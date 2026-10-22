@@ -2912,6 +2912,27 @@ def test_a_suite_validator_whose_harness_imports_changed_marks_every_suite(
     assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == expected
 
 
+@pytest.mark.parametrize(
+    "base, head, expected",
+    [
+        (None, "from harness.dates import parse_date\n", {"demo", "convert-dates"}),
+        (None, "def test_x():\n    assert True\n", {"convert-dates"}),
+        ("from harness.dates import parse_date\n", None, {"demo", "convert-dates"}),
+    ],
+    ids=["new-file-with-harness-import", "new-file-without", "deleted-file-with-harness-import"],
+)
+def test_a_new_or_deleted_suite_validator_is_judged_by_its_harness_imports(monkeypatch, tmp_path, base, head, expected):
+    path = "eval/harness/validators/test_convert_dates.py"
+    (tmp_path / "eval" / "harness" / "validators").mkdir(parents=True)
+    (tmp_path / "eval" / "harness" / "harness").mkdir()
+    (tmp_path / "eval" / "harness" / "harness" / "dates.py").write_text("def parse_date():\n    pass\n", encoding="utf-8")
+    if head is not None:
+        (tmp_path / path).write_text(head, encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda p: base)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == expected
+
+
 def test_an_unreadable_base_opens_every_suite_and_says_so(monkeypatch, capsys):
     def unreadable(path):
         raise check_runlogs.BaseUnreadable("BASE_SHA/HEAD_SHA unset")
@@ -2930,17 +2951,39 @@ def test_git_show_at_merge_base_refuses_without_the_shas(monkeypatch):
         check_runlogs.git_show_at_merge_base("eval/harness/harness/dates.py")
 
 
-def test_git_show_at_merge_base_reads_the_base_and_reports_an_absent_file(monkeypatch):
-    """Against this repo's own history: HEAD~1 vs HEAD has a merge base of HEAD~1."""
-    head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, encoding="utf-8",
-                                   cwd=check_runlogs.REPO_ROOT).strip()
-    monkeypatch.setenv("BASE_SHA", head)
+def test_git_show_at_merge_base_reads_the_merge_base_not_either_tip(monkeypatch, tmp_path):
+    """A throwaway repo where main moved on after the branch forked: the read must
+    return the fork point's content, not main's tip (BASE_SHA) or the branch's
+    (HEAD_SHA) -- either would hide an import the branch changed."""
+
+    def git(*args):
+        return subprocess.check_output(["git", *args], text=True, encoding="utf-8", cwd=tmp_path).strip()
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    target = tmp_path / "eval" / "harness" / "validators" / "test_x.py"
+    target.parent.mkdir(parents=True)
+
+    def commit(text):
+        target.write_text(text, encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", text)
+        return git("rev-parse", "HEAD")
+
+    fork = commit("fork\n")
+    git("checkout", "-q", "-b", "branch")
+    head = commit("branch\n")
+    git("checkout", "-q", "main")
+    base = commit("main\n")
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", head)
-    shown = check_runlogs.git_show_at_merge_base("eval/harness/harness/dates.py")
-    committed = subprocess.check_output(["git", "show", f"{head}:eval/harness/harness/dates.py"], text=True,
-                                        encoding="utf-8", cwd=check_runlogs.REPO_ROOT)
-    assert shown == committed and shown
-    assert check_runlogs.git_show_at_merge_base("eval/harness/harness/never_existed.py") is None
+    assert fork not in (base, head)
+    assert check_runlogs.git_show_at_merge_base("eval/harness/validators/test_x.py") == "fork\n"
+    assert check_runlogs.git_show_at_merge_base("eval/harness/validators/never_existed.py") is None
+
 
 
 def _seed_instrument_suite(tmp_path, monkeypatch, stored):

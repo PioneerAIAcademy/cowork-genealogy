@@ -529,14 +529,22 @@ _CLOSURE_TREE = {
     "provenance_report.py": "def f():\n    return 7\n",
     "tests/helpers.py": "h = 8\n",
     "validators/test_imports_tests.py": "import tests.helpers\n",
+    "validators/test_imports_sibling.py": "import validators.sibling\nfrom harness.sub import deep\n",
+    "harness/sub/__init__.py": "",
+    "harness/sub/deep.py": "from ..two_up import w\nfrom .... import beyond_top\n",
+    "harness/two_up.py": "w = 9\n",
+    # what `from .... import beyond_top` would wrongly reach without the past-top guard
+    "harness/beyond_top.py": "b = 10\n",
 }
 
 
 def test_the_closure_follows_every_import_form_and_stops_at_dead_ends(tmp_path):
     """In-function, `import harness.x`, `from harness import x`, relative imports
-    (`from .x import` and `from . import x`), a top-level module and transitive
-    imports are followed, with the package's `__init__.py`; the stdlib, third-party, `validators/` siblings and
-    `tests/` are not, and an unimported module stays out."""
+    (`from .x import`, `from . import x`, `from ..x import`, and one past the top,
+    which is dropped), a top-level module and transitive imports are followed,
+    with the package's `__init__.py`; the stdlib, third-party, `validators/`
+    siblings (even as `import validators.x`) and `tests/` are not, and an
+    unimported module stays out."""
     validators = _harness_tree(tmp_path, _CLOSURE_TREE)
     assert instrument.harness_import_closure(validators) == [
         "harness/__init__.py",
@@ -545,7 +553,10 @@ def test_the_closure_follows_every_import_form_and_stops_at_dead_ends(tmp_path):
         "harness/lazy.py",
         "harness/plain.py",
         "harness/relative.py",
+        "harness/sub/__init__.py",
+        "harness/sub/deep.py",
         "harness/transitive.py",
+        "harness/two_up.py",
         "harness/via_sibling.py",
         "provenance_report.py",
     ]
