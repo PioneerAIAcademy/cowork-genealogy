@@ -23,9 +23,10 @@ Two modes:
 Pure analysis over committed JSON — no live run, no API. `analyze_runlog` /
 `diff_skill` are pure and unit-tested; the CLI locates run logs and prints.
 
-Caveat carried in every number: committed unit run logs are single-run (test
-files pin `runs_per_test=1`; the `--runs-per-test` override only writes scratch
-logs this report does not read), and the skill run itself is not
+Caveat carried in every number: a committed test entry is one run, except a
+fail-retried test, whose totals sum up to four (`orchestrator.FAIL_RETRIES`); the
+`--runs-per-test` override only writes scratch logs this report does not read.
+The skill run itself is not
 temperature-pinned (only the judge is — eval/CLAUDE.md), so a single test's
 token count carries run-to-run variance. Trust the *direction* and
 the *aggregate across a skill's tests*, not a single test's exact percentage.
@@ -72,8 +73,8 @@ class SkillLatency:
     source_file: str | None = None
     n_tests: int = 0
 
-    # Summed across the skill's tests (each test's `totals`, which with
-    # runs_per_test=1 is its single run).
+    # Summed across the skill's tests (each test's `totals`: its one run, or
+    # every run of a fail-retried test).
     output_tokens: int = 0
     # None when any test predates the num_turns instrumentation (older logs).
     num_turns: int | None = None
