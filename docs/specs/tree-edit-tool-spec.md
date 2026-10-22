@@ -523,16 +523,21 @@ batch form:
 
 > `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or tie the record first through person-evidence; a relationship added in this same call does not count, so add it in an earlier call.`
 
-**Measured** at `3181f969d` by `dev/measure-namesake-cap.ts` §6 over the committed
+**Measured** at `e47d00e05` by `dev/measure-namesake-cap.ts` §6 over the committed
 e2e runs, with a row planted on every person holding a live `probable` or
-`confident` link: 40 calls cite a record onto such a person's fact or name, 15
+`confident` link: 39 calls cite a record onto such a person's fact or name, 14
 onto the subject. At call time, where the replay has the run's links (15 calls;
-the other 25 had their captures stripped), it refuses 5 of the 11 it judges, 3
+the other 24 had their captures stripped), it refuses 5 of the 10 it judges, 3
 only because the run linked the record after writing the fact. On each run's
-final state it refuses 14 of the 36 calls whose citations reach a research
+final state it refuses 14 of the 34 calls whose citations reach a research
 source, 11 of the 13 onto the subject: every refused citation but one is a link
 the cap refuses, and that one rests on an assertion that records an absence
-(`wilkins-death-kentucky` 2026-07-25, call 118). Known let through: a ref cited
+(`wilkins-death-kentucky` 2026-07-25, call 118). The replay keeps no tree, so it
+rebuilds the refs a fact or name carried before an update from the starting tree
+and the run's earlier citing writes; it also judges every update charged none
+and every one of its refs, and the ten updates that move a count between those
+two are read from their run logs instead (`TRACED_PRIOR_REFS`; a floor fails on
+one that is not). Known let through: a ref cited
 before its record is registered as a research source is never judged, even when
 a later call restates it (committed instance: `antonio-lucas-spouse` 2026-08-04,
 S5 on I12 since `add_person` at call 184, restated at call 214). Labelled cases:
