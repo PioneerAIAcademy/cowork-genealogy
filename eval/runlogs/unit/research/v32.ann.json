@@ -1,0 +1,126 @@
+{
+  "run_log": "v32.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the project_context response: q_001's nextStep is \"proof-conclusion — concluded while blocked: re-conclude ps_001\", and q_002's is \"proof-conclusion — resolved with no proof summary\". The reply follows both exactly and describes what it delegated without claiming results. It checked for an existing project before routing."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both open questions were routed to proof-conclusion with the reason for each, and it proceeded without pausing to ask, as the --autonomous test requires. Nothing omitted."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath; its nextStep values drove both hand-offs. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Called project_context before routing and read it correctly: q_001 concluded while blocked (re-conclude ps_001), q_002 resolved with no proof summary, and Irish origins not covered by any question. Routes match. Minor: the summary heading shortens the objective to \"identify Patrick Flynn\" (it is his parents), though the line above states it correctly."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Handled both open questions and registered the new Irish-origins question, but then stopped to ask \"Would you like me to continue…?\" and deferred the locality guide for Ireland and the research plan to \"the following run\". The test expects it to drive the full workflow. Same gap as the previous run's 004, scored 2."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath; its nextStep values drove the hand-offs. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No ID was given, so per the rule that a project always starts from a FamilySearch person ID, nothing should be created. Nothing was: no tool calls, no files, and test_creates_no_project_when_none_exists passed. The reply's description of the ID format and where to find it is accurate."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declined to start, asked for the one thing required (the FamilySearch ID), and invited known facts to focus the research. Nothing more was expected of a correct decline."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool calls, which is the correct behaviour here, so there are no arguments to grade."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge's reasons don't hold. The two proof-conclusion hand-offs are in the recorded Agent spawns (re-conclude ps_001 for q_001, write q_002's summary); they don't appear in the MCP call list. \"No mother linked\" is accurate (the tree's only parent link for I1 is Thomas, I2), and the user asked for both parents. \"13 assertions from src_001–src_004 (FamilySearch and Ancestry)\" matches the scenario."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "It read state and handed off both open questions, but having found that the mother is uncovered, it asked \"plan a search for his mother, or the proof summary first?\" instead of routing that new question to question-selection, as 004 did for Irish origins. The user asked for both parents."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath; its nextStep values drove both hand-offs. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "The h_002 contradiction (an 1861 death rules out the 1870 Boyd County groom) is right, but the reply invents results. The hypothesis-tracking stub said the hand-off \"changed no project state\", yet the reply says it \"has recorded the following updates\" and lists two hypotheses as \"registered\". Neither exists. It also says the death record places Robert \"in the Burton household\"; the researcher made that census match, the record doesn't state it, and the judge context counts that as a failure.\n\nCompleteness — LLM 3 → my score: 3 (agree)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covered the contradiction to h_002, the split into two Robert Easthams, and the James/Elizabeth parentage lead, and asked for the record's ARK or collection, which the judge context counts as following the new lead. The invented results are scored under Correctness, not here."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context, then research_query for hypotheses and for q_001's assertions, all with the correct projectPath. No fixture misses."
+    }
+  ]
+}
