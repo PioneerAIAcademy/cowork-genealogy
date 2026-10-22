@@ -6,7 +6,7 @@
 // No network, no auth.
 
 import { getProjectStore } from "../store/project-store.js";
-import { treePidOfArk } from "../utils/ark.js";
+import { findAnchor } from "../utils/tree-person.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
@@ -121,30 +121,6 @@ async function loadAnchor(
   }
 
   return { tree, anchor: findAnchor(tree.persons, personId) };
-}
-
-/**
- * The tree person `personId` names: by tree id first, else (issue #2942) the
- * one person whose FamilySearch link (`ark`) names that id, read by
- * `treePidOfArk` (a `4:1:` ark in any spelling or a tree person URL),
- * compared case-insensitively. init-project keys imported persons `I1`, `I2`…
- * and keeps their FamilySearch id in `ark`, so a caller holding only the
- * FamilySearch id still reaches them. Two persons linked to the same id is a
- * pending merge, not a choice to make silently.
- */
-export function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
-  const byId = persons.find((p) => p.id === personId);
-  if (byId) return byId;
-  const wanted = personId.trim().toUpperCase();
-  const linked = persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
-  if (linked.length === 1) return linked[0];
-  if (linked.length > 1) {
-    throw new Error(
-      `FamilySearch id '${personId}' is linked to more than one person in ${TREE_FILE} ` +
-        `(${linked.map((p) => p.id).join(", ")}); pass one of those ids.`,
-    );
-  }
-  throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
 }
 
 export const personWarningsToolSchema = {

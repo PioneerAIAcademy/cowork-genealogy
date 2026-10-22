@@ -320,6 +320,37 @@ def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
     assert sink["plain"] == {}
 
 
+def test_a_delegation_is_forced_to_the_foreground(tmp_path, monkeypatch):
+    """On CLI 2.1.294 an agent backgrounds when the flag is absent: the run ends at
+    the main thread's result and loses it, and the Stop hook's nudge spawns a
+    duplicate. Deleting the `foreground_rewrite` call in pretool_hook must red this."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    sink: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            ("spawn", {"tool_name": "Agent", "tool_input": {"subagent_type": "record-extractor"}}),
+            ("plain", {"tool_name": "Read", "tool_input": {"file_path": str(tmp_path / "x")}}),
+        ]
+        return _HookDrivingAgent(
+            hook, inputs, [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()], sink
+        )
+
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
+    asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy")))
+    assert sink["spawn"]["hookSpecificOutput"]["updatedInput"] == {
+        "subagent_type": "record-extractor", "run_in_background": False,
+    }
+    assert sink["plain"] == {}
+
+
 def _run_with_mcp_calls(tmp_path, monkeypatch, n_calls: int, cap: int):
     """Drive `n_calls` genealogy calls through the PreToolUse hook against a
     tool_calls cap of `cap`, then stream three messages. Returns the run's

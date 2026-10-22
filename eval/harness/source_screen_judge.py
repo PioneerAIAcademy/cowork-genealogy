@@ -47,7 +47,8 @@ FINDINGS_INSTRUCTION = (
     'entry per finding: {"source_url": <the source URL>, "kind": <"indexing" | '
     '"misattributed" | "source_conflict" | "unchecked">, "fact": <the fact it bears on>}. '
     "List each audit-list source you could not check as kind \"unchecked\". "
-    "An empty list is []."
+    "Do not list a source that belongs on the profile and has no problem. "
+    "An empty list is []. Write the block once, as the last thing in your reply."
 )
 
 _ARK_CORE = re.compile(r"ark:/61903/\d:\d:[A-Za-z0-9.-]+")
@@ -221,11 +222,13 @@ def parse_findings(text: str) -> tuple[list[dict[str, Any]], str | None, list[An
     One malformed entry is set aside, not allowed to void the rest. An
     `unchecked` entry may name no URL: a memory or a book has none.
     """
-    blocks = _FENCE.findall(text or "")
+    blocks = list(_FENCE.finditer(text or ""))
     if not blocks:
         return [], "no closing ```json block", []
+    if (text or "")[blocks[-1].end():].strip():
+        return [], "text follows the closing ```json block, so it may have been retracted", []
     try:
-        data = json.loads(blocks[-1])
+        data = json.loads(blocks[-1].group(1))
     except json.JSONDecodeError as e:
         return [], f"closing json block does not parse: {e}", []
     if not isinstance(data, list):
@@ -446,7 +449,7 @@ def main(argv: list[str] | None = None) -> int:
                     quota_reason=QUOTA_ABORT_REASON,
                 )
             )
-            state = rec["aborted_reason"] or ("harness_miss" if rec["harness_miss"] else "ok")
+            state = rec["aborted_reason"] or ("harness_miss" if rec["harness_miss"] else "parse_error" if rec["parse_error"] else "ok")
             print(f"[{i}/{len(copies)}] {state}: {len(rec['findings'])} findings, {rec['wall_seconds']}s", flush=True)
     except QuotaStop:
         print(

@@ -536,11 +536,11 @@ async def test_one_unmappable_message_does_not_end_draining(tmp_path, monkeypatc
     real_map = real_agent.map_message
     state = {"n": 0}
 
-    def flaky(message, tool_names, tasks=None, live=None):
+    def flaky(message, tool_names, tasks=None, live=None, **kw):
         state["n"] += 1
         if state["n"] == 4:                      # one bad message, mid-drain
             raise ValueError("unmappable message")
-        return real_map(message, tool_names, tasks, live)
+        return real_map(message, tool_names, tasks, live, **kw)
 
     monkeypatch.setattr(real_agent, "map_message", flaky)
 

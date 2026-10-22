@@ -1,0 +1,247 @@
+{
+ "log_id": "log_006",
+ "tool": "fulltext_search",
+ "retrieved": "2026-10-20T15:53:22.528Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 10,
+   "includeFacets": true,
+   "keywords": "+Barker +Smith +Mississippi +England",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "yearFrom": 1840,
+   "yearTo": 1900
+  },
+  "totalResults": 9699,
+  "returned": 10,
+  "offset": 0,
+  "hasMore": true,
+  "results": [],
+  "facets": [
+   {
+    "name": "Collection",
+    "count": 9699,
+    "items": [
+     {
+      "name": "North Carolina, Wills and Deeds, ca. 1700s-2017",
+      "count": 2,
+      "filterParam": "c.collectionId=on&f.collectionId=3158816"
+     },
+     {
+      "name": "Georgia, Wills and Deeds, ca. 1700s-2017",
+      "count": 3,
+      "filterParam": "c.collectionId=on&f.collectionId=3158836"
+     },
+     {
+      "name": "Iowa, Wills and Deeds, ca. 1700s-2017",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=3158837"
+     },
+     {
+      "name": "Nebraska, Wills and Deeds, ca. 1700s-2017",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=3158842"
+     },
+     {
+      "name": "West Virginia Wills and Deeds, ca. 1700s-2017",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=3158864"
+     },
+     {
+      "name": "Australia, Western Australia, Probate Records, 1775-1990",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=5000312"
+     },
+     {
+      "name": "United States, Massachusetts, Deaths, from 0161 to 9188",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M924-YMZ"
+     },
+     {
+      "name": "United States, New Hampshire, Deaths, from 0187 to 2951",
+      "count": 9,
+      "filterParam": "c.collectionId=on&f.collectionId=M92C-9TB"
+     },
+     {
+      "name": "United States, Mississippi, Deaths, from 0024 to 2999",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M92H-B4Q"
+     },
+     {
+      "name": "Canada, Ontario, Others, from 1890 to 1989",
+      "count": 10,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-244"
+     },
+     {
+      "name": "United States, New York, Residences, from 1600 to 1997",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-316"
+     },
+     {
+      "name": "United States, Kentucky, Others, from 2010 BC to 2026",
+      "count": 4,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-33Z"
+     },
+     {
+      "name": "Canada, Ontario, Biographies, from 9 January 1400 to 2003",
+      "count": 43,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-34Z"
+     },
+     {
+      "name": "United States, Others, from 2010 BC to 2031",
+      "count": 18,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-35L"
+     },
+     {
+      "name": "United States, Rhode Island, Deaths, from 0101 to 4944",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-385"
+     },
+     {
+      "name": "United States, Idaho, Deaths, from 1005 to 9999",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-3CZ"
+     },
+     {
+      "name": "United States, Massachusetts, Military Service, from 1 October 0863 to 2001",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-3KZ"
+     },
+     {
+      "name": "United States, West Virginia, Deaths, from 0001 to 8921",
+      "count": 1,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-3L2"
+     },
+     {
+      "name": "United States, Alabama, Biographies, from 1590 to 2010",
+      "count": 835,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-3X3"
+     },
+     {
+      "name": "United States, Arizona, Deaths, from 0990 to 9175",
+      "count": 6,
+      "filterParam": "c.collectionId=on&f.collectionId=M9J1-3Y5"
+     }
+    ]
+   },
+   {
+    "name": "Year",
+    "count": 9699,
+    "items": [
+     {
+      "name": "1800",
+      "count": 10,
+      "filterParam": "c.recordYear1=on&f.recordYear0=1800"
+     },
+     {
+      "name": "1840",
+      "count": 0,
+      "filterParam": "c.recordYear1=on&f.recordYear0=1840"
+     },
+     {
+      "name": "1900",
+      "count": 9699,
+      "filterParam": "c.recordYear1=on&f.recordYear0=1900"
+     }
+    ]
+   },
+   {
+    "name": "Place",
+    "count": 9699,
+    "items": [
+     {
+      "name": "Australia & New Zealand",
+      "count": 1,
+      "filterParam": "c.recordPlace1=on&f.recordPlace0=2"
+     },
+     {
+      "name": "Canada",
+      "count": 68,
+      "filterParam": "c.recordPlace1=on&f.recordPlace0=3"
+     },
+     {
+      "name": "United Kingdom and Ireland",
+      "count": 1,
+      "filterParam": "c.recordPlace1=on&f.recordPlace0=9"
+     },
+     {
+      "name": "United States of America",
+      "count": 9629,
+      "filterParam": "c.recordPlace1=on&f.recordPlace0=10"
+     }
+    ]
+   },
+   {
+    "name": "Record Type",
+    "count": 9699,
+    "items": [
+     {
+      "name": "122797",
+      "count": 8,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=122797"
+     },
+     {
+      "name": "122956",
+      "count": 1,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=122956"
+     },
+     {
+      "name": "123402",
+      "count": 3,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=123402"
+     },
+     {
+      "name": "123682",
+      "count": 151,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=123682"
+     },
+     {
+      "name": "124078",
+      "count": 17,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=124078"
+     },
+     {
+      "name": "124133",
+      "count": 86,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=124133"
+     },
+     {
+      "name": "124231",
+      "count": 9367,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=124231"
+     },
+     {
+      "name": "124365",
+      "count": 1,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=124365"
+     },
+     {
+      "name": "124443",
+      "count": 56,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=124443"
+     },
+     {
+      "name": "126340",
+      "count": 1,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=126340"
+     },
+     {
+      "name": "126808",
+      "count": 49,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=126808"
+     },
+     {
+      "name": "127015",
+      "count": 7,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=127015"
+     },
+     {
+      "name": "127023",
+      "count": 4,
+      "filterParam": "c.recordTypeId1=on&f.recordTypeId0=127023"
+     }
+    ]
+   }
+  ]
+ }
+}

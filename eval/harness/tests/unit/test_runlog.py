@@ -15,6 +15,7 @@ from harness.runlog import (
     aggregate_per_run_outcome,
     assemble_test_entry,
     build_run_log,
+    bundled_cli_version,
     derive_activated,
     suppressed_failure,
     unexpected_pass,
@@ -1041,6 +1042,21 @@ def _validate_both_schema_trees(log):
             ),
         )
     jsonschema.Draft202012Validator(schema, registry=registry).validate(log)
+
+
+def test_cli_version_is_the_bundled_cli_and_validates_against_both_schema_trees():
+    from claude_agent_sdk._cli_version import __cli_version__
+
+    assert bundled_cli_version() == __cli_version__
+    log = build_run_log(
+        skill="check-warnings", version=1, released=False, releasable=True,
+        invocation="skill", timestamp="2026-10-21_10-00-00", harness_version="0.2.0",
+        model="claude-sonnet-4-6", judge_prompt_hash="b" * 64, snapshot={},
+        tests=[_make_entry()], cli_version=bundled_cli_version(),
+    )
+    assert log["cli_version"] == __cli_version__
+    _validate_both_schema_trees(log)
+    assert "cli_version" not in _wrap_envelope(_make_entry())
 
 
 def _captured_entry(run):
