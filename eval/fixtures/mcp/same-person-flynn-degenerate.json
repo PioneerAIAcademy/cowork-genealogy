@@ -7,7 +7,6 @@
   },
   "response": {
     "matched": false,
-    "confidence": 0,
     "score": 0.005,
     "recordSource": "record_read",
     "recorded": true,
