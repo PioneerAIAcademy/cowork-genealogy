@@ -319,19 +319,18 @@ hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no v
 .PHONY: agent-smoke
 agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dead-stub MCP abort check (issue #1743)
 	# Arm 1 — agent registration (issue #939). Reads the SDK init
-	# handshake's agent list — no query, no model call. The key comes from
-	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
-	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
-	# AGENT_SMOKE=1 turns the live test's skips into hard errors.
+	# handshake's agent list — no query, no model call, and no credential:
+	# the bare names come from a filesystem staging nothing authenticates
+	# (issue #1142, measured 2026-08-23). AGENT_SMOKE=1 turns the live test's
+	# skips into hard errors. This arm now also runs in CI (server-tests.yml);
+	# it stays here for a quick local re-check.
 	#
 	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
 	# server that dies at startup; asserts the init-message abort text and
-	# the retention rule (no files written). Bills one session start (~8s).
-	#
-	# Both arms are hand-run; issue #1142 is what would make them CI.
+	# the retention rule (no files written). Bills one session start (~8s),
+	# so it stays hand-run — not in CI.
 	cd apps/server && \
 	  AGENT_SMOKE=1 \
-	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 	# Arm 2 — dead-stub e2e abort (issue #1743).
 	cd eval/harness && \
@@ -356,7 +355,7 @@ agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dea
 	  echo "Dead-stub arm: PASS"
 
 .PHONY: probe-agent-binding
-probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (12 short sessions, hosted + prototype, ~$3.60)
 	# agent-smoke above reads what the runtime RESOLVED; this reads what it
 	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
 	# AND denied, omitted — each with tool search off and on, spawn a probe
@@ -366,6 +365,8 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	# Answered 2026-08-30 (Claude Code 2.1.220, SDK 0.2.128): BOTH bind, so a
 	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
 	# moves, or before adding a deny on the strength of it binding.
+	# Re-run 2026-10-20 (Claude Code 2.1.294, SDK 0.2.165): BOTH bind, all 12 arms.
+	# Bills ~$3.60 (hosted and prototype option sets, 6 arms each).
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
@@ -404,6 +405,7 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# Answered 2026-09-09 (Claude Code 2.1.258, SDK 0.2.128): the hosted
 	# loader DOES bind it -- arm A denied with the guard's own reason text,
 	# arm B (hooks/ removed) did not. Re-run when the CLI or the SDK moves.
+	# Re-run 2026-10-20 (Claude Code 2.1.294, SDK 0.2.165): BOUND, same verdict.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the
@@ -503,7 +505,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -1049,10 +1051,14 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
-.PHONY: source-screen-snapshot source-screen-baseline source-screen-plant source-screen-judge source-screen-score
-source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1]
+.PHONY: source-screen-snapshot source-screen-attachments source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1] [TREE=<researcher tree id>]
 	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
-	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED))
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED)) $(if $(TREE),--tree $(TREE))
+
+source-screen-attachments: $(ENGINE_DEPS) ## Re-read a snapshot's attachments from a researcher tree: make source-screen-attachments SNAPSHOT=<dir> TREE=<tree id>
+	@test -n "$(SNAPSHOT)" -a -n "$(TREE)" || { echo "ERROR: set SNAPSHOT and TREE" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts attachments --snapshot "$(abspath $(SNAPSHOT))" --tree $(TREE)
 
 source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
@@ -1163,6 +1169,10 @@ judge-report: ## Non-discrimination scan of the UNIT judge over committed run lo
 	# nominally measuring. Pairs with /audit-rubric, which checks one skill at a
 	# time by LLM judgment; this is the mechanical corpus-wide half.
 	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: eval-health
+eval-health: ## Weekly: unit tests below the 95% pass bar, and consistently-partial tests, from committed run logs: make eval-health [SKILL=<name>] [WINDOW=20]. No API calls.
+	cd eval/harness && uv run python -m eval_health_report $(if $(SKILL),--skill $(SKILL),) $(if $(WINDOW),--window $(WINDOW),)
 
 .PHONY: judge-regrade
 judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
@@ -1351,6 +1361,18 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-routing-agreement
+e2e-routing-agreement: ## How often project_context's nextStep names the unit run next, over committed e2e runs (issue #3523): make e2e-routing-agreement | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. A decision is a
+	# project_context call carrying a nextStep, paired with the next spawn,
+	# Skill call or extraction_append before the next project_context. Router
+	# and subagent decisions print separately, then the same per run git_sha.
+	# It reads response_summary, which is stripped from runs older than 14
+	# days, so SINCE=all mostly adds unreadable calls; the report counts them.
+	cd eval/harness && uv run python -m e2e.routing_agreement_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-advisories
 e2e-advisories: ## Do the 4 advisory return-fields fire, and does the agent act? Over committed e2e runs (issue #3199): make e2e-advisories | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. For each advisory
@@ -1407,6 +1429,15 @@ e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed 
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
 	cd eval/harness && uv run python -m e2e.detector_before_after_report --detector $(DETECTOR) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-narration-figures
+e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-narration-figures
+	# Pure analysis over committed run JSONs — no live run, no API. Derives the
+	# three load-bearing narration figures in docs/plan/research-as-a-job-later.md
+	# so they cannot drift unnoticed as the corpus grows, which is how PR #2870's
+	# corpus figures drifted. Exits 2 on a zero-paragraph scan rather than
+	# reporting a cheerful 0%.
+	cd eval/harness && uv run python -m e2e.narration_figures_report ../runlogs/e2e
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD

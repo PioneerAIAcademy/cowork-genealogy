@@ -454,7 +454,10 @@ function mergeNames(names: SimplifiedName[]): SimplifiedName[] {
   return reps.map((r) => r.rep);
 }
 
-function namesEquivalent(a: SimplifiedName, b: SimplifiedName): boolean {
+/** Whether a merge folds these two names into one: each part's tokens cover
+ *  the other's, an initial matching any token it starts. Exported for the
+ *  namesake check on a merge, which asks what a merge would fold. */
+export function namesEquivalent(a: SimplifiedName, b: SimplifiedName): boolean {
   return (
     tokensCompatible(nameTokens(a.given), nameTokens(b.given)) &&
     tokensCompatible(nameTokens(a.surname), nameTokens(b.surname))

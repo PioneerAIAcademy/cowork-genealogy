@@ -248,12 +248,15 @@ that apply:
   | e2e harness | `eval/harness/e2e/orchestrator.py`'s `PreToolUse` | the user messages it sends (section F) | The resume-on-stall prompt is not a new turn |
   | Cowork | the plugin hook's own entry point (phase 0 picks the signal) | its prompt text | The hook is a fresh process per call, so the entry point keeps the turn's steps in a session state file, or reads them from the transcript (phase 0) **SUPERSEDED by decision 25**. Cowork ships no hook under decision 25. |
 
-  - **The plugin hook steps aside where a host enforces.** It does nothing when
-    `GENEALOGY_STEP_HOST=1`, giving one guard per plane, each testable.
-    - **Prototype:** `cli_env_blanks` blanks every inherited `GENEALOGY_*` variable
-      (`options.py`), so the variable goes in `build_worker_options`' `env`.
-    - **Alpha:** it goes in `_sdk_env()`.
-    - Neither harness loads the plugin's `hooks.json`.
+  - **There is no plugin step hook** (lead, 2026-10-21). The prototype worker
+    enforces with its own `PreToolUse`, and neither harness loads the plugin's
+    `hooks.json`, so the only plane a plugin step hook could run on is Cowork --
+    which decision 25 gives no hook. Nothing to step aside from, so no
+    `GENEALOGY_STEP_HOST`.
+    - `step_boundary.py` still lives in `plugin/hooks/`, as a **library**: the
+      worker and both harnesses load it with `importlib`, the way
+      `context_policy.py` loads `guard_project_files.py`. It is not registered as
+      a hook anywhere.
   - **Mode detection is exact-phrase only:** "keep going." → `job`, "wrap it up." → `wrapup`,
     case and trailing punctuation ignored. Anything else is `step`. **One normalizer,**
     `step_mode(text)` in `step_boundary.py`, is used by every plane, so a typed "Keep going!"
@@ -298,10 +301,12 @@ that apply:
   A step that ends on a question only the researcher can answer writes no "Continue with …?"
   line, and a "Keep going." turn starts from the step the last turn offered.
   `docs/architecture.md:859-860` says finishing a sub-skill is mid-loop; it changes with it.
-- **The plugin entry:** append the step entry to `hooks.json` **after** the existing guard, since
-  `plugin-hooks.test.ts` reads `PreToolUse[0]`. Add a row for the new guardrail to
-  `docs/specs/guardrail-enforcement-spec.md`'s guardrail table (`docs/architecture.md`,
-  "Restrain something"). `make hook-smoke` gets a step arm that **unsets** `GENEALOGY_STEP_HOST`.
+- **No `hooks.json` entry.** `step_boundary.py` ships in `plugin/hooks/` as a library the
+  worker and both harnesses import; it is never registered as a plugin hook, so there is no
+  `plugin-hooks.test.ts` case, no matcher-coverage test and no `make hook-smoke` step arm.
+  Still add a row for the guardrail to `docs/specs/guardrail-enforcement-spec.md`'s table
+  (`docs/architecture.md`, "Restrain something"), saying it binds in the prototype worker and
+  both harnesses, **not** Cowork.
 - **Web:**
   - `ChatPane.tsx`, `chatEvents.ts`, its test and `styles.css` get Continue, Keep going, Wrap
     it up and Search more buttons. A turn shows exactly the ones named in its
@@ -332,8 +337,11 @@ that apply:
   - **A host reply** shows in the chat as an automatic "Keep going.", and the buttons stay
     hidden while "Keep going" runs.
   - Plus `hosted-web-workbench-spec.md`.
-- **Fallback:** if phase 0 shows Cowork's hook cannot find turns or keep state between calls,
-  Cowork runs on router prose alone.
+- **Cowork runs on router prose alone** (decision 25). This was written as a fallback for
+  "if phase 0 shows Cowork's hook cannot find turns or keep state". Phase 0 showed it CAN
+  (ADR-0005), and the lead chose prose anyway: the cost exposure is the prototype, and a
+  Cowork researcher can press stop. Rider 2's halt rate on the prototype is what would buy
+  the hook later, with numbers rather than a guess.
 
 ### A2. "Keep going": the host replies for the researcher
 - **"Keep going" is a run of ordinary step turns.** After each one, the host sends the next
@@ -1006,7 +1014,7 @@ file's own sections, top to bottom.
 | No proof export; nothing writes to the FamilySearch tree; no numeric confidence meter | **Unaffected** |
 | No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion, question-selection, research-plan, conflict-resolution, hypothesis-tracking, person-evidence and timeline changes |
 | No further cost bounding | **Step mode bounds every turn to one step.** "Keep going" is bounded by its reply cap, and on the prototype by the $35 spend bound |
-| Nothing Cowork-specific | **Except** the plugin hook's Cowork entry point and Cowork's one-turn "Keep going" (sections A and A2) |
+| Nothing Cowork-specific | **Except** Cowork's one-turn "Keep going" (section A2). The plugin hook's Cowork entry point was removed by decision 25: Cowork ships no hook |
 
 **Suggested order:**
 1. Split PR #3262. Land what survives (the front door, `rejected_links`, phase 2's reading
@@ -1034,8 +1042,11 @@ file's own sections, top to bottom.
 - **Record the results** in ADR-0005. **Cowork half recorded 2026-10-19,** all items. Item 7
   is a NO. A plugin `PreToolUse` hook returning `"continue": false` ends a Cowork turn.
   `AskUserQuestion` waits for the researcher, but it pauses the turn rather than ending it:
-  the answer resumes the same turn. `UserPromptSubmit` also fires for agent hand-backs, so
-  the Cowork entry point keys turns on `prompt_id`.
+  the answer resumes the same turn — which is why rider 1 makes the rule "no new step until
+  the researcher has answered since the last one", not "one step per turn". `UserPromptSubmit`
+  also fires for agent hand-backs, which would have made the Cowork entry point key turns on
+  `prompt_id`; decision 25 removed that entry point, so the finding is recorded in ADR-0005
+  rather than owed as work.
 
 **Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
 prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches
@@ -1067,27 +1078,51 @@ in parallel with PR 2.
      passes the fields. A zero-assertion wrap-up test.
 - **PR 1 — code and CI tests:**
   - `step_boundary.py` (the predicate with mode `wrapup`, `step_ctx`, `current_question`,
-    `next_auto_reply`, `reply_options`, `STEP_LABELS` with `wrap-up`, and the Cowork entry
-    point with its state file), its `hooks.json` entry after the guard, `plugin-hooks.test.ts`
-    cases, a matcher-coverage test, the step-table coverage test, the guardrail-spec row, and
-    `make hook-smoke` with the step arm;
+    `next_auto_reply`, `reply_options`, and `STEP_LABELS` with `wrap-up`), the step-table
+    coverage test, and the guardrail-spec row saying it binds in the prototype worker and
+    both harnesses, not Cowork.
+    **It ships as a LIBRARY, not a plugin hook** (lead, 2026-10-21). The worker and both
+    harnesses load it with `importlib`, the way `context_policy.py` loads
+    `guard_project_files.py`. So: no `hooks.json` entry, no `plugin-hooks.test.ts` case, no
+    matcher-coverage test, no `make hook-smoke` step arm, and no `GENEALOGY_STEP_HOST`
+    anywhere — the only plane a plugin step hook could run on is Cowork, which gets none.
+    Phase 0's `prompt_id`, `Agent`-vs-`Task` and prefixed-name findings were for the Cowork
+    entry point decision 25 removed; they stay recorded in ADR-0005 and are not work this PR
+    owes.
   - **"waiting only on an upload"** (section I): `awaitingUserHandOffs` and its closing-entry
     match moved into `src/utils`, used by `project-context.ts`, `question-state.ts` and
     `research-append.ts`; its `step_ctx` mirror; and the shared fixture;
-  - **the host integrations:**
-    - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed;
-    - the alpha's hooks, with the `Skill` coverage;
+  - **the host integrations** (decision 25: the FS prototype is the only plane that
+    enforces the boundary, so this list is the prototype plus the harnesses):
+    - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed.
+      **Deny first, halt only on a second attempt** — the halt is the BACKSTOP, not the first
+      move, and it denies the call it stops (decision 25). Rider 2: log every halt, because
+      the router prose is identical on both planes, so the rate measures how often Cowork
+      runs past a boundary;
+    - ~~the alpha's hooks, with the `Skill` coverage~~ — **removed by decision 25: the alpha
+      gets nothing, it is retired within months;**
     - the unit harness, with the check before the stubs and the mode mapping set per test;
-    - the e2e orchestrator;
-    - `GENEALOGY_STEP_HOST` in `build_worker_options` and `_sdk_env()`;
-    - each host's `ctx` read;
-  - **no Stop veto:** `turn_max_nudges` returning 0, the alpha arming no turn, and the recipe,
-    docstring and test sites (A);
+    - the e2e orchestrator, which gets the step check (rider 3). It tracks `real_agent`,
+      so the harnesses enforce a boundary neither Cowork nor the alpha has, and no eval can
+      catch a miss on either (`docs/architecture.md` §9.4, gap 4);
+    - the `ctx` read for the prototype and both harnesses. **Not Cowork:** ADR-0005 item 7
+      measured that a hook cannot read `research.json` from its working directory, and under
+      decision 25 Cowork has no hook to read it from;
+  - **no Stop veto:** `turn_max_nudges` returning 0, the alpha's `autonomous_max_nudges` and
+    `_DEFAULT_MAX_NUDGES` at cap 0 with the tests that pin them, the alpha arming no turn, and
+    the recipe, docstring and test sites (A). The cap-0 change stays here deliberately: the
+    lead accepts a few days of uneven stopping on the alpha between the PR 1 and PR 2 deploys
+    (2026-10-21);
   - **"Keep going":** `next_auto_reply` and its unit tests; the worker's held-row reply inside
     `complete()` with its lock order and race test, the lifted queue-body module, the state on
     `sessions`, the `auto_continue` event and the resume prompt; the web tier's held-`auto`
-    handling and `has_queued`; the alpha's runner chain and `turn_step`; `reply_follows` and
-    ChatPane's busy state (A2); a turn that ran no step leaving `prev_step` as it was (J);
+    handling and `has_queued`; ChatPane's busy state (A2); a turn that ran no step leaving
+    `prev_step` as it was (J).
+    **Not on the alpha** (lead, 2026-10-21): it runs the way Cowork does — router prose plus
+    `AskUserQuestion`, no hook, "keep going" as Cowork's single bounded turn, no reply
+    buttons. So its runner chain and `turn_step`, `reply_follows` and `options`, its loading
+    of `next_auto_reply`, its `ctx` read, and its host-hook and chain tests are all out of
+    this PR. Only the cap-0 Stop-veto change above touches it;
   - decision 12's three contract sites (E);
   - the worker's turn-close `completed`, set only when `project.status` became `completed`
     during the turn, so later turns on a finished project that took a new question are not
@@ -1157,6 +1192,11 @@ in parallel with PR 2.
       acceptance item 7, and the unsettled-conflict "continue runs no step" case;
     - a search step with a hints item reports triage's recommendations as statements and still
       ends "Continue with linking the records?" (D), when issue #3153 has landed.
+  - **After deploy, one manual check on the alpha** (lead, 2026-10-21): open a session and
+    confirm a step ends at its question and WAITS for the researcher. Nobody has measured
+    `AskUserQuestion` on the alpha — ADR-0005 item 10 measured it in Cowork, where it waits
+    but resumes the same turn. The alpha has no hook and no Stop veto after PR 1, so if its
+    `AskUserQuestion` does not wait, nothing stops a step there and the fix is a follow-on.
 - **Prerequisites, staffed separately:**
   - issue #2243 for the fan-out, and its handed-state follow-up for D's handed state;
   - prototype uploads (research-as-a-job's "let documents in") for external-site searches on
@@ -1204,9 +1244,10 @@ in parallel with PR 2.
      listed;
    - `step_ctx` and the engine agree, on the shared fixture, which items are waiting only on an
      upload.
-2. **Host-hook tests** on the worker (including the redelivery seed from `turns.step`), the
-   alpha (including `Skill`), the unit harness and the e2e paths. `GENEALOGY_STEP_HOST` is in
-   each hosted plane's CLI environment, and the plugin entry point does nothing when it is set.
+2. **Host tests** on the worker (including the redelivery seed from `turns.step`), the unit
+   harness and the e2e paths. Not the alpha and not Cowork: neither enforces the boundary, so
+   neither has a hook to test. There is no plugin hook entry point and no
+   `GENEALOGY_STEP_HOST`, so nothing steps aside for anything.
 3. **No Stop veto, and "Keep going":**
    - no hosted turn binds a Stop hook: `turn_max_nudges` returns 0, and the alpha's
      `_build_hooks` binds no `Stop`;
@@ -1375,7 +1416,8 @@ in parallel with PR 2.
 - **Paid eval runs, one per skill:** `research-plan`, `conflict-resolution`,
   `hypothesis-tracking`, `timeline` and `proof-conclusion` in the prep PRs; `research`,
   `research-exhaustiveness`, `person-evidence` and `question-selection` in PR 2; second runs of
-  `conflict-resolution` and `proof-conclusion` in the conflict PR; `search-records` in phase 2; plus `make hook-smoke`.
+  `conflict-resolution` and `proof-conclusion` in the conflict PR; `search-records` in phase 2.
+    **Not `make hook-smoke`:** there is no plugin step hook for it to bind (lead, 2026-10-21).
 - **Plus the suites a callee edit stales, until issue #3568's option D is built:**
   - each of the research-plan, conflict-resolution, hypothesis-tracking and proof-conclusion
     prep PRs also stales `research`: four more runs, and a fifth if the conflict PR lands

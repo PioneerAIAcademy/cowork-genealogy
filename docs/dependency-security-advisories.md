@@ -341,13 +341,13 @@ not digests, so it catches tag moves (`python:3.12` → `3.13`) and nothing else
 patch-level base-image CVEs land when upstream rebuilds the same tag, which a
 rebuild picks up and Dependabot never sees. Pin by digest if that ever matters.
 
-Two `ignore` rules protect load-bearing upper bounds in
+Two `ignore` rules protect load-bearing pins in
 `eval/harness/pyproject.toml` — `mcp>=1.29,<2` (PR #932; mcp 2.0.0 removed
 `Server.list_tools`, which `claude_agent_sdk.create_sdk_mcp_server` calls) and
-`claude-agent-sdk<0.2`. Both are scoped to `version-update:*`, so a genuine
-security advisory on either package still opens a PR. Note that Dependabot
-classifies `0.1 → 0.2` as semver-**minor** for a 0.x package, so the
-`claude-agent-sdk` ignore must cover minor as well as major.
+the exact `claude-agent-sdk==` pin, which moves only with apps/server's
+`sandbox` group (`eval/harness/tests/unit/test_sdk_pin_matches_hosted.py`), so
+every version update to it is ignored. Both are scoped to `version-update:*`,
+so a genuine security advisory on either package still opens a PR.
 
 One known rough edge: `packages/engine/mcp-server` pins `npm@11.12.1` and
 `check-engine-lockfile.yml` fails any PR whose lockfile that exact npm would
