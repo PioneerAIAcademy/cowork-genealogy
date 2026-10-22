@@ -25,9 +25,18 @@ the body's output format.
 
 The guide is scoped to the question: jurisdiction overview, boundary
 changes, repository guide, records not online, known record losses and research tips in
-full, plus each record-type subsection the delegation names; every other record type gets
-one line (what exists, its level, where held). A request naming no record type gets every
-section in full.
+full, plus each record-type subsection the delegation names and each record type that
+substitutes for a named one missing for the period; every other record type gets one line
+(what exists, its level, where held). Research tips are capped at six bullets and the
+repository tables list only repositories holding the record types written in full. A
+request naming no record type gets every section in full.
+
+The substitute clause exists because naming alone drops what a genealogist relies on: for
+County Antrim in the 1820s a baptism question names church records, but the tithe books and
+Griffith's Valuation (land records) are the standard stand-in for the destroyed census
+returns. Measured on two hosted guides (2026-10-07 Antrim, 24.7k characters; 2026-10-15
+Freeborn County, 25.2k), one-lining the unnamed record types alone cut 30-33%; research
+tips (3.6-4.6k) and the repository tables were the largest remaining sections.
 
 ## Wiki outages
 
