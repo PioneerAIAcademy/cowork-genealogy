@@ -964,12 +964,16 @@ they have different fixes, and only one of them is a description problem.
    pointing it at an agent would score every correct hand-off as a miss.
 
    **The instrument for an agent is a routing negative**, not the optimizer: a
-   test whose `negative.correct_skill` names the agent asserts that an utterance
-   routes there, and the harness resolves an agent file as a valid target.
-   Eight of the 30 agents carry one today — 18 negatives between them. The other
-   22 have no triggering coverage at all, so a miss against one of those is
-   unmeasured, not evidence about its description. Add the missed utterance as a
-   negative first, and diagnose the delegation before editing any description.
+   test with a `user_message`, no `grade_on_invariant`, and a
+   `negative.correct_skill` naming the agent asserts that the utterance routes
+   there, and the harness resolves an agent file as a valid target.
+   **No agent carries one today.** All 18 committed negatives that name an agent
+   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
+   routing branch, so the verdict is the tag-gated invariant validator alone and
+   the hand-off is never checked. A miss against any agent is therefore
+   unmeasured, not evidence about its description. Add the missed utterance as
+   such a negative first, and diagnose the delegation before editing any
+   description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
