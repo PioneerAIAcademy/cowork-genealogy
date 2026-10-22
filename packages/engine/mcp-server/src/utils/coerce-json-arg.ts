@@ -40,8 +40,8 @@ export interface JsonParseFailure {
 // `undefined` unless `value` is a string that `JSON.parse` rejects. `offset` is
 // V8's own `position N` when its message carries one, the length of the string
 // for "Unexpected end of JSON input", and null otherwise: V8 gives no position
-// for "Unexpected token 'x', "..." is not valid JSON", but that message quotes
-// the text around the token.
+// in its "Unexpected token 'x', ..." message, but that message quotes the text
+// around the token.
 export function jsonParseFailure(value: unknown): JsonParseFailure | undefined {
   if (typeof value !== "string") return undefined;
   try {

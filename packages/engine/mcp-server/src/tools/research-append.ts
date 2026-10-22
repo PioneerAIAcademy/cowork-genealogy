@@ -5007,9 +5007,9 @@ function narrativeWordCount(text: string): number {
 }
 
 /** A WARNING, never a refusal, when a narrative runs over its vehicle's budget.
- *  Refusing is not on the table: most narratives already written run over, so a
- *  refusal would fail the ordinary write, and the budget in the agent body is
- *  approximate. Names the vehicle and its budget. Silent for a vehicle that is
+ *  Refusing is not on the table: the budgets in the agent body are approximate,
+ *  and a narrative over one is not wrong enough to lose the write. Names the
+ *  vehicle and its budget. Silent for a vehicle that is
  *  not one of the three or a narrative that is not text, which the document
  *  validator reports in its own words. */
 export function narrativeLengthWarnings(entry: any): string[] {
@@ -8631,7 +8631,7 @@ function opsNotAnArrayMessage(ops: unknown): string {
   const offset =
     failure.offset === null || /\bposition \d+\b/.test(failure.message) ? "" : ` (offset ${failure.offset})`;
   return (
-    "`ops` must be a non-empty array, but it arrived as a string that is not valid JSON: " +
+    "`ops` must be a non-empty array, but it arrived as a string that does not parse as JSON: " +
     `${failure.message}${offset}. Fix that and send \`ops\` as a JSON array.`
   );
 }

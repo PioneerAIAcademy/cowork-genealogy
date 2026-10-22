@@ -3147,8 +3147,8 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
-  // A warning, never a refusal: most narratives already written run over their
-  // vehicle's budget, so refusing would fail the ordinary write. Fixture words
+  // A warning, never a refusal: the budgets are approximate, and a narrative over
+  // one is not wrong enough to lose the write. Fixture words
   // are built as N copies of "w" so the count is known by construction, not read
   // back through the implementation's own counter.
   describe("a narrative over its vehicle's word budget is written, with a warning", () => {
@@ -3188,6 +3188,24 @@ describe("research_append (Phase 3)", () => {
       // Written, in full.
       const stored = (await readResearch()).proof_summaries[0];
       expect(stored.narrative_markdown.split(/\s+/)).toHaveLength(520);
+    });
+
+    it("a write refused for another reason reports no length warning, and writes nothing", async () => {
+      // Over budget AND refused: a conclusive tier with shortfall 'gap' on q_001,
+      // which this project has not declared exhaustive. The warning is computed
+      // before the refusal, so this is where it could leak into a failed call.
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...summaryEntry("summary", words(600)), tier: "proved" },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)!.join(" ")).toContain("conclusive answer");
+      expect(JSON.stringify(r)).not.toMatch(/word budget/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     });
 
     it.each([
@@ -3250,8 +3268,9 @@ describe("research_append (Phase 3)", () => {
         op: "append",
         entry: summaryEntry("summary", 5 as never),
       } as never);
-      // The document validator does not type-check this field, so the write may stand;
-      // what matters here is that the length check neither crashes nor speaks.
+      // The document validator refuses a narrative that is not a string; what matters
+      // here is that the length check neither crashes nor speaks before it does.
+      expect(notText.ok).toBe(false);
       expect(budgetWarning(notText)).toEqual([]);
       expect((errorsOf(notText) ?? []).join(" ")).not.toMatch(/word budget/);
     });
