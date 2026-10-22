@@ -743,7 +743,8 @@ violations per fixture rather than runs.
 
 Every `make` target in the fixture-authoring steps above has a batch file in
 `eval\`. The corpus reports (`make e2e-corpus`, `e2e-nudges`, `e2e-latency`,
-`e2e-wiki-failures`, `e2e-compaction`, `e2e-ranked-reads`, `e2e-branch-only`)
+`e2e-wiki-failures`, `e2e-compaction`, `e2e-ranked-reads`, `e2e-routing-agreement`,
+`e2e-branch-only`)
 do not — run those from Git Bash or WSL. Double-click a batch file or run it
 from that folder; each prompts for what it needs instead of taking
 `TEST=`-style arguments, and builds the MCP server first where that matters.
