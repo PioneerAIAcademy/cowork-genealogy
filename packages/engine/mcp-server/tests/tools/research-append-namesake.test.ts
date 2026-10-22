@@ -1000,4 +1000,102 @@ describe("namesake cap", () => {
       expect(errs(r)).toContain("move_bridge");
     });
   });
+
+  // ─── 1d: the namesake warning (spec §5.6) ───────────────────────────────────
+
+  describe("the namesake warning (WN-row)", () => {
+    const wn = (r: any): string[] =>
+      r.ok ? (r.validation.warnings as string[]).filter((w) => w.startsWith("namesake 'ns_")) : [];
+    const appendRow = () => call({ section: "namesakes", op: "append", entry: noId(ROW) });
+
+    it("WT1 records a row over an untied link and lists it with the fact copied through it", async () => {
+      const t = tree();
+      t.persons[0] = {
+        ...person(P, "John", "Smith", "Male"),
+        facts: [{ id: "F1", type: "Occupation", value: "Clerk", sources: [{ ref: "S2" }] }],
+      };
+      await setup(research({ namesakes: [], person_evidence: [standing("pe_001", "a_010", P)] }), t);
+      const r = await appendRow();
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await readResearch()).namesakes).toHaveLength(1);
+      expect(wn(r)).toEqual([
+        "namesake 'ns_001' (John Smith, San Francisco, California, United States, born about 1873) recorded " +
+          "for 'KWCB-111': 1 probable or confident link(s) to 'KWCB-111' stand with nothing in their record " +
+          "tying them to 'KWCB-111': 'pe_001' (assertion 'a_010' on source 'src_002', name). 1 fact(s) on " +
+          "'KWCB-111' were copied through them: 'F1' Occupation (cites S2). The row is recorded and these stay " +
+          "as they are, but materialize_facts will not copy any further fact onto 'KWCB-111' through these " +
+          "links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+          "namesake. Remove a listed fact that belongs to the namesake with tree_correct (operation 'remove', " +
+          "its factId and personId 'KWCB-111').",
+      ]);
+    });
+
+    it("WT2 lists only the facts whose party holds the untied link", async () => {
+      const r0 = research({
+        namesakes: [],
+        assertions: [
+          ...baseAssertions().filter((a) => a.id !== "a_011" && a.id !== "a_012"),
+          assertion("a_011", "src_002", REC.voter, "principal", "occupation", "Farmer"),
+          assertion("a_014", "src_002", REC.voter, "wife", "birth", "", { date: "1852" }),
+        ],
+        person_evidence: [standing("pe_001", "a_010", P), standing("pe_002", "a_001", P), standing("pe_003", "a_003", W)],
+      });
+      const t = tree();
+      t.persons[0] = {
+        ...person(P, "John", "Smith", "Male"),
+        facts: [
+          { id: "F1", type: "Occupation", value: "Farmer", assertion_id: "a_011", sources: [{ ref: "S2" }] },
+          { id: "F2", type: "Occupation", value: "Clerk", assertion_id: "a_004", sources: [{ ref: "S1" }] },
+          // From the voter record's wife, a party holding no link: the refused
+          // link's own record, but not its party.
+          { id: "F3", type: "Birth", date: "1852", assertion_id: "a_014", sources: [{ ref: "S2" }] },
+        ],
+      };
+      await setup(r0, t);
+      const r = await appendRow();
+      expect(r.ok, errs(r)).toBe(true);
+      const found = wn(r);
+      expect(found).toHaveLength(1);
+      expect(found[0]).toContain("1 probable or confident link(s)");
+      expect(found[0]).toContain("'pe_001' (assertion 'a_010' on source 'src_002', name)");
+      expect(found[0]).toContain("1 fact(s) on 'KWCB-111' were copied through them: 'F1' Occupation (cites S2).");
+      expect(found[0]).not.toContain("'F2'");
+      expect(found[0]).not.toContain("'F3'");
+    });
+
+    it("WT3 warns about nothing when every link to the row holder is tied", async () => {
+      await setup(research({ namesakes: [], person_evidence: [standing("pe_002", "a_001", P), standing("pe_003", "a_003", W)] }));
+      const r = await appendRow();
+      expect(r.ok, errs(r)).toBe(true);
+      expect(wn(r)).toEqual([]);
+    });
+
+    it("WT4 reads a fact's party across its record, as the cap reads the links'", async () => {
+      // a_013 carries no persona id and comes from a re-extraction that set none
+      // and named one principal, so recordPartyKeyer joins it to persona VP1:
+      // the fact made from it holds the untied name link's party.
+      const r0 = research({
+        namesakes: [],
+        assertions: [
+          ...baseAssertions().filter((a) => !["a_010", "a_011", "a_012"].includes(a.id as string)),
+          assertion("a_010", "src_002", REC.voter, "principal", "name", "John Smith", {
+            record_persona_id: "VP1",
+            log_entry_id: "log_001",
+          }),
+          assertion("a_013", "src_002", REC.voter, "principal", "occupation", "Farmer", { log_entry_id: "log_002" }),
+        ],
+        person_evidence: [standing("pe_001", "a_010", P)],
+      });
+      const t = tree();
+      t.persons[0] = {
+        ...person(P, "John", "Smith", "Male"),
+        facts: [{ id: "F1", type: "Occupation", value: "Farmer", assertion_id: "a_013", sources: [{ ref: "S2" }] }],
+      };
+      await setup(r0, t);
+      const r = await appendRow();
+      expect(r.ok, errs(r)).toBe(true);
+      expect(wn(r)).toHaveLength(1);
+      expect(wn(r)[0]).toContain("'F1' Occupation (cites S2)");
+    });
+  });
 });
