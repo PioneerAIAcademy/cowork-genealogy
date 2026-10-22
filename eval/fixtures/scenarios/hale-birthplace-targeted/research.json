@@ -1,0 +1,103 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine where in Pennsylvania Thomas Hale was born",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-22",
+    "updated": "2026-10-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "In which Pennsylvania county was Thomas Hale (b. about 1810, Pennsylvania; d. 1868, Greene County, Ohio) born?",
+      "rationale": "Primary research objective. The tree gives Pennsylvania as his birthplace with no county, and no records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-22",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "question_kind": "targeted"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "United States",
+      "for_place": "Greene County, Ohio, United States",
+      "time_period": "1830-1880",
+      "jurisdictions": [
+        {
+          "name": "Greene County, Ohio",
+          "date_range": "1803-present"
+        },
+        {
+          "name": "Xenia (county seat)",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1401638",
+          "title": "United States Census, 1850",
+          "date_range": "1850"
+        },
+        {
+          "id": "1473181",
+          "title": "United States Census, 1860",
+          "date_range": "1860"
+        },
+        {
+          "id": "1438024",
+          "title": "United States Census, 1870",
+          "date_range": "1870"
+        },
+        {
+          "id": "1614804",
+          "title": "Ohio, County Marriages, 1789-2016",
+          "date_range": "1789-2016"
+        }
+      ],
+      "quirks": [
+        "Ohio county probate courts kept birth and death records from 1867 to 1908; the Greene County probate judge holds birth records from 1869.",
+        "Greene County marriage and probate records survive from 1803. Probate was held by the Court of Common Pleas until 1852, and by the Greene County Probate Court after."
+      ],
+      "created": "2026-10-22",
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Greene_County,_Ohio_Genealogy",
+          "found": true
+        }
+      ]
+    }
+  ]
+}

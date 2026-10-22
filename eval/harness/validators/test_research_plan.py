@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 
 import pytest
 
@@ -366,6 +367,40 @@ _TARGET_RECORD_TYPES = ("church", "vital_record")
 _INDIRECT_JURISDICTION = "trysil"
 
 
+@dataclass(frozen=True)
+class _ObjectiveTarget:
+    """What the objective's target record looks like in one scenario.
+    `jurisdiction` and `rationale` are patterns matched case-insensitively
+    with `re.search`. `rationale` narrows a target that shares its place and
+    type with other items (a held death certificate vs. a birth record in the
+    same county); `indirect` names a second place that must neither lead nor
+    gate it."""
+    description: str
+    jurisdiction: str
+    record_types: tuple[str, ...]
+    rationale: str | None = None
+    indirect: str | None = None
+
+
+# The Kongsberg scenario is the default, so a test with no entry here keeps the
+# behaviour this validator shipped with.
+_DEFAULT_OBJECTIVE_TARGET = _ObjectiveTarget(
+    "a baptism record in Kongsberg", _TARGET_JURISDICTION, _TARGET_RECORD_TYPES,
+    indirect=_INDIRECT_JURISDICTION,
+)
+# Issue #1830 item 2: when the objective's facts came from a document the user
+# holds, that document is the target (principle 7's widened trigger). The place
+# matches Chicago or Cook County, since either is a correct way to write it.
+_OBJECTIVE_TARGET_BY_TEST_ID: dict[str, _ObjectiveTarget] = {
+    "ut_research_plan_hdo": _ObjectiveTarget(
+        "Anna Kovač's 1952 death certificate, which the user holds",
+        r"cook|chicago",
+        ("vital_record", "death", "death_record", "death_certificate", "civil_registration"),
+        rationale=r"\bdeath\b|\bcertificate\b",
+    ),
+}
+
+
 def _plan_items_in_sequence(research: dict) -> list[dict]:
     items: list[dict] = []
     for plan in research.get("plans", []) or []:
@@ -388,6 +423,7 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     after = after_state.get("research_json")
     if after is None:
         pytest.skip("missing research.json for diff")
+    spec = _OBJECTIVE_TARGET_BY_TEST_ID.get(test.get("id"), _DEFAULT_OBJECTIVE_TARGET)
 
     items = _plan_items_in_sequence(after)
     if not items:
@@ -396,25 +432,28 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     def juris(item: dict) -> str:
         return str(item.get("jurisdiction") or "").lower()
 
+    def is_target(item: dict) -> bool:
+        return (
+            re.search(spec.jurisdiction, juris(item), re.IGNORECASE) is not None
+            and (spec.indirect is None or spec.indirect not in juris(item))
+            and str(item.get("record_type") or "").lower() in spec.record_types
+            and (
+                spec.rationale is None
+                or re.search(spec.rationale, str(item.get("rationale") or ""), re.IGNORECASE)
+                is not None
+            )
+        )
+
     # An item naming BOTH places cannot be the target. `jurisdiction` is free
     # text and the skill really writes multi-place values -- `r3d`'s own run
     # produced "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway" -- so
     # without this exclusion one item satisfies both the target test and the
     # ahead-of-target test, and relabelling the seq-1 death item makes the
     # identical defect pass. Found in review of #2033.
-    target = next(
-        (
-            i
-            for i in items
-            if _TARGET_JURISDICTION in juris(i)
-            and _INDIRECT_JURISDICTION not in juris(i)
-            and str(i.get("record_type") or "").lower() in _TARGET_RECORD_TYPES
-        ),
-        None,
-    )
+    target = next((i for i in items if is_target(i)), None)
     assert target is not None, (
         f"no plan item targets the objective's record "
-        f"(record_type in {_TARGET_RECORD_TYPES} in {_TARGET_JURISDICTION.title()}); "
+        f"({spec.description}: record_type in {spec.record_types}); "
         f"items were: "
         + ", ".join(
             f"seq {i.get('sequence')} {i.get('record_type')}/{i.get('jurisdiction')}"
@@ -433,8 +472,7 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     # what precedes it is not the point.
     ahead = [i for i in items if (i.get("sequence") or 0) < target_seq]
     assert not ahead, (
-        f"the objective asks for a baptism record in "
-        f"{_TARGET_JURISDICTION.title()} and supplies the place, but "
+        f"the objective names {spec.description}, but "
         f"{len(ahead)} item(s) are sequenced "
         f"ahead of it (target is seq {target_seq}):\n  - "
         + "\n  - ".join(
@@ -444,14 +482,18 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
         )
     )
 
-    # The target must not be reachable only via an indirect item.
+    # The target must not be reachable only via an indirect item. With no
+    # indirect place named, any parent gates it: a held document is read first,
+    # never only when some other search comes back empty.
     fallback_of = target.get("fallback_for")
     if fallback_of:
         parent = next((i for i in items if i.get("id") == fallback_of), None)
-        assert parent is None or _INDIRECT_JURISDICTION not in juris(parent), (
+        gated = parent is not None and (spec.indirect is None or spec.indirect in juris(parent))
+        assert not gated, (
             f"the objective's target item {target.get('id')} is a "
-            f"fallback_for {fallback_of}, a {_INDIRECT_JURISDICTION.title()} "
-            f"item — the requested record must not be gated behind an "
+            f"fallback_for {fallback_of} "
+            f"({parent.get('jurisdiction') if parent else '?'}) "
+            f"— the requested record must not be gated behind an "
             f"indirect source"
         )
 
@@ -531,6 +573,76 @@ def test_pension_item_reaches_past_window(before_state, after_state, test):
             or "none"
         )
     )
+
+
+# --- Tag-gated: an enumerative question's plan accounts for five events ------
+
+# Issue #1830 item 1, the lead's 2026-08-31 ruling on #1917: an enumerative
+# question's plan covers birth, marriage, death, census and probate, and says in
+# writing why any is absent. "In writing" is a `skipped` item with a category
+# and a reason (`_enumerative_skip`). `record_type` alone cannot separate the
+# three vital events — the five enumerative corpus plans file birth, marriage and
+# death alike as `vital_record` — so those match on a vital-type item whose
+# rationale names the event. Death is not matched on a probate rationale that
+# merely says the subject died.
+_VITAL_RECORD_TYPES = re.compile(r"vital|church|parish|civil|registr|birth|marriage|death|cemetery|burial", re.IGNORECASE)
+_FIVE_EVENTS = {
+    "birth": re.compile(r"\b(?:births?|born|baptisms?|baptized|baptised|christenings?|christened)\b", re.IGNORECASE),
+    "marriage": re.compile(r"\b(?:marriages?|married|marry|banns|wedding)\b", re.IGNORECASE),
+    "death": re.compile(r"\b(?:deaths?|died|burials?|buried|obituary|obituaries)\b", re.IGNORECASE),
+}
+
+
+def _covered_events(item: dict) -> set[str]:
+    record_type = str(item.get("record_type") or "")
+    text = f"{record_type} {item.get('rationale') or ''} {item.get('skip_reason') or ''}"
+    events: set[str] = set()
+    if re.search(r"census", record_type, re.IGNORECASE):
+        events.add("census")
+    if re.search(r"probate|estate|will", record_type, re.IGNORECASE):
+        events.add("probate")
+    if _VITAL_RECORD_TYPES.search(record_type):
+        events |= {name for name, pattern in _FIVE_EVENTS.items() if pattern.search(text)}
+    if re.search(r"cemetery|burial", record_type, re.IGNORECASE):
+        events.add("death")
+    return events
+
+
+def test_enumerative_plan_accounts_for_five_events(before_state, after_state, test):
+    """Tag-gated: for an enumerative question, each of birth, marriage, death,
+    census and probate is either covered by a new plan item or written as a
+    `skipped` item with a category and a reason."""
+    if "enumerative-five-events" not in (test.get("tags") or []):
+        pytest.skip("not an enumerative-five-events test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    plans = _new_plans(before, after)
+    assert plans, "no new plan was written"
+    questions = {q.get("id"): q for q in after.get("questions") or []}
+
+    for plan in plans:
+        question = questions.get(plan.get("question_id"))
+        assert (question or {}).get("question_kind") == "enumerative", (
+            f"{plan.get('id')} plans {plan.get('question_id')}, which is not "
+            f"enumerative — the fixture is wrong, not the plan"
+        )
+        accounted: set[str] = set()
+        for item in plan.get("items") or []:
+            if item.get("status") == "skipped" and not _enumerative_skip(item, question):
+                continue  # a skip with no written reason accounts for nothing
+            accounted |= _covered_events(item)
+        missing = [e for e in ("birth", "marriage", "death", "census", "probate") if e not in accounted]
+        assert not missing, (
+            f"{plan.get('id')} (enumerative question {plan.get('question_id')}) "
+            f"neither covers nor gives a written reason for: {', '.join(missing)}. "
+            f"Items: "
+            + "; ".join(
+                f"{i.get('id')} {i.get('status')} {i.get('record_type')}"
+                for i in plan.get("items") or []
+            )
+        )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY

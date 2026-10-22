@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_research_plan_enm",
+    "skill": "research-plan",
+    "type": "positive",
+    "name": "An enumerative question's plan accounts for birth, marriage, death, census and probate",
+    "description": "Issue #1830 item 1, the lead's 2026-08-31 ruling on #1917. q_001 asks for every child of Thomas and Sarah Hale and carries question_kind: enumerative. The plan must cover birth, marriage, death, census and probate, writing any it does not cover as a skipped item with skip_category and skip_reason. Gated by test_enumerative_plan_accounts_for_five_events, and by the amended test_new_plan_items_planned_status, which allows exactly that skip. Synthetic scenario — no PII.",
+    "tags": [
+      "planning",
+      "record-type-selection",
+      "new-plan-items-planned-status",
+      "direct-arm",
+      "enumerative-five-events"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — who were the children of Thomas Hale and his wife Sarah?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "hale-children-enumerative"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "person-read-empty-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "Whether the plan accounts for birth, marriage, death, census and probate is checked by the deterministic validator test_enumerative_plan_accounts_for_five_events. If the plan misses one, that validator is listed among the failed validators; if it is not listed, the plan met it. Do not re-derive this from the record types.",
+    "Background: the question asks for every child of a couple, not one fact. An event type the plan does not cover may be written as a skipped plan item with a skip_category and a skip_reason; that is a legitimate way to account for it. Look for whether each item's rationale says what it could add to the list of children.",
+    "The repository is irrelevant, and an item may reach a record without naming a collection id."
+  ]
+}

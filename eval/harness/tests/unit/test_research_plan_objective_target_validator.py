@@ -206,3 +206,53 @@ def test_kongsberg_census_does_not_satisfy_the_target():
     with pytest.raises(AssertionError, match="no plan item targets the objective"):
         check_target_leads({}, after, TAGGED)
 
+
+
+# --- issue #1830 item 2: a document the user holds leads the plan ---------
+#
+# `kovac-held-death-certificate`: the objective says the user's grandmother's
+# 1952 Chicago death certificate names her parents. Principle 7's widened
+# trigger makes that certificate the first research target. Keyed by test id,
+# so the Kongsberg cases above keep the default spec.
+
+HELD = {"id": "ut_research_plan_hdo", "tags": ["planning", "objective-target"]}
+
+
+def _cert(seq, juris="Chicago, Cook County, Illinois", rtype="vital_record", **kw):
+    return _item(seq, rtype, juris,
+                 rationale="Anna's 1952 death certificate, which names her parents.", **kw)
+
+
+@pytest.mark.parametrize("juris", ["Chicago, Cook County, Illinois", "Cook County, Illinois",
+                                   "Chicago, Illinois"])
+def test_held_certificate_passes_when_it_leads_under_any_place_spelling(juris):
+    after = _state([_cert(1, juris), _item(2, "census", "Chicago, Illinois")])
+    check_target_leads({}, after, HELD)
+
+
+def test_held_certificate_fires_when_a_census_leads_it():
+    after = _state([_item(1, "census", "Chicago, Illinois"), _cert(2)])
+    with pytest.raises(AssertionError, match="sequenced\s+ahead of it"):
+        check_target_leads({}, after, HELD)
+
+
+def test_held_certificate_fires_when_it_is_a_fallback_of_another_search():
+    """A held document is read first, never only when some other search
+    comes back empty — so with no indirect place named, any parent gates it."""
+    after = _state([_cert(1, fallback_for="pli_002"), _item(2, "census", "Chicago, Illinois")])
+    with pytest.raises(AssertionError, match="must not be gated behind"):
+        check_target_leads({}, after, HELD)
+
+
+def test_held_certificate_fires_when_no_item_reaches_it():
+    after = _state([_item(1, "vital_record", "Cook County, Illinois",
+                          rationale="Her 1890 birth record would name her parents.")])
+    with pytest.raises(AssertionError, match="no plan item targets the objective"):
+        check_target_leads({}, after, HELD)
+
+
+def test_held_certificate_is_not_matched_in_another_county():
+    after = _state([_item(1, "vital_record", "Lake County, Indiana",
+                          rationale="A death certificate filed where she may have died.")])
+    with pytest.raises(AssertionError, match="no plan item targets the objective"):
+        check_target_leads({}, after, HELD)

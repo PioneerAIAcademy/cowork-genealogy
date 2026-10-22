@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_research_plan_hdo",
+    "skill": "research-plan",
+    "type": "positive",
+    "name": "A document the user holds, named in the objective, is the first thing the plan reaches",
+    "description": "Issue #1830 item 2. The objective says the user's grandmother's 1952 Chicago death certificate names her parents. Principle 7's widened trigger makes that certificate the first research target, and no fresh search is planned for facts taken from a document nobody has read. No known_holdings entry: the held document is stated only in the objective. Gated by test_objective_target_leads_the_plan through its per-test-id table, and by test_new_plan_items_planned_status. Synthetic scenario — no PII.",
+    "tags": [
+      "planning",
+      "sequencing",
+      "objective-target",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — who were the parents of Anna Kovač?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "kovac-held-death-certificate"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "person-read-empty-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "Whether the plan's first item reaches the death certificate the objective names, and whether that item is gated as a fallback, is checked by the deterministic validator test_objective_target_leads_the_plan. If it fails, it is listed among the failed validators; if it is not listed, the plan met it. Do not re-derive the order.",
+    "Background: the objective states the user holds a 1952 death certificate that names Anna's parents. Look for whether the rationale treats that certificate as the source to read before searching for the people it names, and what later items would corroborate.",
+    "The repository is irrelevant: the certificate may be read from the user, from the county clerk or from a FamilySearch collection."
+  ]
+}
