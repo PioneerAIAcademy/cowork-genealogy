@@ -24,20 +24,30 @@ export async function lookupPlaceCoords(
   resolver: PlaceCoordsResolver,
   budgetMs: number,
 ): Promise<Map<string, PlaceCoords | null>> {
-  const coords = new Map<string, PlaceCoords | null>();
+  return lookupWithin(names, resolver, budgetMs);
+}
+
+/** Answer every distinct name once through `resolver`, four at a time. A name
+ *  whose lookup throws, or is still open when `budgetMs` runs out, answers null. */
+export async function lookupWithin<T>(
+  names: string[],
+  resolver: (name: string) => Promise<T | null>,
+  budgetMs: number,
+): Promise<Map<string, T | null>> {
+  const answers = new Map<string, T | null>();
   const distinct = [...new Set(names)];
-  for (const name of distinct) coords.set(name, null);
+  for (const name of distinct) answers.set(name, null);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let expired = false;
   const lookups = mapWithConcurrency(distinct, PLACE_LOOKUP_CONCURRENCY, async (name) => {
     if (expired) return;
-    let found: PlaceCoords | null = null;
+    let found: T | null = null;
     try {
       found = await resolver(name);
     } catch {
       found = null;
     }
-    if (!expired) coords.set(name, found);
+    if (!expired) answers.set(name, found);
   });
   const cap = new Promise<void>((resolve) => {
     timer = setTimeout(() => {
@@ -50,5 +60,5 @@ export async function lookupPlaceCoords(
   } finally {
     clearTimeout(timer);
   }
-  return coords;
+  return answers;
 }

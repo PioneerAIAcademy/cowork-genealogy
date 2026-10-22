@@ -223,7 +223,7 @@ the absorbed person's id in every section that holds person ids.
 | | `rejected_links` | `person-evidence` | — | `research_append`, `merge_tree_persons` | unit + hook + tool — the hook denies the section to every caller but the person-evidence **agent**; `research_append` refuses a `person_evidence` write that creates, moves onto or revives a rejected pair |
 | | `conflicts` | `conflict-resolution` | — | `research_append` | unit + hook + tool. The hook is CLAIM-scoped: it denies a resolve, or any of the analysis fields (`independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value`), to every caller but the conflict-resolution **agent**, while a skeleton open or a re-open passes. The tool refuses a resolve that does not name its `resolution_kind` |
 | | `hypotheses` | `hypothesis-tracking` | — | `research_append` | unit + tool |
-| | `timelines` | `timeline` | — | `research_append`, `merge_tree_persons` | unit |
+| | `timelines` | `timeline` | `timeline_build`, by tool identity, for a person's own timeline only | `research_append`, `merge_tree_persons`, `timeline_build` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append`, `merge_tree_persons` | unit + hook — the hook denies the section unless the caller is the proof-conclusion **agent** |
 | | `evaluations` | `gps-mentor` | — | `research_append` | **nothing** routes the section to its owner — issue #3191. The hook's per-agent lanes do keep every other agent off it |
 | | `localities` | `locality-guide` | — | `research_append` | unit |

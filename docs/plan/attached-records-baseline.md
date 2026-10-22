@@ -1,6 +1,6 @@
 # Attached records baseline: extract, link and timeline a person in code, and close the plan item
 
-**Status:** PR C is split. C1 (PR #3670, Emruthwill) is everything in § PR C except `timeline_build`, and is in review. C2 (`timeline_build`) and PR D are not started; Gennecis owns them. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
+**Status:** PR C is split. C1 (PR #3670), everything in § PR C except `timeline_build`, has merged. C2 (`timeline_build` and the census table) is in review; its deviations are recorded under § The census table and § `timeline_build`. PR D is not started. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
 
 **Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/plan/research-step-mode.md`, prerequisites).
 
@@ -134,6 +134,13 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
 
 The developer has Claude fill the table, from the live catalog (`dev/probe-census-placeids.ts` lists every single-year census collection with its record count) and what it knows of each country's censuses. It covers every country in North America, South America, Europe and Australia with an indexed FamilySearch census, which may be more than 25. It is a good guess, fixed row by row as rows prove wrong (lead, 2026-10-21).
 
+**As built in C2 (2026-10-22), measured against the live catalog:**
+- The year comes from the collection **title**. `dev/probe-census-placeids.ts` keeps only single-year metadata, and 91 census collections with records span several years there, Mexico 1930 (1929–1931) among them. A title naming a range ("France, Charente, Census, 1837-1936") gives no row, since which years it indexes is unknown.
+- **Population censuses only**: no school, church, mortality, veterans, Native American, electoral or poll-tax collections. City censuses have no rows yet.
+- **`covers` is a list**, every standard-place form the area takes, because Places names change with the era ("Kent, England" before 1801, "Kent, England, United Kingdom" after). The bullet below gives it as one string.
+- **A row counts for an interval only when it covers both bounding places**, not the earlier one alone: NY 1850 to Ohio 1870 expects the federal 1860, not New York's 1855 or 1865. So there is no separate same-country test.
+- **Rows list only areas enumerated and surviving in the index.** US federal 1790–1880 rows list their states per year. A collection indexing under 75% of its census's population (households, for a heads-only schedule) has no row. 152 rows; `dev/check-census-table.ts` passed on all of them on 2026-10-22.
+
 - [ ] **`src/data/census-table.ts`**, a typed constant, so it needs no file read. One row per census a FamilySearch index covers:
   - `year`;
   - `label`, the jurisdiction named in the gap ("United States", "New York", "Canada");
@@ -150,6 +157,14 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 - [ ] **Correct `collections-search-tool-spec.md`'s** "Place ID mismatch (design note)" and Key API details bullet: `searchMetadata.placeIds` are the Primary ids `standardPlaceToPlaceId` returns (Alabama 33, Ohio 43, New York 22, England 1986340), and a filing place is not a coverage area.
 
 ### `timeline_build({ projectPath, personId })`
+
+**As built in C2 (2026-10-22):**
+- Dates parse through a new `parseStdDate` (strips a trailing `(?)`, then single, range or "or"), not a bare export of `parseSingle`, which reads `1845?` as undated. `getDayRange` now uses it.
+- The census and 20-year rules judge an interval on the years each event's date allows (`earliestYear`/`latestYear`), never on the written point: an `Aft 1840` birth does not expect 1850.
+- The marriage gap reads the child persona's own `birth` assertion in the person's linked record, which is not itself linked to the person; a child is a `relationship` assertion naming the person's role with a child type, never a text match.
+- No census, marriage or 20-year gap starts at or after a linked death; the death/burial gap is bounded by the event present.
+- The unit-harness handler passes both Places tables through the tool's injected `deps`, not `__usePlaceTableForTests`.
+- Spec: `docs/specs/timeline-build-tool-spec.md`.
 
 - [ ] **Add the tool** in `src/tools/timeline-build.ts`. It does the timeline agent's Mode A Steps 2–4 and 7 in code. Also add:
   - its schema in `allToolSchemas` (`src/tool-schemas.ts`), its dispatch arm in `src/server.ts`, and its name in `manifest.json` `tools`;

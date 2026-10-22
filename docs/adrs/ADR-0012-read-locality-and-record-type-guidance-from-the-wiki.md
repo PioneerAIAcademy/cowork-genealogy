@@ -14,11 +14,11 @@
 - **Status:** Accepted
 - **Decided:** 2026-08-27 (issue #1967: no record-type × country tables) and
   2026-08-31 (issue #1923: the wiki is the source of truth)
-- **Last updated:** 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
+- **Last updated:** 2026-10-21 (issue #3516, decision 14: `timeline_build` reads census years from a table in code, never from the catalog or the wiki); 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `packages/engine/plugin/skills`, `packages/engine/plugin/agents`, `packages/engine/mcp-server/src/tools/wiki-read.ts`, `packages/engine/mcp-server/src/tools/wiki-search.ts`, `packages/engine/mcp-server/src/tools/wiki-place-page.ts`, `docs/skill-to-agent-pair-conversion.md` — *linted; keep current*
+- **Applies to:** `packages/engine/plugin/skills`, `packages/engine/plugin/agents`, `packages/engine/mcp-server/src/tools/wiki-read.ts`, `packages/engine/mcp-server/src/tools/wiki-search.ts`, `packages/engine/mcp-server/src/tools/wiki-place-page.ts`, `packages/engine/mcp-server/src/data/census-table.ts`, `docs/skill-to-agent-pair-conversion.md` — *linted; keep current*
 - **Related:** ADR-0002 (where a capability goes), ADR-0003 (prose does not
   bind), ADR-0004 (three tool spellings), ADR-0011 (write-boundary rules);
   issues #1923, #1967, #2123, #2153, #2078, #2054, #2130, #1344, #1112, #2259
@@ -138,9 +138,22 @@ Concretely:
   already-documented record-survival fact — "the US 1890 federal census does
   not survive" — may be enforced as a `research_append` write-boundary
   precondition rather than left to prose, since a harness check already
-  encodes it (`test_us_1890_never_expected`); this does not license a
-  per-country census-survival table, which stays a jurisdiction-shaped fact
-  and is written to the wiki or fetched (issue #3255).
+  encodes it (`test_us_1890_never_expected`) (issue #3255). A per-country
+  census table is licensed in exactly one place, below.
+- **One census table lives in code** (lead, 2026-10-21, issue #3516 decision
+  14). `timeline_build` takes the census years a person timeline expects from
+  `src/data/census-table.ts`, with a named fragment list (US 1890; Ireland
+  1821–1851; New South Wales 1841), and never from the catalog or the wiki. A
+  census gap there means FamilySearch likely holds a record that could be
+  attached and is not, and a false `high` gap is worse than a missed one. The
+  catalog cannot tell a fragment from a full census (US 1790 is 0.26% of the US
+  maximum, Ireland 1821 6.27%), and the place a collection is filed under is not
+  the area it covers; the wiki lists what a country enumerated, not what
+  FamilySearch indexed. So the table holds only population censuses a
+  FamilySearch collection indexes, each row naming the areas whose returns
+  survive in that index, and a country it does not list produces no census gap.
+  It is a tool's own data, read by code; it does not license a census fact in a
+  prompt, and the timeline agent's hypothesis mode still reads the wiki.
 - **Where the wiki is wrong or thin, fix the wiki.** The genealogist's path is
   to find the page for the country and record type and request a specific change
   to it. The plugin does not keep a corrected local copy.
@@ -160,7 +173,7 @@ process, in order"), then the model and effort floor search.
 | Option | Why rejected | Evidence |
 |---|---|---|
 | Author per-country reference guides in `references/` | Six guides for the UK and Scandinavian censuses were requested; the same content already existed upstream at about 440 KB, agents cannot read reference files, and six new unreached files would fail `skill-reference-reachability.test.ts` | issue #1923, closed 2026-09-01; the twelve-page probe in its comments |
-| Hard-code record-type × country checks in the writer tools | A year-only pre-1880 census gate false-denies a correct claim about an 1851–1871 England & Wales or a Norwegian census; the space is ~200 × dozens × eras and every entry goes stale silently | issue #1967, ruling 2026-08-27; 4 non-US flags measured on `residenceYearFrom < 1880` |
+| Hard-code record-type × country checks in the writer tools | A year-only pre-1880 census gate false-denies a correct claim about an 1851–1871 England & Wales or a Norwegian census; the space is ~200 × dozens × eras and every entry goes stale silently. Still rejected as a gate on writes. The census table `timeline_build` reads (2026-10-21) is not one: it refuses no write, and a missing or stale row only misses a gap, the error direction decision 14 prefers | issue #1967, ruling 2026-08-27; 4 non-US flags measured on `residenceYearFrom < 1880`; issue #3516 decision 14 |
 | Fold `references/` verbatim into the agent body at pair conversion, locality content included | Carries the US-shaped content into a body billed on every spawn, and for `search-records` the reference layer alone makes the pair unbuildable | issue #2123: 87,313 of 143,557 folded bytes are references |
 | Serve every lookup through `wiki_search` | Fragments for a known page; on `record_search` mechanics the corpus returns refuted claims and contradicts itself inside one result set | issue #2123's comment of 2026-09-01, live probes |
 | Persist the facts once in `research.json`'s `localities` and read them there | Holds place-scoped record availability, not record-type craft, and `search-records` does not read that section | `docs/specs/research-schema-spec.md`; issue #2123's comment |
@@ -274,6 +287,12 @@ None — convention only, beyond two neighbours:
 > the rate and causes of wiki-call failures across the e2e corpus.
 > It does **not** catch a wiki call that was never made.
 
+> `packages/engine/mcp-server/tests/data/census-table.test.ts` — fails when a
+> census-table row names a fragment census, and pins the heads-only years.
+> It does **not** check a row against FamilySearch:
+> `packages/engine/mcp-server/dev/check-census-table.ts` does, by hand, with a
+> login, and no CI job runs it.
+
 ## Revisit when
 
 - Issue #2078 lands and `wiki_place_page` gains the record-type axis: the
@@ -284,3 +303,6 @@ None — convention only, beyond two neighbours:
   that one fact, and this file says which.
 - The wiki service moves off the developer host (issue #290 stays `icebox`;
   hosting is not ours): the costs paragraph changes.
+- The census table needs correcting faster than rows can be fixed by hand, or
+  FamilySearch publishes which years and places each census collection indexes:
+  the table's source changes, and this file says what replaces it.

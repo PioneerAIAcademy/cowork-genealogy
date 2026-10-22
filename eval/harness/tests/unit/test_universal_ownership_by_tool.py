@@ -294,3 +294,55 @@ def test_the_merge_s_own_repeat_collapses_in_either_order(before_ids):
         research(before_ids), research([SURVIVOR]), TREE_EDIT, POSITIVE,
         tool_calls=[merge_call()],
     )
+
+
+# ── timeline_build: a person timeline written by tool identity (issue #3516) ──
+
+RESEARCH_SKILL = {"name": "research"}
+
+HYPOTHESIS = {"id": "t_001", "hypothesis_id": "h_001", "person_ids": [SURVIVOR], "events": [], "gaps": []}
+PERSON = {"id": "t_002", "label": "person", "person_ids": [SURVIVOR], "events": [], "gaps": []}
+
+
+def timeline_call(tool="mcp__genealogy__timeline_build"):
+    return {
+        "tool": tool,
+        "args": {"projectPath": "/p", "personId": SURVIVOR},
+        "matched": {},
+        "response_fixture": None,
+        "response": {"ok": True},
+    }
+
+
+def test_timeline_build_appending_a_person_timeline_passes():
+    before = research([SURVIVOR], timelines=[HYPOTHESIS])
+    after = research([SURVIVOR], timelines=[HYPOTHESIS, PERSON])
+    check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[timeline_call()])
+
+
+def test_timeline_build_updating_the_person_s_own_timeline_passes():
+    before = research([SURVIVOR], timelines=[HYPOTHESIS, PERSON])
+    after = research([SURVIVOR], timelines=[HYPOTHESIS, {**PERSON, "events": [{"date": "1850"}]}])
+    check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[timeline_call()])
+
+
+def test_timeline_build_editing_a_hypothesis_timeline_fails():
+    before = research([SURVIVOR], timelines=[HYPOTHESIS])
+    after = research([SURVIVOR], timelines=[{**HYPOTHESIS, "events": [{"date": "1850"}]}])
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[timeline_call()])
+    assert "timelines" in str(e.value)
+
+
+def test_timeline_build_appending_a_multi_person_timeline_fails():
+    before = research([SURVIVOR], timelines=[])
+    after = research([SURVIVOR], timelines=[{**PERSON, "person_ids": [SURVIVOR, COLLAPSED]}])
+    with pytest.raises(AssertionError):
+        check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[timeline_call()])
+
+
+def test_a_person_timeline_without_the_call_still_fails():
+    before = research([SURVIVOR], timelines=[HYPOTHESIS])
+    after = research([SURVIVOR], timelines=[HYPOTHESIS, PERSON])
+    with pytest.raises(AssertionError):
+        check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[])
