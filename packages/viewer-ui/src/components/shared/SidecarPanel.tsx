@@ -1,19 +1,21 @@
 import { useEffect, useRef } from 'react'
 import FocusTrap from 'focus-trap-react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
-import type {
-  RecordSearchResult,
-  FulltextSearchResult,
-  SidecarFile,
-  SidecarTool
-} from '../../lib/schema'
-import SidecarResultCard from './SidecarResultCard'
+import type { RecordSearchResult, SidecarFile, SidecarTool } from '../../lib/schema'
+import SidecarResultCard, {
+  ROUTED_TOOLS,
+  type ExternalLinkResult,
+  type SidecarResult
+} from './SidecarResultCard'
+import ExternalLinksResults from './ExternalLinksResults'
 import styles from './SidecarPanel.module.css'
 
 function HeaderTitle({ tool }: { tool: SidecarTool }): React.JSX.Element {
   if (tool === 'record_search') return <>Record Search Results</>
   if (tool === 'fulltext_search') return <>Fulltext Search Results</>
-  return <>Search Results</>
+  if (tool === 'record_read') return <>Record</>
+  if (tool === 'external_links_search') return <>External Links</>
+  return <>{`${tool} results`}</>
 }
 
 function SummaryStrip({
@@ -42,14 +44,30 @@ function LoadedBody({
   focusPersonaId?: string
   bodyRef: React.Ref<HTMLDivElement>
 }): React.JSX.Element {
-  const results = (payload.payload.results ?? []) as Array<
-    RecordSearchResult | FulltextSearchResult
-  >
+  const results = (payload.payload.results ?? []) as SidecarResult[]
 
   if (results.length === 0) {
     return (
       <div ref={bodyRef} className={styles.body}>
         <p className={styles.emptyMessage}>This search returned no results.</p>
+      </div>
+    )
+  }
+
+  if (payload.tool === 'external_links_search') {
+    return (
+      <div ref={bodyRef} className={styles.body}>
+        <ExternalLinksResults results={results as ExternalLinkResult[]} />
+      </div>
+    )
+  }
+
+  if (!ROUTED_TOOLS.includes(payload.tool)) {
+    return (
+      <div ref={bodyRef} className={styles.body}>
+        <p className={styles.emptyMessage}>
+          {`${payload.tool} returned ${payload.returned_count} result${payload.returned_count === 1 ? '' : 's'}. The viewer does not display this tool's results yet.`}
+        </p>
       </div>
     )
   }
