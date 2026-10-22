@@ -52,6 +52,7 @@ LIVE_TOOLS: set[str] = {
     "research_log_append",
     "research_append",
     "extraction_append",
+    "evaluation_append",
     "tree_edit",
     "tree_correct",
     "materialize_facts",

@@ -57,6 +57,7 @@ import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 import { projectContextSchema } from "./tools/project-context.js";
 import { materializeFactsSchema } from "./tools/materialize-facts.js";
 import { extractionAppendSchema } from "./tools/extraction-append.js";
+import { evaluationAppendSchema } from "./tools/evaluation-append.js";
 import { researchQuerySchema } from "./tools/research-query.js";
 import { projectCreateSchema } from "./tools/project-create.js";
 import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.js";
@@ -176,6 +177,7 @@ export const allToolSchemas = [
   projectContextSchema,
   materializeFactsSchema,
   extractionAppendSchema,
+  evaluationAppendSchema,
   researchQuerySchema,
   projectCreateSchema,
   buildExternalSearchUrlSchema,

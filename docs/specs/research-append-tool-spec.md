@@ -2467,3 +2467,40 @@ no `same_person` gate. Checking the attachments is a separate request.
   records): **19.1 s cold** (20 extracted, 119 assertions linked), **0.14 s** on a
   re-send (all 20 records left as already linked). Cowork aborts a call at 60 s.
   46 of 186 e2e subjects have at least one attached indexed record.
+
+## 12. `evaluation_append` — the second lane-scoped variant
+
+`evaluation_append` is this tool restricted to a single section: **`evaluations`**.
+It exists for the same reason `extraction_append` does (§11.1): the lane must be
+expressed as tool identity, not prose or a parameter, because the caller — the
+gps-mentor agent — is the most prompt-exposed agent in the system, and a
+delegation can instruct it to write anything. The three-way table in §11.1 holds
+unchanged; only tool identity survives a caller that prompts against the rule.
+
+Unlike `extraction_append`, there is **no bespoke input surface and no in-code
+extraction**: the mentor supplies an ordinary `evaluations` append (or `update`),
+the same shape `research_append` takes, and the tool only forces the lane. The
+implementation is a thin wrapper
+(`src/tools/evaluation-append.ts`): `evaluationAppend(input)` calls
+`researchAppend(input, { allowedSections: new Set(["evaluations"]), toolName:
+"evaluation_append" })`. No `principal` is threaded — `researchAppend` is
+`(input, options)`, exactly as the `research_append` dispatch arm calls it. The
+lane gate (§11.4's `allowedSections` machinery) rejects any op whose section is
+not `evaluations` before the write, so a delegation that tells the mentor to grade
+`proof_summaries` or append to `conflicts` is refused with the same
+`section 'X' is not writable by evaluation_append` error `extraction_append`
+produces for its out-of-lane sections.
+
+The advertised input schema (`evaluationAppendSchema`) is `researchAppendSchema`'s
+with `section`'s enum narrowed to `["evaluations"]` on both the top-level field and
+each `ops[]` item, so the model is never offered another section; the runtime lane
+gate enforces the same restriction, and the schema narrowing just keeps the
+advertised surface honest. The `verdict` composite field (§3) is kept — it is the
+mechanism by which a mentor verdict body is written to a sidecar and `file_path`
+stamped.
+
+gps-mentor's frontmatter omits the broad `research_append` and holds only
+`evaluation_append` (plus its read tools). The omission is the whole mechanism
+(§11.1); `agent-tool-names.test.ts` pins the swap. The ownership manifest's
+`evaluations` row names `evaluation_append` as its sole `writerTool`, and
+`agent:gps-mentor` as owner and caller.

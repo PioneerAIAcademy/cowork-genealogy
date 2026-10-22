@@ -57,6 +57,7 @@ export type McpToolResult = {
 export const OK_FALSE_IS_FAILURE = [
   "research_append",
   "extraction_append",
+  "evaluation_append",
   "research_log_append",
   "tree_edit",
   "tree_correct",
