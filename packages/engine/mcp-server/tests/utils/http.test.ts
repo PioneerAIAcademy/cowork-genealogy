@@ -318,25 +318,31 @@ describe("fetchWithRetry", () => {
   });
 
   it("does not start new attempts after budget is exhausted", async () => {
-    // Mock a slow-enough 429 that consuming the budget on the first retry
-    // prevents a third attempt.  With attempts=3 and a tiny budget, the
-    // budget — not the attempt cap — is what stops the loop.
-    mockFetch.mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(() => resolve(mockResponse(429)), 50),
-        ),
-    );
-
-    const res = await fetchWithRetry("https://example.com", {}, 1000, {
-      budgetMs: 80,
-      attempts: 3,
-      baseMs: 1,
+    // Each 429 costs 50ms of an 80ms budget, so the second attempt leaves none
+    // and the budget — not the attempt cap of 3 — stops the loop. The clock is
+    // advanced by the mock, not by a real 50ms timer: under the full engine
+    // suite's parallel load a real timer fired late, the first attempt alone
+    // spent the budget, and the loop stopped at 1 call.
+    let clock = 1_000_000;
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => clock);
+    mockFetch.mockImplementation(async () => {
+      clock += 50;
+      return mockResponse(429);
     });
 
-    expect(res.status).toBe(429);
-    // Budget expires before the third attempt can start.
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    try {
+      const res = await fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 80,
+        attempts: 3,
+        baseMs: 1,
+      });
+
+      expect(res.status).toBe(429);
+      // Budget expires before the third attempt can start.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it("stops instead of sleeping when the backoff would spend the rest of the budget (network error)", async () => {

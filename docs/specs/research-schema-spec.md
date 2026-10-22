@@ -110,6 +110,7 @@ flagged. (One row below is the exception, and says so.)
 | `project_status` | `active`, `paused`, `completed` | project |
 | `priority` | `high`, `medium`, `low` | questions |
 | `selection_basis` | `timeline_gap`, `unresolved_conflict`, `fan_pivot`, `hypothesis_test`, `objective_decomposition`, `new_evidence`, `record_found_incidentally`, `user_directed` | questions |
+| `question_kind` | `enumerative`, `targeted` | questions |
 | `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
@@ -582,6 +583,7 @@ Array of question objects.
 | `question` | string | yes | The specific research question |
 | `rationale` | string | yes | Why this question matters to the objective |
 | `selection_basis` | `selection_basis` | yes | Why this question was chosen |
+| `question_kind` | `question_kind` | no | `enumerative` when the question asks for every member of a set of people ("Who were the children of X?"), which carries `research-plan`'s breadth obligation (birth, marriage, death, census and probate, or a `skipped` item saying why one is absent); `targeted` otherwise, where a narrow plan stays legitimate. Set by `question-selection` at creation. Absent on questions written before the field existed |
 | `priority` | `priority` | yes | Question priority |
 | `status` | `question_status` | yes | Current status |
 | `depends_on` | string[] | yes | Question IDs this question depends on (may be empty; each ID must reference an existing question) |

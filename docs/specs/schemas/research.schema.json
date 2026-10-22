@@ -272,6 +272,9 @@
         "selection_basis": {
           "$ref": "enums.schema.json#/$defs/selection_basis"
         },
+        "question_kind": {
+          "$ref": "enums.schema.json#/$defs/question_kind"
+        },
         "priority": {
           "$ref": "enums.schema.json#/$defs/priority"
         },

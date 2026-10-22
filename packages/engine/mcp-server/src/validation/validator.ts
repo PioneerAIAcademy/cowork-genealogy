@@ -76,6 +76,7 @@ const CLOSED_ENUMS = {
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
   priority: new Set(["high", "medium", "low"]),
+  question_kind: new Set(["enumerative", "targeted"]),
   informant_proximity: new Set([
     "self", "witness", "household_member",
     "family_not_present", "researcher", "official_duty", "unknown",
@@ -613,8 +614,8 @@ export const RESEARCH_SHAPES = {
     "relevant_facts", "confidence", "promoted", "created",
   ]),
   question: new Set([
-    "id", "question", "rationale", "selection_basis", "priority", "status",
-    "depends_on", "unblocks", "created", "resolved",
+    "id", "question", "rationale", "selection_basis", "question_kind",
+    "priority", "status", "depends_on", "unblocks", "created", "resolved",
     "resolution_assertion_ids", "search_stop",
   ]),
   search_stop: new Set([
@@ -869,6 +870,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("priority" in q) {
       checkEnum(q.priority, "priority", qp, report);
+    }
+    if ("question_kind" in q) {
+      checkEnum(q.question_kind, "question_kind", qp, report);
     }
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
       const sorted = Array.from(SELECTION_BASIS_VALUES).sort();
