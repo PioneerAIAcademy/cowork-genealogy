@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "Lydia Grice is never mentioned anywhere in this run -- not in the final tree, not in research.json, not even as a considered candidate. The run died (API connection error) at ~43 minutes while still working a different, preliminary question (resolving Hannah Earnest's own birth/christening record), before ever reaching the children-completeness research that would address f1. proof_summaries is empty."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "ecb1e132c57b7428cf2cab7f8ed6436bbf3d86ce1b9f21d1ffc388172b1d37ce"
+}

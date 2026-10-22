@@ -130,14 +130,14 @@ def test_research_check_fails_when_no_plan_item_block_is_sent():
 def test_research_check_fails_when_the_item_is_summarised():
     summary = dict(ITEM, rationale="Search for Unna.")
     prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(summary)}"
-    with pytest.raises(AssertionError, match="not verbatim; differs on \['rationale'\]"):
+    with pytest.raises(AssertionError, match=r"not verbatim; differs on \['rationale'\]"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_fails_when_a_field_is_dropped():
     trimmed = {k: v for k, v in ITEM.items() if k != "fallback_for"}
     prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(trimmed)}"
-    with pytest.raises(AssertionError, match="differs on \['fallback_for'\]"):
+    with pytest.raises(AssertionError, match=r"differs on \['fallback_for'\]"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
