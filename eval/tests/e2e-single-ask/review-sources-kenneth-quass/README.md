@@ -15,18 +15,18 @@ snake_case, following `historical-context`'s `historical_context`).
 
 ## Expected result today
 
-Measured 2026-10-19 on `main`, when the fixture still expected `source-evaluation`
-(the turn wrote no log entry at all, so the result is the same): FAIL on `save` only.
+PASS. Measured 2026-10-22 on the issue #3524 branch, and again with that branch's
+`agents/source-evaluation.md` replaced by `main`'s, which writes no log entry:
 
 ```
-FAIL review-sources-kenneth-quass  expected=source-evaluation  first=source-evaluation  save=missing log tool=source-evaluation (new log tools: none)  delivered=no  stop=clean  failed=[save]
+reverted:  FAIL review-sources-kenneth-quass  expected=source-evaluation  first=source-evaluation  save=missing log tool=source_evaluation (new log tools: none)  delivered=no  stop=clean  failed=[save]
+restored:  PASS review-sources-kenneth-quass  expected=source-evaluation  first=source-evaluation  save=ok  delivered=no  stop=clean
 ```
 
 `owner` already passes. With no `/research` prefix the main thread matched the ask to
 `source-evaluation`'s own description and spawned it without the router, so this
 fixture cannot see the router gap issue #3526 fixes; #3526's own `routes-to:` unit
-tests cover that (Done-when amended on issue #3527, 2026-10-19). It turns PASS when
-issue #3524 (`source-evaluation` saves a log entry) lands.
+tests cover that (Done-when amended on issue #3527, 2026-10-19).
 
 ## Starting state
 

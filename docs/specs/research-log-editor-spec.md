@@ -414,7 +414,8 @@ are two that do block, and the distinction is what makes them legitimate.
   `wiki_read`, `wikipedia_search`, `historical_context`, and the read-only agents'
   reports `source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
   `validate_schema`) are not counted: their `positive` entries carry a looked-up
-  article, overview or report in `notes`, not a record to persist. The pre-1880 census hedge is unaffected.
+  article, overview or report in `notes`, not a record to persist. The pre-1880
+  census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
