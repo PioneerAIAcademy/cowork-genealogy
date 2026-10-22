@@ -327,8 +327,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "Agree with the judge's 2: negative test that should route the planning question to research-plan, but the response produced the strategy inline. An earlier 3 here was a grading mistake."
     },
     {
       "test_id": "ut_research_016",
