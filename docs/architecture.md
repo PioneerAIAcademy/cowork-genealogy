@@ -1037,8 +1037,8 @@ bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
-probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165,
-same result): under `bypassPermissions` **both**
+probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165
+and 2026-10-22 on 2.1.308 / SDK 0.2.172, same result): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
 `research_append`, and its deny restated that rather than being the last line.
