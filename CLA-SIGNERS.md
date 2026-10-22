@@ -44,7 +44,7 @@ Full legal name: Ada Lovelace
 
 | Agreement | Version | Date signed |
 |---|---|---|
-| CLA | 1.0 | 2026-10-19 |
+| CLA | 1.0 | 2026-10-22 |
 ```
 
 The example is illustrative. Use your own name, login, and today's date.

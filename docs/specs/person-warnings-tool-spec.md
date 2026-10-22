@@ -17,7 +17,7 @@ live `person_read` is ~115–121 KB, which the model would re-type on every
 audit. The project lives in the session's own folder (`/project` on the hosted
 path), and init-project, not
 source-evaluation, creates it: `project_create` keeps its single caller and
-source-evaluation stays read-only. Where the working folder's project does not
+source-evaluation creates no project and adds no person to one. Where the working folder's project does not
 hold the audited person, the tool answers "not found" and source-evaluation
 says so in one line rather than adding the person to a project the user did not
 ask to change.
