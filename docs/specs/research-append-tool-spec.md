@@ -255,10 +255,10 @@ camelCase convenience fields the same way `research_log_append` does.
 
 `validation.warnings` carries non-blocking advisories: `standard_place` that
 could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
-no-op, and the write-boundary advisories of §5.1–§5.6 (sources without
+no-op, and the write-boundary advisories of §5.1–§5.7 (sources without
 assertions, tree-encoding completion, a corrected assertion with no linked fact,
 a transcription without a page, unsourced timeline events, a namesake row over
-untied links).
+untied links, a narrative over its vehicle's word budget).
 
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
@@ -302,18 +302,43 @@ no more expensive (decision from the e2e research-runtime speedup review, §6 Q1
 - **All-or-nothing.** Every op is applied to one in-memory `research`, the **whole
   document is validated once**, and `research.json` is written **once**. Any op's
   precondition failure (§5) or a final validation failure writes **nothing** and
-  returns `{ ok: false, errors }`.
-- **Per-op error indexing + `opsReceived`.** A precondition failure on op *i* (an
-  `applyOne` check — bad section, missing field, the §5 invariants enforced in-loop —
-  or a §3.4/§3.5/§3.6 pre-pass check, which collects **every** failing op at once)
-  returns its message(s) prefixed `ops[<i>]: …`, so the caller can fix exactly the
-  named rows and resubmit the identical batch otherwise. A failure caught only by
-  the **final whole-document validation** is mapped back to the op that touched the
-  offending entry when possible (`ops[<i>]: research.json/…`), and keeps its bare
-  `research.json/…` path when no op in the batch touched it. Every batch failure
-  additionally echoes `opsReceived: N` — the number of ops the tool received — so a
-  retry that silently dropped ops (or a transport-side truncation) is detectable by
-  comparing against the batch the caller believes it sent.
+  returns `{ ok: false, errors }`. `research.json` is byte-identical after a failed
+  batch, whichever check refused it.
+- **Every op's errors, indexed, plus `opsReceived`.** A batch that fails reports
+  **every** failing op, not the first, so the caller fixes what is named and
+  resubmits once. A precondition failure on op *i* (an `applyOne` check — bad
+  section, missing field, the §5 invariants enforced in-loop — or a §3.4/§3.5/§3.6
+  pre-pass check, which collects every failing op at once) returns its message(s)
+  prefixed `ops[<i>]: …`, in op order, so the caller can fix exactly the named rows
+  and resubmit the identical batch otherwise.
+  - **The ops after the first failure are judged without the failed ones.** An op
+    that fails leaves no trace: each later op, and the whole-document check, sees
+    the document as it would stand with the failed ops left out. `applyOne` mutates
+    the document in place and most of its refusals come after the entry is already
+    in it, so each op is applied to its own copy of the document and the copy is
+    kept only when the op holds. No dependency between ops is tracked and none is
+    skipped, so an op can fail only because an earlier one did. A batch with an op
+    after its first failure says so in one more line: `ops after the first failure
+    (ops[<i>]) were checked, and the document validated, without the failed ops
+    applied, so an error after the first may only follow from an earlier one, and
+    an op that passed may still fail once the failed ones are fixed. Fix the
+    earliest first.` The line is absent when the failure is the last op, and for a
+    single op.
+  - **The whole-document checks run on the ops that applied**, when at least one
+    did: the misrouted-items message (§5), the namesake cap (§5) and the
+    call-introduced validation, each finding labelled with its op's own index in
+    the batch. A failure caught only by the **final whole-document validation** is
+    mapped back to the op that touched the offending entry when possible
+    (`ops[<i>]: research.json/…`), and keeps its bare `research.json/…` path when no
+    op in the batch touched it.
+  - **Best effort past the first failure.** The first failing op's errors always
+    come back. If judging the rest throws, for example on a later op whose `entryId`
+    is not a string, the call returns that first failure alone.
+
+  Every batch failure additionally echoes `opsReceived: N` — the number of ops the
+  tool received — so a retry that silently dropped ops (or a transport-side
+  truncation) is detectable by comparing against the batch the caller believes it
+  sent.
 - **Intra-batch id assignment.** Ids are assigned in array order, each scanning the
   live in-memory document, so consecutive appends to a section get consecutive ids.
   A later op **may reference an id created by an earlier op** via that id's
@@ -342,7 +367,10 @@ schema declares `ops` as an array and `entry`/`fields` as objects, a string valu
 unambiguously a mis-serialization. The tool therefore JSON-parses a string-valued
 `ops`/`entry`/`fields` before any shape check (`src/utils/coerce-json-arg.ts`); an
 unparseable string falls through to the normal, specific error (e.g. ``` `ops` must
-be a non-empty array ```). This is not a supported call form — callers should still
+be a non-empty array ```). For a string `ops` that will not parse, that error also
+says why: the engine's own parse message, and an offset where that message holds no
+position (`jsonParseFailure`, a sibling of `coerceJsonArg`, which keeps its signature
+for the other tools that share it). This is not a supported call form — callers should still
 pass real JSON — but it stops a correct-but-stringified batch from being rejected and
 driving the model into a slow one-op-per-call fallback (the root cause of the
 `record-extraction` eval wall-clock timeouts, 2026-06-30). `tree_edit` applies the
@@ -1307,6 +1335,34 @@ is listed, and the name sentence only when a name is. It rides
 
 Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
 
+### 5.7 Narrative length advisory (warning, not a precondition)
+
+A **warning**, never a refusal, when a `proof_summaries` write leaves a narrative
+over its vehicle's word budget: `proof_summaries <ps_id>: narrative_markdown is <N>
+words, over the <B>-word budget for the '<vehicle>' vehicle. Written as is; keep to
+the budget by citing evidence already quoted elsewhere instead of restating it.` It
+rides `validation.warnings` and never touches `ok`.
+
+- **The budget** is keyed on the persisted `vehicle`: `statement` 150 words,
+  `summary` 500, `argument` 800. These are the upper bounds in "Select the proof
+  conclusion form" in `packages/engine/plugin/agents/proof-conclusion.md` (a
+  statement up to about 150 words, a summary about 300 to 500, an argument up to
+  about 800); the lower end of the summary range is not a budget. The table in
+  `research-append.ts` (`NARRATIVE_WORD_BUDGET`) is the one definition in the engine.
+  A vehicle that is not one of the three draws no warning; the document validator
+  reports it.
+- **Words** are the whitespace-separated tokens of `narrative_markdown`, markdown
+  syntax included, so a heading marker counts as a word. A narrative of exactly its
+  budget is not over it.
+- **When it is judged.** On an append, and on an update whose `fields` set
+  `narrative_markdown` or `vehicle` (a new vehicle re-judges the stored narrative
+  against its own budget). An unrelated edit to a summary already over budget is not
+  told again.
+- **Why warn and not refuse.** The budgets in the agent body are approximate, and a
+  narrative over one is not wrong enough to lose the write. Whether the tool should
+  refuse is not decided here: it needs a replay over the committed runs first.
+- **What nothing checks.** Whether the agent shortens a narrative it is told is long.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -1367,8 +1423,11 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | `op: update` with an `entryId` not found in `section` (or wrong prefix) | staleness error; write nothing |
 | `op: update` `fields` attempting to change `id` | input error |
 | `section: plan_items` without a resolvable `planId` | input error |
+| A batch with more than one failing op (§3.3) | every failing op is reported, `ops[<i>]: …` in op order, with the document checks run on the ops that applied and, when an op follows the first failure, the one line saying the later ops were judged without the failed ones; write nothing, and `research.json` is byte-identical |
+| `ops` is a string that is not valid JSON (§3.3) | ``` `ops` must be a non-empty array, but it arrived as a string that is not valid JSON: <the engine's parse message> ```, with ` (offset N)` added where that message holds no position and the end of the string is the offset; write nothing |
+| A `proof_summaries` `claims[]` entry that is not a ParentChild relationship: `relationship` absent, null, of another type, or not an object | document-level error naming the claim. An absent, null or other-typed `relationship` keeps its opening words and adds why: `claims[]` holds ParentChild relationship claims only, fact claims are not supported yet, keep the ParentChild claims in `claims[]`, and `tier` must equal the strongest `proof_tier` among the claims that remain (the existing rule, never the weakest). A `relationship` that is not an object, `""`, `false` and `0` included, is refused as `must be an object — got <type>`; write nothing |
 | `section: questions`, `op: append` while an unresolved question has an `in_progress` item on its active plan, and no `unresolved` conflict blocking that question is named in the new question's `unblocks` (§5) | op-indexed hard error on that `questions` op; write nothing. Opens `a new question cannot be opened while research is still running: <pli_id> (on <q_id>)` |
-| `section: plan_items`, `op: append`, whose parent plan is **terminal** (`completed` or `superseded`) (§5) | op-indexed hard error on that `plan_items` op; write nothing. Opens `plans entry '<planId>' is '<status>' (question '<qid>') — a <status> plan is a settled audit trail and takes no new items.` and then prescribes: when the same call created exactly one plan, `This call created plan '<newId>' — re-issue these items with planId '<newId>'.`; otherwise `Append to that question's active plan, or create one first; if these items belong to a different question, re-issue with that question's plan id.` Both the status and the question id are guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with either absent. An `op: update` is never refused — it targets an item already inside the plan, and denying it would strand an `in_progress` item there. **This error preempts the misrouted-items error below** whenever the misrouted-to plan is terminal: it throws in `applyOne`, which returns the batch before the post-pass that produces the other message, which is why the prescription is repeated here |
+| `section: plan_items`, `op: append`, whose parent plan is **terminal** (`completed` or `superseded`) (§5) | op-indexed hard error on that `plan_items` op; write nothing. Opens `plans entry '<planId>' is '<status>' (question '<qid>') — a <status> plan is a settled audit trail and takes no new items.` and then prescribes: when the same call created exactly one plan, `This call created plan '<newId>' — re-issue these items with planId '<newId>'.`; otherwise `Append to that question's active plan, or create one first; if these items belong to a different question, re-issue with that question's plan id.` Both the status and the question id are guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with either absent. An `op: update` is never refused — it targets an item already inside the plan, and denying it would strand an `in_progress` item there. **This error preempts the misrouted-items error below** whenever the misrouted-to plan is terminal: it throws in `applyOne`, so those items are not among the ops the post-pass that produces the other message judges, which is why the prescription is repeated here |
 | A `plan_items` op leaving the item at `status: "completed"` while no `log[]` entry carries its id, or a `plans` op whose `items` do the same (§5) | op-indexed hard error on that op; write nothing. Opens `plan_items[<pli_id>]: no log[] entry names <pli_id>, so completing it would claim a search nothing in the document records.` and then prescribes: `Log the search that satisfies this item with research_log_append({ planItemId: "<pli_id>", ... }) before completing it — planItemId: null is only for an ad-hoc search that matches no plan item. If that search was already logged with planItemId: null, leave this item 'in_progress' rather than logging the same search twice.` A refused **append** gets its own prescription instead, because its id is assigned inside the call and `in_progress` is one of the two statuses that block the question's exhaustive declaration (`planned` is the other): `plan_items[<pli_id>]: an appended item cannot arrive 'completed' — its id is assigned in this call, so no log[] entry can name it. Don't add a plan item for a search that was already done: cite that search's log id in the question's search_stop.log_entry_ids when you declare. If the search has not been done yet, append the item as 'planned', then complete it after logging the search …` The prescription names an **append**, never a fix to the existing entry, because `research_log_append` has no update op — every op allocates the next log id — so an entry already written with `planItemId: null` cannot be re-attributed and telling the agent to correct it would be an instruction it cannot follow. The `in_progress` fallback is the settled remedy for that case: re-logging writes a durable duplicate that every reader of `log[]` counts twice, and `skipped` states the search was not done, which is false. The id is guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with the id absent; a legacy `log: [null]` element is stepped over rather than dereferenced. An `op: update` on an item already sitting at `completed` before the call is never refused, whether or not it re-sends `status` |
 | A `plan_items` op, or a `plans` op's inline `items`, newly setting `status: "skipped"` with no `skip_category`; or a `plan_items` update setting `skipped` while changing `rationale` (§5) | op-indexed hard error on that op; write nothing. Names all seven `skip_category` values and points the detail at `skip_reason` |
 | A `plan_items` op, or a `plans` op's inline `items`, newly setting `status: "skipped"` on an item whose search ran: a tied `record_search`, `fulltext_search` or `image_search` entry with any outcome but `error`, or a tied `external_site` entry whose capture arrived (lead, 2026-10-20) | op-indexed hard error on that op; write nothing. `plan_items[<pli_id>]: <log_id> (<tool>, <outcome>) shows this item's search ran, so it cannot be marked 'skipped', which says nothing was searched.` It continues `Set it to 'completed' instead: <log_id> names this item, so the completion is attributed.` **Silent where capture-pending would refuse `completed`** (lead, 2026-10-20), for any `skip_category`: capture-pending answers alone there. It lets an `inaccessible` or `user_declined` skip stand, and refuses any other category with a message naming those two. That is search-records' escalation, where search-external-sites, with no user to capture, logs a deferred hand-off and skips the item; refusing the skip too would leave the item `in_progress` for good. Re-stating an item already `skipped` is never refused |
@@ -1483,6 +1542,38 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   second research source citing `S1` with no record does not hide the record a
   person was minted from: that person's link still needs no score, and one
   carrying a score is refused as minted from the very record.
+- **every op's errors (§3.3)** — `research-append.test.ts`, "every op's errors".
+  Two independent failing ops are both named, in op order, with the one line and
+  nothing written; the ops that held are not named; the line names the first
+  failure, and is absent when the failure is the last op or the only one. A failed
+  op leaves no trace: an op after it that names the id a refused plan would have
+  taken is refused as unknown, whether the failure is the first or a later one and
+  whether the refused op was an append or an update (a completed plan set active,
+  then written into); a refused append's id is not counted as created in this call.
+  The whole-document checks run on the ops that applied and label their findings
+  with the op's own index (the document check, the misrouted-items message, and in
+  `research-append-namesake.test.ts` the namesake cap). The ops are re-applied as
+  they were before the first pass touched them. A later op that throws instead of
+  being refused (a numeric `entryId`) leaves the first failure alone, and
+  `research.json` is byte-identical after every failed batch. The lane gate names
+  every op outside the lane and none inside it.
+- **proof-summary invariants (§5)** — a summary breaking the shortfall rule and the
+  stop gate is told about both, the shortfall rule first; each rule alone still
+  reports alone.
+- **the parse error (§3.3)** — a stringified `ops` with a syntax error names the
+  engine's parse message and the offset of the defect, checked against the fixture's
+  own index; cut off at the end, the offset is the length of the string; an
+  unexpected-token message is quoted with no offset; valid JSON that is not an
+  array, a non-string and a valid batch are left alone.
+- **claim refusals (§8)** — an absent, null or other-typed `relationship` carries the
+  reason; a `relationship` of `""`, `false` or `0` is refused as not an object; a
+  valid ParentChild claim is accepted and the tier rule's own message is unchanged.
+- **narrative length (§5.7)** — a `summary` over its budget is written with a warning
+  naming the vehicle and the budget; each vehicle at its budget and one word over;
+  words counted across newlines, tabs and runs of spaces; never refused; an update
+  that sets neither the narrative nor the vehicle stays silent, and one that sets
+  the vehicle re-judges the stored narrative; a vehicle that is not one of the
+  three draws nothing, including names that index the prototype.
 
 ---
 
@@ -1658,7 +1749,9 @@ work around the lane. (`applyOne`'s generic "not supported by research_append
 `research_append` itself; the lane gate intercepts first for a scoped caller.)
 
 Batch form prefixes the failing index as usual (`ops[1]: section '…' is not
-writable by …`), and the batch stays all-or-nothing: nothing is written.
+writable by …`) and names **every** op outside the lane, not only the first; each
+line names only its own op's section, so naming them all reveals nothing the caller
+did not send. The batch stays all-or-nothing: nothing is written.
 
 ### 11.4 What this does *not* fix
 
