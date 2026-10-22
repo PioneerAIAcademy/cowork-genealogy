@@ -471,23 +471,28 @@ def _steps_per_run() -> list[int]:
     return sorted(steps)
 
 
-def test_the_web_tiers_nudge_cap_clears_the_corpus_p99_step_count():
-    """The number is DERIVED, not remembered. Measured 2026-09-23 over 189 runs: median
-    15, p90 25, p99 51, max 76 -- so the shipped 60 clears p99. Re-deriving it here means
-    a corpus that grows past the cap reds this instead of silently truncating runs.
+def test_the_web_tiers_nudge_cap_is_zero_and_compose_agrees():
+    """Under step mode the cap is 0, and the p99 derivation that sized it is retired.
 
-    The plan's floor is 30, and the max (76) is deliberately NOT the target: the cap is
-    not the spend control (1e's per-session bound is), and sizing to the longest run in
-    the corpus would mean the cap never fires at all."""
-    steps = _steps_per_run()
-    assert len(steps) >= 100, f"only {len(steps)} runs readable; the derivation needs the corpus"
-    p99 = steps[int(0.99 * (len(steps) - 1))]
+    This test used to DERIVE the number: measured 2026-09-23 over 189 runs (median 15,
+    p90 25, p99 51, max 76), the shipped 60 cleared p99, and re-deriving it here meant a
+    corpus growing past the cap reddened this instead of silently truncating runs. It also
+    held a floor of 30.
+
+    Both rest on a premise decision 25 removed. They protected a CONTINUOUS run from being
+    truncated by too small a cap; there is no continuous run now. Every turn is one step,
+    and a turn that stops has finished it, so a nudge would re-open a turn that ended on
+    purpose. Sizing a cap against a step-count corpus answers a question nobody asks any
+    more.
+
+    What survives is the half that is still true at any value: compose and the tier's own
+    fallback must agree, or an unset variable changes behaviour. Plus a pin at 0, so
+    raising it is a decision made here on purpose -- the role the old floor played."""
     default = _compose_default(_env(_service(_load(COMPOSE), "web"))["AUTONOMOUS_MAX_NUDGES"])[1]
-    assert int(default) >= p99, \
-        f"the web tier's cap {default} is below the corpus p99 step count {p99}: runs would be truncated"
-    assert int(default) >= 30, "the plan's floor"
     assert int(default) == app.DEFAULT_MAX_NUDGES, \
         "compose and the tier's own fallback must agree, or an unset variable changes behaviour"
+    assert app.DEFAULT_MAX_NUDGES == 0, \
+        "step mode ships no Stop veto; raising this is a decision, not a test fix"
 
 
 def test_the_cap_is_not_read_off_the_request():
@@ -509,9 +514,12 @@ def test_the_cap_is_not_read_off_the_request():
     ({"AUTONOMOUS_MAX_NUDGES": "-3"}, 0),
 ])
 def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env, expected):
-    """Unset, blank and malformed all take the DEFAULT rather than 0. Guessing 0 here
-    would ship the stop-every-step behaviour the plan exists to remove, and it would look
-    exactly like the feature not working. An explicit 0 is honoured -- proto-demo needs it."""
+    """Unset, blank and malformed all take the DEFAULT rather than guessing a value.
+
+    The DEFAULT is itself 0 under step mode (decision 25), so this no longer protects a
+    non-zero cap -- it protects the rule that a malformed value never silently becomes
+    something the operator did not write. A negative is still clamped to 0, and an
+    explicit 0 is still honoured."""
     assert app.max_nudges(env) == expected
 
 

@@ -300,7 +300,7 @@ services:
       # describes runs under a harness that FORBIDS yielding and does not describe this
       # regime. The cap is not the spend control either; 1e's per-session bound is.
       # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
-      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-60}
+      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
     depends_on:
       postgres:
         condition: service_healthy

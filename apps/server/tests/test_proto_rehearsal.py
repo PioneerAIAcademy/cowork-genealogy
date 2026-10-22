@@ -1413,9 +1413,13 @@ def test_every_case_has_a_row_in_the_readme_probe_table():
 ])
 def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
     """Neither name is in up's API layer, so the restore removes it: on web the template's
-    AUTONOMOUS_MAX_NUDGES=60 (01-web.config) applies again; the worker template sets neither."""
+    AUTONOMOUS_MAX_NUDGES=0 (01-web.config) applies again; the worker template sets neither."""
     assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
-    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "60"
+    # The template is 0 under step mode (decision 25), so `nudges_0` now sets the
+    # value the template already carries. The case still earns its keep: it proves
+    # the rehearsal APPLIES and REMOVES the option, which is what the restore tests,
+    # and it is the case that would catch the template drifting back above 0.
+    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "0"
     assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
     env, fake, _ = stack
     env_name = rh.ENV_NAMES[tier]

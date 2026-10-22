@@ -1320,7 +1320,7 @@ def _env_float(name: str, default: float) -> float:
 # max 76, so this clears p99 with margin. The nudge histogram (median 1, p90 4) describes
 # runs under a harness that FORBIDS yielding and does not describe this regime; the plan
 # puts the floor at 30. test_proto_config re-derives the p99 from the corpus.
-DEFAULT_MAX_NUDGES = 60
+DEFAULT_MAX_NUDGES = 0
 
 
 def max_nudges(env: Mapping[str, str] | None = None) -> int:
@@ -1332,11 +1332,15 @@ def max_nudges(env: Mapping[str, str] | None = None) -> int:
     ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
     container with its own export instead.
 
-    Unset takes ``DEFAULT_MAX_NUDGES``, not 0. A tier that silently enqueued 0 would ship
-    the stop-every-step behaviour the plan exists to remove, and it would look like the
-    feature simply not working. A recipe that needs a one-turn run exports 0 explicitly.
-    A malformed value is a warning and the default, for the same reason: the failure mode
-    of guessing 0 here is invisible."""
+    **The default is now 0, and the reason inverted** (step mode, decision 25,
+    2026-10-21). This paragraph used to say "not 0", because a tier that enqueued 0 would
+    ship "the stop-every-step behaviour the plan exists to remove". Under step mode
+    stopping at each step IS the behaviour: every turn runs one step, reports it and ends
+    with "Continue with X?". A nudge past that re-opens a turn that ended on purpose.
+
+    A malformed or unset value still takes the default, and that default is still the
+    operator's to change -- a recipe that wants the old continuous behaviour exports a
+    positive cap explicitly, exactly as a recipe wanting one turn used to export 0."""
     raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
     text = (raw or "").strip()
     if not text:
