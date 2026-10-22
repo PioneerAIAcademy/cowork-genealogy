@@ -1,0 +1,13 @@
+{
+ "log_id": "log_048",
+ "tool": "image_transcribe",
+ "retrieved": "2026-10-20T18:23:37.270Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "ark": "ark:/61903/3:1:3Q9M-CSZN-WK3X",
+   "lookingFor": "Jonathan of William and Martha Barker"
+  },
+  "results": []
+ }
+}

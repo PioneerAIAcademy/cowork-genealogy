@@ -1,0 +1,139 @@
+{
+ "log_id": "log_037",
+ "tool": "record_read",
+ "retrieved": "2026-10-20T18:11:22.231Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "recordId": "ark:/61903/1:1:NB73-4NT"
+  },
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:NB73-4NT",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_12348537806",
+       "ark": "ark:/61903/1:1:NB73-4NT",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Jonathan",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Christening",
+         "primary": true,
+         "date": "15 May 1818",
+         "standard_date": "15 May 1818",
+         "place": "Whitehaven Town, Cumberland, England, United Kingdom"
+        }
+       ]
+      },
+      {
+       "id": "p_12348537807",
+       "ark": "ark:/61903/1:1:NB73-4NY",
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "William",
+         "surname": "Barker"
+        }
+       ]
+      },
+      {
+       "id": "p_12348537808",
+       "ark": "ark:/61903/1:1:NB73-4NB",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Martha"
+        }
+       ]
+      }
+     ],
+     "relationships": [
+      {
+       "id": "MM9.1.6/PFXZ-4NZN",
+       "type": "ParentChild",
+       "parent": "p_12348537807",
+       "child": "p_12348537806"
+      },
+      {
+       "id": "MM9.1.6/PFXZ-4NZJ",
+       "type": "ParentChild",
+       "parent": "p_12348537808",
+       "child": "p_12348537806"
+      },
+      {
+       "id": "MM9.1.6/PFXZ-4NZV",
+       "type": "Couple",
+       "person1": "p_12348537807",
+       "person2": "p_12348537808"
+      }
+     ],
+     "sources": [
+      {
+       "id": "sd_c_1473014",
+       "resource_type": "Collection",
+       "title": "England, Births and Christenings, 1538-1975",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1473014",
+       "coverage": {
+        "place_rep_id": "1986340",
+        "date_range": "1538/1975",
+        "record_type": "Vital",
+        "standard_place": "Chefe Cazembe, Milange, Zambézia, Mozambique"
+       }
+      },
+      {
+       "id": "src_r_957137070",
+       "resource_type": "Record",
+       "title": "Entry for Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+       "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:9C8K-FKM : 5 February 2023), Entry for Jonathan Barker, 1818.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:9C8K-FKM",
+       "coverage": {
+        "place_rep_id": "3039342",
+        "date_range": "15 May 1818",
+        "record_type": "Vital",
+        "standard_place": "Whitehaven, Cumberland, England, United Kingdom"
+       }
+      },
+      {
+       "id": "sd_p_12348537806",
+       "resource_type": "Person",
+       "title": "Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+       "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NB73-4NT : 5 February 2023), Jonathan Barker, 1818.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:NB73-4NT"
+      },
+      {
+       "id": "sd_p_12348537807",
+       "resource_type": "Person",
+       "title": "William Barker in entry for Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+       "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NB73-4NY : 5 February 2023), William Barker in entry for Jonathan Barker, 1818.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:NB73-4NY"
+      },
+      {
+       "id": "sd_p_12348537808",
+       "resource_type": "Person",
+       "title": "Martha in entry for Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+       "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NB73-4NB : 5 February 2023), Martha in entry for Jonathan Barker, 1818.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:NB73-4NB"
+      }
+     ],
+     "places": [
+      {},
+      {
+       "id": "place_1986340"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

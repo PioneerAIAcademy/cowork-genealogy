@@ -54,6 +54,7 @@ from harness.context_policy import (
     subagent_only_denial,
     SUBAGENT_ONLY_TOOLS,
 )
+from harness.delegation import foreground_rewrite
 from harness.judge import _summarize_response
 from harness.redact import redact_secrets
 from harness.sdk_query import close_query, open_query
@@ -1125,8 +1126,8 @@ def build_workspace(
     # option is set, at every version this repo has pinned. Both reach
     # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
     # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
-    # 2.1.220, 2026-10-12, issue #3263). This harness runs CLI 2.1.139, where subagent
-    # reach is unprobed for either lever. Do not restate this as
+    # 2.1.220, 2026-10-12, issue #3263; 2.1.294, 2026-10-20), and this harness runs
+    # the hosted CLI (tests/unit/test_sdk_pin_matches_hosted.py). Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
     # checked. Session-wide (parent + every subagent that does not pin its own
     # `effort:` — agent frontmatter overrides this, verified live in Cowork and
@@ -1614,7 +1615,7 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
 _USAGE_FIELDS = pricing.PRICED_FIELDS
 
 # The SDK beta that asks for the 1M-token context window. `SdkBeta` is a Literal
-# of exactly this one value on the pinned claude-agent-sdk (0.1.81), and the CLI
+# of exactly this one value on the pinned claude-agent-sdk (0.1.81 and 0.2.165), and the CLI
 # receives it as `--betas`. Its docstring says "(Sonnet 4/4.5 only)", which may
 # be stale against 4.6's 1M support or may be literal — unverified, which is why
 # a cheap reachability probe gates the paid arm rather than the other way round.
@@ -2271,7 +2272,7 @@ async def _run_agent(
                 return deny
 
         if not tool_name.startswith("mcp__"):
-            return {}
+            return foreground_rewrite(tool_name, input_data.get("tool_input")) or {}
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
@@ -3077,7 +3078,7 @@ async def _run_agent(
                     sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
-                    # 2.1.139's init carries `claude_code_version`; the other
+                    # 2.1.139's and 2.1.294's init carry `claude_code_version`; the other
                     # two keys are kept for a CLI that spells it either way.
                     ver = (
                         data.get("claude_code_version")

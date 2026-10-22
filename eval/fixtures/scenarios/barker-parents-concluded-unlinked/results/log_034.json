@@ -1,0 +1,164 @@
+{
+ "log_id": "log_034",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T18:10:05.992Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "birthYearFrom": 1808,
+   "birthYearTo": 1824,
+   "count": 20,
+   "fatherGivenName": "William",
+   "givenName": "Jonathan",
+   "motherGivenName": "Martha",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordCountry": "England",
+   "surname": "Barker"
+  },
+  "totalMatches": 47563,
+  "paginationCappedAt": 4999,
+  "returned": 20,
+  "offset": 0,
+  "hasMore": true,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:NB73-4NT",
+    "events": [
+     {
+      "type": "Christening",
+      "date": "15 May 1818",
+      "place": "Whitehaven Town, Cumberland, England, United Kingdom"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "Jonathan Barker",
+    "score": 8.8336,
+    "confidence": 3,
+    "sex": "Male",
+    "collectionId": "1473014",
+    "collectionTitle": "England, Births and Christenings, 1538-1975",
+    "collectionUrl": "https://familysearch.org/collections/1473014",
+    "recordTitle": "Entry for Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+    "recordArk": "ark:/61903/1:2:9C8K-FKM",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_12348537806",
+       "ark": "ark:/61903/1:1:NB73-4NT",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Jonathan",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Christening",
+         "primary": true,
+         "date": "15 May 1818",
+         "standard_date": "15 May 1818",
+         "place": "Whitehaven Town, Cumberland, England, United Kingdom",
+         "standard_place": "Whitehaven, Cumberland, England, United Kingdom"
+        }
+       ]
+      },
+      {
+       "id": "p_12348537807",
+       "ark": "ark:/61903/1:1:NB73-4NY",
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "William",
+         "surname": "Barker"
+        }
+       ]
+      },
+      {
+       "id": "p_12348537808",
+       "ark": "ark:/61903/1:1:NB73-4NB",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Martha"
+        }
+       ]
+      }
+     ],
+     "relationships": [
+      {
+       "type": "ParentChild",
+       "parent": "p_12348537807",
+       "child": "p_12348537806"
+      },
+      {
+       "type": "ParentChild",
+       "parent": "p_12348537808",
+       "child": "p_12348537806"
+      },
+      {
+       "type": "Couple",
+       "person1": "p_12348537807",
+       "person2": "p_12348537808"
+      }
+     ],
+     "sources": [
+      {
+       "id": "sd_c_1473014",
+       "resource_type": "Collection",
+       "title": "England, Births and Christenings, 1538-1975",
+       "url": "https://familysearch.org/collections/1473014",
+       "coverage": {
+        "place_rep_id": "267",
+        "date_range": "1538/1975",
+        "record_type": "Vital"
+       }
+      },
+      {
+       "id": "src_r_957137070",
+       "resource_type": "Record",
+       "title": "Entry for Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+       "citation": "\"England, Births and Christenings, 1538-1975,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:9C8K-FKM : 5 February 2023, Entry for Jonathan Barker, 15 May 1818); citing , index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm .",
+       "url": "https://familysearch.org/ark:/61903/1:2:9C8K-FKM",
+       "coverage": {
+        "place_rep_id": "3039342",
+        "date_range": "15 May 1818",
+        "record_type": "Vital"
+       }
+      },
+      {
+       "id": "src_p_p_12348537806",
+       "resource_type": "Person",
+       "url": "#p_12348537806"
+      }
+     ],
+     "places": [
+      {
+       "id": "3039342",
+       "name": "Whitehaven, Cumberland, England, United Kingdom",
+       "latitude": 54.548,
+       "longitude": -3.5877
+      }
+     ]
+    },
+    "primaryId": "p_12348537806",
+    "batchNumber": "P01280-1",
+    "role": "Principal",
+    "relativeTerms": {
+     "father": {
+      "status": "present",
+      "name": "William Barker"
+     },
+     "mother": {
+      "status": "present",
+      "name": "Martha"
+     }
+    }
+   }
+  ]
+ }
+}
