@@ -424,12 +424,10 @@ def format_footer(reports: list[SkillReport]) -> str:
             "resolve.",
             "",
             "Not computed here: rubric-critic's 'Flaky / high-variance dimension'. "
-            "Every committed run log is single-run (test files pin runs_per_test=1, "
-            "and the --runs-per-test override only ever writes scratch logs), so the "
-            "flaky flag is dead by construction here, not healthy: a silent flakiness "
-            "column means this report is blind to it, never that the suite is stable. "
-            "Surface flakiness deliberately with run_tests.py --test <id> "
-            "--runs-per-test 3, then fix whatever differs.",
+            "In a committed run log the flaky flag fires only on a fail-retried test, "
+            "so a silent flakiness column means this report is blind to it, never "
+            "that the suite is stable. Per-test rates across committed logs: "
+            "make eval-health.",
         ]
     )
 
