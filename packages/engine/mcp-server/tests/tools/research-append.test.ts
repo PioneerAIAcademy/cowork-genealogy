@@ -3338,6 +3338,99 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // `narrative_markdown` is the one required text field of a proof summary, and the
+  // validator knew only that it was present and not null: a number, a list or an
+  // object validated clean and was persisted. Both JSON Schemas declare a string.
+  describe("a proof summary's narrative_markdown must be a string", () => {
+    const entry = (narrative: unknown) => ({
+      question_id: "q_001",
+      tier: "probable",
+      vehicle: "summary",
+      shortfall: "gap",
+      supporting_assertion_ids: ["a_001"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals",
+      narrative_markdown: narrative,
+    });
+    const append = (narrative: unknown) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry: entry(narrative) } as never);
+    /** A project already holding a summary whose narrative is not text: drift written before the check. */
+    const legacy = (narrative: unknown) => {
+      const r = phase3Research();
+      r.proof_summaries = [{ id: "ps_001", ...entry(narrative), updated: "2026-01-01T00:00:00Z" }] as any;
+      return r;
+    };
+    const update = (fields: Record<string, unknown>) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields } as never);
+
+    it.each([
+      ["a number", 5, "number"],
+      ["a decimal", 1.5, "number"],
+      ["true", true, "boolean"],
+      ["an object", { text: "## Conclusion" }, "object"],
+      ["a list of words", ["w", "w"], "array"],
+    ])("%s is refused on append, naming the type, and nothing is written", async (_label, value, type) => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await append(value);
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)!.join("\n")).toContain(`research.json/proof_summaries[0]: 'narrative_markdown' must be a string, got ${type}`);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("null keeps its own refusal, and is not also told it is not a string", async () => {
+      await writeProject();
+      const r = await append(null);
+      expect(r.ok).toBe(false);
+      const text = errorsOf(r)!.join("\n");
+      expect(text).toContain("required field 'narrative_markdown' is null");
+      expect(text).not.toContain("must be a string");
+    });
+
+    it("an update that sets a non-string is refused, and one that sets a string repairs a legacy entry", async () => {
+      await writeProject(legacy("## C\n..."));
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const refused = await update({ narrative_markdown: 5 });
+      expect(refused.ok).toBe(false);
+      expect(errorsOf(refused)!.join("\n")).toContain("'narrative_markdown' must be a string, got number");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      await writeProject(legacy(5));
+      const repaired = await update({ narrative_markdown: "## Conclusion\nRepaired." });
+      expect(errorsOf(repaired) ?? []).toEqual([]);
+      expect(repaired.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].narrative_markdown).toBe("## Conclusion\nRepaired.");
+    });
+
+    it("a string is accepted, the empty string and a long one included", async () => {
+      for (const text of ["## Conclusion\nA sentence.", "", "w ".repeat(2000)]) {
+        await writeProject();
+        const r = await append(text);
+        expect(errorsOf(r) ?? [], JSON.stringify(text).slice(0, 30)).toEqual([]);
+        expect(r.ok).toBe(true);
+      }
+    });
+
+    it("an entry already in the project with a non-string narrative is not refused for it again: the write stands, with a warning", async () => {
+      // The introduced-errors diff keys an error on its path plus its message, so the
+      // message names the type and not the value, and a legacy entry is demoted.
+      await writeProject(legacy(5));
+      const r = await update({ shortfall: "ceiling" });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(warningsOfResult(r)).toMatch(/1 pre-existing schema error\(s\) not caused by this call/);
+    });
+
+    it("the length warning cannot throw on a legacy non-string narrative", async () => {
+      // The vehicle is being set, so the length check runs on the stored narrative, which is a number.
+      await writeProject(legacy(5));
+      const r = await update({ vehicle: "statement" });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(warningsOfResult(r)).not.toMatch(/word budget/);
+    });
+  });
+
   it("appends a proof_summary referencing an existing question", async () => {
     await writeProject();
     const r = await researchAppend({
@@ -5540,6 +5633,8 @@ describe("research_append (project singleton section)", () => {
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────
 
+/** The warnings of a successful result, joined. */
+const warningsOfResult = (r: { ok: boolean }) => ((r as any).validation?.warnings ?? []).join("\n");
 const noId = (o: any) => {
   const { id: _omit, ...rest } = o;
   return rest;

@@ -1596,6 +1596,24 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("updated" in ps && (typeof ps.updated !== "string" || !ISO_DATETIME_PATTERN.test(ps.updated))) {
       addError(report, psp, `'updated' must be an ISO 8601 date-time with a timezone, got '${ps.updated}'`);
     }
+    // The narrative is the one required field here that is TEXT, and `checkRequired`
+    // knows only that it is present and not null, so a number, a boolean, a list or an
+    // object validated clean. Both JSON Schemas declare it a string. The message names
+    // the TYPE, not the value: a narrative is long, and `introduced-errors.ts` keys an
+    // error on its path plus its message, so a message that is stable for an entry
+    // already in the project keeps that legacy entry from reading as newly introduced.
+    // Null is `checkRequired`'s, and an empty string is a string.
+    if (
+      "narrative_markdown" in ps &&
+      ps.narrative_markdown !== null &&
+      typeof ps.narrative_markdown !== "string"
+    ) {
+      addError(
+        report,
+        psp,
+        `'narrative_markdown' must be a string, got ${Array.isArray(ps.narrative_markdown) ? "array" : typeof ps.narrative_markdown}`,
+      );
+    }
 
     // resolved_conflict_ids -> conflicts[].id, and that conflict must be
     // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
