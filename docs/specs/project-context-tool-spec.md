@@ -293,11 +293,14 @@ open ones.
 Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `state`, `nextStep` or `openConflictIds` value.
 
-**A conclusion is not the end of the work.** The ladder tracks what was
-*produced*, and the `resolved` write produces nothing, so it has no rung of its
-own — but it is still outstanding, and it is the transition no skill body claims.
-A question that is `concluded` or `critiqued` and not yet resolved reports that
-resolve as its next step. `nextStep` is null only when the question has a proof
+**A conclusion on a question still open means it was written while blocked.**
+`proof-conclusion` resolves the question it concludes, in the same batch as the
+summary (its step 7), and leaves the question open only when its preconditions gate
+blocked the conclusion. So a question that is `concluded` or `critiqued` and not yet
+resolved reports `proof-conclusion — concluded while blocked: re-conclude <ps_id>`,
+naming its latest summary. That arm sits below the conflict arms, so while the
+blocking conflict is still open the question routes to `conflict-resolution` instead,
+and the two cannot loop. `nextStep` is null only when the question has a proof
 summary and is resolved.
 
 **Nothing gates on this field, and that is the design.** `research_append`
