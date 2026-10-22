@@ -13,7 +13,7 @@ import { wikiReadTool, wikiReadSchema } from "../../src/tools/wiki-read.js";
 import { WIKI_PAGE_MAX_CHARS } from "../../src/types/wikiPage.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
-import { headingPage, oneLinePage, quotePage, walkParts } from "../helpers/wiki-pages.js";
+import { SHAPES, escapedBody, headingPage, oneLinePage, walkParts } from "../helpers/wiki-pages.js";
 
 const API_BASE = "http://localhost:8000";
 const TEST_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
@@ -153,36 +153,25 @@ describe("wikiReadTool", () => {
 
 // ── paging ───────────────────────────────────────────────────────────────────
 
-const TEST_PAGE_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
-
 /** The server answers every call with this page, as the real one does. */
 function servePage(content: string | undefined): void {
   mockFetch.mockReset();
   mockFetch.mockImplementation(async () => ({
     ok: true,
     status: 200,
-    json: async () => ({ title: "Portugal_Genealogy", content, source_url: TEST_PAGE_URL }),
+    json: async () => ({ title: "Portugal_Genealogy", content, source_url: TEST_URL }),
   }));
 }
 
 const read = (offset?: number) =>
   wikiReadTool({ url: TEST_URL, ...(offset === undefined ? {} : { offset }) }, LOCAL);
 
-/** What the cap bounds: the JSON-escaped body of `content`. */
-const escapedBody = (s: string): number => JSON.stringify(s).length - 2;
-
-const SHAPES: Array<[string, () => string]> = [
-  ["about 50 headings over 66,000 characters", () => headingPage()],
-  ["one heading and one 46,000-character row", () => oneLinePage()],
-  ["66,000 double quotes", () => quotePage()],
-];
-
 describe.each(SHAPES)("wikiReadTool, a page of %s", (_label, make) => {
   const page = make();
   beforeEach(() => servePage(page));
 
   it("is a page that would have spilled: its whole answer is over the CLI limit", () => {
-    expect(JSON.stringify({ url: TEST_PAGE_URL, content: page }).length).toBeGreaterThan(CLI_SPILL_CHARS);
+    expect(JSON.stringify({ url: TEST_URL, content: page }).length).toBeGreaterThan(CLI_SPILL_CHARS);
   });
 
   it("(a) every part serializes under the CLI spill line, with content inside the cap", async () => {
@@ -250,7 +239,7 @@ describe("wikiReadTool, a page under the cap", () => {
     expect(content.length).toBe(9_000);
     servePage(content);
     const result = await read();
-    expect(result).toStrictEqual({ url: TEST_PAGE_URL, content });
+    expect(result).toStrictEqual({ url: TEST_URL, content });
     expect(Object.keys(result)).toEqual(["url", "content"]);
   });
 
@@ -274,7 +263,7 @@ describe("wikiReadTool, a page under the cap", () => {
   it("adds the paging fields, and only those, when offset is passed on a page that fits", async () => {
     servePage("# Small");
     const result = await read(0);
-    expect(result).toStrictEqual({ url: TEST_PAGE_URL, content: "# Small", totalChars: 7, offset: 0, truncated: false });
+    expect(result).toStrictEqual({ url: TEST_URL, content: "# Small", totalChars: 7, offset: 0, truncated: false });
   });
 
   it("starts at the offset it is given", async () => {
@@ -287,13 +276,13 @@ describe("wikiReadTool, a page under the cap", () => {
 
   it("reads an offset past the end as an empty part that is not truncated", async () => {
     servePage("# Small");
-    expect(await read(7)).toStrictEqual({ url: TEST_PAGE_URL, content: "", totalChars: 7, offset: 7, truncated: false });
-    expect(await read(1_000_000)).toStrictEqual({ url: TEST_PAGE_URL, content: "", totalChars: 7, offset: 7, truncated: false });
+    expect(await read(7)).toStrictEqual({ url: TEST_URL, content: "", totalChars: 7, offset: 7, truncated: false });
+    expect(await read(1_000_000)).toStrictEqual({ url: TEST_URL, content: "", totalChars: 7, offset: 7, truncated: false });
   });
 
   it("passes a body with no text through as it always did", async () => {
     servePage(undefined);
-    expect(await read()).toStrictEqual({ url: TEST_PAGE_URL, content: undefined });
+    expect(await read()).toStrictEqual({ url: TEST_URL, content: undefined });
   });
 });
 

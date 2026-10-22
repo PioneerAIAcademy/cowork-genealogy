@@ -6,9 +6,7 @@ import {
   requireWholeNumber,
   type TextPaging,
 } from "../../src/utils/text-page.js";
-
-/** What the cap bounds: the JSON-escaped body, the two wrapping quotes excluded. */
-const body = (s: string): number => JSON.stringify(s).length - 2;
+import { escapedBody } from "../helpers/wiki-pages.js";
 
 /** The rule on its own: a page of `n` raw characters from `offset`, moved back to a boundary.
  *  (`fitPage` bounds the ESCAPED body and a line break escapes to two characters, so its page
@@ -66,7 +64,7 @@ describe("fitPage", () => {
     for (const maxChars of [7, 40, 100, 999]) {
       for (const unit of ['"', "\\", "\n", "\u0001", "ab\"", "é"]) {
         const page = fitPage(unit.repeat(2000), 0, maxChars);
-        expect(body(page), `${JSON.stringify(unit)} x ${maxChars}`).toBeLessThanOrEqual(maxChars);
+        expect(escapedBody(page), `${JSON.stringify(unit)} x ${maxChars}`).toBeLessThanOrEqual(maxChars);
       }
     }
   });
@@ -277,10 +275,10 @@ describe("pageText", () => {
     // 100 characters, but every second one is a line break that serializes to two
     const text = "a\n".repeat(50);
     expect(text.length).toBe(100);
-    expect(body(text)).toBe(150);
+    expect(escapedBody(text)).toBe(150);
     const r = pageText(text, undefined, 100);
     expect(r.paging?.truncated).toBe(true);
-    expect(body(r.content)).toBeLessThanOrEqual(100);
+    expect(escapedBody(r.content)).toBeLessThanOrEqual(100);
   });
 
   it("walks every shape to the end and joins back to the text, from any offset and at any cap", () => {
@@ -318,7 +316,7 @@ describe("pageText", () => {
           expect(ended, `ends: ${label}`).toBe(true);
           expect(parts.map((p) => p.content).join(""), label).toBe(text.slice(start ?? 0));
           for (const p of parts) {
-            expect(body(p.content) <= maxChars || [...p.content].length === 1, label).toBe(true);
+            expect(escapedBody(p.content) <= maxChars || [...p.content].length === 1, label).toBe(true);
           }
           if (start === undefined || start === 0) {
             for (const p of parts) expect(LONE_SURROGATE.test(p.content), label).toBe(false);

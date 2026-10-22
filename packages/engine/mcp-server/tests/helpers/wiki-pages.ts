@@ -1,7 +1,8 @@
 /**
  * Synthetic wiki pages for the paging tests, one per shape that makes a cut hard. They are
  * generated, never a copy of a real page: a real page changes when the wiki is edited, and
- * a test of the cut must not change with it.
+ * a test of the cut must not change with it. Also the two pieces every paging suite
+ * needs: `escapedBody`, what the cap bounds, and `SHAPES`, the three pages each tool is run over.
  */
 
 const line = (i: number, k: number): string =>
@@ -39,6 +40,16 @@ export function oneLinePage(rowChars = 46_000): string {
 export function quotePage(chars = 66_000): string {
   return '"'.repeat(chars);
 }
+
+/** What the cap bounds: the JSON-escaped body of `s`, the two wrapping quotes excluded. */
+export const escapedBody = (s: string): number => JSON.stringify(s).length - 2;
+
+/** The three pages both wiki tools are run over, each with the label its test names carry. */
+export const SHAPES: Array<[string, () => string]> = [
+  ["about 50 headings over 66,000 characters", () => headingPage()],
+  ["one heading and one 46,000-character row", () => oneLinePage()],
+  ["66,000 double quotes", () => quotePage()],
+];
 
 /** Call a paged tool from the start and follow `nextOffset` until `truncated` is false.
  *  The guard turns a chain that never ends into a failure rather than a hang. */

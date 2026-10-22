@@ -40,7 +40,7 @@ import { WIKI_PAGE_MAX_CHARS, WIKI_PAGE_SECTIONS } from "../../src/types/wikiPag
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
-import { headingPage, oneLinePage, quotePage, walkParts } from "../helpers/wiki-pages.js";
+import { SHAPES, escapedBody, headingPage, walkParts } from "../helpers/wiki-pages.js";
 
 const API_BASE = "http://localhost:8000";
 
@@ -548,15 +548,6 @@ const readPortugal = (offset?: number) =>
   wikiPlacePageTool({ standardPlace: "Portugal", section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL);
 const readSchuylkill = (offset?: number) =>
   wikiPlacePageTool({ standardPlace: SCHUYLKILL_PLACE, section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL);
-
-/** What the cap bounds: the JSON-escaped body of `content`. */
-const escapedBody = (s: string): number => JSON.stringify(s).length - 2;
-
-const SHAPES: Array<[string, () => string]> = [
-  ["about 50 headings over 66,000 characters", () => headingPage()],
-  ["one heading and one 46,000-character row", () => oneLinePage()],
-  ["66,000 double quotes", () => quotePage()],
-];
 
 describe.each(SHAPES)("wikiPlacePageTool, a page of %s", (_label, make) => {
   const page = make();
