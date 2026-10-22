@@ -623,6 +623,16 @@ function hhResearch(): any {
   };
 }
 
+/** One assertion of an `hhResearch()`, by id. */
+function hhRow(research: any, id: string): any {
+  return (research.assertions as any[]).find((a) => a.id === id);
+}
+
+/** A fetched persons[] of personas known only by the names given. */
+function docWithNames(...names: Array<[id: string, given: string, surname: string]>): SimplifiedGedcomX {
+  return { persons: names.map(([id, given, surname]) => ({ id, names: [{ given, surname }] })) };
+}
+
 /** One tree person per persona. */
 const HH_TREE: SimplifiedGedcomX = {
   persons: [
@@ -974,6 +984,33 @@ describe("samePerson — project-relative arm", () => {
       expect(result.recorded).toBe(true);
     });
 
+    it("files the role of the projected group, not the role a shared persona id lists first", async () => {
+      // The id names no single party, so the group at the role asked is the party.
+      // The entry names that role beside the persona the response names, not
+      // `principal`, the first of the two roles the id's assertions carry.
+      const r = research();
+      r.assertions[0].record_persona_id = "p_shared";
+      r.assertions.push({
+        id: "a_007", record_id: RECORD, record_role: "informant",
+        fact_type: "name", value: "Somebody Else", record_persona_id: "p_shared",
+        record_basis: "stated", log_entry_id: "log_1",
+      });
+      await project(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          {
+            projectPath: dir, assertionId: "a_005", treePersonId: "I1",
+            recordRole: "informant", recordPersonaId: "p_shared",
+          },
+          LOCAL,
+        ),
+      );
+      expect(result.recordPersona).toEqual({ id: null, name: "Somebody Else", role: "informant" });
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_005|I1"]).toMatchObject({ record_persona_id: null, record_role: "informant" });
+    });
+
     it("says so when recordPersonaId names no persona in the record", async () => {
       await project();
       await expect(
@@ -1215,31 +1252,42 @@ describe("samePerson — project-relative arm", () => {
     });
 
     it("matches the joined given name and surname before the given name alone", async () => {
-      // The first persona whose name merely CONTAINS "pierre" is the wrong one.
+      // The child's relationship assertion gives the OTHER party's name in parts.
+      // Two personas share its given name and two share its surname, so neither
+      // part alone can choose; the whole name does.
       recordReadMock.mockResolvedValue({
         persons: [
           { id: "p_wrong", names: [{ given: "Pierre", surname: "Metzeler" }] },
           { id: "p_right", names: [{ given: "Pierre", surname: "Mouchang" }] },
+          { id: "p_other", names: [{ given: "Johann", surname: "Mouchang" }] },
         ],
       });
       const r = hhResearch();
       r.assertions = [
-        hhAssertion("a_070", "father", null, "relationship", "child of Pierre Mouchang",
-          { given: "Pierre", surname: "Mouchang" }),
+        hhAssertion("a_070", "child", null, "relationship", "child of Pierre Mouchang",
+          { relationship_type: "child", given: "Pierre", surname: "Mouchang" }),
       ];
       await hhProject(r);
       okScore();
       const result = projectResult(
-        await samePerson({ projectPath: dir, assertionId: "a_070", treePersonId: "I1" }, LOCAL),
+        await samePerson(
+          { projectPath: dir, assertionId: "a_070", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
       );
       expect(sentFocus().first).toBe("p_right");
-      // Found by name as the assertion's own party, so it holds the assertion's role.
+      // Found by name for the role the caller asked, so it holds that role.
       expect(result.recordPersona).toEqual({ id: "p_right", name: "Pierre Mouchang", role: "father" });
     });
 
     it("ignores a sibling's persona id that is not on the fetched record", async () => {
+      // The sibling's id is not on the record and the name it gives is on no
+      // persona either: nothing resolves the role.
       const r = hhResearch();
-      (r.assertions as any[]).find((a) => a.id === "a_034").record_persona_id = "p_stale";
+      const father = (r.assertions as any[]).find((a) => a.id === "a_034");
+      father.record_persona_id = "p_stale";
+      father.value = "Somebody Else";
+      father.structured_value = { given: "Somebody", surname: "Else" };
       await hhProject(r);
       await expect(
         samePerson(
@@ -1248,6 +1296,22 @@ describe("samePerson — project-relative arm", () => {
         ),
       ).rejects.toThrow(/holds no persona for role 'father'/);
       expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the sibling's name when its persona id is not on the fetched record", async () => {
+      // The id is stale (the record was re-indexed under other ids), the name is not.
+      const r = hhResearch();
+      (r.assertions as any[]).find((a) => a.id === "a_034").record_persona_id = "p_stale";
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
     });
 
     it("keeps the assertion's own persona when recordRole equals the assertion's own role", async () => {
@@ -1300,6 +1364,67 @@ describe("samePerson — project-relative arm", () => {
       expect(sentFocus().first).toBe(HH_MOTHER);
       // The persona is the mother; the response names her role, not the one asked.
       expect(result.recordPersona).toEqual({ id: HH_MOTHER, name: "Margreta Metzeler", role: "mother" });
+      // ... and the attestation names the same role beside her id, not `father`.
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_038|I2"]).toMatchObject({ record_persona_id: HH_MOTHER, record_role: "mother" });
+    });
+
+    it("files the role a named persona holds when no role was asked, not the assertion's own", async () => {
+      // a_038 is the child's. Naming the mother's persona must not leave `child`
+      // beside her id.
+      await hhProject();
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I2", recordPersonaId: HH_MOTHER },
+          LOCAL,
+        ),
+      );
+      expect(result.recordPersona.role).toBe("mother");
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_038|I2"]).toMatchObject({ record_persona_id: HH_MOTHER, record_role: "mother" });
+    });
+
+    it("files no role, and reports none, for a named persona that no assertion names", async () => {
+      recordReadMock.mockResolvedValue(hhDoc([{ id: "p_unlisted", names: [{ given: "Anna", surname: "Zeller" }] }]));
+      await hhProject();
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I2", recordPersonaId: "p_unlisted" },
+          LOCAL,
+        ),
+      );
+      expect(result.recordPersona).toEqual({ id: "p_unlisted", name: "Anna Zeller", role: null });
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_038|I2"]).toMatchObject({ record_persona_id: "p_unlisted", record_role: null });
+    });
+
+    it("does not read negative evidence as a role the persona holds", async () => {
+      // An `absent` row stamped with the father's id, listed before his own.
+      const r = hhResearch();
+      (r.assertions as any[]).unshift(hhAssertion("a_000", "absent", HH_FATHER, "name", ""));
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_039", treePersonId: "I1", recordPersonaId: HH_FATHER },
+          LOCAL,
+        ),
+      );
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+    });
+
+    it("lists a persona by the roles it holds, not by negative evidence about it", async () => {
+      const r = hhResearch();
+      (r.assertions as any[]).unshift(hhAssertion("a_000", "absent", HH_FATHER, "name", ""));
+      await hhProject(r);
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "witness_1" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(`${HH_FATHER} (Pierre Mouchang, father)`);
     });
 
     it("refuses a recordPersonaId that names no persona on the fetched record", async () => {
@@ -1315,11 +1440,13 @@ describe("samePerson — project-relative arm", () => {
       expect(await scoresOnDisk()).toEqual([]);
     });
 
-    it("resolves a persona by name when another role was asked and no sibling carries a persona id", async () => {
+    it("resolves a persona by the name the assertion gives that party when no sibling names it", async () => {
+      // The father has no assertion of his own, so the child's relationship
+      // assertion is the only place his name is written.
       const r = hhResearch();
       const rows = r.assertions as any[];
-      rows.find((a) => a.id === "a_034").record_persona_id = null;
-      rows.find((a) => a.id === "a_038").structured_value = {
+      r.assertions = rows.filter((a) => a.record_role !== "father");
+      (r.assertions as any[]).find((a) => a.id === "a_038").structured_value = {
         relationship_type: "child", related_person_role: "father", father: "Pierre Mouchang",
       };
       await hhProject(r);
@@ -1336,12 +1463,39 @@ describe("samePerson — project-relative arm", () => {
     });
 
     it("does not accept a name hit on the assertion's own persona when another role was asked", async () => {
-      // a_031 is the child's own name assertion, so its name hint is the child.
-      // With no sibling carrying the father's persona id, that hint would resolve
-      // the asked role to the assertion's own persona by name: the same wrong
-      // answer as the fallback, through another door.
+      // The child's relationship assertion gives a name, and it is the child's own.
+      // Nothing carries the father's id or name, so that name is all there is, and
+      // it finds the assertion's own persona: the same wrong answer as the
+      // fallback, through another door. The persona is left out of the candidates.
+      recordReadMock.mockResolvedValue(
+        docWithNames([HH_CHILD, "Maria Elisabeth", "Mouchang"], ["p_x", "Johann", "Zeller"]),
+      );
       const r = hhResearch();
-      (r.assertions as any[]).find((a) => a.id === "a_034").record_persona_id = null;
+      r.assertions = (r.assertions as any[]).filter((a) => a.record_role !== "father");
+      (r.assertions as any[]).find((a) => a.id === "a_038").structured_value = {
+        relationship_type: "child", given: "Maria Elisabeth", surname: "Mouchang",
+      };
+      await hhProject(r);
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona for role 'father'/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("does not read a name assertion's own name as the name of another party", async () => {
+      // A name assertion is about one person. Its given name and surname are that
+      // person's, so they say nothing about the father, however the persona id is
+      // missing. Reading them as the father's scored the child as the father
+      // whenever her assertion carried no persona id, which most name assertions
+      // do not.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_031", "child", null, "name", "Maria Elisabeth Mouchang",
+          { given: "Maria Elisabeth", surname: "Mouchang" }),
+      ];
       await hhProject(r);
       await expect(
         samePerson(
@@ -1350,6 +1504,453 @@ describe("samePerson — project-relative arm", () => {
         ),
       ).rejects.toThrow(/holds no persona for role 'father'/);
       expect(mockFetch).not.toHaveBeenCalled();
+      expect(await scoresOnDisk()).toEqual([]);
+    });
+
+
+    // ── a persona id the record stamps on more than one role ──
+
+    it("does not resolve a role through a persona id the record stamps on more than one role", async () => {
+      // The mother's persona id is on the father's assertion too, so that id names
+      // no single party. It is not "the father's persona": the mother would be
+      // scored as the father. The name his own assertion gives finds him.
+      const r = hhResearch();
+      hhRow(r, "a_034").record_persona_id = HH_MOTHER;
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_038|I1"]).toMatchObject({ record_persona_id: HH_FATHER, record_role: "father" });
+    });
+
+    it("refuses a role whose only persona id is one the record stamps on several roles", async () => {
+      // The same stamp, and no persona on the record bears the father's name:
+      // the mother is all that is left, and she is the wrong answer.
+      recordReadMock.mockResolvedValue(
+        docWithNames([HH_CHILD, "Maria Elisabeth", "Mouchang"], [HH_MOTHER, "Margreta", "Metzeler"]),
+      );
+      const r = hhResearch();
+      hhRow(r, "a_034").record_persona_id = HH_MOTHER;
+      await hhProject(r);
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona for role 'father'/);
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(await scoresOnDisk()).toEqual([]);
+    });
+
+    it("does not score the child as the father when her persona id is stamped on his assertion", async () => {
+      // An extraction that wrote the searched persona's id on every party: the
+      // child's id is on the father's assertion, and it is also the cited
+      // assertion's own. Neither is the father.
+      const r = hhResearch();
+      hhRow(r, "a_034").record_persona_id = HH_CHILD;
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona.id).toBe(HH_FATHER);
+    });
+
+    // ── the names the assertions give: another role, whole names, and parts ──
+
+    it("reads the name a sibling name assertion gives the role, when no sibling carries a persona id", async () => {
+      // The issue's worked case, with the extraction's persona ids gone: the
+      // child's relationship assertion names a role and no name, and the father's
+      // own name assertion is where his name is written.
+      const r = hhResearch();
+      hhRow(r, "a_034").record_persona_id = null;
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+    });
+
+    it("reads a sibling name assertion's given name and surname as well as its value", async () => {
+      // `value` is the transcription ("Mouchang, Pierre"); the persona carries the
+      // name as given then surname, which is what the structured value joins to.
+      const r = hhResearch();
+      const father = hhRow(r, "a_034");
+      father.record_persona_id = null;
+      father.value = "Mouchang, Pierre";
+      await hhProject(r);
+      okScore();
+      await samePerson(
+        { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+        LOCAL,
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+    });
+
+    it("takes a sibling's name only when exactly one persona bears it", async () => {
+      // Two personas answer to the father's name, and nothing else says which.
+      recordReadMock.mockResolvedValue(
+        docWithNames(
+          [HH_CHILD, "Maria Elisabeth", "Mouchang"],
+          ["p_a", "Pierre", "Mouchang"],
+          ["p_b", "Pierre", "Mouchang"],
+        ),
+      );
+      const r = hhResearch();
+      hhRow(r, "a_034").record_persona_id = null;
+      await hhProject(r);
+      const call = samePerson(
+        { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+        LOCAL,
+      );
+      await expect(call).rejects.toThrow(/holds no persona for role 'father'/);
+      await expect(call).rejects.toThrow("p_a (Pierre Mouchang, role unknown), p_b (Pierre Mouchang, role unknown)");
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("does not read the name a sibling gives ANOTHER role as the name of the role asked", async () => {
+      // The mother's name assertion is a sibling too, and it names the mother.
+      const r = hhResearch();
+      r.assertions = (r.assertions as any[]).filter((a) => a.record_role !== "father");
+      hhRow(r, "a_036").record_persona_id = null;
+      await hhProject(r);
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona for role 'father'/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("leaves the assertion's own persona out of a sibling name search", async () => {
+      // The groom and his father are both John Flynn. The father's name assertion
+      // carries no persona id, so only his name can find him, and the same name
+      // finds the groom unless the groom's own persona is left out.
+      recordReadMock.mockResolvedValue(docWithNames(["G1", "John", "Flynn"], ["F1", "John", "Flynn"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_004", "groom", "G1", "relationship", "son of John Flynn",
+          { relationship_type: "child", related_person_role: "father_of_groom" }),
+        hhAssertion("a_006", "father_of_groom", null, "name", "John Flynn",
+          { given: "John", surname: "Flynn" }),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_004", treePersonId: "I1", recordRole: "father_of_groom" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe("F1");
+      expect(result.recordPersona).toEqual({ id: "F1", name: "John Flynn", role: "father_of_groom" });
+    });
+
+    it("finds a father who shares his son's name, because the son's persona is left out first", async () => {
+      // The groom's assertion names his father in its own words. Both personas bear
+      // that name; the groom's persona is not a candidate for "the father", so one
+      // is left. Rejecting the groom AFTER the name found him would end the search
+      // there and refuse a call whose answer is on the record.
+      recordReadMock.mockResolvedValue(docWithNames(["G1", "John", "Flynn"], ["F1", "John", "Flynn"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_004", "groom", "G1", "relationship", "son of John Flynn",
+          { relationship_type: "child", father_of_groom: "John Flynn" }),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_004", treePersonId: "I1", recordRole: "father_of_groom" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe("F1");
+      expect(result.recordPersona).toEqual({ id: "F1", name: "John Flynn", role: "father_of_groom" });
+    });
+
+    it("does not read a sibling's assertion that is not a name as a name", async () => {
+      // The father's residence assertion happens to read like the mother's name.
+      // Only a `name` assertion says what a party is called.
+      const r = hhResearch();
+      r.assertions = [
+        hhRow(r, "a_038"),
+        hhAssertion("a_034", "father", null, "residence", "Margreta Metzeler"),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona for role 'father'/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it.each(["related_person_name", "person", "other"])(
+      "reads the `%s` key of any assertion as the name of another party",
+      async (key) => {
+        // A birth assertion is about one person, yet it can name another under these keys.
+        const r = hhResearch();
+        r.assertions = [
+          hhAssertion("a_041", "child", null, "birth", "", { [key]: "Pierre Mouchang" }),
+        ];
+        await hhProject(r);
+        okScore();
+        const result = projectResult(
+          await samePerson(
+            { projectPath: dir, assertionId: "a_041", treePersonId: "I1", recordRole: "father" },
+            LOCAL,
+          ),
+        );
+        expect(sentFocus().first).toBe(HH_FATHER);
+        expect(result.recordPersona.role).toBe("father");
+      },
+    );
+
+    it("reads the one key that names a second person as the other party's name", async () => {
+      // The groom's marriage assertion names his spouse under `spouse`; nothing names a role.
+      const r = hhResearch();
+      r.assertions = [hhAssertion("a_040", "father", null, "marriage", "married", { spouse: "Margreta Metzeler" })];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_040", treePersonId: "I2", recordRole: "mother" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_MOTHER);
+      expect(result.recordPersona).toEqual({ id: HH_MOTHER, name: "Margreta Metzeler", role: "mother" });
+    });
+
+    it("does not choose between two keys that each name a second person", async () => {
+      // `father` and `mother` name two people. Neither is the "godparent" asked for.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_040", "child", null, "relationship", "child of two",
+          { relationship_type: "child", father: "Pierre Mouchang", mother: "Margreta Metzeler" }),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson(
+          { projectPath: dir, assertionId: "a_040", treePersonId: "I1", recordRole: "godparent" },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/holds no persona for role 'godparent'/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("reads the key named by the role asked before any second-person key", async () => {
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_040", "child", null, "relationship", "child of two",
+          { relationship_type: "child", father: "Pierre Mouchang", mother: "Margreta Metzeler" }),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_040", treePersonId: "I2", recordRole: "mother" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_MOTHER);
+      expect(result.recordPersona.role).toBe("mother");
+    });
+
+    it("takes the whole name exactly before it takes one that merely contains it", async () => {
+      recordReadMock.mockResolvedValue(
+        docWithNames(["p_sr", "Pierre", "Mouchang Sr"], ["p_pierre", "Pierre", "Mouchang"]),
+      );
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Pierre Mouchang", { given: "Pierre", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      okScore();
+      await samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL);
+      expect(sentFocus().first).toBe("p_pierre");
+    });
+
+    it("takes the whole name loosely when no persona bears it exactly", async () => {
+      // "Pierre Mouchang Sr" contains the whole name; neither part alone can choose
+      // him, since another persona is a Pierre and another a Mouchang.
+      recordReadMock.mockResolvedValue(
+        docWithNames(
+          ["p_sr", "Pierre", "Mouchang Sr"], ["p_pierre", "Pierre", "Metzeler"], ["p_johann", "Johann", "Mouchang"],
+        ),
+      );
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Pierre Mouchang", { given: "Pierre", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      okScore();
+      await samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL);
+      expect(sentFocus().first).toBe("p_sr");
+    });
+
+    it("refuses a whole name that two personas bear, instead of taking the first", async () => {
+      recordReadMock.mockResolvedValue(
+        docWithNames(["p_a", "Pierre", "Mouchang"], ["p_b", "Pierre", "Mouchang"], [HH_MOTHER, "Margreta", "Metzeler"]),
+      );
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Pierre Mouchang", { given: "Pierre", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/could not tell which persona/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the given name alone when the surname is spelled differently", async () => {
+      // The register's "Flynn" is the index's "Flinn": no whole name matches, and
+      // only one persona is a Patrick.
+      recordReadMock.mockResolvedValue(docWithNames(["MP1", "Patrick", "Flinn"], ["MP2", "Mary", "Doyle"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Patrick Flynn", { given: "Patrick", surname: "Flynn" }),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL),
+      );
+      expect(sentFocus().first).toBe("MP1");
+      expect(result.recordPersona).toEqual({ id: "MP1", name: "Patrick Flinn", role: "principal" });
+    });
+
+    it("falls back to the surname alone when the given name is spelled differently", async () => {
+      recordReadMock.mockResolvedValue(docWithNames(["MP1", "Patrick", "Flynn"], ["MP2", "Mary", "Doyle"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Patrik Flynn", { given: "Patrik", surname: "Flynn" }),
+      ];
+      await hhProject(r);
+      okScore();
+      await samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL);
+      expect(sentFocus().first).toBe("MP1");
+    });
+
+    it("takes the surname alone when the given name fits two personas", async () => {
+      // Two Pierres; one persona's name is written surname first. The given name
+      // cannot choose, the surname can.
+      recordReadMock.mockResolvedValue({
+        persons: [
+          { id: "p_wrong", names: [{ given: "Pierre", surname: "Metzeler" }] },
+          { id: "p_right", names: [{ given: "Mouchang", surname: "Pierre" }] },
+        ],
+      });
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Pierre Mouchang", { given: "Pierre", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      okScore();
+      await samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL);
+      expect(sentFocus().first).toBe("p_right");
+    });
+
+    it("refuses a part of the name that fits two personas, instead of taking the first", async () => {
+      // Two Patricks and two Flynns, and no whole name to tell them by: neither
+      // part alone names one persona.
+      recordReadMock.mockResolvedValue(
+        docWithNames(
+          ["MP1", "Patrick", "Doyle"], ["MP2", "Patrick", "Smith"],
+          ["MP3", "Thomas", "Flynn"], ["MP4", "Anna", "Flynn"],
+        ),
+      );
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Patrick Flynn", { given: "Patrick", surname: "Flynn" }),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/could not tell which persona/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("matches a part of a name as a word of the persona's name, not as any run of letters", async () => {
+      // "Ann" is inside "Hannah", who is not an Ann.
+      recordReadMock.mockResolvedValue(docWithNames(["MP1", "Hannah", "Doyle"], ["MP2", "Mary", "Smith"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Ann Zeller", { given: "Ann", surname: "Zeller" }),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/could not tell which persona/);
+    });
+
+    it("does not read a two-party assertion's given name and surname as its OWN party's name", async () => {
+      // On the child's relationship assertion they name the other party, so with
+      // no recordRole asked they say nothing about who the child is.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_070", "child", null, "relationship", "child of Pierre Mouchang",
+          { relationship_type: "child", given: "Pierre", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_070", treePersonId: "I3" }, LOCAL),
+      ).rejects.toThrow(/could not tell which persona/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    // ── a record with one persona ──
+
+    it("refuses the only persona of a record when the record's assertions know it as another role", async () => {
+      // MP1 is the child by the extraction's own persona id, and the assertion
+      // being scored is the father's: the one persona is not him.
+      recordReadMock.mockResolvedValue(docWithNames(["MP1", "Maria", "Mouchang"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_005", "father", null, "residence", "Basel"),
+        hhAssertion("a_009", "child", "MP1", "name", "Maria Mouchang"),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/could not tell which persona/);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("scores the only persona of a record when the record's assertions know it as the assertion's own role", async () => {
+      recordReadMock.mockResolvedValue(docWithNames(["MP1", "Pierre", "Mouchang"]));
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_005", "father", null, "residence", "Basel"),
+        hhAssertion("a_009", "father", "MP1", "name", "Pierre Mouchang"),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+      );
+      expect(sentFocus().first).toBe("MP1");
+      expect(result.recordPersona).toEqual({ id: "MP1", name: "Pierre Mouchang", role: "father" });
     });
 
     it("scores the only persona of a record when the assertion names none, and gives it the assertion's role", async () => {
@@ -1444,6 +2045,76 @@ describe("samePerson — project-relative arm", () => {
       expect(derived?.record_persona_id).toBe(filed.record_persona_id);
       expect(derived?.record_persona_id).toBe(HH_FATHER);
       expect(derived?.record_role).toBe(filed.record_role);
+    });
+  });
+
+  // The same household when the fetch fails (the default here): the record's own
+  // assertions are the record, and its parties are the groups they fall into.
+  describe("a projected household (recordRole)", () => {
+    const hhProject = (r: any = hhResearch()) => project(r, HH_TREE);
+    /** A second man at the role `father`, under a persona id of his own. */
+    const otherFather = (id: string) =>
+      hhAssertion(id, "father", "p_other", "name", "Johann Mouchang", { given: "Johann", surname: "Mouchang" });
+
+    it("refuses a role that two groups hold, and lists them, instead of scoring the first", async () => {
+      const r = hhResearch();
+      (r.assertions as any[]).push(otherFather("a_050"));
+      await hhProject(r);
+      const call = samePerson(
+        { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+        LOCAL,
+      );
+      await expect(call).rejects.toThrow(/role 'father' in record .* names more than one person/);
+      await expect(call).rejects.toThrow(
+        `${HH_FATHER} (Pierre Mouchang, father), p_other (Johann Mouchang, father)`,
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(await scoresOnDisk()).toEqual([]);
+    });
+
+    it("scores a role that one group holds", async () => {
+      await hhProject();
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_038", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      );
+      expect(result.recordSource).toBe("projection");
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+    });
+
+    it("scores the group the assertion itself falls in when its role holds two, whichever is first", async () => {
+      // Two fathers, and the other one is listed first. The first group at the role
+      // is not the cited assertion's, so the role alone would score the wrong man.
+      const r = hhResearch();
+      (r.assertions as any[]).unshift(otherFather("a_050"));
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_034", treePersonId: "I1" }, LOCAL),
+      );
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_034|I1"]).toMatchObject({ record_persona_id: HH_FATHER, record_role: "father" });
+    });
+
+    it("scores an id-less party of an extraction that set ids, though another persona holds its role", async () => {
+      // Inside an extraction that set ids a party without one is a different person,
+      // so the record holds two groups at `father`. The cited assertion is in the
+      // id-less one: its group is not a guess.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_049", "father", null, "name", "Pierre Mouchang", { given: "Pierre", surname: "Mouchang" }),
+        otherFather("a_050"),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_049", treePersonId: "I1" }, LOCAL),
+      );
+      expect(result.recordPersona).toEqual({ id: null, name: "Pierre Mouchang", role: "father" });
     });
   });
 });
@@ -1586,6 +2257,29 @@ describe("buildRecordedScore", () => {
     const r = buildRecordedScore(hhResearch(), "a_038", "I2", "father", RESULT, HH_MOTHER);
     expect(r?.record_persona_id).toBe(HH_MOTHER);
   });
+
+  it("records no persona when the record stamps the father's id on more than one role", () => {
+    // The mother's id on the father's assertion names no single party, so it is
+    // not "the persona of the father".
+    const r = hhResearch();
+    hhRow(r, "a_034").record_persona_id = HH_MOTHER;
+    expect(buildRecordedScore(r, "a_038", "I1", "father", RESULT)?.record_persona_id).toBeNull();
+  });
+
+  it("records the role the record gives a persona the caller named, not the role asked", () => {
+    const named = buildRecordedScore(hhResearch(), "a_038", "I2", "father", RESULT, HH_MOTHER);
+    expect(named?.record_persona_id).toBe(HH_MOTHER);
+    expect(named?.record_role).toBe("mother");
+    // with no role asked, not the assertion's own `child`
+    expect(buildRecordedScore(hhResearch(), "a_038", "I2", undefined, RESULT, HH_MOTHER)?.record_role)
+      .toBe("mother");
+  });
+
+  it("records no role for a named persona that no assertion names", () => {
+    const r = buildRecordedScore(hhResearch(), "a_038", "I2", "father", RESULT, "p_unlisted");
+    expect(r?.record_persona_id).toBe("p_unlisted");
+    expect(r?.record_role).toBeNull();
+  });
 });
 
 // ─── resolvePartyBySiblings: the lookup both callers share ──────────────────
@@ -1651,6 +2345,28 @@ describe("resolvePartyBySiblings", () => {
     });
   });
 
+  it("skips a persona id the record gives to more than one role", () => {
+    // The mother's id is on the father's assertion as well as hers. It is not the
+    // cited assertion's own id, so only the shared-id rule keeps it from answering.
+    const r = hhResearch();
+    hhRow(r, "a_034").record_persona_id = HH_MOTHER;
+    expect(resolvePartyBySiblings(r, own, "father")).toEqual({ kind: "unresolved" });
+  });
+
+  it("does not make an id shared by an `absent` row that carries it", () => {
+    // Negative evidence is no role a persona holds, so the father's id is still his.
+    const r = hhResearch();
+    (r.assertions as any[]).push(hhAssertion("a_099", "absent", HH_FATHER, "name", ""));
+    expect(resolvePartyBySiblings(r, own, "father")).toEqual({ kind: "resolved", personaId: HH_FATHER });
+  });
+
+  it("skips the assertion's own persona id, even when its role is unknown", () => {
+    // With no record_role on the cited assertion its id counts as no role of
+    // anyone's, so only the rule against its own id keeps it from answering.
+    const roleless = { id: "a_x", record_id: HH_RECORD, record_role: null, record_persona_id: HH_FATHER };
+    expect(resolvePartyBySiblings(hhResearch(), roleless, "father")).toEqual({ kind: "unresolved" });
+  });
+
   it("reads an assertion with no record_role as asking for any role named", () => {
     const noRole = { id: "a_x", record_id: HH_RECORD, record_role: null, record_persona_id: null };
     expect(resolvePartyBySiblings(hhResearch(), noRole, "father")).toEqual({
@@ -1711,6 +2427,32 @@ describe("describeScoredPair", () => {
     };
     expect(describeScoredPair(research, HH_TREE, "a_005", "I1", undefined)?.recordPersona).toEqual({
       id: null, name: "", role: "principal",
+    });
+  });
+
+  it("names nobody for a role that two groups hold, as production refuses to choose between them", () => {
+    const r = hhResearch();
+    (r.assertions as any[]).push(hhAssertion("a_050", "father", "p_other", "name", "Johann Mouchang"));
+    expect(describeScoredPair(r, HH_TREE, "a_038", "I1", "father")?.recordPersona).toEqual({
+      id: null, name: "", role: "father",
+    });
+  });
+
+  it("names no one for a persona id that no group holds", () => {
+    // Production refuses such an id; it does not name the group that holds the role.
+    expect(describeScoredPair(...RESULT_ARGS, "a_038", "I1", "father", "p_nope")?.recordPersona).toEqual({
+      id: "p_nope", name: "", role: null,
+    });
+  });
+
+  it("names the one group at the role when no persona id says which", () => {
+    // The record stamps the mother's id on the father's assertion, so no id resolves
+    // him. His own group is the only one at the role, and production finds the same
+    // man by his name.
+    const r = hhResearch();
+    hhRow(r, "a_034").record_persona_id = HH_MOTHER;
+    expect(describeScoredPair(r, HH_TREE, "a_038", "I1", "father")?.recordPersona).toEqual({
+      id: null, name: "Pierre Mouchang", role: "father",
     });
   });
 

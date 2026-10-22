@@ -27,8 +27,14 @@ import { getProjectStore, type ProjectStore } from "../store/project-store.js";
 import { recordReadTool } from "./record-read.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 import {
+  NAME_TYPES,
+  NAMES_SECOND_PERSON_KEYS,
+  factTypeKey,
+  isTwoParty,
+  personaRolesById,
   projectRecordPersonas,
   projectedRecordDocument,
+  recordPartyKeyer,
   type RecordPersonaGroup,
 } from "../utils/record-persona.js";
 import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
@@ -132,27 +138,146 @@ function displayName(person: SimplifiedPerson | undefined): string {
     .join(" ");
 }
 
-/** The name an assertion gives the party this link is about, from its
- *  `structured_value` (where a relationship assertion can name the other
- *  party).
- *
- *  The WHOLE name comes first: a value that gives `given` and `surname` apart
- *  is one name, and its given name alone matches every persona that shares it,
- *  so the loose match downstream took whichever came first on the record. */
-function partyNameHint(assertion: any, role: string | undefined): string | undefined {
+// ─── The names a link gives its party ────────────────────────────────────────
+//
+// A fetched `persons[]` carries names and no roles, so when the assertions'
+// persona ids do not say which persona a link is about, the names they give
+// have to. Two questions, never mixed: whose name is it (the assertion's own
+// party, or another one), and how close a match is good enough.
+
+/** A name as matching compares it: trimmed and lower case, the way `personNames`
+ *  reads a persona's. A blank or non-string value is no name. */
+function nameText(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() !== "" ? v.trim().toLowerCase() : undefined;
+}
+
+/** The assertion's `structured_value`, when it is an object. */
+function structuredObject(assertion: any): Record<string, unknown> | undefined {
   const sv = assertion?.structured_value;
-  if (sv && typeof sv === "object" && !Array.isArray(sv)) {
-    const text = (key: string | undefined): string | undefined => {
-      if (key === undefined) return undefined;
-      const v = (sv as Record<string, unknown>)[key];
-      return typeof v === "string" && v.trim() !== "" ? v.trim().toLowerCase() : undefined;
-    };
-    const joined = [text("given"), text("surname")]
-      .filter((part): part is string => part !== undefined)
-      .join(" ");
-    for (const hint of [text(role), text("name"), joined || undefined, text("person"), text("other")]) {
-      if (hint !== undefined) return hint;
-    }
+  return sv && typeof sv === "object" && !Array.isArray(sv) ? (sv as Record<string, unknown>) : undefined;
+}
+
+/** `given` then `surname` of a structured value, joined as `personNames` joins a
+ *  persona's: the whole name, which is what matches a persona exactly. */
+function joinedName(sv: Record<string, unknown>): string | undefined {
+  return nameText([nameText(sv.given), nameText(sv.surname)].filter(Boolean).join(" "));
+}
+
+/** The value of the one key of a structured value that names a second person
+ *  (`spouse`, `father`, `mother`, ...: `NAMES_SECOND_PERSON_KEYS`, as
+ *  `factTypeKey` folds a key). Undefined when none does, and when several do:
+ *  `{father, mother}` names two people, so neither answers a question about one. */
+function secondPersonName(sv: Record<string, unknown>): string | undefined {
+  const keys = Object.keys(sv).filter((k) => NAMES_SECOND_PERSON_KEYS.has(factTypeKey(k)));
+  return keys.length === 1 ? nameText(sv[keys[0]]) : undefined;
+}
+
+/** What an assertion says one party is called: whole names, most specific
+ *  first, and the given name and surname alone for a name given in parts. */
+interface PartyWords {
+  names: string[];
+  given?: string;
+  surname?: string;
+}
+
+function distinctNames(names: Array<string | undefined>): string[] {
+  return names.filter((n, i): n is string => n !== undefined && names.indexOf(n) === i);
+}
+
+/**
+ * What the cited assertion says ANOTHER party of its record is called: the party
+ * a `recordRole` asks for.
+ *
+ * Its own party's name never counts. On a fact about one person (a `name`), the
+ * `given`, `surname` and `name` of its structured value are the name of the
+ * person the assertion is about, and answering a request for another party with
+ * it scores the wrong person. On a fact about two (a marriage, a relationship,
+ * a parentage: `isTwoParty`) they name the OTHER party, as does the one key that
+ * names a second person (`{spouse: "Mary Doyle"}` on the groom's marriage).
+ * A key named by the role asked, and `related_person_name`, `person` and `other`,
+ * name another party whatever the fact.
+ */
+function otherPartyWords(assertion: any, asked: string): PartyWords {
+  const sv = structuredObject(assertion);
+  if (sv === undefined) return { names: [] };
+  const names = [nameText(sv[asked]), nameText(sv.related_person_name), nameText(sv.person), nameText(sv.other)];
+  const words: PartyWords = { names: [] };
+  if (isTwoParty(assertion?.fact_type)) {
+    names.push(joinedName(sv), nameText(sv.name), secondPersonName(sv));
+    words.given = nameText(sv.given);
+    words.surname = nameText(sv.surname);
+  }
+  words.names = distinctNames(names);
+  return words;
+}
+
+/**
+ * What the cited assertion says ITS OWN party is called. The key its own role
+ * names; and, on a fact about one person, `name` and `given` + `surname`. On a
+ * fact about two, `given`, `surname` and `name` name the other party, so they do
+ * not say who this one is.
+ */
+function ownPartyWords(assertion: any, ownRole: string | undefined): PartyWords {
+  const sv = structuredObject(assertion);
+  if (sv === undefined) return { names: [] };
+  const names = [ownRole !== undefined ? nameText(sv[ownRole]) : undefined];
+  const words: PartyWords = { names: [] };
+  if (!isTwoParty(assertion?.fact_type)) {
+    names.push(nameText(sv.name), joinedName(sv));
+    words.given = nameText(sv.given);
+    words.surname = nameText(sv.surname);
+  }
+  words.names = distinctNames(names);
+  return words;
+}
+
+/** The names the record's own `name` assertions give the party at `role`: each
+ *  one's `value`, and its structured given name and surname joined. */
+function siblingNames(record: readonly any[], role: string): string[] {
+  const names: Array<string | undefined> = [];
+  for (const a of record) {
+    if (a?.record_role !== role || !NAME_TYPES.has(String(a?.fact_type ?? "").toLowerCase())) continue;
+    const sv = structuredObject(a);
+    names.push(nameText(a?.value), sv !== undefined ? joinedName(sv) : undefined);
+  }
+  return distinctNames(names);
+}
+
+/** How close a persona's name must be to a name the assertions give. */
+type NameTest = (name: string, hint: string) => boolean;
+/** The whole name, exactly. */
+const SAME_NAME: NameTest = (n, h) => n === h;
+/** The whole name loosely: one contains the other. */
+const LIKE_NAME: NameTest = (n, h) => n.includes(h) || h.includes(n);
+/** A part of a name (a given name, a surname): a whole word of the persona's. */
+const HAS_WORDS: NameTest = (n, h) => ` ${n} `.includes(` ${h} `);
+
+/** The personas any of whose names passes `test` against any of `hints`. */
+function personsNamed(
+  candidates: readonly SimplifiedPerson[],
+  hints: readonly string[],
+  test: NameTest,
+): SimplifiedPerson[] {
+  return candidates.filter((p) => personNames(p).some((n) => n !== "" && hints.some((h) => test(n, h))));
+}
+
+/**
+ * The one persona some words name, or undefined when nothing does or when two
+ * people answer to them: choosing between those is a guess, so the caller
+ * refuses and lists them. In order: the whole name exactly, the whole name
+ * loosely, then the given name alone and the surname alone. The last two are
+ * the loosest, since a household shares a surname, so each counts only when it
+ * matches a single persona.
+ */
+function personNamedBy(candidates: readonly SimplifiedPerson[], words: PartyWords): SimplifiedPerson | undefined {
+  for (const test of [SAME_NAME, LIKE_NAME]) {
+    const hits = personsNamed(candidates, words.names, test);
+    if (hits.length > 0) return hits.length === 1 ? hits[0] : undefined;
+  }
+  for (const part of [words.given, words.surname]) {
+    if (part === undefined) continue;
+    const hits = personsNamed(candidates, [part], HAS_WORDS);
+    if (hits.length === 1) return hits[0];
   }
   return undefined;
 }
@@ -260,9 +385,10 @@ async function samePersonFromProject(
   try {
     await withProjectLock(projectPath, async () => {
       // `buildRecordedScore` derives every field from the project documents;
-      // the two this call already resolved by fetching are authoritative and
-      // override it. The shared builder exists so the eval harness writes the
-      // same shape on a fixture-served call rather than restating the rule.
+      // what this call already resolved is authoritative and overrides it: the
+      // persona, the role the response names for it, and the route. The shared
+      // builder exists so the eval harness writes the same shape on a
+      // fixture-served call rather than restating the rule.
       const derived = buildRecordedScore(
         research, assertionId, treePersonId, role, result, input.recordPersonaId,
       );
@@ -270,6 +396,7 @@ async function samePersonFromProject(
         await recordMatchScore(projectPath, {
           ...derived,
           record_persona_id: recordPersona.id,
+          record_role: recordPersona.role,
           record_source: recordSource,
         });
         recorded = true;
@@ -384,6 +511,14 @@ function otherRoleAsked(assertion: any, role: unknown): string | undefined {
   return role === own ? undefined : role;
 }
 
+/** Every assertion of the record `assertion` cites, itself included. The record
+ *  id is compared as `sameRecord` does, which tolerates the stored spellings. */
+function recordAssertionsOf(research: any, assertion: any): any[] {
+  return (Array.isArray(research?.assertions) ? research.assertions : []).filter((a: any) =>
+    sameRecord(a?.record_id, assertion?.record_id),
+  );
+}
+
 /**
  * Resolve the party a call names through the OTHER assertions of the same
  * record, when it names a different party from the one the assertion is about.
@@ -401,6 +536,12 @@ function otherRoleAsked(assertion: any, role: unknown): string | undefined {
  *                 may be handed one of silently.
  *  - `unresolved` another role was asked and nothing carries it.
  *
+ * Two kinds of id are no answer, however a sibling carries them. One the record
+ * stamps on more than one role names no single party (the rule
+ * `recordPartyKeyer` keys on, through `personaRolesById`): an extraction that
+ * wrote the searched persona's id on every party gives "the father" the child's
+ * id. And the assertion's own id is the party this call is NOT asking for.
+ *
  * `presentIds`, when given, are the persona ids of the fetched record: a
  * sibling's id that the record does not hold is not an answer. The eval harness
  * has no fetch and omits it.
@@ -417,11 +558,15 @@ export function resolvePartyBySiblings(
 ): PartyBySiblings {
   const asked = otherRoleAsked(assertion, recordRole);
   if (asked === undefined) return { kind: "own" };
+  const record = recordAssertionsOf(research, assertion);
+  const rolesById = personaRolesById(record);
+  const own = typeof assertion?.record_persona_id === "string" ? assertion.record_persona_id : "";
   const personaIds: string[] = [];
-  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
-    if (a?.record_role !== asked || !sameRecord(a?.record_id, assertion?.record_id)) continue;
+  for (const a of record) {
+    if (a?.record_role !== asked) continue;
     const pid = a?.record_persona_id;
     if (typeof pid !== "string" || pid === "") continue;
+    if ((rolesById.get(pid)?.size ?? 0) > 1 || pid === own) continue;
     if (presentIds !== undefined && !presentIds.includes(pid)) continue;
     if (!personaIds.includes(pid)) personaIds.push(pid);
   }
@@ -430,17 +575,12 @@ export function resolvePartyBySiblings(
 }
 
 /** persona id -> the roles the record's assertions give it. A fetched
- *  `persons[]` has no role of its own, so this is where one comes from. */
+ *  `persons[]` has no role of its own, so this is where one comes from.
+ *  Negative evidence (`record_role: "absent"`) is no role a persona holds. */
 function personaRoles(research: any, assertion: any): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
-    const pid = a?.record_persona_id;
-    const role = a?.record_role;
-    if (typeof pid !== "string" || pid === "" || typeof role !== "string" || role === "") continue;
-    if (!sameRecord(a?.record_id, assertion?.record_id)) continue;
-    const roles = out.get(pid) ?? [];
-    if (!roles.includes(role)) roles.push(role);
-    out.set(pid, roles);
+  for (const [pid, roles] of personaRolesById(recordAssertionsOf(research, assertion))) {
+    out.set(pid, [...roles]);
   }
   return out;
 }
@@ -463,6 +603,12 @@ function describePersonas(persons: SimplifiedPerson[], roles: Map<string, string
   return rows.length > 0 ? rows.join(", ") : "(none)";
 }
 
+/** A projected group as a refusal lists it: `id (name, role)`, with `no persona
+ *  id` for a party the record gave none. */
+function describeGroup(g: RecordPersonaGroup): string {
+  return `${g.personaId ?? "no persona id"} (${g.names.join(" / ") || "unnamed"}, ${g.role})`;
+}
+
 /** The persona id an attestation files for a call, from the project documents
  *  alone: the caller's explicit `recordPersonaId`, else the persona the sibling
  *  lookup finds for a role asked, else the assertion's own. Null when the record
@@ -478,6 +624,25 @@ function attestedPersonaId(
   if (party.kind === "resolved") return party.personaId;
   if (party.kind === "own") return (assertion.record_persona_id as string | null) ?? null;
   return null;
+}
+
+/** The role an attestation files for a call. When the caller named a persona,
+ *  the role the record's assertions give THAT persona, which need not be the role
+ *  asked: filing the role asked beside another persona's id is an entry that
+ *  contradicts itself. Otherwise the role the call asks for, else the
+ *  assertion's own. Null when nothing says. The production response reports
+ *  the same role, so the entry and the answer name one role for one persona. */
+function attestedRole(
+  research: any,
+  assertion: any,
+  role: string | undefined,
+  recordPersonaId: string | undefined,
+): string | null {
+  const ownRole = typeof assertion?.record_role === "string" ? assertion.record_role : undefined;
+  if (typeof recordPersonaId === "string" && recordPersonaId !== "") {
+    return roleOf(personaRoles(research, assertion), recordPersonaId, ownRole);
+  }
+  return (typeof role === "string" && role !== "" ? role : ownRole) ?? null;
 }
 
 /** The attestation record for one scored pairing, derived from the project
@@ -515,6 +680,8 @@ function attestedPersonaId(
  *  caller's `recordPersonaId`), so a call for the father files the father's
  *  persona whether or not a fetch happened. Where only a fetch can tell (a party
  *  found by name, a record with one persona) it files null or the assertion's own.
+ *  The role it files is `attestedRole`'s: with a persona named, the role the
+ *  record gives that persona.
  *
  *  Returns null when the pairing has no record side to attest — no such
  *  assertion, or no `record_id` on it — which is exactly when `samePerson`
@@ -546,7 +713,7 @@ export function buildRecordedScore(
   return {
     record_id: recordId,
     record_persona_id: attestedPersonaId(research, assertion, role, recordPersonaId),
-    record_role: (role ?? (assertion.record_role as string | undefined)) ?? null,
+    record_role: attestedRole(research, assertion, role, recordPersonaId),
     tree_person_id: treePersonId,
     score: result.score,
     ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
@@ -565,11 +732,17 @@ export function buildRecordedScore(
  * answer it was recorded with. Production names the pair each call asked for,
  * so the harness overlays this on the canned response: the id is the one
  * `buildRecordedScore` files, the name is the record's own name assertion for
- * that party (found as the projection route finds it), the role is the call's,
- * and the tree person is read from the tree.
+ * that party (found as the projection route finds it), the role is the one
+ * `buildRecordedScore` files, and the tree person is read from the tree.
  *
  * What the documents cannot say stays empty: no persona id is null, no name is
  * "". A fetch can say more, and the harness performs none.
+ *
+ * It names nobody that production would refuse to score. A persona id picks the
+ * group keyed on it and nothing else: an id no group holds is named with no
+ * name, not with the name of whichever group holds the role. With no id, the
+ * party is the group at the role only when exactly one holds it; two groups at
+ * one role are two people, which production refuses to choose between.
  *
  * Returns null when the assertion is not in the project.
  */
@@ -588,22 +761,18 @@ export function describeScoredPair(
   const id = attestedPersonaId(research, assertion, role, recordPersonaId);
   const ownRole = typeof assertion.record_role === "string" ? assertion.record_role : undefined;
   const effectiveRole = typeof role === "string" && role !== "" ? role : ownRole;
-  const named = typeof recordPersonaId === "string" && recordPersonaId !== "";
   const groups = projectRecordPersonas(
-    assertions.filter((a) => sameRecord(a?.record_id, assertion.record_id)),
+    recordAssertionsOf(research, assertion),
     String(assertion.record_id ?? ""),
   );
+  const atRole = groups.filter((g) => g.role === effectiveRole);
   const group =
-    groups.find((g) => id !== null && g.key === id) ?? groups.find((g) => g.role === effectiveRole);
+    id !== null ? groups.find((g) => g.key === id) : atRole.length === 1 ? atRole[0] : undefined;
   return {
     recordPersona: {
       id,
       name: group?.names[0] ?? "",
-      // A persona the caller named holds the role the record gives IT, which may
-      // not be the role asked; every other route answers the party that was asked.
-      role: named
-        ? id !== null ? roleOf(personaRoles(research, assertion), id, ownRole) : null
-        : effectiveRole ?? null,
+      role: attestedRole(research, assertion, role, recordPersonaId),
     },
     treePerson: {
       id: treePersonId,
@@ -701,10 +870,33 @@ async function resolveRecordSide(
     typeof input.recordPersonaId === "string" &&
     own.some((a: any) => a?.record_persona_id === input.recordPersonaId) &&
     !groups.some((g) => g.key === input.recordPersonaId);
-  const group =
-    typeof input.recordPersonaId === "string" && input.recordPersonaId !== "" && !sharedPid
-      ? groups.find((g) => g.key === input.recordPersonaId)
-      : groups.find((g) => g.role === role);
+  let group: RecordPersonaGroup | undefined;
+  if (typeof input.recordPersonaId === "string" && input.recordPersonaId !== "" && !sharedPid) {
+    group = groups.find((g) => g.key === input.recordPersonaId);
+  } else {
+    // No persona was named. A call about the assertion's own party is about the
+    // group that assertion falls in (the key `projectRecordPersonas` gave it):
+    // two groups can hold one role, and the first of them is not always its.
+    if (otherRoleAsked(assertion, role) === undefined) {
+      const key = recordPartyKeyer(own)(assertion);
+      group = groups.find((g) => g.key === key);
+    }
+    // Any other party is the group at the role asked, and two groups at one role
+    // are two people. Taking the first would score one of them without saying so,
+    // which the fetched route refuses; list them so the call can name one.
+    if (group === undefined) {
+      const atRole = groups.filter((g) => g.role === role);
+      if (atRole.length > 1) {
+        throw new SamePersonInputError(
+          `same_person: role '${role}' in record '${recordId}' names more than one person ` +
+            `(${atRole.map(describeGroup).join(", ")}), so scoring it would pick between them. ` +
+            "Pass recordPersonaId to name one of them (a party shown with no persona id " +
+            "cannot be named).",
+        );
+      }
+      group = atRole[0];
+    }
+  }
   if (group === undefined && typeof input.recordPersonaId === "string") {
     throw new SamePersonInputError(
       `same_person: record '${recordId}' holds no persona with ` +
@@ -762,6 +954,18 @@ function assertUnambiguous(group: RecordPersonaGroup, recordId: string): void {
   );
 }
 
+/** Whether the record's assertions give a persona roles and none of them is
+ *  `role`: it is another party. False when no assertion names it, or when the
+ *  assertion being scored has no role to compare. */
+function knownAsAnotherRole(
+  roles: Map<string, string[]>,
+  personaId: string,
+  role: string | undefined,
+): boolean {
+  const held = roles.get(personaId);
+  return role !== undefined && held !== undefined && held.length > 0 && !held.includes(role);
+}
+
 /**
  * Which persons[].id in a FETCHED record document this link is about, and the
  * role the record's assertions give it.
@@ -771,12 +975,23 @@ function assertUnambiguous(group: RecordPersonaGroup, recordId: string): void {
  *     hold is refused, as on the projection route: skipping it scored whichever
  *     persona came next while the caller believed it had named one.
  *  2. A caller who asked for another role than the assertion's own (the second
- *     party of a relationship or marriage assertion): the persona a sibling
- *     assertion carries for that role, then the name the assertion gives that
- *     party. NEVER the assertion's own persona, which is a different party.
- *  3. Otherwise the assertion's own persona (exact), then the name the
- *     assertion gives (a loose match, so after it), then a record with one
- *     persona.
+ *     party of a relationship or marriage assertion):
+ *       a. the persona id a sibling assertion of the same record carries for that
+ *          role (`resolvePartyBySiblings`); two ids are two people and refused;
+ *       b. the persona whose name is the name a sibling `name` assertion of that
+ *          role gives, when exactly one persona's name is exactly that;
+ *       c. the persona the cited assertion's own words name as that party
+ *          (`otherPartyWords`), by the whole name exactly, the whole name loosely,
+ *          then the given name alone and the surname alone, each when it names a
+ *          single persona.
+ *     The assertion's own persona is taken out of the candidates before any name
+ *     is tried, since it is a different party: a name that finds it must not end
+ *     the search while another persona bears the same name. A name given for the
+ *     assertion's OWN party is not a name for this one.
+ *  3. Otherwise the assertion's own persona (exact), then the name the assertion
+ *     gives for its own party (`ownPartyWords`, matched as in 2c), then a record
+ *     with one persona, unless the record's assertions know that persona as a
+ *     different role than the assertion's own.
  * Everything else is refused, with every persona listed as `id (name, role)`.
  */
 function pickFetchedParty(
@@ -820,23 +1035,35 @@ function pickFetchedParty(
   const own = typeof assertion?.record_persona_id === "string" ? assertion.record_persona_id : "";
   if (asked === undefined && own !== "" && ids.includes(own)) return picked(own);
 
-  // The agent's own rule for the second party of a relationship assertion:
-  // find the persona by the name the assertion gives that party.
-  const hint = partyNameHint(assertion, role);
-  if (hint !== undefined) {
-    const hit =
-      persons.find((p) => personNames(p).some((n) => n !== "" && n === hint)) ??
-      persons.find((p) =>
-        personNames(p).some((n) => n !== "" && (n.includes(hint) || hint.includes(n))),
-      );
-    // A name that finds the assertion's OWN persona does not answer a request for
-    // another role: it would be the fallback this order refuses, by another door.
-    if (hit?.id !== undefined && !(asked !== undefined && hit.id === own)) {
-      return picked(hit.id, asked ?? ownRole);
-    }
+  // The personas a name may find. For another party that is everyone but the
+  // assertion's own persona, taken out here and not rejected after a name has
+  // found it: a father and son who share a name would otherwise stop the search
+  // at the son.
+  const candidates = persons.filter(
+    (p) => typeof p.id === "string" && !(asked !== undefined && p.id === own),
+  );
+  let hit: SimplifiedPerson | undefined;
+  if (asked !== undefined) {
+    const bySiblings = personsNamed(
+      candidates,
+      siblingNames(recordAssertionsOf(research, assertion), asked),
+      SAME_NAME,
+    );
+    hit =
+      bySiblings.length === 1
+        ? bySiblings[0]
+        : personNamedBy(candidates, otherPartyWords(assertion, asked));
+  } else {
+    hit = personNamedBy(candidates, ownPartyWords(assertion, ownRole));
   }
+  if (hit?.id !== undefined) return picked(hit.id, asked ?? ownRole);
 
-  if (asked === undefined && persons.length === 1 && ids.length === 1) {
+  if (
+    asked === undefined &&
+    persons.length === 1 &&
+    ids.length === 1 &&
+    !knownAsAnotherRole(roles, ids[0], ownRole)
+  ) {
     return picked(ids[0], ownRole);
   }
 
