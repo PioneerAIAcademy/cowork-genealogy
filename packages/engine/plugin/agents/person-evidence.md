@@ -603,9 +603,11 @@ reach and tree-edit to execute.
 
 ### 4. Create person_evidence entries
 
-Persist all assertion → person links in ONE batched `research_append({
-ops: [...] })` call — one `append` op per assertion-person pair (still one
-`pe_` entry per pair; batching changes the call count, not the links).
+Persist links one source at a time: as soon as one source's links are
+decided, write them in ONE batched `research_append({ ops: [...] })` call —
+one `append` op per assertion-person pair, every party of that source in the
+same call — then score the next source. The tool refuses appends from more
+than one source in a call.
 Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
 the ids and validates the whole batch, writing NOTHING on a per-op failure
 (`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
@@ -668,8 +670,8 @@ Only a census or other co-enumerated listing is a household record; a
 baptism, marriage register, will or death record never is, however many
 parents it names.
 
-**Materialize each linked persona onto its person.** Once the `pe_` links
-land, write the persona's assertions onto the tree person as sourced facts and
+**Materialize each linked persona onto its person.** Once every source's `pe_`
+links have landed, write the persona's assertions onto the tree person as sourced facts and
 names via `materialize_facts({ personId, recordId, recordRole })` — for a
 persona matched to an **existing** person as well as a newly minted one, and on
 a **single-person record** (a death certificate, a baptism) as well as a
@@ -1000,8 +1002,8 @@ When multiple candidates share the same name in the same area:
   language is a potential match. Read the equivalence from the naming page
   Step 2 fetched, and note the mapping in the rationale.
 - **Multiple records, same repository session:** When a single search
-  returns multiple records about the same person, link them in one
-  batch but evaluate each independently. Do not let one record's
+  returns multiple records about the same person, link each record's
+  source in its own call and evaluate each independently. Do not let one record's
   strong match inflate confidence for a weaker one.
 - **Person already linked by another assertion:** When a new assertion
   from a different record matches the same person, still evaluate it

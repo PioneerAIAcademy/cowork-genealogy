@@ -409,10 +409,14 @@ describe("namesake cap", () => {
       expect(errs(byAssertion)).toContain("on link 'pe_002'");
     });
 
-    it("C7 an occupation matched only by a record linked in the same call", async () => {
-      await setup();
+    it("C7 an occupation matched only by a record raised in the same call", async () => {
+      // Two sources' appends cannot share a call (one source per call), so the
+      // same-call voucher arrives as a raise on standing links.
+      await setup(
+        research({ person_evidence: [standing("pe_001", "a_011", P, "speculative"), standing("pe_002", "a_001", P, "speculative")] }),
+      );
       await attest(["a_011", P], ["a_001", P]);
-      const r = await call(link("a_011", P), link("a_001", P));
+      const r = await call(update("pe_001", { confidence: "probable" }), update("pe_002", { confidence: "probable" }));
       expect(r.ok).toBe(false);
       expect(errs(r)).toContain(
         `The occupation 'clerk' on this source matches no record linked to '${P}' at 'probable' or better ` +
@@ -692,10 +696,10 @@ describe("namesake cap", () => {
     });
 
     it.each([
-      ["superseded", [link("a_011", P, "speculative"), update("pe_001", { superseded_by: "pe_002" })], "pe_003"],
-      ["lowered to speculative", [update("pe_001", { confidence: "speculative" })], "pe_002"],
-    ])("refuses an occupation tie whose voucher is %s in the same call", async (_label, ops, linkId) => {
-      await setup(research({ person_evidence: [standing("pe_001", "a_011", P)] }));
+      ["superseded", [standing("pe_002", "a_011", P, "speculative")], [update("pe_001", { superseded_by: "pe_002" })], "pe_003"],
+      ["lowered to speculative", [], [update("pe_001", { confidence: "speculative" })], "pe_002"],
+    ])("refuses an occupation tie whose voucher is %s in the same call", async (_label, seeded, ops, linkId) => {
+      await setup(research({ person_evidence: [standing("pe_001", "a_011", P), ...(seeded as unknown[])] }));
       await attest(["a_011", P], ["a_001", P]);
       const r = await call(...(ops as unknown[]), link("a_001", P));
       expect(r.ok).toBe(false);
