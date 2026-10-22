@@ -4,6 +4,7 @@
  * issue #2547 names, each of which gives a wrong answer with everything green.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
 import { LOCAL } from "../../src/auth/principal.js";
 
 vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
@@ -15,7 +16,8 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...real, standardPlaceToRepId: mockStandardPlaceToRepId };
 });
 
-import { catalogSearchTool } from "../../src/tools/catalog-search.js";
+import { catalogSearchTool, mergeFilmNotes } from "../../src/tools/catalog-search.js";
+import type { CatalogFilmNote, CatalogSearchResult } from "../../src/types/catalog-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 
@@ -227,9 +229,11 @@ describe("catalog_search — hydration", () => {
     expect(r.hits[2].subjects).toEqual([]);
   });
 
-  it("maps every film-note field to its own key", async () => {
-    // Seven fields written as seven near-identical spreads, where one
-    // mistyped repeat would be invisible; only two were asserted.
+  it("maps every film-note field to its own key, and carries neither shelf nor imageStartNumber", async () => {
+    // The fields were seven near-identical spreads, where one mistyped repeat
+    // would be invisible; only two were asserted. `shelf` and
+    // `item_image_start_no` arrive from the service and are not carried: no
+    // plugin body, validator or fixture reads them (spec, Response).
     respond(
       { totalHits: 1, searchHits: [hit("koha:1")] },
       { source: { film_note: {
@@ -247,11 +251,12 @@ describe("catalog_search — hydration", () => {
       filmNumber: "111",
       imageGroupNumber: "999",
       indexed: "Yes",
-      shelf: "US/CAN Film",
       copyLocation: "Granite Mountain Record Vault",
       text: "Baptisms 1750-1790",
-      imageStartNumber: "42",
     });
+    expect(Object.keys(r.hits[0].filmNotes?.[0] ?? {})).toEqual([
+      "filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text",
+    ]);
   });
 
   it("surfaces digital_film_no as imageGroupNumber", async () => {
@@ -1497,5 +1502,163 @@ describe("catalog_search — errors", () => {
     await expect(
       catalogSearchTool({ keywords: "x", [field]: value }, LOCAL),
     ).resolves.toBeDefined();
+  });
+});
+
+// ─── One entry per reel ─────────────────────────────────────────────────────────
+//
+// A hydrated item can carry a film note per frame range, dozens of them on one
+// reel. Notes that agree on every field but `text` are one entry, texts joined
+// with " | " in order. Nothing is dropped, and notes that differ in ANY other
+// field stay apart: the plugin reads `copyLocation` and the numbers off each
+// entry, so a merge across them would make an entry say something no note said.
+
+/** The answer the tool gave for "Ireland" + "Catholic parish registers baptism
+ *  marriage" on 2026-10-22, saved verbatim by `dev/try-catalog-search.ts --save`
+ *  at the defaults (count 25, hydrate 10) before film notes were merged or
+ *  budgeted: 433 hits, 25 returned, 10 hydrated, 55,803 characters. */
+const IRELAND: CatalogSearchResult = JSON.parse(
+  readFileSync(
+    new URL("../fixtures/catalog-search/ireland-catholic-parish-registers.answer.json", import.meta.url),
+    "utf-8",
+  ),
+);
+
+/** One film note in the shape the service returns it. */
+const note = (o: Record<string, string>): Record<string, string> => ({
+  filmno: "100",
+  digital_film_no: "900",
+  fs_indexed: "Y",
+  copy_location: "Granite Mountain Record Vault",
+  ...o,
+});
+
+describe("catalog_search — one entry per reel", () => {
+  /** One hit, hydrated with the given film notes, answered through the tool. */
+  async function notesOf(...film: object[]): Promise<CatalogFilmNote[]> {
+    respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: { film_note: film } });
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    return r.hits[0].filmNotes ?? [];
+  }
+
+  it("notes on one reel become one entry, texts joined in the order given", async () => {
+    const entries = await notesOf(
+      note({ text: "MIC 1/1-10 baptisms" }),
+      note({ text: "MIC 1/11-20 marriages" }),
+      note({ text: "MIC 1/21-30 burials" }),
+    );
+    expect(entries).toEqual([
+      {
+        filmNumber: "100",
+        imageGroupNumber: "900",
+        indexed: "Y",
+        copyLocation: "Granite Mountain Record Vault",
+        text: "MIC 1/1-10 baptisms | MIC 1/11-20 marriages | MIC 1/21-30 burials",
+      },
+    ]);
+  });
+
+  it.each([
+    ["filmno", "101"],
+    ["digital_film_no", "901"],
+    ["fs_indexed", "N"],
+    ["copy_location", "FamilySearch Library"],
+  ])("two notes that differ only in %s stay apart", async (field, other) => {
+    const entries = await notesOf(note({ text: "a" }), note({ text: "b", [field]: other }));
+    expect(entries).toHaveLength(2);
+    expect(entries.map((e) => e.text)).toEqual(["a", "b"]);
+  });
+
+  it("a note missing a field the other has stays apart from it", async () => {
+    const { copy_location: _gone, ...noCopy } = note({ text: "b" });
+    const entries = await notesOf(note({ text: "a" }), noCopy);
+    expect(entries).toHaveLength(2);
+    expect(entries[1]).not.toHaveProperty("copyLocation");
+  });
+
+  it("notes that differ only in a field the answer no longer carries are one reel", async () => {
+    // `shelf` is where the reel sits, not which reel it is.
+    const entries = await notesOf(
+      note({ text: "a", shelf: "Film" }),
+      note({ text: "b", shelf: "B1 Floor Film" }),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0].text).toBe("a | b");
+    expect(entries[0]).not.toHaveProperty("shelf");
+  });
+
+  it("a note with no text adds no separator, and a reel with no text at all has no text key", async () => {
+    const noText = (o: Record<string, string> = {}) => {
+      const { text: _t, ...rest } = note(o);
+      return rest;
+    };
+    const [middle] = await notesOf(note({ text: "a" }), noText(), note({ text: "b" }));
+    expect(middle.text).toBe("a | b");
+    const [bare] = await notesOf(noText(), noText());
+    expect(bare).not.toHaveProperty("text");
+  });
+
+  it("entries keep the order their reel first appeared in, and a later note joins its reel's entry", async () => {
+    const entries = await notesOf(
+      note({ text: "r1-a" }),
+      note({ text: "r2-a", filmno: "200", digital_film_no: "901" }),
+      note({ text: "r1-b" }),
+      note({ text: "r2-b", filmno: "200", digital_film_no: "901" }),
+    );
+    expect(entries.map((e) => [e.filmNumber, e.text])).toEqual([
+      ["100", "r1-a | r1-b"],
+      ["200", "r2-a | r2-b"],
+    ]);
+  });
+
+  describe("mergeFilmNotes", () => {
+    it("is empty for no notes, and leaves a lone note as it was", () => {
+      expect(mergeFilmNotes([])).toEqual([]);
+      const lone = { filmNumber: "1", imageGroupNumber: "2", text: "t" };
+      expect(mergeFilmNotes([lone])).toEqual([lone]);
+    });
+
+    it("drops a field the notes no longer carry, whatever it is called, and keeps the key order", () => {
+      const saved = [
+        { filmNumber: "1", imageGroupNumber: "2", indexed: "Y", shelf: "Film", copyLocation: "V", text: "t", imageStartNumber: "7", mystery: "x" },
+      ] as unknown as CatalogFilmNote[];
+      const [entry] = mergeFilmNotes(saved);
+      expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text"]);
+    });
+
+    it("is idempotent, and does not touch its input", () => {
+      const input: CatalogFilmNote[] = [
+        { filmNumber: "1", text: "a" },
+        { filmNumber: "1", text: "b" },
+        { filmNumber: "2", text: "c" },
+      ];
+      const copy = structuredClone(input);
+      const once = mergeFilmNotes(input);
+      expect(input).toEqual(copy);
+      expect(mergeFilmNotes(once)).toEqual(once);
+    });
+  });
+
+  it("on the saved Ireland answer, loses no text and no reel: 76 notes of one hit become one entry per reel", () => {
+    const first = IRELAND.hits[0];
+    const original = first.filmNotes ?? [];
+    expect(original).toHaveLength(76);
+    const merged = mergeFilmNotes(original);
+    // The reel, as the rule defines it, counted here independently of the code.
+    const reels = new Set(
+      original.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.indexed ?? null, n.copyLocation ?? null])),
+    );
+    expect(merged).toHaveLength(reels.size);
+    expect(merged.length).toBeLessThan(original.length);
+    // Lossless: every text survives, once, whatever entry it moved to. No note
+    // text contains the separator, so splitting gives the originals back.
+    expect(original.every((n) => !n.text?.includes(" | "))).toBe(true);
+    const texts = merged.flatMap((e) => (e.text ?? "").split(" | "));
+    expect([...texts].sort()).toEqual(original.map((n) => n.text ?? "").sort());
+    // Every entry still carries what the plugin reads.
+    for (const e of merged) {
+      expect(e.filmNumber).toBeDefined();
+      expect(e.imageGroupNumber).toBeDefined();
+    }
   });
 });

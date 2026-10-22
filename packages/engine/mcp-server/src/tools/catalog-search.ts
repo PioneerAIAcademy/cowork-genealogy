@@ -332,14 +332,14 @@ function hydrateFromSource(hit: CatalogHit, sources: Collapsed[]): void {
   // spreads it named each source key twice, so a single mistyped repeat
   // would be invisible to both review and these tests.
   // The DGS is image_search's and fulltext_search's `imageGroupNumber`.
+  // `shelf` and `item_image_start_no` are deliberately not read: no plugin body,
+  // validator or fixture uses them (spec, Response).
   const FILM_FIELDS: [keyof CatalogFilmNote, string][] = [
     ["filmNumber", "filmno"],
     ["imageGroupNumber", "digital_film_no"],
     ["indexed", "fs_indexed"],
-    ["shelf", "shelf"],
     ["copyLocation", "copy_location"],
     ["text", "text"],
-    ["imageStartNumber", "item_image_start_no"],
   ];
   hit.filmNotes = across("film_note").map((f) => {
     const note: CatalogFilmNote = {};
@@ -371,6 +371,57 @@ function hydrateFromSource(hit: CatalogHit, sources: Collapsed[]): void {
     }
   }
   hit.hydrated = true;
+}
+
+/** The text of every film note on one reel joins with this, in the order the
+ *  Catalog gave them. */
+const FILM_TEXT_SEPARATOR = " | ";
+
+/** The film-note fields that identify a reel. Notes that agree on ALL of them
+ *  are one entry; `text` is what varies. `copyLocation` is among them on
+ *  purpose: the same reel held in two places is two entries, and the plugin
+ *  reads `copyLocation` off each one. */
+const REEL_KEY_FIELDS = ["filmNumber", "imageGroupNumber", "indexed", "copyLocation"] as const;
+
+/**
+ * One entry per reel. Film notes that agree on every field but `text` are
+ * merged, their texts joined with " | " in the order they came. Nothing is
+ * dropped: the keys the plugin reads stay on each entry, and notes that differ
+ * in ANY other field stay apart. Entries keep the order their reel first
+ * appeared in. Only the five fields of `CatalogFilmNote` survive, so a saved
+ * answer that still carries `shelf` or `imageStartNumber` comes out without them.
+ */
+export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNote[] {
+  const reels = new Map<string, { entry: CatalogFilmNote; texts: string[] }>();
+  for (const n of notes) {
+    // `?? null`: an absent field and an undefined one must key alike.
+    const key = JSON.stringify(REEL_KEY_FIELDS.map((f) => n[f] ?? null));
+    let reel = reels.get(key);
+    if (!reel) {
+      const entry: CatalogFilmNote = {};
+      for (const f of REEL_KEY_FIELDS) if (n[f] !== undefined) entry[f] = n[f];
+      reel = { entry, texts: [] };
+      reels.set(key, reel);
+    }
+    // A note with no text adds nothing, and so no separator either.
+    if (n.text) reel.texts.push(n.text);
+  }
+  return [...reels.values()].map(({ entry, texts }) =>
+    texts.length > 0 ? { ...entry, text: texts.join(FILM_TEXT_SEPARATOR) } : entry,
+  );
+}
+
+/**
+ * Everything that shapes an answer once its hits are hydrated: one entry per
+ * reel. The tool ends in it, and a recorded answer can be run through it (the
+ * eval fixtures were reshaped that way), so there is one code path and not a
+ * copy of it.
+ */
+export function shapeAnswer(result: CatalogSearchResult): CatalogSearchResult {
+  for (const h of result.hits) {
+    if (h.filmNotes) h.filmNotes = mergeFilmNotes(h.filmNotes);
+  }
+  return result;
 }
 
 export async function catalogSearchTool(
@@ -728,7 +779,7 @@ export async function catalogSearchTool(
       ? upstreamTotal
       : hits.length;
 
-  return {
+  return shapeAnswer({
     totalHits,
     returned: hits.length,
     // Boolean(repId), matching buildQuery's own `if (repId)`: `"" !== null`
@@ -737,7 +788,7 @@ export async function catalogSearchTool(
     hydrationTimedOut,
     hydrateRequested: hydrate,
     hits,
-  };
+  });
 }
 
 export const catalogSearchSchema = {

@@ -26,18 +26,21 @@ export interface CatalogSearchInput {
   hydrate?: number;
 }
 
-/** One reel or digitization of an item. */
+/** One reel or digitization of an item: ONE entry per reel, however many film
+ *  notes the Catalog holds for it. Notes that agree on every field but `text`
+ *  are one entry (`catalog-search.ts`, `mergeFilmNotes`). The Catalog's `shelf`
+ *  and `item_image_start_no` are not carried: no plugin body, validator or
+ *  fixture reads them. */
 export interface CatalogFilmNote {
   /** Legacy microfilm number. */
   filmNumber?: string;
   /** DGS — feeds `image_search`/`fulltext_search` as their `imageGroupNumber`. */
   imageGroupNumber?: string;
   indexed?: string;
-  shelf?: string;
   copyLocation?: string;
-  /** What that reel covers. */
+  /** What that reel covers. When several notes were merged, their texts in the
+   *  order the Catalog gave them, joined with " | ". */
   text?: string;
-  imageStartNumber?: string;
 }
 
 export interface CatalogHit {
@@ -60,6 +63,7 @@ export interface CatalogHit {
   notes?: string[];
   authors?: string[];
   subjects?: string[];
+  /** One entry per reel. */
   filmNotes?: CatalogFilmNote[];
   availableOnline?: boolean;
   /** FamilySearch Digital Library URL for a digitized book. Surfaced only; no
