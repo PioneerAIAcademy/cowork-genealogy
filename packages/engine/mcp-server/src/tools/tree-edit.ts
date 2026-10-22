@@ -26,6 +26,8 @@ import type {
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import { introducedCitations, namesakeCitationRefusals, type IntroducedCitation } from "./research-append.js";
+import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import {
   introducedWarnings,
   staleJustifications,
@@ -1216,7 +1218,21 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     // block only on errors THIS call introduces, not pre-existing drift in a
     // section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-
+    // The namesake check on tree writes (#3363): each op's citations onto a
+    // fact or name of a person with a namesake row, judged once all ops have
+    // applied, on the tree as it stood before the call. Only a project that
+    // records a namesake takes the snapshots.
+    const holders = new Set<string>(
+      ((Array.isArray(research?.namesakes) ? research.namesakes : []) as any[])
+        .map((r) => r?.person_id)
+        .filter((id): id is string => typeof id === "string"),
+    );
+    const startingPersonIds = holders.size > 0 ? startingPersonIdsOf(await readStartingTree(projectPath)) : undefined;
+    const introduced: IntroducedCitation[] = [];
+    const holderSnapshot = () =>
+      holders.size === 0
+        ? null
+        : { persons: ((tree.persons ?? []) as any[]).filter((p) => holders.has(p?.id)).map((p) => structuredClone(p)) };
 
     // ─── Batch form: apply every op in-memory, then validate + write once ─────
     if (input.ops !== undefined) {
@@ -1229,7 +1245,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
         const op = input.ops[i];
         try {
           gateOperation(op?.operation, gate);
+          const snapshot = holderSnapshot();
           const applied = await applyOperation(tree, research, { ...op, projectPath });
+          if (snapshot) introduced.push(...introducedCitations(snapshot, tree, holders, i));
           opWarnings.push(...applied.warnings);
           const r: PerOpResult = { operation: op.operation };
           if (Object.keys(applied.assignedIds).length > 0) r.assignedIds = applied.assignedIds;
@@ -1241,6 +1259,11 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
           }
           throw e;
         }
+      }
+
+      const namesakeFindings = namesakeCitationRefusals(research, beforeTree, introduced, startingPersonIds);
+      if (namesakeFindings.length > 0) {
+        return { ok: false, errors: namesakeFindings.map((f) => `ops[${f.index}]: ${f.message}`) };
       }
 
       const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
@@ -1285,8 +1308,15 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       return { ok: false, errors: ["provide either `ops` (batch) or `operation` (single)"] };
     }
     gateOperation(input.operation, gate);
+    const snapshot = holderSnapshot();
     const applied = await applyOperation(tree, research, input);
     const { assignedIds, warnings } = applied;
+    if (snapshot) {
+      const findings = namesakeCitationRefusals(
+        research, beforeTree, introducedCitations(snapshot, tree, holders, null), startingPersonIds,
+      );
+      if (findings.length > 0) return { ok: false, errors: findings.map((f) => f.message) };
+    }
 
     const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
@@ -1347,7 +1377,10 @@ export const treeEditSchema = {
     "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
     "never duplicated onto each spouse. Use materialize_facts to write a record " +
     "persona's sourced facts onto a tree person, or merge_tree_persons to collapse " +
-    "duplicate persons (this tool never deletes a person).\n" +
+    "duplicate persons (this tool never deletes a person). " +
+    "On a person with a recorded namesake (research.json `namesakes`), a fact or " +
+    "name may cite a record only when that record's link to the person passes the " +
+    "namesake cap; otherwise nothing is written and the refusal names the route.\n" +
     "\n" +
     "add_relationship requires a non-null source-ref on the edge. Prefer " +
     "`sourceAssertionId` (the research.json assertion this edge comes from — any " +
