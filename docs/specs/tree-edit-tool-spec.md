@@ -504,11 +504,16 @@ or name may cite a record onto that person only when the record ties to them.
 After the ops apply in memory, each op's **introduced citations** onto a row
 holder's facts and names are judged (`introducedCitations`: every ref of a node
 the op makes, and the refs an existing node gains, compared without a leading
-`#`; a node is matched by id on the same person). Each research source a
-citation reaches (`refsReach`) needs a live `probable` or `confident` link from
-one of its assertions to the person that the namesake cap allows
-(`namesakeCitationRefusals`, on `namesakeVerdicts`); a ref that reaches no
-research source is not judged. Relationships, and facts on them, are left to
+`#`; a node is matched by id on the same person). A batch is charged with what
+the call adds as a whole (`netIntroducedCitations`): a ref one op drops and a
+later op restores, or one op adds and a later op drops, is not charged, and a
+ref several ops add is charged once, on the last of them. Each ref passes when
+one of the research sources it reaches (`refsReach`) has a live `probable` or
+`confident` link from one of its assertions to the person that the namesake cap
+allows (`namesakeCitationRefusals`, on `namesakeVerdicts`). An S entry can back
+several research sources, one per persona of a record, so one that ties is
+enough; when none does, each is named. A ref that reaches no research source is
+not judged. Relationships, and facts on them, are left to
 Rule T, and a person-level `sources` ref is not judged: the lead's ruling of
 2026-10-18 names facts and names. The cap reads relatives from the tree as it
 stood **before the call**, as `materialize_facts`' copy gate does, so a
@@ -523,7 +528,7 @@ batch form:
 
 > `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or tie the record first through person-evidence; a relationship added in this same call does not count, so add it in an earlier call.`
 
-**Measured** at `e47d00e05` by `dev/measure-namesake-cap.ts` §6 over the committed
+**Measured** at `bb8af9a54` by `dev/measure-namesake-cap.ts` §6 over the committed
 e2e runs, with a row planted on every person holding a live `probable` or
 `confident` link: 39 calls cite a record onto such a person's fact or name, 14
 onto the subject. At call time, where the replay has the run's links (15 calls;
@@ -563,8 +568,8 @@ Sequence (validate-before-persist, tree-only):
 2. Apply the operation **in memory**: allocate ids, run the primary/preferred
    swaps, resolve `standard_place`.
 3. **Judge citations onto a person with a recorded namesake** (§4.5): when the
-   project records a namesake row, each op's introduced citations onto a row
-   holder's facts and names. A finding writes nothing and returns
+   project records a namesake row, the citations the call as a whole introduces
+   onto a row holder's facts and names. A finding writes nothing and returns
    `{ ok: false, errors }`.
 4. **Validate** the would-be tree with `validateParsed(research, tree, { projectPath })`
    before any write. If the call introduces an error → write nothing, return
@@ -757,7 +762,9 @@ The caller (`tree-edit` skill) still:
   with both files unchanged; a tied record, no row, a row on a relative only, a
   ref no research source cites, a fact on a relationship, an update restating or
   respelling a ref, and a relative the starting tree holds are all written; a
-  relationship the same call adds does not tie the record.
+  relationship the same call adds does not tie the record. An S entry two
+  research sources share passes on one that ties and names each when none does;
+  a batch is judged as a whole, each ref charged once, to the last op adding it.
 
 ---
 

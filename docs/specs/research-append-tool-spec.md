@@ -1270,8 +1270,9 @@ refuses. One line per holder, from `namesakeRowWarnings` over
 '<a>' on source '<src>', <fact_type>), ….[ <M> fact(s) on '<P>' were copied through
 them: '<F>' <type> (cites <S>), ….][ <K> name(s) on '<P>' also cite those records
 and stay, since no tool removes a name.] The row is recorded and these stay as they are,
-but materialize_facts will not copy, and tree_edit and tree_correct will not cite,
-any further fact or name onto '<P>' through these links. For each link, person-evidence either ties it or lowers it to
+but materialize_facts will not copy any further fact onto '<P>' through these
+links, and tree_edit and tree_correct will not cite their records' S entries onto
+'<P>''s facts or names unless another record on the same S entry ties to '<P>'. For each link, person-evidence either ties it or lowers it to
 'speculative' naming the namesake.[ Remove a listed fact that belongs to the
 namesake with tree_correct (operation 'remove', its factId and personId
 '<P>').]"` The fact sentence and the removal sentence appear only when a fact
