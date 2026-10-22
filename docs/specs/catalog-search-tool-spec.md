@@ -472,23 +472,26 @@ items of up to 1,804 entries, and they pin the two exceptions.
 
 ### Measured on 2026-10-22
 
-Measured with `packages/engine/mcp-server/dev/try-catalog-search.ts`, live, at
-the tool's defaults (`count` 25, `hydrate` 10). Each call was run before the
-change and again after it. The Catalog moves, so a re-run differs by a few
-characters: the Ireland call came back 55,803 and, run again at once, 55,802.
+Each call was run live with `packages/engine/mcp-server/dev/try-catalog-search.ts`
+at the tool's defaults (`count` 25, `hydrate` 10) before the change, and its whole
+answer saved with `--save`. The "after" column is that same saved answer put
+through `shapeAnswer`, the function the tool ends in, so the two columns hold the
+same hits and differ only by the shaping. The Catalog moves, so a live re-run
+differs a little: the Ireland call came back 55,803 and, run again at once, 55,802.
 
 | call | before | after | what the answer holds |
 |---|--:|--:|---|
-| `Ireland` + `Catholic parish registers baptism marriage` | 55,803 | 26,392 | 25 hits, 10 hydrated. The hit at rank 1 lists 5 of its 7 entries (it carried 76 notes). The other hydrated hits are whole |
-| `Hammer, Hordaland, Norway` + `kirkebøker` | 25,595 | 9,620 | 3 hits, all whole. One hit's 142 notes are 14 entries |
+| `Ireland` + `Catholic parish registers baptism marriage` | 55,803 | 26,302 | 25 hits, 10 hydrated. The hit at rank 1 lists 5 of its 7 entries (it carried 76 notes). The other hydrated hits are whole |
+| `Hammer, Hordaland, Norway` + `kirkebøker` | 25,595 | 9,619 | 3 hits, all whole. One hit's 142 notes are 14 entries |
 | `Cook, Illinois, United States` + `church records` | 18,012 | 16,614 | 25 hits, none cut. 21 notes became 11 entries, and `shelf` is gone |
-| `Norway` + `kirkebøker` | 1,476,812 | 39,921 | every hit listed, 8 of 25 cut, each to its first 34 or 35 of 434 to 1,804 entries |
+| `Norway` + `kirkebøker` | 1,476,812 | 40,000 | every hit listed; 9 of 25 cut, each to its first 30 or 31 of 434 to 1,804 entries |
 
-The Norway call is the tail. Before the change it carried ten hydrated hits,
-nine of them `Norway, kirkebøker : Volume N`, with 434 to 1,804 notes each and
-every note its own image group, so merging cannot shrink them. In the run after
-the change one of the ten item calls gave no detail, so nine hits were
-hydrated.
+The Norway call is the tail. It carried ten hydrated hits, nine of them
+`Norway, kirkebøker : Volume N`, with 434 to 1,804 notes each and every note its
+own image group, so merging cannot shrink them. The four calls were also run live
+after the change, the same day, and all four stayed within the budget. On some
+runs an item call gave no detail, so fewer hits were hydrated than asked, which
+only leaves more room for the ones that were.
 
 ### How to get the rest
 
