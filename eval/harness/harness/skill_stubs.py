@@ -85,16 +85,15 @@ _NO_DISCLOSE = (
     "the text does not state."
 )
 
-# Sent as `additionalContext`, outside the error-framed reason. It defers to
-# the caller's own instructions rather than pushing it onward: many
-# canned responses tell the router to write its summary and stop, and a "keep
-# going" here would override that. It names no tool, skill or step, because
-# every stubbed test shares this text and naming the step a test grades would
-# hand that test its pass.
-_CARRY_ON = (
-    "\n\nThis hand-off does not complete your own instructions. Follow them "
-    "through to their end{using}."
-)
+# Sent as `additionalContext`, outside the error-framed reason. It says the
+# turn goes on but not what to do in it, and a canned result outranks the
+# caller's own instructions: many canned responses tell the router to write its
+# summary and stop, and an earlier "follow your own instructions through to
+# their end" sent a router on a job down the rest of its routing table
+# (ut_research_h7w, 4 of 4 runs). It names no tool, skill or step, because every
+# stubbed test shares this text and naming the step a test grades would hand
+# that test its pass.
+_CARRY_ON = "\n\nThe hand-off is over; your turn is not. Decide what to do next from {basis}."
 
 
 def parse_stub_skills(execution: dict[str, Any] | None) -> dict[str, str | None]:
@@ -133,12 +132,15 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     preamble = _STUB_PREAMBLE.format(name=skill_name)
     if response:
         reason = _CANNED_SUFFIX.format(name=skill_name, response=response)
-        context = preamble + _CARRY_ON.format(using=", using the result it returned")
+        context = preamble + _CARRY_ON.format(
+            basis="the result it returned and your own instructions, and where "
+            "they differ, follow the result"
+        )
     else:
         # No result to carry, so the preamble stays in the reason: a deny
         # with an empty reason gives the model nothing to act on.
         reason = preamble
-        context = _CARRY_ON.format(using="").lstrip()
+        context = _CARRY_ON.format(basis="your own instructions").lstrip()
     reason += _NO_DISCLOSE.format(name=skill_name)
     return {
         "hookSpecificOutput": {

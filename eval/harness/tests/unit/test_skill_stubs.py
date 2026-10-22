@@ -136,8 +136,8 @@ def test_every_form_tells_the_model_not_to_retry_or_self_serve():
 def test_bare_deny_does_not_claim_a_result_exists():
     text = _all_text(stub_denial("s", None))
     assert "Treat the following as the result" not in text
-    assert "using the result" not in text
-    assert "Follow them through to their end" in text
+    assert "the result" not in text.split("this hand-off using only")[-1]
+    assert "Decide what to do next from your own instructions." in text
 
 
 def test_skill_name_appears_in_the_reason():
@@ -208,11 +208,15 @@ def test_hand_back_rides_in_additional_context_not_the_reason():
     hand-back goes in `additionalContext` and the reason keeps the result."""
     for response in (None, "some result"):
         out = stub_denial("s", response)
-        assert "Follow them through to their end" not in _reason(out)
+        assert "your turn is not" not in _reason(out)
         assert _context(out).endswith(
-            "This hand-off does not complete your own instructions. Follow them "
-            "through to their end"
-            + (", using the result it returned." if response else ".")
+            "The hand-off is over; your turn is not. Decide what to do next from "
+            + (
+                "the result it returned and your own instructions, and where they "
+                "differ, follow the result."
+                if response
+                else "your own instructions."
+            )
         )
 
 
@@ -224,11 +228,16 @@ def test_canned_form_moves_the_did_not_execute_instructions_out_of_the_reason():
 
 def test_hand_back_defers_to_a_canned_stop_rather_than_overriding_it():
     """Many canned responses tell the router to summarize and stop. A push like
-    "keep going" after them would override that and invite a second hand-off,
-    so the hand-back only points to the caller's own instructions."""
+    "follow your instructions through to their end" after them sent a router on
+    a job down the rest of its routing table (ut_research_h7w), so the result
+    must outrank the caller's own instructions."""
     hand_back = _context(stub_denial("research-plan", _STOP_TAIL)).split("\n\n")[-1]
-    assert hand_back.startswith("This hand-off does not complete")
-    for push in ("keep going", "carry on", "continue", "next step", "remaining steps"):
+    assert hand_back.startswith("The hand-off is over")
+    assert hand_back.endswith("where they differ, follow the result.")
+    for push in (
+        "keep going", "carry on", "continue", "next step", "remaining steps",
+        "through to their end",
+    ):
         assert push not in hand_back.lower(), f"{push!r} overrides the canned stop"
 
 
