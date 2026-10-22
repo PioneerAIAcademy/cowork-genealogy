@@ -588,11 +588,12 @@ that apply:
     record-structurer spawn covers other sources. That call completes every item whose search
     lists an extracted record, including a record two items both found
     (`docs/plan/attached-records-baseline.md`, PR B).
-- **Handing each agent its state comes later.** That means the item, the person's attached
-  records and the locality facts, as the 10x plan advises. Issue #2243 is "ids only" by lead
-  ruling (2026-10-06), and it files the handed-state follow-up. That follow-up also has to
-  change the router's "read nothing beyond the ids you are passing"
-  (`skills/research/SKILL.md:293-298`) for search spawns.
+- **Handing each agent its state is half done.** Issue #3581 delivered the plan item (with
+  its `planId`) and the subject (`subjectId`, names, birth, death) to `search-records`; the
+  router's "read nothing beyond the ids you are passing" now allows exactly those two for
+  search spawns, and the agent skips its `research_query` and the tree `Read` when they
+  arrive. What D still owes is the person's attached records and the locality facts, as
+  the 10x plan advises, and the same handing for the other agents.
 - **The early stop comes back through the plan.** A plan for an easy question leads with one or
   two decisive primaries and puts the broader sweeps behind them as fallbacks. A completeness
   question needs its enumerating sources as primaries (issue #1830, `question_kind`).

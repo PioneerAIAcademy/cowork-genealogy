@@ -915,4 +915,25 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
                 if item.get(k, missing) != handed.get(k, missing)
             )
             problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
+        tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+            (research.get("project") or {}).get("subject_person_ids") or []
+        )
+        match = re.search(r"subject:\s*", prompt)
+        sbrace = prompt.find("{", match.end()) if match else -1
+        if sbrace == -1:
+            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            subject, _ = decoder.raw_decode(prompt[sbrace:])
+        except ValueError:
+            problems.append("subject block is not valid JSON")
+            continue
+        if subject.get("subjectId") not in subject_ids:
+            problems.append(
+                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
+                f"tree {subject_ids}"
+            )
+        if not subject.get("names"):
+            problems.append("subject block carries no names")
     assert not problems, "; ".join(problems)

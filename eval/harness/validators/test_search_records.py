@@ -854,6 +854,32 @@ def test_handed_plan_item_status_update_uses_delegated_plan_id(tool_calls, test)
     assert not wrong, f"the status update used planId {wrong}, not the delegated pl_001"
 
 
+def test_handed_subject_skips_tree_read(builtin_tool_calls, tool_calls, test):
+    """Tag-gated (handed-subject): the delegation carries the subject, so the agent
+    takes ``subjectId`` and the names and dates from it and does not ``Read``
+    ``tree.gedcomx.json`` — and still passes that ``subjectId`` to ``record_search``.
+    """
+    if "handed-subject" not in test.get("tags", []):
+        pytest.skip("not a handed-subject scenario")
+    reads = [
+        (c.get("args") or {}).get("file_path", "")
+        for c in builtin_tool_calls or []
+        if c.get("tool") == "Read"
+    ]
+    tree_reads = [r for r in reads if r.replace("\\", "/").endswith("tree.gedcomx.json")]
+    assert not tree_reads, (
+        f"The delegation handed over the subject, but the agent still read the tree: {tree_reads[:2]}"
+    )
+    searches = [
+        c.get("input") or c.get("args") or {}
+        for c in tool_calls or []
+        if _bare_tool_name(c.get("tool")) == "record_search"
+    ]
+    assert searches and all(s.get("subjectId") == "I1" for s in searches), (
+        f"record_search was not called with the handed subjectId I1: {searches[:2]}"
+    )
+
+
 def test_mismatched_handed_plan_item_is_queried(tool_calls, test):
     """Tag-gated (handed-plan-item-mismatch): a ``plan_item`` whose ``id`` differs
     from ``planItemId`` is not the item the caller named, so it is not trusted and

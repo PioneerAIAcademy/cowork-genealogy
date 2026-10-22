@@ -20,6 +20,7 @@ from test_research import (  # noqa: E402
 )
 from test_search_records import (  # noqa: E402
     test_handed_plan_item_skips_research_query as skips_check,
+    test_handed_subject_skips_tree_read as subject_check,
     test_mismatched_handed_plan_item_is_queried as mismatch_check,
 )
 
@@ -31,6 +32,13 @@ ITEM = {
     "rationale": "Search for Unna \u2014 the distinctive patronymic narrows results.",
     "fallback_for": None,
     "status": "planned",
+}
+
+SUBJECT = {
+    "subjectId": "I1",
+    "names": [{"given": "Unna", "surname": "Hamre", "type": "BirthName"}],
+    "birth": {"year": 1845, "place": "Hamre, Norway"},
+    "death": None,
 }
 
 
@@ -88,7 +96,7 @@ def test_mismatch_check_fails_when_the_search_ran_first():
 # --- research: the spawn carries the item verbatim --------------------------
 
 RTEST = {"tags": ["routing", "routes-to:search-records", "asserts-delegation-plan-item"]}
-BEFORE = {"research_json": {"plans": [{"id": "pl_001", "status": "active", "items": [ITEM]}]}}
+BEFORE = {"tree_gedcomx_json": {"persons": [{"id": "I1"}, {"id": "I2"}]}, "research_json": {"project": {"subject_person_ids": ["I1"]}, "plans": [{"id": "pl_001", "status": "active", "items": [ITEM]}]}}
 
 
 def spawn(prompt):
@@ -106,19 +114,32 @@ def test_research_check_ignores_an_untagged_test():
 
 
 def test_research_check_passes_on_a_verbatim_block():
-    prompt = f"planItemId: pli_001\nplanId: pl_001\nprojectPath: /p\nplan_item:\n{block(ITEM)}"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nprojectPath: /p\nplan_item:\n{block(ITEM)}\nsubject:\n{block(SUBJECT)}"
     research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_passes_on_a_fenced_and_escaped_block():
     escaped = json.dumps(ITEM, indent=2)  # ensure_ascii escapes the em dash
-    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n```json\n{escaped}\n```"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n```json\n{escaped}\n```\nsubject:\n{block(SUBJECT)}"
     research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_fails_when_the_plan_id_is_not_handed():
     prompt = f"planItemId: pli_001\nprojectPath: /p\nplan_item:\n{block(ITEM)}"
     with pytest.raises(AssertionError, match="does not hand the parent plan id pl_001"):
+        research_check(RTEST, [spawn(prompt)], BEFORE)
+
+
+def test_research_check_fails_when_no_subject_is_handed():
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(ITEM)}"
+    with pytest.raises(AssertionError, match="no subject JSON block"):
+        research_check(RTEST, [spawn(prompt)], BEFORE)
+
+
+def test_research_check_fails_when_the_subject_is_not_in_the_tree():
+    other = dict(SUBJECT, subjectId="I9")
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(ITEM)}\nsubject:\n{block(other)}"
+    with pytest.raises(AssertionError, match="is not a person in the tree"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
@@ -129,14 +150,14 @@ def test_research_check_fails_when_no_plan_item_block_is_sent():
 
 def test_research_check_fails_when_the_item_is_summarised():
     summary = dict(ITEM, rationale="Search for Unna.")
-    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(summary)}"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(summary)}\nsubject:\n{block(SUBJECT)}"
     with pytest.raises(AssertionError, match=r"not verbatim; differs on \['rationale'\]"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_fails_when_a_field_is_dropped():
     trimmed = {k: v for k, v in ITEM.items() if k != "fallback_for"}
-    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(trimmed)}"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(trimmed)}\nsubject:\n{block(SUBJECT)}"
     with pytest.raises(AssertionError, match=r"differs on \['fallback_for'\]"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 
@@ -144,3 +165,35 @@ def test_research_check_fails_when_a_field_is_dropped():
 def test_research_check_fails_when_no_search_records_was_spawned():
     with pytest.raises(AssertionError, match="No recorded spawn"):
         research_check(RTEST, [], BEFORE)
+
+
+# --- search-records: subject handed, no tree Read ---------------------------
+
+SUBJECT_HANDED = {"tags": ["search", "handed-plan-item", "handed-subject"]}
+
+
+def read(path):
+    return {"tool": "Read", "args": {"file_path": path}}
+
+
+def test_subject_check_ignores_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        subject_check([read("/w/tree.gedcomx.json")], [], UNTAGGED)
+
+
+def test_subject_check_passes_without_a_tree_read():
+    subject_check([read("/w/other.json")], [call("record_search", subjectId="I1")], SUBJECT_HANDED)
+
+
+def test_subject_check_fails_when_the_tree_is_read():
+    with pytest.raises(AssertionError, match="still read the tree"):
+        subject_check(
+            [read("C:" + chr(92) + "w" + chr(92) + "tree.gedcomx.json")],
+            [call("record_search", subjectId="I1")],
+            SUBJECT_HANDED,
+        )
+
+
+def test_subject_check_fails_when_the_subject_id_is_not_passed():
+    with pytest.raises(AssertionError, match="not called with the handed subjectId"):
+        subject_check([], [call("record_search", surname="Flynn")], SUBJECT_HANDED)

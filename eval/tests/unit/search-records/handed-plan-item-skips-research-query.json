@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_search_records_hpi",
     "skill": "search-records",
-    "name": "A handed plan item replaces the research_query",
+    "name": "A handed plan item and subject replace the research_query and the tree Read",
     "type": "positive",
-    "description": "The delegation carries the plan item for pli_001 exactly as research_query returned it. The agent must use it as the plan item and its status, issue no research_query, and still execute, rank, triage and log the search as in the ungrouped execute test.",
+    "description": "The delegation carries the plan item for pli_001 exactly as research_query returned it. The agent must use it as the plan item and its status, issue no research_query and no Read of tree.gedcomx.json (the delegation also carries the subject), and still execute, rank, triage and log the search as in the ungrouped execute test.",
     "tags": [
       "search",
       "census",
@@ -16,11 +16,12 @@
       "pre-1880-census-household",
       "topical-fixture-required",
       "direct-arm",
-      "handed-plan-item"
+      "handed-plan-item",
+      "handed-subject"
     ]
   },
   "input": {
-    "delegation": "Execute plan item pli_001: search the 1850 census for Patrick Flynn in Schuylkill County.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1850\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1850 census places Patrick in a household, identifying candidate parents.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}",
+    "delegation": "Execute plan item pli_001: search the 1850 census for Patrick Flynn in Schuylkill County.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1850\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1850 census places Patrick in a household, identifying candidate parents.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"~1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": null\n}",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
