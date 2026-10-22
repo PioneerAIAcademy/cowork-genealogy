@@ -55,9 +55,9 @@
  * not to be trusted, which is what most of the corpus looks like. In E no
  * assertion carries one, so only the names the record's name assertions give can
  * say who the father and the mother are. In F every assertion carries the child's
- * id: it names no single party, and scoring "the father" through it would score
- * the child. Each must still score the persona asked for, and score what that
- * persona scores from its own assertion.
+ * id: it names no single party, and scoring "the father" through it, by role or
+ * from his own assertion, would score the child. Each must still score the persona
+ * asked for, and score what that persona scores from its own assertion.
  */
 import { mkdtemp, writeFile, rm, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -399,14 +399,14 @@ async function fetchedHousehold(): Promise<void> {
 
   // F. The extraction stamped the child's persona id on every party. That id names
   // no single party, so it is no answer for "the father", and the child must not
-  // be scored as him. (A father's OWN assertion would carry the child's id and so
-  // be answered with the child by the assertion's own id; only the calls from the
-  // child's relationship assertions are asked here.)
+  // be scored as him, whether the call asks for him by role from the child's
+  // assertion or is about his own assertion, which carries the child's id: the id
+  // is passed over as if it were not there, and the names say who each party is.
   const sharedId = HOUSEHOLD_ASSERTIONS.map((a) => ({ ...a, record_persona_id: HOUSEHOLD.child.persona }));
   await scoreHousehold(
     "F. the same household, the child's persona id stamped on every assertion",
     sharedId,
-    [BY_ROLE_FATHER, BY_ROLE_MOTHER],
+    [OWN_CHILD, OWN_FATHER, OWN_MOTHER, BY_ROLE_FATHER, BY_ROLE_MOTHER],
     ownScores,
   );
 }

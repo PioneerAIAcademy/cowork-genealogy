@@ -593,6 +593,13 @@ function roleOf(roles: Map<string, string[]>, personaId: string, prefer?: string
   return prefer !== undefined && list.includes(prefer) ? prefer : list[0];
 }
 
+/** Whether the record's assertions give a persona id to more than one role (negative
+ *  evidence is no role). Such an id was stamped on several parties and names none of
+ *  them, whichever assertion carries it: the rule `recordPartyKeyer` keys on. */
+function givenToSeveralRoles(roles: Map<string, string[]>, personaId: string): boolean {
+  return (roles.get(personaId)?.length ?? 0) > 1;
+}
+
 /** Every persona of a fetched record as `id (name, role)`, so a refusal says who
  *  IS on the record. A role is only known from the assertions; a persona none of
  *  them names reads `role unknown`. */
@@ -612,7 +619,9 @@ function describeGroup(g: RecordPersonaGroup): string {
 /** The persona id an attestation files for a call, from the project documents
  *  alone: the caller's explicit `recordPersonaId`, else the persona the sibling
  *  lookup finds for a role asked, else the assertion's own. Null when the record
- *  names none, or another role was asked and nothing carries it. */
+ *  names none, when another role was asked and nothing carries it, and when the
+ *  assertion's own id is one the record gives to more than one role: that id names
+ *  no single party, and only a fetch could say which persona the call is about. */
 function attestedPersonaId(
   research: any,
   assertion: any,
@@ -622,7 +631,10 @@ function attestedPersonaId(
   if (typeof recordPersonaId === "string" && recordPersonaId !== "") return recordPersonaId;
   const party = resolvePartyBySiblings(research, assertion, role);
   if (party.kind === "resolved") return party.personaId;
-  if (party.kind === "own") return (assertion.record_persona_id as string | null) ?? null;
+  if (party.kind === "own") {
+    const own = (assertion.record_persona_id as string | null) ?? null;
+    return own !== null && givenToSeveralRoles(personaRoles(research, assertion), own) ? null : own;
+  }
   return null;
 }
 
@@ -988,10 +1000,12 @@ function knownAsAnotherRole(
  *     is tried, since it is a different party: a name that finds it must not end
  *     the search while another persona bears the same name. A name given for the
  *     assertion's OWN party is not a name for this one.
- *  3. Otherwise the assertion's own persona (exact), then the name the assertion
- *     gives for its own party (`ownPartyWords`, matched as in 2c), then a record
- *     with one persona, unless the record's assertions know that persona as a
- *     different role than the assertion's own.
+ *  3. Otherwise the assertion's own persona (exact), unless the record's assertions
+ *     give its id to more than one role, which names no single party and is passed
+ *     over as if the assertion carried none; then the name the assertion gives for
+ *     its own party (`ownPartyWords`, matched as in 2c), then a record with one
+ *     persona, unless the record's assertions know that persona as a different
+ *     role than the assertion's own.
  * Everything else is refused, with every persona listed as `id (name, role)`.
  */
 function pickFetchedParty(
@@ -1033,7 +1047,12 @@ function pickFetchedParty(
   }
 
   const own = typeof assertion?.record_persona_id === "string" ? assertion.record_persona_id : "";
-  if (asked === undefined && own !== "" && ids.includes(own)) return picked(own);
+  // The assertion's own id comes first, unless the record gives it to more than one
+  // role: it names no single party, so it is passed over as if the assertion carried
+  // none, and the name step and the rest of the order decide.
+  if (asked === undefined && own !== "" && ids.includes(own) && !givenToSeveralRoles(roles, own)) {
+    return picked(own);
+  }
 
   // The personas a name may find. For another party that is everyone but the
   // assertion's own persona, taken out here and not rejected after a name has

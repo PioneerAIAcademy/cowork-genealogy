@@ -147,12 +147,14 @@ Party selection. On route 1 (a fetched record), in this order:
    of both name steps before any name is tried, so a name it shares with another
    persona (a father and son) finds that persona. A fetched `persons[]` carries no
    role, so a role can only come from the assertions around it.
-3. Otherwise the assertion's own `record_persona_id` (an exact id), then the name
-   the assertion gives for its own party (the key of its structured value named
-   by its own role and, on a fact about one person, its `name` and its given name
-   and surname), matched as in 2.3 and so after the id, then a record that holds
-   a single persona, unless the record's assertions know that persona as another
-   role than the assertion's own.
+3. Otherwise the assertion's own `record_persona_id` (an exact id), unless the
+   record's assertions give that id to more than one role: it then names no single
+   party, whichever assertion carries it, and is passed over as if the assertion
+   carried none. Then the name the assertion gives for its own party (the key of
+   its structured value named by its own role and, on a fact about one person, its
+   `name` and its given name and surname), matched as in 2.3 and so after the id,
+   then a record that holds a single persona, unless the record's assertions know
+   that persona as another role than the assertion's own.
 
 On route 2 (a projected record) the party is the group of the persona
 `recordPersonaId` names. An id the record gives to more than one role names no
@@ -426,8 +428,9 @@ when no assertion names it: the entry never lists the role asked beside another
 persona's id. The eval harness performs no fetch, so `buildRecordedScore`
 derives both from the same sibling lookup (and an explicit `recordPersonaId`)
 that route 1 uses, and a call for the father files the father's persona in both
-places. Where only a fetch can tell, such as a party found by name, the harness
-files the assertion's own id or null. Neither is part of the lookup key.
+places. Where only a fetch can tell, such as a party found by name or one whose id the
+record gives to several roles, the harness files the assertion's own id (when one
+role carries it) or null. Neither is part of the lookup key.
 
 ADR-0009 constraint 3 says to key on (`record_id`, `record_persona_id`) and not
 on `record_id` alone, so that a second persona of an already-linked record

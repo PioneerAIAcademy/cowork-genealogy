@@ -1613,6 +1613,32 @@ def test_same_person_attests_no_persona_the_record_gives_to_several_roles(tmp_pa
 
 
 @pytest.mark.requires_engine_build
+def test_same_person_attests_no_own_persona_the_record_gives_to_several_roles(tmp_path):
+    """The child's persona id is on the father's OWN assertion too. With no other
+    role asked, that id names no single party, so the entry files no persona
+    (production passes it over and finds the father by his name) and the answer
+    names the one group at the role."""
+    ws = _household_workspace(tmp_path)
+    research = json.loads((ws / "research.json").read_text(encoding="utf-8"))
+    for a in research["assertions"]:
+        if a["id"] == "a_034":
+            a["record_persona_id"] = "p_child"
+    (ws / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    served = _serve_same_person(ws, {"assertionId": "a_034", "treePersonId": "I1"})
+    assert _written_scores(ws)["a_034|I1"]["record_persona_id"] is None
+    assert served["recordPersona"] == {"id": None, "name": "Pierre Mouchang", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_an_own_persona_one_role_carries(tmp_path):
+    """The other direction: an own id that one role carries is filed, as before."""
+    ws = _household_workspace(tmp_path)
+    served = _serve_same_person(ws, {"assertionId": "a_034", "treePersonId": "I1"})
+    assert _written_scores(ws)["a_034|I1"]["record_persona_id"] == "p_father"
+    assert served["recordPersona"] == {"id": "p_father", "name": "Pierre Mouchang", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
 def test_same_person_names_nobody_production_would_refuse(tmp_path):
     """Two fathers on the record: production refuses to choose between them, so the
     answer served does not name one."""

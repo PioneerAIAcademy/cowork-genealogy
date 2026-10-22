@@ -1567,6 +1567,56 @@ describe("samePerson — project-relative arm", () => {
       expect(result.recordPersona.id).toBe(HH_FATHER);
     });
 
+    // ── the assertion's own persona id, when the record gives it to several roles ──
+
+    it("does not trust the assertion's own persona id when the record gives it to several roles", async () => {
+      // The child's id is on the father's own assertion too. That id names no single
+      // party, so it is passed over as if his assertion carried none, and his name
+      // finds him. Trusting it first scored the child as the father.
+      const r = hhResearch();
+      hhRow(r, "a_034").record_persona_id = HH_CHILD;
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_034", treePersonId: "I1" }, LOCAL),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+      const [file] = await scoresOnDisk();
+      expect(file.scores["a_034|I1"]).toMatchObject({ record_persona_id: HH_FATHER, record_role: "father" });
+    });
+
+    it("refuses, rather than scoring the persona a shared id names, when nothing else resolves the party", async () => {
+      // The father's residence assertion carries the child's id, which her own name
+      // assertion carries too, and gives no name of his: nothing is left to go on.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_050", "father", HH_CHILD, "residence", "Basel"),
+        hhAssertion("a_051", "child", HH_CHILD, "name", "Maria Elisabeth Mouchang",
+          { given: "Maria Elisabeth", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      await expect(
+        samePerson({ projectPath: dir, assertionId: "a_050", treePersonId: "I1" }, LOCAL),
+      ).rejects.toThrow(/could not tell which persona/);
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(await scoresOnDisk()).toEqual([]);
+    });
+
+    it("keeps an own persona id that only one role carries, ahead of the name the assertion gives", async () => {
+      // The other direction. a_034 carries the father's id (his alone) and, as a
+      // stray, the child's name: the id is exact and comes first, as before.
+      const r = hhResearch();
+      hhRow(r, "a_034").structured_value = { given: "Maria Elisabeth", surname: "Mouchang" };
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_034", treePersonId: "I1" }, LOCAL),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona.id).toBe(HH_FATHER);
+    });
+
     // ── the names the assertions give: another role, whole names, and parts ──
 
     it("reads the name a sibling name assertion gives the role, when no sibling carries a persona id", async () => {
@@ -2327,6 +2377,16 @@ describe("buildRecordedScore", () => {
     expect(buildRecordedScore(r, "a_038", "I1", "father", RESULT)?.record_persona_id).toBeNull();
   });
 
+  it("records no persona for the assertion's own id when the record gives it to several roles", () => {
+    // The child's id on the father's own assertion names no single party. Filing it
+    // is filing the child as the father; only a fetch can say who the call is about.
+    const r = hhResearch();
+    hhRow(r, "a_034").record_persona_id = HH_CHILD;
+    expect(buildRecordedScore(r, "a_034", "I1", undefined, RESULT)?.record_persona_id).toBeNull();
+    // while an id one role carries is filed, as before
+    expect(buildRecordedScore(hhResearch(), "a_034", "I1", undefined, RESULT)?.record_persona_id).toBe(HH_FATHER);
+  });
+
   it("records the role the record gives a persona the caller named, not the role asked", () => {
     const named = buildRecordedScore(hhResearch(), "a_038", "I2", "father", RESULT, HH_MOTHER);
     expect(named?.record_persona_id).toBe(HH_MOTHER);
@@ -2513,6 +2573,14 @@ describe("describeScoredPair", () => {
     const r = hhResearch();
     hhRow(r, "a_034").record_persona_id = HH_MOTHER;
     expect(describeScoredPair(r, HH_TREE, "a_038", "I1", "father")?.recordPersona).toEqual({
+      id: null, name: "Pierre Mouchang", role: "father",
+    });
+  });
+
+  it("names the one group at the role for an assertion whose own id the record gives to several roles", () => {
+    const r = hhResearch();
+    hhRow(r, "a_034").record_persona_id = HH_CHILD;
+    expect(describeScoredPair(r, HH_TREE, "a_034", "I1", undefined)?.recordPersona).toEqual({
       id: null, name: "Pierre Mouchang", role: "father",
     });
   });
