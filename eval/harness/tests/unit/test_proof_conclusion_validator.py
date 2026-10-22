@@ -229,3 +229,100 @@ def test_ceiling_skips_when_untagged():
     with pytest.raises(BaseException) as exc:
         possible_tier(_summary_state("probable"), {"type": "positive", "tags": []})
     assert "not a tier-possible-q001 scenario" in str(exc.value)
+
+
+# --- stale-proof-refresh (ut_proof_conclusion_g9j) ---
+
+import copy  # noqa: E402
+import json  # noqa: E402
+
+from test_proof_conclusion import test_stale_proof_refreshed as check_refresh  # noqa: E402
+
+_SCENARIO = (
+    Path(__file__).resolve().parents[3]
+    / "fixtures" / "scenarios" / "g9gj-proof-update-after-later-search" / "research.json"
+)
+REFRESH_TAGGED = {"type": "positive", "tags": ["stale-proof-refresh"]}
+
+_COMPLIANT_NARRATIVE = (
+    "# Parents of Iram Hyde — Not Proved\n\n"
+    "Walworth's *Hyde Genealogy* (1864) was searched in full, both volumes: no Iram.\n\n"
+    "**What could resolve it:** daughters' death certificates (Christina Wilson, IN 1910; "
+    "Elizabeth Skellie, PA 1910; Margaret Clark, PA 1916); the 1880 entries of Christina "
+    "and Elizabeth; the 1855 census searched for kin households; New Hampshire town records."
+)
+_COMPLIANT_SUMMARY = (
+    "Searched: indexes, deeds, church register, Iram's 1855 entry (image), Margaret Clark's "
+    "1880 entry (image), and Walworth's Hyde Genealogy (both volumes, no Iram). Not yet "
+    "examined: daughters' death certificates; New Hampshire town records; Washington Co. probate."
+)
+
+
+def _refresh_states(narrative=None, summary=None, extra_ps=None):
+    before = json.loads(_SCENARIO.read_text(encoding="utf-8"))
+    after = copy.deepcopy(before)
+    ps = next(p for p in after["proof_summaries"] if p["id"] == "ps_002")
+    if narrative is not None:
+        ps["narrative_markdown"] = narrative
+    if summary is not None:
+        ps["exhaustive_search_summary"] = summary
+    if extra_ps:
+        after["proof_summaries"].append(extra_ps)
+    return {"research_json": before}, {"research_json": after}
+
+
+def test_refresh_accepts_both_fields_rewritten_without_walworth_left_to_search():
+    """Walworth reported as SEARCHED, and the genuinely unsearched look-alikes
+    (other daughters' 1880 entries, the 1855 census searched for kin) still
+    listed: the compliant shape the judge failed four times."""
+    check_refresh(*_refresh_states(_COMPLIANT_NARRATIVE, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_an_untouched_proof():
+    with pytest.raises(AssertionError, match="was not refreshed"):
+        check_refresh(*_refresh_states(), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_the_mined_shape_summary_only():
+    """The Cowork run: summary rewritten to report the searches, narrative left."""
+    with pytest.raises(AssertionError, match="narrative_markdown is unchanged"):
+        check_refresh(*_refresh_states(summary=_COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_both_rewritten_but_walworth_still_to_search():
+    """Both fields written (what the tool rule forces), content still stale."""
+    stale = _COMPLIANT_NARRATIVE.replace(
+        "**What could resolve it:** ", "**What could resolve it:** Walworth's Hyde Genealogy; "
+    )
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_walworth_under_a_heading_list():
+    """A cue heading on its own line, then a blank line, then the list."""
+    stale = (
+        "# P\n\n**What could resolve it:**\n\n"
+        "- Walworth, *Hyde Genealogy* (1864)\n- death certificates"
+    )
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_walworth_under_a_markdown_heading():
+    stale = "# P\n\n## Next steps\n\n- Walworth's Hyde Genealogy\n- death certificates"
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_a_second_summary_for_the_question():
+    dup = {"id": "ps_003", "question_id": "q_002", "tier": "not_proved"}
+    with pytest.raises(AssertionError, match="only proof summary"):
+        check_refresh(
+            *_refresh_states(_COMPLIANT_NARRATIVE, _COMPLIANT_SUMMARY, extra_ps=dup),
+            REFRESH_TAGGED,
+        )
+
+
+def test_refresh_skips_when_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_refresh(*_refresh_states(), UNTAGGED)

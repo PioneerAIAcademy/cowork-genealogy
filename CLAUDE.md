@@ -252,7 +252,10 @@ and the model silently falls back to a general-purpose stand-in that binds none
 of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
-what the runtime actually resolved, and no CI job covers this path.
+what the runtime actually resolved. Its agent-registration arm now also runs in
+CI (`server-tests.yml`, keyless, under `AGENT_SMOKE=1`); its dead-stub arm and
+whether a granted tool actually *binds* (`make probe-agent-binding`) still have
+no CI job.
 
 **Dual-spelled tool names.** (Heading kept as a stable anchor — the
 architecture guide and ADR-0004 both cite it by name — though the rule now
@@ -293,7 +296,8 @@ because unrecognized entries are ignored so long as at least one resolves.
 **No agent declares `disallowedTools:` any more — omit the tool instead.**
 Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
-2026-08-30, Claude Code 2.1.220 / SDK 0.2.128). Every deny we shipped named a
+2026-08-30, Claude Code 2.1.220 / SDK 0.2.128; re-run 2026-10-20 on 2.1.294 / SDK
+0.2.165, same result). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
 restatements. What keeps `record-structurer` off the broad `research_append` is
 `research_append` not being in its `tools:`.

@@ -89,9 +89,9 @@ def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[st
     guard (`ownership-manifest.test.ts`) reads the same field, so a holder of a
     tool on a row that authorizes it here needs no caller entry there.
 
-    The manifest already uses that reasoning one row over — `person_evidence`'s
-    `requires` records that extraction is held off the section
-    "by tool identity: `extraction_append` does not accept it."
+    The manifest uses the same reasoning on `person_evidence`: its `requires`
+    records that `extraction_append({ personId })` writes the one kind of link
+    no identity decision makes, an unchecked attachment, "by tool identity".
 
     Keyed on the same `enforceableAt` filter as `writer_sets`: a row this plane
     cannot enforce contributes no tools, so a caller cannot be authorized on a

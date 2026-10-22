@@ -32,13 +32,14 @@ describe("person-id-refs walker", () => {
           ],
         },
       ],
+      namesakes: [{ id: "ns_001", person_id: "I10" }],
     };
   }
 
   it("yields every populated person-id reference, skipping a falsy person_evidence id", () => {
     const refs = [...iteratePersonIdRefs(researchWithAllFields())];
     expect(refs.map((r) => r.pid)).toEqual([
-      "I3", "I9", "I1", "I2", "I4", "I5", "I6", "I7", "I8",
+      "I3", "I9", "I1", "I2", "I4", "I5", "I6", "I7", "I8", "I10",
     ]);
   });
 
@@ -71,6 +72,19 @@ describe("person-id-refs walker", () => {
       parent: "I99",
       child: "I8",
     });
+  });
+
+  it("`set` re-keys a namesakes row onto the survivor in place", () => {
+    const research = researchWithAllFields();
+    for (const ref of iteratePersonIdRefs(research)) {
+      if (ref.pid === "I10") ref.set("I99");
+    }
+    expect(research.namesakes[0].person_id).toBe("I99");
+  });
+
+  it("skips a malformed namesakes row without throwing", () => {
+    const research = { namesakes: [null, "ns_001", { person_id: null }, { person_id: "I9" }] };
+    expect([...iteratePersonIdRefs(research)].map((r) => r.pid)).toEqual(["I9"]);
   });
 
   it("skips a malformed proof_summaries entry, claim, or relationship without throwing", () => {

@@ -191,6 +191,8 @@ export const VALIDATOR_ENUMS = {
 // deliberately not enumerated — that list went stale (named 8, applied at 10)
 // and the enumeration is what created the staleness.
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/** `enums.schema.json#/$defs/iso_datetime`, the colon or dash-separated form. */
+export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}([.-]\d+)?(Z|[+-]\d{2}:?\d{2})$/;
 
 // Hand-copied from each section's `properties.id.pattern` in research.schema.json.
 // validator.test.ts diffs this against the schema (key-set both ways + prefix)
@@ -212,6 +214,7 @@ export const ID_PREFIXES: Record<string, string> = {
   proof_summaries: "ps_",
   evaluations: "ev_",
   localities: "loc_",
+  namesakes: "ns_",
 };
 
 /**
@@ -596,7 +599,7 @@ export const RESEARCH_SHAPES = {
     "project", "researcher_profile", "known_holdings", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "localities", "warning_justifications",
+    "localities", "warning_justifications", "namesakes",
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
@@ -690,7 +693,7 @@ export const RESEARCH_SHAPES = {
     "id", "question_id", "tier", "vehicle", "shortfall",
     "supporting_assertion_ids",
     "resolved_conflict_ids", "exhaustive_search_summary",
-    "narrative_markdown", "claims",
+    "narrative_markdown", "updated", "claims",
   ]),
   proof_claim: new Set([
     "claim", "proof_tier", "shortfall", "supporting_assertion_ids",
@@ -710,6 +713,10 @@ export const RESEARCH_SHAPES = {
   ]),
   warning_justification: new Set([
     "warning_id", "justification", "person_ids", "tool", "recorded_at",
+  ]),
+  namesake: new Set([
+    "id", "person_id", "name", "place", "time_period", "record_ids",
+    "log_entry_ids", "notes", "created",
   ]),
 };
 
@@ -1573,6 +1580,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
     }
+    if ("updated" in ps && (typeof ps.updated !== "string" || !ISO_DATETIME_PATTERN.test(ps.updated))) {
+      addError(report, psp, `'updated' must be an ISO 8601 date-time with a timezone, got '${ps.updated}'`);
+    }
 
     // resolved_conflict_ids -> conflicts[].id, and that conflict must be
     // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
@@ -1765,8 +1775,60 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   // Evaluations
   validateEvaluations(data, ids, path, report);
   validateLocalities(data, path, report);
+  validateNamesakes(data, ids, path, report);
 
   return ids;
+}
+
+/**
+ * namesakes (optional): one row per different person who shares a tree
+ * person's name, keyed by the tree person_id it shadows. Required fields are
+ * never null, so checkRequired gets an empty nullable set: the shared
+ * NULLABLE_FIELDS admits a null `place` and `notes` for assertions.
+ */
+function validateNamesakes(data: any, ids: ResearchIds, path: string, report: ValidationReport): void {
+  const rows = data.namesakes;
+  if (rows === undefined) return;
+  if (!Array.isArray(rows)) {
+    addError(report, `${path}/namesakes`, "namesakes must be an array");
+    return;
+  }
+  for (let i = 0; i < rows.length; i++) {
+    const ns = rows[i];
+    const np = `${path}/namesakes[${i}]`;
+    if (!isObjectEntry(ns, np, report)) continue;
+    checkRequired(ns, ["id", "person_id", "name", "place", "record_ids", "created"], np, report, new Set());
+    checkAllowedKeys(ns, RESEARCH_SHAPES.namesake, "namesakes entries", np, report);
+    if ("id" in ns && ns.id !== null) checkIdPrefix(ns.id, ID_PREFIXES.namesakes, np, report);
+    for (const field of ["person_id", "name", "place"]) {
+      if (field in ns && ns[field] !== null && (typeof ns[field] !== "string" || ns[field] === "")) {
+        addError(report, np, `'${field}' must be a non-empty string`);
+      }
+    }
+    checkStringOrNull(ns, ["time_period", "notes"], np, report);
+    if ("record_ids" in ns && ns.record_ids !== null) {
+      if (!Array.isArray(ns.record_ids)) {
+        addError(report, np, "record_ids must be an array");
+      } else {
+        ns.record_ids.forEach((r: unknown, j: number) => {
+          if (typeof r !== "string") addError(report, `${np}/record_ids[${j}]`, "must be a string");
+        });
+      }
+    }
+    if ("log_entry_ids" in ns) {
+      const logs = ns.log_entry_ids;
+      if (!Array.isArray(logs)) {
+        addError(report, np, "log_entry_ids must be an array");
+      } else {
+        logs.forEach((l: unknown, j: number) => {
+          const lp = `${np}/log_entry_ids[${j}]`;
+          if (typeof l !== "string") addError(report, lp, "must be a string");
+          else checkRefExists(l, ids.log, "log entry", lp, report);
+        });
+      }
+    }
+    checkIsoDate(ns, "created", np, report);
+  }
 }
 
 function validateEvaluations(
@@ -2287,7 +2349,8 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings, proof_summaries[].claims[].relationship). The
+  // timelines, known_holdings, proof_summaries[].claims[].relationship,
+  // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
   // check's original order and messages.

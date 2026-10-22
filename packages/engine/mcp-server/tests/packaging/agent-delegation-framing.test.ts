@@ -487,6 +487,63 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // Added with the agent (issue #2029). Two spawns, because an agent returns
   // once: triage, then the researcher's verdicts. The caller pin is the one
   // that keeps a triage recommendation from being passed back as a verdict.
+  // Added with the bounded-ask owners (issue #3526): each bounded deliverable is
+  // handed straight to the agent that owns it, by one clause naming a destination.
+  // Same shape as research -> image-reader above.
+  "research -> source-evaluation": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for an audit, never a finding.**",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
+      mitigation: {
+        side: "caller",
+        excerpt: "`@plugin:source-evaluation`, whether two people are the same or should be merged",
+      },
+    },
+  },
+
+  "research -> check-warnings": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "never work out the missing children yourself, even when the tool errors.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
+      mitigation: {
+        side: "caller",
+        excerpt: "candidates rather than a verdict — and to `@plugin:check-warnings` as well when the",
+      },
+    },
+  },
+
+  "research -> tree-edit": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "**Only merge when proof-conclusion confirms identity.**",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
+      mitigation: {
+        side: "caller",
+        excerpt: "counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
+      },
+    },
+  },
+
   "research -> search-hints": {
     pins: [
       {

@@ -268,12 +268,17 @@ def test_startup_adds_the_agent_column_to_an_api_calls_table_created_before_it(t
     db_module.init_db()
     db_module.init_db()
 
-    assert "agent" in {c["name"] for c in inspect(engine).get_columns("api_calls")}
+    # Every column added since the table first shipped: agent (#3511), effort (T4.1), and
+    # the 1-hour cache-write count -- each null on the row that predates it.
+    columns = {c["name"] for c in inspect(engine).get_columns("api_calls")}
+    assert {"agent", "effort", "cache_creation_1h_input_tokens"} <= columns
     with Session(engine) as s:
-        s.add(ApiCall(project_id="p", user_id="u", cost_usd=0.25, session_age_s=1, agent="main"))
+        s.add(ApiCall(project_id="p", user_id="u", cost_usd=0.25, session_age_s=1, agent="main",
+                      effort="medium", cache_creation_1h_input_tokens=2))
         s.commit()
         rows = s.exec(select(ApiCall).order_by(ApiCall.id)).all()
-    assert [(r.cost_usd, r.agent) for r in rows] == [(0.5, None), (0.25, "main")]
+    assert [(r.cost_usd, r.agent, r.effort, r.cache_creation_1h_input_tokens) for r in rows] == [
+        (0.5, None, None, None), (0.25, "main", "medium", 2)]
 
 
 def test_a_table_that_already_has_every_column_is_left_alone():
@@ -385,10 +390,47 @@ def test_the_report_prices_every_call_by_model_and_token_type(calls, capsys):
     models = out.split("Every call, by model")[1].splitlines()[2:4]
     assert [line.split() for line in models] == [
         ["claude-sonnet-4-6", "$6.50", "4", "94"], ["claude-sonnet-5", "$0.40", "1", "6"]]
-    lines = out.split("Every call, by token type")[1].splitlines()[2:6]
+    lines = out.split("Every call, by token type")[1].splitlines()[2:7]
     got = {line.rsplit(None, 2)[0].strip(): line.rsplit(None, 2)[1] for line in lines}
-    assert got == {"input": "$0.19", "cache write": "$0.30", "cache read": "$0.16",
-                   "output": "$0.26"}
+    # Every fixture row predates the 1h column (NULL), so the 1h row is $0 -- not a crash.
+    assert got == {"input": "$0.19", "cache write 5m": "$0.30", "cache write 1h": "$0.00",
+                   "cache read": "$0.16", "output": "$0.26"}
+
+
+def test_1h_writes_are_priced_at_2x_input_and_shown_per_session(calls, db, capsys):
+    """A main-thread call with 1-hour writes, and one with no model at all: the 1h row
+    prices at 2x input (Sonnet 4.6: $6.00/MTok), the None-model row is still counted, and
+    the session table shows the share of main-thread writes that were 1h."""
+    from datetime import timedelta
+
+    from app import cost_report
+    from app.models import utcnow
+
+    when = utcnow() - timedelta(days=1)
+    added = [
+        ApiCall(project_id="prj_1h", user_id="u-call", model="claude-sonnet-4-6",
+                cache_creation_input_tokens=100_000, cache_creation_1h_input_tokens=100_000,
+                cost_usd=99.0, session_age_s=60, created=when, agent="main"),
+        ApiCall(project_id="prj_1h", user_id="u-call", model=None,
+                cache_creation_input_tokens=50_000, cache_creation_1h_input_tokens=0,
+                cost_usd=0.1, session_age_s=60, created=when, agent="Record Structurer"),
+    ]
+    db.add_all(added)
+    db.commit()
+    try:
+        cost_report.main(["--days", "30"])
+        out = capsys.readouterr().out
+        lines = out.split("Every call, by token type")[1].splitlines()[2:7]
+        got = {line.rsplit(None, 2)[0].strip(): line.rsplit(None, 2)[1] for line in lines}
+        assert got["cache write 1h"] == "$0.60"          # 100,000 x $6.00
+        assert got["cache write 5m"] == "$0.49"          # $0.30 before + 50,000 x $3.75
+        row = next(line for line in out.split("most expensive sessions")[1].splitlines()
+                   if line.strip().startswith("prj_1h"))
+        assert row.split()[-2:] == ["100%", "0%"]
+    finally:
+        for r in added:
+            db.delete(r)
+        db.commit()
 
 
 def test_the_report_splits_every_call_by_agent(calls, capsys):
@@ -399,11 +441,40 @@ def test_the_report_splits_every_call_by_agent(calls, capsys):
     cost_report.main(["--days", "30"])
     out = capsys.readouterr().out
     rows = out.split("Every call, by agent")[1].splitlines()[2:5]
-    assert [line.rsplit(None, 5) for line in rows] == [
-        ["main", "$4.00", "2", "58", "190000", "2500"],
-        ["(none)", "$2.00", "1", "29", "100000", "5000"],
-        ["Record Structurer", "$0.90", "2", "13", "115000", "4500"],
+    assert [line.rsplit(None, 6) for line in rows] == [
+        ["main", "-", "$4.00", "2", "58", "190000", "2500"],
+        ["(none)", "-", "$2.00", "1", "29", "100000", "5000"],
+        ["Record Structurer", "-", "$0.90", "2", "13", "115000", "4500"],
     ]
+
+
+def test_the_by_agent_table_splits_by_effort(calls, db, capsys):
+    """T4.1: sessions born under different effort settings are not averaged together --
+    the same agent at two levels is two rows, and a call with no effort reads `-`."""
+    from datetime import timedelta
+
+    from app import cost_report
+    from app.models import utcnow
+
+    when = utcnow() - timedelta(days=1)
+    added = [ApiCall(project_id="prj_effort", user_id="u-call", model="claude-sonnet-4-6",
+                     input_tokens=1_000, output_tokens=100, cost_usd=cost, session_age_s=60,
+                     created=when, agent="main", effort=effort)
+             for effort, cost in (("medium", 0.30), ("high", 0.70))]
+    db.add_all(added)
+    db.commit()
+    try:
+        cost_report.main(["--days", "30"])
+        out = capsys.readouterr().out
+        rows = [line.rsplit(None, 6) for line in
+                out.split("Every call, by agent")[1].splitlines()[2:7]]
+        mains = {(r[0], r[1]): r[2] for r in rows if r[0] == "main"}
+        assert mains == {("main", "-"): "$4.00", ("main", "high"): "$0.70",
+                         ("main", "medium"): "$0.30"}
+    finally:
+        for row in added:
+            db.delete(row)
+        db.commit()
 
 
 def test_an_empty_window_says_so(db, capsys):
