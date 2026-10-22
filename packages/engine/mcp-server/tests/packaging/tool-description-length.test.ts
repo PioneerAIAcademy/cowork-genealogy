@@ -180,7 +180,11 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // and in the spec's `<event>Year` row -- the same defect as the retired
   // "3 jurisdiction levels". Measured independently (2695 tool-level + 14387
   // params), not copied from the failure message.
-  ["record_search", 17082],
+  // 17082 -> 17207: `recordType` now accepts a plan item's record_type as is
+  // (land, court, tax -> 'other'; vital_record, church, cemetery -> no filter),
+  // and its description says so, 82 -> 206 chars. Measured independently (2695
+  // tool-level + 14512 params), not copied from the failure message.
+  ["record_search", 17207],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured

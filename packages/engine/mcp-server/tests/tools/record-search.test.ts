@@ -22,6 +22,7 @@ import {
   mapEntry,
   findRepresentedPerson,
   parseUpstreamErrorBody,
+  recordSearchToolSchema,
 } from "../../src/tools/record-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -429,6 +430,22 @@ describe("buildSearchUrl param mapping", () => {
   it("19. recordType=marriage maps to f.recordType=1", () => {
     const url = buildSearchUrl({ surname: "Smith", recordType: "marriage" });
     expect(url).toContain("f.recordType=1");
+  });
+
+  // Issue #3547: a search built straight from a plan item is not refused.
+  it.each(["land", "court", "tax"])("19a. plan type %s searches 'other' (f.recordType=7)", (type) => {
+    expect(() => validateInput({ surname: "Smith", recordType: type as never })).not.toThrow();
+    expect(buildSearchUrl({ surname: "Smith", recordType: type as never })).toContain("f.recordType=7");
+  });
+
+  it.each(["vital_record", "church", "cemetery"])("19b. plan type %s sends no type filter", (type) => {
+    expect(() => validateInput({ surname: "Smith", recordType: type as never })).not.toThrow();
+    expect(buildSearchUrl({ surname: "Smith", recordType: type as never })).not.toContain("f.recordType");
+  });
+
+  it("19c. the schema enum advertises the plan types it accepts", () => {
+    const values = (recordSearchToolSchema as any).inputSchema.properties.recordType.enum;
+    expect(values).toEqual(expect.arrayContaining(["vital_record", "church", "cemetery", "land", "court", "tax"]));
   });
 
   it("20. default flags m.queryRequireDefault=on and m.defaultFacets=off are sent", () => {
