@@ -76,14 +76,30 @@ _CLAUSE_BREAKS = (
 )
 
 
+# Markdown emphasis around a word is not a word boundary to a human and must
+# not be one here. `Do **not** detach` read as a RECOMMENDATION on the shipped
+# module while the unemphasised `Do not detach` read as a negation, because the
+# asterisks sat between the negator and the term. Stripping the markers is not
+# a text-shape heuristic: it removes markup so the words underneath can be read.
+_EMPHASIS = re.compile(r"(\*\*|\*|__|_|`)")
+
+
+def _unemphasised(text: str) -> str:
+    return _EMPHASIS.sub("", text)
+
+
 def _is_negated(text: str, at: int) -> bool:
     """True when the detach term at `at` is being ruled out rather than urged.
 
     Scoped to the term's OWN clause: the window is cut at the nearest preceding
     clause break, so a negation belonging to an earlier clause cannot license a
     recommendation in this one.
+
+    The window is read with emphasis stripped — see `_EMPHASIS`. The offset
+    cannot shift the term out of view: stripping only ever SHORTENS the prefix,
+    so the negator stays inside the window it was already inside.
     """
-    before = text[max(0, at - _NEG_WINDOW):at].lower()
+    before = _unemphasised(text[max(0, at - _NEG_WINDOW):at]).lower()
     cut = max((before.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in before), default=0)
     return bool(_NEGATED_TERM.search(before[cut:]))
 
@@ -113,7 +129,14 @@ def _recommends_detach(block: str) -> bool:
             end = i + len(term)
             while end < len(low) and low[end].isalpha():
                 end += 1  # "detach" matched inside "detaching": read after the word
-            after = low[end:end + 40]
+            # Emphasis stripped for the same reason `_is_negated` strips it:
+            # `_DISPARAGED_DETACH` is anchored at the start of this window, and
+            # `**loses the evidence**` puts asterisks where the anchor expects
+            # the verb — so a bolded harm verb reads as a RECOMMENDATION while
+            # the plain one is correctly ignored. The agent bolds freely (251
+            # bold spans across the 53 graded replies), so this is one word
+            # away on any correct report.
+            after = _unemphasised(low[end:end + 40])
             if not _is_negated(low, i) and not _DISPARAGED_DETACH.search(after):
                 return True
             start = i + len(term)
@@ -146,15 +169,30 @@ def _recommends_detach(block: str) -> bool:
 # phrasings: go back to the document the index was made from, go back to the
 # underlying document under any verb, or use the index's own correction route.
 # A reply that recommends only detaching still matches nothing here.
+# A mention of the original is not a direction to it. The branch counts only
+# where a REMEDY VERB governs it — issue #2481's own checklist, and a reviewer's
+# ruling of 2026-10-20 after a copula-exclusion attempt was shown to let any
+# two-word noun past ("the original DEATH record is not this man").
+#
+# A verb list is wide enough here because the thing being named is a remedy,
+# and the remedies are few. The window is bounded and forbids sentence-enders,
+# so the verb and the noun must govern each other rather than merely co-occur.
+_REMEDY_VERB = (
+    r"(?:locate|obtain|consult|check|read|view|examine|order|request|pull"
+    r"|find|see|compare\s+(?:it\s+)?(?:against|with)|look\s+at|go\s+back\s+to)"
+)
+
 _GO_TO_SOURCE_PATTERN = re.compile(
     # Re-reading, in any spelling.
     r"re-?read"
     # Any verb applied to "the original ..." — the earlier pattern fixed the
     # verb (read/check) and the noun (image/record/page), so "locate the
     # original certificate" and "obtain the original register" both missed.
-    r"|the original\s+\w+"
-    # The document the index derives from, named as such.
-    r"|underlying\s+\w+"
+    # ...governed by a remedy verb. One alternative covers both nouns: the
+    # earlier pair of bare `the original \w+` / `underlying \w+` branches
+    # counted any MENTION, so a reply saying the original is WRONG satisfied a
+    # guard asking whether it recommended going back to it (issue #2382).
+    r"|\b" + _REMEDY_VERB + r"\b[^.;:\n]{0,40}?\b(?:the\s+)?(?:original|underlying)\s+\w+"
     r"|source of truth"
     r"|go(ing)? back to"
     r"|derive[sd]? from"
@@ -304,6 +342,13 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     detached") does not count, nor does a title word `protected` itself
     contains ("Detach the Death Index record."), so those stay attributed.
     """
+    # `_DETACH_*_ON_TITLE_RE` require a record title to start with
+    # `[A-Z0-9]`, and the agent writes them bolded —
+    # `Detach the **1885 Minnesota State Census**` — so the asterisk sits
+    # where the capital is expected and the ONLY path that clears a
+    # correct report stops matching. Strip emphasis first; the titles and
+    # the protected name carry none of their own.
+    block = _unemphasised(block)
     sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
     detaching = [x for x in sentences if _recommends_detach(x)]
     protected_lower = protected.lower()
@@ -402,12 +447,123 @@ def test_index_discrepancy_recommends_reread(text_response, test, agent_returns=
     from harness.skill_runner import subject_reply_text
 
     text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
-    assert _GO_TO_SOURCE_PATTERN.search(text_response), (
+    assert _goes_to_source(text_response), (
         "source-evaluation reported on an index discrepancy without "
         "recommending a re-read of the original record. Doctrine point 1 "
         "of issue #1606: for a fact conflict that looks like a "
         "transcription or indexing error, the first-line remedy is to "
         "re-read the original image and correct the index."
+    )
+
+
+def _goes_to_source(text: str) -> bool:
+    """Does the text direct the reader to the underlying document?
+
+    Read with emphasis stripped. Emphasis can close BETWEEN the noun and the
+    word after it, so `**Locate the original** death certificate` leaves the
+    pattern's `(?:original|underlying)\\s+\\w+` tail looking at `original**`
+    and failing — a correct remedy sentence silently not counting. The same
+    class PR #3461 closed in the three detach matchers, in the one matcher its
+    test did not cover. 251 bold spans across the 53 committed graded replies.
+
+    Both consumers go through here, so neither can keep the gap while the
+    other loses it.
+    """
+    return bool(_GO_TO_SOURCE_PATTERN.search(_unemphasised(text)))
+
+
+# --- the conditional detach (issue #2481) ---------------------------------
+#
+# Decided on issue #2481 (review-ready, 2026-10-05): a reply-wide,
+# source-independent rule. A detach recommendation conditioned on evidence not
+# yet obtained fails on any `index-discrepancy`-tagged test. A decided
+# misattribution is detached unconditionally; an undecided one is not detached
+# at all, so "if X turns out Y, detach it" is never the right answer.
+#
+# REJECTED ALTERNATIVE, recorded per the card: declare the ambiguous source in
+# the test JSON, as `index_error_source` does. `_COSMETIC_TEST_FIELDS` is
+# ("name", "description"), so every other test field AND `tags` are in the
+# run-log snapshot — adding one would buy a paid `source-evaluation` run.
+# This rule needs no declared source, which is the whole point of it.
+
+# Conditions on evidence not yet in hand.
+_UNMET_CONDITION_RE = re.compile(
+    r"\b(if|unless|were\s+it|should\s+it|turns?\s+out)\b", re.IGNORECASE
+)
+
+# ...but asking PERMISSION is not deferring to a record. "if you agree, detach
+# the 1885 census" is a must-not-fire.
+#
+# Keyed on the consent VERB, never on "if you" alone: the agent addresses the
+# reader while naming real evidence often — "if you suspect the township is
+# miskeyed", "if you can obtain the death certificate", "if you find the
+# household does not fit". A bare "if you" carve swallows every one of those,
+# which is the shape this guard exists to catch (review, 2026-10-20).
+_CONSENT_CONDITION_RE = re.compile(
+    r"\b(?:if|unless)\s+(?:you|the\s+user|the\s+researcher)\s+"
+    r"(?:would\s+)?(?:agree|prefer|wish|like|want|consent|approve|are\s+happy|"
+    r"would\s+rather)\b",
+    re.IGNORECASE,
+)
+
+# `_recommends_detach` already subtracts negation, and correctly: it returns
+# True for "if the household does not fit, detach it", where the "not" belongs
+# to the condition rather than to the verb. Do NOT add a second proximity
+# window here — the first draft of this rule did, and its 40-character window
+# swallowed exactly that clause, waving through the shape this guard exists to
+# catch. It only looked right because the corpus phrasing is long enough to
+# fall outside the window, which is the shape-dependence issue #2481 is about.
+#
+# One gap is left to subtract: bare "no" as a determiner is absent from
+# `_NEGATORS` (`:54`), so `_recommends_detach("No detach is warranted")` is
+# True. Narrow, and attached to the verb rather than merely near it.
+_NO_DETACH_RE = re.compile(r"\bno\s+detach", re.IGNORECASE)
+
+# Clause boundaries WITHIN a passage. Deliberately not a sixth top-level
+# splitter: `_passages` alone leaves a recap whole when `_SUMMARY_LEAD_RE` does
+# not recognise its lead ("To summarise what needs doing:" does not match), and
+# a whole recap carries an unrelated condition and an unrelated detach together.
+# Measured: `_passages` alone fires 7 times across 4 tests; clause-split inside
+# it fires 3 times across the 2 the card names.
+_CLAUSE_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+|\n")
+
+
+def _conditional_detach(text: str) -> str | None:
+    """The first clause recommending a detach contingent on unobtained evidence."""
+    for block in _passages(_unemphasised(text)):
+        for clause in _CLAUSE_SPLIT_RE.split(block):
+            clause = clause.strip()
+            if not clause:
+                continue
+            if (
+                _recommends_detach(clause)
+                and _UNMET_CONDITION_RE.search(clause)
+                and not _NO_DETACH_RE.search(clause)
+                and not _CONSENT_CONDITION_RE.search(clause)
+            ):
+                return clause
+    return None
+
+
+def test_index_discrepancy_detach_is_not_conditional(
+    text_response, test, agent_returns=None
+):
+    """A detach recommended on evidence the reply has not obtained.
+
+    `ut_source_evaluation_j4s` returns "If the household does not fit, the
+    source may belong to a different man and should be detached" and nothing
+    fails it. The remedy is unrecoverable and the condition is never resolved,
+    so the researcher is left holding a decision the report declined to make.
+    """
+    _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    offending = _conditional_detach(reply)
+    assert not offending, (
+        "source-evaluation recommended a detach conditioned on evidence it did "
+        "not obtain. A decided misattribution is detached unconditionally; an "
+        f"undecided one is not detached at all. Offending clause: {offending!r}"
     )
 
 
@@ -465,8 +621,7 @@ def test_research_json_unmodified(before_state, after_state, test):
 
     Skipped on negative tests: the run is expected to route away to
     another skill, which may legitimately write as part of its own
-    contract. Mirrors the same guard in test_check_warnings.py and
-    test_project_status.py.
+    contract. Mirrors the same guard in test_check_warnings.py.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests don't run the skill body")
@@ -694,7 +849,7 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
     )
     acting = [
         p for p in pointers
-        if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
+        if _recommends_detach(p) or _goes_to_source(p) or _POINTER_ACTION_RE.search(p)
     ]
     assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
 

@@ -8,6 +8,10 @@
 > and nothing else.
 > Revised 2026-09-27 against PR #2870's live run and the alpha feedback.
 >
+> **Step mode, 2026-10-16:** `docs/plan/research-step-mode.md` replaces this design's
+> continuous-job core with one research step per turn. Read it first. Its section
+> "Integrating with research-as-a-job" says which parts of this file survive.
+>
 > **Do not build from this file.** Each phase gets its own detailed pass, written when the
 > phase before it has landed. That is the point: four review rounds on the combined plan found
 > most of their defects in the later phases, because they described surfaces nobody had opened

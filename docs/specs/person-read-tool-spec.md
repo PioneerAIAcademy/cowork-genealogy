@@ -88,6 +88,10 @@ Two more conditional keys ride on a call that carried `projectPath`:
 `staged` (`{ resultsRef, returnedCount }`, or `null` when staging failed) and
 `stagingError` (the reason, present only beside `staged: null`). Both are
 response-only, like `notes[]`, and never tree keys (`TREE_TOP_LEVEL_FIELDS`).
+They are serialized **first**, ahead of `persons[]`: a well-sourced read is larger
+than the client accepts from one tool call, and the model then sees only a preview
+of the head of the text, so a `staged` written last fell outside it and the agent
+could not pass the ref on. `server.ts` keeps insertion order.
 
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` and `sources[]` are always present; an empty array means
@@ -1144,6 +1148,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 26 | No `staged` key without `projectPath`, or with a blank one | Staging gate |
 | 27 | A staging failure returns the read with `staged: null` + `stagingError`; a missing folder is not created | Staging fail-soft |
 | 28 | A merged subject's staged element carries the post-redirect id | Staging + redirect |
+| 28a | The serialized response starts with `staged` (or `staged: null` then `stagingError`) | Staging order |
 | 29 | Carries the subject's person-level sources, dropping refs to descriptions not returned (an `SD_*` target; a relative's ref when the second read fails) | Person-level refs |
 | 30 | Never carries FamilySearch's tags or attribution onto a ref | Person-level refs |
 | 31 | The living 204 stub carries no `sources` key | Living person |

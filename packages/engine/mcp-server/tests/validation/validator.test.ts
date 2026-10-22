@@ -1011,6 +1011,32 @@ describe("Project Validator", () => {
         )
       ).toBe(true);
     });
+
+    it("reports a namesakes row keyed on a non-existent person", async () => {
+      const research = {
+        ...minimalResearch,
+        namesakes: [
+          {
+            id: "ns_001",
+            person_id: "NONEXISTENT",
+            name: "John Smith",
+            place: "San Francisco, California, United States",
+            record_ids: [],
+            created: "2026-10-17",
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/namesakes[0]" &&
+            e.message.includes("person_id 'NONEXISTENT' not found in tree.gedcomx.json persons"),
+        ),
+      ).toBe(true);
+    });
   });
 
   // --- issue #1972 V5 -------------------------------------------------------
@@ -2879,6 +2905,19 @@ describe("Research closed shapes", () => {
           updated: "2026-01-02",
         },
       ],
+      namesakes: [
+        {
+          id: "ns_001",
+          person_id: "I1",
+          name: "John Smith",
+          place: "San Francisco, California, United States",
+          time_period: "born about 1873",
+          record_ids: ["ark:/61903/1:1:Q295-JLGZ"],
+          log_entry_ids: ["log_001"],
+          notes: "A different John Smith, a clerk, in the 1880 census.",
+          created: "2026-01-02",
+        },
+      ],
     };
   }
 
@@ -3000,7 +3039,41 @@ describe("Research closed shapes", () => {
     },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
+    { site: "namesakes entries", plant: (r) => (r.namesakes[0].zz_extra = true) },
   ];
+
+  // namesakes: required fields are never null, though the shared nullable set
+  // admits a null place and notes for assertions.
+  const namesakeRejections: Array<{ why: string; plant: (r: any) => void; message: string }> = [
+    { why: "a null place", plant: (r) => (r.namesakes[0].place = null), message: "required field 'place' is null" },
+    { why: "an empty name", plant: (r) => (r.namesakes[0].name = ""), message: "'name' must be a non-empty string" },
+    { why: "a section that is not an array", plant: (r) => (r.namesakes = { id: "ns_001" }), message: "namesakes must be an array" },
+    { why: "a null section", plant: (r) => (r.namesakes = null), message: "namesakes must be an array" },
+    { why: "an unknown log id", plant: (r) => (r.namesakes[0].log_entry_ids = ["log_999"]), message: "references log entry 'log_999'" },
+    { why: "a wrong id prefix", plant: (r) => (r.namesakes[0].id = "n_001"), message: "should start with 'ns_'" },
+    { why: "a number in notes", plant: (r) => (r.namesakes[0].notes = 7), message: "'notes' must be a string or null" },
+    { why: "a missing record_ids", plant: (r) => delete r.namesakes[0].record_ids, message: "missing required field 'record_ids'" },
+    { why: "a record id that is not a string", plant: (r) => (r.namesakes[0].record_ids = [3]), message: "must be a string" },
+    { why: "a malformed created date", plant: (r) => (r.namesakes[0].created = "16 October 2026"), message: "must be an ISO date" },
+  ];
+  for (const v of namesakeRejections) {
+    it(`rejects a namesakes entry with ${v.why}`, async () => {
+      const research = maximalResearch();
+      v.plant(research);
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("namesakes") && e.message.includes(v.message)), JSON.stringify(result.errors)).toBe(true);
+    });
+  }
+
+  it("accepts a namesakes entry with only its required fields and null optional ones", async () => {
+    const research = maximalResearch();
+    research.namesakes = [
+      { id: "ns_001", person_id: "I1", name: "John Smith", place: "Butte, Montana", record_ids: [], created: "2026-01-02", time_period: null, notes: null },
+    ];
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
+  });
 
   for (const v of vectors) {
     it(`rejects an unexpected property on ${v.site}`, async () => {
@@ -3292,6 +3365,7 @@ describe("Research closed shapes", () => {
       citation_detail: schema.$defs.citation_detail,
       assertion: schema.$defs.assertion,
       person_evidence_entry: schema.$defs.person_evidence_entry,
+      rejected_link_entry: schema.$defs.rejected_link_entry,
       conflict: schema.$defs.conflict,
       hypothesis: schema.$defs.hypothesis,
       timeline: schema.$defs.timeline,
@@ -3303,6 +3377,7 @@ describe("Research closed shapes", () => {
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
       warning_justification: schema.$defs.warning_justification,
+      namesake: schema.$defs.namesake,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());
@@ -3347,12 +3422,14 @@ describe("ID_PREFIXES mirrors research.schema.json id patterns", () => {
     sources: "source",
     assertions: "assertion",
     person_evidence: "person_evidence_entry",
+    rejected_links: "rejected_link_entry",
     conflicts: "conflict",
     hypotheses: "hypothesis",
     timelines: "timeline",
     proof_summaries: "proof_summary",
     evaluations: "evaluation_entry",
     localities: "locality",
+    namesakes: "namesake",
   };
 
   /** Every `$def` in research.schema.json whose `id` carries a `pattern`. */
@@ -3434,7 +3511,7 @@ describe("a malformed element is reported, never thrown", () => {
   const ARRAYS = [
     "questions", "plans", "log", "sources", "assertions", "person_evidence",
     "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "known_holdings", "localities",
+    "known_holdings", "localities", "namesakes", "warning_justifications",
   ];
 
   for (const section of ARRAYS) {

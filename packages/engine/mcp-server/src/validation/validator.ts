@@ -191,6 +191,8 @@ export const VALIDATOR_ENUMS = {
 // deliberately not enumerated — that list went stale (named 8, applied at 10)
 // and the enumeration is what created the staleness.
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/** `enums.schema.json#/$defs/iso_datetime`, the colon or dash-separated form. */
+export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}([.-]\d+)?(Z|[+-]\d{2}:?\d{2})$/;
 
 // Hand-copied from each section's `properties.id.pattern` in research.schema.json.
 // validator.test.ts diffs this against the schema (key-set both ways + prefix)
@@ -205,12 +207,14 @@ export const ID_PREFIXES: Record<string, string> = {
   sources: "src_",
   assertions: "a_",
   person_evidence: "pe_",
+  rejected_links: "rj_",
   conflicts: "c_",
   hypotheses: "h_",
   timelines: "t_",
   proof_summaries: "ps_",
   evaluations: "ev_",
   localities: "loc_",
+  namesakes: "ns_",
 };
 
 /**
@@ -381,6 +385,19 @@ function checkIdPrefix(
   }
 }
 
+// The schema gives these id arrays an item pattern (`^q_`); without this check
+// a writer persisted `extracted_for_question_ids: ["flynn-household-origins"]`,
+// which the JSON schema then rejected (ut_search_records_003, issue #2116).
+function checkIdPrefixArray(
+  values: unknown,
+  expectedPrefix: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (!Array.isArray(values)) return;
+  values.forEach((v, j) => checkIdPrefix(v, expectedPrefix, `${path}[${j}]`, report));
+}
+
 function checkEnum(
   value: any,
   enumName: string,
@@ -460,6 +477,37 @@ function checkRefExists(
 ): void {
   if (!validIds.has(refId)) {
     addError(report, path, `references ${refType} '${refId}' which does not exist`);
+  }
+}
+
+/**
+ * An array-of-assertion-ids field: a container-type guard, an entry-type check
+ * and a referential check, each embedding the offending value. Null and absent
+ * are left to `checkRequired`, which already reports them.
+ */
+function checkAssertionIdArray(
+  value: unknown,
+  field: string,
+  validIds: Set<string>,
+  path: string,
+  report: ValidationReport
+): void {
+  if (value == null) return;
+  if (!Array.isArray(value)) {
+    addError(report, path, `'${field}' must be an array (got ${JSON.stringify(value)})`);
+    return;
+  }
+  for (const aid of value) {
+    if (typeof aid !== "string") {
+      addError(
+        report,
+        path,
+        `${field} contains a non-string entry ` +
+          `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
+      );
+      continue;
+    }
+    checkRefExists(aid, validIds, "assertion", path, report);
   }
 }
 
@@ -549,9 +597,9 @@ const NULLABLE_FIELDS = new Set([
 export const RESEARCH_SHAPES = {
   document: new Set([
     "project", "researcher_profile", "known_holdings", "questions", "plans",
-    "log", "sources", "assertions", "person_evidence", "conflicts",
+    "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "localities", "warning_justifications",
+    "localities", "warning_justifications", "namesakes",
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
@@ -614,6 +662,9 @@ export const RESEARCH_SHAPES = {
     "id", "assertion_id", "person_id", "confidence", "rationale",
     "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
   ]),
+  rejected_link_entry: new Set([
+    "id", "assertion_id", "person_id", "reason", "created",
+  ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
     "identity_question", "competing_assertion_ids", "status",
@@ -642,7 +693,7 @@ export const RESEARCH_SHAPES = {
     "id", "question_id", "tier", "vehicle", "shortfall",
     "supporting_assertion_ids",
     "resolved_conflict_ids", "exhaustive_search_summary",
-    "narrative_markdown", "claims",
+    "narrative_markdown", "updated", "claims",
   ]),
   proof_claim: new Set([
     "claim", "proof_tier", "shortfall", "supporting_assertion_ids",
@@ -662,6 +713,10 @@ export const RESEARCH_SHAPES = {
   ]),
   warning_justification: new Set([
     "warning_id", "justification", "person_ids", "tool", "recorded_at",
+  ]),
+  namesake: new Set([
+    "id", "person_id", "name", "place", "time_period", "record_ids",
+    "log_entry_ids", "notes", "created",
   ]),
 };
 
@@ -1164,6 +1219,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
       ids.assertions.add(a.id);
     }
+    checkIdPrefixArray(a.extracted_for_question_ids, ID_PREFIXES.questions, `${ap}.extracted_for_question_ids`, report);
     if ("information_quality" in a) {
       checkEnum(a.information_quality, "information_quality", ap, report);
     }
@@ -1283,6 +1339,38 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
   }
 
+  // Rejected links. RESEARCH_SHAPES.rejected_link_entry existed and was referenced
+  // NOWHERE, so the section had no shape check at all: a scratch write of
+  // `{assertion_id: 42, reason: "", bogus: 1}` persisted clean. The rule it carries --
+  // a rejection is kept so a later step cannot silently re-link the same pair -- is
+  // only as good as the rows it is read back from.
+  const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
+  for (let i = 0; i < rejectedLinks.length; i++) {
+    const rj = rejectedLinks[i];
+    const rp = `${path}/rejected_links[${i}]`;
+    if (!isObjectEntry(rj, rp, report)) continue;
+    checkRequired(rj, ["id", "assertion_id", "person_id", "created"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(rj, RESEARCH_SHAPES.rejected_link_entry, "rejected_links entries", rp, report);
+    if ("id" in rj) checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+    for (const field of ["assertion_id", "person_id"] as const) {
+      if (field in rj && typeof rj[field] !== "string") {
+        addError(report, rp, `${field} must be a string`);
+      }
+    }
+    // A mistyped id records a rejection that protects nothing.
+    if (typeof rj.assertion_id === "string") {
+      checkRefExists(rj.assertion_id, ids.assertions, "assertion", rp, report);
+    }
+    // Optional, and "never a demand for the right answer" -- but an empty string is
+    // not a reason, and downstream it reads as one that was given.
+    if ("reason" in rj && rj.reason != null) {
+      if (typeof rj.reason !== "string" || rj.reason.trim() === "") {
+        addError(report, rp, "reason must be a non-empty string or null");
+      }
+    }
+    if ("created" in rj) checkIsoDate(rj, "created", rp, report);
+  }
+
   // Person evidence
   const personEvidence = Array.isArray(data.person_evidence) ? data.person_evidence : [];
   for (let i = 0; i < personEvidence.length; i++) {
@@ -1336,6 +1424,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(c.id, ID_PREFIXES.conflicts, cp, report);
       ids.conflicts.add(c.id);
     }
+    checkIdPrefixArray(c.blocks_question_ids, ID_PREFIXES.questions, `${cp}.blocks_question_ids`, report);
     if ("conflict_type" in c) {
       checkEnum(c.conflict_type, "conflict_type", cp, report);
     }
@@ -1397,6 +1486,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(h.id, ID_PREFIXES.hypotheses, hp, report);
       ids.hypotheses.add(h.id);
     }
+    checkIdPrefixArray(h.related_question_ids, ID_PREFIXES.questions, `${hp}.related_question_ids`, report);
     if ("status" in h) {
       checkEnum(h.status, "hypothesis_status", hp, report);
     }
@@ -1420,6 +1510,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       ids.timelines.add(t.id);
     }
 
+    // The loops below read a non-array as empty, so an object or string here
+    // persisted unchecked and broke the viewer's `.map`.
+    for (const field of ["events", "gaps"] as const) {
+      if (t[field] != null && !Array.isArray(t[field])) {
+        addError(report, tp, `'${field}' must be an array (got ${JSON.stringify(t[field])})`);
+      }
+    }
     const events = Array.isArray(t.events) ? t.events : [];
     for (let j = 0; j < events.length; j++) {
       const ev = events[j];
@@ -1431,6 +1528,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         const sorted = Array.from(DATE_CERTAINTY_TIMELINE).sort();
         addError(report, ep, `'${ev.date_certainty}' is not valid for timeline events (use: ${sorted.join(', ')})`);
       }
+      // Without these `"a_001"` and a dangling `["a_999"]` persisted and read as
+      // sourced, which the unsourced-event advisory then could not see. Zero of
+      // 411 references in 515 committed research documents fail them.
+      checkAssertionIdArray(ev.assertion_ids, "assertion_ids", ids.assertions, ep, report);
     }
 
     const gaps = Array.isArray(t.gaps) ? t.gaps : [];
@@ -1478,6 +1579,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
+    }
+    if ("updated" in ps && (typeof ps.updated !== "string" || !ISO_DATETIME_PATTERN.test(ps.updated))) {
+      addError(report, psp, `'updated' must be an ISO 8601 date-time with a timezone, got '${ps.updated}'`);
     }
 
     // resolved_conflict_ids -> conflicts[].id, and that conflict must be
@@ -1570,32 +1674,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // documents carrying the field and 2,123-2,131 references, with zero
     // dangling, non-string or non-array. That is what makes it a fix here
     // rather than a card.
-    if (
-      "supporting_assertion_ids" in ps &&
-      ps.supporting_assertion_ids !== null &&
-      !Array.isArray(ps.supporting_assertion_ids)
-    ) {
-      addError(
-        report,
-        psp,
-        `'supporting_assertion_ids' must be an array (got ` +
-          `${JSON.stringify(ps.supporting_assertion_ids)})`
-      );
-    }
-    if (Array.isArray(ps.supporting_assertion_ids)) {
-      for (const aid of ps.supporting_assertion_ids) {
-        if (typeof aid !== "string") {
-          addError(
-            report,
-            psp,
-            `supporting_assertion_ids contains a non-string entry ` +
-              `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
-          );
-          continue;
-        }
-        checkRefExists(aid, ids.assertions, "assertion", psp, report);
-      }
-    }
+    checkAssertionIdArray(ps.supporting_assertion_ids, "supporting_assertion_ids", ids.assertions, psp, report);
 
     if (Array.isArray(ps.resolved_conflict_ids)) {
       for (const cid of ps.resolved_conflict_ids) {
@@ -1696,8 +1775,60 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   // Evaluations
   validateEvaluations(data, ids, path, report);
   validateLocalities(data, path, report);
+  validateNamesakes(data, ids, path, report);
 
   return ids;
+}
+
+/**
+ * namesakes (optional): one row per different person who shares a tree
+ * person's name, keyed by the tree person_id it shadows. Required fields are
+ * never null, so checkRequired gets an empty nullable set: the shared
+ * NULLABLE_FIELDS admits a null `place` and `notes` for assertions.
+ */
+function validateNamesakes(data: any, ids: ResearchIds, path: string, report: ValidationReport): void {
+  const rows = data.namesakes;
+  if (rows === undefined) return;
+  if (!Array.isArray(rows)) {
+    addError(report, `${path}/namesakes`, "namesakes must be an array");
+    return;
+  }
+  for (let i = 0; i < rows.length; i++) {
+    const ns = rows[i];
+    const np = `${path}/namesakes[${i}]`;
+    if (!isObjectEntry(ns, np, report)) continue;
+    checkRequired(ns, ["id", "person_id", "name", "place", "record_ids", "created"], np, report, new Set());
+    checkAllowedKeys(ns, RESEARCH_SHAPES.namesake, "namesakes entries", np, report);
+    if ("id" in ns && ns.id !== null) checkIdPrefix(ns.id, ID_PREFIXES.namesakes, np, report);
+    for (const field of ["person_id", "name", "place"]) {
+      if (field in ns && ns[field] !== null && (typeof ns[field] !== "string" || ns[field] === "")) {
+        addError(report, np, `'${field}' must be a non-empty string`);
+      }
+    }
+    checkStringOrNull(ns, ["time_period", "notes"], np, report);
+    if ("record_ids" in ns && ns.record_ids !== null) {
+      if (!Array.isArray(ns.record_ids)) {
+        addError(report, np, "record_ids must be an array");
+      } else {
+        ns.record_ids.forEach((r: unknown, j: number) => {
+          if (typeof r !== "string") addError(report, `${np}/record_ids[${j}]`, "must be a string");
+        });
+      }
+    }
+    if ("log_entry_ids" in ns) {
+      const logs = ns.log_entry_ids;
+      if (!Array.isArray(logs)) {
+        addError(report, np, "log_entry_ids must be an array");
+      } else {
+        logs.forEach((l: unknown, j: number) => {
+          const lp = `${np}/log_entry_ids[${j}]`;
+          if (typeof l !== "string") addError(report, lp, "must be a string");
+          else checkRefExists(l, ids.log, "log entry", lp, report);
+        });
+      }
+    }
+    checkIsoDate(ns, "created", np, report);
+  }
 }
 
 function validateEvaluations(
@@ -2218,7 +2349,8 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings, proof_summaries[].claims[].relationship). The
+  // timelines, known_holdings, proof_summaries[].claims[].relationship,
+  // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
   // check's original order and messages.

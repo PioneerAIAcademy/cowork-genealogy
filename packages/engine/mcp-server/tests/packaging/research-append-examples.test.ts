@@ -95,6 +95,7 @@ const DEF_FOR: Record<string, string> = {
   sources: "source",
   assertions: "assertion",
   person_evidence: "person_evidence_entry",
+  rejected_links: "rejected_link_entry",
   questions: "question",
   plans: "plan",
   plan_items: "plan_item",
@@ -105,6 +106,7 @@ const DEF_FOR: Record<string, string> = {
   evaluations: "evaluation_entry",
   known_holdings: "known_holding",
   localities: "locality",
+  namesakes: "namesake",
 };
 
 /**
@@ -128,7 +130,7 @@ const TOOL_ASSIGNED: Record<string, string[]> = {
  * them — distinct from `TOOL_ASSIGNED`, where the tool fills the field itself.
  *
  * A `plans` shell omits `items` and the `plan_items` ops in the same batched
- * call create them, which is what `research-plan/SKILL.md` prescribes and what
+ * call create them, which is what `agents/research-plan.md` prescribes and what
  * `exampleFor("plans")` now renders. Naming this separately matters: calling it
  * tool-assigned would be false, and the false version is what makes a reader
  * think a standalone `plans` append is legal — the belief that put `"items":
@@ -307,7 +309,7 @@ describe("the rendered plan examples teach a call the tool accepts", () => {
    * what a caller is actually SHOWN, which is `exampleFor`'s output. Both
    * failures being guarded here were in that output and in nothing else: the
    * `plans` example rendered a standalone append the tool refuses, and the
-   * `plan_items` example hard-coded the one plan id `research-plan/SKILL.md`
+   * `plan_items` example hard-coded the one plan id `agents/research-plan.md`
    * says never to hard-code.
    */
   /** The rendered call with its `//` commentary removed. A guard on the call

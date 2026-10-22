@@ -15,6 +15,7 @@ import { readBuildInfo } from "../utils/build-info.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
+import { collectSourceRefs } from "../utils/tree-person.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -108,6 +109,9 @@ export type ProjectContextResult =
       projectStatus: string | null;
       /** research.project.objective verbatim; null when absent. No other tool returns it (#3026). */
       objective: string | null;
+      /** research.project.subject_person_ids verbatim (strings only); [] when absent. The
+       *  router has no other way to see who the research is about. */
+      subjectPersonIds: string[];
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
@@ -141,23 +145,6 @@ function preferredDisplayName(person: any): string | null {
     (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
   );
   return parts.length > 0 ? parts.join(" ") : null;
-}
-
-/** Distinct S ids cited anywhere on the person — person-level `sources`,
- *  each fact's `sources`, each name's `sources` — in first-seen order. */
-function collectSourceRefs(person: any): string[] {
-  const refs: string[] = [];
-  const take = (sources: unknown): void => {
-    if (!Array.isArray(sources)) return;
-    for (const s of sources) {
-      const ref = s && typeof s === "object" ? (s as any).ref : undefined;
-      if (typeof ref === "string" && ref !== "" && !refs.includes(ref)) refs.push(ref);
-    }
-  };
-  take(person?.sources);
-  for (const f of Array.isArray(person?.facts) ? person.facts : []) take(f?.sources);
-  for (const n of Array.isArray(person?.names) ? person.names : []) take(n?.sources);
-  return refs;
 }
 
 function externalSiteOf(entry: any): any | null {
@@ -333,6 +320,9 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     buildId,
     projectStatus,
     objective,
+    subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
+      (id: unknown): id is string => typeof id === "string",
+    ),
     openQuestions,
     questionStatuses,
     persons,
@@ -396,6 +386,16 @@ function diedByYear(p: any): number | null {
 export const projectContextSchema = {
   name: "project_context",
   description:
+    "When the user asks where the project stands (\"where are we?\", \"summarize " +
+    "progress\", \"what have we found?\") or reopens a project, call this and answer " +
+    "from it in exactly ONE plain-language paragraph and nothing else: the objective, " +
+    "what is established, what is open or waiting on the researcher, and the next " +
+    "step, stated rather than asked. No lead-in line (\"Here's where things stand:\"), " +
+    "no line breaks, headings, tables, lists or bold, no closing question, " +
+    "and no identifiers, file names, tool names or field names: " +
+    "say \"the proof summary\" or \"the parentage question\", never q_001 or ps_001. " +
+    "nextStep values name ids and agents; restate them in plain words. " +
+    "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
@@ -425,7 +425,8 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. externalCollections counts stored curated " +
+    "entry with the same urlGenerated. subjectPersonIds are the project's subject " +
+    "persons (research.project.subject_person_ids). externalCollections counts stored curated " +
     "collections per place by record type (rows: research_query external_collections). " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +

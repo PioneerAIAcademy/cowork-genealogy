@@ -207,4 +207,25 @@ describe("compatiblePlace", () => {
     // Both share "USA" + "Pennsylvania"; one adds a county.
     expect(compatiblePlace("Pennsylvania, USA", "Schuylkill, Pennsylvania, USA")).toBe(true);
   });
+
+  // #2537: lined up from the country, a place written without its country, or
+  // with a level above it, read as a different place.
+  it("returns true for a place written without the country the other adds", () => {
+    expect(compatiblePlace("Ohio", "Ohio, United States")).toBe(true);
+    expect(compatiblePlace("Columbus, Ohio", "Ohio, United States")).toBe(true);
+    expect(compatiblePlace(
+      "Staffordshire, England",
+      "West Bromwich, Staffordshire, England, United Kingdom",
+    )).toBe(true);
+  });
+
+  it("aligns a place whose name repeats across levels", () => {
+    expect(compatiblePlace("Manhattan, New York", "Manhattan, New York, New York, United States")).toBe(true);
+  });
+
+  it("returns false when the levels below the shared top disagree", () => {
+    expect(compatiblePlace("Springfield, Ohio", "Springfield, Illinois, United States")).toBe(false);
+    expect(compatiblePlace("London, England", "London, Ontario, Canada")).toBe(false);
+    expect(compatiblePlace("Ohio", "Pennsylvania, United States")).toBe(false);
+  });
 });

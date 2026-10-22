@@ -23,8 +23,11 @@
 
   /* Ink tones */
   --text-primary: #2c2419;
-  --text-secondary: #6b6055;
-  --text-tertiary: #9a9188;
+  /* The muted scale was shifted on 2026-10-14 so all three levels clear 4.5 on every
+     light surface while STAYING three visible levels. Lifting tertiary alone would have
+     made it #6b635a -- a 1.04 separation from secondary, i.e. the same colour. */
+  --text-secondary: #4f4740;
+  --text-tertiary: #6e665c;
   --text-link: #8b5e34;
 
   /* Warm borders */
@@ -46,13 +49,13 @@
   --badge-green-bg: #dce8d4;
   --badge-green-text: #3d6b2e;
   --badge-amber-bg: #f0e0c0;
-  --badge-amber-text: #8b6914;
+  --badge-amber-text: #7a5c10;
   --badge-red-bg: #ebd4d0;
   --badge-red-text: #963b30;
   --badge-blue-bg: #d4dde8;
   --badge-blue-text: #3d5f8b;
   --badge-gray-bg: #e5e0d8;
-  --badge-gray-text: #7a7267;
+  --badge-gray-text: #615a51;
   --badge-purple-bg: #ddd4e8;
   --badge-purple-text: #6b4f8b;
 
@@ -78,9 +81,16 @@
 
   /* Decorative */
   --accent-gold: #b8860b;
+  /* Text drawn ON the gold fill. The gold is a MID tone in both themes, so dark ink wins
+     in both -- but the two golds differ enough that one hardcoded value is not safe, and
+     `#fff` (what the feedback button used) scored 3.25 here and 2.36 in dark. */
+  --accent-gold-ink: #2c2419;
   --accent-gold-soft: rgba(184, 134, 11, 0.12);
   /* AA-compliant variant for small text on warm paper (~6.0:1 vs #faf8f4) */
-  --accent-gold-strong: #8a6608;
+  /* Also the link colour (Linkify, Pill, PersonCard, the sidecar cards). #8a6608 was
+     4.40 on the tinted surfaces it lands on -- just under -- so this darkens every link
+     slightly as well as the footer toggle. */
+  --accent-gold-strong: #7a5a07;
   --accent-burgundy: #7b2d3b;
   --divider-ornament: #cfc6b8;
 }
@@ -97,8 +107,17 @@
   --bg-code: #2a2620;
 
   --text-primary: #e8e0d4;
-  --text-secondary: #a89e90;
-  --text-tertiary: #706860;
+  /* Lifted with tertiary. Raising tertiary to #9c9284 for contrast had squeezed the
+     secondary/tertiary separation to 1.16 -- two levels rendering as one. 1.46 now. */
+  --text-secondary: #bcb2a4;
+  /* Was #706860, which gave 3.03-3.26 against the three surfaces it actually sits on
+     (#1a1714, #1e1b17, #211e1a) -- under the 4.5 bar for small text, and this token
+     carries the table headers, every count badge, the timestamps and the research-log
+     times. #9c9284 gives 4.66-5.83 on EVERY dark surface (including --bg-hover,
+     which a DOM sweep never sampled and where #968c80 still scored 4.33) while staying
+     visibly dimmer than --text-secondary
+     (#a89e90), so the three-level hierarchy survives. */
+  --text-tertiary: #9c9284;
   --text-link: #d4a060;
 
   --border-color: #3a342c;
@@ -113,7 +132,9 @@
   --badge-blue-bg: #1e2a38;
   --badge-blue-text: #78a0c8;
   --badge-gray-bg: #2e2a24;
-  --badge-gray-text: #908878;
+  /* #908878 scored 4.06 on its own #2e2a24 fill -- just under the 4.5 bar for the small
+     text a badge carries. #9c9484 gives 4.74 and is still the quietest badge of the set. */
+  --badge-gray-text: #9c9484;
   --badge-purple-bg: #2a2238;
   --badge-purple-text: #a890c8;
 
@@ -130,6 +151,7 @@
   --sidebar-active-bg: #2e2a22;
 
   --accent-gold: #d4a040;
+  --accent-gold-ink: #1a1714;
   --accent-gold-soft: rgba(212, 160, 64, 0.15);
   /* AA-compliant variant for small text on dark paper (~7.2:1 vs #1a1714) */
   --accent-gold-strong: #e8b75c;

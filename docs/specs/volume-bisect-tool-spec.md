@@ -174,7 +174,7 @@ Cowork aborts at 60s, so all three legs are bounded to fit, not just the OCR:
 
 The 6s is real only because that call site caps `fetchWithRetry`'s retry **budget** as well as its per-request timeout. Without the cap the default 10s budget stands and one attempt costs 10s however short the timeout is — measured 2026-09-30 against a hanging `fetch`: **10,001ms over 2 requests uncapped, 6,001ms over 1 capped**, which put the real worst case near the abort while this table said 52s. A count is not enough on its own; the duration it multiplies has to be checked too, and `tests/tools/probe-retry-budget.test.ts` is what checks it.
 | image download | **1** | `fs-image-fetch` can issue a fallback, but only when `resolveFsImageInput` returned a `fallbackUrl`, which it does for the `ark` shape alone. This tool always passes an `imageId`. | 10s | 10s |
-| OCR | 1 | retries a transport failure but never a timeout, so a full-budget first attempt is the worst case | 30s | 30s |
+| OCR | 1 | retries a transport failure and a 429/503 but never a timeout, and runs every attempt and wait inside the one budget it is given, so the whole leg costs that budget at most | 30s | 30s |
 
 **Worst case 52s**, inside the 60s ceiling with 8s of headroom.
 

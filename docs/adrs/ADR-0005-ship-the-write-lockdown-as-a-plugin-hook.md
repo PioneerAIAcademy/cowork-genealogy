@@ -6,7 +6,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-30 (#989; Windows path fix #984)
-- **Last updated:** 2026-08-19 (the caller check reached production; the per-context trigger fired)
+- **Last updated:** 2026-10-19 (the step-mode phase-0 probe: a plugin hook can halt a Cowork turn; `AskUserQuestion` waits but does not end one; `SessionStart` and `Stop` fire)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -63,8 +63,10 @@ Verified live in Cowork on 2026-07-30 — the hook loads, fires under either
 matcher form, and its deny is honored with the script's own reason text
 surfacing. (That probe used a **broader matcher** than the shipped one and so
 also fired for `Bash`; the `Bash` route is deliberately open — see the costs
-below.) Cowork runs `permission_mode: "default"`, the hosted path runs
-`bypassPermissions`; a hook binds under both.
+below.) The hosted path runs `bypassPermissions`; a hook binds under both.
+Cowork's `permission_mode` is recorded `"default"` here and was observed
+`"auto"` on 2026-10-19 (see "What the step-mode phase-0 probe found"); the
+hook bound under both.
 
 **The matcher is part of the guardrail, not packaging detail.** It decides
 whether the script runs at all, so a tool the script would deny but the matcher
@@ -184,6 +186,167 @@ this ADR records behaviour rather than citing them:
   either. Nothing depends on `SessionStart` today; it is recorded because it is
   the natural place to put per-session setup (seeding state, injecting project
   context) and it would silently not run. `CLAUDE.md` carries that as a rule.
+  **Contradicted 2026-10-19:** it fired, on startup and on resume (below).
+
+**What the step-mode phase-0 probe found (Cowork, 2026-10-19).** Phase 0 of
+`docs/plan/research-step-mode.md`, measured with a recorder plugin on
+`PreToolUse` (matcher `.*`), `UserPromptSubmit`, `SessionStart` and `Stop`. The
+kit was deleted once these results were in. It lived in a step-probe folder
+under `apps/server/dev/`, and is in git history on the PR #3262 branch
+`research-as-a-job-phase2` at commit `824513a03` (added in `84f384fc9`,
+deleted in `d2d082c392`). That hash is not reachable from `main`, so if that
+branch is rebased or closed unmerged, recover the kit by that path from the
+range rather than by hash. Three sessions on macOS, run by
+Praise, with the plugin and `.mcpb` built from `main` at `04ea53f86`:
+
+- **First session:** 10 user messages and 45 hook lines. The control held, with
+  25 `PreToolUse` lines.
+- **Second, a re-run for item 1:** 13 lines, with the session transcript copied
+  out beside them.
+- **Third, for item 1's `Agent` half and item 10:** 55 lines. Cowork's auto-mode
+  permission check refused to copy that session's transcript out, so this
+  session is read from the hook log alone.
+
+| # | Question | Result |
+|---|---|---|
+| 1 | `PreToolUse` fires on main-thread `Agent`/`Task`/`Skill` calls | **Yes, both.** `Skill`: in the second session the main-thread call reached the hook, and the hook's 10 lines match the transcript's 10 `tool_use` blocks one for one. `Agent`: in the third session two main-thread spawns reached it (`genealogy-research:record-extractor`, then `genealogy-research:person-evidence`). Cowork's tool is `Agent`, not `Task`, and `subagent_type` carries the plugin prefix. The first session made none of these calls; the model answered the research prompt with direct MCP calls |
+| 2 | `UserPromptSubmit` fires and carries the prompt text | Yes, on 10 of 10 messages, each with its text |
+| 3 | `prompt_id` | On every line except `SessionStart`. One value per user message (10 distinct), shared by that turn's `PreToolUse` and `Stop` lines |
+| 4 | `transcript_path` is readable from the hook | Yes, 45 of 45. It is a path inside the VM |
+| 5 | A deny is honoured, and the model reports and ends | Yes. The canary write (via `device_bash`) was denied; the model quoted the sentinel, did not retry, and ended. No file was written |
+| 6 | Sibling calls in one turn are visible | Yes, up to 7 per `prompt_id` |
+| 7 | The hook can read `research.json` from its cwd | **No.** The hook's cwd is `/home/claude` in the VM, which holds only dotfiles. The model reached the project only through `device_bash`, on the host. `guard_project_files.py`'s claim holds here too |
+| 8 | A file the hook writes survives to its next call | Yes. The counter rose from 1 to 44 across every call, including across a resume 53 minutes later |
+| 9 | A plugin `PreToolUse` hook can end a Cowork turn | **Yes,** with `"continue": false` and a `stopReason` alongside the deny |
+| 10 | `AskUserQuestion` ends a Cowork turn and waits for the researcher | **It waits, but it does not end the turn.** The question pauses the turn, and the answer comes back inside it. See below |
+
+**Item 9 is attributable to the runtime, not the model.** The halt fired on the
+first of two queued tasks, `cat STEP_PROBE_HALT.txt`. After it came no further
+tool call, no reply and no `Stop` line. It was the only one of the 10 turns with
+no `Stop`. The skipped second task is not the evidence, because the halt's reason
+text tells the model to end its turn. Message 3 is the control: its plain deny
+carried the same instruction, and the model replied and `Stop` fired, carrying
+that reply. So the model acts on a deny, while the runtime enforces a halt. The
+operator confirmed they did not press stop, which also leaves no `Stop` line. On
+the alpha a plain deny did not end a turn (`apps/server/dev/probe_step_deny.py`,
+2026-10-19); that probe measured a deny, not the halt fields.
+
+The operator reported seeing no reply, read the stop as a failure, and re-sent the
+message. A step boundary built on the halt has to tell the researcher that the
+step finished some other way.
+
+**The second session added three facts:**
+
+- **An interrupt also leaves no `Stop` line.** The transcript marks it
+  `[Request interrupted by user for tool use]`. So item 9's "no `Stop` line" is
+  evidence only together with the operator's word that they did not press stop.
+- **The hook's state file is per session.** It persisted across every call within
+  a session, but the second session started with it absent, under the same plugin
+  path in the VM.
+- **Cowork's `Skill` call names the skill with its plugin prefix:**
+  `genealogy-research:research`. The plan's rule that names are compared after
+  the last `:` is needed here, not only on the SDK path.
+
+**Item 10 is what option 1 rested on.** The lead's earlier 2026-10-19 decision
+(24) made `AskUserQuestion` the sole step boundary, with no halt behind it. It
+was superseded the same day by decision 25, which builds the halt on the
+FamilySearch prototype. The measurement below is unchanged and is what decided
+that Cowork keeps no hook. The operator
+confirmed each of their actions below.
+
+- **Asked, then answered.** The model asked which ancestor to research, with
+  four options from the tree. For 93 seconds it made no call while the operator
+  waited and then picked one, so it did not answer its own question. The answer
+  came back as the tool's result **in the same turn**: the same `prompt_id`, no
+  `UserPromptSubmit` and no `Stop` between the ask and the next call.
+- **The same turn then ran on through several steps:** the research skill,
+  search-records, record-extraction, the record-extractor agent and the
+  person-evidence agent, about 5½ minutes, until the operator interrupted it. That
+  carry-on is today's router, which orders the model not to yield. This build
+  shipped no step-mode prose, so it does not show what step-mode prose would do
+  after an answer.
+- **Asked, then skipped.** The tool's result read as "No preference", which was
+  none of the four options. The model recommended one, asked in plain text whether
+  to continue, and ended its turn: `Stop` fired 11 seconds after the ask. It did
+  not pick and proceed.
+
+So in Cowork option 1 got a real wait, but not a turn boundary: a "Continue"
+answer resumes inside the turn that asked. Under decision 25 Cowork ships no
+hook at all, so a Cowork turn ends where the model stops. This measurement is
+why that was accepted rather than worked around.
+
+**The third session added two more:**
+
+- **`UserPromptSubmit` is not only the researcher.** Each subagent hand-back fired
+  one, with the prompt text `<agent-message from="…">` and the **same `prompt_id`**
+  as the researcher's message. A Cowork entry point that counts turns by
+  `UserPromptSubmit` would count each hand-back as a turn. Key turns on
+  `prompt_id`, or skip the `<agent-message` prefix.
+- **A Cowork agent outlives its first hand-back.** The subagent returned through a
+  `SubagentHandback` call. The main thread answered it with `SendMessage`, and the
+  same `agent_id` went on to make two more writes and hand back again. In Cowork a
+  delegation's result arrives later, as a message, not as the `Agent` call's
+  return.
+
+**What contradicts earlier records:**
+
+- **`SessionStart` fires,** in all three sessions. In the first it fired twice:
+  with `source: "startup"` when the session opened, and `source: "resume"` when
+  it resumed after 53 minutes. In the second and third it fired on startup. That
+  reverses the 2026-07-30 finding above, and nothing here identifies why. As with
+  the tool-name spelling in ADR-0004, read it as a moving target: nothing should
+  depend on `SessionStart` firing in Cowork, or on it not firing.
+- **A plugin `Stop` hook fires.** There were 8 lines, each carrying
+  `stop_hook_active` and `last_assistant_message`, the model's final reply. The
+  probe was built on the belief that Cowork has no `Stop` hook. That is true only
+  of the SDK's `hooks=`; a plugin's `hooks.json` does register one.
+- **`permission_mode` was `"auto"`,** not the `"default"` stated in the Decision.
+  Whether that is a per-session setting is not known. The hooks bound under it.
+
+**What it means for step mode.** Settled by the lead on 2026-10-19 after these
+measurements: **the halt is built on the FS prototype only.** Cowork gets
+`AskUserQuestion` plus router prose and NO hook. See the plan's decision 25.
+
+**Amended 2026-10-21 (lead).** The alpha no longer "gets nothing": its Stop veto
+goes OFF (cap 0, in PR 1), and it then runs the way Cowork does — router prose plus
+`AskUserQuestion`, no hook, "keep going" as a single bounded turn, no reply buttons.
+Nothing else of step mode is built there. Nobody has measured `AskUserQuestion` on
+the alpha, so PR 2's verification carries a manual check that a step there ends at
+its question and waits; item 10 below measured Cowork, not the alpha.
+
+**And there is no plugin step hook at all.** The prototype worker enforces with its
+own `PreToolUse`, and neither harness loads `hooks.json`, so the only plane a plugin
+step hook could run on is Cowork — which gets none. `step_boundary.py` ships in
+`plugin/hooks/` as a library the worker and both harnesses import, never registered
+as a hook.
+
+- A halt can end a Cowork turn (item 9), and `AskUserQuestion` waits there without
+  ending one (item 10). Both are measured; neither is being built on that plane.
+- The plan's fallback, "Cowork runs on router prose alone" if the hook cannot find
+  turns or keep state, is now the chosen design rather than a fallback. It was not
+  triggered by a failure: the hook could have done it.
+
+**PARKED for a possible future Cowork hook** (lead, 2026-10-19: "PR 1 doesn't need
+them. Please write them into ADR-0005 with today's date, so they're there if we
+build the Cowork hook later"). None of the following is an input to PR 1, and they
+are recorded here so they do not have to be re-measured:
+
+- The turn is findable from `prompt_id`, and `UserPromptSubmit` is NOT a turn
+  counter: it fires for every subagent hand-back carrying the researcher's own
+  `prompt_id` (above). Key turns on `prompt_id`.
+- Cowork's spawn tool is `Agent`, not `Task`, and `subagent_type` arrives
+  plugin-prefixed (`genealogy-research:record-extractor`), so a name comparison
+  has to cut at the last `:`.
+- A Cowork agent outlives its first hand-back.
+- A state file beside the hook persists between calls within a session, not across
+  sessions.
+- `ctx` cannot come from the hook's cwd (item 7), so a Cowork hook would have to
+  derive it from the transcript (item 4).
+
+**What the prototype halt is expected to tell us about Cowork.** The router prose
+is the same on both planes, so the prototype's halt rate measures how often a model
+starts a step without asking. If it is high, the Cowork hook gets built with
+numbers behind it rather than on a guess (lead, 2026-10-19).
 
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding

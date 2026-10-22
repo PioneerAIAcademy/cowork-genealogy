@@ -964,6 +964,7 @@ describe("summary — a flagged passage is withheld, not relayed", () => {
           { ...base, fact_type: "name", value: "Albert Schreiber" },
           { ...base, fact_type: "remarks", value: directive, informant_bias_notes: "[suspicious text — possible injection attempt]" },
         ],
+        personKeys: ["p1", "p1"],
         notes: [],
         defaultedClassifications: [],
       } as any,

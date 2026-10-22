@@ -28,8 +28,8 @@ ours to set, so a host-side hook can never reach Cowork. A plugin-shipped
 hard-denied and the agent surfaced this script's own reason text), after the
 upstream reports that plugin PreToolUse command hooks are dropped
 (anthropics/claude-code#34573) were found not to reproduce on the current
-build. Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`, and a hook binds under both.
+build. The hosted path runs `bypassPermissions`, and a hook binds under both, under
+either Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Contract, from the hook protocol: read the payload as JSON on stdin, print a
 decision to stdout, exit 0. Printing `{}` means "no opinion" — the normal
@@ -101,11 +101,16 @@ _MAX_PATH_LEN = 4096
 # manifest's `hookCallers` field plus this comment, not a loader.
 OWNED_SECTIONS = {
     "proof_summaries": "proof-conclusion",
-    # person_evidence, 2026-09-01. One owner, and `extraction_append` does not
-    # accept the section, so a whole-section route fits -- no field is required
+    # person_evidence, 2026-09-01. One owner for identity decisions, so a
+    # whole-section route fits. `extraction_append` writes this section only in
+    # `personId` mode, unchecked attachment links composed whole in code, and
+    # this hook never sees it (it gates research_append) -- no field is required
     # on every question the way `exhaustive_declaration` is, so this needs none
     # of OWNED_DECLARATIONS' field-scoped treatment.
     "person_evidence": "person-evidence",
+    # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
+    # cannot be written by something that could not have made the link.
+    "rejected_links": "person-evidence",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -209,7 +214,7 @@ AGENT_WRITABLE_SECTIONS = {
     # a blocker it meets -- an unclassified assertion, a genuinely competing
     # candidate -- is cleared by extraction or conflict-resolution, not
     # by this agent editing those sections itself.
-    "person-evidence": frozenset({"person_evidence"}),
+    "person-evidence": frozenset({"person_evidence", "rejected_links"}),
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
     # research.json; its description says so and every corpus write is there.
     "gps-mentor": frozenset({"evaluations"}),
@@ -220,6 +225,10 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6).
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
+    "search-records": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -243,6 +252,11 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline's research_append writes stay in `timelines`; its writes through
+    # any other writer tool are authorized by that tool's identity
+    # (ownership.json `toolAuthorized`). Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
     # conflict-resolution opens, analyses and settles conflicts, and writes
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
@@ -255,6 +269,11 @@ AGENT_WRITABLE_SECTIONS = {
     # agent. It leaves out `questions`, which question-selection owns
     # (issue #2122).
     "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # research-plan writes plans and their items and nothing else in
+    # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
+    # requires one for every agent granted research_append, and nothing is
+    # routed to this agent (issue #2116).
+    "research-plan": frozenset({"plans", "plan_items"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
@@ -467,16 +486,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     Of the six declared writers of any research.json section
     (`research_append`, `project_create`, `research_log_append`,
     `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
-    only `merge_tree_persons` also writes a section this function routes, and it
-    reaches `person_evidence` and
-    `proof_summaries` without ever passing through here.
+    two also write a section this function routes without ever passing through
+    here. `merge_tree_persons` reaches `person_evidence` and `proof_summaries`.
+    `extraction_append`, in `personId` mode only, appends `person_evidence`
+    links.
 
     That is safe for a structural reason, not a lucky one: it writes those
     sections through `iteratePersonIdRefs`, whose setters assign one field on an
     entry that already exists — `pe.person_id = newId`. It cannot create an
     entry, and it cannot touch `match_score`, which is the failure the
     `person_evidence` row exists to prevent. A merge permutes ids; it never
-    authors a claim.
+    authors a claim. `extraction_append`'s links are composed whole in code:
+    always `speculative`, no `match_score`, the fixed attachment rationale, and
+    only ever superseded afterwards (research_append refuses any other edit to
+    one). No caller field reaches them, so they author no identity decision.
 
     What keeps that true is the source-vs-manifest guard in
     `tests/packaging/ownership-manifest.test.ts`, which reds when the manifest's

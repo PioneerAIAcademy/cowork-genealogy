@@ -1,6 +1,6 @@
 # Conclusion tree — one evidence/conclusion model for facts and relationships
 
-**Status:** Draft; `/critique-plan` closed after 17 rounds (2026-10-07); nothing built.
+**Status:** Stage 1a under way: PRs #3398, #3400, #3453, #3457 and #3470 merged (2026-10-14/15). Stage 1b not started, except its Decision 13 merge refusal, which issue #3363's PR 1b ships ahead of that stage. `/critique-plan` closed after 17 rounds (2026-10-07).
 
 **Decision record:** issue #3032. Its body is rewritten from this plan.
 
@@ -51,7 +51,7 @@ only.
 | 19 | Evidence resting only on a speculative identity link, or on a persona a live denied identity claim covers, is hidden from the view unless asked for | Stops wrong-candidate evidence surfacing as "found" |
 | 20 | The e2e judge grades recall from the final tree plus the saved view, and reports found beside concluded (claimed); the verdict switches to concluded in Stage 4; the avoid guard keys on edges and claims, not names | Measures the new promise without a score cliff |
 | 21 | The viewer shows status chips, a found-in-records list, and rival parent sets side by side | Status is useless unless users see it |
-| 22 | project-status, question-selection and hypothesis-tracking read status through `project_context`, not the tree file | Issue #2943: imports narrated as fact |
+| 22 | question-selection and hypothesis-tracking read status through `project_context`, not the tree file | Issue #2943: imports narrated as fact |
 | 23 | Link-time fact and edge writes retire only after the view exists (Stage 3) | Readers need the view before the tree thins |
 | 24 | Legacy documents are read, never repaired; they get the legacy labels in row 6 | Readers tolerate old shapes |
 | 25 | A new rule lands in warn mode in one module, `src/validation/rule-modes.ts`, and refuses only from its flip stage (1c, 2b or 3b), a separate PR. The engine accepts a claim kind before any body writes it: Stage 1b merges after Stage 1a, and the prototype deploys `eb-tools.zip` before `eb-worker.zip`. `project_context.claimKinds` lists what the running engine accepts, and each changed body that holds `project_context` keeps today's behaviour when it lacks `claimKinds` or `owedFindings` | There are no releases or tags. A Cowork tester builds both artifacts from one commit and may install either alone; the hosted image ships both at each `make deploy`; the prototype's engine and plugin are separate Beanstalk environments |
@@ -271,6 +271,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
   - **`primary`** (Decision 34): `add_fact`, `add_person`'s inline facts, `add_relationship`'s inline Couple facts and `update_fact` set `primary: true` only on a fact an affirmed claim at `probable` or better covers. Warns until Stage 1c.
   - `add_relationship`, and its corroborate path, refuse a pair a `disproved` claim covers. This refuses at once: no `disproved` claim exists before this stage, so there is nothing to measure.
   - `merge_tree_persons` refuses a merge of two persons an edge joins, naming the edge (Decision 13). It refuses at once, with no warn mode: the merge would turn the edge into a self-relationship that `dedupRelationships` (`src/utils/merge-gedcomx.ts`) drops silently, an impossibility like an ancestry cycle, so there is no false positive to measure.
+    - **Shipped** ahead of this stage, in every project, by issue #3363's PR 1b: `joinedPairRefusals` in `src/tools/merge-tree-persons.ts`, pinned by MF3 and MF3c in `tests/tools/merge-tree-persons.test.ts` (MF3 is the acceptance case below, "a merge of a parent into its own child is refused and names the edge"), so this stage builds nothing for it.
   - Each of these raises a synthetic introduced warning, which a persisted `warningJustifications` entry must cover:
     - `remove` of an import with no disproof;
     - `update_relationship` when no claim names that subtype;
@@ -417,7 +418,7 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
 
 **Deferred.** Rule T's flip → Stage 3b.
 
-### Stage 2 — the evidence view and its readers (paid slots: project-status, hypothesis-tracking, question-selection, research)
+### Stage 2 — the evidence view and its readers (paid slots: hypothesis-tracking, question-selection, research)
 
 **What changes**
 - **A new `src/utils/evidence-view.ts`** computes "found in records" for each tree person from assertions and `pe_` links.
@@ -446,9 +447,9 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
     - known gap: a cross-marriage among the parents (for example, the birth father also married the adoptive mother) adds a Couple that is not a FamilySearch group, so the derived pairing is ambiguous. There are 0 instances in the 136 trees, and the component handles it when it meets one.
   - the new labels and colours in `components/shared/StatusBadge.tsx`. Each new `statusColorMap` key is copied into `eval/app/components/scenario/components/shared/StatusBadge.tsx` (`eval/app/tests/unit/statusBadgeParity.test.ts`), and each new label is added to the display-label table in `docs/specs/research-schema-spec.md` §5.11, whose 2026-09-14 rule reserves "conclusion" for `proved`.
 - **Agents:**
-  - `packages/engine/plugin/agents/project-status.md` and `hypothesis-tracking.md` gain `project_context` in all three spellings, with an updated `tests/packaging/agent-tool-names.test.ts` snapshot.
+  - `packages/engine/plugin/agents/hypothesis-tracking.md` gains `project_context` in all three spellings, with an updated `tests/packaging/agent-tool-names.test.ts` snapshot.
   - `question-selection.md` already holds it, and switches its tree read to it.
-  - project-status, question-selection and hypothesis-tracking pass `include: ["status"]` (Decision 22); record-extractor and research-exhaustiveness, which make most calls, do not.
+  - question-selection and hypothesis-tracking pass `include: ["status"]` (Decision 22); record-extractor and research-exhaustiveness, which make most calls, do not.
 - **e2e:**
   - `eval/harness/e2e/orchestrator.py` saves `project_context`'s view (`include: ["view"]`) at the end of each run, beside the final tree;
   - `eval/harness/e2e/judge.py` and `judge_prompt.md` grade recall from the final tree plus the saved view for every finding kind, and report found (tree or view) beside concluded (claims) for every finding; for a relationship finding they also report whether the proof narrative concludes it with no claim covering it (issue #3213's trigger). `judge_prompt.md` also drops "the deliverable that uploads to FamilySearch" (Decision 16);

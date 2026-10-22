@@ -86,6 +86,13 @@ const EXAMPLES: Record<string, string> = {
   "superseded_by": null
 }`,
 
+
+  rejected_links: `{
+  "assertion_id": "a_031",
+  "person_id": "I7",
+  "reason": "Same name and county, but the 1880 census puts this Patrick Flynn in Luzerne with a wife named Bridget; the subject was unmarried and in Schuylkill. same_person scored 0.21.",
+  "created": "2026-07-19"
+}`,
   questions: `{
   "question": "Who were the parents of Patrick Flynn (b. abt 1845, Ireland)?",
   "rationale": "The death certificate names a father (Thomas Flynn) on a single uncorroborated reading; no record yet names the mother.",
@@ -243,6 +250,17 @@ const EXAMPLES: Record<string, string> = {
   "promoted": false,
   "created": "2026-07-18"
 }`,
+
+  namesakes: `{
+  "person_id": "I1",
+  "name": "John Smith",
+  "place": "San Francisco, California, United States",
+  "time_period": "born about 1873",
+  "record_ids": ["ark:/61903/1:1:Q295-JLGZ"],
+  "log_entry_ids": ["log_004"],
+  "notes": "A different John Smith, a clerk, in the 1880 census of San Francisco",
+  "created": "2026-10-16"
+}`,
 };
 
 /** `project` is a singleton: update-only field writes, no `entry`. */
@@ -254,7 +272,7 @@ const PROJECT_EXAMPLE = `research_append({
 })`;
 
 /**
- * The `plans` append, as the batched call `research-plan/SKILL.md` prescribes:
+ * The `plans` append, as the batched call `agents/research-plan.md` prescribes:
  * the shell, then one `plan_items` op per item carrying the id the tool will
  * assign the shell. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather
  * than a third literal, so a schema drift in either is caught once.
@@ -353,7 +371,7 @@ export function exampleFor(
   const entry = Object.hasOwn(EXAMPLES, section) ? EXAMPLES[section] : undefined;
   if (!entry) return null;
   // `pl_001` was hard-coded here, which is the one literal
-  // `research-plan/SKILL.md` says never to hard-code: in an ongoing project it
+  // `agents/research-plan.md` says never to hard-code: in an ongoing project it
   // attaches the items to another question's plan. The append form teaches the
   // prediction rule; the update form needs an id that already exists.
   const planId =
@@ -408,6 +426,22 @@ export function exampleFor(
       },
       not_reached: []
     }
+  }
+})`;
+    }
+    // A summary's narrative and search summary are refused one without the
+    // other (`narrativeAndSearchSummaryTogether`), so the generic placeholder
+    // would contradict the refusal it is attached to.
+    if (section === "proof_summaries") {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "update",
+  entryId: "<existing-ps_-id>",
+  fields: {
+    /* only the fields you are changing; after a later search, these two together: */
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\n... **What could resolve it:** the 1885 county estate file.",
+    exhaustive_search_summary: "Searched ... and the 1850-1880 censuses. Not yet examined: the 1885 county estate file."
   }
 })`;
     }

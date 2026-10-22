@@ -1,0 +1,1759 @@
+{
+  "log_id": "log_017",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T18:02:45.166Z",
+  "returned_count": 5,
+  "payload": {
+    "query": {
+      "surname": "Burton",
+      "givenName": "Polly",
+      "collectionId": "1325221",
+      "residenceYearFrom": 1900,
+      "residenceYearTo": 1900,
+      "residencePlace": "Boyd County, Kentucky",
+      "subjectId": "I2",
+      "projectPath": "/project"
+    },
+    "totalMatches": 5,
+    "paginationCappedAt": 4999,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M9W6-3GT",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary E Burton",
+        "score": 4.71288,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "September 1891",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of Christopher Burton, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1T12-HMR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_29514386",
+              "ark": "ark:/61903/1:1:M9W6-3GT",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Mary E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Sep 1891",
+                  "standard_date": "Sep 1891",
+                  "place": "Virginia",
+                  "standard_place": "Virginia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_29514381",
+              "ark": "ark:/61903/1:1:M9W6-3GL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Christopher"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Feb 1857",
+                  "standard_date": "Feb 1857",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29514382",
+              "ark": "ark:/61903/1:1:M9W6-3GG",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Alafare"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Jun 1867",
+                  "standard_date": "Jun 1867",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29514383",
+              "ark": "ark:/61903/1:1:M9W6-3GP",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Charlie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Aug 1885",
+                  "standard_date": "Aug 1885",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29514384",
+              "ark": "ark:/61903/1:1:M9W6-3G5",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Milton F"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Apr 1888",
+                  "standard_date": "Apr 1888",
+                  "place": "Virginia",
+                  "standard_place": "Virginia, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29514385",
+              "ark": "ark:/61903/1:1:M9W6-3GR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Walter"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Jan 1890",
+                  "standard_date": "Jan 1890",
+                  "place": "Virginia",
+                  "standard_place": "Virginia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_29514387",
+              "ark": "ark:/61903/1:1:M9W6-3GY",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Frank"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Jun 1893",
+                  "standard_date": "Jun 1893",
+                  "place": "Virginia",
+                  "standard_place": "Virginia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_29514388",
+              "ark": "ark:/61903/1:1:M9W6-3GB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Rozella"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Mar 1895",
+                  "standard_date": "Mar 1895",
+                  "place": "Arkansas",
+                  "standard_place": "Arkansas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_29514389",
+              "ark": "ark:/61903/1:1:M9W6-3G1",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Jeff"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "May 1897",
+                  "standard_date": "May 1897",
+                  "place": "Virginia",
+                  "standard_place": "Virginia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_29514390",
+              "ark": "ark:/61903/1:1:M9W6-3PM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Ned"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Apr 1900",
+                  "standard_date": "Apr 1900",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_29514391",
+              "ark": "ark:/61903/1:1:M9W6-3P9",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Marshall",
+                  "given": "Charlie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+                  "standard_place": "Magisterial District 2 East Fork, Boyd, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Dec 1893",
+                  "standard_date": "Dec 1893",
+                  "place": "Pennsylvania",
+                  "standard_place": "Pennsylvania, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514384"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514384"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514387"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514387"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514386"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514386"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514388"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514383"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514390"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514389"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514381",
+              "child": "p_29514385"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_29514381",
+              "person2": "p_29514382"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514389"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514385"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514390"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514383"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_29514382",
+              "child": "p_29514388"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21796837225",
+              "resource_type": "Record",
+              "title": "Household of Christopher Burton, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9W6-3GL : Thu Jan 16 14:09:07 UTC 2025), Entry for Christopher Burton and Alafare Burton, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1T12-HMR",
+              "coverage": {
+                "place_rep_id": "8059832",
+                "date_range": "1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYLZ-S1L",
+              "coverage": {
+                "place_rep_id": "394113",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYLZ-MBN"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_29514386",
+              "resource_type": "Person",
+              "url": "#p_29514386"
+            }
+          ],
+          "places": [
+            {
+              "id": "338",
+              "name": "Pennsylvania, United States",
+              "latitude": 40.75,
+              "longitude": -77.75
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "360",
+              "name": "Virginia, United States",
+              "latitude": 37.5,
+              "longitude": -78.5
+            },
+            {
+              "id": "367",
+              "name": "Arkansas, United States",
+              "latitude": 34.75,
+              "longitude": -92.5
+            },
+            {
+              "id": "8059832",
+              "name": "Magisterial District 2 East Fork, Boyd, Kentucky, United States",
+              "latitude": 38.31068,
+              "longitude": -82.67682
+            }
+          ]
+        },
+        "primaryId": "p_29514386",
+        "batchNumber": "N00787-9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MMRY-3QM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Marie Burton",
+        "score": 3.8178802,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "January 1897",
+        "birthPlace": "Utah, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of Ira Burton, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1BK1-CC4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_20981820",
+              "ark": "ark:/61903/1:1:MMRY-3QM",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Marie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "January 1897",
+                  "standard_date": "Jan 1897",
+                  "place": "Utah",
+                  "standard_place": "Utah, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_20981815",
+              "ark": "ark:/61903/1:1:MMRY-33R",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Ira"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "August 1862",
+                  "standard_date": "Aug 1862",
+                  "place": "Un",
+                  "standard_place": "Un, Madhya Pradesh, India"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_20981816",
+              "ark": "ark:/61903/1:1:MMRY-33T",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Hattie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "March 1867",
+                  "standard_date": "Mar 1867",
+                  "place": "Nebraska",
+                  "standard_place": "Nebraska, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_20981817",
+              "ark": "ark:/61903/1:1:MMRY-33Y",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Clair"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "May 1889",
+                  "standard_date": "May 1889",
+                  "place": "Utah",
+                  "standard_place": "Utah, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_20981818",
+              "ark": "ark:/61903/1:1:MMRY-33B",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Troy"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "November 1890",
+                  "standard_date": "Nov 1890",
+                  "place": "Utah",
+                  "standard_place": "Utah, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_20981819",
+              "ark": "ark:/61903/1:1:MMRY-331",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton",
+                  "given": "Guy"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "March 1893",
+                  "standard_date": "Mar 1893",
+                  "place": "Utah",
+                  "standard_place": "Utah, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_20981815",
+              "child": "p_20981820"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981816",
+              "child": "p_20981820"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981815",
+              "child": "p_20981817"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981816",
+              "child": "p_20981817"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981815",
+              "child": "p_20981818"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981815",
+              "child": "p_20981819"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_20981815",
+              "person2": "p_20981816"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981816",
+              "child": "p_20981819"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_20981816",
+              "child": "p_20981818"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21837581377",
+              "resource_type": "Record",
+              "title": "Household of Ira Burton, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMRY-33R : Thu Oct 09 08:04:49 UTC 2025), Entry for Ira Burton and Hattie Burton, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1BK1-CC4",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DKGG-R3",
+              "coverage": {
+                "place_rep_id": "393434",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_20981820",
+              "resource_type": "Person",
+              "url": "#p_20981820"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "1815992",
+              "name": "Un, Madhya Pradesh, India",
+              "latitude": 21.82192,
+              "longitude": 75.45679
+            },
+            {
+              "id": "342",
+              "name": "Utah, United States",
+              "latitude": 39.25,
+              "longitude": -111.75
+            },
+            {
+              "id": "358",
+              "name": "Nebraska, United States",
+              "latitude": 41.5003,
+              "longitude": -99.7503
+            }
+          ]
+        },
+        "primaryId": "p_20981820",
+        "batchNumber": "N00675-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M35L-DG9",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "Austin, Travis, Texas, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Barton",
+        "score": 3.08716,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "December 1847",
+        "birthPlace": "Mississippi, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of David Spinola, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1B16-LMD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_92918461",
+              "ark": "ark:/61903/1:1:M35L-DG9",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Barton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "December 1847",
+                  "standard_date": "Dec 1847",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Austin, Travis, Texas, United States",
+                  "standard_place": "Austin, Travis, Texas, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_92918459",
+              "ark": "ark:/61903/1:1:M35L-DL1",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "David",
+                  "surname": "Spinola"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1868",
+                  "standard_date": "1868",
+                  "place": "Austria",
+                  "standard_place": "Austria"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Austin, Travis, Texas, United States",
+                  "standard_place": "Austin, Travis, Texas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_92918462",
+              "ark": "ark:/61903/1:1:M35L-DGS",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Spinola"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Austin, Travis, Texas, United States",
+                  "standard_place": "Austin, Travis, Texas, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1878",
+                  "standard_date": "1878",
+                  "place": "Austria",
+                  "standard_place": "Austria"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_92918460",
+              "ark": "ark:/61903/1:1:M35L-DGM",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lessie",
+                  "surname": "Spinola"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Austin, Travis, Texas, United States",
+                  "standard_place": "Austin, Travis, Texas, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "March 1877",
+                  "standard_date": "Mar 1877",
+                  "place": "Texas",
+                  "standard_place": "Texas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_92918461",
+              "child": "p_92918462"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_92918461",
+              "child": "p_92918459"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_92918459",
+              "person2": "p_92918460"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21845259912",
+              "resource_type": "Record",
+              "title": "Household of David Spinola, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M35L-DL1 : Thu Jan 01 17:52:51 UTC 2026), Entry for David Spinola and Lessie Spinola, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1B16-LMD",
+              "coverage": {
+                "place_rep_id": "5059068",
+                "date_range": "1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DC33-XQG",
+              "coverage": {
+                "place_rep_id": "393507",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_92918461",
+              "resource_type": "Person",
+              "url": "#p_92918461"
+            }
+          ],
+          "places": [
+            {
+              "id": "225",
+              "name": "Austria",
+              "latitude": 47.5,
+              "longitude": 14
+            },
+            {
+              "id": "343",
+              "name": "Texas, United States",
+              "latitude": 31.25,
+              "longitude": -99.25
+            },
+            {
+              "id": "369",
+              "name": "Mississippi, United States",
+              "latitude": 32.7503,
+              "longitude": -89.7503
+            },
+            {
+              "id": "5059068",
+              "name": "Austin, Travis, Texas, United States",
+              "latitude": 30.2746,
+              "longitude": -97.7404
+            }
+          ]
+        },
+        "primaryId": "p_92918461",
+        "batchNumber": "N00954-7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M316-9V2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "United States"
+          },
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Quartermaster (Corrals) Joseph P Burton",
+        "score": 2.9169798,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "April 1873",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of Quartermaster (Corrals) Wellington Dunn, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1TRW-RQN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_96742460",
+              "ark": "ark:/61903/1:1:M316-9V2",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joseph P",
+                  "prefix": "Quartermaster (Corrals)",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "April 1873",
+                  "standard_date": "Apr 1873",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_96742457",
+              "ark": "ark:/61903/1:1:M316-9VJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Wellington",
+                  "prefix": "Quartermaster (Corrals)",
+                  "surname": "Dunn"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "October 1841",
+                  "standard_date": "Oct 1841",
+                  "place": "New York",
+                  "standard_place": "New York, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_96742458",
+              "ark": "ark:/61903/1:1:M316-9VV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charles F",
+                  "prefix": "Quartermaster (Corrals)",
+                  "surname": "White"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "January 1872",
+                  "standard_date": "Jan 1872",
+                  "place": "New York",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_96742459",
+              "ark": "ark:/61903/1:1:M316-9VK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William",
+                  "prefix": "Quartermaster (Corrals)",
+                  "surname": "Anderson"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "April 1876",
+                  "standard_date": "Apr 1876",
+                  "place": "Denmark",
+                  "standard_place": "Denmark"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_299636604537",
+              "ark": "ark:/61903/1:1:6LML-GMJY",
+              "principal": true,
+              "gender": "Unknown",
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_96742457",
+              "child": "p_96742459"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_96742457",
+              "person2": "p_299636604537"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_96742457",
+              "child": "p_96742460"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_96742457",
+              "child": "p_96742458"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21793234636",
+              "resource_type": "Record",
+              "title": "Household of Quartermaster (Corrals) Wellington Dunn, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M316-9VJ : Sat Oct 18 11:06:49 UTC 2025), Entry for Quartermaster (Corrals) Wellington Dunn and Quartermaster (Corrals) Charles F White, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TRW-RQN",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYW9-YBN",
+              "coverage": {
+                "place_rep_id": "10740592",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "MilitaryCensus"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-XRC",
+              "resource_type": "auto",
+              "title": "Philippines, Manila, Military Service, from 1 September 1828 to 1900",
+              "coverage": {
+                "place_rep_id": "10740592",
+                "date_range": "+1828-09-01T00:00:00Z/+1900-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_96742460",
+              "resource_type": "Person",
+              "url": "#p_96742460"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "48",
+              "name": "Denmark",
+              "latitude": 56,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_96742460",
+        "batchNumber": "N00928-8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M31D-KVM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William P Barton",
+        "score": 2.1862602,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "February 1876",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of William P Barton, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:1TRW-GXF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_96731640",
+              "ark": "ark:/61903/1:1:M31D-KVM",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barton",
+                  "given": "William P"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Feb 1876",
+                  "standard_date": "Feb 1876",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21793232235",
+              "resource_type": "Record",
+              "title": "Household of William P Barton, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M31D-KVM : Tue Jan 21 07:31:58 UTC 2025), Entry for William P Barton, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TRW-GXF",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DYW9-1D6",
+              "coverage": {
+                "place_rep_id": "10740592",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "MilitaryCensus"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-XRC",
+              "resource_type": "auto",
+              "title": "Philippines, Manila, Military Service, from 1 September 1828 to 1900",
+              "coverage": {
+                "place_rep_id": "10740592",
+                "date_range": "+1828-09-01T00:00:00Z/+1900-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_96731640",
+              "resource_type": "Person",
+              "url": "#p_96731640"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_96731640",
+        "batchNumber": "N00928-8",
+        "role": "Principal"
+      }
+    ]
+  }
+}

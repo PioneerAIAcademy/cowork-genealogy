@@ -54,7 +54,7 @@ The MCP server exposes 54 tools.
 |------|---------|------|
 | `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
 | `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
-| `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
+| `wiki_place_page` | A FamilySearch Research Wiki page for a place — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`. `home` resolves the place's own page at any level the wiki has one (country, state or province, county, parish, independent city); the other three exist only for a country or a state/province | None |
 
 ### Project state (structured read/write)
 
@@ -72,7 +72,7 @@ way project state changes.
 | `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/`, a text upload under `uploads/`, or a staged transcription under `results/` — one file, or several at once by `refs`. Refuses a staged search result, images, `research.json` and the tree with a pointer to the tool that serves each | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
 | `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. BOTH hosted planes end the turn on this tool's name via a `PreToolUse` hook, the prototype worker and the hosted alpha; in Cowork and e2e no such hook binds, so it returns a harmless acknowledgement and the run carries on | None |
-| `extraction_append` | Extracts records in code: FamilySearch records by `recordIds` (read, logged and classified from the extraction table), any other source as a structured document from the `record-structurer` agent, and a nil search as negative evidence by `absences`. Classifications are set here and are final | None |
+| `extraction_append` | Extracts records in code: FamilySearch records by `recordIds` (read, logged and classified from the extraction table), any other source as a structured document from the `record-structurer` agent, a nil search as negative evidence by `absences`, and, by `personId`, every indexed record FamilySearch has attached to one tree person, each linked to that person as an unverified candidate. Classifications are set here and are final | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
@@ -109,9 +109,9 @@ way project state changes.
 
 `logout` and `auth_status` are direct-invocation tools — Claude calls
 them in response to the user ("log me out", "am I logged in?") rather
-than as part of any skill workflow. `login` is invoked both directly
-by the `search-records` skill, and by the `init-project` and
-`search-external-sites` agents, when a tool call needs authentication.
+than as part of any skill workflow. `login` is invoked the same way, in
+response to the user. No agent holds it: `search-records` tells the user to
+ask for a login when a search fails on authentication.
 
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
@@ -134,7 +134,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 5 skills covering the full GPS research cycle. Skills
+The plugin ships 2 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -149,21 +149,13 @@ session — see [gps-research-flow.md](gps-research-flow.md).
 
 ### Planning the research
 
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
-
-### Executing searches
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
+Planning is an agent rather than a skill — see `research-plan` in the agent
+table below.
 
 ### Identity resolution and analysis
 
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
+Building a timeline is an agent rather than a skill — see `timeline` in the
+agent table below.
 
 ### Concluding
 
@@ -190,17 +182,18 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-eight Cowork agents. Unlike skills, an agent runs in
+The plugin ships thirty Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
 
 | Agent | What it does | Say this |
 |-------|-------------|----------|
-| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
+| **init-project** | Creates a new project from a FamilySearch person ID. Fetches the person and their relatives to seed the tree. **A PID is required**: with no ID it creates nothing and asks for one, and it never searches by name. Started by the `research` router, not invoked directly. | "Start a new project for person KWCJ-RN4" |
 | **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
 | **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. It runs only when you ask for it — at any time, including after the research is finished; its verdict is advisory and never blocks or re-opens a resolved question. | "Second opinion" / "Review my work" / "Is this defensible?" |
 | **record-structurer** | Turns sources that are not FamilySearch indexed records — an image transcription, an uploaded PDF, pasted text — into structured documents (who is named, what each says about them) and hands them to `extraction_append` in one call. It sends no roles and no classifications: the code assigns those from the extraction table, so they are the same for every source of a type. | (not invoked directly — the search skills and `/research` delegate) |
+| **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. `/research` routes to it at the conclusion step, and you can ask for it directly; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | "Write the conclusion" / "What's the proof?" |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. `/research` spawns it directly at the exhaustiveness step, and a user naming it reaches the same agent; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | "Is the research on q_001 exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
@@ -210,10 +203,10 @@ don't load it explicitly.
 | **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. A first pass recommends accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, and reads the record image before recommending against a hint; it writes nothing. Once you decide, a second pass logs your verdict on each hint, so an accepted hint flows on to extraction like any search result. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to extraction (`extraction_append`, or the `record-structurer` agent for a source that is not a FamilySearch record). | "Fix citations" / "Cite this source" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
+| **research-plan** | Creates, reviews and revises the sequenced plan for **one** question — which record sets to search, in what order, from which repositories, with fallbacks. | "Plan research for this question" |
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Given a mother's 1900 or 1910 US census counts of children born and living, it also reports which of her children the tree is missing and when each was born. With no project yet, it hands you to project creation first. Writes nothing. The tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" / "The 1900 census says she had 6 children, 5 living — who is missing?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Returns narrative context and, inside a project, logs it to the research log: one entry per wiki/Wikipedia lookup and one `historical_context` entry carrying the full overview, plus a Search implications block handed back to hypothesis-tracking and research-plan. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
-| **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `search-records` and `search-full-text` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and records the guidance, citing the wiki pages it came from, as one entry in the project's research log (an empty search is logged as a nil entry). With no project it returns the guidance in the reply instead. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and records the article summary as one entry in the project's research log. One lookup, a template it carries in its own body, one log entry. With no project it returns the filled template in the reply instead. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
@@ -222,6 +215,7 @@ don't load it explicitly.
 | **conflict-resolution** | Resolves conflicting evidence — fact conflicts and identity conflicts where two candidate people genuinely compete. It analyses whether the sources are independent, weighs them by the preponderance hierarchy, and records how each conflict was settled: one record's version preferred, the tree's existing conclusion kept, or a value built from several records. It is the only caller allowed to record that analysis in the `conflicts` section; anything else may open a conflict but not resolve one. | "These sources disagree" / "Resolve this conflict" |
 | **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, list a person's attached records and record matches, and check possible duplicates. Also executes person merges after proof-conclusion confirms identity. A write that would introduce an unjustified genealogical warning is refused by the tool itself. | "Fix this name" / "Merge these two persons" |
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
+| **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.) for one plan item or one search you name, ranks the results by match quality, flags namesakes for review, and logs every search including nil results. Hands back to `search-external-sites` after FamilySearch is exhausted. | "Search for Patrick Flynn in the 1850 census" / "Execute the plan" / "Run the next search" |
 | **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. When the project tree holds the person, also reports the impossible-date warnings `person_warnings` finds there, outside the findings count. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 | **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year, recorded as one entry in the project's research log. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
 | **tree-survey** | Surveys a FamilySearch tree for holes it likely has records for before any project exists, checks what FamilySearch holds for the strongest ones, and suggests 3-5 people with one research question each. Writes nothing; the user picks one and `init-project` starts from it. | "What should I research in my tree?" / "Find gaps in my tree" / "Where should I start?" |
@@ -231,7 +225,7 @@ don't load it explicitly.
 ```
 1. init-project              Start with a FamilySearch person ID
 2. question-selection (agent) "What should I research next?"
-3. research-plan             "How do I answer this question?"
+3. research-plan (agent)     "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
    search-external-sites (agent) ...or on Ancestry/MyHeritage/FindMyPast
@@ -248,7 +242,7 @@ don't load it explicitly.
                              (FAN pivot). If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
     tree-edit (agent)        Merge persons, correct facts
-12. project-status (agent)   "Where are we? What's next?"
+12. Ask "where are we?"      Answered by the main thread from the project state
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at

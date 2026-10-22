@@ -56,8 +56,9 @@ export const IMAGE_SEARCH_ATTEMPTS = 2;
  *  `ark` shape alone. This tool always passes an `imageId`, so the fallback is
  *  unreachable here. Raise this the moment the tool resolves an ark. */
 export const DOWNLOAD_ATTEMPTS = 1;
-/** `ocr.ts` retries a transport failure, but never a timeout — a full-budget
- *  first attempt is the worst case, so this leg counts once. */
+/** `ocr.ts` retries a transport failure and a 429/503, but never a timeout, and it
+ *  runs every attempt and every wait inside the one budget it is given — so this
+ *  leg costs `PROBE_OCR_TIMEOUT_MS` once at most. */
 export const OCR_ATTEMPTS = 1;
 
 /** Cowork's device bridge aborts every MCP call at this (spec §8). */

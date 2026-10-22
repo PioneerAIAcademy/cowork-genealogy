@@ -330,7 +330,9 @@
   border-radius: var(--border-radius-sm);
   padding: 6px 20px;
   font-size: 0.85rem;
-  color: #fff;
+  /* Same as the header's feedback button: gold fill, and `#fff` met the contrast bar in
+     neither theme. */
+  color: var(--accent-gold-ink);
   font-weight: 500;
   transition: all 0.15s;
 }

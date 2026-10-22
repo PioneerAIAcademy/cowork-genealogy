@@ -141,32 +141,36 @@
     {
       "artifact": "research.json",
       "section": "plans",
-      "owner": "skill:research-plan",
+      "owner": "agent:research-plan",
       "callers": [
-        "skill:research-plan",
-        "skill:search-records",
+        "agent:research-plan",
+        "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
         "agent:search-images"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item.",
+      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item. `extraction_append`, whoever calls it, moves an `in_progress` item on an active plan to `completed` once a record one of its positive or partial `record_search` searches found is extracted, and changes nothing else.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
-      "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
-      "override": "none"
+      "remedy": "Update the item's status; route a change to the plan itself through the research-plan agent.",
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
       "section": "plan_items",
-      "owner": "skill:research-plan",
+      "owner": "agent:research-plan",
       "callers": [
-        "skill:research-plan",
-        "skill:search-records",
+        "agent:research-plan",
+        "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
         "agent:search-images"
@@ -189,17 +193,27 @@
           "tools": [
             "research_append"
           ]
+        },
+        {
+          "agent": "agent:search-records",
+          "tools": [
+            "research_append"
+          ]
         }
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "extraction_append"
       ],
       "enforceableAt": [],
       "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny.",
-      "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`.",
+      "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`, and `extraction_append` completes an `in_progress` item once a record its search found is extracted.",
       "failure": "A deny on this section refuses the status flip that the plans row explicitly blesses.",
       "remedy": "Same as `plans`.",
-      "override": "none"
+      "override": "none",
+      "toolAuthorized": [
+        "extraction_append"
+      ]
     },
     {
       "artifact": "research.json",
@@ -207,7 +221,7 @@
       "owner": null,
       "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`. No single skill owns the section; the permitted writers are listed in `callers`.",
       "callers": [
-        "skill:search-records",
+        "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
         "agent:search-images",
@@ -263,6 +277,12 @@
         },
         {
           "agent": "agent:historical-context",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:search-records",
           "tools": [
             "research_log_append"
           ]
@@ -339,7 +359,7 @@
         "tool"
       ],
       "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`. Tool plane since 2026-10-05 (genealogist ruling, option B): research_append, as an MCP caller reaches it (researchAppendFromCaller), refuses every assertions write except an update that sets only informant_bias_notes; extraction_append calls researchAppend directly and is unaffected.",
-      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them.",
+      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them. The one later change it makes is to `extracted_for_question_ids`: when a question re-finds a record already extracted, that question's id is appended to the record's assertions, and ids are never removed.",
       "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
       "remedy": "Extract through `extraction_append`, or the record-structurer agent for a non-FamilySearch source. A disagreement with a classification, from evidence outside the record, is weighed in conflict-resolution.",
       "override": "none",
@@ -355,18 +375,20 @@
       "callers": [],
       "writerTools": [
         "research_append",
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "extraction_append"
       ],
       "toolAuthorized": [
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit",
         "hook"
       ],
-      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
-      "requires": "Only person-evidence links a persona to a tree person. Extraction is held off this section by tool identity: `extraction_append` does not accept it.",
-      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
+      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner, and `extraction_append` writes it only in `personId` mode, and only the unchecked attachment links it composes whole in code, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
+      "requires": "Only person-evidence makes an identity decision linking a persona to a tree person. `extraction_append({ personId })` writes the one other kind of link, by tool identity: an unchecked FamilySearch attachment, always `speculative`, with no `match_score` and the fixed `ATTACHMENT_LINK_RATIONALE`. An attachment link is only ever superseded, never raised in place.",
+      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool. An attachment link raised in place would turn an unchecked attachment into an identity without `same_person`.",
       "remedy": "Route the identity link through person-evidence.",
       "override": "none",
       "hookCallers": [
@@ -419,9 +441,9 @@
     {
       "artifact": "research.json",
       "section": "timelines",
-      "owner": "skill:timeline",
+      "owner": "agent:timeline",
       "callers": [
-        "skill:timeline"
+        "agent:timeline"
       ],
       "writerTools": [
         "research_append",
@@ -433,10 +455,10 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to the skill. Enforced on the unit plane, where the skill has a suite.",
+      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to it. Enforced on the unit plane, where the agent has a suite.",
       "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry.",
       "failure": "A partially-edited timeline reads as a complete one, and the gaps it exists to expose are hidden.",
-      "remedy": "Regenerate through timeline.",
+      "remedy": "Regenerate through the timeline agent.",
       "override": "none"
     },
     {
@@ -522,8 +544,28 @@
       ],
       "enforceableAt": [],
       "requires": "Append-only; a justification entry is persisted by the warning gate as a side-effect of a justified tree write. Each entry carries warning_id, justification, person_ids, tool, and recorded_at.",
-      "failure": "A warning justification lost from the audit trail leaves gps-mentor unable to evaluate whether the researcher acknowledged and addressed each introduced warning.",
+      "failure": "A warning justification lost from the audit trail leaves no record of why a tree write that introduced a genealogical warning was accepted. No tool returns the section: research_query excludes it and project_context omits it.",
       "remedy": "The tree-writer tools persist justifications automatically through checkWarningGate. No manual write is needed.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "namesakes",
+      "owner": null,
+      "reason": "No writer ships yet: search-records records rows in a later change (issue #3363, PR 2), which sets the owner and adds the section to its hook lane.",
+      "callers": [],
+      "writerTools": [
+        "research_append",
+        "merge_tree_persons"
+      ],
+      "toolAuthorized": [
+        "merge_tree_persons"
+      ],
+      "enforceableAt": [],
+      "notes": "The section ships before its writer: search-records records a row when a search turns up a different person with the subject's name in the subject's place and time, and that write lands in a later change. Until then no committed document carries the section, so research_append's namesake cap and warning, merge_tree_persons' namesake checks and materialize_facts' copy gate refuse and warn about nothing. merge_tree_persons re-keys a row onto the merge survivor through the person-id walker. Not enforceable on the unit plane: no suite writes the section yet.",
+      "requires": "One row per namesake, never retired. An update may change the descriptive fields but never `person_id`, the tree person the namesake is not; research_append refuses that update.",
+      "failure": "A row on the wrong person caps that person's links at speculative and leaves the namesake's records free to be linked to the subject.",
+      "remedy": "Record namesakes through search-records.",
       "override": "none"
     },
     {
@@ -715,6 +757,32 @@
         "extraction_append"
       ],
       "reason": "Each `S` entry is minted in code, by tool identity, as the mirror of a `src_` `extraction_append` writes, so no extraction caller owns it. The other writers are listed in `callers`."
+    },
+    {
+      "artifact": "research.json",
+      "section": "rejected_links",
+      "owner": "agent:person-evidence",
+      "callers": [],
+      "writerTools": [
+        "research_append",
+        "merge_tree_persons"
+      ],
+      "toolAuthorized": [
+        "merge_tree_persons"
+      ],
+      "enforceableAt": [
+        "unit",
+        "hook",
+        "tool"
+      ],
+      "notes": "A researcher's rejection of a person-link, ruled 2026-09-30 to be its own record rather than a fourth `person_evidence.confidence` value -- that field says how sure we are a link IS a match, and rejected is the opposite claim, so every reader of it would otherwise have to learn a value meaning 'ignore this row'. Owned by the same lane as the links themselves, so a rejection cannot be written by something that could not have made the link. Also enforceable at the TOOL plane, which the link section is not: whether a pair was rejected is decidable from research.json alone, so the writer tool refuses the re-link rather than a skill body asking the model to remember. merge_tree_persons writes it too: a rejection names a tree person, so a merge must repoint it to the survivor. Without that the rejection keeps pointing at a collapsed id, isRejectedPair stops matching, and the pair becomes linkable again -- silently voiding the record the section exists to keep. The remap is minted in code by TOOL identity, exactly as on person_evidence: a merge repoints every person-id reference to the survivor, and which agent happened to call merge_tree_persons says nothing about whether a rejection should follow its person. Listing the holders as callers would name agents that have no opinion about this section.",
+      "requires": "Only the person-evidence lane creates or rejects an identity link.",
+      "failure": "A rejection recorded by deletion is forgotten, and a later step re-links the same pair -- the reported failure, where a researcher challenged an assumption and the agent reverted to it because nothing recorded the rivals.",
+      "remedy": "Record the rejection; never delete the link to mean 'no'.",
+      "override": "none",
+      "hookCallers": [
+        "agent:person-evidence"
+      ]
     }
   ]
 }

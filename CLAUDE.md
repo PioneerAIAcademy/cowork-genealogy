@@ -214,9 +214,11 @@ owner-checked against the bearer the worker stamped on that open turn — U6/U4)
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
-Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
-agent uses `person_search` to find a person in the FamilySearch tree
-when the user doesn't have a FamilySearch ID to provide.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project always
+starts from a FamilySearch person ID: `init-project` never searches by name, and with
+no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
+front door — its routing table sends a first message with no project to `init-project`
+or `tree-survey`, so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -250,7 +252,10 @@ and the model silently falls back to a general-purpose stand-in that binds none
 of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
-what the runtime actually resolved, and no CI job covers this path.
+what the runtime actually resolved. Its agent-registration arm now also runs in
+CI (`server-tests.yml`, keyless, under `AGENT_SMOKE=1`); its dead-stub arm and
+whether a granted tool actually *binds* (`make probe-agent-binding`) still have
+no CI job.
 
 **Dual-spelled tool names.** (Heading kept as a stable anchor — the
 architecture guide and ADR-0004 both cite it by name — though the rule now
@@ -291,7 +296,8 @@ because unrecognized entries are ignored so long as at least one resolves.
 **No agent declares `disallowedTools:` any more — omit the tool instead.**
 Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
-2026-08-30, Claude Code 2.1.220 / SDK 0.2.128). Every deny we shipped named a
+2026-08-30, Claude Code 2.1.220 / SDK 0.2.128; re-run 2026-10-20 on 2.1.294 / SDK
+0.2.165, same result). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
 restatements. What keeps `record-structurer` off the broad `research_append` is
 `research_append` not being in its `tools:`.
@@ -314,15 +320,19 @@ incidents, and what the probe retired: ADR-0004.
 
 The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
 Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
-cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Cowork runs
-`permission_mode: "default"`, the hosted path runs `bypassPermissions`, and a
-hook binds under both.
+cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. The hosted
+path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
+`"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
+(ADR-0005); whether that is a per-session setting is not known. **Do not rely on
+which one it is** — the hook bound under both, which is the part that matters.
 
-**`SessionStart` hooks do not fire in Cowork.** Nothing depends on one today, so
-do not put per-session setup — seeding state, injecting project context — in
-one: it would silently not run. `PreToolUse` does fire. Both were probed live;
-where an upstream issue thread says otherwise, the probe wins. Dates, probes and
-thread numbers: ADR-0005.
+**Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
+did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
+depends on one today; do not put per-session setup — seeding state, injecting
+project context — in one. `PreToolUse`, `UserPromptSubmit` and a plugin `Stop`
+hook all fire, and a `PreToolUse` hook returning `"continue": false` ends the turn.
+All were probed live; where an upstream issue thread says otherwise, the probe
+wins. Dates, probes and thread numbers: ADR-0005.
 
 Hook scripts run in the VM: **stdlib-only Python, no network** — the same rule
 as skill `scripts/`. A hook must never raise; every failure path falls through
@@ -418,7 +428,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-nine other agents also carry no line — `search-wikipedia` is the one whose
+ten other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 
@@ -828,7 +838,8 @@ Where to look first:
   `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
-  60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a
+  60s for `wiki_search` and `collections_search`; `wikipedia_search`'s three
+  requests share one 55s deadline, under the Cowork bridge's 60s abort). Size a
   raise from the measured e2e corpus, not by guessing — the worked method is in
   `docs/specs/image-transcribe-tool-spec.md`. The
   budget covers headers **and** body — size it for the whole transfer, not the

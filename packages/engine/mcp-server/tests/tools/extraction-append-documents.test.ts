@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { mkdtemp, writeFile, readFile, rm, mkdir } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -17,6 +17,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { runExtractionAppend, type ExtractionBatchResult } from "../../src/tools/extraction-append.js";
 import { validateStructuredDocument } from "../../src/utils/structured-document.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const noReader = { readRecord: async () => { throw new Error("no reads on the document path"); } } as any;
@@ -285,6 +286,90 @@ describe("extraction_append: documents", () => {
     expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
   });
 
+  async function stageScan(imageRef?: string) {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{
+          id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m",
+          transcription: "Harold Dean Whitaker, 91, of Logan…", ...(imageRef ? { image_ref: imageRef } : {}),
+        }],
+      },
+    });
+    return staged!.resultsRef;
+  }
+
+  it("a transcribed source cites its scan from the staged result when the agent relays no imageFilename", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    expect(r.ok).toBe(true);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source.image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("the staged scan wins over a different imageFilename the agent relayed", async () => {
+    const ref = await stageScan("images/004022578_00190.jpg");
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref, imageFilename: "images/someone-else.jpg" }]);
+    expect((await read()).sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("a staged result with no image_ref and no relayed imageFilename writes no image_filename", async () => {
+    const ref = await stageScan();
+    await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: ref }]);
+    const source = (await read()).sources[0];
+    expect(source.transcription).toMatch(/Harold Dean Whitaker/);
+    expect(source).not.toHaveProperty("image_filename");
+  });
+
+  // ─── a transcription already finalized under its own entry (issue #3516) ───
+
+  it("cites a finalized results ref under its own log entry and logs nothing new", async () => {
+    const logged = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "image_transcribe", query: { imageId: "004022578_00190" }, outcome: "positive", resultsExamined: 1, stagedResultsRef: await stageScan("images/004022578_00190.jpg") }],
+    } as any);
+    const finalized = (logged as any).results[0].resultsRef as string;
+    expect(finalized).toBe("results/log_001.json");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: finalized }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records[0].logId).toBe("log_001");
+    const after = await read();
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_001"]);
+    expect(after.sources[0].log_entry_id).toBe("log_001");
+    expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
+    expect(after.sources[0].image_filename).toBe("images/004022578_00190.jpg");
+  });
+
+  it("refuses a finalized results ref that no log entry names, writing nothing", async () => {
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(join(dir, "results", "log_009.json"), JSON.stringify({ tool: "image_transcribe", retrieved: "x", returned_count: 0, payload: { results: [] } }), "utf8");
+    const r = await run([{ recordId: "capture:obituary-whitaker", document: obituary, transcriptionRef: "results/log_009.json" }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].summary).toMatch(/no log entry names/);
+    const after = await read();
+    expect(after.log).toEqual([]);
+    expect(after.sources).toEqual([]);
+  });
+
+  it("a re-sent document with questionIds is tied to the question", async () => {
+    const q = (id: string) => ({
+      id, question: "Q?", rationale: "r", selection_basis: "objective_decomposition", priority: "high", status: "open",
+      depends_on: [], unblocks: [], created: "2026-01-01", resolved: null, resolution_assertion_ids: [],
+      search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+    });
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...research(), questions: [q("q_001"), q("q_002")] }), "utf8");
+    const doc = { recordId: "capture:obituary-whitaker", document: obituary };
+    await runExtractionAppend({ projectPath: dir, documents: [doc], questionIds: ["q_001"] } as any, noReader, LOCAL);
+    const r = await runExtractionAppend({ projectPath: dir, documents: [doc], questionIds: ["q_002"] } as any, noReader, LOCAL);
+    expect(r.records[0].status).toBe("already_extracted");
+    expect(r.records[0].summary).toMatch(/tied to q_002/);
+    const ids = (await read()).assertions.map((a: any) => a.extracted_for_question_ids.join(","));
+    expect(new Set(ids)).toEqual(new Set(["q_001,q_002"]));
+  });
+
   it("flags an Old Style date in the summary without changing it", async () => {
     const baptism = {
       recordType: "christening",
@@ -376,5 +461,183 @@ describe("extraction_append: documents", () => {
     const refused = await run([{ recordId: "capture:bad-facts", document: doc("none") }]);
     expect(refused.ok).toBe(false);
     expect((refused.errors ?? []).join(" ")).toMatch(/facts: must be a list/);
+  });
+
+  it("summarizes each household of a census page under its own people (#3543)", async () => {
+    const person = (id: string, given: string, surname: string, household: string, occupation: string) => ({
+      id, household, names: [{ given, surname }], facts: [{ type: "occupation", value: occupation }],
+    });
+    const page = {
+      recordType: "census",
+      documentForm: "page_image",
+      census: { jurisdiction: "United States", year: 1860 },
+      source: { title: "1860 U.S. Census, Butler Township, page 37", repository: "NARA" },
+      persons: [
+        person("p1", "Thomas", "Flynn", "1", "Laborer"),
+        person("p2", "Bridget", "Flynn", "1", "Keeping house"),
+        person("p3", "Michael", "Gallagher", "2", "Miner"),
+        person("p4", "Ellen", "Gallagher", "2", "Seamstress"),
+      ],
+    };
+    const r = await run([{ recordId: "capture:census-1860-p37", document: page }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const lines = r.records[0].summary.split("\n");
+    expect(lines).toContain("- Thomas Flynn (head_of_household): occupation Laborer.");
+    expect(lines).toContain("- Michael Gallagher (head_of_household): occupation Miner.");
+    expect(lines).toContain("- Ellen Gallagher (household_member_1): occupation Seamstress.");
+  });
+
+  it("names a parent sent with no gender by the relation the text states (#3543)", async () => {
+    const baptism = {
+      recordType: "christening",
+      documentForm: "page_image",
+      source: { title: "Stavanger Domkirke, baptisms 1817", repository: "Digitalarkivet" },
+      persons: [
+        { id: "p1", principal: true, names: [{ given: "Kristian Fredrik" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+        { id: "p2", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+        { id: "p3", statedRelation: "mother", names: [{ given: "Inger", surname: "Larsdatter" }] },
+      ],
+      relationships: [
+        { type: "parent_child", person1: "p2", person2: "p1" },
+        { type: "parent_child", person1: "p3", person2: "p1" },
+      ],
+    };
+    const r = await run([{ recordId: "capture:birkeland-1817", document: baptism }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const names = (await assertionsFor("capture:birkeland-1817")).filter((a: any) => a.fact_type === "name");
+    expect(Object.fromEntries(names.map((a: any) => [a.value, a.record_role]))).toMatchObject({
+      "Tollev Nadnesen": "father",
+      "Inger Larsdatter": "mother",
+    });
+    expect(r.records[0].summary).toContain("- Inger Larsdatter (mother).");
+    const rels = (await assertionsFor("capture:birkeland-1817")).filter((a: any) => a.fact_type === "relationship");
+    expect(rels.map((a: any) => a.value).sort()).toEqual(["child of Inger Larsdatter", "child of Tollev Nadnesen"]);
+  });
+
+  it("ties a stated parent with no edge to the one principal of a baptism (#3543)", async () => {
+    const baptism = {
+      recordType: "christening",
+      documentForm: "page_image",
+      source: { title: "Stavanger Domkirke, baptisms 1817", repository: "Digitalarkivet" },
+      persons: [
+        { id: "p1", principal: true, names: [{ given: "Kristian Fredrik" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+        { id: "p2", gender: "male", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+        { id: "p3", gender: "female", statedRelation: "mother", names: [{ given: "Inger", surname: "Larsdatter" }] },
+      ],
+    };
+    const r = await run([{ recordId: "capture:birkeland-noedge", document: baptism }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const as = await assertionsFor("capture:birkeland-noedge");
+    const roles = Object.fromEntries(as.filter((a: any) => a.fact_type === "name").map((a: any) => [a.value, a.record_role]));
+    expect(roles).toMatchObject({ "Tollev Nadnesen": "father", "Inger Larsdatter": "mother" });
+    expect(as.filter((a: any) => a.fact_type === "relationship").map((a: any) => a.value).sort()).toEqual([
+      "child of Inger Larsdatter",
+      "child of Tollev Nadnesen",
+    ]);
+  });
+
+  it.each([
+    [
+      "a marriage, which has two principals",
+      {
+        recordType: "marriage",
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "Thomas", surname: "Flynn" }], facts: [{ type: "marriage", date: "11 February 1845" }] },
+          { id: "p2", principal: true, gender: "female", names: [{ given: "Mary", surname: "Cook" }], facts: [{ type: "marriage", date: "11 February 1845" }] },
+          { id: "p3", gender: "male", statedRelation: "father", names: [{ given: "John", surname: "Cook" }] },
+        ],
+      },
+    ],
+    [
+      "an obituary, which is not a vital record",
+      {
+        recordType: "obituary",
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "Thomas", surname: "Flynn" }], facts: [{ type: "death", date: "1 May 1890" }] },
+          { id: "p2", gender: "male", statedRelation: "father", names: [{ given: "John", surname: "Flynn" }] },
+        ],
+      },
+    ],
+    [
+      "a twins' baptism, which has two principals",
+      {
+        recordType: "christening",
+        persons: [
+          { id: "p1", principal: true, gender: "male", names: [{ given: "John", surname: "Birkeland" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+          { id: "p2", principal: true, gender: "male", names: [{ given: "Lars", surname: "Birkeland" }], facts: [{ type: "christening", date: "20 July 1817" }] },
+          { id: "p3", gender: "male", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+        ],
+      },
+    ],
+    [
+      "a death with no principal flagged, its father listed first",
+      {
+        recordType: "death",
+        persons: [
+          { id: "p1", gender: "male", statedRelation: "father", names: [{ given: "Tollev", surname: "Nadnesen" }] },
+          { id: "p2", gender: "female", statedRelation: "mother", names: [{ given: "Inger", surname: "Larsdatter" }] },
+          { id: "p3", gender: "male", names: [{ given: "Kristian", surname: "Birkeland" }], facts: [{ type: "death", date: "1 May 1890" }] },
+        ],
+      },
+    ],
+  ])("adds no parent edge on %s (#3543)", async (_name, doc) => {
+    const recordId = `capture:noedge-${(doc as any).recordType}-${(doc as any).persons.length}`;
+    const r = await run([
+      { recordId, document: { documentForm: "verbatim_transcript", source: { title: "A record", repository: "An archive" }, ...doc } },
+    ]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const rels = (await assertionsFor(recordId)).filter((a: any) => a.fact_type === "relationship").map((a: any) => a.value);
+    expect(rels.filter((v: string) => /^child of (John Cook|John Flynn|Tollev|Inger)/.test(v))).toEqual([]);
+  });
+
+  it("refuses a statedRelation that is not a string, before anything is logged (#3543)", async () => {
+    const bad = structuredClone(obituary) as any;
+    bad.persons[1].statedRelation = 5;
+    const r = await run([{ recordId: "capture:bad-relation", document: bad }]);
+    expect(r.ok).toBe(false);
+    expect((r.errors ?? []).join(" ")).toMatch(/persons\[1\]\.statedRelation: must be a string/);
+    expect((await read()).log).toHaveLength(0);
+  });
+
+  describe("a computed entry written as a value (#3543)", () => {
+    const death = (birth: Record<string, unknown>) => ({
+      recordType: "death",
+      documentForm: "verbatim_transcript",
+      source: { title: "Death certificate of Albert Schreiber", repository: "Ohio Department of Health" },
+      persons: [
+        {
+          id: "p1", principal: true, names: [{ given: "Albert J.", surname: "Schreiber" }],
+          facts: [{ type: "death", date: "14 March 1921" }, { type: "age", value: "58" }, { type: "birth", ...birth }],
+        },
+      ],
+    });
+    const birthOf = async (recordId: string) =>
+      (await assertionsFor(recordId)).find((a: any) => a.fact_type === "birth" && a.date);
+
+    it.each([
+      ["equal to the fact's date", { date: "~1862", place: "Germany", computed: ["~1862"] }],
+      ["with no date at all (ut_record_structurer_002)", { place: "Germany", computed: ["~1862"] }],
+      ["beside its own attribute name", { date: "~1862", place: "Germany", computed: ["date", "~1862"] }],
+    ])("writes a year %s as a computed date", async (_name, birth) => {
+      const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const year = await birthOf("capture:schreiber");
+      expect(year.date).toBe("~1862");
+      expect(year.record_basis).toBe("inferred");
+    });
+
+    it.each([
+      ["a value matching no attribute and not a year", { date: "~1862", computed: ["about 1862"] }],
+      ["a year that differs from the fact's own date", { date: "~1862", computed: ["1861"] }],
+      ["a value two attributes share", { value: "1862", date: "1862", computed: ["1862"] }],
+      ["a non-year on a fact with no date", { place: "Germany", computed: ["about 1862"] }],
+      ["the date's year without its tilde", { date: "~1862", computed: ["1862"] }],
+      ["a year on a fact that is not a birth", { type: "age", value: "58", computed: ["~1862"] }],
+    ])("still refuses %s", async (_name, birth) => {
+      const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
+      expect(r.ok).toBe(false);
+      expect((r.errors ?? []).join(" ")).toMatch(/computed: '[^']+' is not an attribute/);
+      expect((await read()).sources).toHaveLength(0);
+    });
   });
 });

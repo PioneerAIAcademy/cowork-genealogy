@@ -15,6 +15,7 @@ from harness.runlog import (
     aggregate_per_run_outcome,
     assemble_test_entry,
     build_run_log,
+    bundled_cli_version,
     derive_activated,
     suppressed_failure,
     unexpected_pass,
@@ -105,6 +106,31 @@ def test_assembles_passing_entry():
     assert entry["outcome_summary"]["per_run_outcomes"] == ["pass"]
     assert entry["totals"]["input_tokens"] == 1000
     assert entry["totals"]["total_cost_usd"] == pytest.approx(0.011)
+
+
+def test_a_fail_retried_pass_quotes_a_passing_runs_rationale():
+    """A first run failed on a judge score, then three fail-retries passed. Each
+    review row's rationale must come from a passing run — the one the results
+    page shows — while the scores stay the modal."""
+    def judge(correctness, tag):
+        return JudgeResult(
+            skipped=False,
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": correctness, "rationale": tag},
+                {"source": "base", "name": "Completeness", "score": 3, "rationale": tag},
+            ],
+            judge_cost_usd=0.0,
+        )
+
+    runs = [_stub_run(outcome="fail", judge=judge(1, "failed run"))]
+    runs += [_stub_run(outcome="pass", judge=judge(3, "passing run")) for _ in range(3)]
+    entry = _make_entry(runs=runs)
+    assert entry["outcome"] == "pass"
+    rows = entry["outcome_summary"]["review_dimensions"]
+    assert [(d["name"], d["score"], d["rationale"]) for d in rows] == [
+        ("Correctness", 3, "passing run"),
+        ("Completeness", 3, "passing run"),
+    ]
 
 
 def test_validators_failed_entry():
@@ -1041,6 +1067,21 @@ def _validate_both_schema_trees(log):
             ),
         )
     jsonschema.Draft202012Validator(schema, registry=registry).validate(log)
+
+
+def test_cli_version_is_the_bundled_cli_and_validates_against_both_schema_trees():
+    from claude_agent_sdk._cli_version import __cli_version__
+
+    assert bundled_cli_version() == __cli_version__
+    log = build_run_log(
+        skill="check-warnings", version=1, released=False, releasable=True,
+        invocation="skill", timestamp="2026-10-21_10-00-00", harness_version="0.2.0",
+        model="claude-sonnet-4-6", judge_prompt_hash="b" * 64, snapshot={},
+        tests=[_make_entry()], cli_version=bundled_cli_version(),
+    )
+    assert log["cli_version"] == __cli_version__
+    _validate_both_schema_trees(log)
+    assert "cli_version" not in _wrap_envelope(_make_entry())
 
 
 def _captured_entry(run):

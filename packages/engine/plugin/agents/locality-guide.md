@@ -58,7 +58,7 @@ tools:
 
 # Locality Guide
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to narrating once at the start of the survey and once when presenting the guide — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See **Working with places (standard places)** below.
 
@@ -73,6 +73,8 @@ Produces a structured survey of what records exist for a specific place and time
 ### 1. Identify the target
 
 Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
+
+When the delegation names a `projectPath`, Step 6 runs, whatever its value; when it is not an absolute path, use the current working directory. With no `projectPath`, `Read` `research.json` in the current working directory in your first tool turn; Step 6 runs only if the file comes back.
 
 When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
 
@@ -107,17 +109,16 @@ Once `place_search` (step 2) has returned the `standardPlace`, issue the survey 
 **Fetch the jurisdiction's own wiki pages by constructed URL — never restate their contents from memory.** A `{Jurisdiction}_{Topic}` page needs no `wiki_search` first, so these join the batch above:
 
 - `{Jurisdiction}_Vital_Records` — REQUIRED. The level and year each registration system began.
-- `{County}_County,_{State}_Genealogy` when the target is a county — REQUIRED. A county's own page is reachable this way even where the `wiki_place_page` sections below are not, so the note there about broadening does not apply to it. Its *Neighboring Counties* table names the adjoining jurisdictions.
 - `{Jurisdiction}_Land_and_Property`, `_Church_Records`, `_Probate_Records`, `_Census`, `_Naming_Customs` — at the point the guide needs that record type's facts.
 
 On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
 
-**All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. If the exact-place page 404s, broaden the `standardPlace` one jurisdiction level (a county has no page; its state/country does) and retry before recording `found: false`.
+**All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
 
 ```
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "home" })
+wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
@@ -126,7 +127,6 @@ external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States"
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
-wiki_read({ url: "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy" })
 # then, once wiki_search returns a page URL:
 wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 ```
@@ -149,22 +149,20 @@ For each record type, assign a digitization level using the **Digitization level
 
 **Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
 
-### 5. Compile and present
+### 5. Compile
 
-Use the template under **Locality Guide Output Format** below. Fill every section with data from tool results. Consult the **Topical breadth checklist** under **Broad Context Factors for Locality Research** below. Present the guide to the user, then persist it (Step 6).
+Use the template under **Locality Guide Output Format** below. Fill every section with data from tool results. Consult the **Topical breadth checklist** under **Broad Context Factors for Locality Research** below. When `research_append` returns `ok: true` in Step 6, the guide is in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or does not return `ok: true`, the guide is your return.
 
-### 6. Persist the locality (only inside a research project)
+### 6. Persist the locality
 
-**When running inside a research project** — a `research.json` exists at the project
-path (e.g. `locality-guide` was invoked by the orchestrator) — write one `localities`
-entry so the knowledge survives for `research-plan` (and the Research Viewer) instead
-of being discarded. This is the whole point of the survey — an un-persisted guide
-helps only the current turn. **If there is no project** (standalone locality Q&A with
-no `research.json`), skip this step: just present the guide. Use `research_append`:
+**Run this step whenever Step 1 says it runs**, whatever the project's objective and
+however the delegation is phrased. Only an answer of `ok: false` with
+`reason: "no_project"` means there is no project; on any other `ok: false`, fix the
+entry and call again. Use `research_append`:
 
 ```
 research_append({
-  projectPath: "<absolute path to the project directory>",
+  projectPath: "<the delegation's projectPath, or the current working directory when that is not absolute>",
   section: "localities",
   op: "append",                       // op: "update" with entryId to refresh an existing loc_ for the same place
   entry: {
@@ -181,7 +179,7 @@ research_append({
       "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first.",
       "Feliciana Parish split into East and West Feliciana Parish in 1824 — which side holds a given record depends on where within old Feliciana Parish the event occurred; search both unless that's pinned down."
     ],
-    guide_markdown: "<the guide you just presented, in markdown>",
+    guide_markdown: "<the whole guide, every template section, in markdown — never a pointer to it>",
     pages_read: [
       { section: "home", url: "<page url or null>", found: true },
       { section: "getting_started", url: "...", found: true },
@@ -194,7 +192,7 @@ research_append({
 ```
 
 The tool assigns the `loc_` id and stamps `created`. **`pages_read` must list all four
-sections** (each with its `found` outcome) — this is how read-coverage is audited.
+sections** (each with its `found` outcome).
 Do not put the applied per-search decision here; that goes in a plan item's
 `rationale` when `research-plan` uses this entry.
 
@@ -216,7 +214,7 @@ field on a jurisdiction or collection.
 | Place is sub-county (town or parish) | Guide at county level; note town-specific repositories (local church, town clerk) |
 | Place is an entire country or state with no region/theme | Ask to narrow — but a named sub-region or theme is specific enough, proceed |
 | User asks "why" questions about records or history | Redirect to historical-context skill |
-| User wants locality guide + research plan | Produce the guide, then hand back: say in your caller-facing lines that research-plan runs next. Do not plan |
+| User wants locality guide + research plan | Produce the guide, then hand back: say in the hand-back line that research-plan runs next. Do not plan |
 | Records appear destroyed for the target period | List substitute sources (see **Locality Survey Methodology**, step 5 below) |
 | Jurisdiction did not exist in the target period | Identify the parent jurisdiction that held authority and produce the guide for that |
 
@@ -234,7 +232,7 @@ field on a jurisdiction or collection.
 
 ## Re-invocation behavior
 
-**Writes** (only when a research project is present): one `localities[]` entry per place-jurisdiction (via `research_append`). Standalone Q&A (no `research.json`) writes nothing. Never modifies `tree.gedcomx.json`.
+**Writes** (whenever Step 1 says Step 6 runs): one `localities[]` entry per place-jurisdiction (via `research_append`). Never modifies `tree.gedcomx.json`.
 
 **On repeat invocation for the same place:** update the existing `loc_` entry (`op: "update"` with its `entryId`) rather than appending a duplicate — supersede-not-delete, so the knowledge is refreshed in place. A genuinely new place gets a new `loc_` entry.
 
@@ -896,21 +894,26 @@ A thorough locality guide should consider sources related to:
 
 ## Return contract
 
-The guide you presented in Step 5 is the caller-facing half of the return:
-return it in full, then the lines below. Inside a research project, add one
-line naming the `loc_` id written or updated. When a decision rule hands back,
-name the owner there.
+- **Your last `research_append` call returned `ok: true`:** one line naming the
+  `loc_` id written or updated, then `summary_for_user` — no heading, list, table
+  or section of the guide anywhere in the return, even when the delegation asks
+  for the guide.
+- **Step 6 did not run, or your last `research_append` call did not return
+  `ok: true`:** the guide in full, then `summary_for_user`.
+- **A decision rule asks or hands back:** one line before `summary_for_user`
+  giving the question or naming the owner who runs next. With no guide, that
+  line replaces the guide and the `loc_` line.
 
 ### `summary_for_user`
 
-After the guide, write a line containing only `---`, then exactly two
+Then write a line containing only `---`, then exactly two
 paragraphs of plain prose with **no label, heading or field name**:
 
-1. One paragraph for someone who has never done genealogy: which place and
+1. One paragraph of at most five sentences for someone who has never done genealogy: which place and
    years were surveyed, which kinds of old records survive there and where they
    are kept, and the one or two warnings that matter most (a split county, a
    town that kept its own records, records only on paper in an archive). No
-   identifiers, file names, tool names or field names.
+   identifiers, collection numbers, record counts, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.
 
 No closing essay.

@@ -12,7 +12,8 @@ proxy can verify without a lookup table — same derivation pattern as
 ``ws_token.sandbox_secret``.
 
 Each Messages API call's usage is read off the response on its way back
-(``_UsageMeter``) and recorded to ``api_calls``. Recording only: the alpha has no
+(``_UsageMeter``) and recorded to ``api_calls``, with the agent that made it read off the
+request's system prompt (``_agent_name``). Recording only: the alpha has no
 spend limit (lead ruling 2026-09-25), so nothing here refuses a call on cost.
 """
 from __future__ import annotations
@@ -29,7 +30,7 @@ from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
-from .agent.spend import price_usd, usage_tokens
+from .agent.spend import price_usd, usage_cache_write_1h, usage_tokens
 from .config import get_settings
 from .db import get_engine
 from .models import ApiCall, Project, utcnow
@@ -55,6 +56,44 @@ _USAGE_EVENTS = (b"message_start", b"message_delta")
 # One thread writes every row: off the event loop and in order, so a test can wait for
 # the rows by queueing behind them.
 _usage_writer = ThreadPoolExecutor(max_workers=1, thread_name_prefix="api-usage")
+
+# The opening of the hosted main thread's appended prompt (`real_agent.build_options`),
+# which no agent body contains. A test pins it against that prompt.
+_MAIN_MARKER = "You are the hosted genealogy research agent"
+
+
+def _agent_name(request_body: bytes) -> str | None:
+    """The agent behind one Messages API call, from its request's ``system`` field: ``main``
+    when it carries the main thread's marker, otherwise the text of its first ``# `` line
+    (every plugin agent body opens with one, and Claude Code copies the body in verbatim),
+    otherwise None. ``system`` is a string or a list of text blocks. Never raises: it runs in
+    the writer thread, and a failure only leaves the row's agent null."""
+    try:
+        system = json.loads(request_body).get("system")
+        if isinstance(system, list):
+            system = "\n".join(b.get("text", "") for b in system
+                               if isinstance(b, dict) and isinstance(b.get("text"), str))
+        if not isinstance(system, str):
+            return None
+        if _MAIN_MARKER in system:
+            return "main"
+        for line in system.splitlines():
+            if line.startswith("# "):
+                return line[2:].strip() or None
+        return None
+    except Exception:  # noqa: BLE001 — a malformed body names no agent
+        return None
+
+
+def _request_effort(request_body: bytes) -> str | None:
+    """``output_config.effort`` from one request, or None. Never raises, like
+    ``_agent_name``: it runs in the writer thread."""
+    try:
+        config = json.loads(request_body).get("output_config")
+        effort = config.get("effort") if isinstance(config, dict) else None
+        return effort if isinstance(effort, str) and effort else None
+    except Exception:  # noqa: BLE001 — a malformed body records no effort
+        return None
 
 
 def proxy_active() -> bool:
@@ -102,7 +141,11 @@ def make_upstream_client() -> httpx.AsyncClient:
     return httpx.AsyncClient(timeout=_UPSTREAM_TIMEOUT)
 
 
-def _save(row: ApiCall) -> None:
+def _save(row: ApiCall, request_body: bytes = b"") -> None:
+    # Named here, in the writer thread, rather than in the route: the parse waits until
+    # the stream has ended, and its errors cannot reach the relay.
+    row.agent = _agent_name(request_body)
+    row.effort = _request_effort(request_body)
     try:
         with Session(get_engine()) as session:
             session.add(row)
@@ -119,13 +162,15 @@ class _UsageMeter:
     replaces an earlier one and none is ever added to another. Not streamed, the body
     carries ``usage`` itself. Nothing here raises into the relay."""
 
-    def __init__(self, project: Project, streaming: bool):
+    def __init__(self, project: Project, streaming: bool, request_body: bytes = b""):
         self._project = project
         self._streaming = streaming
+        self._request_body = request_body
         self._buf = b""
         self._event = b""
         self._model: str | None = None
         self._usage: dict[str, int] = {}
+        self._split: dict = {}
 
     def feed(self, chunk: bytes) -> None:
         self._buf += chunk
@@ -147,9 +192,11 @@ class _UsageMeter:
             data = json.loads(raw)
             body = data.get("message") or data
             self._model = body.get("model") or self._model
-            self._usage.update(
-                (k, v) for k, v in (body.get("usage") or {}).items() if isinstance(v, int)
-            )
+            usage = body.get("usage") or {}
+            self._usage.update((k, v) for k, v in usage.items() if isinstance(v, int))
+            # The 5m/1h split is a nested object, which the int filter above drops.
+            if isinstance(usage.get("cache_creation"), dict):
+                self._split = usage["cache_creation"]
         except Exception:  # noqa: BLE001 — never into the relay
             log.warning("proxy: unreadable usage for project %s", self._project.id)
 
@@ -163,6 +210,7 @@ class _UsageMeter:
             if self._model is None and not self._usage:
                 return
             tokens = usage_tokens(self._usage)
+            one_hour = min(usage_cache_write_1h({"cache_creation": self._split}), tokens[1])
             created = self._project.created
             if created.tzinfo is None:  # SQLite hands back naive datetimes
                 created = created.replace(tzinfo=timezone.utc)
@@ -174,9 +222,10 @@ class _UsageMeter:
                 cache_creation_input_tokens=tokens[1],
                 cache_read_input_tokens=tokens[2],
                 output_tokens=tokens[3],
-                cost_usd=price_usd(tokens, self._model),
+                cache_creation_1h_input_tokens=one_hour,
+                cost_usd=price_usd(tokens, self._model, cache_write_1h=one_hour),
                 session_age_s=int((utcnow() - created).total_seconds()),
-            ))
+            ), self._request_body)
         except Exception:  # noqa: BLE001 — the relay's finally must reach aclose()
             log.exception("proxy: could not meter an API call for project %s",
                           self._project.id)
@@ -268,7 +317,8 @@ async def anthropic_proxy(path: str, request: Request) -> Response:
     meter = None
     if (request.method == "POST" and path.strip("/") == _METERED_PATH
             and upstream_resp.status_code == 200):
-        meter = _UsageMeter(project, streaming=content_type.startswith("text/event-stream"))
+        meter = _UsageMeter(project, streaming=content_type.startswith("text/event-stream"),
+                            request_body=body)
 
     async def _relay():
         try:

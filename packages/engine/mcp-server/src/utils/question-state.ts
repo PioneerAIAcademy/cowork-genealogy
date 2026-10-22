@@ -33,6 +33,7 @@
  */
 
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
+import { countsForLinkedRung } from "./tree-person.js";
 
 export type QuestionState =
   | "framed"
@@ -77,6 +78,31 @@ export interface CompetingParentSet {
 }
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
+
+/**
+ * Positive or partial log entries no assertion cites by `log_entry_id`. An
+ * external-site entry whose capture has not come back is an open hand-off, not
+ * something to extract.
+ */
+function pendingExtraction(research: any, logs: any[]): any[] {
+  const cited = new Set(arr(research?.assertions).map((a) => a?.log_entry_id));
+  return logs.filter(
+    (e) =>
+      (e?.outcome === "positive" || e?.outcome === "partial") &&
+      !cited.has(e?.id) &&
+      !(e?.tool === "external_site" && e?.external_site?.capture_received !== true),
+  );
+}
+
+/** The lowest-sequence `planned`/`in_progress` item on a plan that is still active. */
+function nextUnexecutedItem(plans: any[]): any | null {
+  const items = plans
+    .filter((p) => p?.status === undefined || p?.status === "active")
+    .flatMap((p) => arr(p?.items))
+    .filter((i) => i?.status === "planned" || i?.status === "in_progress")
+    .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
+  return items[0] ?? null;
+}
 
 /** Fact types that name one event per person, so two values are a disagreement
  *  rather than two events. `birthplace` is folded into `birth`'s place, since
@@ -396,6 +422,19 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     .map((c) => c?.id)
     .filter((id): id is string => typeof id === "string");
 
+  // Zero links, not some: a household record routinely leaves its children and
+  // wife unlinked once the subject is linked (53 of 230 concluded e2e questions),
+  // and that is not a skipped identity step. No link at all is.
+  // An unchecked FamilySearch attachment link does not count as linked here:
+  // the question still routes to person-evidence. A speculative link the
+  // researcher confirmed does count (`countsForLinkedRung`).
+  const linkedAssertionIds = new Set(
+    arr(research?.person_evidence)
+      .filter(countsForLinkedRung)
+      .map((pe) => pe?.assertion_id),
+  );
+  const noneLinked = assertions.length > 0 && !assertions.some((a) => linkedAssertionIds.has(a?.id));
+
   const disagreements = unregisteredDisagreements(research, assertionIds);
   const parentSets = competingParentSets(research, tree, qid, assertionIds);
 
@@ -416,6 +455,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
+  } else if (noneLinked && summaries.length === 0) {
+    // Ahead of the disagreement rung because that rung reads links: with none,
+    // it is blind, so routing past here would also hide an unregistered conflict.
+    nextStep =
+      `person-evidence — none of this question's ${assertions.length} assertions ` +
+      "is linked to a person";
   } else if (disagreements.length > 0) {
     // Registering a conflict is conflict-resolution's output, so an empty
     // `conflicts[]` cannot be what routes there — the evidence has to.
@@ -427,23 +472,37 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (summaries.length > 0 && !resolved) {
-    // A conclusion is not the end of the work: the `resolved` write is still
-    // outstanding, and it is the transition no skill body claims. Reporting null
-    // here would tell the router nothing is left to do on the one step this
-    // design most needs routed.
-    nextStep = "question-selection — concluded; mark the question resolved";
+    // A summary on a question still open was written while the preconditions
+    // gate blocked the conclusion: proof-conclusion resolves the question it
+    // concludes (its step 7) and leaves it open only when blocked. The conflict
+    // arms above found nothing open, so the blocker has settled and the next
+    // step is to conclude again. Reporting null here would tell the router
+    // nothing is left to do.
+    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
+    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.
     nextStep = "proof-conclusion — resolved with no proof summary";
   } else if (state === "framed") {
     nextStep = "research-plan";
-  } else if (state === "planned") {
-    nextStep = "search-records";
-  } else if (state === "searching") {
-    nextStep = "extraction (extraction_append for FamilySearch records, record-structurer for any other source)";
   } else if (state === "evidence-gathered") {
+    // Not preempted by an uncited positive/partial entry: agents log
+    // inconclusive searches as `partial` and link lists as `positive`, and those
+    // stay uncited for good, so the check would hold the question on extraction.
     nextStep = "research-exhaustiveness, then proof-conclusion";
+  } else if (state === "concluded" || state === "critiqued") {
+    // Resolved with a proof summary: nothing outstanding.
+  } else if (pendingExtraction(research, logs).length > 0) {
+    nextStep = "extraction (extraction_append for FamilySearch records, record-structurer for any other source)";
+  } else {
+    // planned or searching, nothing to extract: the next unexecuted item decides
+    // between the routing table's two search destinations, by its repository.
+    const item = nextUnexecutedItem(plans);
+    const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
+    if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
+    else if (!repo || /familysearch/i.test(repo)) nextStep = "search-records";
+    else nextStep = `search-external-sites — ${item.id} (${repo})`;
   }
 
   // Copied verbatim, never re-mapped or re-validated: this tool skips malformed

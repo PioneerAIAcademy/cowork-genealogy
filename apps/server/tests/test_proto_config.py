@@ -927,11 +927,13 @@ REGENERATE = (
 )
 
 
-def _locked_version(package: str) -> str:
-    lock = (PROTO.parent / "uv.lock").read_text(encoding="utf-8")
-    m = re.search(rf'^\[\[package\]\]\nname = "{re.escape(package)}"\nversion = "([^"]+)"', lock, re.M)
-    assert m, f"{package} is not in apps/server/uv.lock"
-    return m.group(1)
+def _locked_version(package: str, group: str) -> str:
+    """``package``'s version as uv.lock resolves it for ``group``. Read from a fresh export,
+    not the first ``[[package]]`` entry: the proto-worker/sandbox conflict lets the lock
+    carry claude-agent-sdk twice, one version per fork."""
+    reqs, _ = _requirements(_uv_export(group))
+    assert package in reqs, f"{package} is not in uv.lock's {group} resolution"
+    return reqs[package][0]
 
 
 def _requirements(text: str) -> tuple[dict[str, tuple[str, str, frozenset[str]]], list[str]]:
@@ -957,12 +959,15 @@ def _requirements(text: str) -> tuple[dict[str, tuple[str, str, frozenset[str]]]
     return reqs, options
 
 
-def _uv_export(group: str) -> str:
+def _uv_export(group: str | None) -> str:
+    """uv.lock's export for one dependency group, or for the default environment ([project]
+    plus the default groups -- what `uv sync`, CI and every dev probe run on) when None."""
     uv = os.environ.get("UV") or shutil.which("uv")
     if not uv:
         pytest.fail("uv is not on PATH: the requirements drift check needs it, and a skip would hide drift")
+    selector = [] if group is None else ["--only-group", group]
     proc = subprocess.run(
-        [uv, "export", "--locked", "--only-group", group, "--no-emit-project",
+        [uv, "export", "--locked", *selector, "--no-emit-project",
          "--format", "requirements-txt", "--no-header"],
         cwd=PROTO.parent, capture_output=True, text=True, encoding="utf-8",
     )
@@ -1090,7 +1095,8 @@ def test_committed_requirements_are_the_uv_export(tier):
         # U3: grants.py decrypts what web/auth.py encrypts, at the one locked version.
         ("worker", "cryptography", None),
         # Issue #3263: the hosted agent's SDK, which bundles the CLI every session runs.
-        ("sandbox", "claude-agent-sdk", "0.2.128"),
+        # 0.2.165 bundles Claude Code 2.1.294 (dev/probe_session_start_cache.py).
+        ("sandbox", "claude-agent-sdk", "0.2.165"),
         ("sandbox", "websockets", None),
     ],
 )
@@ -1103,9 +1109,30 @@ def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, pa
     where = REQUIREMENTS[tier].relative_to(PROTO.parent)
     assert package in reqs, f"{where} does not carry {package}"
     version = reqs[package][0]
-    assert version == _locked_version(package), f"{where} {package}=={version} vs uv.lock; {REGENERATE}"
+    assert version == _locked_version(package, TIERS[tier][2]), \
+        f"{where} {package}=={version} vs uv.lock; {REGENERATE}"
     if pinned:
         assert version == pinned, f"{where} {package}=={version}, not the {pinned} pin"
+
+
+def test_default_env_sdk_matches_the_sandbox_tier():
+    """The default environment and the sandbox image resolve the same claude-agent-sdk.
+
+    Every live probe in apps/server/dev runs on the default env, so if it drifts from the
+    sandbox tier each probe re-proves a CLI production does not run, and nothing else
+    fails. uv itself keeps them together -- they share the non-proto-worker fork, and both a
+    re-pin of `sandbox` and `uv lock --upgrade-package claude-agent-sdk` move them as one
+    (measured 2026-10-20, uv 0.11.32) -- so what this catches is a hand-edited lock or a
+    change to the [tool.uv] conflicts layout, both of which `uv export --locked` accepts.
+    The worker tier is exempt: proto-worker holds its own pin under that conflicts line."""
+    default, _ = _requirements(_uv_export(None))
+    sandbox, _ = _requirements(_uv_export("sandbox"))
+    assert "claude-agent-sdk" in default, "the default env no longer resolves claude-agent-sdk"
+    assert default["claude-agent-sdk"][0] == sandbox["claude-agent-sdk"][0], (
+        f"default env claude-agent-sdk=={default['claude-agent-sdk'][0]} but the sandbox image "
+        f"installs =={sandbox['claude-agent-sdk'][0]}: move both together "
+        "(`uv lock --upgrade-package claude-agent-sdk`, then `make proto-requirements`)"
+    )
 
 
 def test_host_venv_sqs_recipes_use_static_dummies():

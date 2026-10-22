@@ -982,6 +982,13 @@ def test_validate_record_hint_requires_snapshot_and_starting_tree_to_match(
     assert "declares nothing stripped" in capsys.readouterr().err
 
 
+def test_validate_record_hint_requires_the_unstripped_snapshot(fixtures_root, tree, capsys):
+    fixture_dir = _write_record_hint_fixture(fixtures_root, "rh5b", tree)
+    (fixture_dir / "unstripped-tree.gedcomx.json").unlink()
+    assert author.main(["validate", "--slug", "rh5b"]) == 2
+    assert "no unstripped-tree.gedcomx.json" in capsys.readouterr().err
+
+
 def test_validate_rejects_an_unknown_genre(fixtures_root, tree, capsys):
     _write_record_hint_fixture(fixtures_root, "rh6", tree, genre="bogus")
     assert author.main(["validate", "--slug", "rh6"]) == 2
