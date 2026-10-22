@@ -514,7 +514,9 @@ Rule T, and a person-level `sources` ref is not judged: the lead's ruling of
 stood **before the call**, as `materialize_facts`' copy gate does, so a
 relationship the same call adds does not tie the record; one committed call has
 that shape (`spriggs-parents-1898` 2026-06-24, call 89; unmeasured, its captures
-stripped). The starting tree is read for the cap's starting-person ids, fail open.
+stripped). The starting tree is read for the cap's starting-person ids; a missing
+or unreadable one reads as none, so a relative it held whose only refs reach the
+cited record reads as made from it, and does not tie it.
 
 A finding refuses the whole call and nothing is written, `ops[i]: <text>` in the
 batch form:
