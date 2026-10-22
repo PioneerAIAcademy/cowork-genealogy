@@ -59,6 +59,13 @@ b. ~1817 at Aberhafesp (the same birthplace as in 1871), a farmer of 20 acres, m
 to **Mary**, b. ~1815 at Llanwnog. Mary is a candidate mother only: she would have been
 about 44 at Owen's birth, and nothing shows she was alive in 1859.
 
+**f1 is not required (genealogist, 2026-10-22).** The 1891 census (`ark:/61903/1:1:45VS-5PZ`)
+is attached to Owen in the starting tree and records Owen Morris Senr as the head's father,
+so once a project extracts the subject's attached records it answers f1 without any research.
+f2, rejecting the 1871 Cardiganshire hint, still needs research and stays required. The 1891
+and 1911 censuses are listed as starting evidence in
+`eval/tests/e2e/attached-evidence-allowlist.json`. This follows maria-bracero-marriage.
+
 **Searched and not found:** his 1882 marriage to Ellen Elizabeth (her maiden name is
 unknown), which would have named his father directly; and a 1861 census entry placing
 a Montgomeryshire-born Owen, about 2, in a household with a father Owen. The 1861 search
