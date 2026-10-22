@@ -3383,18 +3383,49 @@ describe("research_append (Phase 3)", () => {
       researchAppend({ projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields } as never);
 
     it.each([
-      ["a number", 5, "number"],
-      ["a decimal", 1.5, "number"],
-      ["true", true, "boolean"],
-      ["an object", { text: "## Conclusion" }, "object"],
-      ["a list of words", ["w", "w"], "array"],
-    ])("%s is refused on append, naming the type, and nothing is written", async (_label, value, type) => {
+      ["a number", 5, "number 5"],
+      ["a decimal", 1.5, "number 1.5"],
+      ["true", true, "boolean true"],
+      ["an object", { text: "## Conclusion" }, 'object {"text":"## Conclusion"}'],
+      ["a list of words", ["w", "w"], 'array ["w","w"]'],
+    ])("%s is refused on append, naming the type and the value, and nothing is written", async (_label, value, got) => {
       await writeProject();
       const before = await readFile(join(dir, "research.json"), "utf-8");
       const r = await append(value);
       expect(r.ok).toBe(false);
-      expect(errorsOf(r)!.join("\n")).toContain(`research.json/proof_summaries[0]: 'narrative_markdown' must be a string, got ${type}`);
+      expect(errorsOf(r)!.join("\n")).toContain(`research.json/proof_summaries[0]: 'narrative_markdown' must be a string, got ${got}`);
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("the value is quoted to a short prefix, so a long non-string cannot make a long message", async () => {
+      await writeProject();
+      const r = await append({ text: "w ".repeat(5000) });
+      const line = errorsOf(r)!.find((e) => e.includes("'narrative_markdown' must be a string"))!;
+      expect(line.length).toBeLessThan(200);
+      expect(line).toContain("...");
+    });
+
+    it.each([
+      ["a number", 5, 6],
+      ["true", true, false],
+      ["a list", ["w"], ["x", "y"]],
+      ["an object", { text: "a" }, { text: "b", more: [1, 2, 3] }],
+    ])("an update that replaces a legacy non-string narrative (%s) with a different one of the same type is refused", async (_label, from, to) => {
+      // The introduced-errors diff keys an error on its path plus its message. With a message
+      // that named only the type, the new value read as the error already in the project.
+      await writeProject(legacy(from));
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await update({ narrative_markdown: to });
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)!.join("\n")).toContain("'narrative_markdown' must be a string, got");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("and an update that sends the legacy value back unchanged is tolerated, as one that touches something else is", async () => {
+      await writeProject(legacy(5));
+      const r = await update({ narrative_markdown: 5 });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
     });
 
     it("null keeps its own refusal, and is not also told it is not a string", async () => {
@@ -3411,7 +3442,7 @@ describe("research_append (Phase 3)", () => {
       const before = await readFile(join(dir, "research.json"), "utf-8");
       const refused = await update({ narrative_markdown: 5 });
       expect(refused.ok).toBe(false);
-      expect(errorsOf(refused)!.join("\n")).toContain("'narrative_markdown' must be a string, got number");
+      expect(errorsOf(refused)!.join("\n")).toContain("'narrative_markdown' must be a string, got number 5");
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
 
       await writeProject(legacy(5));
@@ -3431,8 +3462,8 @@ describe("research_append (Phase 3)", () => {
     });
 
     it("an entry already in the project with a non-string narrative is not refused for it again: the write stands, with a warning", async () => {
-      // The introduced-errors diff keys an error on its path plus its message, so the
-      // message names the type and not the value, and a legacy entry is demoted.
+      // The introduced-errors diff keys an error on its path plus its message. This write leaves
+      // the narrative alone, so the message is the one already in the project and is demoted.
       await writeProject(legacy(5));
       const r = await update({ shortfall: "ceiling" });
       expect(errorsOf(r) ?? []).toEqual([]);

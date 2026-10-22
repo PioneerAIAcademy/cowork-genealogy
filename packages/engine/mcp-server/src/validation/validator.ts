@@ -127,6 +127,21 @@ export const PROOF_TIER_RANK = new Map<string, number>([
   ["proved", 4],
 ]);
 
+/** How much of a non-string narrative an error message quotes. */
+const NARRATIVE_VALUE_PREFIX_CHARS = 60;
+
+/** `value` as JSON, cut to `max` characters, for an error message that has to
+ *  name a value without quoting all of it. */
+function clipJson(value: unknown, max: number): string {
+  let text: string;
+  try {
+    text = JSON.stringify(value) ?? String(value);
+  } catch {
+    text = String(value);
+  }
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+}
+
 // What a refused claim is told. `claims[]` holds ParentChild relationship claims
 // only, so a claim that cannot carry one (a fact claim in practice) is refused,
 // and the reported failure was the agent answering that refusal by dropping
@@ -1599,19 +1614,22 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // The narrative is the one required field here that is TEXT, and `checkRequired`
     // knows only that it is present and not null, so a number, a boolean, a list or an
     // object validated clean. Both JSON Schemas declare it a string. The message names
-    // the TYPE, not the value: a narrative is long, and `introduced-errors.ts` keys an
-    // error on its path plus its message, so a message that is stable for an entry
-    // already in the project keeps that legacy entry from reading as newly introduced.
-    // Null is `checkRequired`'s, and an empty string is a string.
+    // the type AND a short prefix of the value, the way `resolved_conflict_ids` names
+    // its value: `introduced-errors.ts` keys an error on its path plus its message, so
+    // a message that named only the type made an update replacing one non-string with
+    // another of the same type read as an error already in the project, and it was
+    // written. The prefix is bounded because a narrative can be long. Null is
+    // `checkRequired`'s, and an empty string is a string.
     if (
       "narrative_markdown" in ps &&
       ps.narrative_markdown !== null &&
       typeof ps.narrative_markdown !== "string"
     ) {
+      const kind = Array.isArray(ps.narrative_markdown) ? "array" : typeof ps.narrative_markdown;
       addError(
         report,
         psp,
-        `'narrative_markdown' must be a string, got ${Array.isArray(ps.narrative_markdown) ? "array" : typeof ps.narrative_markdown}`,
+        `'narrative_markdown' must be a string, got ${kind} ${clipJson(ps.narrative_markdown, NARRATIVE_VALUE_PREFIX_CHARS)}`,
       );
     }
 
