@@ -180,8 +180,8 @@ interface PartyWords {
   surname?: string;
 }
 
-function distinctNames(names: Array<string | undefined>): string[] {
-  return names.filter((n, i): n is string => n !== undefined && names.indexOf(n) === i);
+function definedNames(names: Array<string | undefined>): string[] {
+  return names.filter((n): n is string => n !== undefined);
 }
 
 /**
@@ -207,7 +207,7 @@ function otherPartyWords(assertion: any, asked: string): PartyWords {
     words.given = nameText(sv.given);
     words.surname = nameText(sv.surname);
   }
-  words.names = distinctNames(names);
+  words.names = definedNames(names);
   return words;
 }
 
@@ -227,7 +227,7 @@ function ownPartyWords(assertion: any, ownRole: string | undefined): PartyWords 
     words.given = nameText(sv.given);
     words.surname = nameText(sv.surname);
   }
-  words.names = distinctNames(names);
+  words.names = definedNames(names);
   return words;
 }
 
@@ -240,7 +240,7 @@ function siblingNames(record: readonly any[], role: string): string[] {
     const sv = structuredObject(a);
     names.push(nameText(a?.value), sv !== undefined ? joinedName(sv) : undefined);
   }
-  return distinctNames(names);
+  return definedNames(names);
 }
 
 /** How close a persona's name must be to a name the assertions give. */

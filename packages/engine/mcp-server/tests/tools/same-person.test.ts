@@ -1725,6 +1725,60 @@ describe("samePerson — project-relative arm", () => {
       },
     );
 
+    it("reads the `name` of a two-party assertion as the other party's name", async () => {
+      // `{ name, relation }` is how some extractions write the other party.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_042", "child", null, "relationship", "child of Pierre",
+          { name: "Pierre Mouchang", relation: "father" }),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson(
+          { projectPath: dir, assertionId: "a_042", treePersonId: "I1", recordRole: "father" },
+          LOCAL,
+        ),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona.role).toBe("father");
+    });
+
+    it("reads the key its own role names as its own party's name, even on a two-party assertion", async () => {
+      // The groom's marriage assertion writes both spouses by role. With no other
+      // party asked for, the key for HIS role is his name, and `spouse` is not.
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_043", "father", null, "marriage", "married",
+          { father: "Pierre Mouchang", spouse: "Margreta Metzeler" }),
+      ];
+      await hhProject(r);
+      okScore();
+      const result = projectResult(
+        await samePerson({ projectPath: dir, assertionId: "a_043", treePersonId: "I1" }, LOCAL),
+      );
+      expect(sentFocus().first).toBe(HH_FATHER);
+      expect(result.recordPersona).toEqual({ id: HH_FATHER, name: "Pierre Mouchang", role: "father" });
+    });
+
+    it("does not count a persona with no id as one a name could find", async () => {
+      // A persona with no id cannot be scored. It must not make a name ambiguous.
+      recordReadMock.mockResolvedValue({
+        persons: [
+          { names: [{ given: "Pierre", surname: "Mouchang" }] },
+          { id: "p_x", names: [{ given: "Pierre", surname: "Mouchang" }] },
+        ],
+      });
+      const r = hhResearch();
+      r.assertions = [
+        hhAssertion("a_001", "principal", null, "name", "Pierre Mouchang", { given: "Pierre", surname: "Mouchang" }),
+      ];
+      await hhProject(r);
+      okScore();
+      await samePerson({ projectPath: dir, assertionId: "a_001", treePersonId: "I1" }, LOCAL);
+      expect(sentFocus().first).toBe("p_x");
+    });
+
     it("reads the one key that names a second person as the other party's name", async () => {
       // The groom's marriage assertion names his spouse under `spouse`; nothing names a role.
       const r = hhResearch();
@@ -2211,6 +2265,13 @@ describe("buildRecordedScore", () => {
       research({ id: "a_001", record_id: "r1", record_role: "groom" }),
       "a_001", "I1", "father_of_groom", RESULT);
     expect(r?.record_role).toBe("father_of_groom");
+  });
+
+  it("reads an empty role as none, and files the assertion's own", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "r1", record_role: "groom" }),
+      "a_001", "I1", "", RESULT);
+    expect(r?.record_role).toBe("groom");
   });
 
   it("falls back to the assertion's record_role", () => {
