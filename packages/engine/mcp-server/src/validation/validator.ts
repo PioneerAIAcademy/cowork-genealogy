@@ -105,6 +105,8 @@ const CLOSED_ENUMS = {
     "home", "getting_started", "online_records", "research_tips",
   ]),
   locality_page_outcome: new Set(["unreachable"]),
+  registration_event: new Set(["birth", "marriage", "death"]),
+  registration_level: new Set(["town", "parish", "county", "state", "national"]),
 };
 
 // Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
@@ -709,8 +711,8 @@ export const RESEARCH_SHAPES = {
   ]),
   locality: new Set([
     "id", "place", "for_place", "time_period", "jurisdictions",
-    "collections", "quirks", "guide_markdown", "pages_read", "source",
-    "created", "updated",
+    "collections", "quirks", "guide_markdown", "pages_read",
+    "registration_start", "volume_summary", "source", "created", "updated",
   ]),
   warning_justification: new Set([
     "warning_id", "justification", "person_ids", "tool", "recorded_at",
@@ -1908,6 +1910,27 @@ function validateEvaluations(
   }
 }
 
+/** Each named count, when present, is a non-negative integer; `nullable` ones may also be null. */
+function checkCounts(
+  obj: any,
+  fields: string[],
+  nullable: string[],
+  path: string,
+  report: ValidationReport,
+): void {
+  if (!obj || typeof obj !== "object") return;
+  for (const f of fields) {
+    if (!(f in obj) || (obj[f] === null && nullable.includes(f))) continue;
+    if (!isNonNegativeInteger(obj[f])) {
+      const or = nullable.includes(f) ? " or null" : "";
+      addError(report, path, `${f} must be a non-negative integer${or}; got ${JSON.stringify(obj[f])}`);
+    }
+  }
+}
+
+const BUCKET_COUNTS = ["volumes", "browse_only", "fulltext_only"];
+const BUCKET_NULLABLE = ["browse_only", "fulltext_only"];
+
 function validateLocalities(
   data: any,
   path: string,
@@ -1946,6 +1969,37 @@ function validateLocalities(
       if ("outcome" in pr) {
         checkEnum(pr.outcome, "locality_page_outcome", `${lp}/pages_read[${j}]`, report);
       }
+    }
+    // The fields research-plan reads instead of re-running the survey. Counts
+    // must be what the schema says, or a plan decides on a NaN or a fraction.
+    const cols = Array.isArray(loc.collections) ? loc.collections : [];
+    for (let j = 0; j < cols.length; j++) {
+      checkCounts(cols[j], ["person_count", "record_count"], ["person_count", "record_count"], `${lp}/collections[${j}]`, report);
+    }
+    const regs = Array.isArray(loc.registration_start) ? loc.registration_start : [];
+    for (let j = 0; j < regs.length; j++) {
+      const rs = regs[j];
+      const rp = `${lp}/registration_start[${j}]`;
+      if (!rs || typeof rs !== "object") continue;
+      checkRequired(rs, ["event", "level", "year", "source_url"], rp, report, NULLABLE_FIELDS);
+      if ("event" in rs) checkEnum(rs.event, "registration_event", rp, report);
+      if ("level" in rs) checkEnum(rs.level, "registration_level", rp, report);
+      if ("year" in rs && !Number.isInteger(rs.year)) {
+        addError(report, rp, `year must be an integer; got ${JSON.stringify(rs.year)}`);
+      }
+    }
+    const vs = loc.volume_summary;
+    if (vs && typeof vs === "object") {
+      const vp = `${lp}/volume_summary`;
+      checkRequired(vs, ["total_volumes", "complete", "by_record_type", "untyped"], vp, report, NULLABLE_FIELDS);
+      if ("total_volumes" in vs && !isNonNegativeInteger(vs.total_volumes)) {
+        addError(report, vp, `total_volumes must be a non-negative integer; got ${JSON.stringify(vs.total_volumes)}`);
+      }
+      const buckets = Array.isArray(vs.by_record_type) ? vs.by_record_type : [];
+      for (let j = 0; j < buckets.length; j++) {
+        checkCounts(buckets[j], BUCKET_COUNTS, BUCKET_NULLABLE, `${vp}/by_record_type[${j}]`, report);
+      }
+      checkCounts(vs.untyped, BUCKET_COUNTS, BUCKET_NULLABLE, `${vp}/untyped`, report);
     }
   }
 
