@@ -22,11 +22,14 @@ export const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
  * the next (happy eyeballs, on by default since Node 20). Its own default is 250 ms,
  * which is less than some links take to connect at all. Measured 2026-10-22 from one
  * machine: 81 of 270 connects to the hosts this engine calls took over 250 ms, all 60
- * to the wiki host among them (261 to 337 ms), so `fetch` failed with ETIMEDOUT before a
- * single address had answered; the slowest of the 270 took 1.2 s (an earlier run saw one
- * of 3.4 s). Two seconds clears them with room to spare. A longer wait is paid only by an
- * address that is black-holed, neither answering nor refusing: that now costs two seconds
- * per NEW connection, where a refused or unreachable one still fails at once.
+ * to the wiki host among them (261 to 337 ms); the slowest of the 270 took 1.2 s, and an
+ * earlier run saw one of 3.4 s. Reading a wiki page in 20 fresh processes, `fetch` failed
+ * with ETIMEDOUT in 9 at Node's 250 ms and in none at 2 s: that is what two seconds is
+ * shown to fix, not every slow connect. A connect as slow as that 3.4 s one still loses
+ * its address at two seconds unless it is the last address Node tries, which has no timer.
+ * A longer wait is paid only by an address that is black-holed, neither answering nor
+ * refusing: that now costs two seconds per NEW connection, where a refused or unreachable
+ * one still fails at once.
  */
 export const CONNECT_ATTEMPT_TIMEOUT_MS = 2_000;
 
@@ -49,7 +52,9 @@ export function raiseConnectAttemptTimeout(minMs: number): void {
 }
 
 // Once, when the module loads: this is the one module that calls the global `fetch`
-// (tests/packaging/no-bare-fetch.test.ts), so every network call has passed through it.
+// (tests/packaging/no-bare-fetch.test.ts), so every `fetch` has passed through it. The
+// setting is process-wide, so other sockets in the same process, such as the hosted
+// server's Postgres and S3 clients, get it too.
 raiseConnectAttemptTimeout(CONNECT_ATTEMPT_TIMEOUT_MS);
 
 // Every `Response` method that consumes the body stream, and can therefore

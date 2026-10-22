@@ -477,10 +477,12 @@ describe("raiseConnectAttemptTimeout", () => {
     expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(fresh.CONNECT_ATTEMPT_TIMEOUT_MS);
   });
 
-  it("is a second or more, which is the least that clears the connect times measured", () => {
-    // 81 of 270 connects took over 250 ms, 2 took over 1,000 and none took 1,500 or more.
-    // The constant checked against itself would pass at 250, so the floor is a literal.
-    expect(CONNECT_ATTEMPT_TIMEOUT_MS).toBeGreaterThanOrEqual(1_000);
+  it("is at least two seconds, the value the live trials passed at", () => {
+    // 20 fresh processes reading a wiki page: 11 connected at Node's 250 ms, all 20 at 2,000 ms.
+    // The slowest of 270 timed connects was 1,230 ms, so a floor of 1,000 would let the constant
+    // fall to a value no trial passed at. The constant checked against itself would pass at 250,
+    // so the floor is a literal.
+    expect(CONNECT_ATTEMPT_TIMEOUT_MS).toBeGreaterThanOrEqual(2_000);
   });
 
   it("does nothing, and does not throw at import, on a Node without the setting", async () => {
