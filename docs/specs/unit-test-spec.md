@@ -948,7 +948,7 @@ Only present when `test.type` is `"negative"`.
 
 **POLICY: a test FILE's `runs_per_test` is always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call), and that budget goes on covering more tests rather than on re-running the same one. **This is standing policy, not a stage** — do not plan around the file pin being lifted.
 
-**The file pin decides what a committed run log measures, not what the suite tolerates.** A committed run log deliberately does not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
+**The file pin decides what a committed run log measures, not what the suite tolerates.** A committed run log deliberately does not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test, and never read an absent `flaky` flag as evidence that a test is stable. A suite run's fail-retries (§7, "Retry on fail") keep one flake from blocking an unrelated PR; they are not the fix.
 
 The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") is reachable **only** through the `run_tests.py --runs-per-test N` CLI override, which sets the value after load without touching the test file. The JSON Schema pins `maximum: 1` on the file, so `runs_per_test > 1` in a test definition is a mistake; the override lives at the CLI, and any `N > 1` run is non-releasable (it writes a `scratch_` log), so it never enters the committed corpus.
 
@@ -1639,9 +1639,19 @@ This composition cleanly handles all edge cases:
 
 `run_tests.py --store pg` (Makefile `eval-skill ... STORE=pg`, U15) is the third: every live tool call runs on `PgS3ProjectStore` against the compose Postgres + MinIO instead of the workspace directory. `mock_mcp._run_node_eval` preloads `eval/harness/harness/pg_store_prelude.mjs` into each `node --eval`. The workspace is seeded into its own Postgres project once, right after `build_workspace` (`seed_pg_workspace`), and every tool write is mirrored back, so snapshots, validators and the judge run unchanged; a file the agent writes with its own Write tool after the seed is not imported, as on the hosted path. The run is non-releasable, records `store: "pg"`, and writes to `eval/runlogs/unit-pg/<skill>/` — committed, outside every skill's release lineage and `check_runlogs`. It is judged by parity, not graded: `make unit-pg-parity` compares each skill's Postgres results with its newest file-store log and fails on a live response that reads as a store fault. These logs are scratch-named, so the keep-newest-5 prune never touches them (~20 MB a full pass): a full re-run of a skill supersedes its earlier `unit-pg/` logs — delete them in the same PR. A partial re-run keeps them, because the parity report merges a skill's logs newest-first per test.
 
-So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
+So in a *committed* run log `flaky` fires only on a fail-retried test (below), and a test that happened to pass its one run reads `false` whatever its real rate. **That is the instrument being partly blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and judge cost (every non-aborted run is judged). Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
+
+### Retry on fail
+
+**The bar: each unit test passes 95–97% of the time** (lead, 2026-10-22). Two layers hold it.
+
+**At PR time, a failed test is retried.** In a releasable suite run, a test whose single run comes out `fail` is run again up to three times (`orchestrator.FAIL_RETRIES`), stopping at the first retry that is `fail` or `aborted`. Every run is kept in `runs[]` and the aggregation above decides: `(fail, pass, pass, pass)` is `pass` with `flaky: true`; any failed retry leaves it `fail`. Scratch runs, `--runs-per-test N` probes and `make gate-skill` never retry. The review rows stay `aggregated_dimensions` — for a test that passed its retries, the passing runs' scores — and the results page shows the trace of a run matching the test's outcome.
+
+Why three: a test passing at rate q survives its retries with probability q³. A healthy test (97.5%) clears them 93% of the time; a test a PR knocked to 50% gets through 12.5% of the time. Three is also the most for which the modal aggregate means "every retry passed" — with a fourth, `(fail, pass, pass, pass, fail)` would aggregate to `pass`.
+
+**Over time, `make eval-health` measures the rate.** It reads each test's **first** run (retries happen only after a fail, so counting them would skew the rate) across the suite's last 20 committed logs, and lists a test when its first-run fails would happen less than 10% of the time at a 95% pass rate — 2 fails for 5–10 logs, 3 for 11–20. It also lists tests that are `partial` in at least half their first runs. It is not a gate: each test it lists gets its own issue.
 
 ### Stability floor — ruled out
 
@@ -1884,7 +1894,7 @@ These are excluded from cross-PR comparison and from the `.github/workflows/chec
 
 ### Run log schema
 
-A run log represents N runs of one test (N from `runs_per_test`, default 1). The top-level `outcome` is the aggregated outcome (Section 7); per-run detail lives in `runs[]`. When N=1, `runs[]` has one entry and `flaky` is always false. Machine-readable schema: [`docs/specs/schemas/run-log.schema.json`](schemas/run-log.schema.json).
+A run log represents N runs of one test (N from `runs_per_test`, default 1), plus up to three fail-retries when the first of a single run fails (Section 7, "Retry on fail"). The top-level `outcome` is the aggregated outcome (Section 7); per-run detail lives in `runs[]`, first run first. Machine-readable schema: [`docs/specs/schemas/run-log.schema.json`](schemas/run-log.schema.json).
 
 ```json
 {
