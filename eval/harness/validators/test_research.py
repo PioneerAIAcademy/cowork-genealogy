@@ -876,13 +876,15 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
     prompts = _spawn_prompts(builtin_tool_calls, expected)
     assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
     research = before_state.get("research_json") or {}
-    items = [
-        item
-        for plan in research.get("plans", [])
-        if plan.get("status") == "active"
-        for item in plan.get("items", [])
-        if item.get("status") in ("planned", "in_progress")
-    ]
+    items = []
+    plan_of = {}
+    for plan in research.get("plans", []):
+        if plan.get("status") != "active":
+            continue
+        for item in plan.get("items", []):
+            if item.get("status") in ("planned", "in_progress"):
+                items.append(item)
+                plan_of[item["id"]] = plan["id"]
     assert items, "Scenario drift: no active plan item to hand over."
     decoder = json.JSONDecoder()
     problems = []
@@ -892,6 +894,10 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             problems.append(f"names no plan item id: {prompt[:120]!r}")
             continue
         item = named[0]
+        if plan_of[item["id"]] not in prompt:
+            problems.append(
+                f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
+            )
         marker = prompt.find("plan_item")
         brace = prompt.find("{", marker) if marker != -1 else -1
         if brace == -1:

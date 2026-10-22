@@ -338,7 +338,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, for `@plugin:search-records`",
+          "its plan's `planId` and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, for `@plugin:search-records`",
       },
       {
         side: "agent",

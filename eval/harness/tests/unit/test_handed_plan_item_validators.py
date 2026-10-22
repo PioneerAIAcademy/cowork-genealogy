@@ -106,31 +106,37 @@ def test_research_check_ignores_an_untagged_test():
 
 
 def test_research_check_passes_on_a_verbatim_block():
-    prompt = f"planItemId: pli_001\nprojectPath: /p\nplan_item:\n{block(ITEM)}"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nprojectPath: /p\nplan_item:\n{block(ITEM)}"
     research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_passes_on_a_fenced_and_escaped_block():
     escaped = json.dumps(ITEM, indent=2)  # ensure_ascii escapes the em dash
-    prompt = f"planItemId: pli_001\nplan_item:\n```json\n{escaped}\n```"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n```json\n{escaped}\n```"
     research_check(RTEST, [spawn(prompt)], BEFORE)
+
+
+def test_research_check_fails_when_the_plan_id_is_not_handed():
+    prompt = f"planItemId: pli_001\nprojectPath: /p\nplan_item:\n{block(ITEM)}"
+    with pytest.raises(AssertionError, match="does not hand the parent plan id pl_001"):
+        research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_fails_when_no_plan_item_block_is_sent():
     with pytest.raises(AssertionError, match="no plan_item JSON block"):
-        research_check(RTEST, [spawn("planItemId: pli_001\nprojectPath: /p")], BEFORE)
+        research_check(RTEST, [spawn("planItemId: pli_001\nplanId: pl_001\nprojectPath: /p")], BEFORE)
 
 
 def test_research_check_fails_when_the_item_is_summarised():
     summary = dict(ITEM, rationale="Search for Unna.")
-    prompt = f"planItemId: pli_001\nplan_item:\n{block(summary)}"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(summary)}"
     with pytest.raises(AssertionError, match="not verbatim; differs on \['rationale'\]"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 
 
 def test_research_check_fails_when_a_field_is_dropped():
     trimmed = {k: v for k, v in ITEM.items() if k != "fallback_for"}
-    prompt = f"planItemId: pli_001\nplan_item:\n{block(trimmed)}"
+    prompt = f"planItemId: pli_001\nplanId: pl_001\nplan_item:\n{block(trimmed)}"
     with pytest.raises(AssertionError, match="differs on \['fallback_for'\]"):
         research_check(RTEST, [spawn(prompt)], BEFORE)
 

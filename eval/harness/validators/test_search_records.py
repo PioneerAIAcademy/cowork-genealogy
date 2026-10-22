@@ -833,6 +833,27 @@ def test_handed_plan_item_skips_research_query(tool_calls, test):
     )
 
 
+def test_handed_plan_item_status_update_uses_delegated_plan_id(tool_calls, test):
+    """Tag-gated (handed-plan-item): the status update names the delegated
+    ``planId``. A handed item carries no parent plan id, so an agent that skipped
+    ``research_query`` has nothing else to take it from.
+    """
+    if "handed-plan-item" not in test.get("tags", []):
+        pytest.skip("not a handed-plan-item scenario")
+    updates = [
+        c.get("input") or c.get("args") or {}
+        for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "research_append"
+    ]
+    updates = [
+        u for u in updates
+        if u.get("section") == "plan_items" and u.get("op") == "update"
+    ]
+    assert updates, "the agent never updated the plan item's status"
+    wrong = [u.get("planId") for u in updates if u.get("planId") != "pl_001"]
+    assert not wrong, f"the status update used planId {wrong}, not the delegated pl_001"
+
+
 def test_mismatched_handed_plan_item_is_queried(tool_calls, test):
     """Tag-gated (handed-plan-item-mismatch): a ``plan_item`` whose ``id`` differs
     from ``planItemId`` is not the item the caller named, so it is not trusted and

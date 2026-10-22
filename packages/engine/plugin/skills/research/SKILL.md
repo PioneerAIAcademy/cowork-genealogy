@@ -310,7 +310,7 @@ it by name.
    `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
-   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId` and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, for `@plugin:search-records`, and the `planItemId` (plus the parish page as
+   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, for `@plugin:search-records`, and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
