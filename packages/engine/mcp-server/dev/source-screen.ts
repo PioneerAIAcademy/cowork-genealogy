@@ -401,7 +401,9 @@ export interface RefreshLedger {
 /**
  * Re-read every truth-set copy's attachments with the session switched to
  * `tree`. The Family Tree answer is kept beside it as
- * `attachments.family-tree.json` and `others.family-tree/`. A copy already
+ * `attachments.family-tree.json`. `others/` keeps the person reads it already
+ * holds and gains the tree's: the agent still reads a Family Tree person the
+ * profile names, and the judge can only serve a read that is on disk. A copy already
  * refreshed for this tree (`attachments-tree.json`) is skipped, so a stopped
  * run resumes. Plant copies come from the Family Tree and are left alone.
  */
@@ -426,10 +428,6 @@ export async function runRefreshAttachments(out: string, tools: Tools, tree: str
         if (existsSync(join(dir, "attachments.json")) && !existsSync(join(dir, "attachments.family-tree.json"))) {
           renameSync(join(dir, "attachments.json"), join(dir, "attachments.family-tree.json"));
         }
-        if (existsSync(join(dir, "others")) && !existsSync(join(dir, "others.family-tree"))) {
-          renameSync(join(dir, "others"), join(dir, "others.family-tree"));
-        }
-        rmSync(join(dir, "others"), { recursive: true, force: true });
         const calls: Record<string, number> = {};
         const errors: CallError[] = [];
         await snapshotAttachments(ctx, calls, errors, dir, personas, audit.subject_id, meta.input_pid ?? audit.subject_id);

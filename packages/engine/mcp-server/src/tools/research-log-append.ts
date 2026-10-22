@@ -93,10 +93,21 @@ const NIL_ESCALATION_THRESHOLD = 3;
 /** The FamilySearch index searches whose nils count toward the threshold. */
 const FS_INDEX_SEARCH_TOOLS = new Set(["record_search", "fulltext_search"]);
 
-/** Reference lookups log a looked-up article or overview, not a record search, so
- *  their `positive` entries carry no evidence to persist and are left out of the
- *  logging-without-persistence count (#3244). The census hedge still applies. */
-const REFERENCE_LOOKUP_TOOLS = new Set(["wiki_search", "wiki_read", "wikipedia_search", "historical_context"]);
+/** Reference lookups log a looked-up article, an overview or a read-only agent's
+ *  report, not a record search, so their `positive` entries carry no evidence to
+ *  persist and are left out of the logging-without-persistence count (#3244,
+ *  #3524). The census hedge still applies. */
+const REFERENCE_LOOKUP_TOOLS = new Set([
+  "wiki_search",
+  "wiki_read",
+  "wikipedia_search",
+  "historical_context",
+  "source_evaluation",
+  "check_warnings",
+  "translation",
+  "convert_dates",
+  "validate_schema",
+]);
 
 /** Question statuses under which the question is still open: every status but
  *  the two that close it. */
