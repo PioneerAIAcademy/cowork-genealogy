@@ -2328,16 +2328,13 @@ export function pidOrStartingPerson(personId: string, startingPersonIds?: Readon
  *  "only source ref" means every ref the person carries, and person_read
  *  attaches FamilySearch's at this level. */
 export function personSourceRefs(person: any): Set<string> {
-  const refs = new Set<string>();
-  const add = (sources: unknown) => {
-    for (const src of (Array.isArray(sources) ? sources : []) as any[]) {
-      if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
-    }
-  };
-  add(person?.sources);
-  for (const n of (Array.isArray(person?.names) ? person.names : []) as any[]) add(n?.sources);
-  for (const f of (Array.isArray(person?.facts) ? person.facts : []) as any[]) add(f?.sources);
-  return refs;
+  return new Set(
+    [
+      person,
+      ...((Array.isArray(person?.names) ? person.names : []) as any[]),
+      ...((Array.isArray(person?.facts) ? person.facts : []) as any[]),
+    ].flatMap(sourceRefsOf),
+  );
 }
 
 /** What tree source refs reach in research.json:
@@ -2953,11 +2950,9 @@ export function assertedNamesakeVerdicts(
     const prev = strongBefore.get(pairingKey(e));
     if (!prev || CONFIDENCE_RANK[e.confidence] > CONFIDENCE_RANK[prev.confidence]) strongBefore.set(pairingKey(e), e);
   }
-  const strongAfter = new Set<string>();
   const assertedBy = new Map<string, Set<string>>();
   for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
     if (!isLiveStrong(e)) continue;
-    strongAfter.add(pairingKey(e));
     if (!holders.has(e.person_id) || typeof e.id !== "string") continue;
     const prev = strongBefore.get(pairingKey(e));
     if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
@@ -2966,7 +2961,7 @@ export function assertedNamesakeVerdicts(
     else assertedBy.set(e.person_id, new Set([e.id]));
   }
   if (assertedBy.size === 0) return [];
-  const voucherPairs = new Set([...strongBefore.keys()].filter((k) => strongAfter.has(k)));
+  const voucherPairs = vouchingPairs(before, after);
   const entryById = new Map<string, any>();
   for (const e of (after.research.person_evidence ?? []) as any[]) if (e && typeof e.id === "string") entryById.set(e.id, e);
 
@@ -2977,6 +2972,171 @@ export function assertedNamesakeVerdicts(
     for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, verdict });
   }
   return out;
+}
+
+/** The pairings live and probable or better both before and after a call:
+ *  the links that may vouch in it, so a link cannot vouch in the call that
+ *  writes it. */
+function vouchingPairs(before: { research: any }, after: { research: any }): Set<string> {
+  const strong = (research: any) =>
+    new Set(
+      ((Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[])
+        .filter(isLiveStrong)
+        .map(pairingKey),
+    );
+  const was = strong(before.research);
+  return new Set([...strong(after.research)].filter((k) => was.has(k)));
+}
+
+/** Where a tree fact's evidence comes from, read as the namesake cap reads
+ *  parties: its `assertion_id`'s source and party when that resolves, else
+ *  every research source its refs reach, any party (`party: null`). */
+export function factEvidenceParties(
+  fact: any,
+  research: any,
+  partyOf: (a: any) => string = capPartyKeyer(Array.isArray(research?.assertions) ? research.assertions : []),
+  assertionOf: (id: string) => any = (id) =>
+    ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).find((x) => x?.id === id),
+): Array<{ source: unknown; party: string | null }> {
+  const a = typeof fact?.assertion_id === "string" ? assertionOf(fact.assertion_id) : undefined;
+  if (a) return [{ source: capSource(a), party: partyOf(a) }];
+  return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
+}
+
+/** What the namesake warning lists for one person. */
+export interface NamesakeRowListing {
+  personId: string;
+  /** The rows the call wrote for them. */
+  rows: any[];
+  /** The live probable or confident links to them the cap refuses. */
+  refused: any[];
+  /** The facts on them whose party holds a refused link and no allowed one. */
+  facts: any[];
+  /** Their names citing a refused link's source. */
+  names: any[];
+}
+
+/** For each person whose row the call appended or updated: the live probable
+ *  or confident links to them the cap refuses, judged as the call's own links
+ *  are (vouchers are the pairings strong before and after the call), and the
+ *  facts and names those links' parties carry onto them. A refused link the
+ *  call asserted already fails the call, so a call that succeeds lists only
+ *  links that stood before it. */
+export function namesakeRowListings(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string }>,
+  startingPersonIds?: ReadonlySet<string>,
+): NamesakeRowListing[] {
+  const written = new Set(applied.filter((a) => a.section === "namesakes").map((a) => a.entryId));
+  if (written.size === 0) return [];
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const holders = [
+    ...new Set(
+      rows.filter((r) => r && written.has(r.id) && typeof r.person_id === "string").map((r) => r.person_id as string),
+    ),
+  ].sort();
+  const voucherPairs = vouchingPairs(before, after);
+  const assertions = (Array.isArray(after.research?.assertions) ? after.research.assertions : []) as any[];
+  const assertionById = new Map<string, any>(
+    assertions.filter((a) => a && typeof a.id === "string").map((a) => [a.id, a]),
+  );
+  const partyOf = capPartyKeyer(assertions);
+  const entries = (
+    (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]
+  ).filter((e) => e && typeof e.id === "string");
+  const sourceOf = (e: any) => capSource(assertionById.get(e.assertion_id));
+  const partyKey = (source: unknown, party: string) => `${String(source)}\u0000${party}`;
+  const partyKeyOf = (e: any) => {
+    const a = assertionById.get(e.assertion_id);
+    return a ? partyKey(capSource(a), partyOf(a)) : null;
+  };
+  const out: NamesakeRowListing[] = [];
+  for (const p of holders) {
+    const v = namesakeVerdicts(p, after.research, after.tree, { startingPersonIds, voucherPairs });
+    if (!v) continue;
+    const refused = entries.filter((e) => v.verdicts.get(e.id)?.allowed === false);
+    if (refused.length === 0) continue;
+    const allowed = entries.filter((e) => v.verdicts.get(e.id)?.allowed === true);
+    const refusedParties = new Set(refused.map(partyKeyOf));
+    const allowedParties = new Set(allowed.map(partyKeyOf));
+    const refusedSources = new Set(refused.map(sourceOf));
+    const allowedSources = new Set(allowed.map(sourceOf));
+    const person = ((after.tree?.persons ?? []) as any[]).find((x) => x?.id === p);
+    const facts = ((person?.facts ?? []) as any[]).filter((f) =>
+      factEvidenceParties(f, after.research, partyOf, (id) => assertionById.get(id)).some(({ source, party }) =>
+        party === null
+          ? refusedSources.has(source) && !allowedSources.has(source)
+          : refusedParties.has(partyKey(source, party)) && !allowedParties.has(partyKey(source, party)),
+      ),
+    );
+    const names = ((person?.names ?? []) as any[]).filter((n) =>
+      [...refsReach(sourceRefsOf(n), after.research).sourceIds].some((s) => refusedSources.has(s)),
+    );
+    out.push({ personId: p, rows: rows.filter((r) => r && r.person_id === p && written.has(r.id)), refused, facts, names });
+  }
+  return out;
+}
+
+function sourceRefsOf(x: any): string[] {
+  return ((Array.isArray(x?.sources) ? x.sources : []) as any[])
+    .map((s) => s?.ref)
+    .filter((r): r is string => typeof r === "string" && r !== "");
+}
+
+/** The namesake warning (spec §5.6): `namesakeRowListings`, one warning per
+ *  person. The row is written either way. */
+export function namesakeRowWarnings(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string }>,
+  startingPersonIds?: ReadonlySet<string>,
+): string[] {
+  const assertionById = new Map<string, any>(
+    ((Array.isArray(after.research?.assertions) ? after.research.assertions : []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  return namesakeRowListings(before, after, applied, startingPersonIds).map(({ personId: p, rows, refused, facts, names }) => {
+    const rowText = rows
+      .map((r) => {
+        const about = [r.name, r.place, r.time_period].filter((x) => typeof x === "string" && x !== "");
+        return about.length > 0 ? `'${r.id}' (${about.join(", ")})` : `'${r.id}'`;
+      })
+      .join(", ");
+    const linkText = refused
+      .map((e) => {
+        const a = assertionById.get(e.assertion_id);
+        return `'${e.id}' (assertion '${e.assertion_id}' on source '${String(capSource(a))}', ${String(a?.fact_type ?? "")})`;
+      })
+      .join(", ");
+    const factText =
+      facts.length === 0
+        ? ""
+        : ` ${facts.length} fact(s) on '${p}' were copied through them: ` +
+          facts
+            .map((f) => {
+              const refs = sourceRefsOf(f);
+              return `'${f.id}' ${String(f.type ?? "")}${refs.length > 0 ? ` (cites ${refs.join(", ")})` : ""}`;
+            })
+            .join(", ") +
+          ".";
+    const nameText =
+      names.length === 0
+        ? ""
+        : ` ${names.length} name(s) on '${p}' also cite those records and stay, since no tool removes a name.`;
+    return (
+      `namesake ${rowText} recorded for '${p}': ${refused.length} probable or confident link(s) to '${p}' ` +
+      `stand with nothing in their record tying them to '${p}': ${linkText}.${factText}${nameText} The row is recorded ` +
+      `and these stay as they are, but materialize_facts will not copy any further fact onto '${p}' through ` +
+      "these links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+      "namesake." +
+      (facts.length === 0
+        ? ""
+        : ` Remove a listed fact that belongs to the namesake with tree_correct (operation 'remove', its ` +
+          `factId and personId '${p}').`)
+    );
+  });
 }
 
 /** The namesake cap on one research_append call, judged on its end state: one
@@ -8274,9 +8434,14 @@ export async function researchAppend(
     const transcriptionWarnings = anyMutation
       ? transcriptionWithoutImageWarnings(research, applied)
       : [];
+    // The namesake warning (#3363, spec §5.6): a row written over links that
+    // stand untied. Advisory, like the two above.
+    const namesakeWarnings = anyMutation
+      ? namesakeRowWarnings({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds)
+      : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
