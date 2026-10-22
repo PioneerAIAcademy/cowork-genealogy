@@ -62,6 +62,7 @@ import {
   parentSide,
   unlinkedParentNarrativeInvariants,
   unlinkedParentProofInvariants,
+  narrativeLengthWarnings,
 } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -3099,6 +3100,197 @@ describe("research_append (Phase 3)", () => {
       const text = errors.join("\n");
       expect(text).toContain("tier 'probable' does not match the stronger of claims[].proof_tier ('possible')");
       expect(text).not.toContain("not supported yet");
+    });
+  });
+
+  // A warning, never a refusal: most narratives already written run over their
+  // vehicle's budget, so refusing would fail the ordinary write. Fixture words
+  // are built as N copies of "w" so the count is known by construction, not read
+  // back through the implementation's own counter.
+  describe("a narrative over its vehicle's word budget is written, with a warning", () => {
+    const words = (n: number, sep = " ") => Array(n).fill("w").join(sep);
+    const summaryEntry = (vehicle: string, narrative: string) => ({
+      question_id: "q_001",
+      tier: "probable",
+      vehicle,
+      shortfall: "gap",
+      supporting_assertion_ids: ["a_001"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals",
+      narrative_markdown: narrative,
+    });
+    const appendNarrative = (vehicle: string, narrative: string) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summaryEntry(vehicle, narrative),
+      } as never);
+    const warningsOf = (r: Awaited<ReturnType<typeof researchAppend>>) => (r.ok ? r.validation.warnings : []);
+    const budgetWarning = (r: Awaited<ReturnType<typeof researchAppend>>) =>
+      warningsOf(r).filter((w) => /word budget/.test(w));
+
+    it("a 'summary' over 500 words is written and the warning names the vehicle and 500", async () => {
+      await writeProject();
+      const r = await appendNarrative("summary", words(520));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      const warnings = budgetWarning(r);
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("proof_summaries ps_001");
+      expect(warnings[0]).toContain("520 words");
+      expect(warnings[0]).toContain("500-word budget");
+      expect(warnings[0]).toContain("'summary' vehicle");
+      // Written, in full.
+      const stored = (await readResearch()).proof_summaries[0];
+      expect(stored.narrative_markdown.split(/\s+/)).toHaveLength(520);
+    });
+
+    it.each([
+      ["statement", 150, 150, false],
+      ["statement", 150, 151, true],
+      ["summary", 500, 500, false],
+      ["summary", 500, 501, true],
+      ["argument", 800, 800, false],
+      ["argument", 800, 801, true],
+    ])("vehicle '%s' (budget %i), %i words: warns=%s", async (vehicle, budget, n, warns) => {
+      await writeProject();
+      const r = await appendNarrative(vehicle, words(n));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      const warnings = budgetWarning(r);
+      if (!warns) {
+        expect(warnings).toEqual([]);
+        return;
+      }
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain(`${budget}-word budget`);
+      expect(warnings[0]).toContain(`'${vehicle}' vehicle`);
+      expect(warnings[0]).toContain(`${n} words`);
+    });
+
+    it("counts words across newlines, tabs and runs of spaces, not only single spaces", async () => {
+      await writeProject();
+      const r = await appendNarrative("statement", words(151, "\n\n"));
+      expect(budgetWarning(r)).toHaveLength(1);
+      await writeProject(); // a question carries one summary, so start clean for the second shape
+      const r2 = await appendNarrative("statement", `${words(75, "\t")}  \n  ${words(76, "   ")}`);
+      expect(budgetWarning(r2)).toHaveLength(1);
+      expect(warningsOf(r2).join(" ")).toContain("151 words");
+    });
+
+    it("never refuses, however long: the write stands with its warning", async () => {
+      await writeProject();
+      const r = await appendNarrative("argument", words(5000));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(budgetWarning(r)).toHaveLength(1);
+    });
+
+    it("an empty narrative draws no length warning", async () => {
+      await writeProject();
+      const r = await appendNarrative("summary", "");
+      expect(budgetWarning(r)).toEqual([]);
+    });
+
+    it("a vehicle that is not one of the three, and a narrative that is not text, draw no length warning and no crash", async () => {
+      await writeProject();
+      for (const vehicle of ["constructor", "__proto__", "toString", "essay"]) {
+        const r = await appendNarrative(vehicle, words(5000));
+        expect(r.ok, vehicle).toBe(false);
+        expect(errorsOf(r)!.join(" "), vehicle).not.toMatch(/word budget/);
+      }
+      const notText = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summaryEntry("summary", 5 as never),
+      } as never);
+      // The document validator does not type-check this field, so the write may stand;
+      // what matters here is that the length check neither crashes nor speaks.
+      expect(budgetWarning(notText)).toEqual([]);
+      expect((errorsOf(notText) ?? []).join(" ")).not.toMatch(/word budget/);
+    });
+
+    it("narrativeLengthWarnings: a vehicle that is not one of the three, a narrative that is not text, or no entry is silent", () => {
+      // Direct, because through the tool a refused write drops its warnings and
+      // would hide a budget lookup that indexed the prototype.
+      const long = words(5000);
+      for (const vehicle of ["constructor", "__proto__", "toString", "hasOwnProperty", "essay", "", undefined, null, 5]) {
+        expect(narrativeLengthWarnings({ id: "ps_001", vehicle, narrative_markdown: long }), String(vehicle)).toEqual([]);
+      }
+      for (const narrative of [undefined, null, 5, {}, ["w"]]) {
+        expect(narrativeLengthWarnings({ id: "ps_001", vehicle: "summary", narrative_markdown: narrative })).toEqual([]);
+      }
+      expect(narrativeLengthWarnings(undefined)).toEqual([]);
+      expect(narrativeLengthWarnings(null)).toEqual([]);
+      expect(narrativeLengthWarnings({ id: "ps_001", vehicle: "summary", narrative_markdown: long })).toHaveLength(1);
+    });
+
+    it("the same warning rides a batch", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [{ section: "proof_summaries", op: "append", entry: summaryEntry("statement", words(160)) }],
+      } as never);
+      expect(r.ok).toBe(true);
+      expect(budgetWarning(r)).toHaveLength(1);
+      expect(budgetWarning(r)[0]).toContain("150-word budget");
+    });
+
+    describe("on an update, only when the op sets what the budget reads", () => {
+      const seeded = () => {
+        const r = phase3Research();
+        r.proof_summaries = [
+          {
+            id: "ps_001",
+            ...summaryEntry("summary", words(600)),
+            updated: "2026-01-01T00:00:00Z",
+          },
+        ];
+        return r;
+      };
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "update",
+          entryId: "ps_001",
+          fields,
+        } as never);
+
+      it("an unrelated edit to a summary already over budget is silent", async () => {
+        await writeProject(seeded());
+        for (const fields of [{ exhaustive_search_summary: "Searched census, vitals, wills" }, { shortfall: "ceiling" }, { tier: "possible" }]) {
+          const r = await update(fields);
+          expect(errorsOf(r) ?? [], JSON.stringify(fields)).toEqual([]);
+          expect(budgetWarning(r), JSON.stringify(fields)).toEqual([]);
+        }
+      });
+
+      it("an update that sets narrative_markdown is judged, even when it stays over", async () => {
+        await writeProject(seeded());
+        const r = await update({ narrative_markdown: words(601) });
+        expect(budgetWarning(r)).toHaveLength(1);
+        expect(budgetWarning(r)[0]).toContain("601 words");
+      });
+
+      it("an update that brings the narrative within budget is silent", async () => {
+        await writeProject(seeded());
+        const r = await update({ narrative_markdown: words(400) });
+        expect(errorsOf(r) ?? []).toEqual([]);
+        expect(budgetWarning(r)).toEqual([]);
+      });
+
+      it("an update that sets only the vehicle re-judges the stored narrative against the new budget", async () => {
+        await writeProject(seeded());
+        const r = await update({ vehicle: "statement" });
+        expect(budgetWarning(r)).toHaveLength(1);
+        expect(budgetWarning(r)[0]).toContain("150-word budget");
+        expect(budgetWarning(r)[0]).toContain("600 words");
+        const widened = await update({ vehicle: "argument" });
+        expect(budgetWarning(widened)).toEqual([]);
+      });
     });
   });
 

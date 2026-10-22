@@ -4984,6 +4984,43 @@ function proofSummaryInvariants(
   return [];
 }
 
+/** The most words a narrative should run, by proof vehicle: the budgets in
+ *  "Select the proof conclusion form" in packages/engine/plugin/agents/proof-conclusion.md
+ *  (statement up to ~150, summary ~300-500, argument up to ~800). Only the upper
+ *  bounds are budgets. The one definition in the engine. A Map, not an object, so
+ *  a model-supplied `vehicle: "constructor"` cannot index the prototype (the
+ *  reason `PROOF_TIER_RANK` is one too). */
+const NARRATIVE_WORD_BUDGET: ReadonlyMap<string, number> = new Map([
+  ["statement", 150],
+  ["summary", 500],
+  ["argument", 800],
+]);
+
+/** Whitespace-separated words of `text`, markdown syntax included. */
+function narrativeWordCount(text: string): number {
+  const trimmed = text.trim();
+  return trimmed === "" ? 0 : trimmed.split(/\s+/).length;
+}
+
+/** A WARNING, never a refusal, when a narrative runs over its vehicle's budget.
+ *  Refusing is not on the table: most narratives already written run over, so a
+ *  refusal would fail the ordinary write, and the budget in the agent body is
+ *  approximate. Names the vehicle and its budget. Silent for a vehicle that is
+ *  not one of the three or a narrative that is not text, which the document
+ *  validator reports in its own words. */
+export function narrativeLengthWarnings(entry: any): string[] {
+  const budget = NARRATIVE_WORD_BUDGET.get(entry?.vehicle);
+  const text = entry?.narrative_markdown;
+  if (budget === undefined || typeof text !== "string") return [];
+  const words = narrativeWordCount(text);
+  if (words <= budget) return [];
+  return [
+    `proof_summaries ${entry.id}: narrative_markdown is ${words} words, over the ${budget}-word budget ` +
+      `for the '${entry.vehicle}' vehicle. Written as is; keep to the budget by citing evidence already ` +
+      `quoted elsewhere instead of restating it.`,
+  ];
+}
+
 export type ResearchAppendSection = keyof typeof SECTIONS | string;
 
 /** One mutation. The body of a single call, or one element of a batch `ops`. */
@@ -6940,6 +6977,16 @@ function applyOne(
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
+    // Judged only when THIS op sets what the budget reads: an append always does,
+    // an update when it names the narrative or the vehicle. An unrelated edit to
+    // a summary already over budget is not told again.
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle")
+    ) {
+      opWarnings.push(...narrativeLengthWarnings(resultEntry));
+    }
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
