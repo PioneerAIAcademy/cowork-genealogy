@@ -108,6 +108,18 @@ const REFERENCE_LOOKUP_TOOLS = new Set([
   "validate_schema",
 ]);
 
+/** The report-only agents' own entries: each logs its reply, then must return
+ *  that same reply. A success that logs one carries `next`, read right before
+ *  the agent's final message (#3524 review: translation returned only a note
+ *  that it had logged, so the dispatcher wrote its own translation). */
+const REPORT_TOOLS = new Set(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"]);
+const REPORT_REPLY_NEXT =
+  "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged.";
+
+function reportReplyNext(tools: unknown[]): { next?: string } {
+  return tools.some((t) => typeof t === "string" && REPORT_TOOLS.has(t)) ? { next: REPORT_REPLY_NEXT } : {};
+}
+
 /** Question statuses under which the question is still open: every status but
  *  the two that close it. */
 const OPEN_QUESTION_STATUSES = new Set(
@@ -241,6 +253,8 @@ export type ResearchLogAppendResult =
       validation: { valid: true; warnings: string[] };
       /** `NIL_ESCALATION_NOTE`, present only when it fired. */
       escalationDue?: string;
+      /** `REPORT_REPLY_NEXT`, present only when a report tool was logged. */
+      next?: string;
     } & ResearchLogAppendOpResult)
   | {
       ok: true;
@@ -249,6 +263,7 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
       escalationDue?: string;
+      next?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -2149,6 +2164,7 @@ export async function researchLogAppend(
         ok: true,
         results,
         ...escalation(),
+        ...reportReplyNext(input.ops.map((op) => op?.tool)),
         filesWritten: ["research.json", ...sidecarsCreated],
         validation: {
           valid: true,
@@ -2202,6 +2218,7 @@ export async function researchLogAppend(
       ok: true,
       ...result,
       ...escalation(),
+      ...reportReplyNext([singleOp.tool]),
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
       validation: {
         valid: true,
