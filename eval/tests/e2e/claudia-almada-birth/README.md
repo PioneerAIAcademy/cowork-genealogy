@@ -98,5 +98,12 @@ Dolores Almada (single, born about 1845, Córdoba). That entry (`M4WC-C71` /
 the attached baptism personas `XNDD-ZLB` and `XNDD-ZLY` before any nil result
 was trusted.
 
-**Second opinion.** A second genealogist reviewed the evidence and concurred
-with outcome 1, recording the Dolores baptism as a probable but unproven match.
+**Second opinion.** A second genealogist, @kofiatinka12, reviewed the evidence
+([issue comment](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/3353#issuecomment-6339433532))
+and agreed: the 1869 census entry is a probable match for Claudia, and the
+Dolores baptism is very likely hers but not proven. They would record
+30 October 1860, Dolores, as a probable birth date and place, which is
+consistent with this finding. Their comment also cites image readings (a
+census birthplace, a marriage-file "born in Argentina", and a godmother
+Brígida Alvan) that no FamilySearch index carries and no calibration licenses,
+so this fixture does not rely on them.
