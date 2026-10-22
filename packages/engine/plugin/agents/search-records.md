@@ -70,10 +70,10 @@ You are invoked with a delegation message:
 | `projectPath` | yes | The absolute project-folder path. |
 | `questionId` | no | The `q_` question the search serves. |
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
-| `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId`, and then it replaces the `research_query` read. |
+| `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId` and `planId` arrived with it, and then it replaces the `research_query` read. |
 | `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
 
-Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -132,7 +132,7 @@ step, and stop. The caller decides what runs next.
 ### 1. Identify the plan item
 
 Find the plan item the delegation names (`planItemId`), or when it names none the next plan item with `status: "planned"` in the active plan for the
-current question. When the delegation carries `plan_item` and its `id` equals `planItemId`, that is the plan item and its status: issue no `research_query` this invocation (the status update uses the delegated `planId`), and skip the rest of this section's query rules. A `plan_item` whose `id` differs from `planItemId` is not the item you were asked to run: ignore it, call `research_query` for `planItemId` as your first tool call, and make no `record_search` until it returns.
+current question. When the delegation carries `plan_item` and `planId`, and its `id` equals `planItemId`, that is the plan item and its status: issue no `research_query` this invocation (the status update uses the delegated `planId`), and skip the rest of this section's query rules. A `plan_item` that arrives without `planId`, or whose `id` differs from `planItemId`, is not the item you were asked to run: ignore it, call `research_query` for `planItemId` as your first tool call, and make no `record_search` until it returns.
 
 **With no matching `plan_item`, fetch the project state you lack with
 `research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
