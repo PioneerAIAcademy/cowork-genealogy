@@ -25,3 +25,33 @@ export function coerceJsonArg(value: unknown): unknown {
     return value;
   }
 }
+
+/** Why a string argument could not be parsed: the engine's own message, and where. */
+export interface JsonParseFailure {
+  message: string;
+  offset: number | null;
+}
+
+// The reason `coerceJsonArg` swallowed, for the one caller that wants to give
+// it back. A batch with a stray comma otherwise surfaces as "`ops` must be a
+// non-empty array" and the model has nothing to fix. A sibling rather than a
+// new return type on `coerceJsonArg`, which seven tools share.
+//
+// `undefined` unless `value` is a string that `JSON.parse` rejects. `offset` is
+// V8's own `position N` when its message carries one, the length of the string
+// for "Unexpected end of JSON input", and null otherwise: V8 gives no position
+// for "Unexpected token 'x', "..." is not valid JSON", but that message quotes
+// the text around the token.
+export function jsonParseFailure(value: unknown): JsonParseFailure | undefined {
+  if (typeof value !== "string") return undefined;
+  try {
+    JSON.parse(value);
+    return undefined;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const at = /\bposition (\d+)\b/.exec(message);
+    if (at) return { message, offset: Number(at[1]) };
+    if (message.startsWith("Unexpected end of JSON input")) return { message, offset: value.length };
+    return { message, offset: null };
+  }
+}

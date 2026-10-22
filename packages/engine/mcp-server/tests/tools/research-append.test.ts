@@ -65,6 +65,7 @@ import {
 } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
+import { jsonParseFailure } from "../../src/utils/coerce-json-arg.js";
 import {
   recordImageReadCap,
   sourceImageCapState,
@@ -6770,6 +6771,107 @@ describe("research_append (batch ops)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/non-empty/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // A string `ops` that will not parse used to surface as "`ops` must be a
+  // non-empty array" alone, and the model had nothing to fix. The refusal now
+  // carries the engine's own parse message and, where V8 gives none, the offset.
+  describe("a string `ops` that will not parse names why", () => {
+    /** The engine's own message for `text`, taken from the engine, not retyped. */
+    const engineMessage = (text: string): string => {
+      try {
+        JSON.parse(text);
+      } catch (e) {
+        return (e as Error).message;
+      }
+      throw new Error("the fixture parses");
+    };
+    const refuse = async (ops: unknown) => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({ projectPath: dir, ops: ops as any });
+      expect(r.ok).toBe(false);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      return errorsOf(r) ?? [];
+    };
+
+    it("a syntax error in the middle: the engine's message and the offset of the stray comma", async () => {
+      const bad = '[{"section":"sources","op":"append",}]';
+      const errors = await refuse(bad);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^`ops` must be a non-empty array/);
+      expect(errors[0]).toContain(engineMessage(bad));
+      // The offset is checked against the position of the defect in the fixture,
+      // not re-derived from the message the way the implementation reads it.
+      expect(errors[0]).toContain(`position ${bad.indexOf(",}") + 1}`);
+      // V8's message already carries the position, so it is not said twice.
+      expect(errors[0]).not.toMatch(/\(offset /);
+    });
+
+    it("cut off at the end: V8 gives no position, so the offset is the end of the string", async () => {
+      const bad = '[{"section":';
+      const errors = await refuse(bad);
+      expect(errors[0]).toContain(engineMessage(bad));
+      expect(errors[0]).toContain(`(offset ${bad.length})`);
+    });
+
+    it("an unexpected token: the engine's message, which quotes the text, and no offset", async () => {
+      const bad = '[{"a":None}]';
+      const errors = await refuse(bad);
+      expect(errors[0]).toContain(engineMessage(bad));
+      expect(errors[0]).toContain("None");
+      expect(errors[0]).not.toMatch(/offset|position/);
+    });
+
+    it("names the reason for a stringified batch that has other text after it", async () => {
+      const bad = '[{"section":"sources","op":"append","entry":{}}] and then some prose';
+      const errors = await refuse(bad);
+      expect(errors[0]).toContain(engineMessage(bad));
+      // The first character V8 cannot place is the `a` of "and", just after the space.
+      expect(errors[0]).toContain(`position ${bad.indexOf("and then")}`);
+    });
+
+    it("says nothing about JSON when the string parses to something that is not an array", async () => {
+      for (const ok of ['{"section":"sources","op":"append"}', "[]", "null", "5"]) {
+        const errors = await refuse(ok);
+        expect(errors, ok).toEqual(["`ops` must be a non-empty array"]);
+      }
+    });
+
+    it("a JSON string literal is decoded first, so what is judged is its content", async () => {
+      // `"[{bad"` as sent is a valid JSON string; the batch inside it is not.
+      const inner = "[{bad";
+      const errors = await refuse(JSON.stringify(inner));
+      expect(errors[0]).toContain(engineMessage(inner));
+    });
+
+    it("says nothing about JSON when ops was never a string", async () => {
+      for (const notAString of [{}, 5, true, []]) {
+        const errors = await refuse(notAString);
+        expect(errors, JSON.stringify(notAString)).toEqual(["`ops` must be a non-empty array"]);
+      }
+    });
+
+    it("a valid stringified batch is still applied, not refused", async () => {
+      await writeProject();
+      const good = JSON.stringify([{ section: "sources", op: "append", entry: noId(validSource("x")) }]);
+      const r = await researchAppend({ projectPath: dir, ops: good as any });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
+
+    it("jsonParseFailure: undefined for a non-string and for text that parses; message and offset otherwise", () => {
+      expect(jsonParseFailure(undefined)).toBeUndefined();
+      expect(jsonParseFailure(5)).toBeUndefined();
+      expect(jsonParseFailure({ a: 1 })).toBeUndefined();
+      expect(jsonParseFailure("[1,2]")).toBeUndefined();
+      expect(jsonParseFailure("null")).toBeUndefined();
+      expect(jsonParseFailure('{"a":1,}')).toEqual({ message: engineMessage('{"a":1,}'), offset: 7 });
+      expect(jsonParseFailure("[1,")).toEqual({ message: engineMessage("[1,"), offset: 3 });
+      expect(jsonParseFailure("[1,]")).toEqual({ message: engineMessage("[1,]"), offset: null });
+      expect(jsonParseFailure("")).toEqual({ message: engineMessage(""), offset: 0 });
+      expect(jsonParseFailure("nope")).toEqual({ message: engineMessage("nope"), offset: null });
+    });
   });
 });
 

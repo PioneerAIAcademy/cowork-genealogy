@@ -41,7 +41,7 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
-import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { coerceJsonArg, jsonParseFailure } from "../utils/coerce-json-arg.js";
 import {
   readMatchScores,
   findRecordedScore,
@@ -8229,7 +8229,7 @@ export async function researchAppend(
     let ops: ResearchAppendOp[];
     if (isBatch) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
-        return fail(["`ops` must be a non-empty array"]);
+        return fail([opsNotAnArrayMessage(input.ops)]);
       }
       ops = input.ops;
     } else {
@@ -8542,6 +8542,20 @@ export async function researchAppend(
     throw e;
   }
   });
+}
+
+/** The refusal for an `ops` that is not a non-empty array. When it is a string
+ *  that would not parse, `coerceJsonArg` had swallowed the reason, so say it:
+ *  the engine's own message, plus the offset when the message holds none. */
+function opsNotAnArrayMessage(ops: unknown): string {
+  const failure = jsonParseFailure(ops);
+  if (!failure) return "`ops` must be a non-empty array";
+  const offset =
+    failure.offset === null || /\bposition \d+\b/.test(failure.message) ? "" : ` (offset ${failure.offset})`;
+  return (
+    "`ops` must be a non-empty array, but it arrived as a string that is not valid JSON: " +
+    `${failure.message}${offset}. Fix that and send \`ops\` as a JSON array.`
+  );
 }
 
 /** Best-effort mapping of whole-document validation errors back to the batch op
