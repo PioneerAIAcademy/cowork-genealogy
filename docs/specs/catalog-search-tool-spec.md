@@ -318,9 +318,10 @@ is in the same unit as the list. `filmNotes` then holds the first entries of
 that list, in order, each one whole.
 
 `filmNotesHint` is one line. It says how many entries are listed and how to get
-the rest: hydrate fewer hits, search with keywords that name the item, or read
-the item's catalog entry at the hit's `url`. It names the catalog entry only
-when the hit has a `url`. It names no input the tool does not have.
+the rest: hydrate fewer hits, or search with keywords that name the item. It
+names no input the tool does not have. It does not name the hit's `url`: that is
+the Catalog's item record, which answered 401 without a sign-in token when
+probed on 2026-10-22, so neither an agent nor a person can open it.
 
 ### The item URL needs no parsing — it is `identifier.value`
 
@@ -492,7 +493,7 @@ hydrated.
 ### How to get the rest
 
 A hit with `filmNotesTotal` lists only the first entries of its item. There are
-three ways to the rest, the same three its `filmNotesHint` names:
+two ways to the rest through this tool, the same two its `filmNotesHint` names:
 
 - **Hydrate fewer hits.** The room is shared among the hydrated hits, so a
   smaller `hydrate` leaves more for each, and `hydrate: 1` leaves one hit all of
@@ -500,8 +501,6 @@ three ways to the rest, the same three its `filmNotesHint` names:
   where at the default it lists 5. A test pins that.
 - **Search with keywords that name the item.** A search that matches the item
   alone hydrates it alone, which is the same thing by another road.
-- **The item's own catalog entry**, at the hit's `url`. It holds every film
-  note, as the Catalog keeps them.
 
 ### What this does not cover
 
@@ -509,8 +508,8 @@ three ways to the rest, the same three its `filmNotesHint` names:
   through this tool, even as the only hydrated hit. The largest item measured on
   2026-10-22, a `Norway, kirkebøker` volume of 1,804 entries, is more than four
   times the budget by itself, after merging and without `shelf`. The tool has no
-  input for paging through an item's entries. For that item the way to the rest
-  is its own catalog entry.
+  input for paging through an item's entries. For that item an agent cannot reach
+  the rest; a person can read it in the FamilySearch Catalog.
 - Hits are never cut. At a large `count` the hits alone can pass the line: an
   unhydrated hit takes roughly 250 to 450 characters in the answers measured on
   2026-10-22.
@@ -665,7 +664,7 @@ readers and every access uses one of them:
 | a hit that fits its offer exactly is listed whole, and one a character short is cut | the edge is "no more than", not "less than" |
 | a cut hit keeps at least one entry when the rest of the answer already exceeds the budget; a single huge entry is listed whole and is not called cut | the two cases the bound allows to go over |
 | every character is counted, the two fields a cut hit adds included, at five budgets | the serialized answer is at most the budget |
-| a hit that was not cut carries neither `filmNotesTotal` nor `filmNotesHint`, and a hint with no `url` names no catalog entry | the two fields appear only when something was left out, and name only what exists |
+| a hit that was not cut carries neither `filmNotesTotal` nor `filmNotesHint`, and the hint never names the hit's `url` | the two fields appear only when something was left out, and the `url` is an API record nobody can open |
 | shaping a shaped answer changes nothing, and a hit already cut keeps its total and its entries | cutting it again would count the entries it lists as the entries it has, and `filmNotesTotal` would understate the item |
 | 200 hits come back as 200, whatever the film notes | no hit is dropped |
 | every `catalog-search-*.json` under `eval/fixtures/mcp/` is unchanged by shaping and carries neither `shelf` nor `imageStartNumber`, and the glob finds the files it guards | the recorded evals are graded on an answer the tool still gives. `mcp-fixture-shape.test.ts` reads keys one level below the response and does not see film notes |

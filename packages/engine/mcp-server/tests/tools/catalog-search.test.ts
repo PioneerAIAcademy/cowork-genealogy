@@ -1767,10 +1767,10 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(CLI_SPILL_CHARS - ANSWER_CHAR_BUDGET).toBeGreaterThanOrEqual(10_000);
   });
 
-  it("rebuilds the saved Ireland answer from upstream responses, field for field, before anything is cut", () => {
-    // The inverse the next tests rest on. Run through the tool with the merge
-    // and the budget switched off it would reproduce `IRELAND`; here every
-    // field that neither of them touches is compared.
+  it("turns the saved Ireland answer back into the search response and the ten item responses", () => {
+    // The inverse the next tests rest on: the upstream responses the tool would
+    // have fetched for `IRELAND`. The next test runs them through the tool and
+    // compares every field the shaping does not touch.
     const { search, items } = upstreamFor(IRELAND);
     const s = search as { totalHits: number; searchHits: unknown[] };
     expect(s.totalHits).toBe(433);
@@ -1825,7 +1825,10 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(giant.filmNotesHint).toContain(`${giant.filmNotes?.length} of ${entries.length} film-note entries are listed`);
     expect(giant.filmNotesHint).toContain("hydrate fewer hits");
     expect(giant.filmNotesHint).toContain("keywords that name this item");
-    expect(giant.filmNotesHint).toContain(giant.url as string);
+    // The hit's url is the Catalog's item record (401 without a token): not a way back.
+    expect(giant.url).toBeTruthy();
+    expect(giant.filmNotesHint).not.toContain(giant.url as string);
+    expect(giant.filmNotesHint).not.toContain("catalog entry");
     expect(giant.filmNotesHint).not.toContain("\n");
     // The nine others list everything they have and carry neither field.
     for (const h of r.hits.filter((x) => x !== giant)) {
@@ -1879,7 +1882,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
         // The first entries, in order, whole: nothing cut mid-entry.
         expect(listed).toEqual(Array.from({ length: listed.length }, (_, j) => entryFor(j)));
         expect(h.filmNotesHint).toMatch(new RegExp(`^${listed.length} of ${n} film-note entries are listed`));
-        expect(h.filmNotesHint).toContain(h.url as string);
+        expect(h.filmNotesHint).not.toContain(h.url as string);
       }
     });
 
@@ -2010,7 +2013,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
       }
     });
 
-    it("says nothing about a hit it did not cut, and a hint without a url names no entry to open", () => {
+    it("says nothing about a hit it did not cut, and a hit with no url gets the same hint", () => {
       const r = answer(hitWith("a", 3), hitWith("b", 90, false));
       fitFilmNotes(r, 6_000);
       expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");

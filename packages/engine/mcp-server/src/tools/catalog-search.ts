@@ -424,13 +424,13 @@ export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNo
 }
 
 /** The one line a cut-short hit carries: how many entries are listed and the
- *  way back. Names no input the tool does not have. */
-function filmNotesHint(listed: number, total: number, url: string | undefined): string {
+ *  way back. Names no input the tool does not have, and not the hit's `url`:
+ *  that is the Catalog's item record, which answers 401 without a sign-in
+ *  token, so neither an agent nor a person can open it. */
+function filmNotesHint(listed: number, total: number): string {
   return (
     `${listed} of ${total} film-note entries are listed, to keep this answer under the size limit. ` +
-    "For the rest, hydrate fewer hits, or search with keywords that name this item" +
-    (url ? `; its catalog entry is ${url}` : "") +
-    "."
+    "For the rest, hydrate fewer hits, or search with keywords that name this item."
   );
 }
 
@@ -494,7 +494,7 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
     const capChars = (listed: number): number =>
       chars({
         filmNotesTotal: total,
-        filmNotesHint: filmNotesHint(listed, total, hit.url),
+        filmNotesHint: filmNotesHint(listed, total),
       }) - 1;
     const entryCosts = costs.get(hit) as number[];
     let content = 0;
@@ -511,7 +511,7 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
     }
     hit.filmNotes = entries.slice(0, listed);
     hit.filmNotesTotal = total;
-    hit.filmNotesHint = filmNotesHint(listed, total, hit.url);
+    hit.filmNotesHint = filmNotesHint(listed, total);
     remaining -= used;
   });
 }
