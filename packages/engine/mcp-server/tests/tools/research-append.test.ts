@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
-import { join } from "path";
+import { join, resolve } from "path";
 import { tmpdir } from "os";
 
 // Stub the network place resolver so the composite place-lever tests are
@@ -63,9 +63,11 @@ import {
   unlinkedParentNarrativeInvariants,
   unlinkedParentProofInvariants,
   narrativeLengthWarnings,
+  NARRATIVE_WORD_BUDGET,
 } from "../../src/tools/research-append.js";
-import { validateProject } from "../../src/validation/validator.js";
+import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
+import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
 import { jsonParseFailure } from "../../src/utils/coerce-json-arg.js";
 import {
   recordImageReadCap,
@@ -75,6 +77,15 @@ import {
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
+
+/** Claude Code saves a tool result over this many characters to a file the agent may not be able to
+ *  read back, so a refused answer has to stay well under it. */
+const CLI_SPILL_CHARS_HERE = 50_000;
+
+/** The errors of a refusal without the line that leads a multi-op one ("Fix the earliest failure
+ *  first ..."), for a test about what the first op said. */
+const withoutLead = (errors: string[]): string[] =>
+  errors[0]?.startsWith("Fix the earliest failure first") ? errors.slice(1) : errors;
 
 const citationDetail = {
   who: "Census enumerator",
@@ -3290,6 +3301,23 @@ describe("research_append (Phase 3)", () => {
       expect(narrativeLengthWarnings({ id: "ps_001", vehicle: "summary", narrative_markdown: long })).toHaveLength(1);
     });
 
+    it("the budget map names exactly the proof vehicles the validator allows", () => {
+      // A fourth vehicle added to the enum would otherwise get no budget, and nothing would say so.
+      expect([...NARRATIVE_WORD_BUDGET.keys()].sort()).toEqual([...VALIDATOR_ENUMS.proof_vehicle].sort());
+    });
+
+    it("the budgets are the upper bounds proof-conclusion.md gives for each form", async () => {
+      // The agent body is what the model reads. Editing its numbers has to reach the warning.
+      const body = await readFile(resolve(__dirname, "../../../plugin/agents/proof-conclusion.md"), "utf-8");
+      for (const [vehicle, budget] of NARRATIVE_WORD_BUDGET) {
+        const form = `${vehicle[0].toUpperCase()}${vehicle.slice(1)}`;
+        const line = body.split("\n").find((l) => l.startsWith(`- **${form}**`));
+        expect(line, `a "- **${form}**" line in proof-conclusion.md`).toBeDefined();
+        // "Budget: ≤~150 words", "Budget: ~300–500 words": the number before "words" is the upper bound.
+        expect(Number(/(\d+)\s*words/.exec(line!)?.[1]), form).toBe(budget);
+      }
+    });
+
     it("the same warning rides a batch", async () => {
       await writeProject();
       const r = await researchAppend({
@@ -5800,7 +5828,7 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    const msg = r.errors[0];
+    const msg = withoutLead(r.errors)[0];
     // #2108 CHANGED WHICH GUARD ANSWERS THIS. The terminal-plan deny throws in
     // applyOne, so those items are not among the ops that applied, and
     // emptyCreatedPlanErrors — a post-pass over the applied ops — never sees
@@ -5817,8 +5845,9 @@ describe("research_append (batch ops)", () => {
     expect(msg).toMatch(/settled audit trail and takes no new items/);
     // Inherited from the arm it preempts: name the plan THIS call created.
     expect(msg).toMatch(/This call created plan 'pl_002' — re-issue these items with planId 'pl_002'/);
-    // Blamed on the offending plan_items op, not the plans append.
-    expect(msg).toMatch(/^ops\[1\]:/);
+    // Blamed on the offending plan_items ops, not the plans append. Both are refused the same
+    // way, so one line names the two.
+    expect(msg).toMatch(/^ops\[1\], ops\[2\]:/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -6060,7 +6089,7 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    const msg = r.errors[0];
+    const msg = withoutLead(r.errors)[0];
     expect(msg).toMatch(/plans entry 'pl_001' is 'superseded' \(question 'q_001'\)/);
     expect(msg).not.toMatch(/different question/);
     expect(msg).not.toMatch(/another question/);
@@ -6116,7 +6145,7 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    const msg = r.errors[0];
+    const msg = withoutLead(r.errors)[0];
     expect(msg).toMatch(/^ops\[2\]:/); // the terminal target, not the active one
     expect(msg).toMatch(/plans entry 'pl_002' is 'superseded' \(question 'q_001'\)/);
     expect(msg).not.toMatch(/different question/); // it is not a different one
@@ -7166,7 +7195,7 @@ describe("research_append (batch ops)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/^ops\[1\]:.*already has an active plan/);
+    expect(withoutLead(r.errors)[0]).toMatch(/^ops\[1\]:.*already has an active plan/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -7341,11 +7370,15 @@ describe("research_append (batch ops)", () => {
       }
     });
 
-    it("a JSON string literal is decoded first, so what is judged is its content", async () => {
-      // `"[{bad"` as sent is a valid JSON string; the batch inside it is not.
+    it("a JSON string literal is decoded ONCE, and what is judged is the text inside it", async () => {
+      // `"[{bad"` as sent is a valid JSON string; the batch inside it is not, and its error is named.
       const inner = "[{bad";
       const errors = await refuse(JSON.stringify(inner));
       expect(errors[0]).toContain(engineMessage(inner));
+      // A literal holding a VALID batch is still a string after that one decode: not a batch, so
+      // refused and not applied (and `researchAppendFromCaller` decodes the same way, once).
+      const batch = JSON.stringify([{ section: "sources", op: "append", entry: noId(validSource("x")) }]);
+      expect(await refuse(JSON.stringify(batch))).toEqual(["`ops` must be a non-empty array"]);
     });
 
     it("says nothing about JSON when ops was never a string", async () => {
@@ -7418,11 +7451,12 @@ describe("research_append (batch ops) — every op's errors", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
-  /** The one line a refusal adds when ops follow the first failure. */
-  const NOTE = /^ops after the first failure \(ops\[(\d+)\]\) were checked, and the document validated, without the failed ops applied/;
+  /** The one line that leads a refusal that looked past its first failure. */
+  const NOTE = /^Fix the earliest failure first \(ops\[(\d+)\]\) and send the batch again\. The rest of the batch was checked, and the document validated, without the failed ops applied/;
   const noteOf = (errors: string[]) => errors.filter((e) => NOTE.test(e));
-  /** The `ops[i]: …` lines, which are every op's own errors. Hints and the note do not start that way. */
-  const opLines = (errors: string[]) => errors.filter((e) => /^ops\[\d+\]: /.test(e));
+  /** The `ops[i]: …` lines, which are every op's own errors, and `ops[i], ops[j]: …` for ops that said the
+   *  same thing. Hints and the note do not start that way. */
+  const opLines = (errors: string[]) => errors.filter((e) => /^ops\[\d+\](, ops\[\d+\])*: /.test(e));
 
   /** Run a batch that must fail, check it wrote nothing, and hand back the refusal. */
   const refuse = async (ops: unknown[], research: any = baseResearch(), tree: any = baseTree, options?: any) => {
@@ -7450,8 +7484,8 @@ describe("research_append (batch ops) — every op's errors", () => {
     expect(lines[1]).toMatch(/^ops\[1\]: entryId 'c_999' not found in 'conflicts'/);
     expect(noteOf(r.errors)).toHaveLength(1);
     expect(NOTE.exec(noteOf(r.errors)[0])![1]).toBe("0");
-    // The line follows the ops it is about.
-    expect(r.errors.indexOf(noteOf(r.errors)[0])).toBeGreaterThan(r.errors.indexOf(lines[1]));
+    // The line leads: it says what to do with every error after it.
+    expect(r.errors[0]).toMatch(NOTE);
     expect(r.opsReceived).toBe(2);
   });
 
@@ -7624,21 +7658,385 @@ describe("research_append (batch ops) — every op's errors", () => {
     expect(r.opsReceived).toBe(1);
   });
 
-  it("a later op that cannot even be checked does not hide the first failure, and nothing is written", async () => {
-    // A numeric entryId makes applyOne throw a TypeError, not a refusal. The first
-    // failure still comes back, exactly as it did before the rest was judged.
-    const r = await refuse([unknownConflict, { section: "hypotheses", op: "update", entryId: 12, fields: { claim: "x" } }]);
+  it("firstFailureOnly keeps the first-failure answer: one op's errors, no leading line, one worked example", async () => {
+    const r = await refuse([carriesAnId, unknownConflict, goodHypothesis], baseResearch(), baseTree, { firstFailureOnly: true });
     expect(opLines(r.errors)).toHaveLength(1);
-    expect(opLines(r.errors)[0]).toMatch(/^ops\[0\]: entryId 'c_999' not found in 'conflicts'/);
+    expect(opLines(r.errors)[0]).toMatch(/^ops\[0\]: .*must not carry an id/);
     expect(noteOf(r.errors)).toEqual([]);
-    expect(r.opsReceived).toBe(2);
+    expect(r.errors.filter((e) => e.startsWith("worked example for '"))).toHaveLength(1);
+    expect(r.opsReceived).toBe(3);
   });
 
-  it("attaches the worked example for each failing section, at most two", async () => {
+  it("a non-string entryId is refused like any other op's fault, and the ops after it are still judged", async () => {
+    // A numeric entryId used to make applyOne throw a TypeError from `.startsWith`, which hid
+    // every other later refusal. It is refused where it is first read, with a message that says
+    // what a valid one looks like.
+    const r = await refuse([
+      unknownConflict,
+      { section: "hypotheses", op: "update", entryId: 12, fields: { claim: "x" } },
+      carriesAnId,
+    ]);
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "1", "2"]);
+    expect(lines[1]).toMatch(/^ops\[1\]: update `entryId` must be a string such as 'h_001', got number 12/);
+    expect(r.errors[0]).toMatch(NOTE);
+    expect(r.opsReceived).toBe(3);
+  });
+
+  it("a non-string entryId is refused on a single op too, as a refusal and not a crash", async () => {
+    for (const bad of [12, { id: "h_001" }, ["h_001"], true]) {
+      const r = await refuse([{ section: "hypotheses", op: "update", entryId: bad, fields: { claim: "x" } }]);
+      expect(r.errors[0], JSON.stringify(bad)).toMatch(/update `entryId` must be a string such as 'h_001', got/);
+    }
+  });
+
+  it("an op that throws instead of being refused is reported as one that could not be checked, and does not hide the others", async () => {
+    // A BigInt `match_score` makes the score gate throw a TypeError while it builds its refusal
+    // (JSON.stringify cannot serialize it). Pass one never reaches it, since ops[0] fails first.
+    const throws = {
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: "a_999", person_id: "I1", confidence: "confident", match_score: 5n, rationale: "x" },
+    };
+    const r = await refuse([unknownConflict, throws, carriesAnId]);
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "1", "2"]);
+    expect(lines[1]).toMatch(/^ops\[1\]: could not be checked: .*BigInt/);
+    expect(lines[0]).toMatch(/entryId 'c_999' not found/);
+    expect(lines[2]).toMatch(/must not carry an id/);
+  });
+
+  it("attaches the worked example for each failing section, in op order, at most two", async () => {
     const r = await refuse([carriesAnId, unknownConflict, { section: "timelines", op: "update", entryId: "t_999", fields: { label: "x" } }]);
     const examples = r.errors.filter((e) => e.startsWith("worked example for '"));
-    expect(examples.length).toBeGreaterThan(0);
-    expect(examples.length).toBeLessThanOrEqual(2);
+    // The first failure alone would give one example (hypotheses): the second is what each
+    // failing section means. The third failing section is past the cap of two.
+    expect(examples.map((e) => /^worked example for '([a-z_]+)'/.exec(e)![1])).toEqual(["hypotheses", "conflicts"]);
+  });
+
+  // What the second pass judges each op against is the document as the call found it, less the
+  // ops that failed: not the document the first pass left behind, which holds a refused op's merge.
+  describe("an op is judged without the failed ops, and without what the first pass did to the document", () => {
+    const linkTo = (assertionId: string) => ({
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: assertionId, person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "match" },
+    });
+
+    it("a correct link before a refused assertion update is not blamed for the update", async () => {
+      // a_001 has a recorded same_person score for I1, so the link holds on its own. The update
+      // after it moves the assertion to another record and is refused, and by then the first pass
+      // has merged its fields into the live assertion.
+      await writeProject();
+      await attestPairing(dir);
+      const alone = await researchAppend({ projectPath: dir, ops: [linkTo("a_001")] } as any);
+      expect(errorsOf(alone) ?? []).toEqual([]);
+      expect(alone.ok).toBe(true);
+
+      await writeProject();
+      const bad = { section: "assertions", op: "update", entryId: "a_001", fields: { record_id: "recX", record_basis: "absent" } };
+      const r = await refuse([linkTo("a_001"), bad]);
+      // Only the update is blamed (it breaks two rules, so two lines name it), and no line is about the link.
+      expect([...new Set(opLines(r.errors).map((l) => /^ops\[(\d+)\]/.exec(l)![1]))]).toEqual(["1"]);
+      expect(r.errors.join("\n")).not.toMatch(/same_person/);
+      // The refused op is last and nothing else is wrong, so there is nothing for the line to caveat.
+      expect(noteOf(r.errors)).toEqual([]);
+    });
+
+    it("an assertion update that HOLDS is seen by the link after it, exactly as it is when nothing else fails", async () => {
+      // The other direction: the second pass starts from the document as the call found it, but each op is
+      // judged against the ops before it that held. The update moves a_001 to rec2, and the pairing is
+      // attested for rec1 only, so the link is refused: by the call on its own, and by the second pass
+      // (the link is not the first failure, so it is the second pass that judges it).
+      const update = { section: "assertions", op: "update", entryId: "a_001", fields: { record_id: "rec2" } };
+      const verdictOn = (errors: string[], index: number) =>
+        opLines(errors).filter((l) => l.startsWith(`ops[${index}]`)).map((l) => l.replace(/^ops\[\d+\]: /, ""));
+      await writeProject();
+      await attestPairing(dir);
+      const alone = await researchAppend({ projectPath: dir, ops: [update, linkTo("a_001")] } as any);
+      expect(alone.ok).toBe(false);
+      const expected = verdictOn(errorsOf(alone) ?? [], 1);
+      expect(expected).not.toEqual([]);
+      const r = await refuse([unknownConflict, update, linkTo("a_001")]);
+      expect(verdictOn(r.errors, 2)).toEqual(expected);
+    });
+
+    it("proof-conclusion's own batch, [proof summary, question resolved], leads with the line when the summary is refused", async () => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      research.person_evidence = liveLinks("a_001") as any;
+      const r = await refuse(
+        [
+          {
+            section: "proof_summaries",
+            op: "append",
+            entry: {
+              question_id: "q_001", tier: "probable", vehicle: "summary", shortfall: "none",
+              supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+              exhaustive_search_summary: "Searched census", narrative_markdown: "## Conclusion\nJohn was born in 1850.",
+            },
+          },
+          { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved", resolved: "2026-10-22", resolution_assertion_ids: ["a_001"] } },
+        ],
+        research,
+      );
+      // The line leads and names the fault to fix first. The question update is refused only
+      // because no proof summary exists, and it is listed after the line, where it can be read as
+      // what it is.
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(NOTE.exec(r.errors[0])![1]).toBe("0");
+      const lines = opLines(r.errors);
+      expect(lines[0]).toMatch(/^ops\[0\]: .*shortfall 'none'/);
+      const resolved = lines.find((l) => /^ops\[1\]: question q_001 cannot be marked resolved/.test(l));
+      expect(resolved, r.errors.join("\n")).toBeDefined();
+      expect(r.errors.indexOf(resolved!)).toBeGreaterThan(r.errors.indexOf(lines[0]));
+    });
+
+    it("a plan whose own item op was refused is not called misrouted, and no advice to move items is given", async () => {
+      // ops[1] puts an item into the plan ops[0] creates and is refused on its own account. ops[2] is
+      // a legitimate item for another question's plan. Reading the empty plan as a misroute told the
+      // caller to put ops[2]'s item into the new plan too.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+      research.plans = [validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")])] as any;
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // pl_002
+          { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "completed" }, planId: "pl_002" },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+        ],
+        research,
+      );
+      const text = r.errors.join("\n");
+      expect(text).not.toMatch(/was created for question .* ends this call with no items/);
+      expect(text).not.toContain("must carry the id the tool assigned");
+      expect(text).not.toContain("Never a hard-coded");
+      const lines = opLines(r.errors);
+      expect(lines.some((l) => /^ops\[1\]: plan_items\[pli_\d+\]: an appended item cannot arrive 'completed'/.test(l))).toBe(true);
+      // The legitimate item is not blamed for anything.
+      expect(lines.some((l) => l.startsWith("ops[2]:"))).toBe(false);
+      // The new plan is empty, which the document check says, and the line leads because of it.
+      expect(lines.some((l) => /^ops\[0\]: research\.json\/plans\[1\]\/items/.test(l))).toBe(true);
+      expect(r.errors[0]).toMatch(NOTE);
+    });
+
+    it("a plan whose item ops were ALL refused is not called misrouted either", async () => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      const completed = { ...validPlanItem(), status: "completed" };
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+          { section: "plan_items", op: "append", entry: completed, planId: "pl_001" },
+          { section: "plan_items", op: "append", entry: completed, planId: "pl_001" },
+        ],
+        research,
+      );
+      expect(r.errors.join("\n")).not.toMatch(/ends this call with no items/);
+      // Each item op is refused in its own words: the second would have been pli_002 in the batch.
+      const lines = opLines(r.errors);
+      expect(lines.some((l) => /^ops\[1\]: plan_items\[pli_001\]/.test(l))).toBe(true);
+      expect(lines.some((l) => /^ops\[2\]: plan_items\[pli_002\]/.test(l))).toBe(true);
+    });
+
+    it("a failure on the LAST op leads with the line when the document check blames an earlier, correct op", async () => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // the shell, which is fine
+          { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "completed" }, planId: "pl_001" },
+        ],
+        research,
+      );
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(NOTE.exec(r.errors[0])![1]).toBe("1");
+      expect(opLines(r.errors).some((l) => /^ops\[0\]: research\.json\/plans\[0\]\/items: is empty/.test(l))).toBe(true);
+    });
+
+    it("a failed plan append keeps its id: the id a later message names is the one the fixed batch assigns", async () => {
+      // pl_001 is q_001's active plan and pl_002 is completed. ops[0] appends a second active plan for
+      // q_001 and is refused (it would have been pl_003). ops[1] appends q_003's plan, which is pl_004 once
+      // ops[0] is fixed. ops[2] writes into the COMPLETED pl_002, and that refusal names the plan this call created.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
+      research.plans = [
+        validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+        validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]),
+      ] as any;
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_003", "active")) },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+        ],
+        research,
+      );
+      const terminal = opLines(r.errors).find((l) => /^ops\[2\]:.*plans entry 'pl_002' is 'completed'/.test(l));
+      expect(terminal, r.errors.join("\n")).toBeDefined();
+      expect(terminal).toContain("This call created plan 'pl_004'");
+      // Ground truth: fix ops[0] as its own message says (supersede the active plan first), and the plan
+      // for q_003 is the one the message named.
+      await writeProject(research);
+      const fixed = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plans", op: "update", entryId: "pl_001", fields: { status: "superseded" } },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_003", "active")) },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_003" },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_004" },
+        ],
+      } as any);
+      expect(errorsOf(fixed) ?? []).toEqual([]);
+      expect(fixed.ok).toBe(true);
+      const created = (fixed as any).results.filter((x: any) => x.section === "plans" && x.op === "append").map((x: any) => x.entryId);
+      expect(created).toEqual(["pl_003", "pl_004"]);
+    });
+
+    it("a failed UPDATE takes no id: the append after it gets the next one", async () => {
+      // ops[0] is a plans update that is refused, so it is not an append. ops[1] creates q_003's plan,
+      // pl_003. ops[2] writes into the COMPLETED pl_002, and that refusal names the plan this call created.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
+      research.plans = [
+        validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+        validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]),
+      ] as any;
+      const r = await refuse(
+        [
+          { section: "plans", op: "update", entryId: "pl_999", fields: { status: "superseded" } },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_003", "active")) },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+        ],
+        research,
+      );
+      expect(opLines(r.errors).some((l) => /^ops\[0\]: entryId 'pl_999' not found in 'plans'/.test(l))).toBe(true);
+      const terminal = opLines(r.errors).find((l) => /^ops\[2\]:.*plans entry 'pl_002' is 'completed'/.test(l));
+      expect(terminal, r.errors.join("\n")).toContain("This call created plan 'pl_003'");
+    });
+
+    describe("a failed assertion append keeps its id", () => {
+      // The attachment shape of a link (extraction_append's personId mode) skips the score gate, which
+      // refuses any link to an assertion the same call creates, so the ids are what is left to judge.
+      const speculativeLink = (assertionId: string) => ({
+        section: "person_evidence",
+        op: "append",
+        entry: { assertion_id: assertionId, person_id: "I1", confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE },
+      });
+      const batch = (failing: object) => [
+        failing,
+        { section: "assertions", op: "append", entry: noId(validAssertion("x")) }, // a_003 once the first is fixed
+        speculativeLink("a_003"),
+        speculativeLink("a_002"), // the id the failed op would have taken: nothing has it
+      ];
+
+      it.each([
+        ["one refused before it takes an id (the entry carries one)", { section: "assertions", op: "append", entry: { id: "a_777", ...noId(validAssertion("x")) } }],
+        ["one refused after it is in the document (a record_basis it cannot have)", { section: "assertions", op: "append", entry: { ...noId(validAssertion("x")), record_basis: "absent" } }],
+      ])("%s: a link to the id the next append takes is judged against it, and one to the failed id is refused", async (_label, failing) => {
+        const r = await refuse(batch(failing), baseResearch(), baseTree, { attachmentLink: true });
+        const lines = opLines(r.errors);
+        expect([...new Set(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1]))], r.errors.join("\n")).toEqual(["0", "3"]);
+        expect(lines[lines.length - 1]).toMatch(/^ops\[3\]: .*references assertion 'a_002' which does not exist/);
+        expect(r.errors[0]).toMatch(NOTE);
+      });
+    });
+  });
+
+  // A batch built by code can break one rule in every op, and `extraction_append` returns the errors
+  // twice. The list collapses lines that differ only in the op they name, and is capped.
+  describe("the list of errors is collapsed and capped", () => {
+    const lane = { allowedSections: new Set(["sources", "assertions"]), toolName: "extraction_append" };
+    const textLength = (errors: string[]) => errors.filter((e) => !e.startsWith("worked example")).join("").length;
+
+    it("lines that differ only in the op they name become one line naming the ops", async () => {
+      const r = await refuse([
+        carriesAnId,
+        { section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } },
+        carriesAnId,
+        { section: "conflicts", op: "update", entryId: "c_998", fields: { status: "moot" } },
+      ]);
+      const lines = opLines(r.errors);
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toMatch(/^ops\[0\], ops\[2\]: .*must not carry an id/);
+      expect(lines[1]).toMatch(/^ops\[1\]: entryId 'c_999' not found/);
+      expect(lines[2]).toMatch(/^ops\[3\]: entryId 'c_998' not found/);
+    });
+
+    it("sixty assertions that all break one rule: the same few lines naming the ops, far under the spill line, the line and the examples kept", async () => {
+      const source = noId(validSource("x")) as Record<string, unknown>;
+      delete source.gedcomx_source_description_id;
+      const ops: unknown[] = [{ section: "sources", op: "append", entry: source }];
+      for (let i = 0; i < 60; i++) {
+        ops.push({
+          section: "assertions",
+          op: "append",
+          entry: { ...noId(validAssertion("x")), source_id: undefined, record_id: "rec9", value: `v${i}`, record_basis: "absent" },
+        });
+      }
+      await writeProject();
+      const r = await researchAppend({ projectPath: dir, ops, sourceDescription: { title: "Some record" } } as any, lane);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      // 129 KB before. `extraction_append` returns the list twice, so the bound is on twice the size.
+      expect(JSON.stringify(r.errors).length * 2).toBeLessThan(CLI_SPILL_CHARS_HERE);
+      expect(textLength(r.errors)).toBeLessThan(9_000);
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(r.errors.some((e) => e.startsWith("worked example for '"))).toBe(true);
+      // One line carries all sixty ops.
+      expect(opLines(r.errors).some((l) => /^ops\[1\], ops\[2\], ops\[3\]/.test(l) && l.includes("ops[60]"))).toBe(true);
+    });
+
+    it("distinct messages are kept in order up to the cap, and what is left out is counted in one line", async () => {
+      // Forty ops, each refused with a message of its own: it quotes the bad entryId, 300 characters long.
+      const ops = Array.from({ length: 40 }, (_, i) => ({
+        section: "hypotheses",
+        op: "update",
+        entryId: `${"x".repeat(300)}${i}`,
+        fields: { claim: "x" },
+      }));
+      const r = await refuse(ops);
+      const kept = opLines(r.errors);
+      expect(kept.length).toBeGreaterThan(10);
+      expect(kept.length).toBeLessThan(40);
+      expect(kept[0]).toMatch(/^ops\[0\]: /);
+      expect(kept.map((l) => Number(/^ops\[(\d+)\]/.exec(l)![1]))).toEqual(kept.map((_, i) => i));
+      const note = r.errors.find((e) => /not listed here/.test(e))!;
+      expect(note).toBe(
+        `${40 - kept.length} more error messages, on ${40 - kept.length} more failing ops, not listed here, to keep this answer short. ` +
+          "They are listed in full once the earlier ones are fixed.",
+      );
+      expect(textLength(r.errors)).toBeLessThan(9_000);
+      // The line leads, the list follows, the note ends the list, and the worked example follows that.
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(r.errors.indexOf(note)).toBe(r.errors.length - 2);
+      expect(r.errors[r.errors.length - 1]).toMatch(/^worked example for 'hypotheses'/);
+    });
+
+    it("the first message is kept however long it is", async () => {
+      const r = await refuse([
+        { section: "hypotheses", op: "update", entryId: "x".repeat(20_000), fields: { claim: "x" } },
+        goodHypothesis,
+      ]);
+      const lines = opLines(r.errors);
+      expect(lines).toHaveLength(1);
+      expect(lines[0].length).toBeGreaterThan(20_000);
+      expect(r.errors.some((e) => /not listed here/.test(e))).toBe(false);
+    });
+
+    it("a few messages are all listed, with no note about the rest", async () => {
+      const r = await refuse([carriesAnId, unknownConflict]);
+      expect(r.errors.some((e) => /not listed here/.test(e))).toBe(false);
+    });
+
+    it("the lane gate collapses ops outside the lane the same way", async () => {
+      const ops = Array.from({ length: 30 }, () => goodHypothesis);
+      const r = await refuse(ops, baseResearch(), baseTree, lane);
+      expect(r.errors).toHaveLength(1);
+      expect(r.errors[0]).toMatch(/^ops\[0\], ops\[1\], ops\[2\]/);
+      expect(r.errors[0]).toContain("ops[29]: section 'hypotheses' is not writable by extraction_append".replace("ops[29]: ", ""));
+    });
   });
 
   describe("the lane gate names every op outside the lane", () => {

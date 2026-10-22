@@ -314,7 +314,9 @@ async function tieRecordToQuestions(
   }
   if (ops.length === 0) return { tied: [], warnings: [] };
   const opts = { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" };
-  const whole = await researchAppend({ projectPath, ops } as ResearchAppendInput, opts);
+  // Only `ok` is read from this attempt, and a refusal is retried op by op below, so it is not
+  // asked to judge the rest of the batch: that is a second pass over a copy of the document.
+  const whole = await researchAppend({ projectPath, ops } as ResearchAppendInput, { ...opts, firstFailureOnly: true });
   if (whole.ok) return { tied: ops.map((o) => o.entryId!), warnings: [] };
   const tied: string[] = [];
   const warnings: string[] = [];
@@ -599,7 +601,11 @@ async function personIdMode(
     }
     if (ops.length === 0) continue;
     const linkOpts = { allowedSections: ATTACHMENT_LINK_SECTIONS, toolName: "extraction_append", attachmentLink: true };
-    const whole = await researchAppend({ projectPath: input.projectPath, ops } as ResearchAppendInput, linkOpts);
+    // Only `ok` is read; a refusal is retried op by op below (see `tieRecordToQuestions`).
+    const whole = await researchAppend(
+      { projectPath: input.projectPath, ops } as ResearchAppendInput,
+      { ...linkOpts, firstFailureOnly: true },
+    );
     if (whole.ok) {
       linked += ops.length;
       continue;
