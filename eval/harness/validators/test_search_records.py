@@ -615,9 +615,11 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
     an any()-style match would hide a claim one of them never sent. An entry
     past the last call for its surname is left alone.
 
-    **Reporting-only.** The skill carries no "only record a filter actually
-    sent" rule yet; it is promoted to a gate together with that prose rule, in
-    the PR that pays this skill's run. Run logs recorded before the eval mock
+    **Reporting-only, by design.** The rule it would have been promoted with
+    now lives in the tool (`preflightQueryFilterClaims` refuses a staged
+    entry's never-sent claim), and the gating half that is left is
+    `test_unstaged_log_query_filters_were_sent`, which needs no pairing. This
+    check keeps the per-call detail and the value class. Run logs recorded before the eval mock
     echoed a search's arguments into its staged `query` fire on entries the tool
     FILLED from a fixture's recorded query — a harness artifact, not the
     model's claim (`scripts/replay_log_query_validators.py`).
@@ -696,6 +698,40 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
         for claim in differs:
             errors.append(f"log entry {e.get('id')} ({how}) value differs — {claim}")
     assert not errors, "record_search log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
+
+
+def test_unstaged_log_query_filters_were_sent(before_state, after_state, tool_calls):
+    """A `record_search` log entry with no staged handle claims no filter that
+    no `record_search` call this turn sent.
+
+    `research_log_append` refuses a never-sent claim on a STAGED entry, so this
+    covers the rest: an entry whose op carried no `stagedResultsRef` (a nil
+    search stages nothing), where the `query` is the model's own claim, never a
+    fill from a staged payload. A key no call sent at all was not sent by the
+    call this entry documents, whichever call that was, so no pairing is needed
+    and none can mislead it. Values are not compared: a different value is
+    mostly place normalisation and stays with the report check above.
+    """
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "record_search" and _as_mapping(e.get("query"))
+    ]
+    staged = _staged_ref_by_log_id(tool_calls)
+    unstaged = [e for e in entries if e.get("id") not in staged]
+    if not unstaged:
+        pytest.skip("no new unstaged record_search log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "record_search"]
+    vocabulary = _tool_input_keys("record_search")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the filter vocabulary is unknown")
+    sent_anywhere: dict = {}
+    for c in calls:
+        sent_anywhere.update(_record_search_sent(c.get("args")))
+    errors = []
+    for e in unstaged:
+        never_sent, _ = _filter_claim_findings(e.get("query"), sent_anywhere, vocabulary)
+        errors.extend(f"log entry {e.get('id')} claims {claim}, which no record_search call sent" for claim in never_sent)
+    assert not errors, "unstaged record_search log queries claim filters never sent:\n  - " + "\n  - ".join(errors)
 
 
 # --- The census wiki fetch actually fires (issue #2123) ----------------

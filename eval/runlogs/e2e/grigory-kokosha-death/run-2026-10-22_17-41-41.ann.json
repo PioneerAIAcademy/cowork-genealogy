@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "notes": {
+    "f1": "Agent engaged the 18 Sep 1846 entry and corroborated identity via the 1821 confession list, but stated the death as established (quality:3, primary:true, stopped_because: question_answered, overturn_risk: Low) rather than probable/qualified. The death index names no patronymic or spouse; the image transcription (log_032) failed calibration; a namesake cannot be excluded. Correct person, wrong confidence tier."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "d6dc60e045c309c3bc34411bc432ac2c96aecfb8712137aa402d81f13b5bc1fb",
+  "blind_bundle_digest": "7d90320b4f4a2759780a0717e63640cbfd8c97f5d0557723e62b7f6e5d900394"
+}
