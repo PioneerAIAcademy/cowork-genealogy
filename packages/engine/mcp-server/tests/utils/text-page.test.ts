@@ -103,7 +103,44 @@ describe("fitPage", () => {
   });
 });
 
+/** The cut rule as it was first coded, two backward scans with no string search. The shipped
+ *  function finds the heading with `lastIndexOf`; this is the rule it must agree with. */
+function cutByScan(text: string, offset: number, page: string): string {
+  if (offset + page.length >= text.length) return page;
+  const midpoint = page.length / 2;
+  for (let cut = page.length; cut > midpoint; cut--) {
+    if (text[offset + cut] === "#" && text[offset + cut - 1] === "\n") return page.slice(0, cut);
+  }
+  for (let at = page.length - 1; at > midpoint; at--) {
+    if (page[at] === "\n") return page.slice(0, at + 1);
+  }
+  return page;
+}
+
 describe("cutAtBoundary", () => {
+  it("agrees with the rule written as two backward scans, on every short text of # \\n a and a surrogate pair", () => {
+    // Every text of up to six of these four pieces, every offset into it (an offset right after a
+    // line break, where the "\n#" straddles the start of the page, included) and every page length.
+    const pieces = ["#", "\n", "a", "😀"];
+    const mismatches: string[] = [];
+    let cases = 0;
+    const walk = (text: string, piecesLeft: number): void => {
+      for (let offset = 0; offset <= text.length; offset++) {
+        for (let n = 0; offset + n <= text.length; n++) {
+          const page = text.slice(offset, offset + n);
+          if (cutAtBoundary(text, offset, page) !== cutByScan(text, offset, page)) {
+            mismatches.push(JSON.stringify({ text, offset, n }));
+          }
+          cases++;
+        }
+      }
+      if (piecesLeft > 0) for (const piece of pieces) walk(text + piece, piecesLeft - 1);
+    };
+    walk("", 6);
+    expect(mismatches.slice(0, 3)).toEqual([]);
+    expect(cases).toBeGreaterThan(100_000);
+  });
+
   it("moves the end back to the last heading line that starts past the midpoint", () => {
     // 30 characters fit; the heading starts at 20 and a later line break sits at 29.
     const text = "aaaaaaaaa\nbbbbbbbbb\n## Head\nxxxxx\nyyyyyyyyyy";
@@ -165,6 +202,14 @@ describe("cutAtBoundary", () => {
     expect(text[29]).toBe("\n");
     expect(text.indexOf("## One")).toBe(18);
     expect(cut(text, 30)).toBe(text.slice(0, 30));
+  });
+
+  it("does not take a heading line that starts after the end of the page", () => {
+    // the page ends one character before the line break that precedes `## H`: that heading is
+    // not in the page, so the cut falls back to the last line break inside it
+    const text = "aaaaaaaaa\nbbbbbbbbb\ncccc\n## H\nrest of the text";
+    expect(text.slice(24, 26)).toBe("\n#");
+    expect(cut(text, 24)).toBe(text.slice(0, 20));
   });
 
   it("never cuts back the last page of a text", () => {

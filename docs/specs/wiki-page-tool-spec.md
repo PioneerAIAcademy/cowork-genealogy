@@ -178,12 +178,16 @@ A page edited on the wiki moves these. Re-fetch a page rather than trusting a fi
 looks stale.
 
 **The input is `offset`**, optional on both tools: a whole number ≥ 0, a UTF-16 code-unit
-offset, with the same name, meaning and validation as `sidecar_read` and `research_query`. A
+offset, with the same name, unit and validation as `sidecar_read`'s. (`research_query`'s
+`offset` shares the name and the refusal of a non-number, but counts matches, not characters.) A
 string, a negative number, a fraction, `NaN` or `null` is refused by `requireWholeNumber`
 before any request. It is not called `section`: `wiki_place_page` already takes a required
 `section`, which says which page, not which part of it. Both tools take it because an agent
 may hold `wiki_place_page` without `wiki_read` (`gps-mentor` does), and "continue with
-`wiki_read`" would strand it.
+`wiki_read`" would strand it. As in `sidecar_read` (`sidecar-read-tool-spec.md` §4), the tool does
+not adjust the start of a part: an `offset` a caller invents that lands on the low half of a
+surrogate pair returns that stray unit as the first character, and a caller that only passes back
+`nextOffset` never does.
 
 **The cap.** One part holds at most 40,000 characters (`WIKI_PAGE_MAX_CHARS`), measured as
 `sidecar_read` measures its pages: on the JSON-escaped body of `content`,
@@ -193,7 +197,10 @@ quote, backslash and line break. `fitPage` (`src/utils/text-page.ts`, shared wit
 within the cap, and never splits a surrogate pair; the reasoning for the escape bound is
 `sidecar-read-tool-spec.md` §4 and holds here unchanged. The URL, the place and the paging
 members add a few hundred characters around `content`, so a whole result stays near 41,000, under
-the 50,000 line.
+the 50,000 line. A page whose escaped body lies between the cap and that line, such as
+`England_Church_Records` (43,246 characters escaped, measured 2026-10-22), came back whole before
+paging and now comes back in two parts. The cap stays at 40,000 anyway: it is the bound `sidecar_read`
+already holds, and it leaves the margin under the line that the members around `content` need.
 
 **Where the cut falls.** `fitPage`'s cut is then moved back to a boundary a reader can use
 (`cutAtBoundary`):
@@ -291,8 +298,10 @@ the line; they cannot prove an agent reads them all.
   or wiki server URL does not take an entry.
 - `tests/utils/text-page.test.ts` — the cut rules and their edges (a heading exactly at
   the midpoint is not past it; a part that already ends at a heading is kept), the cap
-  taken from `maxChars` and not a constant, progress for a `maxChars` under 6, and a
-  seeded property test: any text, offset and cap walks to the end and joins back.
+  taken from `maxChars` and not a constant, progress for a `maxChars` under 6, the cut checked
+  against the rule written as two backward scans over every short text of `#`, line breaks, `a`
+  and a surrogate pair, and a seeded property test: any text, offset and cap walks to the end
+  and joins back.
 
 ### Skill unit tests (`eval/tests/unit/<skill>/`)
 

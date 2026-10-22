@@ -10,8 +10,8 @@
 // `writerToolResult` JSON.stringifies the result, which escapes every `"`, `\`
 // and control character, and the CLI spills any result above 50,000 characters
 // to a file the model must Read back (which, on a resumed turn, is deleted at
-// turn end). So the page is shrunk until its JSON form fits in 40,000
-// characters, whatever the raw text looks like.
+// turn end). So the page is shrunk until its JSON-escaped text fits in `maxChars`
+// (40,000 at most), whatever the raw text looks like.
 
 import { getProjectStore } from "../store/project-store.js";
 import { readStagedResults } from "../utils/results-staging.js";

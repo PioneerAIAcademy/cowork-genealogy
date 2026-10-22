@@ -10,8 +10,9 @@
 // "Pagination").
 
 /** Reject-not-coerce, the same posture as research_query's `offset`: a stringified "50"
- *  reaches the tool as a string (index.ts passes arguments through untouched) and would
- *  otherwise be silently coerced by `slice`. */
+ *  reaches the tool as a string (the `wiki_read`, `wiki_place_page` and `sidecar_read` arms
+ *  of src/server.ts pass arguments through untouched) and would otherwise be silently
+ *  coerced by `slice`. */
 export function requireWholeNumber(name: string, value: unknown, min: number): number {
   if (!Number.isInteger(value) || (value as number) < min) {
     const got =
@@ -84,15 +85,18 @@ function isLowSurrogate(code: number): boolean {
  * midpoint) and never splits a surrogate pair (it falls beside a `\n` or a `#`).
  */
 export function cutAtBoundary(text: string, offset: number, page: string): string {
-  if (offset + page.length >= text.length) return page;
+  const end = offset + page.length;
+  if (end >= text.length) return page;
   const midpoint = page.length / 2;
-  for (let cut = page.length; cut > midpoint; cut--) {
-    if (text[offset + cut] === "#" && text[offset + cut - 1] === "\n") return page.slice(0, cut);
-  }
-  for (let at = page.length - 1; at > midpoint; at--) {
-    if (page[at] === "\n") return page.slice(0, at + 1);
-  }
-  return page;
+  // Rule 1. The last "\n#" that starts at or before `end - 1` has its `#` at `end` or earlier, so
+  // `cut` is where the last heading line starts, counted from the page's start; `cut` equal to
+  // the page's length is a page that already ends at one. A "\n#" before the page gives a `cut`
+  // of 0 or less, which is never past the midpoint.
+  const cut = text.lastIndexOf("\n#", end - 1) + 1 - offset;
+  if (cut > midpoint) return page.slice(0, cut);
+  // Rule 2.
+  const lineBreak = page.lastIndexOf("\n");
+  return lineBreak > midpoint ? page.slice(0, lineBreak + 1) : page;
 }
 
 export interface TextPaging {

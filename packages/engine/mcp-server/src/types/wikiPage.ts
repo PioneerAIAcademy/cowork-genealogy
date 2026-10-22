@@ -33,8 +33,9 @@ export const WIKI_PAGING_NOTE =
   "`truncated` is true, call again with `offset: nextOffset` until it is false. A page " +
   "that fits is returned whole.";
 
-/** The `offset` input of both wiki page tools: same name, meaning and validation as
- *  `sidecar_read` and `research_query`. */
+/** The `offset` input of both wiki page tools: the same name, unit (UTF-16 code units) and
+ *  validation as `sidecar_read`'s. `research_query`'s `offset` shares the name and the
+ *  reject-not-coerce check but counts matches, not characters. */
 export const WIKI_OFFSET_PROPERTY = {
   type: "number",
   description:
