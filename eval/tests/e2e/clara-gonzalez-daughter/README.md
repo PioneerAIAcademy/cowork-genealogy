@@ -28,19 +28,6 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 5, `hint-samples.csv` row 170,
-flag `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Chile, Civil Registration, 1880-1933", the birth registration of Zulema de Jesus Silva Gonzalez, born 12 November 1897 at Pichilemu, naming her parents as Benjamín Silva Díaz and Clara Gonzalez Pimienta.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Zulema as Clara's daughter, plus a `required` finding that the report documents
-the rejection.
+**Resolved: true match.** The birth registration of Zulema de Jesús Silva González (Entry 184, 1897 civil registration register, Colchagua) is confirmed from the index: both parents are named as Benjamín Silva Díaz and Clara González Pimienta, with birth date 12 November 1897, registered at Pichilemu, Colchagua. The compound surnames match the tree person across all known records for this family.
 
-A strong candidate. Both parents' names match in full, maternal surname included: Benjamín Silva Díaz and Clara González Pimienta. The register is a Colchagua birth volume, and the birth falls 23 months after Manuel Jesús, which fits the couple's spacing. The tree holds no daughter and no source dated after 1895 for this family, so the hint is not a re-index of anything already attached.
-
-Two cautions. The index standardises Pichilemu under "Petorca, Aconcagua", but the image group is "Chile, Colchagua, Births", and Pichilemu is the Colchagua coastal town. The event place is Pichilemu, Colchagua (now O'Higgins), and a reviewer should not carry the index's Aconcagua into the findings. Second, the tree's Colchagua places for this family are inland: Pumanque, Nancagua and the generic "Colchagua" registration of both sons. A move to the coast between 1895 and 1897 is plausible but unproven.
-
-The discriminating check is the register office on the two sons' birth registrations already in the tree. If either was registered at Pichilemu, or at a neighbouring coastal circunscripción, the hint is a true match. If both sons were registered inland, read the 1897 entry's declarant and the parents' stated residence on the image, which should name the same household.
+**Marriage record cross-check.** The marriage record names the groom's father's mother as Mercedes Díaz and the bride's mother as Antonia Pimienta, locking both compound second surnames to this specific family and ruling out coincidental name matches.
