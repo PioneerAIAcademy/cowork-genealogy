@@ -93,7 +93,10 @@ _NO_DISCLOSE = (
 # (ut_research_h7w, 4 of 4 runs). It names no tool, skill or step, because every
 # stubbed test shares this text and naming the step a test grades would hand
 # that test its pass.
-_CARRY_ON = "\n\nThe hand-off is over; your turn is not. Decide what to do next from {basis}."
+_CARRY_ON = (
+    "\n\nThe hand-off is over; your turn is not. Your own instructions still "
+    "govern how this turn ends: do what they still require before you reply.{result}"
+)
 
 
 def parse_stub_skills(execution: dict[str, Any] | None) -> dict[str, str | None]:
@@ -133,14 +136,13 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     if response:
         reason = _CANNED_SUFFIX.format(name=skill_name, response=response)
         context = preamble + _CARRY_ON.format(
-            basis="the result it returned and your own instructions, and where "
-            "they differ, follow the result"
+            result=" Where the result it returned says otherwise, follow the result."
         )
     else:
         # No result to carry, so the preamble stays in the reason: a deny
         # with an empty reason gives the model nothing to act on.
         reason = preamble
-        context = _CARRY_ON.format(basis="your own instructions").lstrip()
+        context = _CARRY_ON.format(result="").lstrip()
     reason += _NO_DISCLOSE.format(name=skill_name)
     return {
         "hookSpecificOutput": {

@@ -137,7 +137,7 @@ def test_bare_deny_does_not_claim_a_result_exists():
     text = _all_text(stub_denial("s", None))
     assert "Treat the following as the result" not in text
     assert "the result" not in text.split("this hand-off using only")[-1]
-    assert "Decide what to do next from your own instructions." in text
+    assert "do what they still require before you reply." in text
 
 
 def test_skill_name_appears_in_the_reason():
@@ -210,12 +210,12 @@ def test_hand_back_rides_in_additional_context_not_the_reason():
         out = stub_denial("s", response)
         assert "your turn is not" not in _reason(out)
         assert _context(out).endswith(
-            "The hand-off is over; your turn is not. Decide what to do next from "
+            "The hand-off is over; your turn is not. Your own instructions still "
+            "govern how this turn ends: do what they still require before you reply."
             + (
-                "the result it returned and your own instructions, and where they "
-                "differ, follow the result."
+                " Where the result it returned says otherwise, follow the result."
                 if response
-                else "your own instructions."
+                else ""
             )
         )
 
@@ -233,7 +233,7 @@ def test_hand_back_defers_to_a_canned_stop_rather_than_overriding_it():
     must outrank the caller's own instructions."""
     hand_back = _context(stub_denial("research-plan", _STOP_TAIL)).split("\n\n")[-1]
     assert hand_back.startswith("The hand-off is over")
-    assert hand_back.endswith("where they differ, follow the result.")
+    assert hand_back.endswith("says otherwise, follow the result.")
     for push in (
         "keep going", "carry on", "continue", "next step", "remaining steps",
         "through to their end",
