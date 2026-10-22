@@ -1023,9 +1023,9 @@ describe("namesake cap", () => {
           "for 'KWCB-111': 1 probable or confident link(s) to 'KWCB-111' stand with nothing in their record " +
           "tying them to 'KWCB-111': 'pe_001' (assertion 'a_010' on source 'src_002', name). 1 fact(s) on " +
           "'KWCB-111' were copied through them: 'F1' Occupation (cites S2). The row is recorded and these stay " +
-          "as they are, but materialize_facts will not copy, and tree_edit and tree_correct will not cite, any " +
-          "further fact or name onto 'KWCB-111' through these " +
-          "links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+          "as they are, but materialize_facts will not copy any further fact onto 'KWCB-111' through these links, " +
+          "and tree_edit and tree_correct will not cite their records' S entries onto 'KWCB-111''s facts or " +
+          "names unless another record on the same S entry ties to 'KWCB-111'. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
           "namesake. Remove a listed fact that belongs to the namesake with tree_correct (operation 'remove', " +
           "its factId and personId 'KWCB-111').",
       ]);

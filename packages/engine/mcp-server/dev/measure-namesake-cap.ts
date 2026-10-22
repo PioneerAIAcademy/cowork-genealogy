@@ -46,7 +46,10 @@
 //       the shipped `introducedCitations` and judged by the shipped
 //       `namesakeCitationRefusals`, at the call and on the run's final state.
 //       The dump keeps no tree, so updates are also judged charging none and
-//       every one of their refs, which brackets the shipped check.
+//       every one of their refs, which brackets the shipped check. It replays
+//       op by op, so a call that writes one fact or name twice, or removes
+//       one, fails a floor: the shipped check judges what a call adds as a
+//       whole.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -1031,6 +1034,7 @@ function section6(lines: any[], states: FinalState[]): void {
     let unmeasured = 0, finalJudged = 0, finalRefused = 0, judgedOps = 0, refusedOps = 0, unjudgedRefs = 0;
     let updates = 0, unseen = 0, tracedUsed = 0;
     const untraced: string[] = [];
+    const netRisk: string[] = [];
     const endsOf = () => ({ finalJudged: 0, finalRefused: 0, finalSubject: 0, judged: 0, refused: 0 });
     const ends = { none: endsOf(), every: endsOf() };
     const subject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
@@ -1060,6 +1064,8 @@ function section6(lines: any[], states: FinalState[]): void {
       );
       if (!(l.ops as any[]).some((op) => holders.has(op?.personId))) continue;
       calls += 1;
+      const nodeKeys = (l.ops as any[]).map((op) => op?.factId ?? op?.nameId).filter((k) => typeof k === "string");
+      if (new Set(nodeKeys).size < nodeKeys.length || (l.removes ?? 0) > 0) netRisk.push(`${l.run} #${l.call}`);
       const introduced = perOp.flatMap((o) => o?.rebuilt ?? []);
       const atEnd = { none: perOp.flatMap((o) => (o?.add ? o.rebuilt : [])), every: perOp.flatMap((o) => o?.all ?? []) };
       const updateOps = (l.ops as any[]).filter((op, i) => perOp[i] && !perOp[i]!.add);
@@ -1193,6 +1199,11 @@ function section6(lines: any[], states: FinalState[]): void {
     if (bracket === "every linked person") floor(finalJudged > 0, "§6 judged no tree write");
     if (bracket === "every linked person") floor(updates > 0, "§6 saw no update, so its two ends bracket nothing");
     floor(untraced.length === 0, `§6 (${bracket}): an update moves a count and its earlier refs are not traced in TRACED_PRIOR_REFS`);
+    floor(
+      netRisk.length === 0,
+      `§6 (${bracket}): a call writes one fact or name twice, or removes one, so judging it op by op can differ from ` +
+        `the shipped check, which judges what the call adds as a whole: ${netRisk.join("; ")}`,
+    );
   }
 }
 

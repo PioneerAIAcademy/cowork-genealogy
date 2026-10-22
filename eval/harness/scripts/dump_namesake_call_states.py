@@ -20,8 +20,8 @@ One JSON line per run, then one per call the measurement reads:
           or no recorded outcome with ops that pass today's shape checks and
           cite no ref starting with `#`)
           whose ops cite a record onto a person's fact or name: those ops,
-          its outcome, and person_evidence, assertion and source ids at the
-          call.
+          its outcome, how many remove ops it carries, and person_evidence,
+          assertion and source ids at the call.
   shapes  the call shapes the namesake register rows quote, over every
           committed run whatever each call's outcome.
 
@@ -312,6 +312,7 @@ def dump(out_path: Path) -> collections.Counter:
                         out.write(json.dumps({
                             "kind": "treewrite", "run": run_ref, "slug": slug, "call": i, "tool": name,
                             "outcome": _outcome(call), "ops": citing, "merges": [],
+                            "removes": sum(1 for op in ops if op.get("operation") == "remove"),
                             "relationships": [dict(r) for r in rels],
                             "starting_s_ids": sorted(start_s_ids),
                             "source_ids": [x.get("id") for x in before.get("sources") or [] if isinstance(x, dict)],

@@ -298,4 +298,69 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
     await setup(research({ links }), t, { persons: [wife], relationships: [], sources: [] });
     await written(() => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S1") }] } as any));
   });
+
+  it("T16 writes a fact citing an S entry two research sources share when one of them ties", async () => {
+    // One research source per persona, on the census's S entry: src_003 is the
+    // wife's, linked to her alone.
+    const r = research({ links: [...LINKS(), link("pe_4", "a_020", W)] });
+    r.sources.push(source("src_003", "S1"));
+    r.assertions.push(assertion("a_020", "src_003", "REC-CEN-2", "principal", "name", "Mary Smith"));
+    await setup(r, tree());
+    await written(() => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S1") }] } as any));
+  });
+
+  it("T16b refuses an S entry two research sources share when neither ties, naming each", async () => {
+    const r = research({ links: [...LINKS(), link("pe_4", "a_021", W)] });
+    r.sources.push(source("src_004", "S2"));
+    r.assertions.push(assertion("a_021", "src_004", "REC-VOT-2", "principal", "name", "Mary Smith"));
+    await setup(r, tree());
+    const errors = await refused(() =>
+      treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S2") }] } as any),
+    );
+    expect(errors).toHaveLength(2);
+    expect(errors[0]).toContain("cites S2 (research source 'src_002'), and its link 'pe_3' to 'KWCB-111' is not tied: ");
+    expect(errors[1]).toContain("cites S2 (research source 'src_004'), and it has no probable or confident link to 'KWCB-111'.");
+  });
+
+  it("T17 judges a batch by what it adds as a whole: a ref one op drops and a later op restores is not judged", async () => {
+    await setup(research(), tree({ facts: [{ id: "F2", type: "Occupation", value: "Clerk", sources: [{ ref: "S2" }] }] }));
+    await written(() =>
+      treeCorrect({
+        projectPath: dir,
+        ops: [
+          { operation: "update_fact", personId: P, factId: "F2", fact: { sources: [{ ref: "S1" }] } },
+          { operation: "update_fact", personId: P, factId: "F2", fact: { sources: [{ ref: "S2" }, { ref: "S1" }] } },
+        ],
+      } as any),
+    );
+  });
+
+  it("T17b does not judge an untied ref one op adds and a later op drops", async () => {
+    await setup(research(), tree({ facts: [{ id: "F1", type: "Occupation", value: "Clerk", sources: [{ ref: "S1" }] }] }));
+    await written(() =>
+      treeCorrect({
+        projectPath: dir,
+        ops: [
+          { operation: "update_fact", personId: P, factId: "F1", fact: { sources: [{ ref: "S1" }, { ref: "S2" }] } },
+          { operation: "update_fact", personId: P, factId: "F1", fact: { sources: [{ ref: "S1" }] } },
+        ],
+      } as any),
+    );
+  });
+
+  it("T17c charges a ref several ops add once, on the last of them", async () => {
+    await setup(research(), tree({ facts: [{ id: "F1", type: "Occupation", value: "Clerk", sources: [{ ref: "S1" }] }] }));
+    const errors = await refused(() =>
+      treeCorrect({
+        projectPath: dir,
+        ops: [
+          { operation: "update_fact", personId: P, factId: "F1", fact: { sources: [{ ref: "S1" }, { ref: "S2" }] } },
+          { operation: "update_fact", personId: P, factId: "F1", fact: { sources: [{ ref: "S1" }] } },
+          { operation: "update_fact", personId: P, factId: "F1", fact: { sources: [{ ref: "S1" }, { ref: "S2" }] } },
+        ],
+      } as any),
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/^ops\[2\]: 'KWCB-111' has a recorded namesake/);
+  });
 });

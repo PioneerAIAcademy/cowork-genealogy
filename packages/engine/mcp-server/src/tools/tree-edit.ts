@@ -26,7 +26,12 @@ import type {
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
-import { introducedCitations, namesakeCitationRefusals, type IntroducedCitation } from "./research-append.js";
+import {
+  introducedCitations,
+  namesakeCitationRefusals,
+  netIntroducedCitations,
+  type IntroducedCitation,
+} from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import {
   introducedWarnings,
@@ -1218,10 +1223,11 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     // block only on errors THIS call introduces, not pre-existing drift in a
     // section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-    // The namesake check on tree writes (#3363): each op's citations onto a
-    // fact or name of a person with a namesake row, judged once all ops have
-    // applied, on the tree as it stood before the call. Only a project that
-    // records a namesake takes the snapshots.
+    // The namesake check on tree writes (#3363): the citations the call as a
+    // whole adds onto a fact or name of a person with a namesake row, each
+    // charged to the last op that added it, judged once all ops have applied,
+    // on the tree as it stood before the call. Only a project that records a
+    // namesake takes the snapshots.
     const holders = new Set<string>(
       ((Array.isArray(research?.namesakes) ? research.namesakes : []) as any[])
         .map((r) => r?.person_id)
@@ -1233,6 +1239,10 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       holders.size === 0
         ? null
         : { persons: ((tree.persons ?? []) as any[]).filter((p) => holders.has(p?.id)).map((p) => structuredClone(p)) };
+    const namesakeRefusals = (perOp: IntroducedCitation[]) =>
+      perOp.length === 0
+        ? []
+        : namesakeCitationRefusals(research, beforeTree, netIntroducedCitations(perOp, beforeTree, tree, holders), startingPersonIds);
 
     // ─── Batch form: apply every op in-memory, then validate + write once ─────
     if (input.ops !== undefined) {
@@ -1261,7 +1271,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
         }
       }
 
-      const namesakeFindings = namesakeCitationRefusals(research, beforeTree, introduced, startingPersonIds);
+      const namesakeFindings = namesakeRefusals(introduced);
       if (namesakeFindings.length > 0) {
         return { ok: false, errors: namesakeFindings.map((f) => `ops[${f.index}]: ${f.message}`) };
       }
@@ -1311,12 +1321,8 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     const snapshot = holderSnapshot();
     const applied = await applyOperation(tree, research, input);
     const { assignedIds, warnings } = applied;
-    if (snapshot) {
-      const findings = namesakeCitationRefusals(
-        research, beforeTree, introducedCitations(snapshot, tree, holders, null), startingPersonIds,
-      );
-      if (findings.length > 0) return { ok: false, errors: findings.map((f) => f.message) };
-    }
+    const namesakeFindings = namesakeRefusals(snapshot ? introducedCitations(snapshot, tree, holders, null) : []);
+    if (namesakeFindings.length > 0) return { ok: false, errors: namesakeFindings.map((f) => f.message) };
 
     const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
