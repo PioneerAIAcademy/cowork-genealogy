@@ -1592,6 +1592,43 @@ def test_same_person_serves_each_pairing_its_own_persona(tmp_path):
     assert father["score"] == child["score"] == 0.7
 
 
+def _wildcard_same_person_fixtures():
+    """Every committed same_person fixture that answers ANY pairing: both ids `~`."""
+    out = []
+    for path in sorted(FIXTURES_DIR.glob("same-person-*.json")):
+        args = json.loads(path.read_text(encoding="utf-8"))["args"]
+        if args == {"assertionId": "~", "treePersonId": "~"}:
+            out.append(path.stem)
+    return out
+
+
+def test_there_are_wildcard_same_person_fixtures_to_check():
+    # A parametrize over an empty list runs nothing and reports nothing wrong.
+    assert len(_wildcard_same_person_fixtures()) >= 5
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize("fixture", _wildcard_same_person_fixtures())
+def test_a_committed_wildcard_fixture_serves_each_pairing_its_own_persona(tmp_path, fixture):
+    """The same, on the real fixtures: whichever `~` fixture a test loads, two
+    pairings through it name two different pairs."""
+    ws = _household_workspace(tmp_path)
+    _cfg, _log, tools = mock_mcp.create_mock_server([fixture], FIXTURES_DIR, workspace=ws)
+
+    def call(args):
+        out = asyncio.run(tools["same_person"].handler({"projectPath": str(ws), **args}))
+        return _extract_response_dict(out)
+
+    father = call({"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"})
+    child = call({"assertionId": "a_031", "treePersonId": "I3"})
+    assert father["recordPersona"] == {"id": "p_father", "name": "Pierre Mouchang", "role": "father"}
+    assert father["treePerson"] == {"id": "I1", "name": "Pierre Mouchang"}
+    assert child["recordPersona"] == {
+        "id": "p_child", "name": "Maria Elisabeth Mouchang", "role": "child"
+    }
+    assert child["treePerson"] == {"id": "I3", "name": "Maria Elisabeth Mouchang"}
+
+
 @pytest.mark.requires_engine_build
 def test_same_person_keeps_the_fixture_persona_when_the_documents_cannot_contradict_it(tmp_path):
     """A party the documents cannot name (no persona id, no name assertion) keeps

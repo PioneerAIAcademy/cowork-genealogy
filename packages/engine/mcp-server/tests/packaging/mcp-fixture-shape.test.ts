@@ -927,3 +927,94 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
     ).toEqual([]);
   });
 });
+
+// ─── a project-arm same_person fixture names whom it scored ─────────────────
+//
+// The shape check above accepts a fixture that fits ANY member of the handler's
+// return union. `SamePersonResult`, the explicit arm's, is still a member and
+// still carries the API's echo fields, so a project-arm fixture written before
+// the project arm had a type of its own fits it and passes. That is the one
+// question a union cannot ask: a call that names an `assertionId` is a
+// project-arm call, whatever the response looks like.
+
+const SAME_PERSON_ECHO_FIELDS = ["queryArk", "candidateArk", "apiTitle", "updated"];
+const SAME_PERSON_PARTY_FIELDS = ["recordPersona", "treePerson"];
+
+/** What is wrong with the response of a `same_person` fixture whose `args` name
+ *  an `assertionId`, or null when it is a project-arm answer. Arms that are not
+ *  this one are not judged: the explicit arm has no `assertionId`, and the
+ *  relatives result and `{ error }` are other members of the same return. */
+function projectArmFixtureProblem(args: unknown, response: unknown): string | null {
+  if (typeof args !== "object" || args === null || !("assertionId" in args)) return null;
+  if (typeof response !== "object" || response === null || Array.isArray(response)) {
+    return "response is not an object";
+  }
+  if (isErrorEnvelope(response) || "matchRelatives" in response) return null;
+  const keys = Object.keys(response);
+  const echoed = SAME_PERSON_ECHO_FIELDS.filter((k) => keys.includes(k));
+  const unnamed = SAME_PERSON_PARTY_FIELDS.filter((k) => !keys.includes(k));
+  const parts: string[] = [];
+  if (echoed.length) parts.push(`still echoes the API's ${echoed.join(", ")}`);
+  if (unnamed.length) parts.push(`does not name whom it scored (no ${unnamed.join(", ")})`);
+  return parts.length ? parts.join("; ") : null;
+}
+
+describe("same_person fixtures that call the project arm carry the project result shape", () => {
+  const projectArm = fixtures.filter(
+    (f) =>
+      f.tool === "same_person" &&
+      typeof f.args === "object" &&
+      f.args !== null &&
+      "assertionId" in f.args,
+  );
+
+  it("has fixtures to check: a zero-length scan proves nothing", () => {
+    expect(projectArm.length).toBeGreaterThan(0);
+  });
+
+  it("every one names whom it scored and echoes none of the API's framing", () => {
+    const bad = projectArm
+      .map((f) => ({ name: f.name, problem: projectArmFixtureProblem(f.args, f.response) }))
+      .filter((r) => r.problem !== null)
+      .map((r) => `${r.name}: ${r.problem}`);
+    expect(
+      bad,
+      "a project-arm answer is { matched, confidence?, score, recordSource, recorded, " +
+        "recordPersona, treePerson } and nothing the API echoes. The union check above " +
+        "cannot see a fixture in the old shape, because the explicit arm still fits it",
+    ).toEqual([]);
+  });
+
+  it("rejects the old shape and a half-converted one, and accepts every other arm's answer", () => {
+    const named = {
+      recordPersona: { id: "P1", name: "Patrick Flynn", role: "child_1" },
+      treePerson: { id: "I1", name: "Patrick Flynn" },
+    };
+    const projectArgs = { assertionId: "~", treePersonId: "I1" };
+    const core = { matched: true, score: 0.5, recordSource: "record_read", recorded: true };
+    const echo = {
+      queryArk: "ark:/61903/1:1:MXHY-TP4", candidateArk: "ark:/61903/4:1:KWCJ-RN4",
+      apiTitle: "Matches for ark:/61903/1:1:MXHY-TP4", updated: "2026-05-21T00:00:00Z",
+    };
+
+    // The three ways the bad thing passes the union check
+    expect(projectArmFixtureProblem(projectArgs, { matched: true, score: 0.5, ...echo }))
+      .toMatch(/queryArk, candidateArk, apiTitle, updated/);
+    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, candidateArk: "x" }))
+      .toMatch(/still echoes the API's candidateArk/);
+    expect(projectArmFixtureProblem(projectArgs, { ...core, recordPersona: named.recordPersona }))
+      .toMatch(/no treePerson/);
+    expect(projectArmFixtureProblem(projectArgs, core)).toMatch(/no recordPersona, treePerson/);
+
+    // And what must stay accepted
+    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named })).toBeNull();
+    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, confidence: 4 })).toBeNull();
+    // the explicit arm has no assertionId, and still echoes
+    expect(projectArmFixtureProblem({ primaryId1: "I1", primaryId2: "I2" }, { matched: true, score: 0.5, ...echo }))
+      .toBeNull();
+    // the relatives result and the failure envelope are other members of the same return
+    expect(projectArmFixtureProblem({ ...projectArgs, matchRelatives: true }, { matchRelatives: true, matches: [] }))
+      .toBeNull();
+    expect(projectArmFixtureProblem(projectArgs, { error: "same_person: no assertion 'a_9'" })).toBeNull();
+  });
+});

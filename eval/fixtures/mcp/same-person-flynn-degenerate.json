@@ -9,9 +9,16 @@
     "matched": false,
     "confidence": 0,
     "score": 0.005,
-    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
-    "candidateArk": null,
-    "apiTitle": "Matches for ark:/61903/1:1:MXHY-TP4",
-    "updated": "2026-05-21T00:00:00Z"
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "P1",
+      "name": "Patrick Flynn",
+      "role": "child_1"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
   }
 }

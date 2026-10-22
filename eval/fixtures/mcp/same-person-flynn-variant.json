@@ -9,9 +9,16 @@
     "matched": false,
     "confidence": 3,
     "score": 0.32,
-    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:VRNT-7M3",
-    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:KWCJ-RN4",
-    "apiTitle": "Matches for ark:/61903/1:1:VRNT-7M3",
-    "updated": "2026-05-21T00:00:00Z"
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "VP1",
+      "name": "Patrick Flinn",
+      "role": "child_1"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
   }
 }
