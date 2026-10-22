@@ -63,8 +63,17 @@ export interface CatalogHit {
   notes?: string[];
   authors?: string[];
   subjects?: string[];
-  /** One entry per reel. */
+  /** One entry per reel. When the answer is size-limited this is the FIRST
+   *  `filmNotes.length` of the item's entries, in order, and `filmNotesTotal`
+   *  and `filmNotesHint` say so. */
   filmNotes?: CatalogFilmNote[];
+  /** How many entries the item has, in the unit `filmNotes` is listed in (after
+   *  merging). Present ONLY when `filmNotes` was cut short to keep the answer
+   *  under the size budget; absent when every entry is listed. */
+  filmNotesTotal?: number;
+  /** One line, present exactly when `filmNotesTotal` is: how many entries are
+   *  listed and how to get the rest. */
+  filmNotesHint?: string;
   availableOnline?: boolean;
   /** FamilySearch Digital Library URL for a digitized book. Surfaced only; no
    *  tool here reaches the service behind it. */

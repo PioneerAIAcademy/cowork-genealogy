@@ -6,6 +6,10 @@
  * collections: a parish register filmed but never indexed is invisible there
  * and present here. Spec: docs/specs/catalog-search-tool-spec.md. Every
  * figure cited below is measured in dev/probe-catalog.ts.
+ *
+ * An answer is SIZED, not just shaped: see `shapeAnswer`. A hydrated item can
+ * carry thousands of film notes, and Claude Code saves any tool result over
+ * 50,000 characters to a file an agent may not be able to read back.
  */
 import type { Principal } from "../auth/principal.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
@@ -38,6 +42,14 @@ const DEFAULT_COUNT = 25;
 const MAX_COUNT = 200;
 const DEFAULT_HYDRATE = 10;
 const MAX_HYDRATE = 25;
+
+/** What the film notes of an answer are fitted into: the whole answer, as the
+ *  server serializes it (`JSON.stringify(result)`, compact), stays at or under
+ *  this many characters. Under the 50,000 at which Claude Code saves a tool
+ *  result to a file instead of handing it to the agent
+ *  (docs/specs/sidecar-read-tool-spec.md section 4), with margin. Local to this
+ *  tool until a shared constant exists. */
+export const ANSWER_CHAR_BUDGET = 40_000;
 
 /** Anchored at tool ENTRY, under Cowork's 60s MCP bridge abort. Bounds
  *  hydration; place resolution exposes no budget to bound. */
@@ -411,16 +423,110 @@ export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNo
   );
 }
 
+/** The one line a cut-short hit carries: how many entries are listed and the
+ *  way back. Names no input the tool does not have. */
+function filmNotesHint(listed: number, total: number, url: string | undefined): string {
+  return (
+    `${listed} of ${total} film-note entries are listed, to keep this answer under the size limit. ` +
+    "For the rest, hydrate fewer hits, or search with keywords that name this item" +
+    (url ? `; its catalog entry is ${url}` : "") +
+    "."
+  );
+}
+
+/**
+ * Fit the film notes into the answer budget. They are what make an answer big
+ * (a hydrated item can carry thousands), so they are the only thing cut, and
+ * the cut is a list: a hit that does not fit lists the FIRST entries that do
+ * (always at least one), says how many it has in `filmNotesTotal`, and carries
+ * `filmNotesHint`. Neither field is present on a hit that lists everything. No
+ * hit is dropped, nothing is cut mid-entry, and the serialized answer is never
+ * truncated.
+ *
+ * The room is what is left under `budget` after everything except the film
+ * notes of the hydrated hits. It is shared SMALLEST NEED FIRST: with `m` hits
+ * left, each gets `remaining / m`, and a hit that needs less than that is listed
+ * whole and leaves the difference to the others. So one giant at rank 1 cannot
+ * starve the small hits behind it, and the room small hits leave goes to the
+ * giant. Every character is counted exactly, the two fields a cut-short hit
+ * adds included, so the answer is at most `budget` unless the first entry of
+ * each cut-short hit does not fit, which the keep-one rule allows.
+ *
+ * A hit that already carries `filmNotesTotal` is final and counted as it is, so
+ * shaping a shaped answer changes nothing.
+ */
+export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWER_CHAR_BUDGET): void {
+  const chars = (v: unknown): number => JSON.stringify(v).length;
+  const open = result.hits.filter(
+    (h) => h.filmNotes && h.filmNotes.length > 0 && h.filmNotesTotal === undefined,
+  );
+  if (open.length === 0) return;
+
+  // The answer with those lists emptied: what the entries have to fit around.
+  const emptied = new Set<CatalogHit>(open);
+  const base = chars({
+    ...result,
+    hits: result.hits.map((h) => (emptied.has(h) ? { ...h, filmNotes: [] } : h)),
+  });
+  // What a list of entries adds to its hit: the entries and their commas, not
+  // the brackets, which `base` already holds as `[]`.
+  const costs = new Map(open.map((h) => [h, (h.filmNotes as CatalogFilmNote[]).map(chars)] as const));
+  const need = new Map(
+    open.map((h) => {
+      const c = costs.get(h) as number[];
+      return [h, c.reduce((a, b) => a + b, 0) + c.length - 1] as const;
+    }),
+  );
+
+  let remaining = budget - base;
+  const order = [...open].sort((a, b) => (need.get(a) as number) - (need.get(b) as number));
+  order.forEach((hit, i) => {
+    const entries = hit.filmNotes as CatalogFilmNote[];
+    const total = entries.length;
+    const needed = need.get(hit) as number;
+    const share = Math.floor(remaining / (order.length - i));
+    // A single entry cannot be cut by listing fewer of them.
+    if (needed <= share || total === 1) {
+      remaining -= needed;
+      return;
+    }
+    // What the two fields a cut-short hit adds take, for `listed` entries.
+    const capChars = (listed: number): number =>
+      chars({
+        filmNotesTotal: total,
+        filmNotesHint: filmNotesHint(listed, total, hit.url),
+      }) - 1;
+    const entryCosts = costs.get(hit) as number[];
+    let content = 0;
+    let listed = 0;
+    let used = 0;
+    // Never all of them: that is the case above. The first is kept whatever it costs.
+    for (let k = 0; k < total - 1; k++) {
+      const next = content + (k > 0 ? 1 : 0) + entryCosts[k];
+      const withCap = next + capChars(k + 1);
+      if (k > 0 && withCap > share) break;
+      content = next;
+      listed = k + 1;
+      used = withCap;
+    }
+    hit.filmNotes = entries.slice(0, listed);
+    hit.filmNotesTotal = total;
+    hit.filmNotesHint = filmNotesHint(listed, total, hit.url);
+    remaining -= used;
+  });
+}
+
 /**
  * Everything that shapes an answer once its hits are hydrated: one entry per
- * reel. The tool ends in it, and a recorded answer can be run through it (the
- * eval fixtures were reshaped that way), so there is one code path and not a
- * copy of it.
+ * reel, then the size budget. The tool ends in it, and a recorded answer can be
+ * run through it (the eval fixtures were reshaped that way), so there is one
+ * code path and not a copy of it.
  */
 export function shapeAnswer(result: CatalogSearchResult): CatalogSearchResult {
   for (const h of result.hits) {
     if (h.filmNotes) h.filmNotes = mergeFilmNotes(h.filmNotes);
   }
+  fitFilmNotes(result);
   return result;
 }
 
