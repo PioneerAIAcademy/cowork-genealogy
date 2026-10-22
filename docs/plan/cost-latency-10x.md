@@ -342,10 +342,10 @@ the first time it is pulled.
 - ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
   and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
 - **Not a gate: issue #3568 (option D, adopted 2026-10-20) sets what each rung costs in eval runs.**
-  Until it is built, a `model:` or `effort:` line on an agent stales every suite whose
-  SKILL.md names it (A3 item 10), so a rung on a research callee also buys a research run.
-  Once built, a callee no test runs live is fingerprinted by name, description and tools
-  only, and a rung stales just its own suite and the suites that run it live.
+  Built: a callee no test runs live is fingerprinted by `name`, `description`, `tools` and
+  `disallowedTools` only, so a `model:` or `effort:` rung stales just the agent's own suite
+  and the suites that run it live (`execution.run_agents`), not every suite whose SKILL.md
+  names it (A3 item 10). A rung on a research callee no longer buys a research run.
 
 **The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
 only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed

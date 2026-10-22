@@ -40,8 +40,8 @@ from harness.schema_validator import (
     validate_tree_gedcomx_json,
 )
 from harness.skill_stubs import parse_stub_skills
-from harness.snapshot import agent_refs_in_text
-from harness.workspace import DEFAULT_PLUGIN_AGENTS, skill_dir_for
+from harness.snapshot import router_suites
+from harness.workspace import DEFAULT_PLUGIN_AGENTS, TEST_ONLY_SKILLS, skill_dir_for
 
 
 # eval/harness/harness/runnability.py -> eval/harness/validators/
@@ -202,7 +202,8 @@ def check_runnable(
 
     # Validate execution.stub_skills entries. A stub is matched by exact
     # name in the PreToolUse hook (`skill_name in _stub_skills`), so a typo
-    # is a silent no-op: the callee executes for real, the test just gets
+    # is a silent no-op: a `Skill()` callee executes for real (an agent is denied
+    # by default anyway, just without the stub's canned text), the test gets
     # slower and costlier, and nothing in the run log says the stub never
     # fired. Same silent-unsatisfiability class as the correct_skill typo
     # below, and no xfail exemption — unlike correct_skill, there is no
@@ -442,16 +443,10 @@ def check_runnable(
     # A positive test in a ROUTING suite must list its stubs (#3568). Every agent
     # it spawns is denied by default, but the ownership validators skip only on a
     # LISTED stub (test_universal.py), so with an empty list they would grade the
-    # router's denied hand-offs as its own missing writes (#2156). Same rule
-    # `snapshot.router_suites` uses for "routing suite": a unit-test directory and
-    # a SKILL.md body naming at least one @plugin: agent.
+    # router's denied hand-offs as its own missing writes (#2156). "Routing
+    # suite" is `snapshot.router_suites`, the definition the snapshot uses.
     if spec.type == "positive" and not spec.is_direct and not stubbed:
-        skill_md = skill_dir_for(spec.skill, Path(skills_dir)) / "SKILL.md"
-        if (
-            (Path(tests_dir) / spec.skill).is_dir()
-            and skill_md.is_file()
-            and agent_refs_in_text(skill_md.read_text(encoding="utf-8"))
-        ):
+        if spec.skill in router_suites((Path(skills_dir), TEST_ONLY_SKILLS), Path(tests_dir)):
             return RunnabilityResult(
                 False,
                 f"a positive test in the routing suite '{spec.skill}' must list "

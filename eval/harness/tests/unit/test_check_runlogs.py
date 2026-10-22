@@ -3067,8 +3067,8 @@ def test_a_graded_log_with_no_key_for_the_agent_is_not_gated(tmp_path, monkeypat
 
 def test_the_agents_own_suite_is_gated_though_its_log_has_no_key_for_it(tmp_path, monkeypatch):
     """A skill converted to an agent keeps its suite, and that suite's graded log
-    can predate the conversion (search-records' released v7.json, written while
-    it was still a skill). Its next run embeds the agent in full, so the edit
+    can predate the conversion (search-records' graded log was v7.json, written
+    while it was still a skill, until v8). Its next run embeds the agent in full, so the edit
     reaches it: the own suite is gated whatever key form its log holds."""
     repo = _routing_repo(tmp_path, monkeypatch, {"packages/engine/plugin/skills/router/SKILL.md": "0" * 64})
     (repo / "eval/tests/unit/callee").mkdir()

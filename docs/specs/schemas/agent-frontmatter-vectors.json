@@ -126,6 +126,24 @@
       "input": "---\nname: l\ndescription: a\fb\n---\n",
       "expected_text": "name: l\ndescription: a\fb\n",
       "expected_digest": "aaa6b5c69b33c12eb1c39315eefb324128cad6ecaf75fd10227bf8bdb57f65c4"
+    },
+    {
+      "name": "quoted_key_after_discarded_key",
+      "input": "---\nname: q\nmodel: x\n\"tools\":\n  - Read\n---\nbody\n",
+      "expected_text": "---\nname: q\nmodel: x\n\"tools\":\n  - Read\n---\nbody\n",
+      "expected_digest": "d1b5e22d25a45b02631f008a84c07c6ddbe3924889b205d11351d4c115e2120d"
+    },
+    {
+      "name": "spaced_key_after_discarded_key",
+      "input": "---\nname: s\nmodel: x\ntools :\n  - Read\n---\nbody\n",
+      "expected_text": "---\nname: s\nmodel: x\ntools :\n  - Read\n---\nbody\n",
+      "expected_digest": "dd050292cbe876f2b6da41a4f72c5b24d126627a8bbbf22d0c7a2f4c6aa0061d"
+    },
+    {
+      "name": "column0_list_items",
+      "input": "---\nname: c\nmodel: x\ntools:\n- Read\n- mcp__genealogy__x\n---\nbody\n",
+      "expected_text": "name: c\ntools:\n- Read\n- mcp__genealogy__x\n",
+      "expected_digest": "2dcc0b028d8d10abef86e54709bc6810a45b1565aa3472b3b678a5709706f92f"
     }
   ]
 }

@@ -58,6 +58,12 @@ AGENT_FRONTMATTER_SUFFIX = "#frontmatter"
 # FRONTMATTER_KEYS in eval/app/lib/snapshot.ts.
 _FRONTMATTER_KEYS = ("name", "description", "tools", "disallowedTools")
 _FRONTMATTER_KEY_LINE_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):")
+# What a line inside a key's block may start with: indentation, a comment, or a
+# list item (YAML accepts `- Read` at column 0 under `tools:`). Any other
+# column-0 line is a key this parser does not read — `"tools":`, `tools :` —
+# so the fingerprint falls back to the whole text. Space and tab only, so the
+# two sides cannot disagree on what counts as whitespace (U+0085, U+2028).
+_FRONTMATTER_CONTINUATION_STARTS = (" ", "\t", "#", "-")
 
 _AGENTS_REL = "packages/engine/plugin/agents"
 
@@ -147,7 +153,9 @@ def frontmatter_fingerprint_text(normalized: str) -> str:
     key's occurrences in file order, joined with `\\n` plus a final `\\n`.
     Comment lines inside a kept block stay in: over-fingerprinting is the safe
     error. With no well-formed frontmatter (no first-line `---`, no closing
-    `---`, or a leading BOM) the whole text is returned, so nothing is dropped.
+    `---`, or a leading BOM) the whole text is returned, so nothing is dropped;
+    likewise when a column-0 line is neither a key line nor a continuation
+    (`_FRONTMATTER_CONTINUATION_STARTS`), such as a quoted or spaced key.
 
     Splits on `\\n` only, never `splitlines()`, which also breaks on U+2028,
     U+0085 and U+000C and would disagree with the TypeScript twin
@@ -167,6 +175,8 @@ def frontmatter_fingerprint_text(normalized: str) -> str:
         match = _FRONTMATTER_KEY_LINE_RE.match(line)
         if match:
             current = match.group(1)
+        elif line and line[0] not in _FRONTMATTER_CONTINUATION_STARTS:
+            return normalized
         if current in blocks:
             blocks[current].append(line)
     kept = [line for key in _FRONTMATTER_KEYS for line in blocks[key]]

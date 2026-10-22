@@ -34,9 +34,11 @@ const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
 // Mirrors AGENT_FRONTMATTER_SUFFIX in eval/harness/harness/snapshot.py.
 export const AGENT_FRONTMATTER_SUFFIX = '#frontmatter';
 
-// Mirrors _FRONTMATTER_KEYS / _FRONTMATTER_KEY_LINE_RE in snapshot.py.
+// Mirrors _FRONTMATTER_KEYS / _FRONTMATTER_KEY_LINE_RE /
+// _FRONTMATTER_CONTINUATION_STARTS in snapshot.py.
 const FRONTMATTER_KEYS = ['name', 'description', 'tools', 'disallowedTools'] as const;
 const FRONTMATTER_KEY_LINE_RE = /^([A-Za-z][A-Za-z0-9_-]*):/;
+const FRONTMATTER_CONTINUATION_STARTS = [' ', '\t', '#', '-'];
 
 // A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
 // `_HASH_RE` in eval/harness/harness/snapshot.py.
@@ -134,6 +136,7 @@ export function frontmatterFingerprintText(normalized: string): string {
   for (const line of lines.slice(1, end)) {
     const match = FRONTMATTER_KEY_LINE_RE.exec(line);
     if (match) current = match[1];
+    else if (line.length > 0 && !FRONTMATTER_CONTINUATION_STARTS.includes(line[0])) return normalized;
     if (current !== null && blocks.has(current)) blocks.get(current)!.push(line);
   }
   const kept = FRONTMATTER_KEYS.flatMap((k) => blocks.get(k)!);
