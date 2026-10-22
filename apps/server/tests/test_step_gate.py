@@ -293,3 +293,87 @@ def test_the_researchers_stop_outranks_the_boundary(boundary):
     assert _halted(out)
     assert "researcher pressed Stop" in out["hookSpecificOutput"]["permissionDecisionReason"]
     assert g.denials == 0, "the boundary never saw the call"
+
+
+# ── ctx is lazy ─────────────────────────────────────────────────────────────────
+
+
+def test_ctx_is_not_read_for_a_candidate_that_does_not_need_it(boundary):
+    """The plan computes ctx "when a research-plan call is checked".
+
+    Reading it on every call would query `research.json` on turns that never need it --
+    and `run_turn` forbids asking Postgres again once the store is down, which is how
+    an eager read was caught (test_once_the_store_is_down_nothing_asks_postgres_again).
+    """
+    reads = []
+
+    def ctx():
+        reads.append(1)
+        return {"open_items": True}
+
+    g = gate(boundary, ctx=ctx)
+    g.check(*spawn("search-records"), subagent=False)
+    g.check(*spawn("search-images"), subagent=False)
+    assert reads == [], "ctx was read for a candidate that never consults it"
+
+
+def test_ctx_is_read_once_for_the_gated_follower(boundary):
+    reads = []
+
+    def ctx():
+        reads.append(1)
+        return {"open_items": True}
+
+    g = gate(boundary, ctx=ctx)
+    g.check(*spawn("research-exhaustiveness"), subagent=False)
+    assert g.check(*spawn("research-plan"), subagent=False) is None
+    assert reads == [1]
+    # Cached: a second gated check does not re-read.
+    g2 = gate(boundary, steps=["research-exhaustiveness"], ctx=ctx)
+    g2.check(*spawn("research-plan"), subagent=False)
+    g2.check(*spawn("research-plan"), subagent=False)
+    assert reads == [1, 1]
+
+
+def test_a_ctx_read_that_raises_denies_the_follower(boundary):
+    """No ctx is the safe side: one needless pause, never an unasked plan."""
+    logs: list[dict] = []
+
+    def ctx():
+        raise RuntimeError("store down")
+
+    g = gate(boundary, ctx=ctx, log=lambda **kw: logs.append(kw))
+    g.check(*spawn("research-exhaustiveness"), subagent=False)
+    assert g.check(*spawn("research-plan"), subagent=False)[0] == "deny"
+    assert any(e.get("ev") == "step_ctx_failed" for e in logs)
+
+
+# ── the first-step seed ─────────────────────────────────────────────────────────
+
+
+def test_the_first_allowed_step_is_persisted_once(boundary):
+    seen: list[tuple] = []
+    g = gate(boundary, on_first_step=lambda step, mode: seen.append((step, mode)))
+    g.check(*spawn("search-records"), subagent=False)
+    g.check(*spawn("search-images"), subagent=False)
+    assert seen == [("search-records", "step")]
+
+
+def test_a_seeded_gate_never_rewrites_the_turns_step(boundary):
+    """A redelivery must not overwrite what the first attempt recorded."""
+    seen: list[tuple] = []
+    g = gate(boundary, steps=["search-records"],
+             on_first_step=lambda step, mode: seen.append((step, mode)))
+    g.check(*spawn("search-images"), subagent=False)
+    assert seen == []
+
+
+def test_a_failing_seed_write_does_not_fail_the_call(boundary):
+    logs: list[dict] = []
+
+    def boom(step, mode):
+        raise RuntimeError("pg down")
+
+    g = gate(boundary, on_first_step=boom, log=lambda **kw: logs.append(kw))
+    assert g.check(*spawn("search-records"), subagent=False) is None
+    assert any(e.get("ev") == "step_seed_failed" for e in logs)

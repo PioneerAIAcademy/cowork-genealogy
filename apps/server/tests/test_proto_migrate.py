@@ -34,6 +34,7 @@ PINNED = {
     "011_session_entries_uuid_index.sql": "ca31d8c245493b9b020ffe014d874ce098895f8b34053e37ac53039a5d281493",
     "012_turn_bearer.sql": "06d60ca9d298cf661e6260ec4dd89efed9b821cffa9b017d4881a48f31a529b0",
     "013_retention.sql": "d05d4e1dc4334aa0a0cc61d249ea37e0fced6fb1b83a39e6f29e2791d8067afe",
+    "014_turn_step.sql": "1611898991db67f262e0f88da9188f445d68c511ae8e79acdcc4d62814017296",
     # Phase 2. Renumbered FOUR times on main merges -- 008, 010, 012, 013 -- each taken
     # while this sat on the branch. Same file at its fifth name; the digest is the
     # file's, so it does not change with the number.

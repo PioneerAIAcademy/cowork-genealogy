@@ -440,14 +440,46 @@ class StepGate:
 
     def __init__(self, *, boundary, mode: str = "step", ctx: dict | None = None,
                  steps: list[str] | None = None,
-                 log: Callable[..., None] | None = None, turn_id: str = ""):
+                 log: Callable[..., None] | None = None, turn_id: str = "",
+                 on_first_step: Callable[[str, str], None] | None = None):
         self._b = boundary
         self.mode = mode or "step"
-        self.ctx = ctx
+        # May be a dict OR a callable resolved on first need. LAZY by design: the plan
+        # computes ctx "when a research-plan call is checked", and research-plan is the
+        # only candidate the predicate consults it for. Reading research.json on every
+        # turn would also query a store that may be down, which `run_turn` forbids once
+        # the first store error has landed.
+        self._ctx = ctx
+        self._ctx_resolved = not callable(ctx)
+        self._ctx_value = None if callable(ctx) else ctx
         self.steps: list[str] = [s for s in (steps or []) if s]
         self.denials = 0
         self._log = log
         self._turn_id = turn_id
+        # Called ONCE, when the turn's first step is allowed. The worker persists it to
+        # `turns.step`/`turns.mode` there and then -- NOT at complete() -- because the
+        # seed exists for an attempt that never reaches complete(): redelivery happens
+        # when an attempt is interrupted mid-turn, which is precisely the case a value
+        # written at close would miss.
+        self._on_first_step = on_first_step if not self.steps else None
+
+    # The one candidate the predicate gates on ctx, in both `step` and `wrapup` mode.
+    _CTX_CANDIDATE = "research-plan"
+
+    def _ctx_for(self, name: str):
+        """`ctx`, resolved only for the candidate that needs it."""
+        if name != self._CTX_CANDIDATE:
+            return None
+        if not self._ctx_resolved:
+            self._ctx_resolved = True
+            try:
+                self._ctx_value = self._ctx()
+            except Exception as exc:  # noqa: BLE001 - no ctx denies the follower, which is the safe side
+                self._ctx_value = None
+                if self._log is not None:
+                    self._log(ev="step_ctx_failed", turn_id=self._turn_id,
+                              error=f"{type(exc).__name__}: {exc}")
+        return self._ctx_value
 
     @property
     def first_step(self) -> str | None:
@@ -464,9 +496,18 @@ class StepGate:
         if candidate is None or subagent:
             return None
         name = self._b.bare_name(candidate)
-        if self._b.step_allowed(self.steps, name, self.mode, self.ctx):
+        if self._b.step_allowed(self.steps, name, self.mode, self._ctx_for(name)):
             if name != self._b.ROUTER and name not in self.steps:
+                first = not self.steps
                 self.steps.append(name)
+                if first and self._on_first_step is not None:
+                    callback, self._on_first_step = self._on_first_step, None
+                    try:
+                        callback(name, self.mode)
+                    except Exception as exc:  # noqa: BLE001 - persisting the seed must not fail the call
+                        if self._log is not None:
+                            self._log(ev="step_seed_failed", turn_id=self._turn_id,
+                                      step=name, error=f"{type(exc).__name__}: {exc}")
             return None
 
         self.denials += 1

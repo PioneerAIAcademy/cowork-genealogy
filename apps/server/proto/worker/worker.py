@@ -205,6 +205,8 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from proto.worker.options import (  # noqa: E402
+    StepGate,
+    load_step_boundary,
     DELEGATION_TOOLS,
     PRICE_PER_MTOK,
     SPEND_CAP_USD,
@@ -858,6 +860,34 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
                 row.get("tool_use_id"),
             ),
         )
+    conn.commit()
+
+
+# Step mode (decision 25). `turns.step`/`turns.mode` are written the moment a turn's
+# FIRST step is allowed, not at complete(), because the seed exists for an attempt that
+# never reaches complete(): redelivery is what happens when one is interrupted mid-turn.
+TURN_STEP_READ_SQL = "SELECT step, mode FROM turns WHERE turn_id = %s"
+TURN_STEP_WRITE_SQL = (
+    "UPDATE turns SET step = COALESCE(step, %s), mode = COALESCE(mode, %s) WHERE turn_id = %s"
+)
+
+
+def read_turn_step(conn: psycopg.Connection, turn_id: str) -> tuple[str | None, str | None]:
+    """What this turn already opened with, for a redelivered attempt to seed from."""
+    with conn.cursor() as cur:
+        cur.execute(TURN_STEP_READ_SQL, (turn_id,))
+        row = cur.fetchone()
+    if not row:
+        return (None, None)
+    step, mode = row[0], row[1]
+    return (step if isinstance(step, str) else None, mode if isinstance(mode, str) else None)
+
+
+def record_turn_step(conn: psycopg.Connection, turn_id: str, step: str, mode: str) -> None:
+    """Stamp the turn's first step. COALESCE, so a redelivery cannot overwrite what the
+    first attempt recorded -- the turn opened with that step whatever happens next."""
+    with conn.cursor() as cur:
+        cur.execute(TURN_STEP_WRITE_SQL, (step, mode, turn_id))
     conn.commit()
 
 
@@ -2397,10 +2427,40 @@ async def _run_turn(
             terminal["halted"] = True
             log(ev="delivered_exit", turn_id=turn_id, session_id=session_id)
 
+        # The step boundary (decision 25). This worker is the only plane that enforces
+        # it. A gate that cannot be built leaves `step_gate` None and the turn runs
+        # unbounded -- logged loudly, because a worker enforcing nothing looks exactly
+        # like the feature working, and this line is the only way to tell them apart.
+        step_gate = None
+        try:
+            boundary = load_step_boundary()
+            seeded_step, seeded_mode = read_turn_step(conn, turn_id)
+            step_gate = StepGate(
+                boundary=boundary,
+                # A redelivery keeps the mode the first attempt ran under; the
+                # researcher's message is the source only on the first.
+                mode=seeded_mode or boundary.step_mode(text),
+                # No research.json yet means no ctx, and the one gated follower is
+                # denied: a needless pause, never an unasked plan.
+                # Lazy: only a research-plan candidate consults it, so most turns
+                # never read research.json at all -- and a turn whose store has gone
+                # down must not query it again.
+                ctx=lambda: (
+                    boundary.step_ctx(read_research(conn, project_id) or {})
+                ),
+                steps=[seeded_step] if seeded_step else None,
+                log=log, turn_id=turn_id,
+                on_first_step=lambda step, mode: record_turn_step(conn, turn_id, step, mode),
+            )
+        except Exception as exc:  # noqa: BLE001 - a broken boundary must not deny the researcher their turn
+            log(ev="step_gate_unavailable", turn_id=turn_id, session_id=session_id,
+                error=f"{type(exc).__name__}: {exc}")
+
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
             halt=halt, on_delivered=on_delivered, on_halt_failed=on_halt_failed,
+            step_gate=step_gate,
         )
 
         def finish(tool_use_id: str) -> None:
