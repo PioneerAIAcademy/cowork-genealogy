@@ -1624,12 +1624,12 @@ async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: str
   const ref = asNull(op.stagedResultsRef);
   if (typeof ref === "string") {
     const staged = await readStagedEnvelopeQuery(projectPath, ref);
-    if (staged) {
-      if (op.tool === undefined || op.tool === null || op.tool === "") op.tool = staged.tool;
-      if (op.tool === "record_search" && staged.tool === "record_search") fillStagedSearchCounts(op, staged);
-    } else if (op.tool === undefined || op.tool === null || op.tool === "") {
-      return; // an unreadable ref is preflightStagedRef's error to report
-    }
+    // An unreadable ref is preflightStagedRef's error to report. Asking for the
+    // fields it would have filled first sends the caller back with the same dead
+    // ref, and it learns the ref is gone only on the second round trip.
+    if (!staged) return;
+    if (op.tool === undefined || op.tool === null || op.tool === "") op.tool = staged.tool;
+    if (op.tool === "record_search" && staged.tool === "record_search") fillStagedSearchCounts(op, staged);
   }
   const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
   const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
@@ -2135,11 +2135,34 @@ export async function researchLogAppend(
     }
 
     // A staged ref already finalized into a log entry (re-sent after a context
-    // compaction) is answered with that entry's id, never logged twice (#3547).
-    const alreadyLogged = async (op: { stagedResultsRef?: string | null }) => {
+    // compaction) is answered with that entry's id, never logged twice. A re-send
+    // that names a different plan item, outcome or tool is a correction the
+    // append-only log cannot take that way, so it is refused naming the entry
+    // instead of being dropped. The sidecar scan runs at most once per call.
+    let loggedRefs: Map<string, Awaited<ReturnType<typeof findLoggedStagedRef>>> | undefined;
+    const alreadyLogged = async (op: ResearchLogAppendOp) => {
       const ref = asNull(op.stagedResultsRef);
       if (typeof ref !== "string" || !Array.isArray(research.log)) return undefined;
-      return findLoggedStagedRef(projectPath, ref, research.log);
+      loggedRefs ??= new Map();
+      if (!loggedRefs.has(ref)) loggedRefs.set(ref, await findLoggedStagedRef(projectPath, ref, research.log));
+      const found = loggedRefs.get(ref);
+      if (!found) return undefined;
+      const prior = research.log.find((e: { id?: string }) => e.id === found.logId) ?? {};
+      const differs: string[] = [];
+      const sent = (v: unknown) => v !== undefined && v !== null && v !== "";
+      if (sent(op.tool) && op.tool !== prior.tool) differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      if (sent(op.planItemId) && op.planItemId !== prior.plan_item_id) {
+        differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
+      }
+      if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      if (differs.length > 0) {
+        throw new LogAppendError(
+          `stagedResultsRef '${ref}' is already logged as ${found.logId}, and this re-send differs in ` +
+            `${differs.join(", ")}. The log is append-only: leave ${found.logId} as it is and append a ` +
+            "new entry, without the stagedResultsRef, whose notes state the correction.",
+        );
+      }
+      return found;
     };
     const alreadyLoggedResult = (
       found: { logId: string; resultsRef: string; returnedCount: number | null },
@@ -2165,17 +2188,17 @@ export async function researchLogAppend(
       }
       const duplicate = duplicateStagedRefError(input.ops, projectPath);
       if (duplicate) return { ok: false, errors: [duplicate] };
-      const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
-      for (let i = 0; i < input.ops.length; i++) {
-        const found = await alreadyLogged(input.ops[i]);
-        if (found) logged.set(i, found);
-      }
       // Every op is checked before any refusal, so one retry can fix them all;
-      // the batch still writes all or nothing (issue #3547).
+      // the batch still writes all or nothing.
+      const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
       const preflightErrors: string[] = [];
       for (let i = 0; i < input.ops.length; i++) {
-        if (logged.has(i)) continue;
         try {
+          const found = await alreadyLogged(input.ops[i]);
+          if (found) {
+            logged.set(i, found);
+            continue;
+          }
           await preflightRequiredFields(input.ops[i], projectPath);
           await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);

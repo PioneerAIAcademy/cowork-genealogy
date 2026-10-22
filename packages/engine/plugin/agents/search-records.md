@@ -159,8 +159,8 @@ search back to it rather than running it yourself.
 
 **Pre-work — issue this before constructing the query. Do not drop the call.**
 
-- **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): for a United States federal census, `wiki_read({ url: "https://www.familysearch.org/en/wiki/United_States_Census_{year}" })` for the year you are searching — its Contents section lists what that schedule recorded. For any other country, `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` — `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
-- **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link before asserting or denying a field.
+- **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
+- **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
 
 **Choose a search strategy:**
@@ -644,7 +644,7 @@ Call `research_log_append` once per search — it assigns the next `log_` id, st
 
 Never write a bare sentence there — a prose `query` carrying an ARK is rejected before the tool runs, so nothing is logged. Keep ARKs in a keyed field.
 
-**A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` only to override it (`partial` for a collection mismatch, `error`), and `resultsExamined` only when you triaged fewer rows than came back.
+**A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
 **A zero-result search** (no staged handle): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
 

@@ -277,6 +277,42 @@ describe("research_log_append", () => {
       expect((await readJson("research.json")).log).toHaveLength(2);
     });
 
+    it("refuses a re-send that names a different plan item or outcome, naming the entry", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      await researchLogAppend({ projectPath: dir, planItemId: "pli_001", stagedResultsRef: handle!.resultsRef } as any);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+
+      const again = await researchLogAppend({
+        projectPath: dir,
+        planItemId: "pli_004",
+        outcome: "partial",
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(again.ok).toBe(false);
+      const [message] = (again as { errors: string[] }).errors;
+      expect(message).toContain("already logged as log_001");
+      expect(message).toContain("planItemId 'pli_004'");
+      expect(message).toContain("outcome 'partial'");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("reports a dead ref as the staged-ref error even when tool is sent and the counts are omitted", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        notes: "re-log after compaction",
+        stagedResultsRef: `${STAGING_SUBDIR}/pruned.json`,
+      } as any);
+
+      expect(result.ok).toBe(false);
+      const [message] = (result as { errors: string[] }).errors;
+      expect(message).toContain("is not in results/.staging/");
+      expect(message).not.toContain("missing required");
+    });
+
     it("still refuses a ref that was never logged", async () => {
       await writeProject(baseResearch());
       const result = await researchLogAppend({

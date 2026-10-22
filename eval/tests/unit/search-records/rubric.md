@@ -184,7 +184,8 @@ field. For a search that returned results and was logged with its
 `stagedResultsRef`, `research_log_append` fills `query`, `results_examined`,
 `results_available` and `outcome: "positive"` from the staged search itself, so
 those are the tool's, not the skill's: grade only `notes`, whether an `outcome`
-override was owed and sent (`partial` for a collection mismatch), and whether a
+override was owed and sent (`negative` when the ranker found no match in the
+pool, `partial` for a collection mismatch), and whether a
 lower `results_examined` was sent when fewer rows were triaged than returned. For
 a zero-result search, the skill still writes `query`, `outcome` and
 `results_examined` itself, and they are graded as below.
@@ -195,7 +196,7 @@ the diff is never evidence.
 
 - **pass:** Every field the skill authored is right. A skill-written `query` reproduces the search — the parameters actually sent, not a paraphrase, and complete enough to re-run. An `outcome` override is sent where one is owed. `notes` is a specific one-liner a later reader could act on ("1850 Schuylkill household matched; 1870 collection-mismatch candidate rejected on collection year"), not a restatement of the query.
 - **partial:** The entry is broadly right but one authored field is thin: a skill-written `query` omits a parameter that materially shaped the result set; a skill-written `results_examined` is approximate ("about 3") when an exact count was available; or `notes` is generic ("search completed", "found some results") and carries no information a future reader lacks.
-- **fail:** A skill-written `query` misrepresents what was searched (wrong parameters, or so abbreviated the search cannot be reconstructed); a collection mismatch is left at the tool's `positive` with no `partial` override; or a skill-written `results_examined` is materially wrong in a way that would mislead an exhaustiveness claim.
+- **fail:** A skill-written `query` misrepresents what was searched (wrong parameters, or so abbreviated the search cannot be reconstructed); a collection mismatch or a no-match pool is left at the tool's `positive` with no override; or a skill-written `results_examined` is materially wrong in a way that would mislead an exhaustiveness claim.
 
 ## Nil escalation
 
