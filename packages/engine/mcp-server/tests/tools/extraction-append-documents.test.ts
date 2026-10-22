@@ -634,6 +634,39 @@ describe("extraction_append: documents", () => {
       expect(roles["John Smith"]).not.toBe("groom");
     });
 
+    it("two unlinked principals, bride listed first: her late husband is still not the groom", async () => {
+      const roles = await rolesOf("capture:unlinked-bride-first", "wedding notice", [
+        person("b", "Mary", "Smith", "female", { principal: true, facts: marriage }),
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),
+        person("h", "John", "Smith", "male"),
+      ], [{ type: "couple", person1: "h", person2: "b" }]);
+      expect(roles["Patrick Flynn"]).toBe("groom");
+      expect(roles["John Smith"]).not.toBe("groom");
+    });
+
+    it("a sole couple partner with no stated gender takes no side, and neither does her father", async () => {
+      const roles = await rolesOf("capture:genderless-bride", "wedding notice", [
+        person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),
+        person("b", "Leslie", "Kelly", undefined as any),
+        person("bf", "Hugh", "Kelly", "male"),
+      ], [
+        { type: "couple", person1: "g", person2: "b" },
+        { type: "parent_child", person1: "bf", person2: "b" },
+      ]);
+      expect(roles["Patrick Flynn"]).toBe("groom");
+      expect(roles["Leslie Kelly"]).not.toMatch(/groom|bride/);
+      expect(roles["Hugh Kelly"]).not.toMatch(/_of_groom|_of_bride/);
+    });
+
+    it("in an anniversary notice, a wife with no stated gender is not made the husband", async () => {
+      const roles = await rolesOf("capture:genderless-wife", "anniversary notice", [
+        person("h", "Patrick", "Flynn", "male", { principal: true, facts: [{ type: "anniversary", date: "15 October 1920" }] }),
+        person("w", "Leslie", "Flynn", undefined as any),
+      ], [{ type: "couple", person1: "h", person2: "w" }]);
+      expect(roles["Patrick Flynn"]).toBe("husband");
+      expect(roles["Leslie Flynn"]).not.toMatch(/husband|wife/);
+    });
+
     it("a widower linked to his late wife and his bride makes neither the bride", async () => {
       const roles = await rolesOf("capture:widower", "wedding notice", [
         person("g", "Patrick", "Flynn", "male", { principal: true, facts: marriage }),

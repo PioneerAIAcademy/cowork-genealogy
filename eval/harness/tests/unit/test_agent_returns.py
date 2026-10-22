@@ -87,8 +87,15 @@ def test_keeps_an_agents_own_indentation_inside_the_frame():
     assert strip_agent_return_trailer(_framed(nested)) == nested
 
 
+def test_strips_a_frame_that_follows_a_runtime_note():
+    """The header says notes may sit above it (a turn-limit note, say); the note
+    is kept and the report under the header still comes back unindented."""
+    note = "Note: the subagent stopped at its turn limit.\n"
+    assert strip_agent_return_trailer(note + _framed(REPORT)) == note + REPORT
+
+
 def test_leaves_a_report_that_only_mentions_the_header_untouched():
-    """The other direction: the header counts only at the very start."""
+    """The other direction: the header counts only at the start of a line."""
     text = "Quoting the runtime: [Subagent hand-back] is a header.\n  indented line"
     assert strip_agent_return_trailer(text) == text.strip()
 

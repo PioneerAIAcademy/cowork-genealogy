@@ -2279,7 +2279,7 @@ out into the stored assertion's `value`, once. For a name it is appended to the
 surname (the given name when there is none). For a fact it is appended to the
 assertion's value, which for a dated fact is the date, so the flag's marker never
 reaches the `date` or `place`; a marker the agent typed into either stays where it
-typed it. The summary prints one marker per fact, however it arrived, and the calendar flag and the census surname
+typed it. The summary does not print the flag's marker twice, and the calendar flag and the census surname
 comparison read the value without it. The `person_evidence` `confident`
 precondition above reads `value`, so a doubt the flag alone recorded would
 otherwise never reach it.

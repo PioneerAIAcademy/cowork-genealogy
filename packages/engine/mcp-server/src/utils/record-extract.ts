@@ -896,8 +896,9 @@ function newspaperRoles(
     const byId = new Map(ps.map((q) => [q.id, q]));
     // The pair is the principals. When the agent marked only one, that
     // principal's sole couple partner completes it, so an unmarked bride is
-    // still the bride; a second partner, or one the text names otherwise (a
-    // late husband), is never the groom.
+    // still the bride; a second partner, one the text names otherwise (a late
+    // husband), or one whose gender is not stated against the principal's, is
+    // never given a side, since the side is read from gender.
     const principalIds = new Set(ps.filter((q) => q.person.principal === true).map((q) => q.id));
     const pairIds = new Set(principalIds);
     if (principalIds.size === 1) {
@@ -906,7 +907,9 @@ function newspaperRoles(
         .filter(([a, b]) => a === only || b === only)
         .map(([a, b]) => (a === only ? b : a))
         .filter((id) => byId.has(id));
-      if (partners.length === 1 && !statedRelations?.get(partners[0])) pairIds.add(partners[0]);
+      const sex = (id: string) => genderOf(byId.get(id)!.person);
+      const opposite = partners.length === 1 && sex(only) !== "" && sex(partners[0]) !== "" && sex(only) !== sex(partners[0]);
+      if (opposite && !statedRelations?.get(partners[0])) pairIds.add(partners[0]);
     }
     for (const p of ps.filter((q) => pairIds.has(q.id))) {
       const female = genderOf(p.person) === "female";

@@ -545,17 +545,20 @@ _AGENT_RETURN_TRAILERS = (
 # Claude Code 2.1.294 (SDK 0.2.165) wraps a subagent's return in a one-line
 # "[Subagent hand-back] ... The report follows:" header and indents every line
 # of the report by two spaces. Graded raw, no line of the agent's own text starts
-# at column zero, so every line-anchored check fails on a correct return.
-_HAND_BACK_HEADER = re.compile(r"\A\[Subagent hand-back\][^\n]*\n")
+# at column zero, so every line-anchored check fails on a correct return. The
+# header may follow runtime notes ("Notes above this frame…"), so it is found at
+# the start of any line, never inside one.
+_HAND_BACK_HEADER = re.compile(r"^\[Subagent hand-back\][^\n]*\n", re.M)
 
 
 def strip_agent_return_frame(text: str) -> str:
-    """The report inside the runtime's hand-back frame, at its own indentation."""
-    m = _HAND_BACK_HEADER.match(text)
+    """The report inside the runtime's hand-back frame, at its own indentation,
+    after any notes the runtime put above the frame."""
+    m = _HAND_BACK_HEADER.search(text)
     if not m:
         return text
     lines = text[m.end():].split("\n")
-    return "\n".join(line[2:] if line.startswith("  ") else line for line in lines)
+    return text[: m.start()] + "\n".join(line[2:] if line.startswith("  ") else line for line in lines)
 
 
 def strip_agent_return_trailer(text: str) -> str:
