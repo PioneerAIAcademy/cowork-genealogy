@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 28, hint-samples.csv row 978, flags adds_father/adds_mother, confidence 3). Draft transcribed from an 1871 Cardiganshire census household; unverified. The tree's own 1891 census source names a different father (Owen Morris Senr) and the 1911 census a different birthplace, so a false match is the likely outcome."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 28, hint-samples.csv row 978, flags adds_father/adds_mother, confidence 3). Resolved 2026-10-21 (#3632) as outcome 2: the hint (1871 Cardiganshire, Owen son of John and Dorothy Morris, ark:/61903/1:1:V555-VPP) is a different boy. The subject's father is Owen Morris, b. ~1815-1818 Aberhafesp, Montgomeryshire (1891 census ark:/61903/1:1:45VS-5PZ, Owen Morris Senr and Junr; 1871 Newtown household ark:/61903/1:1:KDDP-KLH); his mother is not identified. f2 guards against John and Dorothy Morris.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:V555-VPP",
+    "identity": "different"
+  }
 }
