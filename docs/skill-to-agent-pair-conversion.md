@@ -529,9 +529,9 @@ up while the body ran on the main thread, and each cost a run to find.
    pending list. Three agents are EXCLUDED from the contract rather than
    pending: `image-reader`, which by spec returns a transcription and nothing
    else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
-   `source-evaluation` (issue #2796), which writes nothing, so its id-bearing
-   report IS its whole output — conforming would push it below the caller's
-   print line, where a production relay drops it; and `record-structurer`,
+   `source-evaluation` (issue #2796), which logs its report verbatim and writes
+   nothing else, so its id-bearing report IS its whole output — conforming would
+   push it below the caller's print line, where a production relay drops it; and `record-structurer`,
    whose whole return is `extraction_append`'s code-written summary, verbatim
    (lead, 2026-09-29). (The former `project-status` agent carried the "PS
    return: A" exemption too; it was deleted outright by issue #3112.)

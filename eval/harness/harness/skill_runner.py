@@ -1001,6 +1001,8 @@ async def run_skill(
         routing_resolved["tool_use_id"] = tool_use_id
         if name in _stub_skills:
             denial = stub_denial(name, _stub_skills[name])
+            # Its hand-back tells the caller its turn goes on; this one ends.
+            denial["hookSpecificOutput"].pop("additionalContext", None)
         else:
             callee = repr(name) if name else "a callee whose name cannot be read"
             denial = {
