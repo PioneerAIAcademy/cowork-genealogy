@@ -4940,6 +4940,10 @@ function proofSummaryInvariants(
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
 ): string[] {
   const tier = entry?.tier;
+  // Every finding is reported, not the first: the other proof-summary invariant
+  // calls in `applyOne` all accumulate, and a summary that breaks two rules and
+  // is told about one is sent round again for the other.
+  const errors: string[] = [];
 
   // `shortfall` answers "why is this conclusion not higher?", so a conclusive
   // tier owes `none` and nothing else may claim it. Both fields sit on THIS
@@ -4952,36 +4956,36 @@ function proofSummaryInvariants(
   const shortfall = entry?.shortfall;
   if (typeof shortfall === "string") {
     if (CONCLUSIVE_TIERS.has(tier) && shortfall !== "none") {
-      return [
+      errors.push(
         `tier '${tier}' is a conclusive answer — it reached a verdict, so nothing ` +
           `is holding it back and shortfall must be 'none'; got '${shortfall}'. ` +
           `Use 'ceiling', 'gap' or 'conflict' only on a tier that did NOT reach ` +
           `one (probable, possible, not_proved).`,
-      ];
+      );
     }
     if (!CONCLUSIVE_TIERS.has(tier) && shortfall === "none") {
-      return [
+      errors.push(
         `shortfall 'none' says nothing is holding this conclusion back, but tier ` +
           `'${tier}' reached no conclusive answer — so something is. Name it: ` +
           `'ceiling' (the reachable record is exhausted), 'gap' (a reachable ` +
           `source is still unsearched), or 'conflict' (an unresolved conflict ` +
           `names this question in its blocks_question_ids).`,
-      ];
+      );
     }
   }
 
-  if (!CONCLUSIVE_TIERS.has(tier)) return [];
+  if (!CONCLUSIVE_TIERS.has(tier)) return errors;
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
-    return [
+    errors.push(
       `tier '${tier}' requires question '${entry?.question_id}' to already have its stop gate ` +
         `satisfied (search_stop.stopped_because is 'question_answered', 'record_exhausted', or ` +
         `'nothing_further_reachable') from BEFORE this call (a batch may not declare exhaustiveness ` +
         `and consume it for a tier in the same call) — invoke research-exhaustiveness first, in its ` +
         `own call.`,
-    ];
+    );
   }
-  return [];
+  return errors;
 }
 
 /** The most words a narrative should run, by proof vehicle: the budgets in

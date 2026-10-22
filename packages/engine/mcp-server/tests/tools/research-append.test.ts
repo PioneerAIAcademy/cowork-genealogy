@@ -2854,6 +2854,50 @@ describe("research_append (Phase 3)", () => {
       expect(r.errors.join(" ")).toContain("conclusive answer");
     });
 
+    // A summary that breaks two rules used to hear about one: the function
+    // returned at the first, and the second came back on the retry. The default
+    // project here has q_001 undeclared, so a conclusive tier breaks the stop
+    // gate as well as the shortfall rule.
+    describe("a summary breaking two rules is told about both, in one call", () => {
+      const stopGate = /requires question 'q_001' to already have its stop gate/;
+      const shortfallRule = /is a conclusive answer/;
+
+      it.each([
+        ["proved", "gap"],
+        ["proved", "ceiling"],
+        ["disproved", "conflict"],
+      ])("tier '%s' with shortfall '%s' on an undeclared question reports both", async (tier, shortfall) => {
+        await writeProject();
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await append(tier, shortfall);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.filter((e) => shortfallRule.test(e))).toHaveLength(1);
+        expect(r.errors.filter((e) => stopGate.test(e))).toHaveLength(1);
+        // Order is unchanged: the shortfall finding stays first.
+        expect(r.errors[0]).toMatch(shortfallRule);
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      });
+
+      it("a conclusive tier with shortfall 'none' on an undeclared question reports only the stop gate", async () => {
+        await writeProject();
+        const r = await append("proved", "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.filter((e) => stopGate.test(e))).toHaveLength(1);
+        expect(r.errors.some((e) => shortfallRule.test(e) || /reached no conclusive answer/.test(e))).toBe(false);
+      });
+
+      it("a lower tier with shortfall 'none' reports only the shortfall rule", async () => {
+        await writeProject();
+        const r = await append("probable", "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.filter((e) => /reached no conclusive answer/.test(e))).toHaveLength(1);
+        expect(r.errors.some((e) => stopGate.test(e))).toBe(false);
+      });
+    });
+
     it.each(["proved", "disproved"])(
       "accepts shortfall 'none' on conclusive tier '%s'",
       async (tier) => {
