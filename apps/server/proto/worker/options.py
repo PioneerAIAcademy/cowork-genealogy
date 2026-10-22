@@ -46,11 +46,13 @@ identifiers reach it through a closure, never a global.
 from __future__ import annotations
 
 import dataclasses
+import importlib.util
 import json
 import os
 import re
 import sys
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Any
 
 from app.agent.continue_policy import (
@@ -365,6 +367,121 @@ STOP_REASON = "Stopped by the researcher."
 
 # U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
 # checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
+# ── The step boundary (decision 25) ──────────────────────────────────────────────
+#
+# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, the way
+# `context_policy.py` loads `guard_project_files.py`. It is not a hook anywhere:
+# this worker is the only plane that ENFORCES the boundary, and it does so from
+# its own `PreToolUse` below.
+
+def _default_plugin_dir() -> Path:
+    """Where the plugin is. ``ENGINE_PLUGIN_DIR`` in the deployed image, which the
+    worker's predeploy hook puts at ``/opt/genealogy/plugin``; the checkout otherwise.
+    Read the same way ``worker.py`` reads it, so the two cannot point at different
+    copies."""
+    env = os.environ.get("ENGINE_PLUGIN_DIR")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parents[4] / "packages" / "engine" / "plugin"
+
+
+def load_step_boundary(path: Path | None = None):
+    """Import the plugin's step boundary. Raises if it is missing.
+
+    A checkout always has the file and the worker bundle ships the plugin, so an image
+    without it is broken in a way that must be LOUD -- the alternative is a turn that
+    silently enforces no boundary, which looks exactly like the feature working.
+    """
+    target = Path(path) if path is not None else _default_plugin_dir() / "hooks" / "step_boundary.py"
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", target)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {target}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# What a step arrives as. Cowork's spawn tool is `Agent`; the SDK path uses `Task`;
+# `Skill` routes a skill. All three reach a main-thread `PreToolUse` (phase 0,
+# ADR-0005 items 1 and 10).
+STEP_TOOLS = frozenset({"Agent", "Task", "Skill"})
+
+# Where the name sits. `subagent_type` on a spawn; a `Skill` call names the skill.
+# Every one arrives plugin-prefixed in Cowork (`genealogy-research:research`), which
+# is why the boundary compares after the last `:`.
+_STEP_NAME_KEYS = ("subagent_type", "skill", "command", "name")
+
+
+def step_candidate(tool_name: str, tool_input: Any) -> str | None:
+    """The agent or skill this call would START, or None when it is not a step."""
+    if tool_name not in STEP_TOOLS:
+        return None
+    data = tool_input if isinstance(tool_input, dict) else {}
+    for key in _STEP_NAME_KEYS:
+        raw = data.get(key)
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip()
+    return None
+
+
+class StepGate:
+    """One turn's step boundary, with the deny-then-halt rule (decision 25).
+
+    **Deny first; halt only on a SECOND attempt.** The halt is the backstop, not the
+    first move. A model that does what the deny says -- report the step that finished
+    and end its turn -- never reaches the halt at all. One that keeps spawning has
+    ignored the instruction, and the halt ends the turn and denies the call it stopped.
+
+    `steps` is seeded on a REDELIVERY from the turn row, because the hook is rebuilt
+    per attempt and redelivery is the normal resume path: without the seed a resumed
+    attempt would think it was starting the turn's first step and let a second one
+    through.
+    """
+
+    def __init__(self, *, boundary, mode: str = "step", ctx: dict | None = None,
+                 steps: list[str] | None = None,
+                 log: Callable[..., None] | None = None, turn_id: str = ""):
+        self._b = boundary
+        self.mode = mode or "step"
+        self.ctx = ctx
+        self.steps: list[str] = [s for s in (steps or []) if s]
+        self.denials = 0
+        self._log = log
+        self._turn_id = turn_id
+
+    @property
+    def first_step(self) -> str | None:
+        """What `turns.step` stores: the step this turn opened with."""
+        return self.steps[0] if self.steps else None
+
+    def check(self, tool_name: str, tool_input: Any, *, subagent: bool):
+        """`(decision, reason)` to stop this call, or None to let it through.
+
+        A SUBAGENT's call is never a step: a step is what the router spawns, and work
+        inside one is that step running. Gating there would cut a step in half.
+        """
+        candidate = step_candidate(tool_name, tool_input)
+        if candidate is None or subagent:
+            return None
+        name = self._b.bare_name(candidate)
+        if self._b.step_allowed(self.steps, name, self.mode, self.ctx):
+            if name != self._b.ROUTER and name not in self.steps:
+                self.steps.append(name)
+            return None
+
+        self.denials += 1
+        reason = self._b.deny_reason(name, self.mode)
+        decision = "halt" if self.denials > 1 else "deny"
+        if self._log is not None:
+            # Rider 2: log EVERY halt. The router prose is identical on both planes,
+            # so this rate is how often a run tries to cross a boundary it was told
+            # to stop at -- the only measure we get of Cowork, which has no hook.
+            self._log(ev="step_boundary", turn_id=self._turn_id, decision=decision,
+                      candidate=name, opened_with=self.first_step, mode=self.mode,
+                      denials=self.denials)
+        return (decision, reason)
+
+
 STORE_UNAVAILABLE_REASON = (
     "A server problem is keeping this run from checking for a Stop or its spend limit, so "
     "it is stopping here and will pick up again shortly. Findings already written to the "
