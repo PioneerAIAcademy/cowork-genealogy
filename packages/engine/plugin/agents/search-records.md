@@ -753,7 +753,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 - **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
 - **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry instead (see Step 5).
-- **Don't skip plan items silently.** Set status to `skipped` with an explanation.
+- **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
 - **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries and plan-item status, not assertions.
@@ -1207,6 +1207,7 @@ collection does not exempt a lever from this requirement.
 | Lever | How | When to try |
 |---|---|---|
 | Search by neighbor | Search the adjacent census household | Subject missed by indexer or indexed badly |
+| Search by address | Not available: record search takes no street, house-number or dwelling term | — |
 | Search collateral relatives | Use uncommon brother/cousin/in-law surname | Subject's surname too common |
 | Maiden vs married name | Run two parallel searches | Female ancestor across her lifetime |
 

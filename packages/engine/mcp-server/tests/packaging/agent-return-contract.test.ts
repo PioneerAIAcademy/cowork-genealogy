@@ -39,7 +39,7 @@ const EXCLUDED: Record<string, string> = {
   // summary_for_user paragraph (no identifiers) printed in place of the return
   // would drop them in a production relay while the unit harness, which relays
   // the whole return, stayed green.
-  "source-evaluation.md": "returns the audit report as its whole output; it writes nothing, so the report is the deliverable",
+  "source-evaluation.md": "returns the audit report as its whole output; it logs that report verbatim and writes nothing else, so the report is the deliverable",
 };
 
 const PENDING: Record<string, string> = {
