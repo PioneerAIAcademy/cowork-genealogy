@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_g9j",
+    "skill": "proof-conclusion",
+    "name": "Re-concluding after later searches refreshes the narrative and the search summary together",
+    "type": "positive",
+    "description": "Mined from issue #3177 puzzle 4 (G9GJ-959, Iram F. Hyde), the graded Cowork run of 2026-10-09. q_002 (parents) already has ps_002 at not_proved. Its narrative's 'What could resolve it' and its exhaustive_search_summary both name Walworth's Hyde Genealogy, the 1855 NY census image and the 1880 father's-birthplace column as still to search. log_019, log_020 and log_021 then searched all three. On re-invocation the agent must update ps_002 in place so that both fields describe the current search state. In the mined run it updated the summary alone and left the narrative recommending the three records it had just searched.",
+    "tags": [
+      "from-cowork",
+      "proof",
+      "parentage",
+      "no-new-proof-expected",
+      "stale-proof-refresh",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run your preconditions gate, then conclude the question at whatever tier the evidence supports, including `possible` or `not_proved`. Decline only if the gate itself fails.\n\nquestionId: q_002\nprojectPath: <workspace>",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "judge_context": [
+    "q_002 (who were Iram Hyde's parents) already has ps_002 at not_proved. In the BEFORE state both its `narrative_markdown` ('What could resolve it') and its `exhaustive_search_summary` ('Not yet examined') list Walworth's Hyde Genealogy (1864), the 1855 NY state census image, and the 1880 census father's-birthplace column as records still to search.",
+    "Three log entries made after ps_002 was written searched exactly three records, and only these: (1) log_019 read IRAM'S OWN entry on the 1855 NY state census image (dwelling 163: birthplace 'Washington' [Co., NY], 57 years in town); (2) log_020 read DAUGHTER MARGARET CLARK'S entry on the 1880 census image (father born 'N Hamshire'); (3) log_021 searched the full text of BOTH volumes of Walworth's Hyde Genealogy (no Iram). None of them names Iram's parents. Nothing else was searched after ps_002: the other daughters' 1880 entries (Christina Wilson, Elizabeth Skellie), all three daughters' death certificates, a search of the 1855 census for kin households beyond Iram's own dwelling, New Hampshire town records and Washington Co. probate are all still unsearched.",
+    "WHETHER ps_002 WAS REFRESHED IS NOT YOURS TO GRADE. The deterministic validator test_stale_proof_refreshed reads the persisted file and asserts it: ps_002 is still the only summary for q_002, both `narrative_markdown` and `exhaustive_search_summary` were rewritten, and neither still lists Walworth's Hyde Genealogy as still to search. Do NOT score Correctness or Completeness on whether either field still names a searched record. Your prompt shows ps_002 twice, the stale BEFORE state and the new values under 'Content written to files', and grading the refresh by reading them has already failed four compliant runs.",
+    "Grade only what a reader must: (1) the tier, below; (2) whether the NEW narrative reports the three later findings accurately where it mentions them: the 1855 entry gives birthplace 'Washington' [Co., NY] and 57 years in town, Margaret Clark's 1880 entry gives father born New Hampshire, and Walworth has no Iram. A finding misstated or invented is Correctness 1. (3) Whether the reply is honest about what was written. The reply's claims never establish compliance; the persisted entry does, and the validator reads it.",
+    "Listing a genuinely unsearched record is correct, even when it resembles a searched one: the other daughters' 1880 entries, the daughters' death certificates, the 1855 census searched for kin households, New Hampshire town records and Washington Co. probate are all still unsearched.",
+    "Raising the tier is NON-COMPLIANT: no record names Iram's parents, and the candidate households in the narrative are a pool, not evidence.",
+    "Score `Tree encoding` NULL (N/A): the conclusion is not_proved, so nothing is encoded in the tree."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  }
+}

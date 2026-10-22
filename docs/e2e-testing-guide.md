@@ -15,7 +15,7 @@ assigned, or author a new one from a FamilySearch person.
 Which steps are yours depends on how you got here:
 
 - **Assigned a fixture** — a GitHub issue titled "test `<slug>`". This is the
-  normal case. Do steps **0, 1a, then 4–9**.
+  normal case. Do steps **0, 1a, the [website run](#website-run--research-it-on-the-alpha-site-then-send-feedback--browser), then 4–9**.
 - **Authoring a new fixture** — a person you want to turn into a test, whether
   you picked them yourself or a `feedback`-labelled issue sent you here. Do
   **every** step.
@@ -23,12 +23,17 @@ Which steps are yours depends on how you got here:
   The fixture is already authored, so do steps **0, 5–9**: skip 1a/1b/2/3
   (authoring) and 4 (live debugging, which only delays the measurement). See
   "The standing panel" below.
+- **Running a record-hint fixture** — a GitHub issue titled "e2e run
+  `<date>`: `<slug>`". Do the
+  [website run](#website-run--research-it-on-the-alpha-site-then-send-feedback--browser)
+  first, then steps **0, 5–9**.
 
 | Step | What you do | Where |
 |---|---|---|
 | 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
 | 1 Choose your path | assigned a fixture → 1a; authoring a new one → 1b | 🤖 Claude Code |
 | 1a Resolve *(the norm)* | `/resolve-record-hint` — verify the hint, write the truth | 🤖 Claude Code |
+| Website run *(record-hint)* | research it on the alpha site, then **Send Feedback** — before the PR | 🌐 Browser |
 | 1b Author | `/author-e2e-fixture` — pick a deceased, stable person | 🤖 Claude Code |
 | 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
@@ -45,6 +50,7 @@ Which steps are yours depends on how you got here:
 |---|---|---|---|
 | ⌨️ | **Terminal** | A plain shell where you type `make …` (Windows: double-click the matching `.bat` in `eval\`). | Set up, validate, seed, run, view. |
 | 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app opened on your **repo root**, or `claude` in a terminal there — either works, and the Code tab is the usual Windows path. **Not** Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout and identical on every platform. | Author the fixture, interpret the result, grade the run. |
+| 🌐 | **Alpha website** | <https://genealogy-workbench.fly.dev>, the hosted research app, signed in with your FamilySearch account. | Run the research the way a user does, and send feedback on it. |
 | 🖥️ | **Cowork** | The shipping product, with the plugin + MCP extension installed. | Watch `/research` work on the fixture live, before you spend money on a headless run. |
 
 A fourth surface matters throughout: the **Research Viewer** (Electron,
@@ -246,8 +252,9 @@ which `make matcher-accuracy` scores when the verdict is same or different
    turns the fixture into a restraint test: the agent must *not* assert the
    wrong claim, and must document the negative conclusion.
 
-Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
-here (nothing was stripped, and the skill already validated).
+Once the skill hands off, do the **website run** below, then go to **Step 4** —
+Steps 2 and 3 don't apply here (nothing was stripped, and the skill already
+validated).
 
 > Worked examples of this genre already resolved and run end to end:
 > `eval/tests/e2e/creszentia-haas-birth/` (false hint, real answer found),
@@ -258,6 +265,34 @@ here (nothing was stripped, and the skill already validated).
 > `<dir>/README.md`, so comparing them as-is reports every fixture as differing:
 >
 >     comm -23 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | xargs -n1 dirname | sort)
+
+## Website run — research it on the alpha site, then send feedback 🌐 Browser
+
+Every record-hint fixture gets one: after you resolve it (Step 1a), and before
+an e2e run of it (Step 5). **Don't open your PR until you have sent the
+feedback.**
+
+Don't attach or detach the hint record on familysearch.org at any point. The
+website starts from the live tree.
+
+1. Open <https://genealogy-workbench.fly.dev> and click **+ New research
+   session**.
+2. Send this as the first message, filled in from the fixture's `fixture.json`:
+
+   ```
+   Research PID <source_pid>. <researcher_question>
+   ```
+
+3. **Don't steer it.** You know the answer and it doesn't. If it stops or asks
+   whether to go on, say "continue". Add no facts, records or hints.
+4. When it finishes, or stalls twice, click **Send Feedback**, whether it got
+   the answer or not:
+   - **Did it work as expected?** Yes when it reached the fixture's resolved
+     answer — for a wrong hint, kept the hint out of the tree and said why. No
+     otherwise.
+   - On **No**, fill in **the correct answer and its evidence** from
+     `expected-findings.json`.
+   - In **Notes**, put the fixture slug and the issue number.
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 
@@ -708,7 +743,8 @@ violations per fixture rather than runs.
 
 Every `make` target in the fixture-authoring steps above has a batch file in
 `eval\`. The corpus reports (`make e2e-corpus`, `e2e-nudges`, `e2e-latency`,
-`e2e-wiki-failures`, `e2e-compaction`, `e2e-ranked-reads`, `e2e-branch-only`)
+`e2e-wiki-failures`, `e2e-compaction`, `e2e-ranked-reads`, `e2e-routing-agreement`,
+`e2e-branch-only`)
 do not — run those from Git Bash or WSL. Double-click a batch file or run it
 from that folder; each prompts for what it needs instead of taking
 `TEST=`-style arguments, and builds the MCP server first where that matters.

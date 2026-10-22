@@ -1205,9 +1205,9 @@ def _key(statement: dict) -> tuple:
     return statement["Effect"], flat(statement["Action"]), flat(statement["Resource"])
 
 
-def test_web_policy_reads_the_bucket_and_writes_only_feedback(stack):
-    """U20: beyond its secrets and SQS, exactly GetObject on <bucket>/* and PutObject on
-    <bucket>/feedback/* -- no ListBucket, no DeleteObject, no PutObject elsewhere."""
+def test_web_policy_reads_the_bucket_and_writes_feedback_and_uploads(stack):
+    """Beyond its secrets and SQS: GetObject on <bucket>/*, PutObject on feedback/* and
+    on */uploads/* -- no ListBucket, no DeleteObject, no PutObject elsewhere."""
     env, fake, _ = stack
     statements = _web_policy(fake)
     s3 = sorted(_key(st) for st in statements
@@ -1215,9 +1215,36 @@ def test_web_policy_reads_the_bucket_and_writes_only_feedback(stack):
     run_id = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))["run_id"]
     bucket = f"arn:aws:s3:::genealogy-u13-data-{run_id}"
     assert s3 == sorted([("Allow", ("s3:GetObject",), (f"{bucket}/*",)),
-                         ("Allow", ("s3:PutObject",), (f"{bucket}/feedback/*",))])
+                         ("Allow", ("s3:PutObject",),
+                          tuple(sorted([f"{bucket}/feedback/*", f"{bucket}/*/uploads/*"])))])
     others = {a for st in statements for a in _key(st)[1] if not a.startswith("s3:")}
     assert others == {"secretsmanager:GetSecretValue", "sqs:SendMessage"}
+
+
+def test_the_upload_grant_matches_the_key_the_code_actually_writes(stack):
+    """The exact-set test above pins whatever the code grants, so it would pass just as
+    happily on a resource that matches NOTHING. This one checks the grant against a real
+    key: `put_blob` writes `<project_id>/<key>/<uuid>` and the upload key is
+    `uploads/<name>` (web/project_blobs.py), so the object lands at
+    `<project_id>/uploads/<name>/<uuid>` -- project id FIRST. A grant scoped to
+    `<bucket>/uploads/*` matches none of that and every upload 403s on AWS.
+    """
+    import fnmatch
+
+    env, fake, _ = stack
+    run_id = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))["run_id"]
+    bucket = f"arn:aws:s3:::genealogy-u13-data-{run_id}"
+    puts = [r for st in _web_policy(fake) if "s3:PutObject" in _key(st)[1] for r in _key(st)[2]]
+
+    real_key = f"{bucket}/proj_abc123/uploads/deed.pdf/0f8c1b2e-dead-beef-0000-000000000001"
+    assert any(fnmatch.fnmatch(real_key, pattern) for pattern in puts), \
+        f"no PutObject resource matches a real upload object:\n  key: {real_key}\n  grants: {puts}"
+
+    # And still NOT the engine's own objects, which the web tier must never overwrite.
+    for forbidden in (f"{bucket}/proj_abc123/results/log_001.json",
+                      f"{bucket}/proj_abc123/images/scan.jpg"):
+        assert not any(fnmatch.fnmatch(forbidden, pattern) for pattern in puts), \
+            f"the web tier can overwrite {forbidden}"
 
 
 def test_web_options_name_the_feedback_bucket(stack):

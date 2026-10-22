@@ -925,10 +925,11 @@ every healthy session.
 
 > **As built, verified 2026-08-02 — mixed.**
 >
-> - **The section list is a 2026-06-05 snapshot.** `research.json` now has 15
+> - **The section list is a 2026-06-05 snapshot.** `research.json` now has 17
 >   top-level sections; **`known_holdings` and `localities`** were added after
 >   this was written (they are the two sections behind the two extra viewer
->   components in §4.1). `tree.gedcomx.json` is unchanged.
+>   components in §4.1), and `warning_justifications` and `namesakes` later
+>   still, with no viewer component. `tree.gedcomx.json` is unchanged.
 > - **The `schema` package** shipped exactly as described and is the single
 >   TS-types + JSON-Schema source for viewer-ui, web, and server.
 > - **Schema versioning: NOT BUILT.** No `schema_version` is stamped on

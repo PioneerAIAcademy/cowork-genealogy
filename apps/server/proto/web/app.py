@@ -99,7 +99,7 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -120,6 +120,20 @@ from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+from web.job_state import job_state  # noqa: E402  (the four states the list shows)
+from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
+    IMAGE_REF_RE,
+    UPLOAD_MAX_BYTES,
+    fetch_blob,
+    put_blob,
+    safe_upload_name,
+    upload_key,
+)
+from web.sidecar import (  # noqa: E402  (search-result chip bodies, from the blob store)
+    fetch_sidecar,
+    sidecar_key,
+    sidecar_payload,
+)
 
 log = logging.getLogger("proto.web")
 # What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
@@ -243,6 +257,11 @@ class SessionRow:
     # projects.owner_id (008). None -- a project the engine created and nobody has
     # claimed -- is visible to nobody: the route's owner check never matches it.
     owner_id: str | None = None
+    # The four facts the session list's job state is derived from.
+    latest_outcome: str | None = None
+    turn_in_flight: bool = False
+    project_completed: bool = False
+    has_queued: bool = False
     # U19 (013): set by the worker's retention when it purged this idle session's
     # transcript, events and tool calls. A retired session takes no new message.
     retired_at: datetime | None = None
@@ -350,6 +369,23 @@ class Queue(Protocol):
 # ── pure helpers (tested without I/O) ────────────────────────────────────────────
 
 
+
+
+def _pg_dsn() -> str:
+    """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
+
+    The three blob routes below open their own SYNCHRONOUS connection -- `fetch_sidecar`,
+    `fetch_blob` and `put_blob` are sync, and `app.state.store` is an async pool -- so
+    they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
+    never defined, which made all three raise `NameError` and answer 500 on every call
+    that got past validation. Nothing caught it: the route tests stub the client, and
+    `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
+    """
+    return os.environ.get("PG_DSN") or DEFAULT_PG_DSN
+
+
+# ── rows ─────────────────────────────────────────────────────────────────────────
+
 def sse_frame(data: dict[str, Any], *, seq: int | None = None) -> str:
     """One SSE event. ``id:`` only when the frame is a session_events row."""
     head = f"id: {seq}\n" if seq is not None else ""
@@ -406,10 +442,21 @@ def session_out(row: SessionRow) -> dict[str, Any]:
     """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
     return {
         "id": row.session_id,
+        # The client cannot open a new session ON this project without it, which is
+        # what "continues on the same project in one action" needs.
+        "project_id": row.project_id,
         "title": row.title,
         "model": row.model,
         "status": "retired" if row.retired_at is not None else "active",
         "continuable": row.retired_at is None,
+        # The four states the session list shows. `status` above is the legacy field
+        # every existing client reads; this is additive beside it.
+        "job_state": job_state(
+            latest_outcome=row.latest_outcome,
+            turn_in_flight=row.turn_in_flight,
+            project_completed=row.project_completed,
+            has_queued=row.has_queued,
+        ),
         "sandbox_id": "",
         "agent_session_id": None,
         "created": row.created_at.isoformat(),
@@ -642,13 +689,43 @@ class PgStore:
             title=r["title"] or DEFAULT_TITLE, model=r["model"] or DEFAULT_MODEL,
             created_at=r["created_at"], updated_at=r["updated_at"] or r["created_at"],
             owner_id=r["owner_id"], retired_at=r["retired_at"],
+            latest_outcome=r.get("latest_outcome"),
+            turn_in_flight=bool(r.get("turn_in_flight")),
+            has_queued=bool(r.get("has_queued")),
+            project_completed=bool(r.get("project_completed")),
         )
 
     # LEFT JOIN: 001 declares no foreign keys, so a session whose project row is missing
     # must still load -- with owner_id NULL, which the route turns into a 404.
+    # The three `job_state` inputs are derived here, not stored. Without them `_row`'s
+    # `r.get(...)` returned None/False for every session, so `job_state` took its
+    # `latest_outcome is None` branch and EVERY session read "new" -- a list that cannot
+    # answer the one question a returning reader has, which is the whole reason the four
+    # states exist. The pure function was right and unit-tested all along; nothing fed it.
+    # Found by driving real turn rows in and watching the API keep saying "new".
+    #
+    # `latest_outcome` is the most recently COMPLETED turn's: an in-flight turn has no
+    # outcome yet, and `turn_in_flight` already outranks it in `job_state`.
+    # `project_completed` reads the newest research.json, matching
+    # `continue_policy.project_completed`'s `project.status == "completed"`.
     _SELECT = (
-        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, p.owner_id, "
-        "s.retired_at "
+        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, "
+        "p.owner_id, s.retired_at, "
+        "(SELECT t.outcome FROM turns t "
+        " WHERE t.session_id = s.session_id AND t.completed_at IS NOT NULL "
+        " ORDER BY t.completed_at DESC LIMIT 1) AS latest_outcome, "
+        # A HELD message has `completed_at IS NULL` too, so it must be excluded here or
+        # the first one latches "running" on and the session reads as working forever --
+        # the same exclusion `TURN_ACTIVE_SQL` makes, and for the same reason.
+        "EXISTS (SELECT 1 FROM turns t "
+        "        WHERE t.session_id = s.session_id AND t.completed_at IS NULL "
+        "          AND t.outcome IS DISTINCT FROM 'queued') AS turn_in_flight, "
+        "EXISTS (SELECT 1 FROM turns t "
+        "        WHERE t.session_id = s.session_id AND t.completed_at IS NULL "
+        "          AND t.outcome = 'queued') AS has_queued, "
+        "COALESCE((SELECT d.doc->'project'->>'status' = 'completed' FROM documents d "
+        "          WHERE d.project_id = s.project_id AND d.name = 'research.json' "
+        "          ORDER BY d.version DESC LIMIT 1), false) AS project_completed "
         "FROM sessions s LEFT JOIN projects p ON p.project_id = s.project_id"
     )
 
@@ -1714,25 +1791,162 @@ def create_app(
     async def session_sidecar(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
-        await _session(request, session_id, user)
-        raise HTTPException(status_code=404, detail="Sidecar bodies are not served by the prototype web tier (D6-8)")
+        row = await _session(request, session_id, user)
+        try:
+            sidecar_key(log_id)
+        except ValueError:
+            # A traversal attempt is a bad request, not a missing file -- 404 would
+            # tell a prober that the path shape was accepted.
+            raise HTTPException(status_code=400, detail="not a log id") from None
+        # The SHARED facade, not a second client: `blobstore.client` keys on the bucket
+        # and omits `endpoint_url` when unset, so it works on AWS where the regional
+        # endpoint is correct and the instance profile signs. `_s3_client` keyed on
+        # GENEALOGY_S3_ENDPOINT, which the handoff says to leave unset on AWS, so it
+        # returned None on every deployed tier and this route always 404'd.
+        blobs = request.app.state.blobs
+        if blobs is None:
+            # 404, not 503: a scan reads as ABSENT rather than unimplemented.
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        import psycopg
+
+        # Off the event loop: psycopg.connect and the S3 GET inside fetch_sidecar
+        # are both blocking, and this tier runs ONE uvicorn worker (eb-web/Procfile),
+        # so a slow round trip freezes every live SSE stream. The feedback route
+        # below already does this; these three did not.
+        def _read() -> object:
+            with psycopg.connect(_pg_dsn()) as conn:
+                return fetch_sidecar(conn, blobs, row.project_id, log_id)
+
+        blob = await asyncio.to_thread(_read)
+        payload = sidecar_payload(blob)
+        if payload is None:
+            # 404 is a REAL state: most log entries have no sidecar.
+            raise HTTPException(status_code=404, detail="no sidecar for this log")
+        return payload
 
     _NOT_IN_PROTOTYPE = {
-        "image": "Source images are not served by the prototype web tier (D6-8 blobs)",
+        # Sandbox logs stay unserved on purpose: phase 2's acceptance names images,
+        # uploads and spend-resume, and not this. It is an operator debug surface.
         "logs": "There are no sandbox logs on this backend; read the worker's stdout",
-        "files": "Uploads have no path into the project on this backend (plan: 'the first unserved class')",
     }
 
-    @app.get("/api/sessions/{session_id}/image")
     @app.get("/api/sessions/{session_id}/logs")
     async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
         await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
+    @app.get("/api/sessions/{session_id}/image")
+    async def session_image(
+        session_id: str, request: Request, filename: str | None = None,
+        user: User = Depends(current_user),
+    ) -> Response:
+        """A persisted source page scan, so the viewer can show it beside a transcription.
+
+        The alpha reads the sandbox filesystem; this tier reads the blob store. `filename`
+        is pinned to the `images/<key>.jpg` shape, and a name outside it is a 400 rather
+        than a 404 -- a 404 would tell a prober the path shape was accepted.
+        """
+        # Ownership BEFORE validation, and `filename` optional in the signature for that
+        # reason: a required query param is rejected 422 by FastAPI before the handler
+        # runs, so a foreign session learned the route exists and what it takes. The
+        # ownership suite caught it.
+        row = await _session(request, session_id, user)
+        if not filename or ".." in filename or not IMAGE_REF_RE.match(filename):
+            raise HTTPException(status_code=400, detail="not an image reference")
+        blobs = request.app.state.blobs
+        if blobs is None:
+            # 404, not 503: most projects hold no scans, so absent is the honest answer.
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        import psycopg
+
+        # Off the event loop, for the reason given on the sidecar route above.
+        def _read() -> object:
+            with psycopg.connect(_pg_dsn()) as conn:
+                return fetch_blob(conn, blobs, row.project_id, filename)
+
+        blob = await asyncio.to_thread(_read)
+        if blob is None:
+            # 404 is a REAL state: most projects hold no scans.
+            raise HTTPException(status_code=404, detail="image not found")
+        # `image/jpeg` verbatim from the alpha. The regex admits only `.jpg` names while
+        # `image_transcribe` retains any `image/*` under one, so both planes can mislabel
+        # PNG bytes; browsers sniff, and matching the alpha beats a third behaviour.
+        return Response(content=blob.body, media_type="image/jpeg")
+
     @app.post("/api/sessions/{session_id}/files")
-    async def not_in_prototype_post(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
-        await _session(request, session_id, user)
-        raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
+    async def upload_session_file(
+        session_id: str,
+        request: Request,
+        user: User = Depends(current_user),
+    ) -> dict:
+        """Write a researcher-supplied document or image into `<project>/uploads/`.
+
+        The only path bytes have into a project: the FamilySearch tools reach FS-hosted
+        images, but a scan from another site, a county PDF or a photo of a family bible
+        has none without this. The agent reads the result at `uploads/<name>` -- the
+        worker's deny hook routes that prefix to `sidecar_read`, and a binary falls
+        through to `image_transcribe`, which takes PDFs by magic bytes.
+        """
+        # Ownership first, for the same reason as the image route above.
+        # Ownership BEFORE the body is touched. Declaring `file: UploadFile = File(...)`
+        # made FastAPI parse the multipart body before this handler ran, and therefore
+        # before this check: a 60 MB POST with no cookie was spooled to temp disk and
+        # only then refused 401. The form is parsed below, after auth.
+        row = await _session(request, session_id, user)
+
+        # Reject on the declared length before reading anything. `max_part_size` then
+        # caps what is actually read, so a lying or absent Content-Length cannot load
+        # more than the limit into memory.
+        declared = request.headers.get("content-length")
+        if declared is not None:
+            try:
+                if int(declared) > UPLOAD_MAX_BYTES:
+                    raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="bad content-length") from None
+
+        try:
+            form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
+        except Exception:
+            # Starlette raises when a part exceeds max_part_size; that is a 413, not a 500.
+            raise HTTPException(status_code=413, detail="the file is larger than 25 MB") from None
+        try:
+            file = form.get("file")
+            if file is None or not hasattr(file, "read"):
+                raise HTTPException(status_code=400, detail="no file in the request")
+            name = safe_upload_name(file.filename)
+            if name is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                )
+            body = await file.read()
+            if not body:
+                raise HTTPException(status_code=400, detail="the file is empty")
+            if len(body) > UPLOAD_MAX_BYTES:
+                raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
+            content_type = file.content_type or "application/octet-stream"
+        finally:
+            # Starlette spools large parts to temp files; close() removes them.
+            await form.close()
+        blobs = request.app.state.blobs
+        if blobs is None:
+            # 503 here, unlike the GETs: the researcher asked to STORE something and a
+            # missing store is "unavailable", not "absent". Matches the feedback route.
+            raise HTTPException(status_code=503, detail="no blob store configured")
+        key = upload_key(name)
+        import psycopg
+
+        # Off the event loop, for the reason given on the sidecar route above: this one
+        # also does an S3 PUT, so it is the longest of the three.
+        def _write() -> int:
+            with psycopg.connect(_pg_dsn()) as conn:
+                n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
+                conn.commit()
+                return n
+
+        written = await asyncio.to_thread(_write)
+        return {"path": key, "sizeBytes": written}
 
     @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
     async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
