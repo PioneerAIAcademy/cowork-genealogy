@@ -388,7 +388,7 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	  uv run python dev/probe_agent_nesting.py
 
 .PHONY: hook-smoke
-hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? (issue #1160; 2 short sessions)
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing and the fork deny (issue #1160; 4 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
 	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
 	# call, shells the command and blocks. Nothing else checks that, in any
