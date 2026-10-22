@@ -43,7 +43,8 @@ non-disclosure block, and the instructions about the hand-off (did not execute,
 do not retry, `_CARRY_ON`) go in `additionalContext` on the same
 `hookSpecificOutput`. The run log does not record `additionalContext`, so its
 delivery on a deny was inferred from behaviour (no retries, no disclosure),
-not observed.
+not observed. `_CARRY_ON`'s wording is the second half of the fix; its
+comment records the version that over-shot.
 
 What this deliberately does NOT cover: `skills_invoked` records the skill NAME
 only, not the `args` string the caller composed. So no validator can assert
