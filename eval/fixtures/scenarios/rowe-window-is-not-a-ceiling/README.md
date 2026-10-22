@@ -20,7 +20,7 @@ So the file postdates the question's window by a quarter-century and is the best
 
 ## Why the locality is built the way it is
 
-**The pension collection is listed deliberately.** `loc_001` names *United States Civil War and Later Pension Files, 1861-1934*, and a quirk explains that such files are retrospective. The agent is not being tested on whether it knows pensions exist — it is told. The only variable is whether a record dated later than the window is disqualified in the agent's mind.
+**The pension collection is listed deliberately.** `loc_001` names *United States Civil War and Later Pension Files, 1861-1934*, with its date range. The agent is not being tested on whether it knows pensions exist — it is told. Nothing in the locality says the file is retrospective; an earlier quirk that did was removed because it stated principle 10 outright. The only variable is whether a record dated later than the window is disqualified in the agent's mind.
 
 **The collection list is short on purpose.** Census 1850, census 1860, and the pension file. Indiana marriage and probate collections were removed, because both run past 1865 for reasons that have nothing to do with this rule — a marriage collection spanning to 2007 does not mean a marriage item should be dated to 2007 — and their presence made it impossible to tell a plan that reaches the pension from one that merely reaches *something* late. A quirk records that probate and marriage records do exist for the county and should be planned from the clerk rather than from a collection id.
 
@@ -38,6 +38,6 @@ Several items legitimately stop inside the window. The 1850 and 1860 censuses do
 
 `test_pension_item_reaches_past_window` (`eval/harness/validators/test_research_plan.py`) gates this scenario: at least one plan item whose `record_type` is military or pension must have a `date_range` reaching **1879**.
 
-**1879 is a fixture choice.** The fixture never dates the pension file. The locality quirk names a widow's pension, which cannot predate Josiah Rowe's 1879 death, so 1879 is the earliest the file can be. It is stricter than "past 1865".
+**1879 is a fixture choice.** The fixture never dates the pension file. 1879 is Josiah Rowe's death year, the earliest a widow's claim could open. His own invalid claim could open earlier, so 1879 is deliberately strict; it is stricter than "past 1865".
 
 The validator scores only military/pension items, by `record_type` and not by rationale. A late probate or cemetery item cannot carry a plan whose pension search stops at 1865. One real run wrote a cemetery item dated 1848-1880 whose rationale mentions the pension, so a rationale match would pass that shape. The general rule stays in the agent's principle 10; the validator certifies this one fixture. Measurement and the earlier mechanisms are on issue #1830.
