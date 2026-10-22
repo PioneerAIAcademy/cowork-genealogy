@@ -151,7 +151,7 @@ Concretely:
   the area it covers; the wiki lists what a country enumerated, not what
   FamilySearch indexed. So the table holds only population censuses a
   FamilySearch collection indexes, each row naming the areas whose returns
-  survive in that index, and a country it does not list produces no census gap.
+  survive in that index, and a place no row covers produces no census gap.
   It is a tool's own data, read by code; it does not license a census fact in a
   prompt, and the timeline agent's hypothesis mode still reads the wiki.
 - **Where the wiki is wrong or thin, fix the wiki.** The genealogist's path is

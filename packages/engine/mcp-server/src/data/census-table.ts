@@ -21,6 +21,13 @@
 // schedule naming only heads) gets no row. City and municipal censuses have no
 // rows yet. Fixed row by row as rows prove wrong; `dev/check-census-table.ts`
 // checks each row against the live catalog. This module imports nothing.
+//
+// A row's note gives its indexed record count, as the catalog reported it on
+// 2026-10-22. A population total, and so a percentage, is given only where it
+// is sourced: for every kept row an estimate put within ten points of the
+// line, and for the collections left out near it. "No row" lists the collections left out; the
+// others there were judged against population estimates not sourced here, and
+// leaving a collection out can only miss a gap.
 
 export interface CensusRow {
   year: number;
@@ -152,162 +159,163 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   federal(1940, "2000219", ["United States"]),
   federal(1950, "4464515", ["United States"]),
 
-  // US state censuses (indexed records : population). Dropped as partial:
-  // Alabama 1855/1866, California 1852 (74%), Illinois none, Michigan 1894,
-  // New Jersey 1855/1865, New Mexico 1885, New York 1865/1875/1892 (58-69%),
-  // Wisconsin 1865.
-  census(1885, "Colorado", state("Colorado"), "1807096"), // 234k : ~240k
-  census(1885, "Florida", state("Florida"), "1457854"), // 309k : 340k
-  census(1935, "Florida", state("Florida"), "1457856"), // 1.60m : 1.6m
-  census(1945, "Florida", state("Florida"), "1457855"), // 2.25m : 2.25m
-  census(1855, "Illinois", state("Illinois"), "1803969", true), // heads only; 241k : ~236k households
-  census(1865, "Illinois", state("Illinois"), "1803971", true), // heads only; 380k : ~390k households
-  census(1885, "Iowa", state("Iowa"), "1803643"), // 1.74m : 1.75m
-  census(1895, "Iowa", state("Iowa"), "1803957"), // 2.11m : 2.06m
-  census(1905, "Iowa", state("Iowa"), "2126961"), // 2.18m : 2.21m
-  census(1915, "Iowa", state("Iowa"), "2240483"), // 2.57m : 2.36m
-  census(1925, "Iowa", state("Iowa"), "2224537"), // 2.49m : 2.42m
-  census(1865, "Kansas", state("Kansas"), "1824715"), // 150k : 140k
-  census(1875, "Kansas", state("Kansas"), "1825178"), // 619k : 531k
-  census(1885, "Kansas", state("Kansas"), "1825188"), // 1.40m : 1.27m
-  census(1895, "Kansas", state("Kansas"), "1825193"), // 1.36m : 1.33m
-  census(1905, "Kansas", state("Kansas"), "2659394"), // 1.55m : 1.54m
-  census(1915, "Kansas", state("Kansas"), "2640442"), // 1.66m : 1.69m
-  census(1925, "Kansas", state("Kansas"), "2659395"), // 1.88m : 1.81m
-  census(1855, "Massachusetts", state("Massachusetts"), "1459985"), // 1.20m : 1.13m
-  census(1865, "Massachusetts", state("Massachusetts"), "1410399"), // 1.35m : 1.27m
-  census(1857, "Minnesota", state("Minnesota", "Minnesota Territory, United States"), "1503055"), // 157k : 150k
-  census(1865, "Minnesota", state("Minnesota"), "1503054"), // 247k : 250k
-  census(1875, "Minnesota", state("Minnesota"), "1503053"), // 613k : 597k
-  census(1885, "Minnesota", state("Minnesota"), "1503044"), // 1.13m : 1.12m
-  census(1895, "Minnesota", state("Minnesota"), "1503031"), // 1.57m : 1.57m
-  census(1905, "Minnesota", state("Minnesota"), "1503056"), // 1.97m : 1.98m
-  census(1885, "Nebraska", state("Nebraska"), "1810728"), // 747k : 740k
-  census(1885, "New Jersey", state("New Jersey"), "1803972"), // 1.29m : 1.28m
-  census(1895, "New Jersey", state("New Jersey"), "2659407"), // 1.48m : 1.67m
-  census(1905, "New Jersey", state("New Jersey"), "1928107"), // 2.15m : 2.14m
-  census(1915, "New Jersey", state("New Jersey"), "2061544"), // 2.79m : 2.84m
-  census(1855, "New York", state("New York"), "1937366"), // 2.79m : 3.47m
-  census(1905, "New York", state("New York"), "1463113"), // 7.55m : 8.07m
-  census(1915, "New York", state("New York"), "1937454"), // 9.74m : 9.69m
-  census(1925, "New York", state("New York"), "1937489"), // 11.1m : 11.2m
-  census(1915, "North Dakota", state("North Dakota"), "2346284"), // 619k : 637k
-  census(1925, "North Dakota", state("North Dakota"), "2351024"), // 679k : 640k
-  census(1885, "Rhode Island", state("Rhode Island"), "1794115"), // 322k : 304k
-  census(1905, "Rhode Island", state("Rhode Island"), "1542866"), // 474k : 480k
-  census(1915, "Rhode Island", state("Rhode Island"), "1532188"), // 541k : 591k
-  census(1925, "Rhode Island", state("Rhode Island"), "1532195"), // 684k : 680k
-  census(1935, "Rhode Island", state("Rhode Island"), "1529126"), // 691k : 680k
-  census(1905, "South Dakota", state("South Dakota"), "1477737"), // 473k : 455k
-  census(1915, "South Dakota", state("South Dakota"), "1476041"), // 614k : 583k
-  census(1925, "South Dakota", state("South Dakota"), "1476077"), // 705k : 681k
-  census(1935, "South Dakota", state("South Dakota"), "1614831"), // 673k : 690k
-  census(1945, "South Dakota", state("South Dakota"), "1747589"), // 570k : 590k
-  census(1855, "Wisconsin", state("Wisconsin"), "1443825", true), // heads only; 133k : ~110k households
-  census(1875, "Wisconsin", state("Wisconsin"), "1443778", true), // heads only; 297k : ~250k households
-  census(1885, "Wisconsin", state("Wisconsin"), "1443713", true), // heads only; 407k : ~310k households
-  census(1895, "Wisconsin", state("Wisconsin"), "1443712", true), // heads only; 495k : ~390k households
-  census(1905, "Wisconsin", state("Wisconsin"), "1443899"), // 2.23m : 2.23m
+  // US state censuses. No row: Alabama 1855 and 1866; California 1852 (188,578
+  // records, 62% or 71% of the state's two published totals, 303,808 and
+  // 264,435); Michigan 1894; New Jersey 1855 and 1865; New Mexico 1885; New York
+  // 1865, 1875 and 1892 (FamilySearch's collection pages list 13, 12 and 20
+  // counties missing); Wisconsin 1865 (FamilySearch wiki: 6 counties only).
+  census(1885, "Colorado", state("Colorado"), "1807096"), // 234k records
+  census(1885, "Florida", state("Florida"), "1457854"), // 309k records
+  census(1935, "Florida", state("Florida"), "1457856"), // 1.60m records
+  census(1945, "Florida", state("Florida"), "1457855"), // 2.25m records
+  census(1855, "Illinois", state("Illinois"), "1803969", true), // heads only; 241k records
+  census(1865, "Illinois", state("Illinois"), "1803971", true), // heads only; 380k records
+  census(1885, "Iowa", state("Iowa"), "1803643"), // 1.74m records
+  census(1895, "Iowa", state("Iowa"), "1803957"), // 2.11m records
+  census(1905, "Iowa", state("Iowa"), "2126961"), // 2.18m records
+  census(1915, "Iowa", state("Iowa"), "2240483"), // 2.57m records
+  census(1925, "Iowa", state("Iowa"), "2224537"), // 2.49m records
+  census(1865, "Kansas", state("Kansas"), "1824715"), // 150k records
+  census(1875, "Kansas", state("Kansas"), "1825178"), // 619k records
+  census(1885, "Kansas", state("Kansas"), "1825188"), // 1.40m records
+  census(1895, "Kansas", state("Kansas"), "1825193"), // 1.36m records
+  census(1905, "Kansas", state("Kansas"), "2659394"), // 1.55m records
+  census(1915, "Kansas", state("Kansas"), "2640442"), // 1.66m records
+  census(1925, "Kansas", state("Kansas"), "2659395"), // 1.88m records
+  census(1855, "Massachusetts", state("Massachusetts"), "1459985"), // 1.20m records
+  census(1865, "Massachusetts", state("Massachusetts"), "1410399"), // 1.35m records
+  census(1857, "Minnesota", state("Minnesota", "Minnesota Territory, United States"), "1503055"), // 157k records
+  census(1865, "Minnesota", state("Minnesota"), "1503054"), // 247k records
+  census(1875, "Minnesota", state("Minnesota"), "1503053"), // 613k records
+  census(1885, "Minnesota", state("Minnesota"), "1503044"), // 1.13m records
+  census(1895, "Minnesota", state("Minnesota"), "1503031"), // 1.57m records
+  census(1905, "Minnesota", state("Minnesota"), "1503056"), // 1.97m records
+  census(1885, "Nebraska", state("Nebraska"), "1810728"), // 747k records
+  census(1885, "New Jersey", state("New Jersey"), "1803972"), // 1.29m records
+  census(1895, "New Jersey", state("New Jersey"), "2659407"), // 1.48m records
+  census(1905, "New Jersey", state("New Jersey"), "1928107"), // 2.15m records
+  census(1915, "New Jersey", state("New Jersey"), "2061544"), // 2.79m records
+  census(1855, "New York", state("New York"), "1937366"), // 2.79m records; 81% of 3,426,212 (1855 census report)
+  census(1905, "New York", state("New York"), "1463113"), // 7.55m records
+  census(1915, "New York", state("New York"), "1937454"), // 9.74m records
+  census(1925, "New York", state("New York"), "1937489"), // 11.1m records
+  census(1915, "North Dakota", state("North Dakota"), "2346284"), // 619k records
+  census(1925, "North Dakota", state("North Dakota"), "2351024"), // 679k records
+  census(1885, "Rhode Island", state("Rhode Island"), "1794115"), // 322k records
+  census(1905, "Rhode Island", state("Rhode Island"), "1542866"), // 474k records
+  census(1915, "Rhode Island", state("Rhode Island"), "1532188"), // 541k records
+  census(1925, "Rhode Island", state("Rhode Island"), "1532195"), // 684k records
+  census(1935, "Rhode Island", state("Rhode Island"), "1529126"), // 691k records
+  census(1905, "South Dakota", state("South Dakota"), "1477737"), // 473k records
+  census(1915, "South Dakota", state("South Dakota"), "1476041"), // 614k records
+  census(1925, "South Dakota", state("South Dakota"), "1476077"), // 705k records
+  census(1935, "South Dakota", state("South Dakota"), "1614831"), // 673k records
+  census(1945, "South Dakota", state("South Dakota"), "1747589"), // 570k records
+  census(1855, "Wisconsin", state("Wisconsin"), "1443825", true), // heads only; 133k records
+  census(1875, "Wisconsin", state("Wisconsin"), "1443778", true), // heads only; 297k records
+  census(1885, "Wisconsin", state("Wisconsin"), "1443713", true), // heads only; 407k records
+  census(1895, "Wisconsin", state("Wisconsin"), "1443712", true), // heads only; 495k records
+  census(1905, "Wisconsin", state("Wisconsin"), "1443899"), // 2.23m records
 
-  // Canada. Dropped as partial: Lower and Upper Canada 1825-1842, Nova Scotia
-  // and Prince Edward Island 1861, Canada 1931 (24%), Newfoundland 1921 (74%).
-  census(1851, "Canada", [...ONTARIO, ...QUEBEC, ...NEW_BRUNSWICK, ...NOVA_SCOTIA], "1325192"), // 2.20m : 2.4m
-  census(1861, "New Brunswick", NEW_BRUNSWICK, "1325208"), // 200k : 252k
-  census(1861, "Ontario", ONTARIO, "1460164"), // 1.71m : 1.40m
-  census(1861, "Quebec", QUEBEC, "1460173"), // 1.09m : 1.11m
-  census(1871, "Canada", [...ONTARIO, ...QUEBEC, ...NEW_BRUNSWICK, ...NOVA_SCOTIA], "1551612"), // 3.52m : 3.69m
-  census(1881, "Canada", CANADA_1881, "1804541"), // 4.28m : 4.32m
-  census(1891, "Canada", CANADA_1881, "1583536"), // 4.79m : 4.83m
-  census(1901, "Canada", CANADA_1901, "1584557"), // 5.34m : 5.37m
-  census(1906, "Canada", PRAIRIES, "1584925"), // Northwest Provinces; 802k : 808k
-  census(1911, "Canada", CANADA_1901, "2143998"), // 7.25m : 7.21m
-  census(1916, "Canada", PRAIRIES, "1529118"), // Prairie Provinces; 1.81m : 1.70m
-  census(1921, "Canada", CANADA_1901, "5000285"), // 8.80m : 8.79m
-  census(1926, "Canada", PRAIRIES, "3005862"), // Prairie Provinces; 2.08m : 2.07m
-  census(1935, "Newfoundland", NEWFOUNDLAND, "2246711"), // 296k : 290k
-  census(1945, "Newfoundland", NEWFOUNDLAND, "2246699"), // 294k : 322k
+  // Canada. No row: Lower and Upper Canada 1825-1842; Nova Scotia and Prince
+  // Edward Island 1861; Canada 1931 (2,466,494 records, 24% of 10,376,379);
+  // Newfoundland 1921 (194,365 records, 74% of 263,033).
+  census(1851, "Canada", [...ONTARIO, ...QUEBEC, ...NEW_BRUNSWICK, ...NOVA_SCOTIA], "1325192"), // 2.20m records
+  census(1861, "New Brunswick", NEW_BRUNSWICK, "1325208"), // 200k records; 79% of 252,047 (1867 Canada Year Book)
+  census(1861, "Ontario", ONTARIO, "1460164"), // 1.71m records
+  census(1861, "Quebec", QUEBEC, "1460173"), // 1.09m records
+  census(1871, "Canada", [...ONTARIO, ...QUEBEC, ...NEW_BRUNSWICK, ...NOVA_SCOTIA], "1551612"), // 3.52m records
+  census(1881, "Canada", CANADA_1881, "1804541"), // 4.28m records
+  census(1891, "Canada", CANADA_1881, "1583536"), // 4.79m records
+  census(1901, "Canada", CANADA_1901, "1584557"), // 5.34m records
+  census(1906, "Canada", PRAIRIES, "1584925"), // Northwest Provinces; 802k records
+  census(1911, "Canada", CANADA_1901, "2143998"), // 7.25m records
+  census(1916, "Canada", PRAIRIES, "1529118"), // Prairie Provinces; 1.81m records
+  census(1921, "Canada", CANADA_1901, "5000285"), // 8.80m records
+  census(1926, "Canada", PRAIRIES, "3005862"), // Prairie Provinces; 2.08m records
+  census(1935, "Newfoundland", NEWFOUNDLAND, "2246711"), // 296k records
+  census(1945, "Newfoundland", NEWFOUNDLAND, "2246699"), // 294k records
 
   // Mexico and South America.
-  census(1930, "Mexico", ["Mexico"], "1307314"), // 12.8m : 16.6m
-  census(1869, "Argentina", ["Argentina"], "1462401"), // 1.79m : 1.83m
-  census(1895, "Argentina", ["Argentina"], "1410078"), // 4.28m : 3.95m
+  census(1930, "Mexico", ["Mexico"], "1307314"), // 12.8m records; 77% of 16,552,722 (INEGI)
+  census(1869, "Argentina", ["Argentina"], "1462401"), // 1.79m records
+  census(1895, "Argentina", ["Argentina"], "1410078"), // 4.28m records
 
-  // Britain and Ireland. Dropped as partial: England and Wales 1851 (9%).
-  // Ireland 1821-1851 are fragments.
-  census(1841, "England and Wales", ENGLAND_AND_WALES, "1493745"), // 15.8m : 15.9m
-  census(1861, "England and Wales", ENGLAND_AND_WALES, "1493747"), // 19.6m : 20.1m
-  census(1871, "England and Wales", ENGLAND_AND_WALES, "1538354"), // 22.9m : 22.7m
-  census(1881, "England and Wales", ENGLAND_AND_WALES, "2562194"), // 26.1m : 26.0m
-  census(1891, "England and Wales", ENGLAND_AND_WALES, "1865747"), // 29.0m : 29.0m
-  census(1901, "England and Wales", ENGLAND_AND_WALES, "1888129"), // 34.1m : 32.5m
-  census(1911, "England and Wales", ENGLAND_AND_WALES, "1921547"), // 36.4m : 36.1m
-  census(1921, "England and Wales", ENGLAND_AND_WALES, "5000564"), // 38.4m : 37.9m
-  census(1841, "Scotland", SCOTLAND, "2016000"), // 2.63m : 2.62m
-  census(1851, "Scotland", SCOTLAND, "2028673"), // 2.91m : 2.89m
-  census(1861, "Scotland", SCOTLAND, "2028677"), // 3.01m : 3.06m
-  census(1871, "Scotland", SCOTLAND, "2028678"), // 3.35m : 3.36m
-  census(1881, "Scotland", SCOTLAND, "2046756"), // 3.72m : 3.74m
-  census(1891, "Scotland", SCOTLAND, "2046943"), // 4.02m : 4.03m
-  census(1901, "Scotland", SCOTLAND, "3212239"), // 4.44m : 4.47m
-  census(1901, "Ireland", IRELAND, "1626180"), // 4.38m : 4.46m
-  census(1911, "Ireland", IRELAND, "2854327"), // 4.39m : 4.39m
+  // Britain and Ireland. No row: England and Wales 1851 (1,569,726 records, 9% of
+  // 17,927,609). Ireland 1821-1851 are fragments.
+  census(1841, "England and Wales", ENGLAND_AND_WALES, "1493745"), // 15.8m records
+  census(1861, "England and Wales", ENGLAND_AND_WALES, "1493747"), // 19.6m records
+  census(1871, "England and Wales", ENGLAND_AND_WALES, "1538354"), // 22.9m records
+  census(1881, "England and Wales", ENGLAND_AND_WALES, "2562194"), // 26.1m records
+  census(1891, "England and Wales", ENGLAND_AND_WALES, "1865747"), // 29.0m records
+  census(1901, "England and Wales", ENGLAND_AND_WALES, "1888129"), // 34.1m records
+  census(1911, "England and Wales", ENGLAND_AND_WALES, "1921547"), // 36.4m records
+  census(1921, "England and Wales", ENGLAND_AND_WALES, "5000564"), // 38.4m records
+  census(1841, "Scotland", SCOTLAND, "2016000"), // 2.63m records
+  census(1851, "Scotland", SCOTLAND, "2028673"), // 2.91m records
+  census(1861, "Scotland", SCOTLAND, "2028677"), // 3.01m records
+  census(1871, "Scotland", SCOTLAND, "2028678"), // 3.35m records
+  census(1881, "Scotland", SCOTLAND, "2046756"), // 3.72m records
+  census(1891, "Scotland", SCOTLAND, "2046943"), // 4.02m records
+  census(1901, "Scotland", SCOTLAND, "3212239"), // 4.44m records
+  census(1901, "Ireland", IRELAND, "1626180"), // 4.38m records
+  census(1911, "Ireland", IRELAND, "2854327"), // 4.39m records
 
-  // Scandinavia. Dropped as partial: Denmark 1835, 1911 and 1921; Norway 1870
-  // (towns only) and 1875.
-  census(1787, "Denmark", ["Denmark"], "2790466"), // 843k : 840k
-  census(1840, "Denmark", ["Denmark"], "2778651"), // 1.61m : 1.29m
-  census(1845, "Denmark", ["Denmark"], "2778652"), // 1.67m : 1.35m
-  census(1850, "Denmark", ["Denmark"], "2778653"), // 1.30m : 1.41m
-  census(1855, "Denmark", ["Denmark"], "2778654"), // 1.73m : 1.50m
-  census(1860, "Denmark", ["Denmark"], "2778655"), // 1.75m : 1.60m
-  census(1870, "Denmark", ["Denmark"], "2778656"), // 1.76m : 1.78m
-  census(1880, "Denmark", ["Denmark"], "2778657"), // 1.95m : 1.97m
-  census(1890, "Denmark", ["Denmark"], "2800928"), // 2.14m : 2.17m
-  census(1901, "Denmark", ["Denmark"], "2800929"), // 2.33m : 2.45m
-  census(1906, "Denmark", ["Denmark"], "2800931"), // 2.53m : 2.59m
-  census(1801, "Norway", ["Norway"], "3733603"), // 879k : 883k
-  census(1865, "Norway", ["Norway"], "3756102"), // 1.69m : 1.70m
-  census(1891, "Norway", ["Norway"], "4067726"), // 2.73m : 2.00m
-  census(1900, "Norway", ["Norway"], "3744863"), // 2.26m : 2.24m
-  census(1835, "Iceland", ["Iceland"], "4380200"), // 76k : 56k
-  census(1860, "Iceland", ["Iceland"], "4460200"), // 66k : 67k
+  // Scandinavia. No row: Denmark 1835, 1911 and 1921; Norway 1870 and 1875.
+  census(1787, "Denmark", ["Denmark"], "2790466"), // 843k records
+  census(1840, "Denmark", ["Denmark"], "2778651"), // 1.61m records
+  census(1845, "Denmark", ["Denmark"], "2778652"), // 1.67m records
+  census(1850, "Denmark", ["Denmark"], "2778653"), // 1.30m records
+  census(1855, "Denmark", ["Denmark"], "2778654"), // 1.73m records
+  census(1860, "Denmark", ["Denmark"], "2778655"), // 1.75m records
+  census(1870, "Denmark", ["Denmark"], "2778656"), // 1.76m records
+  census(1880, "Denmark", ["Denmark"], "2778657"), // 1.95m records
+  census(1890, "Denmark", ["Denmark"], "2800928"), // 2.14m records
+  census(1901, "Denmark", ["Denmark"], "2800929"), // 2.33m records
+  census(1906, "Denmark", ["Denmark"], "2800931"), // 2.53m records
+  census(1801, "Norway", ["Norway"], "3733603"), // 879k records
+  census(1865, "Norway", ["Norway"], "3756102"), // 1.69m records
+  census(1891, "Norway", ["Norway"], "4067726"), // 2.73m records
+  census(1900, "Norway", ["Norway"], "3744863"), // 2.26m records
+  census(1835, "Iceland", ["Iceland"], "4380200"), // 76k records
+  census(1860, "Iceland", ["Iceland"], "4460200"), // 66k records
 
-  // Continental Europe. Dropped as partial: Mecklenburg-Schwerin 1890, Fribourg
-  // 1818 and 1842, Ticino 1808 and 1837, and these départements: Calvados,
-  // Eure-et-Loir, Seine-Saint-Denis, Hautes-Alpes 1872, Côtes-d'Armor 1891,
-  // Hérault, Nord. Range-titled collections give no row.
-  census(1867, "Mecklenburg-Schwerin", MECKLENBURG_SCHWERIN, "1883733"), // 520k : 560k
-  census(1901, "Mecklenburg-Schwerin", MECKLENBURG_SCHWERIN, "1607939"), // 1.25m : 607k
-  census(1811, "Fribourg", ["Fribourg, Switzerland"], "2091721"), // 63k : ~70k
-  census(1834, "Fribourg", ["Fribourg, Switzerland"], "2142772"), // 89k : ~91k
-  census(1850, "Fribourg", ["Fribourg, Switzerland"], "2142776"), // 101k : 100k
-  census(1880, "Fribourg", ["Fribourg, Switzerland"], "2142779"), // 134k : 115k
-  census(1865, "San Marino", ["San Marino"], "5000726"), // 38k across the four : ~38k
+  // Continental Europe. No row: Mecklenburg-Schwerin 1890; Fribourg 1818 and
+  // 1842; Ticino 1808 and 1837; and these départements: Calvados, Eure-et-Loir,
+  // Seine-Saint-Denis, Hautes-Alpes 1872, Côtes-d'Armor 1891, Hérault, Nord.
+  // Range-titled collections give no row.
+  census(1867, "Mecklenburg-Schwerin", MECKLENBURG_SCHWERIN, "1883733"), // 520k records
+  census(1901, "Mecklenburg-Schwerin", MECKLENBURG_SCHWERIN, "1607939"), // 1.25m records
+  census(1811, "Fribourg", ["Fribourg, Switzerland"], "2091721"), // 63k records
+  census(1834, "Fribourg", ["Fribourg, Switzerland"], "2142772"), // 89k records
+  census(1850, "Fribourg", ["Fribourg, Switzerland"], "2142776"), // 101k records
+  census(1880, "Fribourg", ["Fribourg, Switzerland"], "2142779"), // 134k records
+  census(1865, "San Marino", ["San Marino"], "5000726"), // 38k records across the four
   census(1874, "San Marino", ["San Marino"], "5000726"),
   census(1899, "San Marino", ["San Marino"], "5000726"),
   census(1947, "San Marino", ["San Marino"], "5000726"),
-  census(1836, "Dordogne", france("Dordogne"), "2821307"), // 489k : 487k
-  census(1856, "Dordogne", france("Dordogne"), "2718581"), // 531k : 505k
-  census(1876, "Dordogne", france("Dordogne"), "2541227"), // 497k : 490k
-  census(1891, "Dordogne", france("Dordogne"), "2821303"), // 471k : 478k
-  census(1836, "Hautes-Alpes", france("Hautes-Alpes"), "2820772"), // 265k : 130k
-  census(1856, "Hautes-Alpes", france("Hautes-Alpes"), "2820771"), // 261k : 129k
-  census(1876, "Hautes-Alpes", france("Hautes-Alpes"), "2819930"), // 97k : 119k
-  census(1896, "Hautes-Alpes", france("Hautes-Alpes"), "2820765"), // 216k : 113k
-  census(1836, "Marne", france("Marne"), "4317030"), // 302k : 350k
-  census(1856, "Marne", france("Marne"), "3225464"), // 362k : 373k
-  census(1876, "Marne", france("Marne"), "4316511"), // 412k : 407k
-  census(1896, "Marne", france("Marne"), "4317027"), // 416k : 434k
-  census(1836, "Saône-et-Loire", france("Saône-et-Loire"), "2721038"), // 546k : 524k
-  census(1856, "Saône-et-Loire", france("Saône-et-Loire"), "2721037"), // 578k : 575k
-  census(1876, "Saône-et-Loire", france("Saône-et-Loire"), "2559965"), // 693k : 614k
-  census(1896, "Saône-et-Loire", france("Saône-et-Loire"), "2786646"), // 623k : 620k
-  census(1856, "Vienne", france("Vienne"), "2849254"), // 364k : 322k
-  census(1876, "Vienne", france("Vienne"), "2858066"), // 297k : 330k
-  census(1896, "Vienne", france("Vienne"), "2858067"), // 342k : 338k
-  census(1876, "Côtes-d'Armor", france("Côtes-d'Armor", "Côtes-du-Nord"), "2748869"), // 618k : 622k
-  census(1906, "Côtes-d'Armor", france("Côtes-d'Armor", "Côtes-du-Nord"), "2748872"), // 470k : 611k
-  census(1896, "Haute-Garonne", france("Haute-Garonne"), "5000057"), // 405k : 454k
+  census(1836, "Dordogne", france("Dordogne"), "2821307"), // 489k records
+  census(1856, "Dordogne", france("Dordogne"), "2718581"), // 531k records
+  census(1876, "Dordogne", france("Dordogne"), "2541227"), // 497k records
+  census(1891, "Dordogne", france("Dordogne"), "2821303"), // 471k records
+  census(1836, "Hautes-Alpes", france("Hautes-Alpes"), "2820772"), // 265k records
+  census(1856, "Hautes-Alpes", france("Hautes-Alpes"), "2820771"), // 261k records
+  census(1876, "Hautes-Alpes", france("Hautes-Alpes"), "2819930"), // 97k records; FamilySearch: "a complete indexing"
+  census(1896, "Hautes-Alpes", france("Hautes-Alpes"), "2820765"), // 216k records
+  census(1836, "Marne", france("Marne"), "4317030"), // 302k records
+  census(1856, "Marne", france("Marne"), "3225464"), // 362k records
+  census(1876, "Marne", france("Marne"), "4316511"), // 412k records
+  census(1896, "Marne", france("Marne"), "4317027"), // 416k records
+  census(1836, "Saône-et-Loire", france("Saône-et-Loire"), "2721038"), // 546k records
+  census(1856, "Saône-et-Loire", france("Saône-et-Loire"), "2721037"), // 578k records
+  census(1876, "Saône-et-Loire", france("Saône-et-Loire"), "2559965"), // 693k records
+  census(1896, "Saône-et-Loire", france("Saône-et-Loire"), "2786646"), // 623k records
+  census(1856, "Vienne", france("Vienne"), "2849254"), // 364k records
+  census(1876, "Vienne", france("Vienne"), "2858066"), // 297k records
+  census(1896, "Vienne", france("Vienne"), "2858067"), // 342k records
+  census(1876, "Côtes-d'Armor", france("Côtes-d'Armor", "Côtes-du-Nord"), "2748869"), // 618k records
+  census(1906, "Côtes-d'Armor", france("Côtes-d'Armor", "Côtes-du-Nord"), "2748872"), // 470k records; 77% of 611,506 (1911 Britannica)
+  census(1896, "Haute-Garonne", france("Haute-Garonne"), "5000057"), // 405k records
 ];
 
 function segments(place: string): string[] {
