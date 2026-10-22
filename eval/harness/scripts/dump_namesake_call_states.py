@@ -17,7 +17,8 @@ One JSON line per run, then one per call the measurement reads:
   merge   a merge_tree_persons call: its merges, its outcome, and
           person_evidence and assertion ids at the call.
   treewrite  a tree_edit or tree_correct call that landed (a recorded success,
-          or no recorded outcome with ops that pass today's shape checks)
+          or no recorded outcome with ops that pass today's shape checks and
+          cite no ref starting with `#`)
           whose ops cite a record onto a person's fact or name: those ops,
           its outcome, and person_evidence, assertion and source ids at the
           call.
@@ -105,13 +106,32 @@ def _cites_onto_person(tool: str, op: dict) -> bool:
     return isinstance(sources, list) and any(isinstance(x, dict) and isinstance(x.get("ref"), str) and x.get("ref") for x in sources)
 
 
+def _hash_ref(node) -> bool:
+    """A node, or a person's name or fact, citing a ref that starts with `#`.
+    The validator resolves a ref by exact source id and no source id starts
+    with `#`, so it refuses the write ("references source '#S1' which does not
+    exist")."""
+    if not isinstance(node, dict):
+        return False
+    nodes = [node] + [n for key in ("names", "facts") if isinstance(node.get(key), list) for n in node[key] if isinstance(n, dict)]
+    return any(
+        isinstance(s, dict) and isinstance(s.get("ref"), str) and s["ref"].startswith("#")
+        for n in nodes
+        if isinstance(n.get("sources"), list)
+        for s in n["sources"]
+    )
+
+
 def _tree_write_landed(call: dict, ops: list) -> bool:
     """A tree write with no recorded outcome landed unless an op fails today's
-    shape checks: a sourced relationship or fact with no usable ref."""
+    shape checks: a sourced relationship or fact with no usable ref, or a node
+    citing a ref that starts with `#`."""
     outcome = _outcome(call)
     if outcome != "unknown":
         return outcome == "applied"
     for op in ops:
+        if any(_hash_ref(op.get(key)) for key in ("fact", "name", "relationship", "person")):
+            return False
         if op.get("operation") == "add_relationship" and isinstance(op.get("relationship"), dict) and not op.get("sourceAssertionId"):
             if _bad_refs(op["relationship"]):
                 return False

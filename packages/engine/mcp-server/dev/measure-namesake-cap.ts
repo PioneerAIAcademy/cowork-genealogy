@@ -40,9 +40,13 @@
 //   §5  the materialize copy gate (1d): each persona op of a committed
 //       materialize_facts call, judged by `personaTargetRefusal` on the
 //       run's final state with and without the rows.
-//   §6  tree writes (1e): each tree_edit or tree_correct op that cites a
-//       source ref onto a person's fact or name, judged on the project at
-//       the call with the shipped `namesakeVerdicts` and `refsReach`.
+//   §6  tree writes (1e): each tree_edit add_fact or add_name and
+//       tree_correct update_fact or update_name that cites a source ref onto
+//       a person's fact or name, charged with the citations it introduces by
+//       the shipped `introducedCitations` and judged by the shipped
+//       `namesakeCitationRefusals`, at the call and on the run's final state.
+//       The dump keeps no tree, so updates are also judged charging none and
+//       every one of their refs, which brackets the shipped check.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -65,6 +69,7 @@ import {
   namesakeCitationRefusals,
   RELATIONAL_FACT_TYPES,
   unexplainedMoveInvariants,
+  type IntroducedCitation,
 } from "../src/tools/research-append.js";
 import { isTwoParty } from "../src/utils/record-persona.js";
 import { joinedPairRefusals, survivorOrderRefusals } from "../src/tools/merge-tree-persons.js";
@@ -938,20 +943,69 @@ function opNodeId(op: any, finalTree: any): string | null {
   return typeof n?.id === "string" ? n.id : null;
 }
 
-/** The citations one op introduces, through the shipped `introducedCitations`:
- *  the node's refs before it are those the starting tree and the run's earlier
- *  landed writes gave that node; an add makes a new node, and an update sets the
- *  node's `sources` to the op's. */
-function opIntroduced(op: any, index: number, holders: ReadonlySet<string>, known: Map<string, string[]>, finalTree: any) {
+/** The refs a node carried before an update, read by hand from the run log, for
+ *  every update whose call is judged or refused differently when its updates are
+ *  charged none or every one of their refs. Keyed `<run>#<call> <node id>`. */
+const TRACED_PRIOR_REFS: ReadonlyMap<string, string[]> = new Map([
+  // add_person at call 184 made N28 citing S5.
+  ["antonio-lucas-spouse/run-2026-08-04_22-45-15.json#205 N28", ["S5"]],
+  // Call 208 set F11's sources to S6.
+  ["antonio-lucas-spouse/run-2026-08-04_22-45-15.json#214 F11", ["S6"]],
+  // add_fact at call 206 made F13 citing S6.
+  ["antonio-lucas-spouse/run-2026-08-04_22-45-15.json#214 F13", ["S6"]],
+  // Call 205 set N28's sources to S6 and S5.
+  ["antonio-lucas-spouse/run-2026-08-04_22-45-15.json#214 N28", ["S6", "S5"]],
+  // add_person at call 184 made F12 citing S5; call 307, citing S9 too, was refused.
+  ["antonio-lucas-spouse/run-2026-08-04_22-45-15.json#309 F12", ["S5"]],
+  // materialize_facts made F1 from S1's record at call 62 and enriched it from S3's at call 125.
+  ["ciriaco-bardales-spouse/run-2026-09-18_12-52-26.json#187 F1", ["S1", "S3"]],
+  // materialize_facts made F1 from S1's record at call 72 and enriched it from S3's, the
+  // other index entry for the burial, at call 73; S4 was registered at call 94.
+  ["ignacio-alvarado-daughter/run-2026-09-10_14-16-30.json#145 F1", ["S1", "S3"]],
+  // add_fact at call 171 made F3 citing S3; the dump matches it by a date call 219 changed.
+  ["john-perry-witbeck-vitals/run-2026-07-24_23-52-08.json#219 F3", ["S3"]],
+  // add_person at call 164 made F2 citing S3; call 163 was refused.
+  ["susanna-szljacsan-spouse/run-2026-08-03_22-34-20.json#174 F2", ["S3"]],
+  // add_fact at call 49 made F2 with no source; calls 43 and 44 were refused.
+  ["wilkins-death-kentucky/run-2026-07-16_20-44-07.json#51 F2", []],
+]);
+
+/** The citations one op introduces, through the shipped `introducedCitations`.
+ *  An add makes a new node, so it introduces every ref it cites. An update sets
+ *  the node's `sources` to the op's and introduces the refs the node did not
+ *  carry: `rebuilt` takes those from the starting tree and the run's earlier
+ *  dumped ops only (an add or update of a fact or name citing a source), so a
+ *  node made or changed by anything else (add_person, materialize_facts, a
+ *  merge, an update citing nothing) has its earlier refs missed or stale.
+ *  `all` charges an update with every ref it cites; the shipped check charges
+ *  no more than that, and no less than the adds alone. `traced` overrides the
+ *  rebuild with the refs read from the run log. `unseen`: an update on a node no
+ *  dumped op or starting tree recorded. */
+function opIntroduced(
+  op: any,
+  index: number,
+  holders: ReadonlySet<string>,
+  known: Map<string, string[]>,
+  finalTree: any,
+  traced?: string[],
+) {
   const kind = op.fact ? "facts" : "names";
   const id = opNodeId(op, finalTree);
   const key = `${op.personId}|${kind}|${id}`;
   const node = { ...(op.fact ?? op.name), id: id ?? "(unmatched)" };
-  const prior = op.operation.startsWith("add_") ? undefined : { id: node.id, sources: (known.get(key) ?? []).map((ref) => ({ ref })) };
-  const before = { persons: [{ id: op.personId, [kind]: prior ? [prior] : [] }] };
-  const after = { persons: [{ id: op.personId, [kind]: [node] }] };
+  const add = op.operation.startsWith("add_");
+  const charge = (priorRefs: string[] | null) =>
+    introducedCitations(
+      { persons: [{ id: op.personId, [kind]: priorRefs === null ? [] : [{ id: node.id, sources: priorRefs.map((ref) => ({ ref })) }] }] },
+      { persons: [{ id: op.personId, [kind]: [node] }] },
+      holders,
+      index,
+    );
+  const rebuilt = charge(add ? null : (traced ?? known.get(key) ?? []));
+  const all = add ? rebuilt : charge([]);
+  const unseen = !add && !known.has(key);
   if (id !== null) known.set(key, nodeRefs(node).map(bareRef));
-  return introducedCitations(before, after, holders, index);
+  return { rebuilt, all, add, unseen };
 }
 
 function section6(lines: any[], states: FinalState[]): void {
@@ -959,11 +1013,14 @@ function section6(lines: any[], states: FinalState[]): void {
     "\n§6  tree writes (1e: item 8 as ruled 2026-10-18, facts and names): each tree_edit add_fact or add_name and " +
       "tree_correct update_fact or update_name onto a person, citing a source ref, in a call that landed. Each op's " +
       "introduced citations come from the shipped `introducedCitations` (an update's refs less those the node carried " +
-      "from the starting tree and the run's earlier landed writes) and are judged by the shipped " +
+      "from the starting tree and the run's earlier dumped ops) and are judged by the shipped " +
       "`namesakeCitationRefusals` on the project as it stood at the call (as §3 builds it); a call is refused when " +
       "an op is. Ordering only: the call passes when judged on the run's final state, so writing the link first " +
       "would pass. Faithful: runs whose person_evidence the replay rebuilds exactly. Final: every such call, " +
-      "unmeasured ones included, judged on the run's final state, which counts every link the run wrote",
+      "unmeasured ones included, judged on the run's final state, which counts every link the run wrote. Refs " +
+      "reaching no research source: refs the measured calls introduce that the check does not judge. Updates: the " +
+      "dump keeps no tree, so the same counts with every update charged none of its refs, and every one of them; " +
+      "the shipped check lies between",
   );
   const byRun = new Map(states.map((s) => [`${s.slug}/run-${s.run}.json`, s]));
   const faithful = new Set(lines.filter((l) => l.kind === "run" && l.fidelity).map((l) => l.run));
@@ -971,12 +1028,17 @@ function section6(lines: any[], states: FinalState[]): void {
   const tw = lines.filter((l) => l.kind === "treewrite" && byRun.has(l.run));
   for (const bracket of BRACKETS) {
     let calls = 0, judgedCalls = 0, refusedCalls = 0, orderingOnly = 0, faithfulJudged = 0, faithfulRefused = 0;
-    let unmeasured = 0, finalJudged = 0, finalRefused = 0;
+    let unmeasured = 0, finalJudged = 0, finalRefused = 0, judgedOps = 0, refusedOps = 0, unjudgedRefs = 0;
+    let updates = 0, unseen = 0, tracedUsed = 0;
+    const untraced: string[] = [];
+    const endsOf = () => ({ finalJudged: 0, finalRefused: 0, finalSubject: 0, judged: 0, refused: 0 });
+    const ends = { none: endsOf(), every: endsOf() };
     const subject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
     const finalSubject: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
     const finalWhy: Record<string, number> = {};
     const fires: string[] = [];
     const finalFires: string[] = [];
+    const updateFires: string[] = [];
     const known = new Map<string, Map<string, string[]>>();
     for (const l of tw) {
       const s = byRun.get(l.run)!;
@@ -992,12 +1054,66 @@ function section6(lines: any[], states: FinalState[]): void {
         known.set(l.run, seed);
       }
       const holders = new Set(holdersIn(s, bracket));
-      const introduced = (l.ops as any[]).flatMap((op, i) => (holders.has(op?.personId) ? opIntroduced(op, i, holders, known.get(l.run)!, s.finalTree) : []));
+      const traceKey = (op: any) => `${l.run}#${l.call} ${op?.factId ?? op?.nameId}`;
+      const perOp = (l.ops as any[]).map((op, i) =>
+        holders.has(op?.personId) ? opIntroduced(op, i, holders, known.get(l.run)!, s.finalTree, TRACED_PRIOR_REFS.get(traceKey(op))) : null,
+      );
       if (!(l.ops as any[]).some((op) => holders.has(op?.personId))) continue;
       calls += 1;
+      const introduced = perOp.flatMap((o) => o?.rebuilt ?? []);
+      const atEnd = { none: perOp.flatMap((o) => (o?.add ? o.rebuilt : [])), every: perOp.flatMap((o) => o?.all ?? []) };
+      const updateOps = (l.ops as any[]).filter((op, i) => perOp[i] && !perOp[i]!.add);
+      updates += updateOps.length;
+      unseen += perOp.filter((o) => o?.unseen).length;
+      tracedUsed += updateOps.filter((op) => TRACED_PRIOR_REFS.has(traceKey(op))).length;
+      const needTrace = () => {
+        for (const op of updateOps) {
+          const k = traceKey(op);
+          if (!TRACED_PRIOR_REFS.has(k) && !untraced.includes(k)) untraced.push(k);
+        }
+      };
+      const reaches = (cites: IntroducedCitation[], research: any) =>
+        cites.some((c) => c.refs.some((ref) => refsReach([ref], research).sourceIds.size > 0));
       const fin = plantRows(s.research, [...holders].sort());
+      const finalAtEnd = {
+        none: namesakeCitationRefusals(fin, s.finalTree, atEnd.none, s.startingIds),
+        every: namesakeCitationRefusals(fin, s.finalTree, atEnd.every, s.startingIds),
+      };
+      for (const end of ["none", "every"] as const) {
+        if (reaches(atEnd[end], fin)) ends[end].finalJudged += 1;
+        if (finalAtEnd[end].length === 0) continue;
+        ends[end].finalRefused += 1;
+        if (atEnd[end].some((c) => c.personId === s.subject)) ends[end].finalSubject += 1;
+      }
+      if (reaches(atEnd.none, fin) !== reaches(atEnd.every, fin) || (finalAtEnd.none.length > 0) !== (finalAtEnd.every.length > 0)) needTrace();
       const finalFindings = namesakeCitationRefusals(fin, s.finalTree, introduced, s.startingIds);
-      const judgedAtAll = introduced.some((c) => c.refs.some((ref) => refsReach([ref], fin).sourceIds.size > 0));
+      const listDeciding = (when: string, findings: Array<{ index: number | null; message: string }>, why: string) => {
+        for (const f of findings) {
+          const op = (l.ops as any[])[f.index ?? -1] ?? {};
+          if (op.operation?.startsWith("add_")) continue;
+          const cited = /cites (\S+) \(research source '([^']+)'\)/.exec(f.message);
+          updateFires.push(
+            `${when}, ${why}: ${l.run} #${l.call} ${op.operation} ${op.factId ?? op.nameId} on ${op.personId}` +
+              `${op.personId === s.subject ? " (subject)" : ""}${perOp[f.index ?? -1]?.unseen ? " (unseen node)" : ""}: ` +
+              `${cited ? `${cited[1]}, research source ${cited[2]}` : f.message.slice(0, 80)}`,
+          );
+        }
+      };
+      const listJudging = (when: string, research: any) => {
+        for (const c of introduced) {
+          const op = (l.ops as any[])[c.index ?? -1] ?? {};
+          const reached = c.refs.filter((ref) => refsReach([ref], research).sourceIds.size > 0);
+          if (op.operation?.startsWith("add_") || reached.length === 0) continue;
+          updateFires.push(
+            `${when}, judged only through an update: ${l.run} #${l.call} ${op.operation} ${op.factId ?? op.nameId} on ` +
+              `${op.personId}${perOp[c.index ?? -1]?.unseen ? " (unseen node)" : ""}: ${reached.join(", ")}`,
+          );
+        }
+      };
+      if (reaches(introduced, fin) && !reaches(atEnd.none, fin)) listJudging("final", fin);
+      if (finalFindings.length > 0 && finalAtEnd.none.length === 0) listDeciding("final", finalFindings, "refused only through an update");
+      if (finalAtEnd.every.length > 0 && finalFindings.length === 0) listDeciding("final", finalAtEnd.every, "refused only when an update is charged every ref");
+      const judgedAtAll = reaches(introduced, fin);
       if (judgedAtAll) finalJudged += 1;
       if (finalFindings.length > 0) {
         finalRefused += 1;
@@ -1014,11 +1130,30 @@ function section6(lines: any[], states: FinalState[]): void {
       }
       const w = mergeWorld(l, s);
       const planted = plantRows(w.research, [...holders].sort());
-      if (!introduced.some((c) => c.refs.some((ref) => refsReach([ref], planted).sourceIds.size > 0))) continue;
+      const callAtEnd = {
+        none: namesakeCitationRefusals(planted, w.tree, atEnd.none, w.startingIds),
+        every: namesakeCitationRefusals(planted, w.tree, atEnd.every, w.startingIds),
+      };
+      for (const end of ["none", "every"] as const) {
+        if (!reaches(atEnd[end], planted)) continue;
+        ends[end].judged += 1;
+        if (callAtEnd[end].length > 0) ends[end].refused += 1;
+      }
+      if (reaches(atEnd.none, planted) !== reaches(atEnd.every, planted) || (callAtEnd.none.length > 0) !== (callAtEnd.every.length > 0)) needTrace();
+      const callFindings = namesakeCitationRefusals(planted, w.tree, introduced, w.startingIds);
+      if (reaches(introduced, planted) && !reaches(atEnd.none, planted)) listJudging("at call time", planted);
+      if (callFindings.length > 0 && callAtEnd.none.length === 0) listDeciding("at call time", callFindings, "refused only through an update");
+      if (callAtEnd.every.length > 0 && callFindings.length === 0) listDeciding("at call time", callAtEnd.every, "refused only when an update is charged every ref");
+      for (const c of introduced) {
+        unjudgedRefs += c.refs.filter((ref) => refsReach([ref], planted).sourceIds.size === 0).length;
+      }
+      judgedOps += introduced.filter((c) => reaches([c], planted)).length;
+      if (!reaches(introduced, planted)) continue;
       judgedCalls += 1;
       if (faithful.has(l.run)) faithfulJudged += 1;
-      const findings = namesakeCitationRefusals(planted, w.tree, introduced, w.startingIds);
+      const findings = callFindings;
       if (findings.length === 0) continue;
+      refusedOps += new Set(findings.map((f) => f.index)).size;
       refusedCalls += 1;
       if (faithful.has(l.run)) faithfulRefused += 1;
       if (finalFindings.length === 0) orderingOnly += 1;
@@ -1028,16 +1163,36 @@ function section6(lines: any[], states: FinalState[]): void {
     console.log(
       `  ${bracket}: ${calls} calls cite onto a row holder (${unmeasured} unmeasured: captures stripped, no links ` +
         `replayed); at call time ${judgedCalls} judged, ${refusedCalls} refused, ${orderingOnly} of them ordering only; ` +
-        `in faithful runs ${faithfulRefused} of ${faithfulJudged} (calls onto the subject: hint the subject's own ` +
-        `${subject.true}, a namesake's ${subject.false}, unlabelled ${subject.unlabelled}); final: ${finalRefused} of ` +
+        `in faithful runs ${faithfulRefused} of ${faithfulJudged}; ops ${refusedOps} of ${judgedOps} refused (calls ` +
+        `onto the subject: hint the subject's own ${subject.true}, a namesake's ${subject.false}, unlabelled ` +
+        `${subject.unlabelled}); refs reaching no research source ${unjudgedRefs}; final: ${finalRefused} of ` +
         `${finalJudged} calls refused (onto the subject: hint the subject's own ${finalSubject.true}, a namesake's ` +
         `${finalSubject.false}, unlabelled ${finalSubject.unlabelled})`,
     );
     console.log(`      final refusals by source: ${Object.entries(finalWhy).map(([k, n]) => `${k} ${n}`).join("; ") || "none"}`);
+    const endText = (e: ReturnType<typeof endsOf>) =>
+      `at call time ${e.refused} of ${e.judged}, final ${e.finalRefused} of ${e.finalJudged} (${e.finalSubject} onto the subject)`;
+    const subjectRefused = finalSubject.true + finalSubject.false + finalSubject.unlabelled;
+    const same =
+      [ends.none, ends.every].every((e) => e.refused === refusedCalls && e.judged === judgedCalls) &&
+      [ends.none, ends.every].every((e) => e.finalRefused === finalRefused && e.finalJudged === finalJudged && e.finalSubject === subjectRefused);
+    console.log(
+      `      updates: ${updates} ops, ${unseen} on a node no dumped op or starting tree recorded, ${tracedUsed} read ` +
+        `from the run log (TRACED_PRIOR_REFS); charging none of their refs: ${endText(ends.none)}; charging every ` +
+        `one: ${endText(ends.every)}` +
+        (same
+          ? "; the same as above either way, so no figure above depends on how an update's earlier refs are rebuilt"
+          : untraced.length === 0
+            ? "; every update that moves a count between the two is read from its run log, so the figures above are the shipped check's"
+            : `; ${untraced.length} update(s) that move a count are not traced, so the figures above are estimates: ${untraced.join("; ")}`),
+    );
     for (const f of VERBOSE ? fires : fires.slice(0, 12)) console.log(`      ${f}`);
     for (const f of VERBOSE ? finalFires : []) console.log(`      ${f}`);
+    for (const f of VERBOSE ? updateFires : []) console.log(`      ${f}`);
     if (!VERBOSE && fires.length > 12) console.log(`      ... ${fires.length - 12} more (--verbose)`);
     if (bracket === "every linked person") floor(finalJudged > 0, "§6 judged no tree write");
+    if (bracket === "every linked person") floor(updates > 0, "§6 saw no update, so its two ends bracket nothing");
+    floor(untraced.length === 0, `§6 (${bracket}): an update moves a count and its earlier refs are not traced in TRACED_PRIOR_REFS`);
   }
 }
 
