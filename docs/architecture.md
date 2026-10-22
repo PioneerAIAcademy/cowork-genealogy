@@ -1500,8 +1500,8 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **12 of the 15** `research.json` sections — missing `project`,
-> `researcher_profile`, and `known_holdings`. On the tree side,
+> **14 of the 18** `research.json` sections — missing `project`,
+> `researcher_profile`, `known_holdings`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
@@ -1565,8 +1565,10 @@ duplicated and the *value* it reads is centralized in project state.
 
 ### If you're asked to…
 
-**Add a field or section to `research.json`.** Ten sites in the shipping product
-— and **two of them are checked by nothing.** *(Unprefixed paths are under
+**Add a field or section to `research.json`.** Fourteen sites in the shipping
+product, the last four only for a new section or a field holding tree person ids
+— and **three of them (8, 11 and 14) are checked by nothing**, while 2 is checked
+only for closed-enum values. *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
 viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
 `lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
@@ -1583,24 +1585,29 @@ product one.)*
 |---|---|---|
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` (and `simplified-gedcomx-spec.md` Section 5) | `make engine-test` (`enum-drift.test.ts`) — closed-enum value rows only; the field tables and prose descriptions stay unchecked |
-| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
+| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema); for a new section also `ID_PREFIXES` and the section's own `validate*` pass | `make engine-test`; the `validate*` pass, nothing |
 | 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
-| 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
+| 6 | `src/tools/research-append-examples.ts` — the worked-example registry; the section's `DEF_FOR` row in `tests/packaging/research-append-examples.test.ts` | `make engine-test` requires an example for every `RESEARCH_APPEND_SECTIONS` section and a `DEF_FOR` row for every example, checks each against the schema, and round-trips every registry example through `research_append` (`SECTIONS_WITH_EXAMPLES` in `tests/tools/research-append.test.ts`, read from the registry) |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
 | 9 | *(required only)* `eval/fixtures/scenarios/*/research.json` + the eval Python stubs | eval suites fail until backfilled |
 | 10 | *(required only)* `packages/viewer-ui/src/lib/__fixtures__/` | `make typecheck` |
+| 11 | *(a section `research_append` writes)* its `SECTIONS` entry in `src/tools/research-append.ts` (prefix, stamp, `updatableFields`) and its name in `RESEARCH_APPEND_SECTIONS`, the `section` enum | **nothing** — a section left out is simply unwritable; once listed, sites 6 and 12 bind it |
+| 12 | *(new section)* its row in `docs/specs/schemas/ownership.json` | `make engine-test` (`ownership-manifest.test.ts`: one row per schema property and `research_append` section, and `merge_tree_persons` among the writer tools of every section the site-14 walker reaches) |
+| 13 | *(new array section)* `src/tools/research-query.ts`: `RESEARCH_QUERY_SECTIONS` with a `SECTION_FILTERS` entry, or `RESEARCH_QUERY_EXCLUDED` with its reason; `RESEARCH_QUERY_OPTIONAL_SECTIONS` when the schema does not require it; the section list in the tool's description | `make engine-test` (`research-query.test.ts`: every array section queryable or excluded, the optional set exact; `tsc`: the filter entry); the description, nothing |
+| 14 | *(holds tree person ids)* `src/validation/person-id-refs.ts` — `PersonIdRefField`, `PERSON_ID_REF_FIELDS` and a block in `iteratePersonIdRefs`, the one walker behind the validator's dangling-id check and `merge_tree_persons`' re-key; `ResearchRefsUpdated` and its zero object in `src/tools/merge-shared.ts`; the re-pointed list in `merge_tree_persons`' description | **nothing** for the walker: an unwalked id is never re-keyed by a merge or reported once it dangles. Once walked, `make engine-test` requires the `ResearchRefsUpdated` key (`tsc`) and site 12's writer tool |
 
 Two things the site list alone won't tell you:
 
 - **Sites 6, 7, and 8 are the "did this field ever become real" set** — 6 teaches
   the model the shape, 8 tells a skill to write it, 7 shows it to the researcher
-  in both the Electron viewer and the web workbench. 6 is checked for round-trip
-  validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
+  in both the Electron viewer and the web workbench. 6 is checked against the
+  schema and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror, site 4,
+  `engine-test` (sites 1, 3, 6, 7, 12 and 13, and 14 once the walker yields the
+  field), `harness-test` (the JSON-schema mirror, site 4,
   byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
   TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
   reaches all four. Naming them individually is how the last one gets skipped.
@@ -1992,7 +1999,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make replay-collapse` | rule `plan-log`: that one `research_query {log, questionId}` call returns **exactly** the entries a recorded `log × planItemId` walk read; rule `plural-id` (`RULE=plural-id`): that one call carrying a **list** of `personId`/`assertionId`/`sourceId`/`recordId` returns exactly the union of the recorded one-id walk's answers (the base build's own singular pages), with `count` and `countById` right on every page and no page past the 50,000-char spill. Both report how many calls that removes (N → M) — free, no model, ~15 s; refuses to pass on an empty or wrong notebook (each replayed walk count must match the recorded one; plural-id classifies a miss as `source-id-unstamped`, allowed, or `ledger-missing-writes`, allowed only for its pinned groups, and anything else is exit 3) | **whether agents adopt the filter** — that is model behaviour, measured on a unit or e2e run; runs whose capture was stripped (their walks report `unverifiable`); **turns**, except on runs whose timeline carries message ids; the `contains`-mode sections (`conflicts`, `hypotheses`, `timelines`, `proof_summaries`) — no recorded walk uses them, so only vitest covers their list path |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
-| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
+| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `scorePair` (`packages/engine/mcp-server/src/utils/match-engine.ts`, the function `same_person` calls): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands `scorePair` (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
 | `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
@@ -2326,11 +2333,11 @@ carries. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
 1 by policy. **The pin buys suite wall-clock, not permission to ship a test that
 flaps.** A test that does not pass every run is a defect — in the test, its
-fixture, its rubric, or the skill — and it gets diagnosed and fixed, never
-re-run until it comes back green (`docs/skill-lifecycle.md` carries the
-symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
-construction, catching one is on you: re-run a suspect test with
-`run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
+fixture, its rubric, or the skill — and it gets diagnosed and fixed
+(`docs/skill-lifecycle.md` carries the symptom-to-fix table). A suite run's
+fail-retries only keep one flake from blocking an unrelated PR; `make
+eval-health` lists the tests below the 95% bar, and a suspect test re-runs with
+`run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`.
 97 of the 446 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one

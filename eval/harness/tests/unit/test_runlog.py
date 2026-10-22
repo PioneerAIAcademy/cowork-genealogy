@@ -108,6 +108,31 @@ def test_assembles_passing_entry():
     assert entry["totals"]["total_cost_usd"] == pytest.approx(0.011)
 
 
+def test_a_fail_retried_pass_quotes_a_passing_runs_rationale():
+    """A first run failed on a judge score, then three fail-retries passed. Each
+    review row's rationale must come from a passing run — the one the results
+    page shows — while the scores stay the modal."""
+    def judge(correctness, tag):
+        return JudgeResult(
+            skipped=False,
+            dimensions=[
+                {"source": "base", "name": "Correctness", "score": correctness, "rationale": tag},
+                {"source": "base", "name": "Completeness", "score": 3, "rationale": tag},
+            ],
+            judge_cost_usd=0.0,
+        )
+
+    runs = [_stub_run(outcome="fail", judge=judge(1, "failed run"))]
+    runs += [_stub_run(outcome="pass", judge=judge(3, "passing run")) for _ in range(3)]
+    entry = _make_entry(runs=runs)
+    assert entry["outcome"] == "pass"
+    rows = entry["outcome_summary"]["review_dimensions"]
+    assert [(d["name"], d["score"], d["rationale"]) for d in rows] == [
+        ("Correctness", 3, "passing run"),
+        ("Completeness", 3, "passing run"),
+    ]
+
+
 def test_validators_failed_entry():
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
     entry = _make_entry(runs=[_stub_run(outcome="fail", validators_passed=False, judge=judge)])
