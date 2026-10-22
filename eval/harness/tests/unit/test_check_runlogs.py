@@ -1745,6 +1745,14 @@ def test_rule6_uses_the_modal_aggregate_not_any_run(capsys):
     assert _rule6([_t("ut_s_1", ["pass", "fail", "pass"])]) == 0
 
 
+def test_rule6_passes_a_test_that_passed_its_three_fail_retries(capsys):
+    """The shapes the harness's fail-retries write (issue #3733) need no rule
+    change: three passing retries outvote the failure, one failed retry does not."""
+    assert _rule6([_t("ut_s_1", ["fail", "pass", "pass", "pass"])]) == 0
+    assert _rule6([_t("ut_s_1", ["fail", "pass", "fail"])]) == 1
+    assert _rule6([_t("ut_s_1", ["fail", "pass", "pass", "fail"])]) == 1
+
+
 def test_rule6_an_xfail_marker_no_longer_suppresses_a_fail(capsys):
     """Lead, 2026-10-06: "We no longer allow xfail." A marked fail is red."""
     assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 1
