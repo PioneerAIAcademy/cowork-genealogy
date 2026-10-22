@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as net from "node:net";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -11,6 +12,8 @@ import {
   retryAfterMs,
   RETRYABLE_STATUS,
   DEFAULT_RETRY_BUDGET_MS,
+  CONNECT_ATTEMPT_TIMEOUT_MS,
+  raiseConnectAttemptTimeout,
 } from "../../src/utils/http.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
@@ -435,5 +438,62 @@ describe("describeFetchError", () => {
     const loop = new Error("loop") as Error & { cause?: unknown };
     loop.cause = loop;
     expect(describeFetchError(loop)).toBe("loop");
+  });
+});
+
+// Node abandons an address after 250 ms by default, which is less than the connect time to
+// the wiki host from the machine this was measured on (docs/architecture.md, the bullet on
+// fetchWithRetry). The setting is process-wide, so every test puts it back.
+describe("raiseConnectAttemptTimeout", () => {
+  const original = net.getDefaultAutoSelectFamilyAttemptTimeout();
+  afterEach(() => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(original);
+    vi.doUnmock("node:net");
+    vi.resetModules();
+  });
+
+  it("raises a lower default to the minimum", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(250);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(2_000);
+  });
+
+  it("leaves a higher default alone, such as one set through NODE_OPTIONS", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(5_000);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(5_000);
+  });
+
+  it("leaves a default equal to the minimum as it is", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(2_000);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(2_000);
+  });
+
+  it("is applied when the module loads: a process still on Node's own 250 ms comes out at the constant", async () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(250);
+    vi.resetModules();
+    const fresh = await import("../../src/utils/http.js");
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(fresh.CONNECT_ATTEMPT_TIMEOUT_MS);
+  });
+
+  it("is a second or more, which is the least that clears the connect times measured", () => {
+    // 81 of 270 connects took over 250 ms, 2 took over 1,000 and none took 1,500 or more.
+    // The constant checked against itself would pass at 250, so the floor is a literal.
+    expect(CONNECT_ATTEMPT_TIMEOUT_MS).toBeGreaterThanOrEqual(1_000);
+  });
+
+  it("does nothing, and does not throw at import, on a Node without the setting", async () => {
+    // The .mcpb is declared for Node 18.0 and up; the two calls arrived in 18.18 and 19.8.
+    vi.doMock("node:net", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("node:net")>();
+      return {
+        ...actual,
+        getDefaultAutoSelectFamilyAttemptTimeout: undefined,
+        setDefaultAutoSelectFamilyAttemptTimeout: undefined,
+      };
+    });
+    vi.resetModules();
+    await expect(import("../../src/utils/http.js")).resolves.toHaveProperty("raiseConnectAttemptTimeout");
   });
 });
