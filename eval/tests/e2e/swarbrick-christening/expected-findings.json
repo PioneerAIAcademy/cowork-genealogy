@@ -57,7 +57,7 @@
       "id": "f4",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT attach this Robert Swarbrick (husband of Ellen Gardner, d. 1839 Hambleton) to the parents of the OTHER same-name Robert Swarbrick christened 11 June 1797 in the parish of Hambleton, son of William Swarbrick. The two Roberts were christened within months of each other in neighboring Lancashire parishes and are easily confused. Pass = the recovered father is John Swarbrick (not William Swarbrick), and no parentage tracing back to a Hambleton-parish William Swarbrick christening is asserted for this Robert (or it appears only as an explicitly rejected hypothesis).",
+      "description": "The agent must NOT attach this Robert Swarbrick (husband of Ellen Gardner, d. 1839 Hambleton) to the parents of the OTHER same-name Robert Swarbrick christened 11 June 1797 in the parish of Hambleton, son of William Swarbrick. The two Roberts were christened within months of each other in neighboring Lancashire parishes and are easily confused. Pass = the agent's final tree.gedcomx.json records John Swarbrick (not William Swarbrick) as the father, and asserts no parentage tracing back to a Hambleton-parish William Swarbrick christening for this Robert. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Robert Swarbrick (PID MM4W-19N)",
         "relation": "father",

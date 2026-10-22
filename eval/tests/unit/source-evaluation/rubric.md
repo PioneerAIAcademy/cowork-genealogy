@@ -2,6 +2,8 @@
 
 Grading dimensions for source-evaluation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+Inside a project the agent ends with one `research_log_append` call logging its report; that entry appears in the file changes summary, and its shape is checked by validators, not by you. With **no project** the call, if made, answers `ok: false`, `reason: "no_project"`: that is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+
 **Grading constraints (read before scoring any dimension).** You do not have direct access to the scenario's `research.json` or `tree.gedcomx.json`. Your only sources of truth are the scenario README, the delegation, the agent's tool calls and the tool responses returned, and the agent's final text response.
 
 Do not assert that a fact is or is not in the tree, in a source, or in any record unless a tool response or the scenario README says so verbatim. This applies symmetrically: do not deduct because the agent missed something you cannot verify, and do not credit it for matching something you cannot verify. When the agent cites a value from a tool response, grade whether the citation matches that response. When it asserts something present in no tool response and no README, that is a Correctness deduction — the agent invented it.
@@ -59,4 +61,4 @@ Every attached source is either read and judged, or reported as unreadable with 
 - **partial:** All readable sources are judged, but the unreadable ones are omitted from the report rather than named.
 - **fail:** A source is described as clean, or as supporting a fact, without a tool response behind it; or attached sources go unmentioned with no explanation.
 
-> Read-only discipline is **not** a rubric dimension: the cap is 5 and it is already checked deterministically by `test_research_json_unmodified` and `test_tree_gedcomx_unmodified` in `eval/harness/validators/test_source_evaluation.py`, plus the universal ownership checks. A judge dimension restating a validator grades nothing and burns budget a substantive dimension needs.
+> Write discipline is **not** a rubric dimension: the cap is 5 and it is already checked deterministically by `test_research_json_only_logs_report`, `test_report_logged` and `test_tree_gedcomx_unmodified` in `eval/harness/validators/test_source_evaluation.py`, plus the universal ownership checks. A judge dimension restating a validator grades nothing and burns budget a substantive dimension needs.

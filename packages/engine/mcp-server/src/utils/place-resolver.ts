@@ -23,6 +23,7 @@ import {
   searchPlace,
   getPlaceById,
   getPlaceRepIds,
+  getPlaceCandidateNames,
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestYear } from "./date-helpers.js";
@@ -114,6 +115,68 @@ export function __clearPlaceResolverCachesForTests(): void {
 
 function normalizeKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** `normalizeKey` with diacritics folded: "Parácuaro" and "Paracuaro" compare
+ *  equal. */
+function foldPlaceName(s: string): string {
+  return normalizeKey(s).normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+/** Letters NFD leaves whole, so `\p{Diacritic}` cannot strip them. */
+const UNDECOMPOSED_LETTERS: Record<string, string> = {
+  "ø": "o", "æ": "ae", "œ": "oe", "ß": "ss", "ł": "l", "đ": "d", "ð": "d", "þ": "th", "ı": "i",
+};
+
+/** Abbreviations spelled out on both sides of `checkFirstPlace`'s compare. */
+const NAME_ABBREVIATIONS: Record<string, string> = {
+  st: "saint", ste: "sainte", mt: "mount", ft: "fort", pt: "point",
+};
+
+/** `foldPlaceName`, looser still, for `checkFirstPlace`'s name compare: "St Louis"
+ *  is "St. Louis", "Sondre Land" is "Søndre Land", "Saint Jean" is "Saint-Jean",
+ *  "Mt. Vernon" is "Mount Vernon". Measured live 2026-10-21: each was refused
+ *  without it. A period is dropped, so "D.C." meets FamilySearch's "Washington
+ *  DC"; `withoutTypeWords` is what splits "St.Louis" at the period. */
+function placeNameKey(s: string): string {
+  return foldPlaceName(s)
+    .replace(/[øæœßłđðþı]/g, (c) => UNDECOMPOSED_LETTERS[c])
+    .replace(/['\u2019]/g, "")
+    .replace(/\./g, "")
+    .replace(/-/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 0)
+    .map((w) => NAME_ABBREVIATIONS[w] ?? w)
+    .join(" ");
+}
+
+/** The keys `checkFirstPlace` compares a name by: as written, and without type
+ *  words (which also splits a word at a period or hyphen). */
+function placeNameKeys(name: string): string[] {
+  return [placeNameKey(name), placeNameKey(withoutTypeWords(name))];
+}
+
+/** Words that name a jurisdiction's TYPE, not the place: "Stagstrup Sogn" is
+ *  Stagstrup, "Co. Cork" is Cork, "Landkreis Soltau" is Soltau. Compared as
+ *  `placeNameKey` output, so "Co." arrives as "co". */
+const JURISDICTION_TYPE_WORDS: ReadonlySet<string> = new Set([
+  "parish", "sogn", "prestegjeld", "herred", "amt", "county", "co", "landkreis", "kreis",
+  "township", "twp", "municipality", "kommune", "socken", "forsamling", "kirchspiel",
+  "pfarrei", "borough", "district",
+]);
+
+/** A name with any administrative "X of" prefix and any leading or trailing type
+ *  word removed, never down to nothing. Works on the raw words, so the result can
+ *  be searched again; a period with no space after it, or a hyphen, ends a word
+ *  ("Co.Cork", "Stagstrup-Sogn"). */
+function withoutTypeWords(name: string): string {
+  let words = name.replace(/\.(?=\S)/g, ". ").trim().split(/[\s-]+/);
+  if (words.length > 2 && ADMIN_PREFIX_RE.test(placeNameKey(words.slice(0, 2).join(" ")) + " ")) {
+    words = words.slice(2);
+  }
+  while (words.length > 1 && JURISDICTION_TYPE_WORDS.has(placeNameKey(words[words.length - 1]))) words.pop();
+  while (words.length > 1 && JURISDICTION_TYPE_WORDS.has(placeNameKey(words[0]))) words.shift();
+  return words.join(" ");
 }
 
 /**
@@ -437,12 +500,7 @@ export function canonicalCountry(segment: string): string | null {
   // Fold diacritics before the lookup: "México" and "Mexico" are the same
   // country, and without this the guard silently switched itself off on the
   // accented spelling while checking the unaccented one.
-  const norm = segment
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/\./g, "");
+  const norm = foldPlaceName(segment).replace(/\./g, "");
   // hasOwn, not `?? null`: `??` only catches null/undefined, so a bare index on
   // a prototype key ("constructor") would return a function from a `string |
   // null` signature.
@@ -605,6 +663,130 @@ export async function resolveStandardPlace(
 
   standardizeCache.set(key, standardPlace); // definitive (incl. null for 0 hits)
   return standardPlace;
+}
+
+export type FirstPlaceStatus = "match" | "mismatch" | "not_found" | "lookup_failed";
+
+export interface FirstPlaceVerdict {
+  status: FirstPlaceStatus;
+  /** On a match, the entry that matched (from the tied set or the re-search);
+   *  otherwise the best entry, whenever the search found one. */
+  standardPlace?: string;
+}
+
+/**
+ * Does FamilySearch's place standard hold the FIRST place a comma list names?
+ * `research_append`'s `localities` rule (issue #3696).
+ *
+ * "Did it resolve?" is the wrong question: "Helvesieck, Schneverdingen, Soltau,
+ * Hanover" resolves to "Schneverdingen, Soltau, Hanover, Prussia, Germany",
+ * dropping the unknown village and returning its parent. So the first name the
+ * caller wrote must equal either the first segment of a top search entry's
+ * fullName, or one of that place's names in ANY language. Both are needed:
+ * the English-only list is empty for Schneverdingen and lacks "Forfarshire"
+ * (measured in issue #3696).
+ *
+ * Segment 2 filters the entries, as in #3696's search path, so it acts as a parent
+ * check and "Helvesiek, Schneverdingen, Hanover"
+ * (a real village under the wrong parish) is refused. Widenings, each measured
+ * live (2026-10-21) to refuse a real place without it:
+ * - the parent named in segment 2 is matched with type words ignored, so
+ *   "Schneverdingen Parish" is still Schneverdingen (`underParent`);
+ * - every entry tied for the top score is checked, because "Mt. Pleasant, Iowa"
+ *   ties the town with a Quaker meeting and the meeting comes first. A tied entry
+ *   with no place id is skipped; the best entry having none, a thrown fetch, or
+ *   the fetch cap leaving entries unchecked is `lookup_failed`, never a refusal;
+ * - type words are ignored ("Stagstrup Sogn", "Co. Cork"), and when that still
+ *   misses the stripped text is searched once more ("Ringebu Parish, Oppland").
+ *
+ * Unlike `resolveStandardPlace`, a failed request is `lookup_failed`, never a
+ * miss, and `placeTableForTests` is never consulted.
+ */
+export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> {
+  // Parents are searched without their type words: "Schneverdingen Parish" in the
+  // query returns no Schneverdingen entry at all (live), so the parent check would
+  // have nothing to keep and fall back to every entry.
+  const [first = "", ...parents] = placeSegments(text);
+  const rest = parents.map(parentWithoutTypeWords);
+  const verdict = await checkFirstPlaceOnce([first, ...rest].join(", "), first);
+  if (verdict.status !== "mismatch" && verdict.status !== "not_found") return verdict;
+  const stripped = withoutTypeWords(first);
+  if (placeNameKey(stripped) === placeNameKey(first)) return verdict;
+  const retry = await checkFirstPlaceOnce([stripped, ...rest].join(", "), stripped);
+  return retry.status === "match" || retry.status === "lookup_failed" ? retry : verdict;
+}
+
+/** Name lists fetched per pass. A context that matches many places can tie
+ *  hundreds of entries ("Nowhereville, Springfield": 189 live), and every fetch
+ *  runs under research_append's project lock. */
+const MAX_NAME_FETCHES = 5;
+
+async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPlaceVerdict> {
+  const wanted = new Set(placeNameKeys(first));
+  const matches = (name: string) => placeNameKeys(name).some((k) => wanted.has(k));
+  let all: SearchEntry[];
+  try {
+    all = await getSearchEntries(text, "");
+  } catch {
+    return { status: "lookup_failed" };
+  }
+  const entries = underParent(all, placeSegments(text)[1]);
+  const best = pickBest(entries);
+  if (!best) return { status: "not_found" };
+  const candidates = topScored(entries);
+  const hit = candidates.find((e) => matches(placeSegments(e.fullName)[0] ?? ""));
+  if (hit) return { status: "match", standardPlace: hit.fullName };
+  if (!best.placeId) return { status: "lookup_failed", standardPlace: best.fullName };
+  let unchecked = false;
+  const seen = new Set<string>();
+  for (const e of candidates) {
+    if (!e.placeId || seen.has(e.placeId)) continue;
+    if (seen.size >= MAX_NAME_FETCHES) {
+      unchecked = true;
+      break;
+    }
+    seen.add(e.placeId);
+    let names: string[];
+    try {
+      names = await getPlaceCandidateNames(e.placeId, {}, { anyLanguage: true });
+    } catch {
+      unchecked = true;
+      continue;
+    }
+    if (names.some(matches)) return { status: "match", standardPlace: e.fullName };
+  }
+  return { status: unchecked ? "lookup_failed" : "mismatch", standardPlace: best.fullName };
+}
+
+/** A parent's type words dropped, unless it is an "X of Y" name: "District of
+ *  Columbia" is a name, and stripping it leaves "Columbia". */
+function parentWithoutTypeWords(parent: string): string {
+  return /\bof\b/i.test(parent) ? parent : withoutTypeWords(parent);
+}
+
+/** The entries under the parent the caller wrote, or all of them when none is.
+ *  Same rule as `getSearchEntries`' derived context (fullName contains it), and
+ *  also a fullName segment equal to it under `placeNameKeys`, so "Schneverdingen
+ *  Parish" or "Hedmark County" still names the parent (measured live 2026-10-21:
+ *  without it the check fell back to every entry and passed a wrong parent). */
+function underParent(entries: SearchEntry[], parent: string | undefined): SearchEntry[] {
+  if (!parent) return entries;
+  const raw = parent.trim().toLowerCase();
+  const keys = new Set([placeNameKey(parent), placeNameKey(parentWithoutTypeWords(parent))]);
+  const kept = entries.filter(
+    (e) =>
+      e.fullName.toLowerCase().includes(raw) ||
+      placeSegments(e.fullName).some((seg) => placeNameKeys(seg).some((k) => keys.has(k))),
+  );
+  return kept.length > 0 ? kept : entries;
+}
+
+/** Every entry sharing the highest score: `pickBest` keeps the first of a tie,
+ *  which is arbitrary. */
+function topScored(entries: SearchEntry[]): SearchEntry[] {
+  if (entries.length === 0) return [];
+  const top = Math.max(...entries.map((e) => e.score ?? 0));
+  return entries.filter((e) => (e.score ?? 0) === top);
 }
 
 /**

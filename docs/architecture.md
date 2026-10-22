@@ -565,7 +565,8 @@ agents.**
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses run the hosted CLI, 2.1.294). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
+| **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -575,8 +576,18 @@ agents.**
 > model, delegate it to a plugin agent.
 >
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
-> property of the agent *definition* — the `Agent` tool's call site accepts only
-> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> property of the agent *definition*. From CLI 2.1.294 the `Agent` tool's call also
+> takes an `effort`, which overrides the definition's (the field is withdrawn from the
+> schema when `CLAUDE_CODE_EFFORT_LEVEL` is set, which is why the hosted settings never
+> use that variable). The model is told to set it only when asked; the hosted hook sets
+> it from the operator's settings. 2.1.294 also carries two flag-driven mechanisms —
+> lowering an *unpinned* subagent's effort, and a per-subagent `<total_tokens>` budget
+> keyed on the session's effort. On the hosted path's API key on 2026-10-20 the first
+> did not fire (helper at `high` unpinned), and the second was unstable: no
+> `<total_tokens>` reminder through the subagent's second request in four sessions
+> (orchestrator `high` and `medium`), one at `15000000 tokens left` on main and subagent
+> alike in a fifth (`high`), and none at `medium` minutes later — so no smaller budget
+> was ever seen under a lowered orchestrator (`apps/server/dev/probe_effort_capture.py`). The definition's field binds wherever `.claude/agents/*.md` is parsed, which is the hosted
 > control plane (`stage_plugin_agents` + `setting_sources=["project"]`), both
 > harnesses, **and Cowork — verified live on 2026-08-25**, the way the `model:` pins
 > were. A probe plugin pinned `record-extractor` to `effort: low` and a `PreToolUse`
@@ -787,7 +798,8 @@ tool it holds — "Give an agent a new tool", §5). Register it in the worker's
 `EXPECTED_AGENTS`, in `DELEGATION_EDGES`, and in `agent-return-contract.test.ts`
 (heading or `PENDING`) — the full list, with
 what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
-agent trips". Then run `make agent-smoke` (§8) — and note that no CI job runs it.
+agent trips". Then run `make agent-smoke` (§8) — its registration arm now runs
+in CI (`server-tests.yml`, keyless), but its dead-stub arm does not.
 
 ---
 
@@ -942,6 +954,26 @@ they have different fixes, and only one of them is a description problem.
    that corpus, and **refuses to run** when that set has no positives (it used to
    report a pass without scoring anything). It makes real paid model calls, is not
    in CI, and only *proposes* text you then apply by hand.
+
+   **`make optimize-skill` reaches exactly one of the 32 routing targets.**
+   `build_eval_set.py --skill <name>` exits `ERROR: no skill` unless
+   `plugin/skills/<name>/` exists, so it cannot be pointed at `agents/<name>.md`;
+   of the two skill directories left, only `research` has trigger queries. Its
+   runner credits a trigger only on a `Skill` or `Read` call naming the target
+   and returns *not triggered* on any other tool, an `Agent` spawn included, so
+   pointing it at an agent would score every correct hand-off as a miss.
+
+   **The instrument for an agent is a routing negative**, not the optimizer: a
+   test with a `user_message`, no `grade_on_invariant`, and a
+   `negative.correct_skill` naming the agent asserts that the utterance routes
+   there, and the harness resolves an agent file as a valid target.
+   **No agent carries one today.** All 18 committed negatives that name an agent
+   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
+   routing branch, so the verdict is the tag-gated invariant validator alone and
+   the hand-off is never checked. A miss against any agent is therefore
+   unmeasured, not evidence about its description. Add the missed utterance as
+   such a negative first, and diagnose the delegation before editing any
+   description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
@@ -1025,7 +1057,8 @@ bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
-probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
+probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165,
+same result): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
 `research_append`, and its deny restated that rather than being the last line.
@@ -1108,7 +1141,9 @@ driver must wait.
 
 > **Correction to three comments in the code (verified 2026-08-02).**
 > `ENABLE_TOOL_SEARCH=true` **enables** deferred/tool-search mode. It does *not*
-> eager-load schemas. Confirmed against the installed CLI (v2.1.220): a truthy
+> eager-load schemas. Confirmed against the installed CLI (v2.1.220; on 2.1.294 a
+> hosted session's first request still offers `ToolSearch` and only the `ALWAYS_LOAD`
+> schemas, `apps/server/dev/probe_session_start_cache.py`, 2026-10-20): a truthy
 > value (`true|1|yes|on`) turns tool search **on**; `auto` / `auto:N` is adaptive;
 > a **falsy** value (`false|0|no|off`) is what turns it **off**. Critically,
 > **unset also means on** — deleting the variable does not eager-load anything.
@@ -1131,7 +1166,7 @@ driver must wait.
 >
 > **Exception: `ALWAYS_LOAD` (`src/tool-schemas.ts`).** Those tools carry
 > `_meta: {"anthropic/alwaysLoad": true}` in `tools/list`, which the Claude Code
-> CLI honors under any server name (verified on 2.1.139 and 2.1.220; unverified in
+> CLI honors under any server name (verified on 2.1.139, 2.1.220 and 2.1.294; unverified in
 > Cowork). The set is sized from the September e2e corpus. 76 of 82
 > `research_append` re-loads follow a `compact_boundary`, which is consistent with
 > compaction dropping a ToolSearch-loaded schema. An always-loaded one is not
@@ -1168,9 +1203,10 @@ by a **second function parameter** (`researchAppend(input, { allowedSections, to
 that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
-an extracted record. Code composes that op whole, as it does the
-`extracted_for_question_ids` growth a re-found record gets, so no input field
-reaches either (ADR-0006, amended 2026-10-20).
+an extracted record, and in `personId` mode a `person_evidence`-only call links
+a person's attached records as unchecked candidates. Code composes each op whole,
+as it does the `extracted_for_question_ids` growth a re-found record gets, so no
+input field reaches any of them (ADR-0006, amended 2026-10-20).
 
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
@@ -1484,8 +1520,8 @@ edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
 > and an `offset` parameter for paging past 50, and covers
-> **12 of the 15** `research.json` sections — missing `project`,
-> `researcher_profile`, and `known_holdings`. On the tree side,
+> **14 of the 18** `research.json` sections — missing `project`,
+> `researcher_profile`, `known_holdings`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
 > sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
@@ -1549,8 +1585,10 @@ duplicated and the *value* it reads is centralized in project state.
 
 ### If you're asked to…
 
-**Add a field or section to `research.json`.** Ten sites in the shipping product
-— and **two of them are checked by nothing.** *(Unprefixed paths are under
+**Add a field or section to `research.json`.** Fourteen sites in the shipping
+product, the last four only for a new section or a field holding tree person ids
+— and **three of them (8, 11 and 14) are checked by nothing**, while 2 is checked
+only for closed-enum values. *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
 viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
 `lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
@@ -1567,24 +1605,29 @@ product one.)*
 |---|---|---|
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` (and `simplified-gedcomx-spec.md` Section 5) | `make engine-test` (`enum-drift.test.ts`) — closed-enum value rows only; the field tables and prose descriptions stay unchecked |
-| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
+| 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema); for a new section also `ID_PREFIXES` and the section's own `validate*` pass | `make engine-test`; the `validate*` pass, nothing |
 | 4 | `packages/schema/schemas/research.schema.json` | `make harness-test` — held **byte-identical** to site 1 (and every schema) by `test_schema_mirrors.py`, which loops both trees |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
-| 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
+| 6 | `src/tools/research-append-examples.ts` — the worked-example registry; the section's `DEF_FOR` row in `tests/packaging/research-append-examples.test.ts` | `make engine-test` requires an example for every `RESEARCH_APPEND_SECTIONS` section and a `DEF_FOR` row for every example, checks each against the schema, and round-trips every registry example through `research_append` (`SECTIONS_WITH_EXAMPLES` in `tests/tools/research-append.test.ts`, read from the registry) |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
 | 9 | *(required only)* `eval/fixtures/scenarios/*/research.json` + the eval Python stubs | eval suites fail until backfilled |
 | 10 | *(required only)* `packages/viewer-ui/src/lib/__fixtures__/` | `make typecheck` |
+| 11 | *(a section `research_append` writes)* its `SECTIONS` entry in `src/tools/research-append.ts` (prefix, stamp, `updatableFields`) and its name in `RESEARCH_APPEND_SECTIONS`, the `section` enum | **nothing** — a section left out is simply unwritable; once listed, sites 6 and 12 bind it |
+| 12 | *(new section)* its row in `docs/specs/schemas/ownership.json` | `make engine-test` (`ownership-manifest.test.ts`: one row per schema property and `research_append` section, and `merge_tree_persons` among the writer tools of every section the site-14 walker reaches) |
+| 13 | *(new array section)* `src/tools/research-query.ts`: `RESEARCH_QUERY_SECTIONS` with a `SECTION_FILTERS` entry, or `RESEARCH_QUERY_EXCLUDED` with its reason; `RESEARCH_QUERY_OPTIONAL_SECTIONS` when the schema does not require it; the section list in the tool's description | `make engine-test` (`research-query.test.ts`: every array section queryable or excluded, the optional set exact; `tsc`: the filter entry); the description, nothing |
+| 14 | *(holds tree person ids)* `src/validation/person-id-refs.ts` — `PersonIdRefField`, `PERSON_ID_REF_FIELDS` and a block in `iteratePersonIdRefs`, the one walker behind the validator's dangling-id check and `merge_tree_persons`' re-key; `ResearchRefsUpdated` and its zero object in `src/tools/merge-shared.ts`; the re-pointed list in `merge_tree_persons`' description | **nothing** for the walker: an unwalked id is never re-keyed by a merge or reported once it dangles. Once walked, `make engine-test` requires the `ResearchRefsUpdated` key (`tsc`) and site 12's writer tool |
 
 Two things the site list alone won't tell you:
 
 - **Sites 6, 7, and 8 are the "did this field ever become real" set** — 6 teaches
   the model the shape, 8 tells a skill to write it, 7 shows it to the researcher
-  in both the Electron viewer and the web workbench. 6 is checked for round-trip
-  validity and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
+  in both the Electron viewer and the web workbench. 6 is checked against the
+  schema and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7), `harness-test` (the JSON-schema mirror, site 4,
+  `engine-test` (sites 1, 3, 6, 7, 12 and 13, and 14 once the walker yields the
+  field), `harness-test` (the JSON-schema mirror, site 4,
   byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
   TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
   reaches all four. Naming them individually is how the last one gets skipped.
@@ -1969,14 +2012,14 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1 — keyless, and now run in CI by `server-tests.yml` under `AGENT_SMOKE=1`, which fails a missing prerequisite loudly rather than skipping), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2 — bills a session start, stays hand-run) | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
 | **`make hook-smoke`** | that the **hosted SDK loader actually binds** the plugin's `PreToolUse` hook: reads `hooks/hooks.json`, matches a real `research_append`, shells `guard_project_files.py` and blocks — attributed by requiring the guard's own reason text, with the SDK-side hook cleared and a hooks-removed control arm. Hard-errors without a key | **Cowork's loader**, which is a different one and reachable only by a human in a live session; the guard script's *decisions* (that is `plugin-hooks.test.ts` and the parity test). The Cowork half stays on the `nothing-checks` register either way |
 | **`make probe-agent-nesting`** | that the **hosted SDK loader** lets a plugin agent spawn another at depth 2, and which `tools:` spelling binds the spawn tool (`Task` and `Agent` both do; the call is named `Agent`) — read off the driver's own `tool_use`, with a no-grant control arm, plus a driver spawning three real `record-extractor`s in parallel, verified by what lands in `research.json`. Hard-errors without a key; ~$5 | **Cowork**, depth 3, and anything the nested agent did — the SDK streams no depth-2 messages |
 | `make replay-sizes` | the **size** of the local-state read tools' answers (`research_query`, `project_context`, `person_warnings`, `merge_warnings`, `validate_research_schema`) — a base build vs the working build, re-asked every call the committed e2e runs recorded, over `research.json` rebuilt as of each call. Free, no model, no network, ~25 s; exact (an unchanged build reads Δ = 0) | the network tools — FamilySearch and wiki, ~57% of answer chars (T1.4c); writers; the tree's state mid-run (the final tree stands in); how many later turns re-read an answer, so no dollars; turn count; prose; anything about research quality |
 | `make replay-collapse` | rule `plan-log`: that one `research_query {log, questionId}` call returns **exactly** the entries a recorded `log × planItemId` walk read; rule `plural-id` (`RULE=plural-id`): that one call carrying a **list** of `personId`/`assertionId`/`sourceId`/`recordId` returns exactly the union of the recorded one-id walk's answers (the base build's own singular pages), with `count` and `countById` right on every page and no page past the 50,000-char spill. Both report how many calls that removes (N → M) — free, no model, ~15 s; refuses to pass on an empty or wrong notebook (each replayed walk count must match the recorded one; plural-id classifies a miss as `source-id-unstamped`, allowed, or `ledger-missing-writes`, allowed only for its pinned groups, and anything else is exit 3) | **whether agents adopt the filter** — that is model behaviour, measured on a unit or e2e run; runs whose capture was stripped (their walks report `unverifiable`); **turns**, except on runs whose timeline carries message ids; the `contains`-mode sections (`conflicts`, `hypotheses`, `timelines`, `proof_summaries`) — no recorded walk uses them, so only vitest covers their list path |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
-| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
+| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `scorePair` (`packages/engine/mcp-server/src/utils/match-engine.ts`, the function `same_person` calls): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands `scorePair` (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
 | `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
@@ -2150,18 +2193,21 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
-4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
-   asking the researcher with `AskUserQuestion`, and what stops a model starting the
-   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
-   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
-   gets nothing. **None of it is built yet.** When it is, the gap will be that
-   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
-   which is the alpha, and the alpha gets nothing -- so the suite will exercise
-   a plane with no enforcement while the one that HAS it goes ungraded. **A
-   green eval suite will therefore say nothing about whether the boundary
-   holds anywhere.**
-   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+  4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+     `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19, amended
+     2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
+     stops a model starting the next step without asking differs by plane: the FS
+     prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
+     router prose and no hook at all**. There is no plugin step hook anywhere.
+     **None of it is built yet.** When it is, the gap will be that PR 1 gives the e2e
+     orchestrator the step check (rider 3) while the plane it tracks, `real_agent`
+     (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
+     suite will enforce a boundary that neither Cowork nor the alpha has, and the one
+     plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
+     suite will therefore say nothing about whether the boundary holds where researchers
+     actually are.**
+     Do not read a passing step-mode test as evidence the boundary holds in Cowork or on
+     the alpha.
 
    This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
    *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`
@@ -2307,11 +2353,11 @@ carries. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
 1 by policy. **The pin buys suite wall-clock, not permission to ship a test that
 flaps.** A test that does not pass every run is a defect — in the test, its
-fixture, its rubric, or the skill — and it gets diagnosed and fixed, never
-re-run until it comes back green (`docs/skill-lifecycle.md` carries the
-symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
-construction, catching one is on you: re-run a suspect test with
-`run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
+fixture, its rubric, or the skill — and it gets diagnosed and fixed
+(`docs/skill-lifecycle.md` carries the symptom-to-fix table). A suite run's
+fail-retries only keep one flake from blocking an unrelated PR; `make
+eval-health` lists the tests below the 95% bar, and a suspect test re-runs with
+`run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`.
 97 of the 446 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one

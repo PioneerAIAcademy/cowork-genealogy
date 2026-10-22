@@ -121,7 +121,17 @@ a destination AND is bounded: naming a destination says **where** to end up,
 bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a
 transcription to `@plugin:image-reader`, a plan to `@plugin:research-plan`, a record to
-`@plugin:search-records`. Do not walk the routing table from the top for one: that table
+`@plugin:search-records`, a review of the sources attached to a person to
+`@plugin:source-evaluation`, whether two people are the same or should be merged
+to `@plugin:person-evidence`, a verdict on a hint to `@plugin:search-hints`, where
+the records are for a place and period to `@plugin:locality-guide`, and whether a
+person's children or siblings are complete to `@plugin:search-records`, returning
+candidates rather than a verdict — and to `@plugin:check-warnings` as well when the
+message gives a mother's 1900 or 1910 US census children-born and children-living
+counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
+of two persons already confirmed identical; a "should these be merged?" never goes
+to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
+with no hand-off. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver what was asked, and stop: at least one hand-off per
@@ -219,7 +229,11 @@ it by name.
    search for each, or ask the researcher for the record's identifier, before
    `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
    record contradicts a hypothesis, say so — do not present its facts as
-   support for that hypothesis or any theory built on it.
+   support for that hypothesis or any theory built on it. The same holds for a
+   relationship you or an earlier log note inferred from shared surname, place
+   or era with no record linking the people: it is a hypothesis, not a fact.
+   Spawn `@plugin:hypothesis-tracking` to register it before any search,
+   filter or rejection relies on it.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
@@ -228,6 +242,7 @@ it by name.
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
+   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |

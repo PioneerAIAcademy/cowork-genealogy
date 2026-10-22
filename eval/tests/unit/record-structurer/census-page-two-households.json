@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_record_structurer_007",
+    "skill": "record-structurer",
+    "name": "Census page: two households on one page stay two households",
+    "type": "positive",
+    "description": "A transcribed 1860 census page carries two dwellings. The agent must write one document with each person's `household`, so code assigns a head per household; merging them makes Michael Gallagher a member of the Flynn household. 1860 has no relationship column, so no relationship is stated. Every age gives a computed birth year.",
+    "tags": [
+      "census",
+      "1860",
+      "multi-household"
+    ]
+  },
+  "input": {
+    "delegation": "Structure this source and write it to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:census-1860-butler-p37\n  documentForm: page_image\n  text: <record-data>\nUnited States Census, 1860. Schedule 1, Free Inhabitants in Butler Township, County of Schuylkill, State of Pennsylvania, enumerated 14 July 1860. Post Office: Ashland. Page 37.\n\nDwelling 412, Family 418\nThomas Flynn | 42 | M | Laborer | Ireland\nBridget Flynn | 38 | F | | Ireland\nPatrick Flynn | 12 | M | | Pennsylvania | attended school\nMary Flynn | 9 | F | | Pennsylvania | attended school\n\nDwelling 413, Family 419\nMichael Gallagher | 50 | M | Miner | Ireland\nEllen Gallagher | 45 | F | | Ireland\nCatherine Gallagher | 16 | F | | Pennsylvania\nJohn Doyle | 24 | M | Laborer | Ireland\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent reads the page, makes one extraction_append call carrying one document with a `household` on each person, and returns the tool's summary verbatim. Roles and classifications are decided in code from the document; grade what the agent READ and whether the reply is the summary, not the classifications.",
+    "1860 schedules have no relationship-to-head column: a statedRelation or relationship on this page is inferred, not read."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  }
+}

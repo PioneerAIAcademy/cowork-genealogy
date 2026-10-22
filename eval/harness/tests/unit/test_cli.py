@@ -141,14 +141,14 @@ def test_runs_per_test_rejects_bad_values(bad):
 
 
 @pytest.mark.parametrize(
-    "extra, want_n, want_scratch",
+    "extra, want_n, want_scratch, want_retries",
     [
-        (["--runs-per-test", "3"], 3, True),  # override -> 3 runs, scratch log
-        ([], 1, False),  # flag omitted -> single run, releasable v{N} log
+        (["--runs-per-test", "3"], 3, True, 0),  # override -> 3 runs, scratch, no fail-retries
+        ([], 1, False, 3),  # flag omitted -> single run, releasable v{N} log, fail-retries on
     ],
 )
 def test_main_runs_per_test_end_to_end(
-    tmp_path, monkeypatch, extra, want_n, want_scratch
+    tmp_path, monkeypatch, extra, want_n, want_scratch, want_retries
 ):
     """Drive main() end-to-end (not a re-implementation of its logic) and
     assert the override actually reaches the run and the releasability
@@ -181,9 +181,11 @@ def test_main_runs_per_test_end_to_end(
 
     seen: list[int] = []
     names: list[str] = []
+    retries: list[int | None] = []
 
     def fake_run(spec, **kwargs):
         seen.append(spec.runs_per_test)
+        retries.append(kwargs.get("fail_retries"))
         return _stub_log(spec.id, spec.skill, "pass")
 
     def fake_write(log, *, runlogs_root, filename, **kwargs):
@@ -212,6 +214,8 @@ def test_main_runs_per_test_end_to_end(
     assert rc == 0
     assert seen == [want_n]  # the override reached the run
     assert names and names[0].startswith("scratch_") is want_scratch
+    # Only a releasable run retries a failed test (issue #3733).
+    assert retries == [want_retries]
 
 
 @pytest.mark.parametrize(
@@ -2067,8 +2071,9 @@ def test_abort_storm_breaker_does_not_trip_on_cap_aborts(
     assert counter["n"] == 5
 
 
+@pytest.mark.parametrize("on_retry", [False, True])
 def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, capsys, on_retry
 ):
     """The behaviour #2192 is actually about, and the one nothing covered.
 
@@ -2112,10 +2117,13 @@ def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
         # Two clean passes, then the seat's quota refuses. One is enough.
         if counter["n"] <= 2:
             return _stub_log(spec.id, spec.skill, "pass")
-        return _stub_log(
+        entry = _stub_log(
             spec.id, spec.skill, "aborted",
             aborted_reason=run_tests.QUOTA_ABORT_REASON,
         )
+        if on_retry:  # the quota hit a fail-retry: its reason is on the last run
+            entry["runs"].insert(0, {"aborted_reason": None})
+        return entry
 
     def fake_partial_write(log, *, runlogs_root, skill, timestamp):
         out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"

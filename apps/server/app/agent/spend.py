@@ -44,12 +44,16 @@ def _spend_env(name: str, default: float) -> float:
 # copy -- the worker image carries no `eval/` -- pinned against this one by
 # `test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl`.
 #
-# Cache writes are the 5-minute rate (1.25x input), not the harness's 1-hour one (2x): the
-# worker authenticates with an API key and never sets ENABLE_PROMPT_CACHING_1H, and the
-# gateway discards the TTL, so every write it meters is 5-minute (handoff U23: 149k
-# 5-minute write tokens metered $1.05 at the 1-hour rate where the CLI billed $0.72; at
-# this rate they come to $0.71). The e2e corpus runs on a subscription, where the CLI
-# writes 1-hour entries, which is why the harness keeps $6.
+# Cache writes are the 5-minute rate (1.25x input), not the harness's 1-hour one (2x).
+# The PROTOTYPE worker writes only 5-minute entries: it authenticates with an API key, its
+# anthropic arm sets no TTL, and on the FamilySearch path agentgateway discards the TTL
+# (upstream agentgateway #3670; handoff U23: 149k 5-minute write tokens metered $1.05 at
+# the 1-hour rate where the CLI billed $0.72; at this rate they come to $0.71). The ALPHA
+# writes 1-hour entries on its main thread when `Settings.prompt_cache_ttl_main` is "1h"
+# (CLI >= 2.1.294); its credential proxy prices those by the response's own 5m/1h split
+# (`price_usd(..., cache_write_1h=)`), so this default stays right for every other write.
+# The e2e corpus runs on a subscription, where the CLI writes 1-hour entries, which is why
+# the harness keeps $6.
 #
 # Env-overridable so an operator can re-price without a rebuild (compose passes each
 # through), and guarded so a typo can neither crash-loop the reader (`env_float`) nor pass
@@ -79,6 +83,10 @@ PRICE_PER_MTOK = {
 SPEND_CAP_USD = _spend_env("SESSION_SPEND_CAP_USD", 35.0)
 
 TOKEN_CLASSES = ("input", "cache_write", "cache_read", "output")
+# A 1-hour cache write is 2x the input rate on every model (a 5-minute one 1.25x). Derived
+# from `input` rather than stored as a rates key, so `rates_for(None) is PRICE_PER_MTOK`
+# still holds and no reader can KeyError on a table that lacks it.
+CACHE_WRITE_1H_INPUT_MULTIPLE = 2.0
 
 # Each model's own input and output rate, USD per 1M tokens, for pricing a call by the
 # model that made it (the alpha's credential proxy). On every model a 5-minute cache write
@@ -106,14 +114,35 @@ def rates_for(model: str | None) -> dict[str, float]:
             "cache_read": 0.1 * input_rate, "output": output_rate}
 
 
-def price_usd(tokens, model: str | None = None) -> float:
+def cache_write_1h_rate(rates: dict[str, float]) -> float:
+    """The 1-hour cache-write rate for one ``rates_for`` table, USD per 1M tokens."""
+    return CACHE_WRITE_1H_INPUT_MULTIPLE * rates["input"]
+
+
+def price_usd(tokens, model: str | None = None, cache_write_1h: int = 0) -> float:
     """Tokens (input, cache_write, cache_read, output) priced at ``rates_for(model)``:
-    with no model, at PRICE_PER_MTOK."""
+    with no model, at PRICE_PER_MTOK. The first ``cache_write_1h`` of the cache writes are
+    1-hour ones, priced at ``cache_write_1h_rate``; clamped to the write total, as the CLI's
+    own cost line clamps it."""
     rates = rates_for(model)
-    return sum(
+    total = sum(
         (t or 0) / 1_000_000 * rates[name]
         for name, t in zip(TOKEN_CLASSES, tokens)
     )
+    one_hour = min(max(cache_write_1h or 0, 0), tokens[1] or 0)
+    if one_hour:
+        total += one_hour / 1_000_000 * (cache_write_1h_rate(rates) - rates["cache_write"])
+    return total
+
+
+def usage_cache_write_1h(usage) -> int:
+    """``cache_creation.ephemeral_1h_input_tokens`` out of one usage block, or 0. A dict or
+    an attribute-carrying object, as ``usage_tokens`` accepts."""
+    split = usage.get("cache_creation") if isinstance(usage, dict) \
+        else getattr(usage, "cache_creation", None)
+    value = split.get("ephemeral_1h_input_tokens") if isinstance(split, dict) \
+        else getattr(split, "ephemeral_1h_input_tokens", None)
+    return value if isinstance(value, int) and value > 0 else 0
 
 
 def usage_tokens(usage) -> tuple:

@@ -1,0 +1,450 @@
+{
+ "log_id": "log_051",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T18:26:07.235Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "birthYearFrom": 1781,
+   "birthYearTo": 1792,
+   "count": 20,
+   "givenName": "William",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordType": "census",
+   "residencePlace": "Cumberland, England",
+   "residenceYearFrom": 1841,
+   "residenceYearTo": 1841,
+   "surname": "Barker"
+  },
+  "totalMatches": 258,
+  "paginationCappedAt": 4999,
+  "returned": 20,
+  "offset": 0,
+  "hasMore": true,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:M73V-LZR",
+    "events": [
+     {
+      "type": "Census",
+      "date": "1841",
+      "place": "St Bees, Cumberland, England, United Kingdom"
+     },
+     {
+      "type": "Residence",
+      "place": "Queen Street Marshall Court"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "William Barker",
+    "score": 5.9336,
+    "confidence": 3,
+    "sex": "Male",
+    "birthDate": "from 1782 to 1786",
+    "birthPlace": "Cumberland, England, United Kingdom",
+    "collectionId": "1493745",
+    "collectionTitle": "England and Wales, Census, 1841",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1493745",
+    "recordTitle": "Household of Dorothy Crosthwaite, \"England and Wales, Census, 1841\"",
+    "recordArk": "ark:/61903/1:2:1JV1-YX9",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_124435225",
+       "ark": "ark:/61903/1:1:M73V-LZR",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "William"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1782-1786",
+         "standard_date": "Bet 1782 and 1786",
+         "place": "Cumberland",
+         "standard_place": "Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Residence",
+         "place": "Queen Street Marshall Court",
+         "standard_place": "Street, Marshall, Alabama, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435222",
+       "ark": "ark:/61903/1:1:M73V-LZG",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Crosthwaite",
+         "given": "Dorothy"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1757-1761",
+         "standard_date": "Bet 1757 and 1761",
+         "place": "Cumberland",
+         "standard_place": "Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435223",
+       "ark": "ark:/61903/1:1:M73V-LZP",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "McLauglin",
+         "given": "Ann"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1757-1761",
+         "standard_date": "Bet 1757 and 1761",
+         "place": "Cumberland",
+         "standard_place": "Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435224",
+       "ark": "ark:/61903/1:1:M73V-LZ5",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "McComiskie",
+         "given": "Mary"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1792-1796",
+         "standard_date": "Bet 1792 and 1796",
+         "place": "Ireland",
+         "standard_place": "Ireland"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435226",
+       "ark": "ark:/61903/1:1:M73V-LZT",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Martha"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1787-1791",
+         "standard_date": "Bet 1787 and 1791",
+         "place": "Cumberland",
+         "standard_place": "Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435227",
+       "ark": "ark:/61903/1:1:M73V-LZY",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1828",
+         "standard_date": "1828",
+         "place": "Cumberland",
+         "standard_place": "Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435228",
+       "ark": "ark:/61903/1:1:M73V-LZB",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "McKenzie",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1807-1811",
+         "standard_date": "Bet 1807 and 1811"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435229",
+       "ark": "ark:/61903/1:1:M73V-LZ1",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "McKenzie",
+         "given": "Angus"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Birth",
+         "date": "1829",
+         "standard_date": "1829"
+        },
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_124435230",
+       "ark": "ark:/61903/1:1:M73V-L8M",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "McKenzie",
+         "given": "James"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1841",
+         "standard_date": "1841",
+         "place": "St Bees, Cumberland, England, United Kingdom",
+         "standard_place": "St Bees, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1831",
+         "standard_date": "1831",
+         "place": "Cumberland",
+         "standard_place": "Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_21569487721",
+       "resource_type": "Record",
+       "title": "Household of Dorothy Crosthwaite, \"England and Wales, Census, 1841\"",
+       "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M73V-LZG : Tue Sep 08 21:38:29 UTC 2026), Entry for Dorothy Crosthwaite and Ann McLauglin, 1841.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:1JV1-YX9",
+       "coverage": {
+        "place_rep_id": "2968024",
+        "date_range": "1841",
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_c_1493745",
+       "resource_type": "Collection",
+       "title": "England and Wales, Census, 1841",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1493745",
+       "coverage": {
+        "place_rep_id": "267",
+        "date_range": "1841/1841",
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS3H-8CMX",
+       "coverage": {
+        "place_rep_id": "2968024",
+        "date_range": "1841",
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_auto_M9J1-9JC",
+       "resource_type": "auto",
+       "title": "United Kingdom, Residences, Census, from 1000 to 2024",
+       "coverage": {
+        "place_rep_id": "56",
+        "date_range": "+1000-01-01T00:00:00Z/+2024-12-31T23:59:59Z"
+       }
+      },
+      {
+       "id": "src_p_p_124435225",
+       "resource_type": "Person",
+       "url": "#p_124435225"
+      }
+     ],
+     "places": [
+      {
+       "id": "1106",
+       "name": "Cumberland, England, United Kingdom",
+       "latitude": 54.53065,
+       "longitude": -3.07617
+      },
+      {
+       "id": "208",
+       "name": "Ireland",
+       "latitude": 53,
+       "longitude": -8
+      },
+      {
+       "id": "2968024",
+       "name": "St Bees, Cumberland, England, United Kingdom",
+       "latitude": 54.4911,
+       "longitude": -3.59
+      },
+      {
+       "id": "3696606",
+       "name": "Street, Marshall, Alabama, United States",
+       "latitude": 34.27833,
+       "longitude": -86.32611
+      }
+     ]
+    },
+    "primaryId": "p_124435225",
+    "role": "Principal"
+   }
+  ]
+ }
+}

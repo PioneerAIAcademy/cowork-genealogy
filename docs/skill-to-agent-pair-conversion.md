@@ -416,7 +416,7 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
 | `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
-| `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
+| `make agent-smoke` | the only check that reads what the runtime resolved; its registration arm runs in CI (`server-tests.yml`); its dead-stub arm does not |
 
 **Deleting the skill trips more, and some of it bills other suites.** Under the
 2026-09-22 ruling every conversion deletes its skill (`citation`,
@@ -528,9 +528,9 @@ up while the body ran on the main thread, and each cost a run to find.
    pending list. Three agents are EXCLUDED from the contract rather than
    pending: `image-reader`, which by spec returns a transcription and nothing
    else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
-   `source-evaluation` (issue #2796), which writes nothing, so its id-bearing
-   report IS its whole output — conforming would push it below the caller's
-   print line, where a production relay drops it; and `record-structurer`,
+   `source-evaluation` (issue #2796), which logs its report verbatim and writes
+   nothing else, so its id-bearing report IS its whole output — conforming would
+   push it below the caller's print line, where a production relay drops it; and `record-structurer`,
    whose whole return is `extraction_append`'s code-written summary, verbatim
    (lead, 2026-09-29). (The former `project-status` agent carried the "PS
    return: A" exemption too; it was deleted outright by issue #3112.)
