@@ -34,6 +34,7 @@ from harness.ownership import (
     load_manifest,
     rows,
     writer_sets,
+    writer_tool_sets,
 )
 
 
@@ -77,6 +78,15 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 #: `localities` (all in `research-plan`, a documented pure consumer), plus
 #: `locality-guide`'s own persist test.
 NEWLY_ENFORCED = {"localities"}
+
+#: Brought in by the research-as-a-job phase-2 merge: `rejected_links` is written by
+#: `person-evidence` alone (phase 3 item 3, "a rejection is its own record"). Declared
+#: here for the same reason NEWLY_ENFORCED is -- the frozen table predates the section.
+#: EMPTY, not {"person-evidence"}: the row was written when person-evidence was a
+#: skill. It is an agent now, and SUBJECTS is derived from `agent:` entries in some
+#: row's `callers` -- person-evidence appears in none, so `writer_sets` resolves its
+#: agent owner nowhere. `person_evidence` is the empty set for the same reason.
+ADDED: dict[str, set[str]] = {"rejected_links": set()}
 
 #: `questions` gains `proof-conclusion`. The transition it covers —
 #: `status -> resolved` — was owned by nobody: `proof-conclusion`'s body hands
@@ -154,7 +164,9 @@ NARROWED: dict[str, set[str]] = {
 #: `extraction_append({ recordIds })` and any other source by the
 #: record-structurer agent's one `extraction_append({ documents })` call. The
 #: sections it wrote are authorized by tool identity (`toolAuthorized`), so no
-#: caller replaces it. `plans` loses it outright: extraction updates no plan item.
+#: caller replaces it. `plans` loses it as a caller too: the plan-item
+#: completion extraction now does (issue #3516) is `extraction_append`'s own,
+#: by tool identity, whoever calls it.
 RETIRED: dict[str, set[str]] = {
     "plans": {"record-extraction"},
     "log": {"record-extraction"},
@@ -253,6 +265,9 @@ def expected_research_owners() -> dict[str, set[str]]:
         expected[section] -= removed
     for section, removed in RETIRED.items():
         expected[section] -= removed
+    # Sections the frozen table predates, declared rather than frozen in.
+    for section, writers in ADDED.items():
+        expected[section] = set(writers)
     return expected
 
 
@@ -267,6 +282,13 @@ def test_tree_owners_match_the_frozen_table():
     assert _union_writer_sets(TREE_GEDCOMX_JSON) == expected_tree_owners()
 
 
+def test_extraction_append_completes_plan_items_by_tool_identity():
+    """`plans` is where a plan-item completion shows up on the unit plane
+    (`plan_items` is never enforced there), so it is the row that must
+    authorize `extraction_append` (issue #3516)."""
+    assert "extraction_append" in writer_tool_sets(RESEARCH_JSON)["plans"]
+
+
 def test_the_only_newly_enforced_section_is_localities():
     """The set of enforced sections grew by exactly what was declared.
 
@@ -274,9 +296,10 @@ def test_the_only_newly_enforced_section_is_localities():
     kind of change happened — a new section being enforced and an owner being
     added to an existing one are different decisions with different costs.
     """
-    before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
+    declared = NEWLY_ENFORCED | set(ADDED)
+    before = set(FROZEN_OWNERSHIP_TABLE) - declared
     after = set(_union_writer_sets(RESEARCH_JSON))
-    assert after - before == NEWLY_ENFORCED
+    assert after - before == declared
     assert before - after == set()
 
 

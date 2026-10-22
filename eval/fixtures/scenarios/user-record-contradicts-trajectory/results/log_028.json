@@ -1,0 +1,172 @@
+{
+  "log_id": "log_028",
+  "tool": "record_read",
+  "retrieved": "2026-10-05T19:22:42.052Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:Q2QD-7ZPV"
+    },
+    "results": [
+      {
+        "recordId": "Q2QD-7ZPV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102167064698",
+              "ark": "ark:/61903/1:1:Q2QD-7ZPH",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "a886d6b5-3056-4a67-a272-29ba2afa549c",
+                  "type": "BirthName",
+                  "given": "Ephriam",
+                  "surname": "Boggs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167064704",
+              "ark": "ark:/61903/1:1:Q2QD-7ZPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "b9e89b13-d75e-444c-a7f3-727e3f930c3e",
+                  "type": "BirthName",
+                  "given": "Mary Ann",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102167064708",
+              "ark": "ark:/61903/1:1:Q2QD-7ZPV",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "b28f9f14-69ac-4e8f-b7ef-c35809e0ae82",
+                  "type": "BirthName",
+                  "given": "Robert",
+                  "surname": "Eastham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "5407c95c-313c-4bf3-94cc-1f2af062c957",
+              "type": "Couple",
+              "person1": "p_102167064698",
+              "person2": "p_102167064704",
+              "facts": [
+                {
+                  "id": "182ca4cb-2983-4cd8-9c0b-1553eb9fc29d",
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "30 Jan 1844",
+                  "standard_date": "30 Jan 1844",
+                  "place": ", Greenup, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "ef6d1104-f49b-4929-82b0-31b57eb5d70c",
+              "type": "ParentChild",
+              "parent": "p_102167064708",
+              "child": "p_102167064704"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102825684465",
+              "resource_type": "Record",
+              "title": "Entry for Ephriam Boggs and Mary Ann Eastham, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH : Sat Feb 24 07:13:24 UTC 2024), Entry for Ephriam Boggs and Mary Ann Eastham, 30 Jan 1844.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9F-H2FF",
+              "coverage": {
+                "record_type": "Marriage"
+              }
+            },
+            {
+              "id": "sd_c_1804888",
+              "resource_type": "Collection",
+              "title": "Kentucky, County Marriages, 1786-1965",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1804888",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1786/1965",
+                "record_type": "Marriage",
+                "standard_place": "Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89S9-B4P",
+              "coverage": {
+                "place_rep_id": "394147",
+                "date_range": "1851-1855",
+                "record_type": "MarriageBond",
+                "standard_place": "Greenup, Kentucky, United States"
+              }
+            },
+            {
+              "id": "sd_p_102167064698",
+              "resource_type": "Person",
+              "title": "Ephriam Boggs, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH : Sat Feb 24 07:13:24 UTC 2024), Entry for Ephriam Boggs and Mary Ann Eastham, 30 Jan 1844.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH"
+            },
+            {
+              "id": "sd_p_102167064708",
+              "resource_type": "Person",
+              "title": "Robert Eastham, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH : Sat Feb 24 07:13:24 UTC 2024), Entry for Ephriam Boggs and Mary Ann Eastham, 30 Jan 1844.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPV"
+            },
+            {
+              "id": "sd_p_102167064704",
+              "resource_type": "Person",
+              "title": "Mary Ann Eastham, \"Kentucky, County Marriages, 1786-1965\"",
+              "citation": "\"Kentucky, County Marriages, 1786-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPH : Sat Feb 24 07:13:24 UTC 2024), Entry for Ephriam Boggs and Mary Ann Eastham, 30 Jan 1844.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:Q2QD-7ZPX"
+            },
+            {
+              "id": "sd_auto_M9J1-QL3",
+              "resource_type": "auto",
+              "title": "United States, Kentucky, Marriages, from 1747 to 5555",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "+1747-01-01T00:00:00Z/+5555-12-31T23:59:59Z",
+                "standard_place": "Kentucky, United States"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

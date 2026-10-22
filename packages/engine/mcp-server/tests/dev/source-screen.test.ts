@@ -5,7 +5,7 @@
  * actually throw.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync } from "fs";
+import { cpSync, mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -38,6 +38,7 @@ import {
   REPO_ROOT,
   runBaseline,
   runPlant,
+  runRefreshAttachments,
   runSnapshot,
   scoreFindings,
   SPEC_PATH,
@@ -253,6 +254,7 @@ describe("error classes", () => {
       ["timeout", () => fetchMock.mockRejectedValue(Object.assign(new Error("t"), { name: "TimeoutError" })), () => tools.recordRead(ark("QQQQ-115")), "transient"],
       ["no token", () => vi.mocked(loadTokens).mockResolvedValue(null), () => tools.recordRead(ark("QQQQ-116")), "stop"],
       ["404 record", () => fetchMock.mockResolvedValue(res(404)), () => tools.recordRead(ark("QQQQ-117")), "permanent"],
+      ["410 record", () => fetchMock.mockResolvedValue(res(410)), () => tools.recordRead(ark("QQQQ-118")), "permanent"],
       ["deleted person", () => fetchMock.mockResolvedValue(res(410)), () => tools.personRead("KWCB-QZ3"), "permanent"],
       ["tombstoned quality", () => fetchMock.mockResolvedValue(res(200, { isValid: true, visibility: "TOMBSTONED" })), () => tools.personQuality("KWCB-QZ4"), "permanent"],
     ];
@@ -268,6 +270,7 @@ describe("error classes", () => {
     }
     expect(Object.fromEntries(Object.entries(got).map(([k, v]) => [k, v.split(" <- ")[0]])), JSON.stringify(got, null, 2)).toEqual(want);
     expect(classifyError("something nobody has seen before")).toBe("transient");
+    expect(classifyError("FamilySearch recapi error: 500")).toBe("transient");
     expect(classifyError("Record 4X7Q-429 was not found in FamilySearch historical records.")).toBe("permanent");
     expect(classifyError("Person KWCB-429 not found in the FamilySearch Family Tree.")).toBe("permanent");
   }, 30_000);
@@ -404,6 +407,98 @@ describe("resume follows the input-PID map", () => {
     const rows = readJson(join(out, "persons", "AAAA-111", "same-person.json"));
     expect(rows.map((r: Json) => r.ark)).toEqual([ark("P1")]);
     expect(readJson(join(out, "persons", "AAAA-111", "meta.json")).relationship_unscored).toBe(2);
+  });
+});
+
+// ─── researcher-tree attachments ────────────────────────────────────────────
+
+describe("attachments refresh", () => {
+  const familyTree = () =>
+    world({
+      persons: { "AAAA-111": person("AAAA-111", { personas: ["REC1-111", "REC2-111"] }), "FTCP-111": person("FTCP-111") },
+      records: { [ark("REC1-111")]: record("REC1-111"), [ark("REC2-111")]: record("REC2-111") },
+      attach: { [ark("REC1-111")]: [{ personId: "FTCP-111", tags: ["Birth"] }] },
+    });
+  const researcherTree = (base: World) => ({
+    ...base,
+    persons: { ...base.persons, "OTHR-222": person("OTHR-222") },
+    attach: {
+      [ark("REC1-111")]: [{ personId: "AAAA-111", tags: ["Birth"] }],
+      [ark("REC2-111")]: [{ personId: "AAAA-111", tags: ["Name"] }, { personId: "OTHR-222", tags: ["Name"] }],
+    },
+    calls: [],
+  });
+
+  it("keeps the Family Tree answer, writes the tree's, and re-reads others from it", async () => {
+    const out = mkTmp();
+    const ft = familyTree();
+    await snap(out, ["AAAA-111"], ft);
+    const dir = join(out, "persons", "AAAA-111");
+    expect(existsSync(join(dir, "others", "FTCP-111.json"))).toBe(true);
+
+    const ledger = await runRefreshAttachments(out, fakeTools(researcherTree(ft)), "9NMM-TEST");
+    expect(ledger).toMatchObject({ refreshed: 1, skipped: 0, errored: 0, subject_arks: 2, subject_arks_naming_subject: 2 });
+    expect(readJson(join(dir, "attachments.family-tree.json")).attachments[ark("REC1-111")][0].personId).toBe("FTCP-111");
+    expect(readJson(join(dir, "attachments.json")).attachments[ark("REC1-111")][0].personId).toBe("AAAA-111");
+    expect(existsSync(join(dir, "others.family-tree", "FTCP-111.json"))).toBe(true);
+    expect(readdirSync(join(dir, "others"))).toEqual(["OTHR-222.json"]);
+    expect(readJson(join(dir, "attachments-tree.json")).tree).toBe("9NMM-TEST");
+  });
+
+  it("skips a copy already refreshed for the tree, and still counts its subject ARKs", async () => {
+    const out = mkTmp();
+    const ft = familyTree();
+    await snap(out, ["AAAA-111"], ft);
+    const rt = researcherTree(ft);
+    await runRefreshAttachments(out, fakeTools(rt), "9NMM-TEST");
+    rt.calls.length = 0;
+    const again = await runRefreshAttachments(out, fakeTools(rt), "9NMM-TEST");
+    expect(again).toMatchObject({ refreshed: 0, skipped: 1, subject_arks: 2, subject_arks_naming_subject: 2 });
+    expect(rt.calls).toEqual([]);
+    expect(readJson(join(out, "persons", "AAAA-111", "attachments.family-tree.json")).attachments[ark("REC1-111")][0].personId).toBe("FTCP-111");
+  });
+
+  it("counts a Family Tree answer as naming no subject ARK", async () => {
+    const out = mkTmp();
+    const ft = familyTree();
+    await snap(out, ["AAAA-111"], ft);
+    const ledger = await runRefreshAttachments(out, fakeTools({ ...ft, calls: [] }), "9NMM-TEST");
+    expect(ledger).toMatchObject({ refreshed: 1, subject_arks: 2, subject_arks_naming_subject: 0 });
+  });
+
+  it("leaves plant copies alone", async () => {
+    const out = mkTmp();
+    const ft = familyTree();
+    await snap(out, ["AAAA-111"], ft);
+    const run = readJson(join(out, "run.json"));
+    writeJson(join(out, "run.json"), { ...run, plants: { "FIX-1": { host: "AAAA-111" } } });
+    cpSync(join(out, "persons", "AAAA-111"), join(out, "persons", "FIX-1"), { recursive: true });
+    writeJson(join(out, "persons", "FIX-1", "attachments.json"), { attachments: {}, unattached: ["x"] });
+    await runRefreshAttachments(out, fakeTools(researcherTree(ft)), "9NMM-TEST");
+    expect(readJson(join(out, "persons", "FIX-1", "attachments.json"))).toEqual({ attachments: {}, unattached: ["x"] });
+    expect(existsSync(join(out, "persons", "FIX-1", "attachments.family-tree.json"))).toBe(false);
+  });
+
+  it("a rate limit stops the run and leaves the copy unmarked for the next run", async () => {
+    const out = mkTmp();
+    const ft = familyTree();
+    await snap(out, ["AAAA-111"], ft);
+    const rt = { ...researcherTree(ft), fail: (tool: string) => (tool === "source_attachments" ? "FamilySearch rate limit reached." : undefined) };
+    const ledger = await runRefreshAttachments(out, fakeTools(rt), "9NMM-TEST");
+    expect(ledger.stopped).toMatch(/rate limit/);
+    expect(existsSync(join(out, "persons", "AAAA-111", "attachments-tree.json"))).toBe(false);
+    const resumed = await runRefreshAttachments(out, fakeTools(researcherTree(ft)), "9NMM-TEST");
+    expect(resumed).toMatchObject({ refreshed: 1, subject_arks_naming_subject: 2 });
+    expect(readJson(join(out, "persons", "AAAA-111", "attachments.family-tree.json")).attachments[ark("REC1-111")][0].personId).toBe("FTCP-111");
+  });
+
+  it("main passes --tree to the attachments subcommand and refuses it on baseline", async () => {
+    const out = mkTmp();
+    const ft = familyTree();
+    await snap(out, ["AAAA-111"], ft);
+    expect(await main(["attachments", "--snapshot", out, "--tree", "9NMM-TEST"], fakeTools(researcherTree(ft)))).toBe(0);
+    await expect(main(["attachments", "--snapshot", out], fakeTools(ft))).rejects.toThrow(/needs --tree/);
+    await expect(main(["baseline", "--snapshot", out, "--tree", "9NMM-TEST"])).rejects.toThrow(/does not take --tree/);
   });
 });
 

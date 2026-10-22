@@ -13,11 +13,12 @@
       "triage",
       "rank-search-matches",
       "pre-1880-census-household",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001. Check if any results are already attached to tree persons.",
+    "delegation": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001. Check if any results are already attached to tree persons.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [

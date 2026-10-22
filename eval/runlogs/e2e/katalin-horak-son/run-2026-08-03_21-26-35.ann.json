@@ -4,9 +4,13 @@
     "f2": "true",
     "f3": "true"
   },
-  "proof_quality_score": 2,
+  "proof_quality_score": 3,
   "notes": {
-    "f3": "Recovered the required part (documents that Katalin Horak cannot be confirmed as Janos's mother, conflict left unresolved rather than dropped), but off-shape versus the fixture's description -- folded into ps_001's narrative rather than a distinct conflict-resolution write-up, and did not reach the deeper 'Szeget' third-name pattern (the tree's own existing son's 1846 baptism naming yet another mother) that a live Cowork debugging run of this same fixture found. That broader pattern was scoped as valuable context, not itself required, when this finding was authored."
+    "f1": "New person I1 (János Bányári) with a Christening fact (1 Sep 1844, Kľak, sourced to the baptismal entry) linked via a new ParentChild relationship to LDSJ-SX2 (István) as father. Exact match on name, date, place, source.",
+    "f2": "No relationship of any kind links LDSJ-SXL (Katalin Horák) to I1 in the final tree. The mother conflict (Liskovics vs. Horák) is documented in research.json as c_001 and resolved as analytically inconclusive without asserting Horák as the mother.",
+    "f3": "Proof summary ps_001 (tier: possible) explicitly states the Horák attribution cannot be established from current evidence, names the actual indexed mother (Káti Liskovics) as the contradiction, documents five negative marriage-record searches, and recommends the decisive next step (reading the blocked original image) rather than guessing."
   },
-  "annotator": "Milescia"
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "d29c69f352031bd58ce79a3e22634e906bca58a2fcaa965da94444040eb6d2be",
+  "blind_bundle_digest": "53066b6b25da9c5bd00ac63c8fd05c9caccc7f52df64721ea8990ccba875c68f"
 }

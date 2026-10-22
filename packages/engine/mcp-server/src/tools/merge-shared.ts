@@ -36,9 +36,11 @@ export interface MergePairSummary {
 export interface ResearchRefsUpdated {
   subject_person_ids: number;
   person_evidence: number;
+  rejected_links: number;
   timelines: number;
   known_holdings: number;
   proof_summaries: number;
+  namesakes: number;
 }
 
 export interface MergeSuccess {
@@ -217,9 +219,11 @@ export function remapResearchPersonIds(
   const counts: ResearchRefsUpdated = {
     subject_person_ids: 0,
     person_evidence: 0,
+    rejected_links: 0,
     timelines: 0,
     known_holdings: 0,
     proof_summaries: 0,
+    namesakes: 0,
   };
   for (const ref of iteratePersonIdRefs(research)) {
     const survivor = collapseMap.get(ref.pid);

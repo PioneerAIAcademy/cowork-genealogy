@@ -107,6 +107,17 @@ const KEYS = {
   absent: ["name", "factType", "note"],
 } as const;
 
+/** A stated relation that states the person's sex. Roles split mother from
+ *  father on gender, so a parent sent with only `statedRelation: "mother"` is
+ *  given the gender the text states. */
+const SEX_OF_RELATION: Record<string, "male" | "female"> = {
+  father: "male", son: "male", husband: "male", brother: "male",
+  mother: "female", daughter: "female", wife: "female", sister: "female",
+};
+
+/** Record types with one principal whose stated parents are that principal's. */
+const PARENT_EDGE_RECORDS: ReadonlySet<string> = new Set(["christening", "birth", "death", "burial"]);
+
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 const isStr = (v: unknown) => typeof v === "string" && v.trim() !== "";
@@ -180,6 +191,9 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
       else ids.add(p.id as string);
       if (p.gender !== undefined && p.gender !== "male" && p.gender !== "female") {
         errs.push(`${at}.gender: must be male or female, or omitted`);
+      }
+      if (p.statedRelation !== undefined && p.statedRelation !== null && typeof p.statedRelation !== "string") {
+        errs.push(`${at}.statedRelation: must be a string, or omitted`);
       }
       if (p.principal !== undefined && p.principal !== true) errs.push(`${at}.principal: true, or omitted`);
       if (!Array.isArray(p.names) || p.names.length === 0) {
@@ -314,10 +328,11 @@ export function documentToExtract(
       ...(p.motherBirthPlace ? { motherBirthPlace: p.motherBirthPlace } : {}),
     };
     indexFields[p.id] = fields;
+    const gender = p.gender ?? SEX_OF_RELATION[p.statedRelation?.trim().toLowerCase() ?? ""];
     return {
       id: p.id,
       ...(p.principal ? { principal: true } : {}),
-      ...(p.gender ? { gender: p.gender === "male" ? "Male" : "Female" } : {}),
+      ...(gender ? { gender: gender === "male" ? "Male" : "Female" } : {}),
       names: p.names.map((n) => ({ ...(n.given ? { given: n.given } : {}), ...(n.surname ? { surname: n.surname } : {}) })),
       facts: p.facts.map((f) => ({
         type: f.type,
@@ -332,7 +347,21 @@ export function documentToExtract(
     r.type === "parent_child"
       ? { type: "http://gedcomx.org/ParentChild", parent: r.person1, child: r.person2 }
       : { type: r.type === "couple" ? "http://gedcomx.org/Couple" : "http://gedcomx.org/Sibling", person1: r.person1, person2: r.person2 },
-  );
+  ) as { type: string; parent?: string; child?: string; person1?: string; person2?: string }[];
+  // `statedRelation` is the relation to the principal, so on a vital record
+  // with exactly one flagged principal a stated father or mother with no edge
+  // is that principal's parent: the edge is added rather than the parent left
+  // tied to no one. With no flag there is no principal to tie them to.
+  const flagged = doc.persons.filter((p) => p.principal);
+  if (PARENT_EDGE_RECORDS.has(doc.recordType) && flagged.length === 1) {
+    const principalId = flagged[0].id;
+    for (const p of doc.persons) {
+      const rel = p.statedRelation?.trim().toLowerCase();
+      if (p.id === principalId || (rel !== "father" && rel !== "mother")) continue;
+      if (relationships.some((r) => r.type === "http://gedcomx.org/ParentChild" && r.parent === p.id)) continue;
+      relationships.push({ type: "http://gedcomx.org/ParentChild", parent: p.id, child: principalId });
+    }
+  }
 
   const gedcomx = {
     sources: [{ resource_type: "http://gedcomx.org/Collection", title: doc.source.title }],

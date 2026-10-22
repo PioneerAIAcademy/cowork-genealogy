@@ -55,7 +55,7 @@ from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
 )
-from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions
+from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions, is_attachment_link
 from harness.ts_validator import validate_parsed
 
 
@@ -82,7 +82,7 @@ DIFFED_SECTIONS = [
     "project", "known_holdings", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
-    "evaluations", "localities",
+    "evaluations", "localities", "rejected_links",
 ]
 
 
@@ -611,6 +611,94 @@ def _explained_by_appends(before_section, after_section) -> bool:
     return len(after_section) > len(before_section)
 
 
+def _ids_unique(section) -> list[str] | None:
+    """The section's entry ids in order, or None when one is missing or repeated."""
+    if not isinstance(section, list):
+        return None
+    ids = [e.get("id") if isinstance(e, dict) else None for e in section]
+    if any(not isinstance(i, str) for i in ids) or len(set(ids)) != len(ids):
+        return None
+    return ids
+
+
+def _explained_by_plan_completion(before_section, after_section) -> bool:
+    """True when the whole `plans` delta is `extraction_append` completing items.
+
+    It moves an item's `status` from `in_progress` to `completed` once a record
+    the item's search found is extracted (issue #3516), and touches nothing
+    else: no plan or item added or removed, no other field, no other move.
+    """
+    before_ids, after_ids = _ids_unique(before_section), _ids_unique(after_section)
+    if before_ids is None or after_ids is None or set(before_ids) != set(after_ids):
+        return False
+    before_by_id = dict(zip(before_ids, before_section))
+    changed = False
+    for plan in after_section:
+        old = before_by_id[plan["id"]]
+        if {k: v for k, v in old.items() if k != "items"} != {k: v for k, v in plan.items() if k != "items"}:
+            return False
+        old_items, new_items = old.get("items"), plan.get("items")
+        old_item_ids, new_item_ids = _ids_unique(old_items), _ids_unique(new_items)
+        if old_item_ids is None or new_item_ids is None or old_item_ids != new_item_ids:
+            return False
+        for o, n in zip(old_items, new_items):
+            if o == n:
+                continue
+            if {k: v for k, v in o.items() if k != "status"} != {k: v for k, v in n.items() if k != "status"}:
+                return False
+            if (o.get("status"), n.get("status")) != ("in_progress", "completed"):
+                return False
+            changed = True
+    return changed
+
+
+def _explained_by_attachment_links(before_section, after_section) -> bool:
+    """True when the whole `person_evidence` delta is `extraction_append`'s
+    `personId` mode: new links only, each an unchecked attachment
+    (`is_attachment_link`: the fixed rationale, speculative, no score), and
+    every existing link untouched. A scored link, a stronger one, or any edit
+    to an existing link fails (issue #3516).
+    """
+    if not _explained_by_appends(before_section, after_section):
+        return False
+    before_ids = {e.get("id") for e in before_section if isinstance(e, dict)}
+    return all(is_attachment_link(e) for e in after_section if e.get("id") not in before_ids)
+
+
+def _explained_by_question_tie(before_section, after_section, notes_ids: set[str]) -> bool:
+    """True when the whole `assertions` delta is `extraction_append`'s.
+
+    That is new assertions, plus question ids appended to an existing
+    assertion's `extracted_for_question_ids` when a question re-finds an
+    extracted record (issue #3516): ids only grow, in order. What the update
+    arm's normalizers rewrite may change on a tied assertion; an assertion this
+    run updated through `research_append` with caller fields only may also
+    change those fields, so a run that ties and writes notes is judged once.
+    """
+    before_ids, after_ids = _ids_unique(before_section), _ids_unique(after_section)
+    if before_ids is None or after_ids is None or not set(before_ids) <= set(after_ids):
+        return False
+    after_by_id = dict(zip(after_ids, after_section))
+    changed = len(after_ids) > len(before_ids)
+    for old in before_section:
+        new = after_by_id[old["id"]]
+        diff = {k for k in set(old) | set(new) if old.get(k) != new.get(k)}
+        if not diff:
+            continue
+        allowed = set()
+        if "extracted_for_question_ids" in diff:
+            was, now = old.get("extracted_for_question_ids"), new.get("extracted_for_question_ids")
+            if not isinstance(was, list) or not isinstance(now, list) or len(now) <= len(was) or now[: len(was)] != was:
+                return False
+            allowed |= {"extracted_for_question_ids"} | _UPDATE_NORMALIZED_FIELDS
+        if old["id"] in notes_ids:
+            allowed |= _CALLER_ASSERTION_FIELDS | _UPDATE_NORMALIZED_FIELDS
+        if diff - allowed:
+            return False
+        changed = True
+    return changed
+
+
 #: The assertion fields any caller may update through `research_append`.
 #: Mirrors CALLER_ASSERTION_FIELDS in research-append.ts; a literal because this
 #: plane is Python. A field added there and not here is refused here, which
@@ -714,8 +802,10 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     failure the `person_evidence` row names.
 
     `extraction_append` is the second tool-identity path: it decides roles and
-    classifications in code, so which skill calls it does not matter, and it is
-    authorized for appends only (`_explained_by_appends`). The third is
+    classifications in code, so which skill calls it does not matter. It is
+    authorized for appends (`_explained_by_appends`), for completing plan items
+    (`_explained_by_plan_completion`) and for tying a re-found record's
+    assertions to a question (`_explained_by_question_tie`). The third is
     `research_append`'s one caller write to `assertions`, an update of
     `informant_bias_notes` alone (`_explained_by_caller_assertion_update`).
 
@@ -797,10 +887,22 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
                 continue
             # extraction_append: roles and classifications are set in code, so
-            # any skill may call it. Authorized only for appends.
+            # any skill may call it. Authorized for appends, and for the two
+            # updates code composes whole: a plan item's in_progress ->
+            # completed, and question ids a re-found record's assertions gain.
             if "extraction_append" in (identity_tools.get(section) or set()) and (
                 "extraction_append" in called
-            ) and _explained_by_appends(before.get(section), after.get(section)):
+            ) and (
+                _explained_by_plan_completion(before.get(section), after.get(section))
+                if section == "plans"
+                else _explained_by_question_tie(
+                    before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
+                )
+                if section == "assertions"
+                else _explained_by_attachment_links(before.get(section), after.get(section))
+                if section == "person_evidence"
+                else _explained_by_appends(before.get(section), after.get(section))
+            ):
                 continue
             # research_append: any caller may update an assertion's
             # caller-writable fields and nothing else.

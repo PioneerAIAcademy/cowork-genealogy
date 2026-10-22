@@ -13,11 +13,12 @@
       "tree-alias",
       "clorinda-review",
       "asks-permission-instead-of-executing",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search the 1880 Lancaster County, Pennsylvania census for Bitsie Jackson, per plan item pli_001. Log the result and write the sidecar.",
+    "delegation": "Search the 1880 Lancaster County, Pennsylvania census for Bitsie Jackson, per plan item pli_001. Log the result and write the sidecar.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "mid-research-jackson-nickname"
   },
   "mcp_fixtures": [

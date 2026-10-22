@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Алексий Васильев Иванов had a son Павел Иванов, born 2 November 1885 in Samara, whose birth entry names the parents as Василий Иванов and Степанида Иванова.",
+      "details": {
+        "subject_person": "Алексий Васильев Иванов (L8PL-3W8)",
+        "relation": "child",
+        "target_person": {
+          "name": "Павел Иванов",
+          "birth": "2 November 1885, Samara, Russia"
+        },
+        "mother": "Степанида Иванова"
+      },
+      "supporting_sources": [
+        "Россия, Самарские метрические книги, 1748-1934 — birth entry for Павел Иванов, 2 Nov 1885, Samara, naming his parents as Василий Иванов and Степанида Иванова"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -164,8 +164,9 @@ def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> 
     The one hook arm on either plane that CHANGES a call rather than refusing it.
     Returns None when the call is not a delegation, or when it already carries an
     explicit `run_in_background: False`. Every other shape is rewritten, because
-    CLI 2.1.220 backgrounds an agent when the key is absent and both measured
-    incidents carried no key at all.
+    the CLI backgrounds an agent when the key is absent (2.1.220, and still on 2.1.294:
+    "Agents run in the background by default") and both measured incidents carried no
+    key at all.
     """
     data = dict(tool_input or {})
     if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:

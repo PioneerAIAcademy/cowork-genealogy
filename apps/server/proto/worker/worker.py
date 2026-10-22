@@ -31,8 +31,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the twenty-nine bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 4
+``options.py``; ``get_server_info()`` checked for the thirty bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 2
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -297,6 +297,7 @@ EXPECTED_AGENTS = frozenset({
     "search-full-text",
     "search-hints",
     "search-images",
+    "search-records",
     "search-wikipedia",
     "source-evaluation",
     "survey-surname",
@@ -307,9 +308,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 2
-# skills registers 2 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 3
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 1
+# skills registers 1 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 2
 
 _stdout_lock = threading.Lock()
 
@@ -2501,6 +2502,10 @@ async def _run_turn(
             tool_names: dict[str, str] = {}
             tasks: dict[str, str] = {}
             live: set[str] = set()
+            # Task tool_use_id -> the SDK's task_id. `map_message` accepted this
+            # from the start but no caller passed one, so no live event carried a
+            # task_id and attribution fell back to the description string.
+            task_ids: dict[str, str] = {}
 
             async def receive(*, require_init: bool) -> Any:
                 """One query's message stream: every event written as it arrives, every
@@ -2523,7 +2528,7 @@ async def _run_turn(
                             raise Superseded(f"turn {turn_id}: claim epoch {turn['claim_epoch']} superseded "
                                              "(transcript append refused)")
                         raise MirrorError(f"session store append failed: {msg.error or msg.data}")
-                    for event in map_message(msg, tool_names, tasks, live):
+                    for event in map_message(msg, tool_names, tasks, live, task_ids=task_ids):
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                     if isinstance(msg, ResultMessage):
                         pass_result = msg

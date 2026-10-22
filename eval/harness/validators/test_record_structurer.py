@@ -12,7 +12,13 @@ import re
 import pytest
 
 from extraction_validators import *  # noqa: F401,F403
+from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import new_section_entries as _new_section_entries
+
+_RECORD_DATA_RE = re.compile(r"<record-data>.*?</record-data>", re.S)
+_DELEGATED_ID_RE = re.compile(r"^\s*(?:-\s*)?recordId:\s*(\S+)", re.M)
+_ARK_RE = re.compile(r"ark:/61903/\d:\d:([^/?#\s]+)")
+_DERIVATION_PHRASES = ("computed from", "derived from", "calculated from", "based on", "inferred from")
 
 
 def _new_assertions(before_state, after_state):
@@ -120,3 +126,104 @@ def test_an_old_style_date_raises_the_calendar_flag(text_response, agent_returns
         pytest.skip("not an Old Style date test")
     reply = _agent_reply(agent_returns, text_response)
     assert re.search(r"^Calendar: .*1750", reply, re.M), "the reply does not carry the calendar line for the 1750 dates"
+
+
+def _record_id(raw) -> str:
+    """One id as the engine compares it: quotes, backticks and trailing
+    punctuation off, and an ARK in any spelling (URL or `ark:/`) reduced to its
+    bare id, as `arkToBareId` does."""
+    s = str(raw or "").strip().strip("`'\"").rstrip(",;)").strip().strip("`'\"")
+    m = _ARK_RE.search(s)
+    return m.group(1) if m else s
+
+
+def _sidecar_text(tool_calls) -> str:
+    """What the agent read through `sidecar_read`: a transcribed source's record
+    text arrives there, not in the delegation."""
+    return "\n".join(
+        str(c.get("response") or "")
+        for c in (tool_calls or [])
+        if _bare_tool_name(str(c.get("tool") or "")) == "sidecar_read"
+    )
+
+
+def test_document_record_ids_were_delegated(tool_calls, test):
+    """Every document the agent sends is one of the sources it was handed.
+
+    Issue #2019 V2, narrowed by issue #2479: code copies one `recordId` onto
+    every assertion of a record, so the one id an LLM still picks is each
+    `documents[].recordId`. It must be an id the delegation names on a
+    `recordId:` line. Lines inside `<record-data>` are record content, not the
+    delegation's own words, so an ARK printed in the record text does not count.
+    """
+    delegation = (test or {}).get("delegation") or ""
+    allowed = {_record_id(m) for m in _DELEGATED_ID_RE.findall(_RECORD_DATA_RE.sub("", delegation))}
+    if not allowed:
+        pytest.skip("the delegation names no recordId")
+    sent = [
+        _record_id(d.get("recordId"))
+        for c in (tool_calls or [])
+        if _bare_tool_name(str(c.get("tool") or "")) == "extraction_append"
+        for d in ((c.get("args") or {}).get("documents") or [])
+        if isinstance(d, dict)
+    ]
+    if not sent:
+        pytest.skip("no extraction_append documents were sent")
+    stray = sorted({s for s in sent if s not in allowed})
+    assert not stray, f"documents sent for recordIds the delegation never named: {stray} (delegated: {sorted(allowed)})"
+
+
+def test_value_holds_no_derivation(before_state, after_state, tool_calls, test):
+    """`value` holds the fact, not how it was worked out.
+
+    Issue #2019 V7. A non-absent assertion whose `informant_bias_notes` is set
+    must not carry derivation wording in `value`; the reasoning belongs in the
+    notes. A phrase the record itself contains is data, so a phrase found in
+    the delegation or in a sidecar the agent read is exempt. That exemption is
+    coarse: a record that says "based on" anywhere lets every value using
+    "based on" pass. The `informant_bias_notes` condition is the ruled gate
+    (issue #2019): it is what makes the rule falsifiable, so a value with no
+    notes is out of scope.
+    """
+    record_text = (((test or {}).get("delegation") or "") + "\n" + _sidecar_text(tool_calls)).lower()
+    phrases = [p for p in _DERIVATION_PHRASES if p not in record_text]
+    hits = []
+    for a in _new_assertions(before_state, after_state):
+        if a.get("record_basis") == "absent" or not (a.get("informant_bias_notes") or "").strip():
+            continue
+        value = str(a.get("value") or "").lower()
+        found = [p for p in phrases if p in value]
+        if found:
+            hits.append(f"{a.get('id')}: {a.get('value')!r} ({', '.join(found)})")
+    assert not hits, "values carry their derivation instead of the fact: " + "; ".join(hits)
+
+
+def test_census_households_are_kept_apart(before_state, after_state, test):
+    """Each household on a census page keeps its own head.
+
+    Gated on `multi-household`. Code assigns roles per `household`; a page read
+    as one household makes the second family's head a member of the first.
+    """
+    if not _tagged(test, "multi-household"):
+        pytest.skip("not a multi-household census test")
+    roles = _roles_by_name(_new_assertions(before_state, after_state))
+    assert roles, "no name assertion was written"
+    wrong = {n: roles.get(n) or "missing" for n in ("Thomas Flynn", "Michael Gallagher") if roles.get(n) != "head_of_household"}
+    assert not wrong, f"each dwelling's first person should head their own household: {wrong}"
+
+
+def test_a_batch_is_written_in_one_call(before_state, after_state, tool_calls, test):
+    """Every delegated source is written, in one `extraction_append` call.
+
+    Gated on `multi-document`. One resend of the whole batch after a refusal
+    is allowed, so up to two calls pass; a call per source does not.
+    """
+    if not _tagged(test, "multi-document"):
+        pytest.skip("not a multi-document batch test")
+    delegation = (test or {}).get("delegation") or ""
+    delegated = {_record_id(m) for m in _DELEGATED_ID_RE.findall(_RECORD_DATA_RE.sub("", delegation))}
+    written = {_record_id(a.get("record_id")) for a in _new_assertions(before_state, after_state)}
+    missing = sorted(delegated - written)
+    assert not missing, f"sources delegated but not written: {missing}"
+    calls = [c for c in (tool_calls or []) if _bare_tool_name(str(c.get("tool") or "")) == "extraction_append"]
+    assert len(calls) <= 2, f"{len(calls)} extraction_append calls for one batch; expected one (two with a resend)"

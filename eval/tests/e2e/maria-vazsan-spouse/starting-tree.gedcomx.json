@@ -1,0 +1,841 @@
+{
+  "persons": [
+    {
+      "id": "LJTH-GRX",
+      "ark": "ark:/61903/4:1:LJTH-GRX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Vázsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0d3be522-560a-4dd9-b124-004204a61f4a",
+          "type": "Death"
+        },
+        {
+          "id": "8327da8a-abe0-4d03-b24d-0b1c2b14ee63",
+          "type": "Baptism",
+          "date": "10 Jan 1853",
+          "standard_date": "10 Jan 1853",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "1e83d2d6-2594-44a8-9558-267ca40f51a6",
+          "type": "Christening",
+          "date": "10 Jan 1853",
+          "standard_date": "10 Jan 1853",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29X-T4Z"
+        }
+      ]
+    },
+    {
+      "id": "LJTH-GRN",
+      "ark": "ark:/61903/4:1:LJTH-GRN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Prividzer",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f853ab09-6fc5-45e6-bae0-46c522f457bd",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LJTZ-DZ3",
+      "ark": "ark:/61903/4:1:LJTZ-DZ3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Ignatius",
+          "surname": "Vazsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4cbcfab3-8d5c-4afd-bd99-0b738683436d",
+          "type": "Birth",
+          "date": "about 1805",
+          "standard_date": "Abt 1805",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "5207fd16-f659-41ab-87f3-ade7339e1136",
+          "type": "Death",
+          "date": "9 May 1881",
+          "standard_date": "9 May 1881",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29X-BJV"
+        },
+        {
+          "ref": "S29X-R2H"
+        },
+        {
+          "ref": "S29X-PLM"
+        },
+        {
+          "ref": "S298-Y7P"
+        },
+        {
+          "ref": "S29C-XJH"
+        },
+        {
+          "ref": "S29C-CN7"
+        },
+        {
+          "ref": "S2M5-SLK"
+        },
+        {
+          "ref": "S2M5-9XX"
+        },
+        {
+          "ref": "S2M5-M42"
+        },
+        {
+          "ref": "S2MP-BXH"
+        },
+        {
+          "ref": "S2MP-R82"
+        }
+      ]
+    },
+    {
+      "id": "LJTW-6YB",
+      "ark": "ark:/61903/4:1:LJTW-6YB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Prividzer",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "269ef528-7cdc-423c-9ead-eeb3abeb8f68",
+          "type": "Birth",
+          "date": "about 1825",
+          "standard_date": "Abt 1825"
+        },
+        {
+          "id": "34295ab5-7e36-4f85-b56e-3cc9ff2677aa",
+          "type": "Death",
+          "date": "24 January 1875",
+          "standard_date": "24 Jan 1875",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29X-BXN"
+        },
+        {
+          "ref": "S29X-RRB"
+        },
+        {
+          "ref": "S29X-P5T"
+        }
+      ]
+    },
+    {
+      "id": "LJTZ-DZS",
+      "ark": "ark:/61903/4:1:LJTZ-DZS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Vazsan",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Maria",
+          "surname": "Varsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "50f6a7b3-db9d-4ddd-96dc-dd95f2912a14",
+          "type": "Baptism",
+          "date": "31 Dec 1832",
+          "standard_date": "31 Dec 1832",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "1e83d2d6-2594-44a8-9558-267ca40f51a6",
+          "type": "Christening",
+          "date": "31 Dec 1832",
+          "standard_date": "31 Dec 1832",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2MP-RV3"
+        }
+      ]
+    },
+    {
+      "id": "G7QH-PS9",
+      "ark": "ark:/61903/4:1:G7QH-PS9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "fb8362d1-fc3f-46c9-ba65-90780c801fd0",
+          "preferred": true,
+          "given": "Ignatius Michael",
+          "surname": "Vazsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "259f5980-ec12-487a-8112-67f11b3910ad",
+          "type": "Birth",
+          "date": "12 September 1835",
+          "standard_date": "12 Sep 1835",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "8c8ec7f9-4b68-40c3-ad6d-fc3e0f1ba51b",
+          "type": "Baptism",
+          "date": "12 Sep 1835",
+          "standard_date": "12 Sep 1835",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "7ec9b5f7-5543-43f0-b457-25202f33fc77",
+          "type": "Death",
+          "date": "24 December 1835",
+          "standard_date": "24 Dec 1835",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2MP-1QH"
+        }
+      ]
+    },
+    {
+      "id": "G7QH-GMW",
+      "ark": "ark:/61903/4:1:G7QH-GMW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "7cb546dc-84b7-4432-96c3-de8d16b7f5c4",
+          "preferred": true,
+          "given": "Vendelinus",
+          "surname": "Vazsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "faf74a2c-8baf-4220-b367-b50245b440a5",
+          "type": "Birth",
+          "date": "7 November 1836",
+          "standard_date": "7 Nov 1836",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "acebe425-2280-4eeb-8b92-d79f8ef5d9f0",
+          "type": "Baptism",
+          "date": "07 Nov 1836",
+          "standard_date": "7 Nov 1836",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "521a78e7-7ad4-49be-897a-e108cea1530f",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2M5-MB9"
+        }
+      ]
+    },
+    {
+      "id": "G7QH-Y6P",
+      "ark": "ark:/61903/4:1:G7QH-Y6P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "942b3cfd-9ade-4280-946f-689e9f386752",
+          "preferred": true,
+          "given": "Joannes",
+          "surname": "Vazsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "42cdb141-35a1-44ce-b5fc-4bd189344762",
+          "type": "Birth",
+          "date": "15 September 1839",
+          "standard_date": "15 Sep 1839",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "5988ca25-2ceb-4a0f-b368-2df3c1349206",
+          "type": "Baptism",
+          "date": "15 Sep 1839",
+          "standard_date": "15 Sep 1839",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "ab0f3b6e-fac4-4ab3-880f-feb64d777abc",
+          "type": "Death",
+          "date": "20 September 1840",
+          "standard_date": "20 Sep 1840",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29C-XJH"
+        },
+        {
+          "ref": "S2M5-SMG"
+        }
+      ]
+    },
+    {
+      "id": "G7QD-VLW",
+      "ark": "ark:/61903/4:1:G7QD-VLW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "be0cdbdb-ec8f-4444-a4ce-60d13d093159",
+          "preferred": true,
+          "given": "Jósef",
+          "surname": "Vázsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "430f76ff-507c-42a6-b82d-932718693252",
+          "type": "Birth",
+          "date": "17 April 1843",
+          "standard_date": "17 Apr 1843",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "e93b53e9-abff-40f0-9c47-65c90b89f65a",
+          "type": "Baptism",
+          "date": "17 Apr 1843",
+          "standard_date": "17 Apr 1843",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "170a0d65-5b2d-466b-b472-8560bf55f1c8",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S298-YDJ"
+        }
+      ]
+    },
+    {
+      "id": "G7QH-28X",
+      "ark": "ark:/61903/4:1:G7QH-28X",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c02063b0-9808-4cf2-b67d-333e4e3c5e69",
+          "preferred": true,
+          "given": "Jósef",
+          "surname": "Vazsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "cf22f68d-3bc5-45e7-9a9c-b972ddf97cdb",
+          "type": "Birth",
+          "date": "13 February 1848",
+          "standard_date": "13 Feb 1848",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "0d26ab0f-29ea-4ac6-958c-91823e75c060",
+          "type": "Baptism",
+          "date": "13 Feb 1848",
+          "standard_date": "13 Feb 1848",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "ae0e4d50-9dd5-4c6b-b711-0f415f735d52",
+          "type": "Death",
+          "date": "13 February 1848",
+          "standard_date": "13 Feb 1848",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29C-CN7"
+        },
+        {
+          "ref": "S2M5-3CB"
+        }
+      ]
+    },
+    {
+      "id": "G7Q6-ND1",
+      "ark": "ark:/61903/4:1:G7Q6-ND1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "9c5708eb-a02e-4336-b9d7-98f09c1065ae",
+          "preferred": true,
+          "given": "János",
+          "surname": "Vázsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b891f8ff-a39b-4676-88f5-55e9164ddc98",
+          "type": "Baptism",
+          "date": "24 Jun 1849",
+          "standard_date": "24 Jun 1849",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "8d1f2a49-3238-464b-b15e-a714316f25a2",
+          "type": "Birth",
+          "date": "24 June 1849",
+          "standard_date": "24 Jun 1849",
+          "place": "Bojnice, Prievidza, Trenčiansky, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "90c5f26b-24f8-4c57-aaa3-b70c6a020144",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29X-1S4"
+        }
+      ]
+    },
+    {
+      "id": "LJTW-6YT",
+      "ark": "ark:/61903/4:1:LJTW-6YT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Agnes",
+          "surname": "Vázsan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1e83d2d6-2594-44a8-9558-267ca40f51a6",
+          "type": "Christening",
+          "date": "10 Oct 1851",
+          "standard_date": "10 Oct 1851",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "60fd4466-3fae-4861-9d18-45a1eadca69b",
+          "type": "Baptism",
+          "date": "10 Oct 1851",
+          "standard_date": "10 Oct 1851",
+          "place": "Bojnice, Prievidza, Slovakia",
+          "standard_place": "Bojnice, Prievidza, Slovakia"
+        },
+        {
+          "id": "1cb441fe-f4ec-4962-bf0c-3f3350352b7d",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S29X-5VF"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LJTZ-DZ3",
+      "person2": "LJTW-6YB"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "LJTH-GRX"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LJTW-6YB",
+      "child": "LJTH-GRX"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LJTH-GRN",
+      "child": "LJTH-GRX"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "G7QD-VLW"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "G7QH-28X",
+      "sources": [
+        {
+          "ref": "S2M5-33K"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "G7QH-Y6P",
+      "sources": [
+        {
+          "ref": "S2M5-951"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "LJTZ-DZS"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "G7QH-GMW",
+      "sources": [
+        {
+          "ref": "S2M5-MGQ"
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "G7QH-PS9",
+      "sources": [
+        {
+          "ref": "S2MP-BB7"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "G7Q6-ND1"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LJTW-6YB",
+      "child": "G7Q6-ND1"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LJTZ-DZ3",
+      "child": "LJTW-6YT"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LJTW-6YB",
+      "child": "LJTW-6YT"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_LJTH-GRX",
+      "title": "Maria Vázsan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Vázsan (PID LJTH-GRX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJTH-GRX"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_LJTH-GRN",
+      "title": "Anna Prividzer",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Anna Prividzer (PID LJTH-GRN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJTH-GRN"
+    },
+    {
+      "id": "sd_person_LJTZ-DZ3",
+      "title": "Ignatius Vazsan",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ignatius Vazsan (PID LJTZ-DZ3); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJTZ-DZ3"
+    },
+    {
+      "id": "sd_person_LJTW-6YB",
+      "title": "Anna Prividzer",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Anna Prividzer (PID LJTW-6YB); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJTW-6YB"
+    },
+    {
+      "id": "S29X-T4Z",
+      "title": "Maria Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DN19 : Wed Jan 15 18:08:49 UTC 2025), Maria Vázsan, 10 Jan 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DN19"
+    },
+    {
+      "id": "S29X-BJV",
+      "title": "Ignácz Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DTF9 : Fri Jan 17 17:56:24 UTC 2025), Ignácz Vázsan in entry for János Vázsan, 24 Jun 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DTF9"
+    },
+    {
+      "id": "S29X-R2H",
+      "title": "Ignatius Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DN1S : Wed Jan 15 18:08:49 UTC 2025), Ignatius Vázsan in entry for Maria Vázsan, 10 Jan 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DN1S"
+    },
+    {
+      "id": "S29X-PLM",
+      "title": "Ignatius Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-6WG9 : Wed Jan 15 21:40:47 UTC 2025), Ignatius Vázsan in entry for Agnes Vázsan, 10 Oct 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-6WG9"
+    },
+    {
+      "id": "S298-Y7P",
+      "title": "Ignácz Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-D1T5 : Wed Jul 24 20:52:19 UTC 2024), Ignácz Vázsan in entry for Jósef Vázsan, 17 Apr 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-D1T5"
+    },
+    {
+      "id": "S29C-XJH",
+      "title": "Slovakia, Church and Synagogue Books, 1592-1935; https://familysearch.org/ark:/61903/3:1:33S7-9BRR-2HW?cc=1554443&wc=9PQS-WQZ%3A107654301%2C112584601%2C153131402%2C153327501",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:33S7-9BRR-2HW?cc=1554443&wc=9PQS-WQZ%3A107654301%2C112584601%2C153131402%2C153327501 : 3 July 2014), Roman Catholic (Rímsko-katolícká cirkev) > Prievidza > Bojnice > Deaths, index (Úmrtia, zoznam) 1834-1876 > image 73 of 288; Odbor Archivnictva (The Archives of the Republic), Slovakia.\n\n",
+      "url": "https://familysearch.org/ark:/61903/3:1:33S7-9BRR-2HW"
+    },
+    {
+      "id": "S29C-CN7",
+      "title": "Slovakia, Church and Synagogue Books, 1592-1935; https://familysearch.org/ark:/61903/3:1:33S7-8BRR-2G7?cc=1554443&wc=9PQS-WQZ%3A107654301%2C112584601%2C153131402%2C153327501",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:33S7-8BRR-2G7?cc=1554443&wc=9PQS-WQZ%3A107654301%2C112584601%2C153131402%2C153327501 : 3 July 2014), Roman Catholic (Rímsko-katolícká cirkev) > Prievidza > Bojnice > Deaths, index (Úmrtia, zoznam) 1834-1876 > image 108 of 288; Odbor Archivnictva (The Archives of the Republic), Slovakia.\n\n",
+      "url": "https://familysearch.org/ark:/61903/3:1:33S7-8BRR-2G7"
+    },
+    {
+      "id": "S2M5-SLK",
+      "title": "Ignátz Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DXBW : Tue Jan 21 04:51:34 UTC 2025), Ignátz Vazsan in entry for Jósef Vazsan, 13 Feb 1848.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DXBW"
+    },
+    {
+      "id": "S2M5-9XX",
+      "title": "Ignatius Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-698R : Tue Jan 27 17:12:27 UTC 2026), Ignatius Vazsan in entry for Joannes Vazsan, 15 Sep 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-698R"
+    },
+    {
+      "id": "S2M5-M42",
+      "title": "Ignatius Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DCQP : Tue Jan 27 17:15:17 UTC 2026), Ignatius Vazsan in entry for Vendelinus Vazsan, 07 Nov 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DCQP"
+    },
+    {
+      "id": "S2MP-BXH",
+      "title": "Ignatius Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DC9Z : Tue Jan 27 17:15:21 UTC 2026), Ignatius Vazsan in entry for Ignatius Michael Vazsan, 12 Sep 1835.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DC9Z"
+    },
+    {
+      "id": "S2MP-R82",
+      "title": "Ignatius Varsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DKVK : Tue Jan 27 17:15:14 UTC 2026), Ignatius Varsan in entry for Maria Varsan, 31 Dec 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DKVK"
+    },
+    {
+      "id": "S29X-BXN",
+      "title": "Anna Prividzer, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DTFS : Fri Jan 17 17:56:24 UTC 2025), Anna Prividzer in entry for János Vázsan, 24 Jun 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DTFS"
+    },
+    {
+      "id": "S29X-RRB",
+      "title": "Anna Prividzer, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DN13 : Wed Jan 15 18:08:49 UTC 2025), Anna Prividzer in entry for Maria Vázsan, 10 Jan 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DN13"
+    },
+    {
+      "id": "S29X-P5T",
+      "title": "Anna Prividzer, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-6WGS : Wed Jan 15 21:40:47 UTC 2025), Anna Prividzer in entry for Agnes Vázsan, 10 Oct 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-6WGS"
+    },
+    {
+      "id": "S2MP-RV3",
+      "title": "Maria Varsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DKVV : Tue Jan 27 17:15:14 UTC 2026), Maria Varsan, 31 Dec 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DKVV"
+    },
+    {
+      "id": "S2MP-1QH",
+      "title": "Ignatius Michael Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DC9C : Tue Jan 27 17:15:21 UTC 2026), Ignatius Michael Vazsan, 12 Sep 1835.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DC9C"
+    },
+    {
+      "id": "S2M5-MB9",
+      "title": "Vendelinus Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DCQG : Tue Jan 27 17:15:17 UTC 2026), Vendelinus Vazsan, 07 Nov 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DCQG"
+    },
+    {
+      "id": "S2M5-SMG",
+      "title": "Joannes Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-6985 : Tue Jan 27 17:12:27 UTC 2026), Joannes Vazsan, 15 Sep 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-6985"
+    },
+    {
+      "id": "S298-YDJ",
+      "title": "Jósef Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-D1TP : Wed Jul 24 20:52:19 UTC 2024), Jósef Vázsan, 17 Apr 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-D1TP"
+    },
+    {
+      "id": "S2M5-3CB",
+      "title": "Jósef Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DXB7 : Tue Jan 21 04:51:34 UTC 2025), Jósef Vazsan, 13 Feb 1848.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DXB7"
+    },
+    {
+      "id": "S29X-1S4",
+      "title": "János Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DTFM : Fri Jan 17 17:56:24 UTC 2025), János Vázsan, 24 Jun 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DTFM"
+    },
+    {
+      "id": "S29X-5VF",
+      "title": "Agnes Vázsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-6WGM : Wed Jan 15 21:40:47 UTC 2025), Agnes Vázsan, 10 Oct 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-6WGM"
+    },
+    {
+      "id": "S2M5-33K",
+      "title": "Jósef Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DXB7 : Tue Jan 21 04:51:34 UTC 2025), Jósef Vazsan, 13 Feb 1848.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DXB7"
+    },
+    {
+      "id": "S2M5-951",
+      "title": "Joannes Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-6985 : Tue Jan 27 17:12:27 UTC 2026), Joannes Vazsan, 15 Sep 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-6985"
+    },
+    {
+      "id": "S2M5-MGQ",
+      "title": "Vendelinus Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DCQG : Tue Jan 27 17:15:17 UTC 2026), Vendelinus Vazsan, 07 Nov 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DCQG"
+    },
+    {
+      "id": "S2MP-BB7",
+      "title": "Ignatius Michael Vazsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNW-DC9C : Tue Jan 27 17:15:21 UTC 2026), Ignatius Michael Vazsan, 12 Sep 1835.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVNW-DC9C"
+    }
+  ]
+}

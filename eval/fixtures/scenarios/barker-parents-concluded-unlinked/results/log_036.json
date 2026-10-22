@@ -1,0 +1,133 @@
+{
+ "log_id": "log_036",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T18:10:18.358Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "count": 15,
+   "givenName": "William",
+   "marriageYearFrom": 1800,
+   "marriageYearTo": 1815,
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordCountry": "England",
+   "spouseGivenName": "Martha",
+   "spouseSurname": "Edwards",
+   "surname": "Barker"
+  },
+  "totalMatches": 46419,
+  "paginationCappedAt": 4999,
+  "returned": 15,
+  "offset": 0,
+  "hasMore": true,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:NKYJ-SY2",
+    "events": [],
+    "treeMatches": [],
+    "personName": "William Barker",
+    "score": 8.8536005,
+    "confidence": 5,
+    "sex": "Male",
+    "collectionId": "1473015",
+    "collectionTitle": "England Marriages, 1538–1973",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1473015",
+    "recordTitle": "Entry for William Barker, \"England Marriages, 1538–1973\"",
+    "recordArk": "ark:/61903/1:2:97H8-7F7",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_12148031630",
+       "ark": "ark:/61903/1:1:NKYJ-SY2",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "William",
+         "surname": "Barker"
+        }
+       ]
+      },
+      {
+       "id": "p_12148031629",
+       "ark": "ark:/61903/1:1:NKYJ-SYK",
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Martha",
+         "surname": "Edwards"
+        }
+       ]
+      }
+     ],
+     "relationships": [
+      {
+       "type": "Couple",
+       "person1": "p_12148031630",
+       "person2": "p_12148031629",
+       "facts": [
+        {
+         "type": "Marriage",
+         "primary": true,
+         "date": "15 July 1811",
+         "standard_date": "15 Jul 1811",
+         "place": "Whitehaven, Cumberland, England, United Kingdom",
+         "standard_place": "Whitehaven, Cumberland, England, United Kingdom"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_857281955",
+       "resource_type": "Record",
+       "title": "Entry for William Barker, \"England Marriages, 1538–1973\"",
+       "citation": "\"England Marriages, 1538–1973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NKYJ-SY2 : Sat Aug 01 16:51:34 UTC 2026), Entry for William Barker and Martha Edwards, 15 July 1811.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:97H8-7F7",
+       "coverage": {
+        "place_rep_id": "3041134",
+        "date_range": "15 July 1811",
+        "record_type": "Vital"
+       }
+      },
+      {
+       "id": "sd_c_1473015",
+       "resource_type": "Collection",
+       "title": "England Marriages, 1538–1973",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1473015",
+       "coverage": {
+        "place_rep_id": "267",
+        "date_range": "1538/1973",
+        "record_type": "Vital"
+       }
+      },
+      {
+       "id": "src_p_p_12148031630",
+       "resource_type": "Person",
+       "url": "#p_12148031630"
+      }
+     ],
+     "places": [
+      {
+       "id": "3041134",
+       "name": "Whitehaven, Cumberland, England, United Kingdom",
+       "latitude": 54.513,
+       "longitude": -3.472
+      }
+     ]
+    },
+    "primaryId": "p_12148031630",
+    "batchNumber": "M01280-1",
+    "role": "Principal",
+    "relativeTerms": {
+     "spouse": {
+      "status": "present",
+      "name": "Martha Edwards"
+     }
+    }
+   }
+  ]
+ }
+}

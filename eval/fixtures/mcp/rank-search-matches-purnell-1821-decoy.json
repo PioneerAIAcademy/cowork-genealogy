@@ -24,7 +24,9 @@
         "matchScore": 0.86,
         "matchConfidence": 4,
         "attachedToSubject": false,
-        "attachedToOther": false
+        "attachedToOther": false,
+        "birthYearConflict": true,
+        "birthYearGap": -5
       }
     ]
   }
