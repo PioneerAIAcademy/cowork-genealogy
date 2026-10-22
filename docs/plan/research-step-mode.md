@@ -736,11 +736,9 @@ that apply:
     entry, `research-schema-spec.md`'s conflicts table, `RESEARCH_SHAPES.conflict`'s allowed
     keys and a type check in `validator.ts`'s conflicts block, and the `Conflict` interface
     in `packages/schema/src/index.ts` (optional, not nullable).
-- **After the round settles the conflict,** the ladder's "concluded; mark the question
-  resolved" arm (`question-state.ts:429-434`) would send the question to question-selection,
-  which writes no resolution. It routes to proof-conclusion instead, which refreshes the summary
-  in place and resolves (`agents/proof-conclusion.md:152-153`, `:313-317`). Update
-  `question-state.test.ts:68` and `:91`.
+- **After the round settles the conflict,** the ladder's concluded-but-open arm routes the
+  question to proof-conclusion ("concluded while blocked: re-conclude <ps_id>"), which refreshes
+  the summary in place and resolves. **Done in issue #3689; nothing left here.**
 - **`docs/specs/project-context-tool-spec.md`** documents the ladder's order (`:187-189`, "an
   unresolved conflict outranks…") and the concluded arm (`:252-257`). Update both for B's
   branch, E's rule and this arm.

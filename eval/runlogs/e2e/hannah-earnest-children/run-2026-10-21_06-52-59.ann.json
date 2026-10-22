@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "f1 is a relationship claim (Lydia as child of Hannah and Edwin), and that relationship is completely absent from tree.gedcomx.json -- I1 has no relationship edges at all. research.json's person_evidence entries correctly reason Lydia as a child of both parents (probable tier, appropriately near-zero match score since she's a new stub minted from the same record), and the right record and person were found and sourced (Christening, 8 Aug 1878, West Bromwich), but per docs/e2e-testing-guide.md's rule, the right answer reasoned only in research.json and never written into the tree is an agent failure, not partial credit -- landing it in the tree is a required GPS success criterion. No proof conclusion was written either (proof_summaries is empty). The run went inactive mid-research-exhaustiveness: the main thread handed off at tool call #187 and produced no further narration through the rest of the run (201 total tool calls), so 14 calls followed the handoff with no visible progress, and the relationship write and proof-conclusion were never reached. Not scored for proof quality: no proof_summaries entry exists for this question."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "990e6eacd6e4db9ce1d91993232a713874d61939d32a5856caa52da96e71e3f9"
+}
