@@ -9,7 +9,8 @@
  *
  * `count` and `hydrate` are sent ONLY when passed (`--count 8 --hydrate 4`), so
  * a bare run measures what an agent that gives a place gets. `--save <file>`
- * writes the raw answer for offline re-measurement.
+ * writes the raw answer; `--from <file>` re-measures a saved answer with no
+ * login and no network.
  *
  * The size is `JSON.stringify(result).length`: `server.ts` serializes a tool
  * result compact, and the CLI saves any result over `CLI_SPILL_CHARS` to a file
@@ -19,14 +20,19 @@
  *
  * Requires a prior `login` so ~/.familysearch-mcp/tokens.json exists.
  */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { LOCAL } from "../src/auth/principal.js";
 import { catalogSearchTool } from "../src/tools/catalog-search.js";
-import type { CatalogHit, CatalogSearchInput } from "../src/types/catalog-search.js";
+import type {
+  CatalogHit,
+  CatalogSearchInput,
+  CatalogSearchResult,
+} from "../src/types/catalog-search.js";
 import { CLI_SPILL_CHARS } from "../tests/helpers/cli-spill.js";
 
 const USAGE =
-  'usage: npx tsx dev/try-catalog-search.ts [place] [keywords] [--count N] [--hydrate N] [--save FILE]';
+  "usage: npx tsx dev/try-catalog-search.ts [place] [keywords] [--count N] [--hydrate N] [--save FILE]\n" +
+  "       npx tsx dev/try-catalog-search.ts --from FILE";
 
 function die(message: string): never {
   console.error(`${message}\n${USAGE}`);
@@ -39,6 +45,7 @@ interface Args {
   count?: number;
   hydrate?: number;
   save?: string;
+  from?: string;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -51,12 +58,19 @@ function parseArgs(argv: string[]): Args {
       continue;
     }
     const name = a.slice(2);
-    if (name !== "count" && name !== "hydrate" && name !== "save") die(`unknown flag ${a}`);
+    if (name !== "count" && name !== "hydrate" && name !== "save" && name !== "from") {
+      die(`unknown flag ${a}`);
+    }
     const value = argv[++i];
     if (value === undefined || value.startsWith("--")) die(`${a} needs a value`);
     flags[name] = value;
   }
   if (positional.length > 2) die("at most two positional arguments: place and keywords");
+  // A saved answer already holds its query and its counts: any of these beside
+  // --from would be silently ignored, which reads as "measured with them".
+  if (flags.from !== undefined && (positional.length > 0 || Object.keys(flags).length > 1)) {
+    die("--from takes a file and nothing else");
+  }
   const whole = (name: string): number | undefined => {
     const raw = flags[name];
     if (raw === undefined) return undefined;
@@ -71,6 +85,7 @@ function parseArgs(argv: string[]): Args {
     count: whole("count"),
     hydrate: whole("hydrate"),
     save: flags.save,
+    from: flags.from,
   };
 }
 
@@ -128,17 +143,19 @@ async function main(): Promise<void> {
   };
 
   const started = Date.now();
-  const r = await catalogSearchTool(input, LOCAL);
+  const r: CatalogSearchResult = args.from
+    ? (JSON.parse(readFileSync(args.from, "utf-8")) as CatalogSearchResult)
+    : await catalogSearchTool(input, LOCAL);
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
   if (args.save) writeFileSync(args.save, JSON.stringify(r), "utf-8");
 
   const total = chars(r);
   const hydrated = r.hits.filter((h) => h.hydrated);
-  console.log(`input sent: ${JSON.stringify(input)}`);
+  console.log(args.from ? `answer read from ${args.from}` : `input sent: ${JSON.stringify(input)}`);
   console.log(
-    `${args.place} -> ${r.totalHits} hits, ${r.returned} returned, ${hydrated.length} hydrated ` +
+    `${args.from ? "saved answer" : args.place} -> ${r.totalHits} hits, ${r.returned} returned, ${hydrated.length} hydrated ` +
       `(hydrateRequested=${r.hydrateRequested}), placeResolved=${r.placeResolved}, ` +
-      `hydrationTimedOut=${r.hydrationTimedOut}, ${seconds}s`,
+      `hydrationTimedOut=${r.hydrationTimedOut}${args.from ? "" : `, ${seconds}s`}`,
   );
   const verdict =
     total > CLI_SPILL_CHARS
