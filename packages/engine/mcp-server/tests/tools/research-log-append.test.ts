@@ -163,6 +163,158 @@ describe("research_log_append", () => {
     });
   });
 
+  describe("counts and outcome from a staged record_search (issue #3547)", () => {
+    async function stage(tool = "record_search") {
+      return stageSearchResults({
+        projectPath: dir,
+        tool,
+        response: { query: { surname: "Byrne" }, totalMatches: 412, results: [{ recordId: "A" }, { recordId: "B" }] },
+      });
+    }
+
+    it("fills outcome, resultsExamined and resultsAvailable when only the ref is sent", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        planItemId: "pli_001",
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      const [entry] = (await readJson("research.json")).log;
+      expect(entry.outcome).toBe("positive");
+      expect(entry.results_examined).toBe(2);
+      expect(entry.results_available).toBe(412);
+      expect(entry.query).toEqual({ surname: "Byrne" });
+      expect((await validateProject(dir)).valid).toBe(true);
+    });
+
+    it("fills them per op in a batch", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ planItemId: null, stagedResultsRef: handle!.resultsRef }],
+      } as any);
+
+      expect(result.ok).toBe(true);
+      const [entry] = (await readJson("research.json")).log;
+      expect([entry.outcome, entry.results_examined, entry.results_available]).toEqual(["positive", 2, 412]);
+    });
+
+    it("keeps the caller's partial outcome and a lower resultsExamined", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      const result = await researchLogAppend({
+        projectPath: dir,
+        outcome: "partial",
+        resultsExamined: 1,
+        resultsAvailable: 7,
+        stagedResultsRef: handle!.resultsRef,
+      } as any);
+
+      expect(result.ok).toBe(true);
+      const [entry] = (await readJson("research.json")).log;
+      expect([entry.outcome, entry.results_examined, entry.results_available]).toEqual(["partial", 1, 7]);
+    });
+
+    it("leaves a staged ref from another tool to the caller", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage("fulltext_search");
+      const result = await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain("missing required fields `outcome`, `resultsExamined`");
+    });
+
+    it("still requires outcome and query for a nil search with no ref", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({ projectPath: dir, tool: "record_search", resultsExamined: 0 } as any);
+
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain("missing required fields `outcome`, `query`");
+    });
+
+    it("records the staged ref in the sidecar", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
+      expect((await readJson("results/log_001.json")).staged_ref).toBe(handle!.resultsRef);
+    });
+
+    it("answers a re-sent, already-logged ref with the existing entry and writes nothing", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+
+      const again = await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
+
+      expect(again.ok).toBe(true);
+      expect((again as any).logId).toBe("log_001");
+      expect((again as any).alreadyLogged).toBe(true);
+      expect((again as any).validation.warnings.join(" ")).toContain("already logged as log_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("logs the rest of a batch and returns the existing id for an already-logged op", async () => {
+      await writeProject(baseResearch());
+      const first = await stage();
+      await researchLogAppend({ projectPath: dir, stagedResultsRef: first!.resultsRef } as any);
+      const second = await stage();
+
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [{ stagedResultsRef: first!.resultsRef }, { stagedResultsRef: second!.resultsRef }],
+      } as any);
+
+      expect(result.ok).toBe(true);
+      expect((result as any).results.map((r: any) => [r.logId, r.alreadyLogged ?? false])).toEqual([
+        ["log_001", true],
+        ["log_002", false],
+      ]);
+      expect((await readJson("research.json")).log).toHaveLength(2);
+    });
+
+    it("still refuses a ref that was never logged", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        stagedResultsRef: `${STAGING_SUBDIR}/never-staged.json`,
+        outcome: "positive",
+        resultsExamined: 1,
+        tool: "record_search",
+      } as any);
+      expect(result.ok).toBe(false);
+      expect((result as { errors: string[] }).errors[0]).toContain("is not in results/.staging/");
+    });
+
+    it("refuses a batch naming every bad op, not just the first", async () => {
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        ops: [
+          { tool: "record_search", resultsExamined: 0, query: { surname: "A" } },
+          { tool: "record_search", outcome: "negative", query: { surname: "B" } },
+        ],
+      } as any);
+      expect(result.ok).toBe(false);
+      const errors = (result as { errors: string[] }).errors;
+      expect(errors).toHaveLength(2);
+      expect(errors[0]).toMatch(/^ops\[0\]: .*`outcome`/);
+      expect(errors[1]).toMatch(/^ops\[1\]: .*`resultsExamined`/);
+      expect((await readJson("research.json")).log).toEqual([]);
+    });
+
+    it("advertises no required op field the staged ref can fill", async () => {
+      const { researchLogAppendSchema } = await import("../../src/tools/research-log-append.js");
+      const ops = (researchLogAppendSchema as any).inputSchema.properties.ops;
+      expect(ops.items.required ?? []).not.toContain("outcome");
+      expect(ops.items.required ?? []).not.toContain("resultsExamined");
+    });
+  });
+
   it("finalizes a staged image_transcribe transcription — a one-element results[] — into the sidecar (#2048)", async () => {
     // The acquisition producers stage through the search channel unchanged: one
     // element, `returned_count` recomputed to 1, the staged file consumed, and the

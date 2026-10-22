@@ -241,7 +241,10 @@ When the log editor is called with `stagedResultsRef`, it (host-side):
    per `research-log-editor-spec.md` §4 ("never trusted from the caller"); the
    staged file's count is advisory.
 4. Wraps it as the full sidecar `{ log_id, tool, retrieved, returned_count,
-   payload }` and writes `results/<log_id>.json`.
+   staged_ref, payload }` and writes `results/<log_id>.json`. `staged_ref` is the
+   staged file's project-relative path, so a later re-send of the same ref (after a
+   context compaction) is answered with this entry's id instead of a refusal
+   (`research-log-editor-spec.md`, "A staged ref that was already logged").
 5. **After `research.json` commits**, removes the staged file
    (`consumeStagedResults`). Never before: finalize itself only writes, so a call
    refused after finalizing — a later op in a batch, the `query`-required check, or

@@ -671,7 +671,7 @@ Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_rea
 | `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `person_read`, `image_search`, `external_site`) |
 | `query` | object | yes | Freeform object capturing the search parameters used |
 | `outcome` | `log_outcome` | yes | Result of the search |
-| `results_examined` | number | yes | Number of results examined (0 for negative) |
+| `results_examined` | number | yes | Number of results examined (0 for negative). For a staged `record_search` with no caller value, the rows returned; the caller sends fewer only when fewer were triaged |
 | `results_ref` | string or null | no | Relative path to the sidecar file holding this search's raw results (e.g. `results/log_005.json`). Null for nil searches and for entries whose payload could not be faithfully retained. See 5.4.1 |
 | `results_available` | number or null | no | Total hits reported upstream by the tool (e.g. `fulltext_search` `totalResults`). Distinct from `results_examined`; null when the tool reports no total |
 | `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
@@ -700,6 +700,7 @@ Sidecar file `results/<log_id>.json`:
 | `tool` | string | yes | The tool that produced the payload (e.g. `record_search`, `fulltext_search`) |
 | `retrieved` | string | yes | ISO 8601 datetime the search was run |
 | `returned_count` | number | yes | Number of results in `payload` — the integrity check: it must equal the actual length of the payload's results array |
+| `staged_ref` | string | no | The `results/.staging/` file this sidecar was finalized from. Lets `research_log_append` answer a re-sent, already-logged staged ref with the existing entry. Absent on sidecars written before it existed |
 | `payload` | object | yes | The verbatim MCP tool response, loosely typed |
 
 A search that returns zero results writes **no** sidecar (`results_ref` is null); the log entry's `outcome` and counts already record the nil. The `results/` directory is a third persisted location of project state, alongside `research.json` and `tree.gedcomx.json`.

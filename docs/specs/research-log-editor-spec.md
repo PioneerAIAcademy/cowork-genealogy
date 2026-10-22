@@ -83,10 +83,16 @@ research_log_append({
   query: object,                  // freeform — enough to reproduce the search; may not name a
                                   //   filter its staged search never sent (§8.3). Omit it with a
                                   //   stagedResultsRef and the tool fills it from the staged search
-  outcome: "positive" | "negative" | "partial" | "error",
-  resultsExamined: number,
+  outcome?: "positive" | "negative" | "partial" | "error",
+                                  //   required, except with a record_search stagedResultsRef, where an
+                                  //   omitted value logs "positive" (a staged search always has rows);
+                                  //   send "partial" for a collection mismatch
+  resultsExamined?: number,       //   required, except with a record_search stagedResultsRef, where it
+                                  //   defaults to the rows returned; send fewer only when fewer were
+                                  //   triaged
   planItemId: string | null,      // pli_ reference, or null for ad-hoc (see planItemId validation below)
-  resultsAvailable?: number | null,
+  resultsAvailable?: number | null, // filled from the staged search's totalMatches when omitted
+                                  //   with a record_search stagedResultsRef
   notes?: string | null,
   externalSite?: {                // REQUIRED when tool === "external_site"; else null/omit
     site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
@@ -121,7 +127,18 @@ op is applied: the staged ref itself (it exists under `results/.staging/` and it
 `tool` matches), a staged ref named by two ops (`ops[j]: stagedResultsRef '…' is also
 ops[i]'s` — with removal deferred, both would finalize it), the §8.2 census check,
 and the §8.3 query check. So a bad ref in op[1] is refused before op[0] writes a
-sidecar.
+sidecar. These checks run over **every** op before the call refuses, and the
+refusal lists each failing op's `ops[i]: <msg>`, so one corrected re-send can fix
+them all; the batch still writes all or nothing.
+
+**A staged ref that was already logged.** Re-sending a `stagedResultsRef` whose
+staged file is gone because an earlier call finalized it (typically after a
+context compaction) is answered with that entry, not refused: the sidecar records
+the staged file it came from (`staged_ref`, research-schema-spec §5.4.1), the call
+returns that entry's `logId`, `resultsRef` and `returnedCount` with
+`alreadyLogged: true` and a warning naming the id, and writes nothing for that op.
+In a batch, every other op is logged as usual. A ref no sidecar names keeps the
+"not in `results/.staging/`" refusal.
 
 **Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
@@ -199,8 +216,10 @@ no other `tool` value is touched.
 **The tool assigns (caller never supplies):** the log entry `id` (next `log_`
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`
 (`results/<log_id>.json` when a sidecar is written, else `null`), and the entire
-sidecar envelope — `log_id`, `retrieved`, and `returned_count` (counted from the
-payload, never trusted from the caller). Because `results_ref` is tool-constructed
+sidecar envelope — `log_id`, `retrieved`, `returned_count` (counted from the
+payload, never trusted from the caller) and `staged_ref` (the staged file it came
+from). For a record_search `stagedResultsRef`, it also fills `outcome`,
+`results_examined` and `results_available` when the caller omits them (§7). Because `results_ref` is tool-constructed
 as `results/<log_id>.json`, the validator's path-traversal guard is satisfied by
 construction.
 
@@ -319,10 +338,12 @@ rule is no longer needed (under Option B it never applied).
 | sidecar `log_id`, `retrieved`, `returned_count` | `results_available`, `notes`, `plan_item_id` |
 | camelCase→snake_case rename; append-only; atomic write + validate | `external_site` details; whether results were retained |
 | `query` and `tool` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
+| `outcome` (`positive`), `results_examined` (rows returned) and `results_available` (`totalMatches`) when omitted with a staged record_search handle | an override of any of them: `partial` for a collection mismatch, `error`, fewer rows triaged |
 | no explicit `query` names a filter its staged search never sent (§8.3) | which descriptive, non-filter context to record |
 
-The caller still makes every analytical call (was the outcome negative? is this
-absence meaningful? which plan item?). The tool removes only the error-prone
+The caller still makes every analytical call (is this absence meaningful? was
+the collection the right one? which plan item?), and overrides any default it
+disagrees with. The tool removes only the error-prone
 clerical work.
 
 **Why the tool owns "no never-sent filter" but not the values** (lead ruling,
