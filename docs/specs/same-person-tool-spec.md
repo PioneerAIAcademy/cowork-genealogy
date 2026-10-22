@@ -70,8 +70,8 @@ about 37 links per call. Identity was being asserted and never scored. The arm i
 | `projectPath` | string | yes | The research project directory. Its presence selects this arm. |
 | `assertionId` | string | yes | The assertion the `person_evidence` link will cite. Resolves the record, the party and the retrieval route in one hop. |
 | `treePersonId` | string | yes | The candidate person's id in `tree.gedcomx.json`. |
-| `recordRole` | string | no | Score a **different** party of the same record than the assertion's own `record_role` — the second party of a relationship or marriage assertion, which gets its own link. |
-| `recordPersonaId` | string | no | Name the record persona directly when the assertion does not carry it and the party is otherwise ambiguous. |
+| `recordRole` | string | no | Score a **different** party of the same record than the assertion's own `record_role` — the second party of a relationship or marriage assertion, which gets its own link. Resolved as "Party selection" below describes. |
+| `recordPersonaId` | string | no | Name the record persona directly when the assertion does not carry it and the party is otherwise ambiguous. A persona the record does not hold is refused. |
 | `matchRelatives` | boolean | no | As on arm B. Unavailable when the record side had to be projected (see below). |
 
 **Why `assertionId` keys it.** The link about to be written is
@@ -113,11 +113,31 @@ than an error.
    `1:1:MARR-8T3` has a single `principal` assertion naming both spouses, and
    whose sidecar holds MP1 and MP2.
 
-Party selection: `recordPersonaId`, else the assertion's `record_persona_id`,
-else (route 1) the persona whose name matches what the assertion gives that
-party, or (route 2) the `record_role` group. When no route yields a persona for
-the requested party the tool says so explicitly rather than scoring something
-else — that is the sanctioned `match_score: null`, not a failure.
+Party selection. On route 1 (a fetched record), in this order:
+
+1. `recordPersonaId`, when the record holds that persona. One it does not hold is
+   refused, as on route 2.
+2. When `recordRole` names a **different** party than the assertion's own
+   `record_role` (the second party of a relationship or marriage assertion): the
+   persona id that a sibling assertion of the same record carries for that role,
+   provided the fetched record holds it; then the name the assertion gives that
+   party, the whole name (given name and surname joined) before either part
+   alone, exact before substring. Two siblings that carry the role under
+   different persona ids are two people: the call is refused and both are
+   listed. **The assertion's own persona is never the answer to a request for
+   another party**, and neither is a name that finds it. A fetched `persons[]`
+   carries no role, so a role can only come from the assertions around it.
+3. Otherwise the assertion's own `record_persona_id` (an exact id), then the name
+   the assertion gives (a loose match, so after the id), then a record that holds
+   a single persona.
+
+On route 2 (a projected record) the party is the `record_role` group, or the
+persona `recordPersonaId` names. When no route yields a persona for the requested
+party the tool says so explicitly rather than scoring something else — that is
+the sanctioned `match_score: null`, not a failure. Every refusal lists each
+persona on the record as `id (name, role)`; the role is the one the record's
+assertions give that persona, and a persona no assertion names reads `role
+unknown`.
 
 #### What the projection admits, and why it is not the tree filter
 
@@ -205,7 +225,10 @@ by 40s + 30s.
 
 `treePersonId` absent from the tree, no persona for the requested party, an
 ambiguous projected role, not a project at all: each returns an LLM-actionable
-message naming what to do. `same_person` is deliberately **not** in
+message naming what to do. On a fetched record that also covers a `recordRole`
+that no sibling assertion and no name resolves, a role two siblings carry under
+different persona ids, and a `recordPersonaId` the record does not hold; each
+lists every persona as `id (name, role)` so the next call can name one. `same_person` is deliberately **not** in
 `tests/tools/no-project.test.ts`'s table: that table's first assertion requires
 the tool to RETURN `{ ok: false, reason: "no_project" }`, and this tool returns a
 score, so there is no answer shape to carry that verdict. That ruling is
@@ -355,6 +378,14 @@ agent to repeat the call that wrote the unfindable record. Caught by review
 before it shipped; the `dev/probe-score-refusal.ts` arm `fetched-route
 attestation` is the standing check.
 
+The entry's `record_persona_id` is the persona the response names as
+`recordPersona.id`. On the fetched route it is the id the fetch resolved. The
+eval harness performs no fetch, so `buildRecordedScore` derives it from the same
+sibling lookup (and an explicit `recordPersonaId`) that route 1 uses, and a call
+for the father files the father's persona in both places. Where only a fetch can
+tell, such as a party found by name, the harness files the assertion's own id or
+null. It is not part of the lookup key.
+
 ADR-0009 constraint 3 says to key on (`record_id`, `record_persona_id`) and not
 on `record_id` alone, so that a second persona of an already-linked record
 cannot attach unscored. The assertion key satisfies it structurally: an
@@ -403,8 +434,44 @@ provenance — but stated so `feedback-case-spec.md`'s consumers are not surpris
 
 ## Output
 
-A small object the LLM can reason over. The verbose GedcomX response
-from the API is parsed and reduced.
+The two arms return different shapes. Both are small objects the LLM can reason
+over; the verbose GedcomX response from the API is parsed and reduced.
+
+### Arm A — project-relative
+
+It says what was scored and whom.
+
+| Field | Type | Always present? | Description |
+|-------|------|-----------------|-------------|
+| `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
+| `confidence` | number | only when `matched: true` | Integer 1–5. The API's coarse-bucket confidence rating. Higher is better. |
+| `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. |
+| `recordSource` | `"record_read"` or `"projection"` | yes | Which route assembled the record side. |
+| `recorded` | boolean | yes | `true` when the score was written to the attestation. |
+| `recordPersona` | `{ id, name, role }` | yes | The record persona that was scored. `id` is the fetched `persons[].id` on route 1 and the projected group's persona id on route 2, and `null` when the record names none. `name` is the record's name for it, `""` when it gives none. `role` is the `record_role` the record's assertions give that persona, `null` when no assertion names it. |
+| `treePerson` | `{ id, name }` | yes | The tree person it was scored against: the `treePersonId` passed, and that person's preferred name (`""` when it has none). |
+
+It returns none of `queryArk`, `candidateArk`, `apiTitle` or `updated`. Those are
+the API's framing of the request: the ARKs are the ones the request carried,
+minted at random for a person whose ark is not a valid FamilySearch id, so they
+differ between two calls on the same pair and name no one a reader could look up.
+`recordPersona` and `treePerson` say who was scored. `matchRelatives: true`
+returns the relatives result, which `docs/specs/same-person-match-relatives-spec.md`
+specifies.
+
+```json
+{
+  "matched": true,
+  "confidence": 5,
+  "score": 0.97,
+  "recordSource": "record_read",
+  "recorded": true,
+  "recordPersona": { "id": "p_300287854667", "name": "Pierre Mouchang", "role": "father" },
+  "treePerson": { "id": "I1", "name": "Pierre Mouchang" }
+}
+```
+
+### Arm B — explicit
 
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
@@ -416,7 +483,7 @@ from the API is parsed and reduced.
 | `apiTitle` | string | yes | The raw `title` field from the API response, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Surfaced so the LLM can confirm which persona was treated as the query. |
 | `updated` | string | yes | ISO timestamp from the API response. Useful for debugging. |
 
-### Example output
+#### Example output (arm B)
 
 ```json
 {
@@ -430,7 +497,7 @@ from the API is parsed and reduced.
 }
 ```
 
-### Non-match example
+#### Non-match example (arm B)
 
 ```json
 {
