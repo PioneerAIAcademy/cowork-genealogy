@@ -7,11 +7,15 @@ import { WIKI_SEARCH_TIMEOUT_MS } from "./wiki-search.js";
 import type { WikiSearchAPIResponse } from "../types/wiki-search.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { describeFetchError, fetchWithRetry } from "../utils/http.js";
+import { pageText, requireWholeNumber } from "../utils/text-page.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
-import type {
-  WikiPlacePageInput,
-  WikiPlacePageResult,
-  WikiPageSection,
+import {
+  WIKI_OFFSET_PROPERTY,
+  WIKI_PAGE_MAX_CHARS,
+  WIKI_PAGING_NOTE,
+  type WikiPlacePageInput,
+  type WikiPlacePageResult,
+  type WikiPageSection,
 } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
@@ -278,6 +282,8 @@ export async function wikiPlacePageTool(
   principal: Principal
 ): Promise<WikiPlacePageResult> {
   const { standardPlace, section } = input;
+  // Argument checks first: a bad offset must not cost a request or a place lookup.
+  const offset = input.offset === undefined ? undefined : requireWholeNumber("offset", input.offset, 0);
   // An out-of-set string would fall through candidateSlugsFor's switch to
   // `undefined` and surface as a TypeError; reject it here with the set instead.
   if (typeof section !== "string" || !SECTIONS.has(section)) {
@@ -287,7 +293,13 @@ export async function wikiPlacePageTool(
         .join(", ")}.`
     );
   }
-  return readPlacePage(standardPlace, section as WikiPageSection, principal);
+  const hit = await readPlacePage(standardPlace, section as WikiPageSection, principal);
+  // The page is cut once, after the place is resolved, so every way a place resolves (the
+  // leaf grammar, a title found by search, an alternate name) is paged the same. A body
+  // with no text passes through as it always did: there is nothing to cut.
+  if (typeof hit.content !== "string") return hit;
+  const { content, paging } = pageText(hit.content, offset, WIKI_PAGE_MAX_CHARS);
+  return { ...hit, content, ...paging };
 }
 
 export const wikiPlacePageSchema = {
@@ -300,7 +312,8 @@ export const wikiPlacePageSchema = {
     "independent city. The other three sections exist only for a country or a " +
     "state/province: for a more specific place they return no page, so " +
     "broaden the standardPlace one jurisdiction (see places guidance) and " +
-    "call again.",
+    "call again. " +
+    WIKI_PAGING_NOTE,
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -317,6 +330,7 @@ export const wikiPlacePageSchema = {
           "'getting_started', 'online_records' (online genealogy records), or " +
           "'research_tips' (research strategies).",
       },
+      offset: WIKI_OFFSET_PROPERTY,
     },
     required: ["standardPlace", "section"],
   },

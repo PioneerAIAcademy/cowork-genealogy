@@ -32,9 +32,11 @@ vi.mock("../../src/auth/config.js", () => ({
 }));
 
 import { wikiPlacePageTool, wikiPlacePageSchema } from "../../src/tools/wiki-place-page.js";
-import { WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
+import { WIKI_PAGE_MAX_CHARS, WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
+import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import { headingPage, oneLinePage, quotePage, walkParts } from "../helpers/wiki-pages.js";
 
 const API_BASE = "http://localhost:8000";
 
@@ -496,5 +498,214 @@ describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", 
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy");
     expect(mockFetch).toHaveBeenCalledTimes(3);
     expect(mockFetch.mock.calls.every((c) => c[1].method === "GET")).toBe(true);
+  });
+});
+
+// ── paging ───────────────────────────────────────────────────────────────────
+
+const PORTUGAL_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
+const SCHUYLKILL_PLACE = "Schuylkill, Pennsylvania, United States";
+const SCHUYLKILL_SLUG = "Schuylkill_County,_Pennsylvania_Genealogy";
+
+/** Every GET answers with this page; Portugal resolves on its first candidate. */
+function servePortugal(content: string | undefined): void {
+  mockFetch.mockReset();
+  mockFetch.mockImplementation(async () =>
+    content === undefined
+      ? { ok: true, status: 200, json: async () => ({ title: "Portugal_Genealogy", source_url: PORTUGAL_URL }) }
+      : pageResponse("Portugal_Genealogy", content),
+  );
+}
+
+/** A county page, found the long way: the wiki's own search ranks its title, then the page is fetched. */
+function serveSchuylkill(content: string): void {
+  mockGetPlaceById.mockResolvedValue(placeOfType("County"));
+  mockFetch.mockReset();
+  mockFetch.mockImplementation(async (url: string) =>
+    String(url).endsWith("/search")
+      ? searchResponse(["Schuylkill County, Pennsylvania Genealogy"])
+      : pageResponse(SCHUYLKILL_SLUG, content),
+  );
+}
+
+const readPortugal = (offset?: number) =>
+  wikiPlacePageTool({ standardPlace: "Portugal", section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL);
+const readSchuylkill = (offset?: number) =>
+  wikiPlacePageTool({ standardPlace: SCHUYLKILL_PLACE, section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL);
+
+/** What the cap bounds: the JSON-escaped body of `content`. */
+const escapedBody = (s: string): number => JSON.stringify(s).length - 2;
+
+const SHAPES: Array<[string, () => string]> = [
+  ["about 50 headings over 66,000 characters", () => headingPage()],
+  ["one heading and one 46,000-character row", () => oneLinePage()],
+  ["66,000 double quotes", () => quotePage()],
+];
+
+describe.each(SHAPES)("wikiPlacePageTool, a page of %s", (_label, make) => {
+  const page = make();
+  beforeEach(() => servePortugal(page));
+
+  it("(a) every part serializes under the CLI spill line, with content inside the cap", async () => {
+    expect(JSON.stringify({ url: PORTUGAL_URL, content: page, standardPlace: "Portugal", placeName: "Portugal" }).length).toBeGreaterThan(CLI_SPILL_CHARS);
+    const parts = await walkParts(readPortugal);
+    expect(parts.length).toBeGreaterThan(1);
+    for (const part of parts) {
+      expect(JSON.stringify(part).length).toBeLessThan(CLI_SPILL_CHARS);
+      expect(escapedBody(part.content)).toBeLessThanOrEqual(WIKI_PAGE_MAX_CHARS);
+    }
+  });
+
+  it("(b) joining content across the nextOffset chain rebuilds the page exactly", async () => {
+    const parts = await walkParts(readPortugal);
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    let at = 0;
+    for (const part of parts) {
+      expect(part.offset ?? 0).toBe(at);
+      at += part.content.length;
+    }
+  });
+
+  it("(c) the chain ends: the last part says truncated: false and carries no nextOffset", async () => {
+    const parts = await walkParts(readPortugal);
+    const last = parts[parts.length - 1];
+    expect(last.truncated).toBe(false);
+    expect("nextOffset" in last).toBe(false);
+    for (const part of parts.slice(0, -1)) {
+      expect(part.truncated).toBe(true);
+      expect(part.nextOffset).toBe((part.offset ?? 0) + part.content.length);
+    }
+  });
+
+  it("keeps url, standardPlace and placeName on every part", async () => {
+    for (const part of await walkParts(readPortugal)) {
+      expect(part.url).toBe(PORTUGAL_URL);
+      expect(part.standardPlace).toBe("Portugal");
+      expect(part.placeName).toBe("Portugal");
+    }
+  });
+
+  it("fetches the page again for each part", async () => {
+    const parts = await walkParts(readPortugal);
+    expect(mockFetch).toHaveBeenCalledTimes(parts.length);
+  });
+});
+
+describe("wikiPlacePageTool, a page found by its title", () => {
+  it("pages a title-resolved page the same way, resolving the place again on each part", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const parts = await walkParts(readSchuylkill);
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    for (const part of parts) {
+      expect(JSON.stringify(part).length).toBeLessThan(CLI_SPILL_CHARS);
+      expect(part.url).toBe(`https://www.familysearch.org/en/wiki/${SCHUYLKILL_SLUG}`);
+      expect(part.standardPlace).toBe(SCHUYLKILL_PLACE);
+      expect(part.placeName).toBe("Schuylkill County, Pennsylvania");
+    }
+    expect(mockFetch).toHaveBeenCalledTimes(parts.length * 2); // a search and a page, per part
+  });
+
+  it("pages a page reached through an alternate name from the places API", async () => {
+    const page = headingPage();
+    mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
+    mockGetPlaceCandidateNames.mockResolvedValue(["Czechia"]);
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith("/page/Czechia_Genealogy") ? pageResponse("Czechia_Genealogy", page) : NOT_FOUND,
+    );
+    const parts = await walkParts((offset) =>
+      wikiPlacePageTool({ standardPlace: "Old Name", section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL),
+    );
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    expect(parts[0].placeName).toBe("Czechia");
+  });
+});
+
+describe("wikiPlacePageTool, a page under the cap", () => {
+  it("(d) returns exactly today's object for a 9,000-character page, with no extra keys", async () => {
+    const head = "# Small page\n";
+    const content = head + "x".repeat(9_000 - head.length);
+    expect(content.length).toBe(9_000);
+    servePortugal(content);
+    const result = await readPortugal();
+    expect(result).toStrictEqual({ url: PORTUGAL_URL, content, standardPlace: "Portugal", placeName: "Portugal" });
+    expect(Object.keys(result).sort()).toEqual(["content", "placeName", "standardPlace", "url"]);
+  });
+
+  it("returns a page whose escaped body is exactly the cap whole, and pages one unit more", async () => {
+    servePortugal("x".repeat(WIKI_PAGE_MAX_CHARS));
+    expect("truncated" in (await readPortugal())).toBe(false);
+    servePortugal("x".repeat(WIKI_PAGE_MAX_CHARS + 1));
+    const parts = await walkParts(readPortugal);
+    expect(parts.map((p) => p.content.length)).toEqual([WIKI_PAGE_MAX_CHARS, 1]);
+  });
+
+  it("adds the paging fields, and only those, when offset is passed on a page that fits", async () => {
+    servePortugal("# Small");
+    expect(await readPortugal(0)).toStrictEqual({
+      url: PORTUGAL_URL,
+      content: "# Small",
+      standardPlace: "Portugal",
+      placeName: "Portugal",
+      totalChars: 7,
+      offset: 0,
+      truncated: false,
+    });
+  });
+
+  it("starts at the offset it is given, and reads one past the end as an empty part", async () => {
+    const page = headingPage();
+    servePortugal(page);
+    const part = await readPortugal(5_000);
+    expect(part.offset).toBe(5_000);
+    expect(part.content).toBe(page.slice(5_000, 5_000 + part.content.length));
+    servePortugal("# Small");
+    expect(await readPortugal(1_000_000)).toMatchObject({ content: "", totalChars: 7, offset: 7, truncated: false });
+  });
+
+  it("passes a body with no text through as it always did", async () => {
+    servePortugal(undefined);
+    expect(await readPortugal()).toStrictEqual({
+      url: PORTUGAL_URL,
+      content: undefined,
+      standardPlace: "Portugal",
+      placeName: "Portugal",
+    });
+  });
+});
+
+describe("wikiPlacePageTool, offset validation", () => {
+  it.each([
+    ["a string", "5", '"5"'],
+    ["a negative number", -1, "-1"],
+    ["a fraction", 1.5, "1.5"],
+    ["NaN", Number.NaN, "NaN"],
+    ["Infinity", Number.POSITIVE_INFINITY, "Infinity"],
+    ["null", null, "null"],
+  ])("(e) rejects an offset of %s with the requireWholeNumber error, before any request or place lookup", async (_label, value, got) => {
+    servePortugal("# Small");
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Portugal", section: "home", offset: value as unknown as number }, LOCAL),
+    ).rejects.toThrow(`offset must be a whole number ≥ 0 (got ${got}). Send it as a number, not a string.`);
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockGetWikiApiUrl).not.toHaveBeenCalled();
+    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+  });
+});
+
+describe("wikiPlacePageSchema, paging", () => {
+  it("declares offset as a number and still requires standardPlace and section", () => {
+    expect(wikiPlacePageSchema.inputSchema.properties.offset.type).toBe("number");
+    expect(wikiPlacePageSchema.inputSchema.required).toEqual(["standardPlace", "section"]);
+  });
+
+  it("tells the agent how to continue", () => {
+    expect(wikiPlacePageSchema.description).toContain(
+      "when `truncated` is true, call again with `offset: nextOffset` until it is false",
+    );
+    expect(wikiPlacePageSchema.inputSchema.properties.offset.description).toContain("`nextOffset`");
   });
 });
