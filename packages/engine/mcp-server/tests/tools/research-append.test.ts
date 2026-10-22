@@ -5657,8 +5657,9 @@ describe("research_append (batch ops)", () => {
     if (r.ok) return;
     const msg = r.errors[0];
     // #2108 CHANGED WHICH GUARD ANSWERS THIS. The terminal-plan deny throws in
-    // applyOne, which returns the batch at once, so emptyCreatedPlanErrors —
-    // a post-pass over the applied ops — never runs on a COMPLETED parent. This
+    // applyOne, so those items are not among the ops that applied, and
+    // emptyCreatedPlanErrors — a post-pass over the applied ops — never sees
+    // them on a COMPLETED parent. This
     // is the exact corpus shape (54 appends, 6 calls, 4 run logs, all
     // flynn-first-plan-surveyed/pl_001), so the deny now owns the corpus case
     // and the misroute arm keeps the ACTIVE-parent and same-call-sibling cases
@@ -7228,6 +7229,290 @@ describe("research_append (batch ops)", () => {
       expect(jsonParseFailure("[1,]")).toEqual({ message: engineMessage("[1,]"), offset: null });
       expect(jsonParseFailure("")).toEqual({ message: engineMessage(""), offset: 0 });
       expect(jsonParseFailure("nope")).toEqual({ message: engineMessage("nope"), offset: null });
+    });
+  });
+});
+
+// ─── Every op's errors ───────────────────────────────────────────────────────
+//
+// A batch used to stop at its first failing op, so a batch with several bad ops
+// was sent round once per op. Every failing op is now reported, with the
+// whole-document check run on the ops that applied, and nothing is written.
+// `applyOne` mutates the document in place and most of its refusals come after
+// the entry is already in it, so each op is judged against a copy of the
+// document and a failed op leaves no trace for the ops after it
+// (`everyOpFailure`). That is what the one added line says, so the tests below
+// pin it, and pin that the file is byte-identical after every failed batch.
+
+describe("research_append (batch ops) — every op's errors", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-every-op-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+
+  /** The one line a refusal adds when ops follow the first failure. */
+  const NOTE = /^ops after the first failure \(ops\[(\d+)\]\) were checked, and the document validated, without the failed ops applied/;
+  const noteOf = (errors: string[]) => errors.filter((e) => NOTE.test(e));
+  /** The `ops[i]: …` lines, which are every op's own errors. Hints and the note do not start that way. */
+  const opLines = (errors: string[]) => errors.filter((e) => /^ops\[\d+\]: /.test(e));
+
+  /** Run a batch that must fail, check it wrote nothing, and hand back the refusal. */
+  const refuse = async (ops: unknown[], research: any = baseResearch(), tree: any = baseTree, options?: any) => {
+    await writeProject(research, tree);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({ projectPath: dir, ops } as any, options);
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error("expected a refusal");
+    // All-or-nothing, whichever way the call got here.
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    return r;
+  };
+
+  // Refused before anything is written to the document: the entry carries an id,
+  // or names an entry that is not there.
+  const carriesAnId = { section: "hypotheses", op: "append", entry: { id: "h_001", ...validHypothesis() } };
+  const unknownConflict = { section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } };
+  const goodHypothesis = { section: "hypotheses", op: "append", entry: validHypothesis() };
+
+  it("reports every failing op in op order, adds the one line, and writes nothing", async () => {
+    const r = await refuse([carriesAnId, unknownConflict]);
+    const lines = opLines(r.errors);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatch(/^ops\[0\]: .*must not carry an id/);
+    expect(lines[1]).toMatch(/^ops\[1\]: entryId 'c_999' not found in 'conflicts'/);
+    expect(noteOf(r.errors)).toHaveLength(1);
+    expect(NOTE.exec(noteOf(r.errors)[0])![1]).toBe("0");
+    // The line follows the ops it is about.
+    expect(r.errors.indexOf(noteOf(r.errors)[0])).toBeGreaterThan(r.errors.indexOf(lines[1]));
+    expect(r.opsReceived).toBe(2);
+  });
+
+  it("names the failing ops and not the ones that held, wherever they sit", async () => {
+    const r = await refuse([carriesAnId, goodHypothesis, unknownConflict]);
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "2"]);
+    expect(r.opsReceived).toBe(3);
+  });
+
+  it("a failed op leaves no trace: the op after it is judged without it", async () => {
+    // The project already has an active plan for q_001. ops[0] appends a second
+    // one, which the one-active-plan rule refuses AFTER the plan is already in the
+    // document. ops[1] names the id that plan would have taken. If the refused
+    // plan stayed in the document, ops[1] would find it and pass.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    const r = await refuse(
+      [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines[0]).toMatch(/^ops\[0\]:.*already has an active plan/);
+    expect(lines[1]).toMatch(/^ops\[1\]: plans entry 'pl_002' not found/);
+    expect(noteOf(r.errors)).toHaveLength(1);
+  });
+
+  it("a failure that is not the first leaves no trace either", async () => {
+    // The first failure is skipped when the rest is judged, since the judging starts from
+    // the document as the call found it. A LATER failure is the one that has to be undone:
+    // ops[1] is refused after its plan is already in the document, and ops[2] names the id
+    // that plan would have taken.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    const r = await refuse(
+      [
+        unknownConflict,
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "1", "2"]);
+    expect(lines[1]).toMatch(/already has an active plan/);
+    expect(lines[2]).toMatch(/^ops\[2\]: plans entry 'pl_002' not found/);
+  });
+
+  it.each([
+    ["the first failure", 0],
+    ["a later failure", 1],
+  ])("a failed UPDATE that is %s leaves no trace either: its merged fields are not seen by the op after it", async (_label, leading) => {
+    // pl_002 is completed. The update sets it active, which the one-active-plan rule
+    // refuses AFTER the merge is already in the document. The plan_items op after it
+    // reads the plan's status live: refused as a completed plan if the merge was undone,
+    // accepted if it was not.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+      validPlan("pl_002", "q_001", "completed", [seededPlanItem("pli_002")]),
+    ] as any;
+    const r = await refuse(
+      [
+        ...(leading ? [unknownConflict] : []),
+        { section: "plans", op: "update", entryId: "pl_002", fields: { status: "active" } },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines.some((l) => new RegExp(`^ops\\[${leading}\\]:.*already has an active plan`).test(l)), r.errors.join("\n")).toBe(true);
+    expect(lines.some((l) => new RegExp(`^ops\\[${leading + 1}\\]:.*plans entry 'pl_002' is 'completed'`).test(l)), r.errors.join("\n")).toBe(true);
+  });
+
+  it("still runs the whole-document check on the ops that applied, labelled with the op's own index", async () => {
+    // ops[1] is accepted by its own checks and refused by the document check, and it
+    // is the FIRST op that applied, so its place among the applied ops is 0.
+    const r = await refuse([unknownConflict, { section: "hypotheses", op: "append", entry: { ...validHypothesis(), status: "bogus" } }]);
+    const lines = opLines(r.errors);
+    expect(lines[0]).toMatch(/^ops\[0\]: entryId 'c_999' not found/);
+    const documentLines = lines.filter((l) => /research\.json\//.test(l));
+    expect(documentLines.length, r.errors.join("\n")).toBeGreaterThan(0);
+    expect(documentLines.every((l) => l.startsWith("ops[1]: research.json/hypotheses[0]"))).toBe(true);
+  });
+
+  it("keeps the cause-naming misroute message, labelled with the plans op's own index", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")])] as any;
+    const r = await refuse(
+      [
+        unknownConflict,
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002, left empty
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // wrote into another plan
+      ],
+      research,
+    );
+    const misroute = opLines(r.errors).find((l) => /plan 'pl_002' was created for question 'q_001' and ends this call with no items/.test(l));
+    expect(misroute, r.errors.join("\n")).toBeDefined();
+    expect(misroute).toMatch(/^ops\[1\]:/);
+    // …and the worked example the success path attaches to it.
+    expect(r.errors.some((e) => e.startsWith("worked example for 'plans'"))).toBe(true);
+  });
+
+  it("re-applies the ops as they were, so a first-pass push into a shared items array is not applied twice", async () => {
+    // The plan's `items` array is shared between the op and the document, and
+    // ops[1] pushes into it. Replaying ops mutated by the first pass would give
+    // the plan the item twice and report its refusal twice.
+    const r = await refuse([
+      { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+      { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "bogus" }, planId: "pl_001" },
+      unknownConflict,
+    ], (() => { const x = baseResearch(); x.questions = [validQuestion("q_001")]; return x; })());
+    const itemErrors = r.errors.filter((e) => /plans\[0\]\/items\[\d+\]/.test(e));
+    expect(itemErrors, r.errors.join("\n")).toHaveLength(1);
+    expect(itemErrors[0]).toMatch(/items\[0\]/);
+  });
+
+  it("the line names the first failure, wherever it sits", async () => {
+    const r = await refuse([goodHypothesis, carriesAnId, unknownConflict]);
+    expect(opLines(r.errors).map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["1", "2"]);
+    expect(noteOf(r.errors)).toHaveLength(1);
+    expect(NOTE.exec(noteOf(r.errors)[0])![1]).toBe("1");
+  });
+
+  it("an id a failed op would have taken is not counted as created in this call for the ops after it", async () => {
+    // ops[1] appends a second active plan, refused after it is already in the
+    // document (it would have been pl_003). ops[2] then writes into the COMPLETED
+    // pl_002, and that refusal says whether this call created a plan. It created
+    // none that stands, so it must not send the caller to pl_003.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+      validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]),
+    ] as any;
+    const r = await refuse(
+      [
+        unknownConflict,
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines.some((l) => /^ops\[1\]:.*already has an active plan/.test(l))).toBe(true);
+    const terminal = lines.find((l) => /^ops\[2\]:.*plans entry 'pl_002' is 'completed'/.test(l));
+    expect(terminal, r.errors.join("\n")).toBeDefined();
+    expect(terminal).not.toContain("This call created plan");
+    expect(terminal).not.toContain("pl_003");
+  });
+
+  it("adds no line when the only failure is the last op", async () => {
+    const r = await refuse([goodHypothesis, unknownConflict]);
+    expect(opLines(r.errors)).toHaveLength(1);
+    expect(opLines(r.errors)[0]).toMatch(/^ops\[1\]:/);
+    expect(noteOf(r.errors)).toEqual([]);
+  });
+
+  it("a single-op batch fails with its own errors alone", async () => {
+    const r = await refuse([carriesAnId]);
+    expect(opLines(r.errors)).toHaveLength(1);
+    expect(noteOf(r.errors)).toEqual([]);
+    expect(r.opsReceived).toBe(1);
+  });
+
+  it("a later op that cannot even be checked does not hide the first failure, and nothing is written", async () => {
+    // A numeric entryId makes applyOne throw a TypeError, not a refusal. The first
+    // failure still comes back, exactly as it did before the rest was judged.
+    const r = await refuse([unknownConflict, { section: "hypotheses", op: "update", entryId: 12, fields: { claim: "x" } }]);
+    expect(opLines(r.errors)).toHaveLength(1);
+    expect(opLines(r.errors)[0]).toMatch(/^ops\[0\]: entryId 'c_999' not found in 'conflicts'/);
+    expect(noteOf(r.errors)).toEqual([]);
+    expect(r.opsReceived).toBe(2);
+  });
+
+  it("attaches the worked example for each failing section, at most two", async () => {
+    const r = await refuse([carriesAnId, unknownConflict, { section: "timelines", op: "update", entryId: "t_999", fields: { label: "x" } }]);
+    const examples = r.errors.filter((e) => e.startsWith("worked example for '"));
+    expect(examples.length).toBeGreaterThan(0);
+    expect(examples.length).toBeLessThanOrEqual(2);
+  });
+
+  describe("the lane gate names every op outside the lane", () => {
+    const lane = { allowedSections: new Set(["sources", "assertions"]), toolName: "extraction_append" };
+
+    it("two ops outside the lane are both named, the one inside is not, and nothing is written", async () => {
+      const r = await refuse(
+        [unknownConflict, { section: "sources", op: "append", entry: noId(validSource("x")) }, goodHypothesis, { op: "append" }],
+        baseResearch(),
+        baseTree,
+        lane,
+      );
+      expect(r.errors).toHaveLength(3);
+      expect(r.errors[0]).toMatch(/^ops\[0\]: section 'conflicts' is not writable by extraction_append \(it writes only: sources, assertions\)/);
+      expect(r.errors[1]).toMatch(/^ops\[2\]: section 'hypotheses' is not writable by extraction_append/);
+      expect(r.errors[2]).toMatch(/^ops\[3\]: section 'undefined' is not writable by extraction_append/);
+      // The broad tool is never named: that string is the routing map for working around the lane.
+      expect(r.errors.join("\n")).not.toContain("research_append");
+      expect(r.opsReceived).toBe(4);
+    });
+
+    it("one op outside the lane is refused as before: one line, its own index", async () => {
+      const r = await refuse([{ section: "sources", op: "append", entry: noId(validSource("x")) }, goodHypothesis], baseResearch(), baseTree, lane);
+      expect(r.errors).toHaveLength(1);
+      expect(r.errors[0]).toMatch(/^ops\[1\]: section 'hypotheses' is not writable by extraction_append/);
+    });
+
+    it("a batch entirely inside the lane is not touched by the gate", async () => {
+      await writeProject();
+      const r = await researchAppend(
+        { projectPath: dir, ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }] } as any,
+        lane,
+      );
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
     });
   });
 });

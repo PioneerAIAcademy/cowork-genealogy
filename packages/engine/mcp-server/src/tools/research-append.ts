@@ -8313,18 +8313,22 @@ export async function researchAppend(
       const allowed = options.allowedSections;
       const toolName = options.toolName ?? "this tool";
       const writes = [...allowed].join(", ");
+      // Every op outside the lane, not the first: a batch with three of them was
+      // otherwise sent round three times. Each line names only its own op's section.
+      const outsideLane: string[] = [];
       for (let i = 0; i < ops.length; i++) {
         const section = ops[i]?.section;
         if (typeof section !== "string" || !allowed.has(section)) {
-          return fail([
+          outsideLane.push(
             fmt(
               i,
               `section '${section}' is not writable by ${toolName} (it writes only: ${writes}). ` +
                 "Another skill owns that section — surface the finding in your summary instead.",
             ),
-          ]);
+          );
         }
       }
+      if (outsideLane.length > 0) return fail(outsideLane);
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
@@ -8333,42 +8337,65 @@ export async function researchAppend(
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
     const appendedThisBatch = new Set<string>();
+    /** `applyOne` with this call's context bound, so both passes apply an op the same way. */
+    const applyOp = (doc: any, op: ResearchAppendOp, appended: Set<string>): AppliedOp =>
+      applyOne(
+        doc,
+        op,
+        appended,
+        preCallExhaustiveDeclared,
+        preCallBlockingConflicts,
+        beforeResearch,
+        tree,
+        prep.matchScores,
+        prep.batchAssertions,
+        prep.startingPersonIds,
+        prep.createdAssertions,
+        prep.personLinks,
+        prep.birthPlaceCoords,
+        options.attachmentLink === true,
+      );
+    // The ops as the pre-pass left them. This loop mutates them (applyOne rewrites
+    // `op.fields` in places, and the document shares their nested objects), and the
+    // failure path below applies them again. A single op has nothing to look past.
+    const opsBeforeApply = ops.length > 1 ? structuredClone(ops) : ops;
+    let firstFailure: OpFailure | undefined;
     for (let i = 0; i < ops.length; i++) {
       try {
-        applied.push(
-          applyOne(
-            research,
-            ops[i],
-            appendedThisBatch,
-            preCallExhaustiveDeclared,
-            preCallBlockingConflicts,
-            beforeResearch,
-            tree,
-            prep.matchScores,
-            prep.batchAssertions,
-            prep.startingPersonIds,
-            prep.createdAssertions,
-            prep.personLinks,
-            prep.birthPlaceCoords,
-            options.attachmentLink === true,
-          ),
-        );
+        applied.push(applyOp(research, ops[i], appendedThisBatch));
       } catch (e) {
         if (e instanceof ResearchAppendError) {
-          // Identify the failing op; nothing has been written.
-          return fail(
-            e.errors.map((m) => fmt(i, m)),
-            [{
-              section: String(ops[i].section),
-              op: ops[i].op === "update" ? "update" : "append",
-              // The field names the failing op actually set. The worked example
-              // is keyed on these so a caller refused on one field is not handed
-              // a payload for another — see exampleFor.
-              fields: Object.keys(ops[i].fields ?? ops[i].entry ?? {}),
-            }],
-          );
+          // Nothing has been written, and nothing will be. The first failure is
+          // not the only one, so the rest of the batch is judged below.
+          firstFailure = { index: i, errors: e.errors };
+          break;
         }
         throw e;
+      }
+    }
+    if (firstFailure !== undefined) {
+      const { index, errors } = firstFailure;
+      /** What this call said before it looked past the first failure. */
+      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index])]);
+      if (ops.length === 1) return firstOnly();
+      try {
+        const every = await everyOpFailure({
+          ops: opsBeforeApply,
+          first: firstFailure,
+          before: { research: beforeResearch, tree: beforeTree },
+          tree,
+          projectPath,
+          startingPersonIds: prep.startingPersonIds,
+          applyOp,
+          fmt,
+        });
+        return fail(every.errors, every.hints);
+      } catch {
+        // Best effort. The first failure always gets through: a later op that cannot
+        // even be checked (a wrongly typed `entryId` throws a TypeError, not a
+        // refusal) must not turn a clean refusal into a crash. Nothing has been
+        // written on either path.
+        return firstOnly();
       }
     }
 
@@ -8612,12 +8639,19 @@ function opsNotAnArrayMessage(ops: unknown): string {
 /** Best-effort mapping of whole-document validation errors back to the batch op
  *  that touched the offending entry, so failure responses name the failing ops.
  *  Errors on entries no op touched keep their `research.json/…` path. */
-function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: boolean): string[] {
+function mapValidationErrors(
+  errors: string[],
+  applied: AppliedOp[],
+  isBatch: boolean,
+  // `applied[k]` came from op `opIndexes[k]` when ops that failed were left out of
+  // `applied`; without it `applied[k]` is op k.
+  opIndexes?: readonly number[],
+): string[] {
   if (!isBatch) return errors;
   const byLocation = new Map<string, number>();
   for (let k = 0; k < applied.length; k++) {
     const a = applied[k];
-    if (a.arrayIndex !== undefined) byLocation.set(`${a.section}[${a.arrayIndex}]`, k);
+    if (a.arrayIndex !== undefined) byLocation.set(`${a.section}[${a.arrayIndex}]`, opIndexes?.[k] ?? k);
   }
   return errors.map((msg) => {
     const m = msg.match(/^research\.json\/([a-z_]+)\[(\d+)\]/);
@@ -8627,6 +8661,129 @@ function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: bo
     }
     return msg;
   });
+}
+
+/** What one failing op said; `index` is its place in the batch. */
+interface OpFailure {
+  index: number;
+  errors: string[];
+}
+
+type ExampleHint = { section: string; op: "append" | "update"; fields?: readonly string[] };
+
+/** The worked-example hint for an op that failed. */
+function failedOpHint(op: ResearchAppendOp): ExampleHint {
+  return {
+    section: String(op.section),
+    op: op.op === "update" ? "update" : "append",
+    // The field names the failing op actually set. The worked example
+    // is keyed on these so a caller refused on one field is not handed
+    // a payload for another — see exampleFor.
+    fields: Object.keys(op.fields ?? op.entry ?? {}),
+  };
+}
+
+/**
+ * A batch has a failing op: judge the rest of it too, so one call reports every
+ * op's errors and the whole-document check, not one failure per round trip.
+ *
+ * `applyOne` mutates the document in place, and most of its refusals come after
+ * the entry is already in it (an append is pushed, an update merged, and only
+ * then do the section invariants run). So skipping a failed op is not enough: it
+ * would stay in the document for every op after it and for the document check.
+ * Each op is therefore applied to its own copy of the document, and the copy is
+ * kept only when the op holds. A later op is then judged against the document
+ * without the failed ops before it, which is what the one line returned below
+ * says. No dependency tracking: a later op can fail only because an earlier one
+ * did, and the line says so.
+ *
+ * Starts from the pre-call document and re-applies every op but the first
+ * failure, whose errors are taken as the first pass found them. The ops must be
+ * the pre-pass copies, since the first pass mutated the live ones. Nothing here
+ * writes anything.
+ *
+ * When at least one op applied, the whole-document family the success path runs
+ * runs on the ops that did, with their indexes mapped back to the batch: the
+ * misrouted-items message, the namesake cap and the introduced-errors validation.
+ * Not the fact rewrite, which only matters to a write.
+ */
+async function everyOpFailure(c: {
+  ops: ResearchAppendOp[];
+  first: OpFailure;
+  before: { research: any; tree: any };
+  tree: any;
+  projectPath: string;
+  startingPersonIds: ReadonlySet<string>;
+  applyOp: (doc: any, op: ResearchAppendOp, appended: Set<string>) => AppliedOp;
+  fmt: (i: number, msg: string) => string;
+}): Promise<{ errors: string[]; hints: ExampleHint[] }> {
+  const { ops, first, before, tree, fmt } = c;
+  const failures: OpFailure[] = [];
+  const applied: AppliedOp[] = [];
+  const appliedAt: number[] = []; // applied[k] came from ops[appliedAt[k]]
+  let doc = structuredClone(before.research);
+  let appended = new Set<string>();
+  for (let i = 0; i < ops.length; i++) {
+    if (i === first.index) {
+      failures.push(first);
+      continue;
+    }
+    const trial = structuredClone(doc);
+    const trialAppended = new Set(appended);
+    try {
+      applied.push(c.applyOp(trial, ops[i], trialAppended));
+      appliedAt.push(i);
+      doc = trial;
+      appended = trialAppended;
+    } catch (e) {
+      if (!(e instanceof ResearchAppendError)) throw e;
+      failures.push({ index: i, errors: e.errors });
+    }
+  }
+
+  const errors = failures.flatMap((f) => f.errors.map((m) => fmt(f.index, m)));
+  const hints = failures.map((f) => failedOpHint(ops[f.index]));
+  if (first.index < ops.length - 1) {
+    errors.push(
+      `ops after the first failure (ops[${first.index}]) were checked, and the document validated, ` +
+        "without the failed ops applied, so an error after the first may only follow from an earlier one, " +
+        "and an op that passed may still fail once the failed ones are fixed. Fix the earliest first.",
+    );
+  }
+  if (!applied.some((a) => !a.noop)) return { errors, hints };
+
+  // The ops that applied, as the checks below expect them: `applied[k]` and
+  // `appliedOps[k]` are the same op, whose place in the batch is `at(k)`.
+  const appliedOps = appliedAt.map((i) => ops[i]);
+  const at = (k: number) => appliedAt[k] ?? 0;
+  const validation = await validateIntroduced(
+    { research: before.research, tree: before.tree },
+    { research: doc, tree },
+    { projectPath: c.projectPath },
+  );
+  const namesake = namesakeCallCheck({ research: before.research }, { research: doc, tree }, applied, c.startingPersonIds).map(
+    (f) => (f.index === null ? f.message : fmt(at(f.index), f.message)),
+  );
+  const mapped = validation.valid ? [] : mapValidationErrors(formatIssues(validation.errors), applied, true, appliedAt);
+  // As on the success path, the cause-naming misroute message leads the document
+  // errors, and is only said when the document is refused anyway.
+  const misroute = validation.valid
+    ? []
+    : emptyCreatedPlanErrors(appliedOps, doc, applied).map((m) => fmt(at(m.index), m.message));
+  errors.push(...namesake, ...misroute, ...mapped);
+  const blamed = appliedOps.filter((o) => mapped.some((m) => m.includes(String(o.section))));
+  hints.push(
+    ...(namesake.length > 0 ? [{ section: "person_evidence", op: "append" as const }] : []),
+    ...(misroute.length > 0
+      ? [{ section: "plans", op: "append" as const }]
+      : mapped.length > 0
+        ? (blamed.length > 0 ? blamed : appliedOps).map((o) => ({
+            section: String(o.section),
+            op: o.op === "update" ? ("update" as const) : ("append" as const),
+          }))
+        : []),
+  );
+  return { errors, hints };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
