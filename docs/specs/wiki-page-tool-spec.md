@@ -173,6 +173,9 @@ units, the unit `content.length` and `offset` use; `#` lines are lines that star
 | `Schuylkill_County,_Pennsylvania_Genealogy` | 66,317 | 67,042 | 51 | 3,439 |
 | `Pennsylvania_Church_Records` | 64,649 | 65,685 | 43 | 7,052 |
 | `Ireland_Online_Genealogy_Records` | 53,075 | 53,255 | 1 | 46,407 |
+| `Norway_Church_Records` | 93,724 | 94,631 | 32 | 2,142 |
+| `Cook_County,_Illinois_Genealogy` | 117,339 | 118,762 | 55 | 10,436 |
+| `San_José,_Costa_Rica,_Catholic_Church_Parish_Finding_Aid` | 421,410 | 423,914 | 181 | 398 |
 
 A page edited on the wiki moves these. Re-fetch a page rather than trusting a figure that
 looks stale.
@@ -321,16 +324,27 @@ skill's test directory; see the test cases shipped with this change.
 
 ```
 cd packages/engine/mcp-server
-npx tsx dev/check-wiki-paging.ts          # the three long pages through wiki_read, two of them through wiki_place_page
+npx tsx dev/check-wiki-paging.ts          # six long pages through wiki_read, three of them through wiki_place_page
 npx tsx dev/check-wiki-paging.ts --wire   # the same through the built server over stdio (npm run build first)
+npx tsx dev/check-wiki-paging.ts <wiki URL> ...   # your own pages, through wiki_read
 ```
 
 Each case fetches the page whole from the wiki server, follows `nextOffset`, joins the parts and
-compares. It exits non-zero on a mismatch, on a part at or over the CLI line, or on a chain that does
-not end. Measured 2026-10-22: `Schuylkill_County,_Pennsylvania_Genealogy` came back in 2 parts
-(37,690 and 28,627 characters, cut at a heading), `Pennsylvania_Church_Records` in 2 (38,388 and
-26,261, at a heading) and `Ireland_Online_Genealogy_Records` in 2 (39,957 and 13,118, mid-row), each
-joining back to the page exactly, through both tools where a section reaches the page and over stdio.
+compares. It exits non-zero on a mismatch, on a part at or over the CLI line, on a part whose
+`nextOffset` does not move past where it was asked to start, and on a chain that does not end. The
+walk is bounded by the page and not by a fixed count: every part is non-empty (`fitPage`), so a page
+of N characters cannot need more than N parts, and a walk that reaches that bound reports its last
+part as truncated. A default page that now comes back in one part fails too, since it would pass
+every other check with nothing walked; pages passed on the command line are not held to that.
+
+The default pages run from two parts to twelve. Measured 2026-10-22, each joining back to the page
+exactly, through both tools where a section reaches the page and over stdio:
+`Schuylkill_County,_Pennsylvania_Genealogy` in 2 parts (37,690 and 28,627 characters, cut at a
+heading), `Pennsylvania_Church_Records` in 2 (38,388 and 26,261, at a heading),
+`Ireland_Online_Genealogy_Records` in 2 (39,957 and 13,118, mid-row), `Norway_Church_Records` in 3,
+`Cook_County,_Illinois_Genealogy` in 4 (through `wiki_place_page` its last three parts are
+continuations that make no search) and `San_José,_Costa_Rica,_Catholic_Church_Parish_Finding_Aid`
+in 12, the longest chain, cut at a heading or a line break.
 
 ---
 

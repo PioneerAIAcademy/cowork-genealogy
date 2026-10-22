@@ -83,9 +83,10 @@ function candidateSlugsFor(
  * Returns the response body on 200, null on 404 (so the caller can try
  * the next candidate), and throws on network failure or any other
  * non-OK status (a transient 5xx must not be silently treated as
- * "page not found").
+ * "page not found"). Exported for `dev/check-wiki-paging.ts`, which reads a
+ * page whole through it.
  */
-async function fetchPage(
+export async function fetchPage(
   baseUrl: string,
   slug: string
 ): Promise<PageApiResponse | null> {

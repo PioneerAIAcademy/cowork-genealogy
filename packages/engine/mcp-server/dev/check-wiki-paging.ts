@@ -3,8 +3,8 @@
  * for each page, join the parts, and compare the join with the page fetched whole from
  * the wiki server.
  *
- *   npx tsx dev/check-wiki-paging.ts                 # the three long pages, through wiki_read;
- *                                                    # two of them again through wiki_place_page
+ *   npx tsx dev/check-wiki-paging.ts                 # the long pages, through wiki_read; some of
+ *                                                    # them again through wiki_place_page
  *   npx tsx dev/check-wiki-paging.ts <wiki URL> ...  # your own pages, through wiki_read
  *   npx tsx dev/check-wiki-paging.ts --wire          # the same, through the built server over
  *                                                    # stdio: what the CLI sees. `npm run build` first.
@@ -14,31 +14,40 @@
  * the CLI sees it (the length of the serialized result), which must stay under the line
  * above which Claude Code saves a result to a file. Exit 0 only when every case joins
  * back exactly, every part is under that line and every chain ends; one line per part.
+ * A default page that now fits whole also fails: it would pass every other check with
+ * nothing walked, so the case needs a longer page. Pages you pass in are not held to that.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { getWikiApiUrl } from "../src/auth/config.js";
 import { LOCAL } from "../src/auth/principal.js";
-import { wikiPlacePageTool } from "../src/tools/wiki-place-page.js";
+import { fetchPage, wikiPlacePageTool } from "../src/tools/wiki-place-page.js";
 import { wikiReadTool } from "../src/tools/wiki-read.js";
 import type { WikiPageResult } from "../src/types/wikiPage.js";
-import { fetchWithRetry } from "../src/utils/http.js";
 import { CLI_SPILL_CHARS } from "../tests/helpers/cli-spill.js";
+import { callViaClient } from "./smoke-calls.js";
 
 const WIKI = "https://www.familysearch.org/en/wiki/";
-const MAX_PARTS = 20;
 
-/** The three pages that are over the line whole (measured 2026-10-22), by wiki slug. */
+/**
+ * Pages too long for one answer, by wiki slug: the pages the default run walks, from pages
+ * of two parts to a long chain at the end. A page edited on the wiki can shrink under the
+ * cap; the run then fails that case, and it needs a longer page.
+ */
 const LONG_PAGES = [
-  "Schuylkill_County,_Pennsylvania_Genealogy",
+  "Schuylkill_County,_Pennsylvania_Genealogy", // a county page: headings throughout
   "Pennsylvania_Church_Records",
-  "Ireland_Online_Genealogy_Records",
+  "Ireland_Online_Genealogy_Records", // most of the page is one table row: a cut falls mid-row
+  "Norway_Church_Records",
+  "Cook_County,_Illinois_Genealogy",
+  "San_José,_Costa_Rica,_Catholic_Church_Parish_Finding_Aid", // the longest chain
 ];
 
-/** The same pages again through `wiki_place_page`, where a section reaches them. */
+/** The pages a section reaches, again through `wiki_place_page`: by leaf name and by title. */
 const PLACE_CASES = [
   { standardPlace: "Ireland", section: "online_records" },
   { standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" },
+  { standardPlace: "Cook, Illinois, United States", section: "home" },
 ] as const;
 
 interface Part {
@@ -60,24 +69,20 @@ const direct: Call = async (tool, args) => {
 const overStdio =
   (client: Client): Call =>
   async (tool, args) => {
-    const res = await client.callTool({ name: tool, arguments: args });
-    const first = (res.content as Array<{ type: string; text?: string }>)[0];
-    const text = first?.type === "text" && typeof first.text === "string" ? first.text : "";
-    if (res.isError) throw new Error(text || "the server returned an error with no text");
-    return { result: JSON.parse(text) as WikiPageResult, wireChars: text.length };
+    const res = await callViaClient(client, tool, args);
+    if (res.isError) throw new Error(res.text || "the server returned an error with no text");
+    if (typeof res.body?.content !== "string") {
+      throw new Error(`the server answered with something that is not a page: ${res.text.slice(0, 200)}`);
+    }
+    return { result: res.body as WikiPageResult, wireChars: res.text.length };
   };
 
 /** The page as the wiki server holds it, fetched without the tool. */
 async function fetchWhole(slug: string): Promise<string> {
-  const base = await getWikiApiUrl(LOCAL);
-  const res = await fetchWithRetry(`${base}/page/${slug}`, {
-    method: "GET",
-    headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
-  });
-  if (!res.ok) throw new Error(`GET /page/${slug} answered ${res.status}`);
-  const body = (await res.json()) as { content?: unknown };
-  if (typeof body.content !== "string") throw new Error(`GET /page/${slug} carried no text`);
-  return body.content;
+  const page = await fetchPage(await getWikiApiUrl(LOCAL), slug);
+  if (page === null) throw new Error(`GET /page/${slug} answered 404`);
+  if (typeof page.content !== "string") throw new Error(`GET /page/${slug} carried no text`);
+  return page.content;
 }
 
 const fmt = (n: number): string => n.toLocaleString("en-US");
@@ -94,51 +99,81 @@ function cutKind(content: string, next: string): string {
   return "mid-line";
 }
 
-/** Walk one page. Returns the problems found; an empty list means it passed. */
+const slugFromUrl = (r: WikiPageResult): string => r.url.slice(r.url.indexOf("/wiki/") + "/wiki/".length);
+
+/**
+ * Walk one page. Returns the problems found; an empty list means it passed. With
+ * `mustBePaged`, a page that comes back whole is a problem too.
+ */
 async function checkCase(
   label: string,
   call: (offset?: number) => Promise<Part>,
-  slugOf: (first: WikiPageResult) => string,
+  mustBePaged: boolean,
 ): Promise<string[]> {
   const problems: string[] = [];
-  const parts: Part[] = [];
-  let offset: number | undefined;
-  for (let n = 0; n < MAX_PARTS; n++) {
-    const part = await call(offset);
-    parts.push(part);
-    if (!part.result.truncated) break;
-    if (part.result.nextOffset === undefined) {
-      problems.push(`part ${n + 1} is truncated but has no nextOffset`);
+  // The first part is read before the whole page because a `wiki_place_page` case learns the
+  // page's slug from it. The whole page comes next: its length bounds the walk.
+  const parts: Part[] = [await call(undefined)];
+  const slug = slugFromUrl(parts[0].result);
+  const whole = await fetchWhole(slug);
+
+  // Every part is non-empty (`fitPage`), so each call starts at least one character past the
+  // last one and a chain over `whole.length` characters cannot have more parts than that. A part
+  // that does not move forward is reported where it is seen, so this bound is the backstop, not
+  // how a stuck chain ends.
+  let asked = 0; // where the latest part was asked to start
+  for (;;) {
+    const n = parts.length;
+    const latest = parts[n - 1].result;
+    if (!latest.truncated) break;
+    if (latest.nextOffset === undefined) {
+      problems.push(`part ${n} is truncated but has no nextOffset`);
       break;
     }
-    offset = part.result.nextOffset;
+    if (latest.nextOffset <= asked) {
+      problems.push(`part ${n} is truncated but its nextOffset ${latest.nextOffset} is not past ${asked}, where it was asked to start`);
+      break;
+    }
+    if (n >= whole.length) {
+      problems.push(`the chain was still going after ${n} parts, more than a page of ${fmt(whole.length)} chars can have`);
+      break;
+    }
+    asked = latest.nextOffset;
+    parts.push(await call(asked));
   }
-  const last = parts[parts.length - 1].result;
-  if (last.truncated) problems.push(`the chain had not ended after ${parts.length} parts`);
 
-  const slug = slugOf(parts[0].result);
-  const whole = await fetchWhole(slug);
   const joined = parts.map((p) => p.result.content).join("");
   console.log(`\n${label}: ${parts.length} part${parts.length === 1 ? "" : "s"}, the page is ${fmt(whole.length)} chars (${slug})`);
   let at = 0;
   parts.forEach((p, i) => {
     const r = p.result;
-    const expectedOffset = r.offset ?? 0;
-    if (expectedOffset !== at) problems.push(`part ${i + 1} starts at ${expectedOffset}, the last part ended at ${at}`);
+    const start = r.offset ?? 0;
+    if (start !== at) problems.push(`part ${i + 1} starts at ${start}, the last part ended at ${at}`);
     at += r.content.length;
     if (p.wireChars >= CLI_SPILL_CHARS) problems.push(`part ${i + 1} is ${fmt(p.wireChars)} chars serialized, over the ${fmt(CLI_SPILL_CHARS)} line`);
-    if (i < parts.length - 1) {
-      if (r.truncated !== true) problems.push(`part ${i + 1} is not marked truncated but another follows`);
-      if (r.nextOffset !== (r.offset ?? 0) + r.content.length) problems.push(`part ${i + 1}: nextOffset ${r.nextOffset} is not offset + content length`);
+    // (A part is followed by another only when it is truncated: the loop above stops otherwise.)
+    if (i < parts.length - 1 && r.nextOffset !== start + r.content.length) {
+      problems.push(`part ${i + 1}: nextOffset ${r.nextOffset} is not offset + content length`);
     }
     const note =
-      i < parts.length - 1 ? `truncated, next ${fmt(r.nextOffset ?? -1)}, cut at ${cutKind(r.content, parts[i + 1].result.content)}` : "last";
+      i < parts.length - 1
+        ? `truncated, next ${fmt(r.nextOffset ?? -1)}, cut at ${cutKind(r.content, parts[i + 1].result.content)}`
+        : r.truncated
+          ? "truncated: the walk stopped here, the page goes on"
+          : "last";
     console.log(
-      `  part ${i + 1}  offset ${fmt(expectedOffset).padStart(7)}  ${fmt(r.content.length).padStart(7)} chars  serialized ${fmt(p.wireChars).padStart(7)}  ${note}`,
+      `  part ${i + 1}  offset ${fmt(start).padStart(7)}  ${fmt(r.content.length).padStart(7)} chars  serialized ${fmt(p.wireChars).padStart(7)}  ${note}`,
     );
   });
-  if (parts.length === 1 && parts[0].result.totalChars !== undefined) {
-    problems.push("a page that fits was asked for from the start but came back with paging fields");
+  // One part that is not truncated: the page came back whole. (A first part that IS truncated and
+  // ends the walk has already been reported above.)
+  if (parts.length === 1 && !parts[0].result.truncated) {
+    if (parts[0].result.totalChars !== undefined) {
+      problems.push("a page that fits was asked for from the start but came back with paging fields");
+    }
+    if (mustBePaged) {
+      problems.push(`it came back in a single part: the page now fits whole (${fmt(whole.length)} chars), so this case walks nothing; use a longer page`);
+    }
   }
   if (joined !== whole) {
     problems.push(`the parts do not join to the page: ${fmt(joined.length)} chars against ${fmt(whole.length)}, first difference at ${fmt(firstDifference(joined, whole))}`);
@@ -147,10 +182,9 @@ async function checkCase(
   return problems;
 }
 
-const slugFromUrl = (r: WikiPageResult): string => r.url.slice(r.url.indexOf("/wiki/") + "/wiki/".length);
-
 async function run(call: Call): Promise<number> {
   const urls = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+  const ownPages = urls.length > 0;
   const failures: string[] = [];
   const attempt = async (label: string, fn: () => Promise<string[]>): Promise<void> => {
     try {
@@ -163,24 +197,16 @@ async function run(call: Call): Promise<number> {
     }
   };
 
-  const readUrls = urls.length > 0 ? urls : LONG_PAGES.map((s) => `${WIKI}${s}`);
+  const readUrls = ownPages ? urls : LONG_PAGES.map((s) => `${WIKI}${s}`);
   for (const url of readUrls) {
     await attempt(`wiki_read ${url.slice(url.lastIndexOf("/") + 1)}`, () =>
-      checkCase(
-        `wiki_read ${url}`,
-        (offset) => call("wiki_read", { url, ...(offset === undefined ? {} : { offset }) }),
-        slugFromUrl,
-      ),
+      checkCase(`wiki_read ${url}`, (offset) => call("wiki_read", { url, offset }), !ownPages),
     );
   }
-  if (urls.length === 0) {
+  if (!ownPages) {
     for (const c of PLACE_CASES) {
-      await attempt(`wiki_place_page ${c.standardPlace}`, () =>
-        checkCase(
-          `wiki_place_page ${JSON.stringify(c)}`,
-          (offset) => call("wiki_place_page", { ...c, ...(offset === undefined ? {} : { offset }) }),
-          slugFromUrl,
-        ),
+      await attempt(`wiki_place_page ${c.standardPlace} ${c.section}`, () =>
+        checkCase(`wiki_place_page ${JSON.stringify(c)}`, (offset) => call("wiki_place_page", { ...c, offset }), true),
       );
     }
   }
@@ -206,11 +232,12 @@ async function main(): Promise<void> {
   }
   console.log("through build/index.js over stdio (what the CLI sees)");
   const client = new Client({ name: "check-wiki-paging", version: "0" });
+  // No `env`: the SDK passes HOME, PATH and a few more by default, which is all the server needs
+  // (it finds its config through os.homedir()). It leaves NODE_OPTIONS out, so the server runs on
+  // Node's own defaults plus what the build sets, whatever this shell has exported.
   const transport = new StdioClientTransport({
     command: "node",
     args: ["build/index.js"],
-    // The server's own environment, not the SDK's trimmed default: it reads HOME for its config.
-    env: Object.fromEntries(Object.entries(process.env).filter((e): e is [string, string] => e[1] !== undefined)),
     stderr: "inherit",
   });
   let code = 1;
