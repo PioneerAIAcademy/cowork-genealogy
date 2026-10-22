@@ -10,10 +10,8 @@
 A placeholder (issue #3527). Issue #3571 picks and adjudicates the real panel from
 alpha feedback; replace or extend this fixture from its comment on issue #3527.
 
-The `tool` value is provisional. Issue #3524 says the log entry's `tool` "names the
-activity" but does not fix the string. `source_evaluation` follows the one agent that
-already logs itself (`historical-context` writes `historical_context`). Match it to
-what #3524 ships.
+The `tool` value is `source_evaluation`, as issue #3524 ships it (the agent name in
+snake_case, following `historical-context`'s `historical_context`).
 
 ## Expected result today
 

@@ -1,8 +1,10 @@
 """Validators for the source-evaluation agent (a skill until issue #2796).
 
-source-evaluation is a read-only audit agent: it enumerates the sources
-already attached to a person, reads each one, classifies what disagrees
-with the profile, and reports. It writes nothing.
+source-evaluation is an audit agent: it enumerates the sources already
+attached to a person, reads each one, classifies what disagrees with the
+profile, and reports. Inside a project it logs that report as one
+`source_evaluation` research-log entry (issue #3524) and writes nothing
+else; with no project it writes nothing.
 
 The rubric (rubric.md) keeps the prose-judgment dimensions — whether a
 classification's cue is convincing, whether the report reads as triaged.
@@ -36,6 +38,12 @@ from __future__ import annotations
 import re
 
 import pytest
+
+from validators_lib import (
+    assert_log_append_only,
+    assert_only_writes_to_sections,
+    new_log_entries,
+)
 
 # Phrases that recommend severing the source from the person. Matched
 # case-insensitively as whole words so "detached" and "detaching" count
@@ -616,8 +624,15 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test, age
     )
 
 
-def test_research_json_unmodified(before_state, after_state, test):
-    """source-evaluation is read-only — it reports, it does not write.
+_REPORT_TOOL = "source_evaluation"
+
+
+def test_research_json_only_logs_report(before_state, after_state, test):
+    """source-evaluation's one write is its report, logged as a single
+    `source_evaluation` entry (issue #3524). Fails on any change outside
+    `log`, an edit to an existing log entry, a new entry with another `tool`,
+    or more than one new entry. With no project, research.json must not
+    appear.
 
     Skipped on negative tests: the run is expected to route away to
     another skill, which may legitimately write as part of its own
@@ -627,13 +642,51 @@ def test_research_json_unmodified(before_state, after_state, test):
         pytest.skip("negative tests don't run the skill body")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("Missing research.json for diff")
-    assert before == after, (
-        "source-evaluation modified research.json — this skill is read-only. "
-        "Findings are reported as narrative; recording a conflict is the "
-        "researcher's next step through conflict-resolution, not this "
-        "skill's write."
+    if before is None:
+        assert after is None, (
+            "source-evaluation created research.json with no project; "
+            "outside a project it writes nothing."
+        )
+        return
+    assert after is not None, "source-evaluation deleted research.json"
+    assert_only_writes_to_sections(
+        before, after, {"log"}, skill_name="source-evaluation"
+    )
+    assert_log_append_only(before, after)
+    new = new_log_entries(before_state, after_state)
+    stray = [e.get("tool") for e in new if e.get("tool") != _REPORT_TOOL]
+    assert not stray, (
+        f"source-evaluation logged {stray}; its only log entry is "
+        f"`{_REPORT_TOOL}`. Recording a conflict is the researcher's next "
+        f"step through conflict-resolution, not this agent's write."
+    )
+    assert len(new) <= 1, (
+        f"source-evaluation logged {len(new)} `{_REPORT_TOOL}` entries; "
+        f"one audit is one entry."
+    )
+
+
+def test_report_logged(before_state, after_state, test):
+    """Tag `logs-report`: exactly one new `source_evaluation` entry, with
+    `plan_item_id` null and the report in `notes`."""
+    if "logs-report" not in test.get("tags", []):
+        pytest.skip("not a logs-report test")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    reports = [
+        e for e in new_log_entries(before_state, after_state)
+        if e.get("tool") == _REPORT_TOOL
+    ]
+    assert len(reports) == 1, (
+        f"expected exactly one new {_REPORT_TOOL} log entry; got {len(reports)}"
+    )
+    entry = reports[0]
+    assert entry.get("plan_item_id") is None, (
+        f"the report entry's plan_item_id is {entry.get('plan_item_id')!r}, not null"
+    )
+    notes = entry.get("notes")
+    assert isinstance(notes, str) and notes.strip(), (
+        "the report entry's notes must carry the report; got none"
     )
 
 
@@ -744,9 +797,9 @@ def test_scope_handback_calls_no_tool(tool_calls, text_response, test, agent_ret
     hand-back test that replaced the two description-routing negatives
     deleted in issue #2796. The gate answers an out-of-scope delegation with
     one line, "Hand-back: <name> — <clause>", and calls no tool. The
-    destination comes from a `handback-to-<name>` tag. That both project
-    files are unchanged is already asserted on every test by the two
-    unmodified-state validators above.
+    destination comes from a `handback-to-<name>` tag. A hand-back writes
+    nothing, but the state validators above skip negative tests, so that is
+    not asserted here.
 
     Fails iff the run made any MCP tool call, or the subject's own reply
     (`subject_reply_text`: on a direct test, the agent's return and never the

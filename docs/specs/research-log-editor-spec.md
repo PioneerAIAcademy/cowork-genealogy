@@ -411,9 +411,10 @@ are two that do block, and the distinction is what makes them legitimate.
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
   Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
-  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
-  `positive` entries carry a looked-up article or overview in `notes`, not a
-  record to persist. The pre-1880 census hedge is unaffected.
+  `wiki_read`, `wikipedia_search`, `historical_context`, and the read-only agents'
+  reports `source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
+  `validate_schema`) are not counted: their `positive` entries carry a looked-up
+  article, overview or report in `notes`, not a record to persist. The pre-1880 census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
