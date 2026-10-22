@@ -27,7 +27,8 @@ export type ExternalSearchSite =
   | "american_ancestors"
   | "italian_genealogy"
   | "archion"
-  | "matricula";
+  | "matricula"
+  | "openarch";
 
 export interface BuildExternalSearchUrlAttributes {
   givenName?: string;
@@ -310,6 +311,38 @@ function chroniclingAmericaWindow(a: BuildExternalSearchUrlAttributes): YearWind
   return { start: s, end: e, dates: `${start}/${end}`, halfWindow: false, inverted: false };
 }
 
+// ─── OpenArch's one-event slot ───────────────────────────────────────────────
+
+// OpenArch (openarchieven.nl) filters by a single `eventtype` per search, and
+// the year is not its own parameter: a trailing "YYYY-YYYY" inside `name` is
+// parsed as a period filter — the results page echoes it back as "from the
+// period 1827-1827" (measured 2026-10-22; a single year passes as both ends,
+// the same collapse digitalarkivet's range fields use). The chosen event
+// supplies eventtype, eventplace and the period TOGETHER — independent
+// fallbacks would let a birth year period-filter a marriage search, whose
+// zero hits then read as evidence of absence. Marriage first: Dutch civil
+// marriage acts carry the most identifying detail, and a marriage hunt is the
+// search that motivated the site (issue #3185). The losing events' attributes
+// are reported by `siteNotes`, not silently dropped.
+interface OpenarchEvent {
+  key: "marriage" | "birth" | "death";
+  type: string;
+  year?: string;
+  place?: string;
+}
+
+function openarchChosenEvent(a: BuildExternalSearchUrlAttributes): OpenarchEvent | undefined {
+  // Dutch facet values, sent even by the site's English UI — the live form's
+  // option values are Dutch under English labels (value="Huwelijk", label
+  // "Marriage"; measured 2026-10-22).
+  const candidates: OpenarchEvent[] = [
+    { key: "marriage", type: "Huwelijk", year: numYear(a.marriageYear), place: str(a.marriagePlace) },
+    { key: "birth", type: "Geboorte", year: numYear(a.birthYear), place: str(a.birthPlace) },
+    { key: "death", type: "Overlijden", year: numYear(a.deathYear), place: str(a.deathPlace) },
+  ];
+  return candidates.find((c) => c.year !== undefined || c.place !== undefined);
+}
+
 // ─── Per-site parameter tables (spec §4) ─────────────────────────────────────
 
 // Each case is a straight port of the site-wide template it replaces. Every
@@ -530,6 +563,24 @@ function siteWideParams(
       return {
         keywords: joinPresent(" ", a.givenName, a.surname, a.keywords),
       };
+    case "openarch": {
+      // `name` is one free-text field: given name, surname, and the chosen
+      // event's "YYYY-YYYY" period, space-joined. The event slot and the
+      // Dutch `eventtype` values: `openarchChosenEvent` above.
+      const givenName = str(a.givenName);
+      const surname = str(a.surname);
+      const event = openarchChosenEvent(a);
+      return {
+        name: joinPresent(
+          " ",
+          givenName,
+          surname,
+          event?.year === undefined ? undefined : `${event.year}-${event.year}`,
+        ),
+        eventtype: event?.type,
+        eventplace: event?.place,
+      };
+    }
     case "archion":
     case "matricula":
       // Browse sites (spec §3.11): church books are reached parish → register
@@ -561,6 +612,10 @@ const SITE_BASE_URL: Record<ExternalSearchSite, string | null> = {
   library_archives_canada: "https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result",
   american_ancestors: "https://app.americanancestors.org/SearchResults/AdvancedSearch",
   italian_genealogy: "https://www.italiangenealogy.com/forum/search",
+  // Open Archieven, the Dutch archives aggregator. The English UI
+  // (openarch.nl) submits its search form to this same endpoint, so one host
+  // serves both; `SITE_FIXED_PARAMS` keeps the hand-off on the English UI.
+  openarch: "https://www.openarchieven.nl/search.php",
   // Browse sites: the site root, returned only when no parish `baseUrl` was
   // supplied (spec §3.11).
   archion: "https://www.archion.de/de/",
@@ -642,6 +697,15 @@ const SITE_ACCESS: Record<ExternalSearchSite, AccessClassification> = {
   // `cf-mitigated` header, with and without a user agent.
   archion: "subscription",
   matricula: "free",
+  // Free to search, and no challenge: measured 2026-10-22, the results URL
+  // returns HTTP 200 with full result content from four check-host.net
+  // regions (plain client, no browser UA) and through a rendering proxy, with
+  // no `cf-mitigated` header — the site is not behind Cloudflare. But two
+  // further vantages (a residential ISP and a cloud fetcher) had the TCP
+  // connection dropped outright: an IP-range block, stronger than a
+  // challenge. Classified into this tier for the tier's stated purpose — a
+  // capture blocked from such a range must narrate as expected, not as a nil.
+  openarch: "free_bot_protected",
 };
 
 // US/UK variants share one parameter table (spec §3.9) — confirmed to use the
@@ -674,6 +738,10 @@ const SITE_FIXED_PARAMS: Partial<Record<ExternalSearchSite, Record<string, strin
   library_archives_canada: { DataSource: "Genealogy|Census", ST: "SCTB" },
   // The exact fields on the one confirmed-working search URL.
   italian_genealogy: { terms: "all", sf: "all", sr: "posts" },
+  // The English UI's own hidden field (measured 2026-10-22); without it the
+  // hand-off lands on the Dutch UI. Filter values (`eventtype`) stay Dutch
+  // either way.
+  openarch: { lang: "en" },
 };
 
 const USER_CONTRIBUTED_NOTE =
@@ -713,7 +781,7 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   // The `access` value for this site is the class default, not a fact about
   // the archive in `baseUrl`. A baseUrl on another SUPPORTED site's domain is
   // refused (baseUrlHostError), but every other host falls through, so a paid
-  // archive outside the seventeen still reports `free_bot_protected` — measured
+  // archive outside the supported sites still reports `free_bot_protected` — measured
   // 2026-09-15 for genealogybank.com, newspaperarchive.com, newsbank.com and
   // britishnewspaperarchive.co.uk. SKILL.md tells the model never to raise
   // access for a site reported free, so the hedge has to travel with the value.
@@ -1105,6 +1173,34 @@ function siteNotes(
         ...shadowedNotes(site, "localita", [["birthPlace", a.birthPlace], ["deathPlace", a.deathPlace]], str),
       );
       break;
+    case "openarch": {
+      // One event per search (`openarchChosenEvent`): a valid attribute
+      // belonging to a losing event is dropped whole — not shadowed into a
+      // shared field like antenati's — and silence would read as a search
+      // scoped by it. `shadowedNotes` can't say this: it reports only when two
+      // candidates compete for one field, and a lone `birthYear` beside a
+      // `marriagePlace` has no competitor, it is just unused.
+      const chosen = openarchChosenEvent(a);
+      if (chosen === undefined) break;
+      const eventAttrs: Array<
+        [keyof BuildExternalSearchUrlAttributes, unknown, (v: unknown) => string | undefined]
+      > = [
+        ["marriageYear", a.marriageYear, numYear],
+        ["marriagePlace", a.marriagePlace, str],
+        ["birthYear", a.birthYear, numYear],
+        ["birthPlace", a.birthPlace, str],
+        ["deathYear", a.deathYear, numYear],
+        ["deathPlace", a.deathPlace, str],
+      ];
+      for (const [key, value, validate] of eventAttrs) {
+        if (!key.startsWith(chosen.key) && validate(value) !== undefined) {
+          notes.push(
+            `'${key}' is not used by ${site} when ${chosen.key} attributes are supplied — the site searches one event per URL`,
+          );
+        }
+      }
+      break;
+    }
     // `archives_gov` has no shadowed-field arm: its one place parameter was
     // removed (see siteWideParams), so a supplied birthPlace/deathPlace is
     // simply unrecognized and `unusedAttributeNotes` reports it.

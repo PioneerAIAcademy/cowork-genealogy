@@ -158,6 +158,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // Browse sites (issue #2802): German church books, reached through the
   // parish page rather than a name search.
   "archion", "matricula",
+  // Open Archieven (issue #3185): the Dutch archives aggregator, searchable
+  // by name.
+  "openarch",
 ]);
 
 /**

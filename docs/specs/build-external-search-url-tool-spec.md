@@ -11,7 +11,7 @@
 > `conflicts[]` says about a disputed field); the tool does only the
 > string-templating.
 
-An offline tool that builds a pre-filled search URL for one of seventeen
+An offline tool that builds a pre-filled search URL for one of eighteen
 supported external genealogy sites from structured search attributes, either
 as a fresh site-wide search or by appending parameters onto a FamilySearch-
 curated collection link. Given a `projectPath` it also logs the hand-off (§6).
@@ -96,7 +96,8 @@ build_external_search_url({
   site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers"
       | "chronicling_america" | "digital_newspaper_archive" | "archives_gov"
       | "archive_org" | "billiongraves" | "digitalarkivet" | "antenati"
-      | "library_archives_canada" | "american_ancestors" | "italian_genealogy",
+      | "library_archives_canada" | "american_ancestors" | "italian_genealogy"
+      | "archion" | "matricula" | "openarch",
 
   // A FamilySearch-curated collection link (SKILL.md Case A, :258-277). When
   // present, attributes are appended onto it rather than a fresh site-wide
@@ -501,6 +502,7 @@ here — this section documents the same mapping the implementation embeds.
 | `library_archives_canada` | `https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result` | `DataSource=Genealogy\|Census`, `ST=SCTB` (required by the search form's own client JS to select the census/genealogy dataset before the results redirect) | `FirstName`, `LastName`, `YearOfBirth` (`birthYear`). Deliberately omits `ProvinceCode`/`GenderCode`/`MaritalStatusCode` — coded `<select>` values with no verified string mapping, and no death data exists in a census (it records the living population at census time) |
 | `american_ancestors` | `https://app.americanancestors.org/SearchResults/AdvancedSearch` | — | `Keywords` (`givenName`+`surname`+`keywords`, space-joined — **not** `Name.First`/`Name.Last`, confirmed non-binding via round-trip GET reflection testing), `Location` (`birthPlace`, falling back to `deathPlace`), `FromYear`/`ToYear` (both set to `birthYear`) |
 | `italian_genealogy` | `https://www.italiangenealogy.com/forum/search` | `terms=all`, `sf=all`, `sr=posts` (the exact fields present on the one confirmed-working search URL — omitting them was not tested) | `keywords` (`givenName`+`surname`+`keywords`, space-joined). A phpBB forum, not a records database — no structured name/date/place fields exist anywhere on the site |
+| `openarch` | `https://www.openarchieven.nl/search.php` | `lang=en` (the English UI's own hidden field; filter values stay Dutch) | `name` (`givenName`+`surname`, space-joined, plus the chosen event's year as a trailing `YYYY-YYYY` period — the site's own in-field syntax, echoed back as "from the period …"; a single year is passed as both ends), `eventtype` (the **Dutch** facet value even on the English UI: `Huwelijk`/`Geboorte`/`Overlijden` — the form's option values are Dutch under English labels), `eventplace` (the chosen event's place). **One event per search**, marriage > birth > death, with type, place and period taken from the chosen event *together* — an independent fallback would let a birth year period-filter a marriage search into a false nil; the losing events' attributes are reported in `notes`. Measured 2026-10-22: the marriage URL for Maijert Zwaan × Rijnsburg returns the 24-6-1827 civil marriage |
 | `archion` | `https://www.archion.de/de/` (the site root, returned only without `baseUrl`) | — | none — **browse, not search** (§3.11): the caller's parish `baseUrl` is returned unchanged |
 | `matricula` | `https://data.matricula-online.eu/de/` (likewise) | — | none — **browse, not search** (§3.11) |
 
@@ -539,8 +541,8 @@ The static `access` value each site returns (§3.1). `digital_newspaper_archive`
 returns the class value state archives carry generally, `"free_bot_protected"`,
 for whichever archive `baseUrl` names — **not verified per archive** — and
 refuses a `baseUrl` on another supported site's own domain (`invalid_base_url`
-naming that site, §3.2). That refusal covers the other sixteen sites and
-nothing else: a **subscription archive outside** the seventeen still receives the
+naming that site, §3.2). That refusal covers the other seventeen sites and
+nothing else: a **subscription archive outside** the eighteen still receives the
 class default, measured 2026-09-15 returning `free_bot_protected` for
 genealogybank.com, newspaperarchive.com, newsbank.com and
 britishnewspaperarchive.co.uk. This matters because `SKILL.md` instructs the
@@ -554,7 +556,7 @@ round 5).
 | Site | `access` |
 |------|----------|
 | `ancestry`, `myheritage`, `findmypast`, `newspapers`, `archion` | `subscription` |
-| `chronicling_america`, `digital_newspaper_archive`, `library_archives_canada` | `free_bot_protected` |
+| `chronicling_america`, `digital_newspaper_archive`, `library_archives_canada`, `openarch` | `free_bot_protected` |
 | `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy`, `matricula` | `free` |
 
 `library_archives_canada` moved into `free_bot_protected` on 2026-09-15: the
@@ -564,6 +566,15 @@ under three different user agents including none. That is the same measurement
 that places `chronicling_america` in this tier, and the tier exists so a blocked
 capture is narrated as expected rather than logged as a nil. Measured from one
 network vantage; a second vantage would settle it.
+
+`openarch` entered the tier on 2026-10-22 on a different shape of evidence: no
+challenge — the results URL returns HTTP 200 with full result content and no
+`cf-mitigated` header from four check-host.net regions (a plain client, no
+browser UA) and through a rendering proxy — but two further vantages (a
+residential ISP and a cloud fetcher) had the TCP connection dropped outright,
+an IP-range block stronger than a challenge. The tier's purpose is the same: a
+capture blocked from an affected network narrates as expected rather than as a
+nil.
 
 ---
 
@@ -639,8 +650,12 @@ network vantage; a second vantage would settle it.
 
 ## 7. Test plan (vitest)
 
-- **One passing case per site** — the seventeen rows in §4, each producing the
+- **One passing case per site** — the eighteen rows in §4, each producing the
   documented parameter names with the correct join/encoding.
+- **openarch's one-event slot** — marriage/birth/death each map to their Dutch
+  `eventtype` with the year as a `YYYY-YYYY` period inside `name`; when several
+  events' attributes are supplied, the marriage set wins whole and every losing
+  attribute gets a note.
 - **Chronicling America's corrections** — `dates=YYYY/YYYY` (never
   `start_date`/`end_date`), and `q` (never `qs`).
 - **`keywords`** — appended on the seven free-text sites; produces a "not
@@ -661,7 +676,7 @@ network vantage; a second vantage would settle it.
   `base_url_required`; with it, only `q=<given>+<surname>[+<keywords>]` is
   appended, and a facet/date parameter is never invented even if
   `attributes` supplies `searchStartYear`/`usState`.
-- **Unsupported site** — `supportedSites` names exactly the seventeen supported
+- **Unsupported site** — `supportedSites` names exactly the eighteen supported
   sites.
 - **Browse sites** — the Baiersbronn Archion parish page and a Baiersbronn
   viewer URL (`cHash` kept) come back unchanged with `access: "subscription"`
