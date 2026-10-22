@@ -37,6 +37,19 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
       };
       return coords[name] ?? null;
     }),
+    // The localities first-place rule (#3696). Unlisted text is lookup_failed,
+    // so no test reaches the live Places API.
+    checkFirstPlace: vi.fn(async (text: string) => {
+      const verdicts: Record<string, { status: string; standardPlace?: string }> = {
+        "Ringebu, Oppland, Norway": { status: "match", standardPlace: "Ringebu, Oppland, Norway" },
+        "Funchal, Madeira, Portugal": { status: "match", standardPlace: "Funchal, Madeira, Portugal" },
+        "Helvesieck, Schneverdingen, Soltau, Hanover":
+          { status: "mismatch", standardPlace: "Schneverdingen, Soltau, Hanover, Prussia, Germany" },
+        "Sierkopas, Germany": { status: "mismatch", standardPlace: "Germany" },
+        "Nowhereville, Atlantis": { status: "not_found" },
+      };
+      return verdicts[text] ?? { status: "lookup_failed" };
+    }),
   };
 });
 
@@ -59,7 +72,7 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace, standardPlaceToCoords } from "../../src/utils/place-resolver.js";
+import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
   who: "Census enumerator",
@@ -13490,5 +13503,161 @@ describe("research_append — a completed plan item needs a search of its own re
     const r = await complete();
     expect(r.ok).toBe(true);
     expect(await itemStatus()).toBe("completed");
+  });
+});
+
+describe("research_append: a localities first place must be in the place standard (#3696)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-locality-test-"));
+    vi.mocked(checkFirstPlace).mockClear();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const locality = (forPlace: string) => ({
+    place: "Germany",
+    for_place: forPlace,
+    jurisdictions: [{ name: forPlace, date_range: "1838-" }],
+    collections: [],
+    quirks: ["Indexed only at county level."],
+    pages_read: [{ section: "home", url: "u1", found: true }],
+    source: "locality-guide",
+  });
+  const append = (forPlace: string, extra: Record<string, unknown> = {}) =>
+    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: locality(forPlace), ...extra });
+
+  it("writes a first place the standard holds, with no warning", async () => {
+    await writeProject();
+    const r = await append("Ringebu, Oppland, Norway");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/for_place/);
+    expect((await readResearch()).localities).toHaveLength(1);
+  });
+
+  it.each([
+    ["Helvesieck, Schneverdingen, Soltau, Hanover"],
+    ["Sierkopas, Germany"],
+    ["Nowhereville, Atlantis"],
+  ])("refuses %s and writes nothing", async (forPlace) => {
+    await writeProject();
+    const r = await append(forPlace);
+    expect(r.ok).toBe(false);
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain(`for_place '${forPlace}'`);
+    expect(msg).toMatch(/place_search/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("names the remedy only: not the parent it resolved to, and not how to avoid the check", async () => {
+    await writeProject();
+    const msg = failure(await append("Helvesieck, Schneverdingen, Soltau, Hanover")).errors.join(" ");
+    expect(msg).not.toContain("Schneverdingen, Soltau, Hanover, Prussia");
+    expect(msg).toContain("Look up 'Helvesieck' with place_search, contextName 'Hanover'");
+    expect(msg).not.toMatch(/free text|single name|skip/i);
+  });
+
+  it("still refuses when the call turns off assertion geocoding", async () => {
+    await writeProject();
+    const r = await append("Helvesieck, Schneverdingen, Soltau, Hanover", { resolveStandardPlace: false });
+    expect(r.ok).toBe(false);
+    expect(checkFirstPlace).toHaveBeenCalledWith("Helvesieck, Schneverdingen, Soltau, Hanover");
+  });
+
+  it("writes with a warning when the lookup fails, never refuses", async () => {
+    await writeProject();
+    const r = await append("Somewhere Unlisted, Hanover");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/for_place 'Somewhere Unlisted, Hanover' could not be checked/);
+    expect((await readResearch()).localities).toHaveLength(1);
+  });
+
+  it("names the op in a batch's lookup warning", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal") },
+        { section: "localities", op: "append", entry: locality("Somewhere Unlisted, Hanover") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/ops\[1\]: for_place 'Somewhere Unlisted, Hanover' could not be checked/);
+  });
+
+  it("makes no lookup when an earlier gate already refused the batch", async () => {
+    await writeProject();
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
+        { section: "localities", op: "append", entry: locality("Sierkopas, Germany") },
+      ],
+    });
+    expect(failure(r).errors.join(" ")).toMatch(/'S999' not found/);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["West Bromwich and Darlaston, Staffordshire"],
+    ["Helvesieck AND Soltau, Hanover"],
+    ["Helvesieck (village, Hanover"],
+    ["Helvesieck village), Hanover"],
+    ["Helvesieck \u2014 Soltau, Hanover"],
+    ["Helvesieck \u2013 Soltau, Hanover"],
+    ["Helvesieck/Soltau, Hanover"],
+    ["Helvesieck; Soltau, Hanover"],
+    ["Helvesieck & Soltau, Hanover"],
+    ["Pennsylvania Anthracite Coal Region"],
+  ])("does not check %s (free text or a single name)", async (forPlace) => {
+    await writeProject();
+    const r = await append(forPlace);
+    expect(r.ok).toBe(true);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+  });
+
+  it("refuses an update that sets for_place, and skips one that does not", async () => {
+    await writeProject();
+    expect((await append("Ringebu, Oppland, Norway")).ok).toBe(true);
+    vi.mocked(checkFirstPlace).mockClear();
+
+    const quirks = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { quirks: ["Parish registers start 1717."] },
+    });
+    expect(quirks.ok).toBe(true);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+
+    const moved = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { for_place: "Sierkopas, Germany" },
+    });
+    expect(moved.ok).toBe(false);
+    expect((await readResearch()).localities[0].for_place).toBe("Ringebu, Oppland, Norway");
+  });
+
+  it("in a batch, names only the refused op and writes nothing", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal") },
+        { section: "localities", op: "append", entry: locality("Sierkopas, Germany") },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors;
+    expect(errors.join(" ")).toMatch(/ops\[1\]/);
+    expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
   });
 });
