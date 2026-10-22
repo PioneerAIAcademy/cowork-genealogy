@@ -26,12 +26,21 @@ Check the CALLER's spec before picking. "Does the callee have its own suite?"
 decides whether to stub at all; "does the caller read the result?" decides
 which form.
 
-Mechanism note (pinned to claude-agent-sdk 0.1.81): a PreToolUse hook has no
-`updatedToolOutput` — that field is PostToolUse-only — so the only channel back
-to the model on a deny is `permissionDecisionReason`. The canned response
-therefore rides in that string and reaches the model as text, not as a
-structured tool result. A stub whose caller needs to *parse* structured output
-is out of scope for this mechanism.
+Mechanism note (re-checked on claude-agent-sdk 0.2.165, unchanged from 0.1.81):
+a PreToolUse hook has no `updatedToolOutput` — that field is PostToolUse-only —
+so the only channel back to the model on a deny is `permissionDecisionReason`.
+The canned response therefore rides in that string and reaches the model as
+text, not as a structured tool result. A stub whose caller needs to *parse*
+structured output is out of scope for this mechanism.
+
+CLI 2.1.294 (SDK 0.2.165) delivers that string as an error result prefixed
+`PreToolUse:Agent hook error:`. On it, a router sometimes took the hand-off as
+the end of its turn and skipped its own closing step (issue #3740: ut_research_020
+ended two turns after the stub in 7 of 20 runs, against 0 of 33 on CLI 2.1.139).
+The text used to end on the non-disclosure block, with the caller's remaining
+work named as a closed list "(logging, status, summary)". It now ends on
+`_CARRY_ON`, which hands the turn back to the caller's own instructions without
+naming any step.
 
 What this deliberately does NOT cover: `skills_invoked` records the skill NAME
 only, not the `args` string the caller composed. So no validator can assert
@@ -52,14 +61,7 @@ _STUB_PREAMBLE = (
     "Do not retry it, and do not attempt to do its work yourself."
 )
 
-_BARE_SUFFIX = (
-    " Carry on and finish your own remaining steps (logging, status, summary)."
-)
-
-_CANNED_SUFFIX = (
-    "\n\nTreat the following as the result it returned, and use it to finish "
-    "your own remaining steps (logging, status, summary):\n\n{response}"
-)
+_CANNED_SUFFIX = "\n\nTreat the following as the result it returned:\n\n{response}"
 
 # The reason string lands in the model's context immediately before it writes
 # its summary, so anything harness-flavoured in it is liable to be narrated
@@ -78,6 +80,17 @@ _NO_DISCLOSE = (
     "updates, summaries). Describe this hand-off using only what the text "
     "above states. Do not say {name!r} wrote, changed or concluded anything "
     "the text does not state."
+)
+
+# Last, so it is the final thing the caller reads before its next move. It
+# defers to the caller's own instructions rather than pushing it onward: many
+# canned responses tell the router to write its summary and stop, and a "keep
+# going" here would override that. It names no tool, skill or step, because
+# every stubbed test shares this text and naming the step a test grades would
+# hand that test its pass.
+_CARRY_ON = (
+    "\n\nThis hand-off does not complete your own instructions. Follow them "
+    "through to their end{using}."
 )
 
 
@@ -115,10 +128,10 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     hand-off: `run_skill` adds the stop to that hand-off.
     """
     reason = _STUB_PREAMBLE.format(name=skill_name)
-    reason += (
-        _CANNED_SUFFIX.format(response=response) if response else _BARE_SUFFIX
-    )
+    if response:
+        reason += _CANNED_SUFFIX.format(response=response)
     reason += _NO_DISCLOSE.format(name=skill_name)
+    reason += _CARRY_ON.format(using=", using the result above" if response else "")
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",

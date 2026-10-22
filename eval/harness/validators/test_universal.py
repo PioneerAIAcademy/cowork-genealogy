@@ -828,10 +828,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     the owning callee is denied, so the section can only ever be written by the
     caller: the check would measure the stub/caller rather than the skill under
     test. Same rationale as the negative-test skip, and the stub's own denial
-    text tells the caller both to carry on ("finish your own remaining steps —
-    logging, status, summary") AND not to substitute for the callee ("do not
-    attempt to do its work yourself"): the caller writing `log`/`project`/status
-    is obeying the first clause, not violating ownership.
+    text tells the caller both to carry on ("This hand-off does not complete
+    your own instructions. Follow them through to their end") AND not to
+    substitute for the callee ("do not attempt to do its work yourself"): the
+    caller writing `log`/`project`/status is obeying the first clause, not
+    violating ownership.
 
     The skip is deliberately keyed on **any** stub being present (whole-run),
     not evaluated per-section. A per-section form gives opposite answers
