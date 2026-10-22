@@ -41,7 +41,7 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
-import { coerceJsonArg, jsonParseFailure } from "../utils/coerce-json-arg.js";
+import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/coerce-json-arg.js";
 import {
   readMatchScores,
   findRecordedScore,
@@ -8629,7 +8629,7 @@ function opsNotAnArrayMessage(ops: unknown): string {
   const failure = jsonParseFailure(ops);
   if (!failure) return "`ops` must be a non-empty array";
   const offset =
-    failure.offset === null || /\bposition \d+\b/.test(failure.message) ? "" : ` (offset ${failure.offset})`;
+    failure.offset === null || V8_POSITION_SUFFIX.test(failure.message) ? "" : ` (offset ${failure.offset})`;
   return (
     "`ops` must be a non-empty array, but it arrived as a string that does not parse as JSON: " +
     `${failure.message}${offset}. Fix that and send \`ops\` as a JSON array.`

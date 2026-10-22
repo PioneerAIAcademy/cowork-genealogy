@@ -7344,6 +7344,22 @@ describe("research_append (batch ops)", () => {
       expect(jsonParseFailure("")).toEqual({ message: engineMessage(""), offset: 0 });
       expect(jsonParseFailure("nope")).toEqual({ message: engineMessage("nope"), offset: null });
     });
+
+    it("jsonParseFailure: a 'position N' inside the text V8 quotes is not a position", async () => {
+      // V8 quotes the caller's text in its "Unexpected token" message and gives no position there.
+      // The first "position N" in the message is then the caller's own, and the defect is at index 15.
+      const quoted = '["position 5", x]';
+      expect(engineMessage(quoted)).toContain("position 5");
+      expect(jsonParseFailure(quoted)).toEqual({ message: engineMessage(quoted), offset: null });
+      // A message that does end with V8's position still gives it, wherever the text says "position".
+      const both = '{"a":"position 9",}';
+      expect(engineMessage(both)).toMatch(/ at position \d+/);
+      expect(jsonParseFailure(both)?.offset).toBe(both.indexOf(",}") + 1);
+      // Through the tool: no `(offset N)` is invented from the quoted text either.
+      const errors = await refuse(quoted);
+      expect(errors[0]).toContain(engineMessage(quoted));
+      expect(errors[0]).not.toMatch(/\(offset /);
+    });
   });
 });
 
