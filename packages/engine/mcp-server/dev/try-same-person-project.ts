@@ -50,6 +50,14 @@
  * reason), when the answer carries the API's echo fields, when the role path
  * scores differently from the own-persona path on the same pair, and when a
  * role or persona the record does not hold is scored instead of refused.
+ *
+ * Sections E and F score the same record when the extraction's persona ids are
+ * not to be trusted, which is what most of the corpus looks like. In E no
+ * assertion carries one, so only the names the record's name assertions give can
+ * say who the father and the mother are. In F every assertion carries the child's
+ * id: it names no single party, and scoring "the father" through it would score
+ * the child. Each must still score the persona asked for, and score what that
+ * persona scores from its own assertion.
  */
 import { mkdtemp, writeFile, rm, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -209,35 +217,61 @@ async function readAttestations(projectDir: string): Promise<Record<string, Reco
   return out;
 }
 
-async function fetchedHousehold(): Promise<void> {
-  console.log("\n── D. a fetched household: whom did each call score? ──");
+/** One call of a household run: whom it asks for, from which assertion, against
+ *  whose tree person. */
+interface HouseholdCase {
+  label: string;
+  assertionId: string;
+  recordRole?: string;
+  asked: keyof typeof HOUSEHOLD;
+  treePerson: keyof typeof HOUSEHOLD;
+}
+
+/** The five calls of section D: each persona from its own assertion, and the
+ *  father and mother from the child's relationship assertions by `recordRole`. */
+const OWN_CHILD: HouseholdCase =
+  { label: "the child, her own assertion", assertionId: "a_031", asked: "child", treePerson: "child" };
+const OWN_FATHER: HouseholdCase =
+  { label: "the father, his own assertion", assertionId: "a_034", asked: "father", treePerson: "father" };
+const OWN_MOTHER: HouseholdCase =
+  { label: "the mother, her own assertion", assertionId: "a_036", asked: "mother", treePerson: "mother" };
+const BY_ROLE_FATHER: HouseholdCase = {
+  label: "the father BY ROLE, from the child's relationship assertion",
+  assertionId: "a_038", recordRole: "father", asked: "father", treePerson: "father",
+};
+const BY_ROLE_MOTHER: HouseholdCase = {
+  label: "the mother BY ROLE, from the child's relationship assertion",
+  assertionId: "a_039", recordRole: "mother", asked: "mother", treePerson: "mother",
+};
+
+/**
+ * Score a household project's calls against the live record and check, for each,
+ * whom the answer says it scored. Returns each call's score by label, so a later
+ * run can compare its by-role scores with the own-assertion scores of the first.
+ *
+ * `reference` is those first scores. A father scored BY ROLE must score what the
+ * father scores from his own assertion, whichever way the role was resolved: it is
+ * the live check, independent of what any answer says, that the role path compared
+ * the right people.
+ */
+async function scoreHousehold(
+  heading: string,
+  assertions: Array<Record<string, unknown>>,
+  cases: HouseholdCase[],
+  reference: ReadonlyMap<string, number> | null,
+  afterwards?: (dir: string) => Promise<void>,
+): Promise<Map<string, number>> {
+  console.log(`\n── ${heading} ──`);
   const dir = await mkdtemp(join(tmpdir(), "try-same-person-household-"));
+  const scores = new Map<string, number>();
   try {
     await writeFile(
       join(dir, "research.json"),
-      JSON.stringify({ log: [], assertions: HOUSEHOLD_ASSERTIONS }, null, 2),
+      JSON.stringify({ log: [], assertions }, null, 2),
       "utf8",
     );
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(HOUSEHOLD_TREE, null, 2), "utf8");
     console.log(`project: ${dir}\nrecord:  ${HOUSEHOLD_RECORD} (child, father, mother; fetched live)\n`);
-
-    const scores = new Map<string, number>();
-    const cases: Array<{
-      label: string; assertionId: string; recordRole?: string;
-      asked: keyof typeof HOUSEHOLD; treePerson: keyof typeof HOUSEHOLD;
-    }> = [
-      { label: "the child, her own assertion", assertionId: "a_031", asked: "child", treePerson: "child" },
-      { label: "the father, his own assertion", assertionId: "a_034", asked: "father", treePerson: "father" },
-      { label: "the mother, her own assertion", assertionId: "a_036", asked: "mother", treePerson: "mother" },
-      {
-        label: "the father BY ROLE, from the child's relationship assertion",
-        assertionId: "a_038", recordRole: "father", asked: "father", treePerson: "father",
-      },
-      {
-        label: "the mother BY ROLE, from the child's relationship assertion",
-        assertionId: "a_039", recordRole: "mother", asked: "mother", treePerson: "mother",
-      },
-    ];
 
     for (const c of cases) {
       const want = HOUSEHOLD[c.asked];
@@ -251,7 +285,7 @@ async function fetchedHousehold(): Promise<void> {
       try {
         answer = await samePerson(args, LOCAL);
       } catch (e) {
-        check(`${c.label}: was scored`, false, `refused: ${e instanceof Error ? e.message : String(e)}`);
+        check(`${heading}: ${c.label}: was scored`, false, `refused: ${e instanceof Error ? e.message : String(e)}`);
         continue;
       }
       // Kept whatever the answer's shape, so the same-pair comparison below can
@@ -259,15 +293,15 @@ async function fetchedHousehold(): Promise<void> {
       if ("score" in answer) scores.set(c.label, answer.score);
       const result: SamePersonProjectResult | null = "recordPersona" in answer ? answer : null;
       if (result === null) {
-        check(`${c.label}: the answer names whom it scored`, false, JSON.stringify(answer));
+        check(`${heading}: ${c.label}: the answer names whom it scored`, false, JSON.stringify(answer));
         continue;
       }
       console.log(JSON.stringify(result));
 
-      check(`${c.label}: took the fetched route`, result.recordSource === "record_read",
+      check(`${heading}: ${c.label}: took the fetched route`, result.recordSource === "record_read",
         `recordSource is ${result.recordSource}: the live fetch failed and the projection answered`);
       check(
-        `${c.label}: scored the ${c.asked} persona`,
+        `${heading}: ${c.label}: scored the ${c.asked} persona`,
         result.recordPersona.id === want.persona &&
           result.recordPersona.name === want.name &&
           result.recordPersona.role === want.role,
@@ -275,66 +309,106 @@ async function fetchedHousehold(): Promise<void> {
           `answer names ${JSON.stringify(result.recordPersona)}`,
       );
       check(
-        `${c.label}: scored against the ${c.treePerson}'s tree person`,
+        `${heading}: ${c.label}: scored against the ${c.treePerson}'s tree person`,
         result.treePerson.id === tree.tree && result.treePerson.name === tree.name,
         `answer names ${JSON.stringify(result.treePerson)}`,
       );
       const echoed = ["queryArk", "candidateArk", "apiTitle", "updated"].filter((k) => k in result);
-      check(`${c.label}: echoes none of the API's framing`, echoed.length === 0, `still carries ${echoed.join(", ")}`);
-      check(`${c.label}: recorded the score`, result.recorded === true);
+      check(`${heading}: ${c.label}: echoes none of the API's framing`, echoed.length === 0, `still carries ${echoed.join(", ")}`);
+      check(`${heading}: ${c.label}: recorded the score`, result.recorded === true);
       const filed = (await readAttestations(dir))[`${c.assertionId}|${tree.tree}`];
       check(
-        `${c.label}: filed the same persona it names`,
+        `${heading}: ${c.label}: filed the same persona and role it names`,
         filed?.record_persona_id === want.persona && filed?.record_role === want.role,
         `attestation says ${JSON.stringify({ persona: filed?.record_persona_id, role: filed?.record_role })}`,
       );
     }
 
-    // The same pair through two routes must score the same: this is the live check,
-    // independent of what the answer says, that the role path compared the right people.
-    for (const [role, ownLabel, roleLabel] of [
-      ["father", "the father, his own assertion", "the father BY ROLE, from the child's relationship assertion"],
-      ["mother", "the mother, her own assertion", "the mother BY ROLE, from the child's relationship assertion"],
+    // The same pair through two routes must score the same.
+    for (const [role, ownCase, roleCase] of [
+      ["father", OWN_FATHER, BY_ROLE_FATHER],
+      ["mother", OWN_MOTHER, BY_ROLE_MOTHER],
     ] as const) {
-      const own = scores.get(ownLabel);
-      const byRole = scores.get(roleLabel);
+      if (!cases.includes(roleCase)) continue;
+      const own = reference?.get(ownCase.label) ?? scores.get(ownCase.label);
+      const byRole = scores.get(roleCase.label);
       check(
-        `the ${role} scores the same by role as by his or her own assertion`,
+        `${heading}: the ${role} scores the same by role as by his or her own assertion`,
         own !== undefined && byRole !== undefined && Math.abs(own - byRole) < 0.01,
         `own assertion ${own}, by role ${byRole}`,
       );
     }
-
-    // A role or a persona the record does not hold is an answer, never a score.
-    const refusals: Array<{ label: string; extra: Record<string, string>; expect: RegExp }> = [
-      { label: "a role the record does not hold", extra: { recordRole: "witness_1" },
-        expect: /holds no persona for role 'witness_1'/ },
-      { label: "a persona the record does not hold", extra: { recordPersonaId: "p_nope" },
-        expect: /holds no persona with record_persona_id 'p_nope'/ },
-    ];
-    for (const r of refusals) {
-      console.log(`\n${r.label} is refused:`);
-      let refusal = "";
-      let scored = "";
-      try {
-        scored = JSON.stringify(
-          await samePerson({ projectPath: dir, assertionId: "a_038", treePersonId: "I1", ...r.extra }, LOCAL),
-        );
-      } catch (e) {
-        refusal = e instanceof Error ? e.message : String(e);
-      }
-      console.log(refusal || scored);
-      check(`${r.label}: refused, not scored`, scored === "" && r.expect.test(refusal),
-        scored !== "" ? `scored instead: ${scored}` : `message was: ${refusal}`);
-      check(
-        `${r.label}: the refusal lists every persona as "id (name, role)"`,
-        Object.values(HOUSEHOLD).every((h) => refusal.includes(`${h.persona} (${h.name}, ${h.role})`)),
-        `message was: ${refusal}`,
-      );
-    }
+    if (afterwards !== undefined) await afterwards(dir);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+  return scores;
+}
+
+/** A role or a persona the record does not hold is an answer, never a score. */
+async function householdRefusals(dir: string): Promise<void> {
+  const refusals: Array<{ label: string; extra: Record<string, string>; expect: RegExp }> = [
+    { label: "a role the record does not hold", extra: { recordRole: "witness_1" },
+      expect: /holds no persona for role 'witness_1'/ },
+    { label: "a persona the record does not hold", extra: { recordPersonaId: "p_nope" },
+      expect: /holds no persona with record_persona_id 'p_nope'/ },
+  ];
+  for (const r of refusals) {
+    console.log(`\n${r.label} is refused:`);
+    let refusal = "";
+    let scored = "";
+    try {
+      scored = JSON.stringify(
+        await samePerson({ projectPath: dir, assertionId: "a_038", treePersonId: "I1", ...r.extra }, LOCAL),
+      );
+    } catch (e) {
+      refusal = e instanceof Error ? e.message : String(e);
+    }
+    console.log(refusal || scored);
+    check(`${r.label}: refused, not scored`, scored === "" && r.expect.test(refusal),
+      scored !== "" ? `scored instead: ${scored}` : `message was: ${refusal}`);
+    check(
+      `${r.label}: the refusal lists every persona as "id (name, role)"`,
+      Object.values(HOUSEHOLD).every((h) => refusal.includes(`${h.persona} (${h.name}, ${h.role})`)),
+      `message was: ${refusal}`,
+    );
+  }
+}
+
+async function fetchedHousehold(): Promise<void> {
+  // D. The extraction stamped every assertion with its own party's persona id.
+  const ownScores = await scoreHousehold(
+    "D. a fetched household: whom did each call score?",
+    HOUSEHOLD_ASSERTIONS,
+    [OWN_CHILD, OWN_FATHER, OWN_MOTHER, BY_ROLE_FATHER, BY_ROLE_MOTHER],
+    null,
+    householdRefusals,
+  );
+
+  // E. The extraction left no persona id on any assertion, which is what most name
+  // assertions in the corpus look like. Nothing but the names says who is who, and
+  // the record's own name assertions give them: the father's and mother's name
+  // assertions name the party asked for, the child's own name finds her.
+  const noIds = HOUSEHOLD_ASSERTIONS.map((a) => ({ ...a, record_persona_id: null }));
+  await scoreHousehold(
+    "E. the same household, the extraction having set no persona ids",
+    noIds,
+    [OWN_CHILD, OWN_FATHER, OWN_MOTHER, BY_ROLE_FATHER, BY_ROLE_MOTHER],
+    ownScores,
+  );
+
+  // F. The extraction stamped the child's persona id on every party. That id names
+  // no single party, so it is no answer for "the father", and the child must not
+  // be scored as him. (A father's OWN assertion would carry the child's id and so
+  // be answered with the child by the assertion's own id; only the calls from the
+  // child's relationship assertions are asked here.)
+  const sharedId = HOUSEHOLD_ASSERTIONS.map((a) => ({ ...a, record_persona_id: HOUSEHOLD.child.persona }));
+  await scoreHousehold(
+    "F. the same household, the child's persona id stamped on every assertion",
+    sharedId,
+    [BY_ROLE_FATHER, BY_ROLE_MOTHER],
+    ownScores,
+  );
 }
 
 async function main(): Promise<void> {
