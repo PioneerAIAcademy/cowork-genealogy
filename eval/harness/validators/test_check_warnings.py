@@ -1,8 +1,9 @@
 """Validators for the check-warnings agent (a skill until issue #2118).
 
-check-warnings is read-only — it calls the `person_warnings` MCP tool and
-surfaces the results as narrative output. It does not modify research.json or
-tree.gedcomx.json.
+check-warnings calls the `person_warnings` MCP tool and surfaces the results
+as narrative output. Inside a project it logs that report as one
+`check_warnings` research-log entry (issue #3524) and writes nothing else; it
+never modifies tree.gedcomx.json.
 
 The rubric (rubric.md) keeps the narrative-judgment dimensions
 (detection accuracy, severity classification, actionability). The
@@ -18,12 +19,15 @@ import re
 
 import pytest
 
+from validators_lib import assert_only_logs_report, assert_report_logged
 
-# --- Read-only enforcement ---
 
-def test_research_json_unmodified(before_state, after_state, test):
-    """check-warnings must not modify research.json. The skill reports
-    warnings as narrative output — the project file is read-only input.
+# --- Write enforcement ---
+
+def test_research_json_only_logs_report(before_state, after_state, test):
+    """check-warnings' one research.json write is its report, logged as a
+    single `check_warnings` entry (issue #3524); warnings are never written
+    anywhere else in the file.
 
     Skipped on negative tests: the LLM is expected to route away to
     another skill (e.g. conflict-resolution), which may legitimately
@@ -33,20 +37,21 @@ def test_research_json_unmodified(before_state, after_state, test):
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests don't run the skill body")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("Missing research.json for diff")
-    assert before == after, (
-        "check-warnings modified research.json — this skill is read-only. "
-        "Warnings should be reported as narrative, not written into the file."
-    )
+    assert_only_logs_report(before_state, after_state, "check_warnings", "check-warnings")
+
+
+def test_report_logged(before_state, after_state, test):
+    """Tag `logs-report`: exactly one new `check_warnings` entry carrying the
+    report."""
+    if "logs-report" not in test.get("tags", []):
+        pytest.skip("not a logs-report test")
+    assert_report_logged(before_state, after_state, "check_warnings")
 
 
 def test_tree_gedcomx_unmodified(before_state, after_state, test):
     """check-warnings must not modify tree.gedcomx.json either.
 
-    Skipped on negative tests (see test_research_json_unmodified).
+    Skipped on negative tests (see test_research_json_only_logs_report).
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests don't run the skill body")

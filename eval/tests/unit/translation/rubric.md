@@ -2,6 +2,8 @@
 
 Grading dimensions for translation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+Inside a project the agent ends with one `research_log_append` call logging its translation; that entry appears in the file changes summary, and its shape is checked by validators, not by you. With **no project** the call, if made, answers `ok: false`, `reason: "no_project"`: that is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+
 ## Accuracy
 
 Did the agent translate the text accurately, preserving the meaning of genealogical terms (names, places, dates, relationships, occupations)?

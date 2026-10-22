@@ -23,12 +23,16 @@ tools:
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
   # The grant is the one tool the folded skill declared, plus `Read` for the
-  # Narration line's read of research.json. No writer tool: the agent persists
-  # nothing.
+  # Narration line's read of research.json, and `research_log_append` (#3524):
+  # inside a project the result is logged as one `convert_dates` entry. No other
+  # writer tool.
   - Read
   - mcp__genealogy__convert_calendar
   - mcp__remote-devices__Genealogy_Research__convert_calendar
   - mcp__Genealogy_Research__convert_calendar
+  - mcp__genealogy__research_log_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__research_log_append
 ---
 
 # Convert Dates
@@ -194,6 +198,17 @@ or name (Vendémiaire–Fructidor, or a complementary-day alias for month 13),
 and the day. The tool converts to Gregorian. This correction is exclusive —
 do not combine it with any other correction.
 
+## Log the result
+
+If the Narration read found no `research.json`, skip this step.
+
+One `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+
+- `reason: "no_project"` → stop; write nothing.
+- Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
+
+A hand-back logs nothing.
+
 ## Rules
 
 - **Answer only the calendar question asked.** Each correction
@@ -209,7 +224,7 @@ do not combine it with any other correction.
 
 ## Re-invocation behavior
 
-Output-only. Writes nothing. Idempotent — same date and jurisdiction produce the same result.
+Inside a project each call appends one new log entry; the log is append-only. Writes nothing else. Same date and jurisdiction produce the same result.
 
 ## Return contract
 

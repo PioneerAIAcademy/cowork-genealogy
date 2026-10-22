@@ -230,7 +230,11 @@
         "agent:search-wikipedia",
         "agent:search-familysearch-wiki",
         "agent:historical-context",
-        "agent:source-evaluation"
+        "agent:source-evaluation",
+        "agent:check-warnings",
+        "agent:translation",
+        "agent:convert-dates",
+        "agent:validate-schema"
       ],
       "agentCallers": [
         {
@@ -284,6 +288,30 @@
         },
         {
           "agent": "agent:source-evaluation",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:check-warnings",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:translation",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:convert-dates",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:validate-schema",
           "tools": [
             "research_log_append"
           ]

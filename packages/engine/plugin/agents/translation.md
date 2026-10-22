@@ -6,7 +6,7 @@ description: >-
   Covers period handwriting (Kurrentschrift, Sütterlin), Latin abbreviations
   in parish registers, genealogy-specific vocabulary, and record-type
   conventions by language and era. Outputs translations and term glosses to
-  the user; does not modify project files. Use when the user says "translate
+  the user. Use when the user says "translate
   this record", "what does this say?", "German church record", "Latin
   abbreviations", "read this handwriting", "French notarial record", "what
   does [foreign word] mean?", when a record is in a non-English Western
@@ -18,6 +18,9 @@ description: >-
 model: claude-sonnet-4-6
 tools:
   - Read
+  - mcp__genealogy__research_log_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__research_log_append
 ---
 
 # Translation
@@ -137,6 +140,17 @@ plain-language summary of what the record says and who is named.
 
 The translation is a working tool. Extraction cites the original record,
 not the translation.
+
+### 6. Log the translation
+
+If the Narration read found no `research.json`, skip this step.
+
+One `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "translation"`, `query: {language, recordType}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (records or terms translated), `notes` set to the **full** translation exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+
+- `reason: "no_project"` → stop; write nothing.
+- Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
+
+A hand-off, or a return asking for the file path or a transcription, logs nothing.
 
 ## Example
 
@@ -386,7 +400,7 @@ and [mother], at the age of [age] years. Buried on [burial date]."
 
 ## Re-invocation behavior
 
-Writes nothing — no files, no `research.json` / `tree.gedcomx.json`. Safe to call repeatedly; each call is a fresh translation pass.
+Inside a project each call appends one new log entry; the log is append-only. Writes no file and nothing else in `research.json` / `tree.gedcomx.json`. Each call is a fresh translation pass.
 
 ## Return contract
 

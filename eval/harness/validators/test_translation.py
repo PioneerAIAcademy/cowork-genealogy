@@ -5,8 +5,9 @@ text and explains genealogically significant terms. Narrative quality
 (accuracy, notation of uncertainty, cultural context, date formatting)
 lives in the rubric — graded by the LLM judge.
 
-One mechanical check: the agent doesn't call MCP tools (it has none
-in its tools frontmatter and shouldn't need any).
+Mechanical checks: its only MCP tool is `research_log_append`, called at most
+once; inside a project it logs the translation as one `translation` entry
+(issue #3524) and writes nothing else, and with no project it writes nothing.
 
 See test_universal.py module docstring for the validator function-
 signature contract. The `test` argument is the parsed test JSON dict
@@ -18,23 +19,43 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import assert_only_logs_report, assert_report_logged
+
 
 # --- Tool-call enforcement -------------------------------------------
 
-def test_no_mcp_tools_called(tool_calls, test):
-    """translation is a pure model task — it shouldn't call any *research*
-    MCP tool. The universal `validate_research_schema` is exempted: post
-    commit 861d3c9 it's the built-in schema verifier any skill may
-    call, not a research tool."""
+def test_only_logs_translation(tool_calls, test):
+    """translation is a pure model task — its one MCP call is the
+    `research_log_append` that logs it (issue #3524), at most once. The
+    universal `validate_research_schema` is exempted: post commit 861d3c9 it's
+    the built-in schema verifier any skill may call, not a research tool."""
     if test.get("type") != "positive":
         pytest.skip("negative tests are not applicable to the direct-arm agent")
-    mcp_calls = [
-        tc for tc in tool_calls
+    names = [
+        tc.get("tool", "").rsplit("__", 1)[-1]
+        for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
     ]
-    assert not mcp_calls, (
-        "translation should not call MCP tools (other than "
-        f"validate_research_schema), but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
+    other = [n for n in names if n not in {"research_log_append", "validate_research_schema"}]
+    assert not other, (
+        "translation should call no MCP tool other than research_log_append "
+        f"(and validate_research_schema), but called: {other}"
     )
+    logs = names.count("research_log_append")
+    assert logs <= 1, f"translation called research_log_append {logs} times; one translation is one entry"
+
+
+def test_research_json_only_logs_report(before_state, after_state, test):
+    """Inside a project, one `translation` log entry and nothing else; with no
+    project, no research.json."""
+    if test.get("type") != "positive":
+        pytest.skip("negative tests are not applicable to the direct-arm agent")
+    assert_only_logs_report(before_state, after_state, "translation", "translation")
+
+
+def test_report_logged(before_state, after_state, test):
+    """Tag `logs-report`: exactly one new `translation` entry carrying the
+    translation."""
+    if "logs-report" not in test.get("tags", []):
+        pytest.skip("not a logs-report test")
+    assert_report_logged(before_state, after_state, "translation")

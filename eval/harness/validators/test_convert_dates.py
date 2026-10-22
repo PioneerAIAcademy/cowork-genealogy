@@ -6,10 +6,9 @@ reading narrative output for genealogical judgment and stay graded by
 the LLM judge.
 
 This file holds the mechanical checks: tool-allowlist enforcement for
-positive tests. State-shape checks for specific dates are intentionally
-not added here because the current test corpus uses `scenario: null`
-(no research.json to diff). Add tag-gated state assertions if/when
-future tests bind to a scenario.
+positive tests, and the one write — inside a project the result is logged as
+one `convert_dates` entry (issue #3524), with no project nothing. Most tests
+use `scenario: null` (no project); the `logs-report` test binds to one.
 
 See test_universal.py module docstring for the validator function-
 signature contract. The `test` argument is the parsed test JSON dict
@@ -21,12 +20,15 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import assert_only_logs_report, assert_report_logged
+
 
 # --- Tool-allowlist enforcement ---------------------------------------
 
 def test_only_convert_calendar_called(tool_calls, test):
     """Positive convert-dates tests should only call convert_calendar (if
-    any MCP tool). Negative tests should not route here at all — graded
+    any MCP tool), plus at most one `research_log_append` logging the result
+    (issue #3524). Negative tests should not route here at all — graded
     by the negative-test outcome logic in orchestrator._compute_outcome."""
     if test.get("type") != "positive":
         pytest.skip("activation rules handle negative tests")
@@ -37,11 +39,33 @@ def test_only_convert_calendar_called(tool_calls, test):
     bad = [
         tc["tool"] for tc in mcp_calls
         if "convert_calendar" not in tc.get("tool", "")
+        and tc.get("tool", "").rsplit("__", 1)[-1] != "research_log_append"
     ]
     assert not bad, (
-        f"convert-dates positive tests should only call convert_calendar; "
-        f"also called: {bad}"
+        f"convert-dates positive tests should only call convert_calendar "
+        f"(and research_log_append once); also called: {bad}"
     )
+    logs = sum(1 for tc in mcp_calls if tc.get("tool", "").rsplit("__", 1)[-1] == "research_log_append")
+    assert logs <= 1, (
+        f"convert-dates should only call convert_calendar and research_log_append once; "
+        f"called research_log_append {logs} times"
+    )
+
+
+def test_research_json_only_logs_report(before_state, after_state, test):
+    """Inside a project, one `convert_dates` log entry and nothing else; with no
+    project, no research.json."""
+    if test.get("type") != "positive":
+        pytest.skip("activation rules handle negative tests")
+    assert_only_logs_report(before_state, after_state, "convert_dates", "convert-dates")
+
+
+def test_report_logged(before_state, after_state, test):
+    """Tag `logs-report`: exactly one new `convert_dates` entry carrying the
+    result."""
+    if "logs-report" not in test.get("tags", []):
+        pytest.skip("not a logs-report test")
+    assert_report_logged(before_state, after_state, "convert_dates")
 
 
 # --- Invariant for the boundary negatives (no spurious conversion) ---
