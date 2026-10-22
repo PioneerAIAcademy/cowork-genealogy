@@ -30,6 +30,10 @@ run, no model, no API spend.
   unit equals the paired unit. A decision is counted under the unit it matched,
   else under its first question's unit, except that a decision paired with an
   untyped spawn has its own `untyped` row.
+- A subagent decision whose nextStep names the reading agent itself is counted
+  as **self-named**: the agent read `project_context` in the middle of its own
+  step, so the pairing measures the router's next hand-off, not this read. It is
+  reported, not removed, so the decided figures stand unchanged.
 
 ## Read it with its denominators
 
@@ -80,6 +84,12 @@ class Decision(NamedTuple):
     population: str  # "router" | "subagent"
     steps: tuple[str, ...]
     paired: str
+    reader: str = ""  # the subagent that read project_context, normalized
+
+    @property
+    def self_named(self) -> bool:
+        """The step names the agent reading it: a mid-step read, not a routing choice."""
+        return bool(self.reader) and self.reader in self.steps
 
     @property
     def matched(self) -> bool:
@@ -178,7 +188,8 @@ def scan_run(doc: dict, run: str) -> tuple[list[Decision], Counter, int, int]:
         if paired is None:
             unpaired[population] += 1
             continue
-        decisions.append(Decision(run, sha, population, tuple(steps), paired))
+        reader = normalize(str(call.get("agent_type") or "")) if population == "subagent" else ""
+        decisions.append(Decision(run, sha, population, tuple(steps), paired, reader))
     return decisions, unpaired, stripped, no_step
 
 
@@ -252,6 +263,13 @@ def format_report(s: Scan, shas: dict[str, int], gate: dict[str, dict[str, bool 
         f"Decisions with more than one question carrying a nextStep: {multi}.",
     ]
     both = [sha for sha in shas if all(gate[sha].get(k) for k in GATE_COMMITS)]
+    sub = [d for d in s.decisions if d.population == "subagent"]
+    lines.append(
+        f"Subagent decisions whose nextStep names the reading agent itself: {sum(d.self_named for d in sub)}"
+        f" of {len(sub)} ({sum(d.self_named and not d.matched for d in sub)} of the"
+        f" {sum(not d.matched for d in sub)} misses). Such a read is the agent checking state"
+        " mid-step, so its pairing with the router's next hand-off is not a routing choice."
+    )
     lines.append(
         "Part 2 gate (issue #3523, needs >= 3): runs whose git_sha contains "
         + " and ".join(f"PR {k} ({v})" for k, v in GATE_COMMITS.items())
