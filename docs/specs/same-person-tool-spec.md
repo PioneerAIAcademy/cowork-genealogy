@@ -118,26 +118,63 @@ Party selection. On route 1 (a fetched record), in this order:
 1. `recordPersonaId`, when the record holds that persona. One it does not hold is
    refused, as on route 2.
 2. When `recordRole` names a **different** party than the assertion's own
-   `record_role` (the second party of a relationship or marriage assertion): the
-   persona id that a sibling assertion of the same record carries for that role,
-   provided the fetched record holds it; then the name the assertion gives that
-   party, the whole name (given name and surname joined) before either part
-   alone, exact before substring. Two siblings that carry the role under
-   different persona ids are two people: the call is refused and both are
-   listed. **The assertion's own persona is never the answer to a request for
-   another party**, and neither is a name that finds it. A fetched `persons[]`
-   carries no role, so a role can only come from the assertions around it.
-3. Otherwise the assertion's own `record_persona_id` (an exact id), then the name
-   the assertion gives (a loose match, so after the id), then a record that holds
-   a single persona.
+   `record_role` (the second party of a relationship or marriage assertion):
+   1. The persona id that a sibling assertion of the same record carries for that
+      role, provided the fetched record holds it. Two siblings that carry the
+      role under different persona ids are two people: the call is refused and
+      both are listed. An id the record gives to more than one role names no
+      single party, and the assertion's own id is the party not asked for, so
+      neither is used.
+   2. The persona whose name is exactly the name a sibling `name` assertion of
+      that role gives (its `value`, or its given name and surname joined), when
+      exactly one persona's name is that.
+   3. The persona the cited assertion's own words name as that party: the key of
+      its structured value named by the role asked, `related_person_name`,
+      `person` or `other`; and, only when the assertion is about two people (a
+      marriage, a relationship, a parentage, a couple event, a fact about a
+      parent or spouse), its given name and surname joined, its `name`, and the
+      value of the one key that names a second person (`spouse` in `{spouse:
+      "Mary Doyle"}`; none when several do). On a fact about one person, such as
+      a `name`, those keys are the name of the assertion's own party, so they are
+      never read as another party's. They are matched as the whole name exactly,
+      the whole name loosely (one contains the other), then the given name alone
+      and the surname alone as words of a persona's name. Each counts only when it
+      names a single persona; two personas that answer to it are refused, since
+      choosing between them is a guess.
 
-On route 2 (a projected record) the party is the `record_role` group, or the
-persona `recordPersonaId` names. When no route yields a persona for the requested
-party the tool says so explicitly rather than scoring something else — that is
-the sanctioned `match_score: null`, not a failure. Every refusal lists each
-persona on the record as `id (name, role)`; the role is the one the record's
-assertions give that persona, and a persona no assertion names reads `role
-unknown`.
+   **The assertion's own persona is never the answer to a request for another
+   party**, and neither is a name that finds it: it is left out of the candidates
+   of both name steps before any name is tried, so a name it shares with another
+   persona (a father and son) finds that persona. A fetched `persons[]` carries no
+   role, so a role can only come from the assertions around it.
+3. Otherwise the assertion's own `record_persona_id` (an exact id), then the name
+   the assertion gives for its own party (the key of its structured value named
+   by its own role and, on a fact about one person, its `name` and its given name
+   and surname), matched as in 2.3 and so after the id, then a record that holds
+   a single persona, unless the record's assertions know that persona as another
+   role than the assertion's own.
+
+On route 2 (a projected record) the party is the group of the persona
+`recordPersonaId` names. An id the record gives to more than one role names no
+group, so the roles decide as they do without one: the group the assertion itself
+falls in, when no other party is asked for, and otherwise the group at the role
+asked. Two groups at one role are two people: the call is refused and both are
+listed.
+
+When no route yields a persona for the requested party the tool says so
+explicitly rather than scoring something else — that is the sanctioned
+`match_score: null`, not a failure. What a refusal lists depends on the route:
+
+- Route 1 lists personas as `id (name, role)`: every persona on the record when
+  nothing resolves the party or the persona named is not on the record, and only
+  the personas that share the role when it names more than one person. The role
+  is the one the record's assertions give that persona (negative evidence is no
+  role), and a persona no assertion names reads `role unknown`.
+- Route 2 lists what the projection holds: the roles it has when the role has no
+  group or the assertion has none, the persona ids and roles it knows when a
+  persona id is not one of them, the names a role merges when it names more than
+  one person, and each of the groups as `id (name, role)`, with `no persona id`
+  for a party the record gave none, when two groups hold the role.
 
 #### What the projection admits, and why it is not the tree filter
 
@@ -227,8 +264,10 @@ by 40s + 30s.
 ambiguous projected role, not a project at all: each returns an LLM-actionable
 message naming what to do. On a fetched record that also covers a `recordRole`
 that no sibling assertion and no name resolves, a role two siblings carry under
-different persona ids, and a `recordPersonaId` the record does not hold; each
-lists every persona as `id (name, role)` so the next call can name one. `same_person` is deliberately **not** in
+different persona ids, and a `recordPersonaId` the record does not hold; on a
+projected record, a role two groups hold. Each lists the personas it is choosing
+between, so the next call can name one ("Party selection" says which).
+`same_person` is deliberately **not** in
 `tests/tools/no-project.test.ts`'s table: that table's first assertion requires
 the tool to RETURN `{ ok: false, reason: "no_project" }`, and this tool returns a
 score, so there is no answer shape to carry that verdict. That ruling is
@@ -379,12 +418,16 @@ before it shipped; the `dev/probe-score-refusal.ts` arm `fetched-route
 attestation` is the standing check.
 
 The entry's `record_persona_id` is the persona the response names as
-`recordPersona.id`. On the fetched route it is the id the fetch resolved. The
-eval harness performs no fetch, so `buildRecordedScore` derives it from the same
-sibling lookup (and an explicit `recordPersonaId`) that route 1 uses, and a call
-for the father files the father's persona in both places. Where only a fetch can
-tell, such as a party found by name, the harness files the assertion's own id or
-null. It is not part of the lookup key.
+`recordPersona.id`, and its `record_role` the role it names as
+`recordPersona.role`. On the fetched route the id is the one the fetch resolved.
+When the caller named the persona with `recordPersonaId`, the role is the one the
+record's assertions give that persona, which need not be the role asked, and none
+when no assertion names it: the entry never lists the role asked beside another
+persona's id. The eval harness performs no fetch, so `buildRecordedScore`
+derives both from the same sibling lookup (and an explicit `recordPersonaId`)
+that route 1 uses, and a call for the father files the father's persona in both
+places. Where only a fetch can tell, such as a party found by name, the harness
+files the assertion's own id or null. Neither is part of the lookup key.
 
 ADR-0009 constraint 3 says to key on (`record_id`, `record_persona_id`) and not
 on `record_id` alone, so that a second persona of an already-linked record
