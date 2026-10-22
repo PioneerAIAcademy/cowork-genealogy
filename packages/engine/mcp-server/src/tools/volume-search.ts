@@ -11,6 +11,7 @@ import {
 import { resolveStandardPlaceToPlaceId, placeIdToRepIds, ambiguousPlaceError } from "../utils/place-resolver.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
 import { formatYearRange } from "../utils/search-helpers.js";
+import { volumeRollup } from "../utils/volume-rollup.js";
 import type {
   VolumeSearchInput,
   VolumeSearchResult,
@@ -62,6 +63,11 @@ function validate(input: VolumeSearchInput): void {
     input.endYear < input.startYear
   ) {
     throw new Error("endYear must be greater than or equal to startYear.");
+  }
+  if (input.summary && input.pageToken) {
+    throw new Error(
+      "summary covers every matching volume, so it is given with the first page only; omit pageToken or summary."
+    );
   }
   // Near-miss spellings of *this* field only. `record_search` and
   // `fulltext_search` both take a singular `recordType`, so that is the name an
@@ -308,7 +314,15 @@ export async function volumeSearchTool(
     ...(input.pageToken ? { nextPageToken: input.pageToken } : {}),
   };
 
-  const response = await callGroupSearch(body, principal);
+  const [response, summary] = await Promise.all([
+    callGroupSearch(body, principal),
+    // The summary is extra: its failure must never cost the caller the page.
+    input.summary
+      ? volumeRollup(body, principal, callGroupSearch).catch(
+          (error: unknown) => (error instanceof Error ? error.message : String(error))
+        )
+      : undefined,
+  ]);
 
   const groups = response.groups ?? [];
   const groupNames = groups.map((g) => g.groupName);
@@ -338,6 +352,8 @@ export async function volumeSearchTool(
   if (response.nextPageToken != null) {
     result.nextPageToken = response.nextPageToken;
   }
+  if (typeof summary === "string") result.summaryError = summary;
+  else if (summary) result.summary = summary;
 
   return result;
 }
@@ -395,6 +411,16 @@ export const volumeSearchSchema = {
           "Pagination cursor. Pass the nextPageToken from a previous " +
           "response, together with the same standardPlace/startYear/endYear/" +
           "recordTypeGroups, to fetch the next page.",
+      },
+      summary: {
+        type: "boolean",
+        description:
+          "Set true on a place survey to also get `summary`: every matching volume " +
+          "(not just this page) counted by record-type group, with how many are " +
+          "browse-only, plus an untyped bucket. A volume counts in every group its " +
+          "coverages reach, parents included. First page only — not with pageToken. " +
+          "Slower: it reads all matching volumes. If it cannot be computed, the page " +
+          "still returns, with `summaryError` saying why.",
       },
     },
     required: ["standardPlace"],

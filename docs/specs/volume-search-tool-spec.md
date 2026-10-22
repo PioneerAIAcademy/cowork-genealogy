@@ -105,6 +105,7 @@ place fetchers all hit anonymous endpoints.
 | `endYear` | integer | No | Latest year of interest, inclusive (e.g., `1810`). Must be ≥ `startYear`. Omit for all periods. |
 | `recordTypeGroups` | string[] | No | One or more record-type group names from the closed vocabulary in [Record-type filtering](#record-type-filtering). Results are restricted to volumes carrying at least one matching coverage. Multiple groups are **OR**-ed. Omit to search all record types. |
 | `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`** that produced it (see [Pagination](#pagination)). |
+| `summary` | boolean | No | First page only (refused with `pageToken`). Adds `summary`: every matching volume, not just this page, counted by record-type group. See [Summary](#summary-record-type-rollup). |
 
 ### Fixed fields (always sent in the group-search request body)
 
@@ -821,6 +822,16 @@ as absent rather than guessing.
           "response, together with the same standardPlace/startYear/endYear/" +
           "recordTypeGroups, to fetch the next page.",
       },
+      summary: {
+        type: "boolean",
+        description:
+          "Set true on a place survey to also get `summary`: every matching volume " +
+          "(not just this page) counted by record-type group, with how many are " +
+          "browse-only, plus an untyped bucket. A volume counts in every group its " +
+          "coverages reach, parents included. First page only — not with pageToken. " +
+          "Slower: it reads all matching volumes. If it cannot be computed, the page " +
+          "still returns, with `summaryError` saying why.",
+      },
     },
     required: ["standardPlace"],
   },
@@ -975,6 +986,56 @@ The tool returns **one page (≤ 100 groups) per call** plus
 pages — that would walk every page (and full-text batch) for what is
 usually just a scoping question. `totalResults` tells the caller how many
 groups exist in total.
+
+---
+
+## Summary (record-type rollup)
+
+`summary: true` is the one exception to "no auto-aggregation": a place survey
+(locality-guide) needs to say how many volumes of each kind exist, and a page
+cannot. On 2026-10-22, hosted locality-guide surveys matched a median of 24–81
+volumes, a 90th percentile of 700–1,000 and a maximum of 4,261, so a 10-row
+volume list would have been complete in about 1 survey in 7. The counts are
+always complete. research-plan's own calls are narrow (median 0 volumes) and do
+not ask for it.
+
+**Output** — `summary` beside the usual page:
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `totalVolumes` | integer | Upstream `totalCount` for the search. |
+| `complete` | boolean | False when the volumes exceeded the rollup's cap (10 pages of 1,000) or fewer came back than upstream counted. |
+| `byRecordType` | `{ group, volumes, browseOnly }[]` | One row per [record-type group](#the-group-vocabulary) with at least one volume, in vocabulary order. |
+| `untyped` | `{ volumes, browseOnly }` | Volumes whose coverages reach no group. |
+
+A volume counts in **every** group its coverages reach, ancestors included (a
+Baptism volume is also Religious), exactly as a `recordTypeGroups: [group]`
+filter would return it: a coverage is in a group when its
+`recordTypeConceptIdHierarchy` (or, absent that, its `recordTypeConceptId`)
+contains an id from `conceptIdsForGroups([group])`. Buckets can therefore sum
+past `totalVolumes`.
+
+`browseOnly` counts volumes with no indexed images (`indexedChildCount` 0 or
+absent) that the full-text endpoint does not list. It is `null`, not 0, when any
+full-text batch failed: unknown is not "none".
+
+**How it fetches.** The rollup runs beside the page call, with its own body:
+the same search at `pageSize: 1000` (upstream answers 400 above that; probed
+2026-10-22) and no `nextPageToken`. If more remain it fetches pages 2..n in
+parallel by the undocumented 1-based `pageNumber`, which matched the token pages
+exactly on Kings, New York 1890–1910 (3,919 groups, no overlap between pages 1
+and 2). If those pages come back short or duplicated, it re-walks by
+`nextPageToken`, slower but exact. The API has no facet or per-type count
+parameter. Full-text status is checked only for volumes with no indexed images,
+in parallel batches of 100 (the endpoint fails on 1,000 names); at about 6 s per
+batch it is the slow step.
+
+**Cost.** Measured live 2026-10-22: Freeborn, Minnesota 1870–1900 (163 volumes)
+21 s; Kings, New York 1890–1910 (3,919 volumes) 40 s on one run and a 30 s
+body-read timeout on a 1,000-group page on another.
+
+**Failure.** The summary never fails the call. If the rollup throws, the page
+returns as usual with `summaryError` carrying the message and no `summary`.
 
 ---
 
