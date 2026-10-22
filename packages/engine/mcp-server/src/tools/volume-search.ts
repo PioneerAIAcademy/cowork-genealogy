@@ -417,7 +417,8 @@ export const volumeSearchSchema = {
         description:
           "Set true on a place survey to also get `summary`: every matching volume " +
           "(not just this page) counted by record-type group, with how many are " +
-          "browse-only, plus an untyped bucket. A volume counts in every group its " +
+          "browse-only and how many full-text-only, plus an untyped bucket. A volume " +
+          "counts in every group its " +
           "coverages reach, parents included. First page only — not with pageToken. " +
           "Slower: it reads all matching volumes. If it cannot be computed, the page " +
           "still returns, with `summaryError` saying why.",

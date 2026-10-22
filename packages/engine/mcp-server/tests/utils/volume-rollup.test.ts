@@ -66,7 +66,7 @@ describe("groupsForVolume", () => {
 });
 
 describe("rollup", () => {
-  it("counts each volume once per group, untyped separately, and browse-only by index and full text", () => {
+  it("counts each volume once per group, untyped separately, and splits unindexed volumes into browse-only and full-text-only", () => {
     const groups = [
       vol("bap-browse", [[RELIGIOUS, BAPTISM]]),
       vol("bap-indexed", [[RELIGIOUS, BAPTISM]], 40),
@@ -78,17 +78,17 @@ describe("rollup", () => {
     expect(r.totalVolumes).toBe(5);
     expect(r.complete).toBe(true);
     expect(r.byRecordType).toEqual([
-      { group: "Religious", volumes: 3, browseOnly: 2 },
-      { group: "Baptism", volumes: 3, browseOnly: 2 },
-      { group: "Census", volumes: 2, browseOnly: 1 },
+      { group: "Religious", volumes: 3, browseOnly: 2, fulltextOnly: 0 },
+      { group: "Baptism", volumes: 3, browseOnly: 2, fulltextOnly: 0 },
+      { group: "Census", volumes: 2, browseOnly: 1, fulltextOnly: 1 },
     ]);
-    expect(r.untyped).toEqual({ volumes: 1, browseOnly: 1 });
+    expect(r.untyped).toEqual({ volumes: 1, browseOnly: 1, fulltextOnly: 0 });
   });
 
-  it("reports browseOnly as null, not zero, when the full-text check failed", () => {
+  it("reports browseOnly and fulltextOnly as null, not zero, when the full-text check failed", () => {
     const r = rollup([vol("a", [[CENSUS]]), vol("b", [])], null, 2, true);
-    expect(r.byRecordType).toEqual([{ group: "Census", volumes: 1, browseOnly: null }]);
-    expect(r.untyped).toEqual({ volumes: 1, browseOnly: null });
+    expect(r.byRecordType).toEqual([{ group: "Census", volumes: 1, browseOnly: null, fulltextOnly: null }]);
+    expect(r.untyped).toEqual({ volumes: 1, browseOnly: null, fulltextOnly: null });
   });
 
   it("is incomplete when fewer volumes came back than upstream counted", () => {
@@ -158,7 +158,7 @@ describe("volumeRollup", () => {
     const r = await volumeRollup(BASE, LOCAL, search);
     expect(mockFulltext).toHaveBeenCalledTimes(3);
     expect(mockFulltext.mock.calls.every(([names]) => names.length <= FULLTEXT_BATCH)).toBe(true);
-    expect(r.byRecordType).toEqual([{ group: "Census", volumes: 250, browseOnly: null }]);
+    expect(r.byRecordType).toEqual([{ group: "Census", volumes: 250, browseOnly: null, fulltextOnly: null }]);
   });
 
   it("checks full text only for volumes with no indexed images", async () => {
@@ -167,6 +167,6 @@ describe("volumeRollup", () => {
     mockFulltext.mockResolvedValue(new Set<string>());
     const r = await volumeRollup(BASE, LOCAL, search);
     expect(mockFulltext.mock.calls.map(([names]) => names)).toEqual([["bare"]]);
-    expect(r.byRecordType).toEqual([{ group: "Census", volumes: 2, browseOnly: 1 }]);
+    expect(r.byRecordType).toEqual([{ group: "Census", volumes: 2, browseOnly: 1, fulltextOnly: 0 }]);
   });
 });

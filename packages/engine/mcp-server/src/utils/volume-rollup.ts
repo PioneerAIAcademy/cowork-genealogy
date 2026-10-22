@@ -117,16 +117,21 @@ async function fulltextFor(names: string[], principal: Principal): Promise<Set<s
   return new Set(sets.flatMap((s) => [...(s as Set<string>)]));
 }
 
-/** Browse-only: no name-indexed images and not full-text searchable. */
-function isBrowseOnly(group: MetadataRmsGroup, fulltext: Set<string>): boolean {
-  return !((group.indexedChildCount ?? 0) > 0) && !fulltext.has(group.groupName);
+/**
+ * A volume with no name-indexed images is either full-text-only (reachable by
+ * `fulltext_search`) or browse-only (image by image); an indexed one is neither.
+ */
+function access(group: MetadataRmsGroup, fulltext: Set<string>): "fulltextOnly" | "browseOnly" | null {
+  if ((group.indexedChildCount ?? 0) > 0) return null;
+  return fulltext.has(group.groupName) ? "fulltextOnly" : "browseOnly";
 }
 
 /**
  * Count volumes per record-type group. A volume counts once in every group its
  * coverages reach, ancestors included (a Baptism volume is also Religious), so
  * the buckets can sum past `totalVolumes`. `untyped` holds volumes that reach
- * no group. `browseOnly` is null when the full-text check did not answer.
+ * no group. `browseOnly` and `fulltextOnly` are null when the full-text check
+ * did not answer.
  */
 export function rollup(
   groups: MetadataRmsGroup[],
@@ -135,21 +140,22 @@ export function rollup(
   complete: boolean,
 ): VolumeRollup {
   const buckets = new Map<string, VolumeRollupBucket>();
-  const untyped: VolumeRollup["untyped"] = { volumes: 0, browseOnly: fulltext ? 0 : null };
+  const unknown = fulltext ? 0 : null;
+  const untyped: VolumeRollup["untyped"] = { volumes: 0, browseOnly: unknown, fulltextOnly: unknown };
   for (const g of groups) {
-    const browse = fulltext ? isBrowseOnly(g, fulltext) : false;
+    const kind = fulltext ? access(g, fulltext) : null;
     const names = groupsForVolume(g);
     const targets: VolumeRollup["untyped"][] = names.size === 0 ? [untyped] : [...names].map((name) => {
       let b = buckets.get(name);
       if (!b) {
-        b = { group: name, volumes: 0, browseOnly: fulltext ? 0 : null };
+        b = { group: name, volumes: 0, browseOnly: unknown, fulltextOnly: unknown };
         buckets.set(name, b);
       }
       return b;
     });
     for (const b of targets) {
       b.volumes++;
-      if (browse && b.browseOnly != null) b.browseOnly++;
+      if (kind && b[kind] != null) (b[kind] as number)++;
     }
   }
   const byRecordType = RECORD_TYPE_GROUP_NAMES.flatMap((name) => {

@@ -827,7 +827,8 @@ as absent rather than guessing.
         description:
           "Set true on a place survey to also get `summary`: every matching volume " +
           "(not just this page) counted by record-type group, with how many are " +
-          "browse-only, plus an untyped bucket. A volume counts in every group its " +
+          "browse-only and how many full-text-only, plus an untyped bucket. A volume " +
+          "counts in every group its " +
           "coverages reach, parents included. First page only — not with pageToken. " +
           "Slower: it reads all matching volumes. If it cannot be computed, the page " +
           "still returns, with `summaryError` saying why.",
@@ -1005,8 +1006,8 @@ not ask for it.
 |-------|------|---------|
 | `totalVolumes` | integer | Upstream `totalCount` for the search. |
 | `complete` | boolean | False when the volumes exceeded the rollup's cap (10 pages of 1,000) or fewer came back than upstream counted. |
-| `byRecordType` | `{ group, volumes, browseOnly }[]` | One row per [record-type group](#the-group-vocabulary) with at least one volume, in vocabulary order. |
-| `untyped` | `{ volumes, browseOnly }` | Volumes whose coverages reach no group. |
+| `byRecordType` | `{ group, volumes, browseOnly, fulltextOnly }[]` | One row per [record-type group](#the-group-vocabulary) with at least one volume, in vocabulary order. |
+| `untyped` | `{ volumes, browseOnly, fulltextOnly }` | Volumes whose coverages reach no group. |
 
 A volume counts in **every** group its coverages reach, ancestors included (a
 Baptism volume is also Religious), exactly as a `recordTypeGroups: [group]`
@@ -1015,9 +1016,11 @@ filter would return it: a coverage is in a group when its
 contains an id from `conceptIdsForGroups([group])`. Buckets can therefore sum
 past `totalVolumes`.
 
-`browseOnly` counts volumes with no indexed images (`indexedChildCount` 0 or
-absent) that the full-text endpoint does not list. It is `null`, not 0, when any
-full-text batch failed: unknown is not "none".
+A volume with no indexed images (`indexedChildCount` 0 or absent) counts in
+`fulltextOnly` when the full-text endpoint lists it (reachable by
+`fulltext_search`, so research-plan routes it there) and in `browseOnly` when it
+does not (image by image). An indexed volume counts in neither. Both are `null`,
+not 0, when any full-text batch failed: unknown is not "none".
 
 **How it fetches.** The rollup runs beside the page call, with its own body:
 the same search at `pageSize: 1000` (upstream answers 400 above that; probed

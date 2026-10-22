@@ -145,11 +145,16 @@ export interface VolumeSearchResult {
   summaryError?: string;
 }
 
-/** Volumes in one record-type group; `browseOnly` is null when the full-text check failed. */
+/**
+ * Volumes in one record-type group. Of those with no name-indexed images,
+ * `fulltextOnly` are full-text searchable and `browseOnly` are not; both are null
+ * when the full-text check failed.
+ */
 export interface VolumeRollupBucket {
   group: string;
   volumes: number;
   browseOnly: number | null;
+  fulltextOnly: number | null;
 }
 
 /**
@@ -162,5 +167,5 @@ export interface VolumeRollup {
   totalVolumes: number;
   complete: boolean;
   byRecordType: VolumeRollupBucket[];
-  untyped: { volumes: number; browseOnly: number | null };
+  untyped: Omit<VolumeRollupBucket, "group">;
 }
