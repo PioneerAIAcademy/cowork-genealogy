@@ -1024,14 +1024,14 @@ prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runl
 	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill
-optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
+optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=research
 	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the
 	# vendored skill-creator run_loop (real `claude -p`, blinded train/test split,
 	# best-by-held-out-score). Tunes the DESCRIPTION only — never runs the skill or
 	# any MCP tool. NOT in CI (incurs model cost). Apply best_description as a
 	# human-reviewed SKILL.md edit. Output (results.json + report.html) lands in
 	# eval/runlogs/optimizer/<ts>/. Override the model with MODEL=<id>.
-	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=tree-edit" >&2; exit 1; }
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=research" >&2; exit 1; }
 	cd eval/triggering && uv run python build_eval_set.py --skill $(SKILL)
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \

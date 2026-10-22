@@ -955,19 +955,21 @@ they have different fixes, and only one of them is a description problem.
    report a pass without scoring anything). It makes real paid model calls, is not
    in CI, and only *proposes* text you then apply by hand.
 
-   **This step does not work for an agent, and there is no instrument that
-   does.** `make optimize-skill` takes `--skill-path .../skills/$(SKILL)` and
-   `build_eval_set.py` exits `ERROR: no skill` when that directory is absent, so
-   it cannot be pointed at `agents/<name>.md`. Pointing it there would not help
-   either: the builder reads only `input.user_message`, and a converted agent's
-   suite holds `input.delegation` tests instead — measured 2026-10-21,
-   `historical-context` 0/14, `check-warnings` 0/16, `tree-edit` 0/14. The
-   trigger runner also counts a trigger only on a `Skill` tool call, never an
-   `Agent` spawn. **Agent triggering has no measurement today**, so a miss is not
-   evidence about the description — diagnose the delegation before editing one.
-   Measured on the one corpus that exists: of 28 live Cowork questions, 26 were
-   answered by the main thread calling tools directly or from its own knowledge,
-   across eight different targets including an optimizer-tuned skill.
+   **`make optimize-skill` reaches exactly one of the 32 routing targets.**
+   `build_eval_set.py --skill <name>` exits `ERROR: no skill` unless
+   `plugin/skills/<name>/` exists, so it cannot be pointed at `agents/<name>.md`;
+   of the two skill directories left, only `research` has trigger queries. Its
+   runner credits a trigger only on a `Skill` or `Read` call naming the target
+   and returns *not triggered* on any other tool, an `Agent` spawn included, so
+   pointing it at an agent would score every correct hand-off as a miss.
+
+   **The instrument for an agent is a routing negative**, not the optimizer: a
+   test whose `negative.correct_skill` names the agent asserts that an utterance
+   routes there, and the harness resolves an agent file as a valid target.
+   Eight of the 30 agents carry one today — 18 negatives between them. The other
+   22 have no triggering coverage at all, so a miss against one of those is
+   unmeasured, not evidence about its description. Add the missed utterance as a
+   negative first, and diagnose the delegation before editing any description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
