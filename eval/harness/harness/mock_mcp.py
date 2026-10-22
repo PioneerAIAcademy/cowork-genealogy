@@ -564,7 +564,8 @@ def _record_match_score(
     can see. `buildRecordedScore` is exported from the tool for exactly this.
     It files the persona production resolves for the call (the caller's
     `recordPersonaId`, else the persona a sibling assertion carries for the
-    `recordRole` asked), through the same lookup production uses.
+    `recordRole` asked), through the same lookup production uses, and the role
+    the record gives that persona when the caller named it.
 
     The same node process also runs `describeScoredPair`, which says whom the
     call is about (the record persona and the tree person) from research.json

@@ -1561,6 +1561,69 @@ def test_same_person_attests_an_explicit_record_persona_id(tmp_path):
     assert _written_scores(ws)["a_034|I3"]["record_persona_id"] == "p_child"
 
 
+def _add_assertion(ws, assertion):
+    """Append one assertion to a workspace's research.json."""
+    path = ws / "research.json"
+    research = json.loads(path.read_text(encoding="utf-8"))
+    research["assertions"].append(assertion)
+    path.write_text(json.dumps(research), encoding="utf-8")
+
+
+def _father_assertion(id_, persona, value):
+    return {
+        "id": id_, "record_id": _HH_RECORD, "record_role": "father",
+        "record_persona_id": persona, "fact_type": "name", "value": value,
+        "structured_value": None, "record_basis": "stated", "log_entry_id": "log_1",
+    }
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_the_role_the_named_persona_holds(tmp_path):
+    """Naming a persona files the role the record gives THAT persona, and the
+    answer served names the same role: the entry never lists the role asked
+    beside another persona's id."""
+    ws = _household_workspace(tmp_path)
+    served = _serve_same_person(
+        ws,
+        {"assertionId": "a_038", "treePersonId": "I3", "recordRole": "father",
+         "recordPersonaId": "p_child"},
+    )
+    entry = _written_scores(ws)["a_038|I3"]
+    assert entry["record_persona_id"] == "p_child"
+    assert entry["record_role"] == "child"
+    assert served["recordPersona"]["role"] == entry["record_role"]
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_no_persona_the_record_gives_to_several_roles(tmp_path):
+    """The record stamps the child's persona id on the father's assertion too. That
+    id names no single party, so a call for the father files no persona, as
+    production's lookup finds none, and the answer names the one group at the role."""
+    ws = _household_workspace(tmp_path)
+    research = json.loads((ws / "research.json").read_text(encoding="utf-8"))
+    for a in research["assertions"]:
+        if a["id"] == "a_034":
+            a["record_persona_id"] = "p_child"
+    (ws / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    served = _serve_same_person(
+        ws, {"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"}
+    )
+    assert _written_scores(ws)["a_038|I1"]["record_persona_id"] is None
+    assert served["recordPersona"] == {"id": None, "name": "Pierre Mouchang", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_names_nobody_production_would_refuse(tmp_path):
+    """Two fathers on the record: production refuses to choose between them, so the
+    answer served does not name one."""
+    ws = _household_workspace(tmp_path)
+    _add_assertion(ws, _father_assertion("a_050", "p_other", "Johann Mouchang"))
+    served = _serve_same_person(
+        ws, {"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"}
+    )
+    assert served["recordPersona"] == {"id": None, "name": "", "role": "father"}
+
+
 @pytest.mark.requires_engine_build
 def test_same_person_serves_each_pairing_its_own_persona(tmp_path):
     """One `~` fixture answers every pairing its test makes. Each answer names
@@ -1701,8 +1764,16 @@ def test_same_person_overlay_never_stops_the_attestation(tmp_path):
     )
     assert "a_034|I1" in _written_scores(ws)
     assert call_log[-1]["attested"] is True
-    # Nothing was overlaid, so the answer is the fixture's own.
-    assert _extract_response_dict(out)["score"] == 0.005
+    # Nothing was overlaid, so the persona and the tree person are the fixture's own.
+    # The score is no evidence of that: the overlay never touches it. What the
+    # documents alone say for this call is the father (p_father), not the fixture's
+    # child_1, so an overlay that ran despite the unreadable tree would show here.
+    fixture = json.loads(
+        (FIXTURES_DIR / "same-person-flynn-degenerate.json").read_text(encoding="utf-8")
+    )["response"]
+    served = _extract_response_dict(out)
+    assert served["recordPersona"] == fixture["recordPersona"]
+    assert served["treePerson"] == fixture["treePerson"]
 
 
 @pytest.mark.requires_engine_build
