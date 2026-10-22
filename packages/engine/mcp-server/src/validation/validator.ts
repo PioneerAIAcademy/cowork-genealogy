@@ -104,6 +104,7 @@ const CLOSED_ENUMS = {
   locality_page_section: new Set([
     "home", "getting_started", "online_records", "research_tips",
   ]),
+  locality_page_outcome: new Set(["unreachable"]),
 };
 
 // Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
@@ -1941,6 +1942,9 @@ function validateLocalities(
       if (!pr || typeof pr !== "object") continue;
       if ("section" in pr) {
         checkEnum(pr.section, "locality_page_section", `${lp}/pages_read[${j}]`, report);
+      }
+      if ("outcome" in pr) {
+        checkEnum(pr.outcome, "locality_page_outcome", `${lp}/pages_read[${j}]`, report);
       }
     }
   }

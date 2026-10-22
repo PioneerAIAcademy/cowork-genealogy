@@ -25,7 +25,8 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  StoppedBecause, Subscription, LocalityPageSection, ResolutionKind, SkipCategory,
+  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
+  SkipCategory,
 } from './enums.generated.js'
 
 // ============================================================
@@ -349,6 +350,7 @@ export interface LocalityPageRead {
   section: LocalityPageSection
   url?: string | null
   found: boolean
+  outcome?: LocalityPageOutcome
 }
 
 export interface LocalityJurisdiction {

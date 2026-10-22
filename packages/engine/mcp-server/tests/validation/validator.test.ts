@@ -2899,6 +2899,7 @@ describe("Research closed shapes", () => {
           pages_read: [
             { section: "home", url: "https://x/Norway_Genealogy", found: true },
             { section: "research_tips", url: null, found: false },
+            { section: "online_records", url: null, found: false, outcome: "unreachable" },
           ],
           source: "locality-guide",
           created: "2026-01-02",
@@ -2984,6 +2985,20 @@ describe("Research closed shapes", () => {
       expect(
         result.errors.filter((e) => e.message.includes("locality_page_section"))
       ).toEqual([]);
+    });
+
+    it("rejects an out-of-set pages_read[].outcome (locality_page_outcome)", async () => {
+      const research = maximalResearch();
+      research.localities[0].pages_read[2].outcome = "timeout";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/pages_read[2]" &&
+            e.message.includes("'timeout' is not a valid locality_page_outcome")
+        )
+      ).toBe(true);
     });
   });
 

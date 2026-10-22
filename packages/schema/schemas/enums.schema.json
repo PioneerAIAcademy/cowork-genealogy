@@ -325,6 +325,12 @@
         "research_tips"
       ]
     },
+    "locality_page_outcome": {
+      "description": "Why a locality's pages_read[] entry has found: false when the cause was not a missing page (localities section). unreachable: the wiki server failed (5xx or no connection) after a retry, so the page may exist.",
+      "enum": [
+        "unreachable"
+      ]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",

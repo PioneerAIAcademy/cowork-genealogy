@@ -1743,6 +1743,9 @@
               },
               "found": {
                 "type": "boolean"
+              },
+              "outcome": {
+                "$ref": "enums.schema.json#/$defs/locality_page_outcome"
               }
             }
           }

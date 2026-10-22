@@ -22,20 +22,31 @@ function PageCoverage({ pagesRead }: { pagesRead: LocalityPageRead[] }): React.J
     <div className={styles.coverage}>
       {WIKI_SECTIONS.map(({ key, label }) => {
         const page = bySection.get(key)
-        const state = page == null ? 'missing' : page.found ? 'found' : 'notfound'
+        const state =
+          page == null
+            ? 'missing'
+            : page.found
+              ? 'found'
+              : page.outcome === 'unreachable'
+                ? 'unreachable'
+                : 'notfound'
         const title =
           state === 'found'
             ? `${label}: read`
             : state === 'notfound'
               ? `${label}: no page for this place (404)`
-              : `${label}: not attempted`
+              : state === 'unreachable'
+                ? `${label}: wiki unreachable — the page may exist`
+                : `${label}: not attempted`
+        const mark =
+          state === 'found' ? '✓' : state === 'notfound' ? '—' : state === 'unreachable' ? '!' : '·'
         return (
           <span
             key={key}
             className={`${styles.coverageChip} ${styles[state]}`}
             title={title}
           >
-            {state === 'found' ? '✓' : state === 'notfound' ? '—' : '·'} {label}
+            {mark} {label}
           </span>
         )
       })}

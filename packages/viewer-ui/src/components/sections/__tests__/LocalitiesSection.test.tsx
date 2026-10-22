@@ -108,4 +108,21 @@ describe('LocalitiesSection', () => {
     render(<LocalitiesSection />)
     expect(screen.getByTitle(/Research Tips: no page for this place/)).toBeInTheDocument()
   })
+
+  it('marks a found:false section with outcome unreachable as an outage, not a 404', () => {
+    mockResearch({
+      localities: [
+        makeLocality({
+          pages_read: [
+            { section: 'home', url: null, found: false, outcome: 'unreachable' },
+            { section: 'getting_started', url: null, found: false }
+          ]
+        })
+      ]
+    })
+    render(<LocalitiesSection />)
+    expect(screen.getByTitle(/Overview: wiki unreachable/)).toBeInTheDocument()
+    expect(screen.queryByTitle(/Overview: no page for this place/)).not.toBeInTheDocument()
+    expect(screen.getByTitle(/Getting Started: no page for this place/)).toBeInTheDocument()
+  })
 })

@@ -113,7 +113,7 @@ Once `place_search` (step 2) has returned the `standardPlace`, issue the survey 
 
 On `No wiki page found`, or a page that returns only generic content, record and report the gap; do not fill it from memory, and do not drop an instruction that does not depend on the page. Only a `wiki_read` on a URL `wiki_search` returned waits for that call.
 
-**An error naming wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) is an outage, not a missing page.** Retry each failed call once. If it fails again: record that section `found: false` with `url: null`; in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
+**An error naming wiki-query-api (`Could not reach wiki-query-api`, `wiki-query-api error: <status>`) is an outage, not a missing page.** Retry each failed call once. If it fails again: record that section `found: false`, `outcome: "unreachable"`, `url: null`; in the guide, say the FamilySearch Wiki could not be reached, never that it has no page; add the quirk `"FamilySearch Wiki unreachable during this survey (<sections>); these pages may exist — re-run locality-guide before relying on their absence."`; and say in `summary_for_user` that the guide was built without the FamilySearch Wiki.
 
 **All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
 
@@ -186,7 +186,7 @@ research_append({
       { section: "home", url: "<page url or null>", found: true },
       { section: "getting_started", url: "...", found: true },
       { section: "online_records", url: "...", found: true },
-      { section: "research_tips", url: "...", found: false }   // 404 or outage → found:false, still recorded; an outage also gets its quirk (Step 3)
+      { section: "research_tips", url: "...", found: false }   // 404 → found:false, still recorded; an outage adds outcome:"unreachable" and its quirk (Step 3)
     ],
     source: "locality-guide"
   }
