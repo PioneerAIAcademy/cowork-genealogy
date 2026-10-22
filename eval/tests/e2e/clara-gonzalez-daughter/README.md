@@ -28,14 +28,6 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved: true match.** The birth registration of Zulema de Jesús Silva González (Entry 184, 1897 civil registration register, Colchagua) was confirmed by reading the original image (`ark:/61903/3:1:939K-PNQ3-4`). The image shows the father's name as "Benjamín Silva y Díaz" and the mother's as "Clara González y Pimienta de Silva" — the same compound surnames seen across all five records for this family. The birth date "doce de Noviembre" (12 November 1897) and stated birth place "Aguada de San Antonio" are clearly legible. The declarant is Benjamín Silva, identified as the child's father and described as "known to the official" — the same phrase used in prior registrations for this family.
+**Resolved: true match.** The birth registration of Zulema de Jesús Silva González (Entry 184, 1897 civil registration register, Colchagua) is confirmed from the index: both parents are named as Benjamín Silva Díaz and Clara González Pimienta, with birth date 12 November 1897 in the Pichilemu registration district, Colchagua. The compound surnames match the tree person across all known records for this family.
 
-**Calibration (licensed).** Two other entries from the same civil registration register (Cáhuil, Colchagua, 1895–1896) were read and cross-checked against their FamilySearch index entries:
-- Entry 12 (Juan Francisco Bernabé Silva González): birth date 27 December 1895, father Benjamín Silva Díaz, mother Clarisa González Pimienta de Silva — image matched index exactly.
-- Entry 13 (Manuel Jesús Silva González): birth date 27 December 1895, same parents — image matched index exactly.
-
-Both matched, licensing the reading of Entry 184 for child name, parents and date.
-
-**Marriage record cross-check.** The marriage record names the groom's father's mother as Mercedes Díaz and the bride's mother as Antonia Pimienta, locking the compound surnames to this specific family and ruling out coincidental name matches.
-
-**Place note.** The image states "Aguada de San Antonio" as the birth place, within the Pichilemu registration district, Colchagua. The FamilySearch index wrongly standardises this as "Petorca, Aconcagua"; the correct jurisdiction is Colchagua (now O'Higgins). The finding uses "Aguada de San Antonio, Colchagua, Chile" as stated in the record.
+**Marriage record cross-check.** The marriage record names the groom's father's mother as Mercedes Díaz and the bride's mother as Antonia Pimienta, locking both compound second surnames to this specific family and ruling out coincidental name matches.

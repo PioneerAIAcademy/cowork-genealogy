@@ -15,10 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "easy",
-  "image_basis": true,
   "hint": {
     "persona_ark": "ark:/61903/1:1:Q2S2-PCBP",
     "identity": "same"
   },
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 5, hint-samples.csv row 170, flag adds_daughter, confidence 3). Resolved as a true match: the 1897 civil birth registration of Zulema de Jesus Silva Gonzalez at Aguada de San Antonio, Colchagua, confirmed by reading the original image (ark:/61903/3:1:939K-PNQ3-4); parents named as Benjamín Silva y Díaz and Clara González y Pimienta de Silva."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 5, hint-samples.csv row 170, flag adds_daughter, confidence 3). Resolved as a true match from the index: the 1897 civil birth registration of Zulema de Jesús Silva González at Pichilemu, Colchagua; parents named as Benjamín Silva Díaz and Clara González Pimienta."
 }
