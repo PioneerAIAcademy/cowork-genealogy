@@ -919,8 +919,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // skill declared, plus `Read` for the Narration line's read of research.json
   // and the name match against tree.gedcomx.json. `person_warnings` (issue
   // #2942) runs the impossible-date check over the project tree when it holds
-  // the audited person; it reads the tree and writes nothing. Writes nothing,
-  // so no hook route. A request belonging to conflict-resolution,
+  // the audited person; it reads the tree and writes nothing.
+  // `research_log_append` (#3524): inside a project it logs its report as one
+  // `source_evaluation` entry and writes nothing else; that tool carries no
+  // `section`, so still no hook route. A request belonging to conflict-resolution,
   // check-warnings or extraction is handed back by name, so no spawn tool.
   "source-evaluation.md": {
     tools: [
@@ -930,6 +932,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "source_attachments",
       "person_quality",
       "person_warnings",
+      "research_log_append",
     ],
     denies: [],
   },
