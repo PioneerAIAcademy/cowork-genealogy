@@ -94,6 +94,12 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 # out ~1.7× faster than the 300s wall-clock cap. Tests whose record
 # requires longer thinking should also bump `execution.max_wall_clock_
 # seconds` (see eval/tests/unit/record-extraction/*.json).
+#
+# Since 2026-10-22 the options set `include_partial_messages`, so every
+# streamed token delta resets the window: silence now means no tokens, not
+# no finished turn. Before that, a final report written in one 3-minute
+# turn read as a stall and was retried from scratch (source-screen judge:
+# 4 copies stalled twice each, every one after all reads, before any text).
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
 
 
@@ -1239,6 +1245,11 @@ async def run_skill(
         # (see _filter_cli_stderr) instead of letting it flood the console on
         # aborted runs. Setting this is also what makes the SDK pipe stderr.
         stderr=_filter_cli_stderr,
+        # Stream each token delta as a StreamEvent so the silence watchdog
+        # sees a long generation as activity, not a stall. The loop has no
+        # branch for StreamEvent, so it only resets the watchdog; the complete
+        # AssistantMessage still arrives as before.
+        include_partial_messages=True,
     )
 
     text_chunks: list[str] = []
