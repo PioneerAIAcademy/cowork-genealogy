@@ -250,6 +250,17 @@ const EXAMPLES: Record<string, string> = {
   "promoted": false,
   "created": "2026-07-18"
 }`,
+
+  namesakes: `{
+  "person_id": "I1",
+  "name": "John Smith",
+  "place": "San Francisco, California, United States",
+  "time_period": "born about 1873",
+  "record_ids": ["ark:/61903/1:1:Q295-JLGZ"],
+  "log_entry_ids": ["log_004"],
+  "notes": "A different John Smith, a clerk, in the 1880 census of San Francisco",
+  "created": "2026-10-16"
+}`,
 };
 
 /** `project` is a singleton: update-only field writes, no `entry`. */
@@ -415,6 +426,22 @@ export function exampleFor(
       },
       not_reached: []
     }
+  }
+})`;
+    }
+    // A summary's narrative and search summary are refused one without the
+    // other (`narrativeAndSearchSummaryTogether`), so the generic placeholder
+    // would contradict the refusal it is attached to.
+    if (section === "proof_summaries") {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "update",
+  entryId: "<existing-ps_-id>",
+  fields: {
+    /* only the fields you are changing; after a later search, these two together: */
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\n... **What could resolve it:** the 1885 county estate file.",
+    exhaustive_search_summary: "Searched ... and the 1850-1880 censuses. Not yet examined: the 1885 county estate file."
   }
 })`;
     }

@@ -1,0 +1,292 @@
+{
+  "log_id": "log_005",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:10:30.492Z",
+  "returned_count": 3,
+  "payload": {
+    "query": {
+      "count": 20,
+      "givenName": "Iram",
+      "givenNameAlt": "Hiram",
+      "projectPath": "<workspace>",
+      "recordType": "census",
+      "residencePlace": "Washington, New York, United States",
+      "residenceYearFrom": 1820,
+      "residenceYearTo": 1840,
+      "surname": "Hyde"
+    },
+    "totalMatches": 3,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:XHGW-BVR",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1820",
+            "place": "Hampton, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "David H Hyde",
+        "score": 3.8119798,
+        "confidence": 2,
+        "collectionId": "1803955",
+        "collectionTitle": "United States, Census, 1820",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1803955",
+        "recordTitle": "Household of David H Hyde, \"United States, Census, 1820\"",
+        "recordArk": "ark:/61903/1:2:1TNX-LBR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10418407765",
+              "ark": "ark:/61903/1:1:XHGW-BVR",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "David H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1820",
+                  "standard_date": "1820",
+                  "place": "Hampton, Washington, New York, United States",
+                  "standard_place": "Hampton, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21786157765",
+              "title": "Household of David H Hyde, \"United States, Census, 1820\"",
+              "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGW-BVR : Sun Mar 10 23:47:33 UTC 2024), Entry for David H Hyde, 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TNX-LBR"
+            },
+            {
+              "id": "sd_c_1803955",
+              "title": "United States, Census, 1820",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1803955"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB4-X91"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10418407765",
+              "url": "#p_10418407765"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608362",
+              "name": "Hampton, Washington, New York, United States",
+              "latitude": 43.5478,
+              "longitude": -73.2989
+            }
+          ]
+        },
+        "primaryId": "p_10418407765"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XHB3-SXZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Queensbury, Warren, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John H Hide",
+        "score": 2.78126,
+        "confidence": 2,
+        "collectionId": "1786457",
+        "collectionTitle": "United States, Census, 1840",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1786457",
+        "recordTitle": "Household of John H Hide, \"United States, Census, 1840\"",
+        "recordArk": "ark:/61903/1:2:1TG5-FQZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10423163230",
+              "ark": "ark:/61903/1:1:XHB3-SXZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hide",
+                  "given": "John H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Queensbury, Warren, New York, United States",
+                  "standard_place": "Queensbury, Warren, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21791281630",
+              "title": "Household of John H Hide, \"United States, Census, 1840\"",
+              "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHB3-SXZ : Sun Mar 10 07:21:49 UTC 2024), Entry for John H Hide, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TG5-FQZ"
+            },
+            {
+              "id": "sd_c_1786457",
+              "title": "United States, Census, 1840",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1786457"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYTB-9V9N"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_10423163230",
+              "url": "#p_10423163230"
+            }
+          ],
+          "places": [
+            {
+              "id": "4613037",
+              "name": "Queensbury, Warren, New York, United States",
+              "latitude": 43.3583,
+              "longitude": -73.6733
+            }
+          ]
+        },
+        "primaryId": "p_10423163230"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZTR-JRKY",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hyde",
+        "score": -3.613136,
+        "confidence": 1,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Mrs Mary Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B8T-D2S8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292252532097",
+              "ark": "ark:/61903/1:1:6ZTR-JRKY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292252532096",
+              "ark": "ark:/61903/1:1:6ZTR-JRKT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde",
+                  "prefix": "Mrs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1800 to 1809",
+                  "standard_date": "Bet 1800 and 1809",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292252532096",
+              "person2": "p_292252532097"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173790702071",
+              "title": "Entry for Mrs Mary Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZTR-JRKT : Sun Mar 10 18:47:50 UTC 2024), Entry for Mrs Mary Hyde and Hyde, from 1800 to 1809.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B8T-D2S8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89DX-DFMQ"
+            },
+            {
+              "id": "sd_auto_M9J1-QD2",
+              "title": "United States, Louisiana, Residences, from 1805 to 1978"
+            },
+            {
+              "id": "src_p_p_292252532097",
+              "url": "#p_292252532097"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            }
+          ]
+        },
+        "primaryId": "p_292252532097"
+      }
+    ]
+  }
+}

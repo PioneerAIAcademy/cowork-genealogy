@@ -1,0 +1,19 @@
+{
+ "log_id": "log_047",
+ "tool": "fulltext_search",
+ "retrieved": "2026-10-20T18:22:24.865Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 10,
+   "imageGroupNumber": "007943147",
+   "keywords": "+\"Martha Barker\" +Jonathan",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2"
+  },
+  "totalResults": 5,
+  "returned": 5,
+  "offset": 0,
+  "hasMore": false,
+  "results": []
+ }
+}
