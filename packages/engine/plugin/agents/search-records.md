@@ -70,8 +70,9 @@ You are invoked with a delegation message:
 | `projectPath` | yes | The absolute project-folder path. |
 | `questionId` | no | The `q_` question the search serves. |
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
+| `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId`. |
 
-Resolve everything else yourself, starting cold: read the plan item with `research_query` (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -130,10 +131,9 @@ step, and stop. The caller decides what runs next.
 ### 1. Identify the plan item
 
 Find the plan item the delegation names (`planItemId`), or when it names none the next plan item with `status: "planned"` in the active plan for the
-current question. You start cold: you hold nothing from the caller's run, and the
-delegation carries ids, not the plan item's text or status. Read it yourself.
+current question. When the delegation carries `plan_item` and its `id` equals `planItemId`, that is the plan item and its status: issue no `research_query` this invocation, and skip the rest of this section's query rules. A `plan_item` whose `id` differs from `planItemId` is not the item you were asked to run: ignore it, and read `planItemId` with `research_query` before any search.
 
-**If you need project state you do not already have, fetch it with
+**With no matching `plan_item`, fetch the project state you lack with
 `research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
 grows all run, so a whole-file read costs more context every time.
 

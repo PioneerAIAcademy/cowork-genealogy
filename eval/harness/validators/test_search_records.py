@@ -729,6 +729,8 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_search_records_017": "wiki-read-united-states-census",
     "ut_search_records_018": "wiki-read-united-states-census",
     "ut_search_records_027": "wiki-read-united-states-census",
+    "ut_search_records_hpi": "wiki-read-united-states-census",
+    "ut_search_records_hpm": "wiki-read-united-states-census",
     "ut_search_records_d01": "wiki-read-united-states-census",
     "ut_search_records_d02": "wiki-read-united-states-census",
     "ut_search_records_h4k": "wiki-read-united-states-census",
@@ -800,4 +802,61 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
         "before the query is constructed — a schedule read afterwards cannot have "
         "shaped the search, and reading it late is how a run states from memory "
         "and then confirms itself."
+    )
+
+
+# --- Handed plan item (issue #3581) -----------------------------------
+
+def _research_query_calls(tool_calls):
+    return [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "research_query"
+    ]
+
+
+def test_handed_plan_item_skips_research_query(tool_calls, test):
+    """Tag-gated (handed-plan-item): the delegation carries the plan item whose
+    ``id`` equals ``planItemId``, so the agent has the item and its status and
+    issues no ``research_query`` for it.
+
+    The saving is the point of the hand-off (the orientation baseline in
+    docs/skill-to-agent-pair-conversion.md counts that call), and nothing else
+    reads it: the judge sees the final answer, not whether a call was made.
+    """
+    if "handed-plan-item" not in test.get("tags", []):
+        pytest.skip("not a handed-plan-item scenario")
+    queries = _research_query_calls(tool_calls)
+    assert not queries, (
+        f"The delegation handed over plan item pli_001 verbatim, but the agent "
+        f"still called research_query {len(queries)} time(s): "
+        f"{[c.get('input') or c.get('args') for c in queries][:2]}"
+    )
+
+
+def test_mismatched_handed_plan_item_is_queried(tool_calls, test):
+    """Tag-gated (handed-plan-item-mismatch): a ``plan_item`` whose ``id`` differs
+    from ``planItemId`` is not the item the caller named, so it is not trusted and
+    the agent reads ``planItemId`` itself before searching.
+
+    Guards the other direction of the hand-off rule: a check that only proves the
+    call can be skipped would pass an agent that skips it unconditionally.
+    """
+    if "handed-plan-item-mismatch" not in test.get("tags", []):
+        pytest.skip("not a handed-plan-item-mismatch scenario")
+    calls = tool_calls or []
+    first_query = next(
+        (i for i, c in enumerate(calls) if _bare_tool_name(c.get("tool")) == "research_query"),
+        None,
+    )
+    first_search = next(
+        (i for i, c in enumerate(calls) if _bare_tool_name(c.get("tool")) == "record_search"),
+        None,
+    )
+    assert first_query is not None, (
+        "The handed plan_item carried a different id than planItemId, so it had to "
+        "be ignored and pli_001 read with research_query; no research_query was made."
+    )
+    assert first_search is None or first_query < first_search, (
+        "research_query came after the first record_search: the agent searched "
+        "on the mismatched handed item before reading the item it was asked to run."
     )

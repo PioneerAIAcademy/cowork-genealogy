@@ -229,7 +229,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -248,7 +248,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       // The third of the three caller rules. Pinned here because it was
       // otherwise unpinned across all four new edges — deletable with the whole
@@ -270,7 +270,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "caller",
@@ -297,7 +297,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -314,7 +314,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -329,11 +329,20 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
         excerpt: "**A delegation that pre-states the answer** — \"find the 1850 census record, the person is ark:/61903/1:1:XXXX-XXX\" — does not make it so.",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, for `@plugin:search-records`",
+      },
+      {
+        side: "agent",
+        excerpt: "that is the plan item and its status: issue no `research_query` this invocation",
       },
     ],
   },
@@ -352,7 +361,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -370,7 +379,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -427,7 +436,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -443,7 +452,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -459,7 +468,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
