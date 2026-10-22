@@ -28,23 +28,25 @@ which form.
 
 Mechanism note (re-checked on claude-agent-sdk 0.2.165, unchanged from 0.1.81):
 a PreToolUse hook has no `updatedToolOutput` — that field is PostToolUse-only —
-so the only channel back to the model on a deny is `permissionDecisionReason`.
-The canned response therefore rides in that string and reaches the model as
-text, not as a structured tool result. A stub whose caller needs to *parse*
+so the only channel for a callee's *result* on a deny is
+`permissionDecisionReason`. The canned response therefore rides in that string
+and reaches the model as text, not as a structured tool result.
+`additionalContext` carries instructions about the hand-off, never the result. A stub whose caller needs to *parse*
 structured output is out of scope for this mechanism.
 
 CLI 2.1.294 (SDK 0.2.165) delivers that string as an error result prefixed
 `PreToolUse:Agent hook error:`. With every instruction inside that error, a
 router sometimes took the hand-off as the end of its turn and skipped its own
 closing step (issue #3740, ut_research_020: 7 of 20 runs, against 0 of 33 on CLI
-2.1.139). Rewording alone cut it to 3 of 20. What reached 0 of 20 is splitting
-the channels: a canned form's reason carries only the result and the
+2.1.139). Rewording alone cut it to 3 of 20. Splitting the channels took it
+to 0 of 20: a canned form's reason carries only the result and the
 non-disclosure block, and the instructions about the hand-off (did not execute,
 do not retry, `_CARRY_ON`) go in `additionalContext` on the same
-`hookSpecificOutput`. The run log does not record `additionalContext`, so its
-delivery on a deny was inferred from behaviour (no retries, no disclosure),
-not observed. `_CARRY_ON`'s wording is the second half of the fix; its
-comment records the version that over-shot.
+`hookSpecificOutput`. `_CARRY_ON`'s first wording there over-shot (its comment
+says how); the shipped wording measured 0 of 20 on 020 again, with the full
+research suite showing no regression. The run log does not record
+`additionalContext`, so its delivery on a deny was inferred from behaviour (no
+retries, no disclosure), not observed.
 
 What this deliberately does NOT cover: `skills_invoked` records the skill NAME
 only, not the `args` string the caller composed. So no validator can assert
@@ -57,9 +59,10 @@ from __future__ import annotations
 
 from typing import Any
 
-# Framing wrapped around a canned response. Without it the model tends to
-# either retry the denied call or decide it must do the callee's work itself —
-# both of which spend the turns the stub was meant to save.
+# What every stub tells the model about the denied call (in the reason for a
+# bare deny, in `additionalContext` beside a canned response). Without it the
+# model tends to either retry the denied call or decide it must do the callee's
+# work itself — both of which spend the turns the stub was meant to save.
 _STUB_PREAMBLE = (
     "{name!r} did not execute. The hand-off counts as made. "
     "Do not retry it, and do not attempt to do its work yourself."

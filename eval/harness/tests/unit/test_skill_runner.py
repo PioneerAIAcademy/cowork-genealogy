@@ -1794,6 +1794,9 @@ def test_stop_at_stub_ends_the_run_at_a_stubbed_spawn(tmp_path, monkeypatch):
     )
     assert returns[1]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert returns[1]["continue_"] is False
+    assert "additionalContext" not in returns[1]["hookSpecificOutput"], (
+        "a stop that ends the turn must not tell the router its turn goes on"
+    )
 
 
 def test_stop_at_stub_ends_the_run_at_a_stubbed_skill_call(tmp_path, monkeypatch):
