@@ -294,8 +294,9 @@ error, exactly as `person_warnings` does.
 `censusChildrenGapTool`, the async entry point that adds tree mode),
 `src/types/census-children-gap.ts`, `tests/tools/census-children-gap.test.ts`,
 `tests/tools/census-children-gap-tree.test.ts`, `dev/try-census-children-gap.ts`.
-Tree mode reuses `findAnchor` and `isNonBiologicalSubtype` from
-`src/tools/person-warnings.ts` and the date parser in `src/utils/date-helpers.ts`;
+Tree mode reuses `findAnchor` from `src/utils/tree-person.ts`,
+`isNonBiologicalSubtype` from `src/tools/person-warnings.ts`, and the date parser
+in `src/utils/date-helpers.ts`;
 `tests/tools/no-project.test.ts` covers its folder states. Registered in `src/tool-schemas.ts`, `src/server.ts`, `manifest.json`,
 `src/tool-result.ts` (`OK_FALSE_IS_FAILURE`, `NOT_A_DOCUMENT_WRITER`),
 `dev/smoke-calls.ts`, and the eval harness's `mock_mcp.py` (`LIVE_TOOLS`,

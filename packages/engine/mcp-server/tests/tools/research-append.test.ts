@@ -37,6 +37,19 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
       };
       return coords[name] ?? null;
     }),
+    // The localities first-place rule (#3696). Unlisted text is lookup_failed,
+    // so no test reaches the live Places API.
+    checkFirstPlace: vi.fn(async (text: string) => {
+      const verdicts: Record<string, { status: string; standardPlace?: string }> = {
+        "Ringebu, Oppland, Norway": { status: "match", standardPlace: "Ringebu, Oppland, Norway" },
+        "Funchal, Madeira, Portugal": { status: "match", standardPlace: "Funchal, Madeira, Portugal" },
+        "Helvesieck, Schneverdingen, Soltau, Hanover":
+          { status: "mismatch", standardPlace: "Schneverdingen, Soltau, Hanover, Prussia, Germany" },
+        "Sierkopas, Germany": { status: "mismatch", standardPlace: "Germany" },
+        "Nowhereville, Atlantis": { status: "not_found" },
+      };
+      return verdicts[text] ?? { status: "lookup_failed" };
+    }),
   };
 });
 
@@ -46,6 +59,9 @@ import {
   mintedFromThisRecord,
   personaReachable,
   coreIdentifierContradictionInvariants,
+  parentSide,
+  unlinkedParentNarrativeInvariants,
+  unlinkedParentProofInvariants,
 } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -56,7 +72,7 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace, standardPlaceToCoords } from "../../src/utils/place-resolver.js";
+import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
   who: "Census enumerator",
@@ -3069,6 +3085,272 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // MHGK-WT7 (issue #3659): `probable` naming the parents, every parent assertion unlinked.
+  describe("a conclusion above not_proved may not rest on a parent nobody identified", () => {
+    const asr = (id: string, record_role: string, record_id = "rec1", extra: Record<string, unknown> = {}) => ({
+      ...validAssertion(id), record_role, record_id, ...extra,
+    });
+    const childOf = (id: string, related_person_role: string) => asr(id, "child", "rec1", {
+      fact_type: "relationship", value: "child of William Barker",
+      structured_value: { relationship_type: "child", related_person_role },
+    });
+    const proof = (tier: string, supporting: string[]) => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: supporting, resolved_conflict_ids: [],
+      exhaustive_search_summary: "census", narrative_markdown: "## C\n...",
+    });
+    const project = async (assertions: Record<string, unknown>[], linkedIds: string[] = []) => {
+      const state = phase3Research();
+      state.assertions.push(...assertions);
+      state.person_evidence = liveLinks("a_001", ...linkedIds);
+      await writeProject(state);
+    };
+    const append = (entry: Record<string, unknown>) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry } as never);
+
+    it("refuses when the cited father side has no linked assertion", async () => {
+      await project([asr("a_010", "father")]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await append(proof("probable", ["a_001", "a_010"]));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/father \(a_010\).*person-evidence/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("allows the father linked on another record: per person, not per persona", async () => {
+      await project([asr("a_010", "father", "rec1"), asr("a_011", "father_of_bride", "rec2")], ["a_011"]);
+      const r = await append(proof("probable", ["a_001", "a_010", "a_011"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("refuses when the father's only link is speculative: a candidate, not an identity", async () => {
+      const state = phase3Research();
+      state.assertions.push(asr("a_010", "father"));
+      state.person_evidence = [...liveLinks("a_001"), { ...liveLinks("a_010")[0], id: "pe_009", person_id: "I2", confidence: "speculative" }];
+      await writeProject(state);
+      const r = await append(proof("probable", ["a_001", "a_010"]));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("father (a_010)");
+    });
+
+    it("refuses when only an unlinked 'child of' assertion cites the father", async () => {
+      await project([childOf("a_012", "father")]);
+      const r = await append(proof("probable", ["a_001", "a_012"]));
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("father (a_012)");
+    });
+
+    it("allows a linked 'child of' assertion with no father persona cited", async () => {
+      await project([childOf("a_012", "father")], ["a_012"]);
+      const r = await append(proof("probable", ["a_001", "a_012"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows not_proved, the sanctioned record of a blocked attempt", async () => {
+      await project([asr("a_010", "father")]);
+      const r = await append(proof("not_proved", ["a_001", "a_010"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    const pre = (assertions: Record<string, unknown>[], linkedIds: string[] = [], superseded: string[] = []) => ({
+      assertions,
+      person_evidence: [
+        ...liveLinks(...linkedIds),
+        ...liveLinks(...superseded).map((pe) => ({ ...pe, superseded_by: "pe_999" })),
+      ],
+    });
+
+    it.each([
+      ["father_of_deceased", "father"], ["mother_of_deceased", "mother"], ["mother_1", "mother"],
+      ["groom_father", "father"], ["Father", "father"], ["parent", "parent"],
+      ["godparent_1", null], ["maternal_grandfather", null], ["father_of_mother", null],
+      ["father_in_law", null], ["child_2", null], ["wife", null], ["head_of_household", null],
+    ])("parentSide(%s) is %s", (role, side) => {
+      expect(parentSide(role)).toBe(side);
+    });
+
+    it("refuses an unlinked father_of_deceased and allows it linked", () => {
+      const a = [asr("a_010", "father_of_deceased")];
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010"]), pre(a))).toHaveLength(1);
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010"]), pre(a, ["a_010"]))).toEqual([]);
+    });
+
+    it("a disproof cites the parent it rules out, so disproved is not checked", () => {
+      const a = [asr("a_010", "father")];
+      expect(unlinkedParentProofInvariants(proof("disproved", ["a_010"]), pre(a))).toEqual([]);
+      expect(unlinkedParentProofInvariants(proof("possible", ["a_010"]), pre(a))).toHaveLength(1);
+    });
+
+    it("a superseded link does not satisfy a side", () => {
+      const a = [asr("a_010", "father")];
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010"]), pre(a, [], ["a_010"]))).toHaveLength(1);
+    });
+
+    it("unlinked godparents, grandparents and household members cite no side", () => {
+      const a = ["godparent_1", "maternal_grandfather", "father_of_mother", "child_2", "wife"]
+        .map((role, i) => asr(`a_02${i}`, role));
+      expect(unlinkedParentProofInvariants(proof("probable", a.map((x) => x.id)), pre(a))).toEqual([]);
+    });
+
+    it("a linked father or mother satisfies a 'parent' citation, and the reverse", () => {
+      const a = [asr("a_010", "father_of_deceased"), asr("a_011", "parent"), asr("a_012", "mother", "rec2")];
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_010", "a_011"]), pre(a, ["a_010"]))).toEqual([]);
+      expect(unlinkedParentProofInvariants(proof("probable", ["a_011", "a_012"]), pre(a, ["a_011"]))).toEqual([]);
+    });
+
+    it("reads claim-level citations", () => {
+      const a = [asr("a_010", "mother")];
+      const entry = { ...proof("probable", []), claims: [{ claim: "maternity", supporting_assertion_ids: ["a_010"] }] };
+      expect(unlinkedParentProofInvariants(entry, pre(a))).toHaveLength(1);
+    });
+
+    it("refuses each unidentified side and names it", () => {
+      const a = [asr("a_010", "father"), asr("a_011", "mother"), asr("a_012", "mother", "rec2")];
+      const [msg] = unlinkedParentProofInvariants(proof("possible", ["a_010", "a_011", "a_012"]), pre(a, ["a_012"]));
+      expect(msg).toContain("father (a_010)");
+      expect(msg).not.toContain("mother (");
+      expect(msg).toContain("does NOT fix this");
+    });
+  });
+
+  // ut_proof_conclusion_32f (#3659): the parent's ids dropped from the citation,
+  // "the son of William Barker" left in the conclusion.
+  describe("a conclusion above not_proved may not state a parent nobody identified", () => {
+    const named = (id: string, record_role: string, given: string, record_id = "rec1") => ({
+      ...validAssertion(id), record_role, record_id, fact_type: "name",
+      value: `${given} Barker`, structured_value: { given, surname: "Barker" },
+    });
+    const proof = (tier: string, narrative: string, supporting = ["a_001"]) => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: supporting, resolved_conflict_ids: [],
+      exhaustive_search_summary: "census", narrative_markdown: narrative,
+    });
+    const pre = (assertions: Record<string, unknown>[], linkedIds: string[] = []) => ({
+      assertions: [validAssertion("a_001"), ...assertions],
+      person_evidence: liveLinks("a_001", ...linkedIds),
+    });
+    const father = [named("a_010", "father", "William")];
+
+    it("refuses the ids dropped and the parentage left in the prose", async () => {
+      const state = phase3Research();
+      state.assertions.push(...father);
+      state.person_evidence = liveLinks("a_001");
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append",
+        entry: proof("probable", "**Conclusion:** born at Whitehaven, the son of William Barker, a sailor."),
+      } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/William \(a_010\).*person-evidence/);
+    });
+
+    it.each([
+      ["the son of William Barker"],
+      ["His parents were William and Martha Barker"],
+      ["born to William Barker and his wife"],
+      ["christened at St James, Whitehaven, son of William Barker (a sailor)"],
+    ])("refuses %j", (phrase) => {
+      expect(unlinkedParentNarrativeInvariants(proof("possible", `Jonathan was ${phrase}.`), pre(father))).toHaveLength(1);
+    });
+
+    it.each([
+      ["The evidence shows Jonathan was the son of William Barker."],
+      ["Records establish Jonathan as the son of William Barker."],
+      ["Born in Whitehaven, Cumberland, United States, the son of William Barker."],
+      ["Given the correlation, Jonathan is the son of William Barker."],
+      ["The preponderance of evidence identifies him as the son of William Barker."],
+    ])("refuses %j", (phrase) => {
+      expect(unlinkedParentNarrativeInvariants(proof("possible", `Jonathan was ${phrase}.`), pre(father))).toHaveLength(1);
+    });
+
+    it("reads a claim's text as well as the narrative", () => {
+      const entry = { ...proof("probable", "## C\nWhitehaven."), claims: [{ claim: "the son of William Barker", supporting_assertion_ids: ["a_001"] }] };
+      expect(unlinkedParentNarrativeInvariants(entry, pre(father))).toHaveLength(1);
+    });
+
+    it.each([
+      ["a sentence reporting a record", "The index reads Jonathan Barker, son of William Barker and Martha."],
+      ["a participle reporting a record", "A baptism record showing a Jonathan, son of William and Martha Barker, at Whitehaven."],
+      ["a record's child", "This entry — the christening of a Jonathan, son of William and Martha Barker — fits."],
+      ["quoted record text", 'The register reads "the son of William Barker".'],
+      ["single-quoted record text", "The entry reads 'the son of William Barker, sailor'."],
+      ["a different family set aside", "She was the daughter of a different William Barker family."],
+      ["a parentage naming nobody unidentified", "He was the son of Thomas Barker."],
+    ])("allows %s", (_label, narrative) => {
+      expect(unlinkedParentNarrativeInvariants(proof("probable", narrative), pre(father))).toEqual([]);
+    });
+
+    it("refuses a namesake son: the subject's own name does not identify his father", () => {
+      const son = { ...named("a_002", "principal", "William"), fact_type: "name" };
+      const entry = proof("probable", "William was the son of William Barker.", ["a_001", "a_002"]);
+      expect(unlinkedParentNarrativeInvariants(entry, pre([son, ...father], ["a_002"]))).toHaveLength(1);
+    });
+
+    it("refuses the parent whose only linked name assertion is speculative", () => {
+      const a = [...father, named("a_011", "father_of_bride", "William", "rec2")];
+      const state = pre(a);
+      state.person_evidence.push({ ...liveLinks("a_011")[0], id: "pe_009", person_id: "I2", confidence: "speculative" });
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), state)).toHaveLength(1);
+    });
+
+    it("allows the parent once a name assertion for him is linked, on any record", () => {
+      const a = [...father, named("a_011", "father_of_bride", "William", "rec2")];
+      const state = pre(a);
+      state.person_evidence.push({ ...liveLinks("a_011")[0], id: "pe_009", person_id: "I2" });
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), state)).toEqual([]);
+    });
+
+    // mcaloney-mother: the subject's mother is the bride, and the proof states HER parents.
+    const marriage = (brideIsSubject: boolean) => ({
+      assertions: [
+        validAssertion("a_001"), validAssertion("a_002"),
+        { ...validAssertion("a_020"), record_id: "rec2", record_role: "bride" },
+        named("a_021", "father_of_bride", "William", "rec2"),
+      ],
+      person_evidence: [
+        ...liveLinks("a_001", "a_002"),
+        { ...liveLinks("a_020")[0], id: "pe_009", person_id: brideIsSubject ? "I1" : "I2" },
+      ],
+    });
+    const cited = ["a_001", "a_002", "a_020"];
+
+    it("ignores the parent of a party who is not the subject", () => {
+      expect(unlinkedParentNarrativeInvariants(proof("proved", "Jessie, daughter of William Barker, is the mother.", cited), marriage(false))).toEqual([]);
+    });
+
+    it("refuses the parent of a party who is the subject", () => {
+      expect(unlinkedParentNarrativeInvariants(proof("proved", "She was the daughter of William Barker.", cited), marriage(true))).toHaveLength(1);
+    });
+
+    it("ignores a parent on a record the summary does not cite", () => {
+      const a = [named("a_010", "father", "William", "rec9")];
+      expect(unlinkedParentNarrativeInvariants(proof("probable", "the son of William Barker"), pre(a))).toEqual([]);
+    });
+
+    it("allows not_proved and disproved", () => {
+      for (const tier of ["not_proved", "disproved"]) {
+        expect(unlinkedParentNarrativeInvariants(proof(tier, "the son of William Barker"), pre(father))).toEqual([]);
+      }
+    });
+
+    it("checks a narrative-only update to a summary already at probable", async () => {
+      const state = phase3Research() as any;
+      state.assertions.push(...father);
+      state.person_evidence = liveLinks("a_001");
+      state.proof_summaries = [{ id: "ps_001", ...proof("probable", "## C\nWhitehaven.") }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { narrative_markdown: "## C\nWhitehaven, the son of William Barker." },
+      } as never);
+      expect(r.ok).toBe(false);
+    });
+  });
+
 
   // The conclusion and its resolution are ONE write — the shape proof-conclusion
   // emits. Both properties below are load-bearing and neither is obvious:
@@ -3664,7 +3946,11 @@ describe("research_append (Phase 3)", () => {
         section: "proof_summaries",
         op: "update",
         entryId: "ps_001",
-        fields: { tier: "not_proved", narrative_markdown: "## Conclusion\nidentity unsettled" },
+        fields: {
+          tier: "not_proved",
+          narrative_markdown: "## Conclusion\nidentity unsettled",
+          exhaustive_search_summary: "census + vitals",
+        },
       });
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
@@ -3850,6 +4136,184 @@ describe("research_append (Phase 3)", () => {
       if (r.ok) return;
       expect(r.errors.join(" ")).toContain("ps_001");
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    // ── narrative and search summary move together once the question is searched again ──
+    //
+    // Observed 2026-10-09 (issue #3177, G9GJ-959): each re-concluded summary was
+    // updated one field at a time after three later searches, so one proof's
+    // narrative recommended records its own summary said were searched, and the
+    // other's summary called images "Not completed" that its narrative quoted.
+    const SUMMARY_WRITTEN = "2026-10-09T10:00:00.000Z";
+    const logEntry = (id: string, planItemId: string | null, performed: string) => ({
+      id, plan_item_id: planItemId, performed, tool: "record_search", query: {},
+      outcome: "negative", results_examined: 0, external_site: null, results_ref: null,
+    });
+    const withSearchedSince = (
+      performed = "2026-10-09T12:00:00Z",
+      stamp: string | null = SUMMARY_WRITTEN,
+    ) => {
+      const state = withSummary() as any;
+      if (stamp !== null) state.proof_summaries[0].updated = stamp;
+      state.plans = [
+        {
+          id: "pl_001", question_id: "q_001", status: "active", created: "2026-10-01",
+          items: [{ id: "pli_001", sequence: 1, record_type: "census", jurisdiction: "Here",
+            date_range: "1850", repository: "FamilySearch", rationale: "r", fallback_for: null,
+            status: "completed" }],
+        },
+      ];
+      state.log = [logEntry("log_001", "pli_001", performed)];
+      return state;
+    };
+    const updatePs001 = (fields: Record<string, unknown>) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields,
+      });
+
+    for (const [set, missing] of [
+      ["narrative_markdown", "exhaustive_search_summary"],
+      ["exhaustive_search_summary", "narrative_markdown"],
+    ] as const) {
+      it(`refuses an update that sets ${set} without ${missing} after a later search`, async () => {
+        await writeProject(withSearchedSince());
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await updatePs001({ [set]: "rewritten after the 1855 image was read" });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("ps_001");
+        expect(msg).toContain(missing);
+        expect(msg).toContain("log_001");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      });
+    }
+
+    it("refuses a one-field update after a later search even when it also changes the tier", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({ tier: "not_proved", narrative_markdown: "## Not proved\n..." });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("exhaustive_search_summary");
+    });
+
+    it("counts a later search logged in the dash-separated time form", async () => {
+      await writeProject(withSearchedSince("2026-10-09T12-00-00Z"));
+      const r = await updatePs001({ narrative_markdown: "## Conclusion\nreworded" });
+      expect(r.ok).toBe(false);
+    });
+
+    it("allows a one-field update when the question has not been searched since", async () => {
+      await writeProject(withSearchedSince("2026-10-09T09:00:00Z"));
+      const r = await updatePs001({ tier: "not_proved", narrative_markdown: "## Not proved\n..." });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows a one-field update on a summary with no updated stamp", async () => {
+      await writeProject(withSearchedSince("2026-10-09T12:00:00Z", null));
+      const r = await updatePs001({ narrative_markdown: "## Conclusion\nreworded" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("ignores later searches attributed to another question or to no plan item", async () => {
+      const state = withSearchedSince("2026-10-09T09:00:00Z");
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      state.plans.push({
+        ...state.plans[0], id: "pl_002", question_id: "q_002",
+        items: [{ ...state.plans[0].items[0], id: "pli_002" }],
+      });
+      state.log.push(logEntry("log_002", "pli_002", "2026-10-09T12:00:00Z"));
+      state.log.push(logEntry("log_003", null, "2026-10-09T12:00:00Z"));
+      await writeProject(state);
+      const r = await updatePs001({ narrative_markdown: "## Conclusion\nreworded" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows an update that rewrites both fields together, and restamps updated", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({
+        narrative_markdown: "## Conclusion\nNow cites the 1855 image.",
+        exhaustive_search_summary: "census; 1855 image read",
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      const ps = (await readResearch()).proof_summaries[0];
+      expect(ps.exhaustive_search_summary).toBe("census; 1855 image read");
+      expect(Date.parse(ps.updated)).toBeGreaterThan(Date.parse("2026-10-09T12:00:00Z"));
+      // The search is now behind the stamp, so a one-field follow-up passes.
+      const r2 = await updatePs001({ narrative_markdown: "## Conclusion\nreworded again" });
+      expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
+    });
+
+    it("allows re-passing one field's current text beside a rewritten other", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({
+        narrative_markdown: "## Conclusion\nreworded",
+        exhaustive_search_summary: "census",
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("stamps updated on append and overwrites a caller-supplied value on update", async () => {
+      const state = withSummary() as any;
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...entry("probable"), question_id: "q_002", updated: "2020-01-01T00:00:00Z" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      const appended = (await readResearch()).proof_summaries[1];
+      expect(Date.parse(appended.updated)).toBeGreaterThan(Date.parse("2026-01-01T00:00:00Z"));
+      const r2 = await updatePs001({
+        narrative_markdown: "## Conclusion\nreworded",
+        updated: "2020-01-01T00:00:00Z",
+      });
+      expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
+      const updated = (await readResearch()).proof_summaries[0].updated;
+      expect(Date.parse(updated)).toBeGreaterThan(Date.parse("2026-01-01T00:00:00Z"));
+    });
+
+    // A tier-only update does not check either text against the log, so moving
+    // the stamp on it would hide the later search from the next one-field update.
+    it("keeps the stamp on a tier-only update, so a later one-field update is still refused", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({ tier: "not_proved", updated: "2026-10-10T00:00:00Z" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries[0].updated).toBe(SUMMARY_WRITTEN);
+      const r2 = await updatePs001({ narrative_markdown: "## Not proved\nreworded" });
+      expect(r2.ok).toBe(false);
+      if (r2.ok) return;
+      expect(r2.errors.join(" ")).toContain("log_001");
+    });
+
+    it("refuses the same tier-only then one-field sequence inside a single batch", async () => {
+      await writeProject(withSearchedSince());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { tier: "not_proved" } },
+          {
+            section: "proof_summaries", op: "update", entryId: "ps_001",
+            fields: { exhaustive_search_summary: "census; 1855 image read" },
+          },
+        ],
+      } as any);
+      expect(r.ok).toBe(false);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("drops a caller-supplied stamp on a tier-only update of an unstamped summary", async () => {
+      await writeProject(withSearchedSince("2026-10-09T12:00:00Z", null));
+      const r = await updatePs001({ tier: "not_proved", updated: "2030-01-01T00:00:00Z" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries[0]).not.toHaveProperty("updated");
     });
 
     it("allows updating the existing summary", async () => {
@@ -4039,7 +4503,10 @@ describe("research_append (Phase 3)", () => {
       section: "proof_summaries",
       op: "update",
       entryId: "ps_001",
-      fields: { narrative_markdown: "## Conclusion\nRevised wording." },
+      fields: {
+        narrative_markdown: "## Conclusion\nRevised wording.",
+        exhaustive_search_summary: "Searched census + vitals",
+      },
     });
     expect(r.ok).toBe(true);
   });
@@ -9180,20 +9647,9 @@ describe("research_append — worked examples are themselves valid", () => {
     },
   };
 
-  const SECTIONS_WITH_EXAMPLES = [
-    "sources",
-    "assertions",
-    "person_evidence",
-    "questions",
-    "plans",
-    "plan_items",
-    "conflicts",
-    "hypotheses",
-    "timelines",
-    "proof_summaries",
-    "evaluations",
-    "known_holdings",
-  ];
+  // Derived from the registry, so an example added for a new section is
+  // round-tripped without anyone remembering to list it here.
+  const SECTIONS_WITH_EXAMPLES = Object.keys(__testing.EXAMPLES);
 
   it.each(SECTIONS_WITH_EXAMPLES)("the '%s' example validates", async (section) => {
     // A fresh project per case so examples never depend on each other.
@@ -9212,6 +9668,9 @@ describe("research_append — worked examples are themselves valid", () => {
     // `plans` already has an active plan for q_002 in the fixture (the
     // one-active-plan invariant); point the example at a fresh question.
     if (section === "plans") entry.question_id = "q_003";
+    // The rejected_links example names ids the fixture lacks; point it at the
+    // pairing the person_evidence example uses.
+    if (section === "rejected_links") Object.assign(entry, { assertion_id: "a_013", person_id: "I1" });
 
     // `plans` is the one section whose example is not a standalone append: the
     // shell omits `items`, so the `plan_items` op that fills it belongs in the
@@ -10852,6 +11311,20 @@ describe("research_append — person_evidence requires a recorded score", () => 
     );
     await attest({ tree_person_id: "p-sibling" });
     expect((await researchAppend(link(0.82, "p-sibling") as any)).ok).toBe(true);
+  });
+
+  // An S entry reaches EVERY research source that cites it (#3363). Read
+  // last-wins, the second source here, which carries no record, hid rec_A: I9
+  // then needed a score no same_person call can give a person made from it.
+  it("C9s reads every research source citing an S entry, not only the last", async () => {
+    await writeProject(mintedTree);
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.sources.push({ ...validSource("src_011"), gedcomx_source_description_id: "S1" });
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    const scored = await researchAppend(link(0.9, "I9") as any);
+    expect(scored.ok).toBe(false);
+    expect(failure(scored).errors?.join(" ")).toMatch(/minted from the very record/);
+    expect((await researchAppend(link(null, "I9") as any)).ok).toBe(true);
   });
 
   it("still calls a locally-minted stub minted when no baseline exists", async () => {
@@ -12933,5 +13406,161 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
   it("does not fire on re-stating an item already skipped", async () => {
     await project([logEntry("log_001", "record_search", "negative")], "skipped");
     expect(singleOk(await skip())).toBeTruthy();
+  });
+});
+
+describe("research_append: a localities first place must be in the place standard (#3696)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-locality-test-"));
+    vi.mocked(checkFirstPlace).mockClear();
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const locality = (forPlace: string) => ({
+    place: "Germany",
+    for_place: forPlace,
+    jurisdictions: [{ name: forPlace, date_range: "1838-" }],
+    collections: [],
+    quirks: ["Indexed only at county level."],
+    pages_read: [{ section: "home", url: "u1", found: true }],
+    source: "locality-guide",
+  });
+  const append = (forPlace: string, extra: Record<string, unknown> = {}) =>
+    researchAppend({ projectPath: dir, section: "localities", op: "append", entry: locality(forPlace), ...extra });
+
+  it("writes a first place the standard holds, with no warning", async () => {
+    await writeProject();
+    const r = await append("Ringebu, Oppland, Norway");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/for_place/);
+    expect((await readResearch()).localities).toHaveLength(1);
+  });
+
+  it.each([
+    ["Helvesieck, Schneverdingen, Soltau, Hanover"],
+    ["Sierkopas, Germany"],
+    ["Nowhereville, Atlantis"],
+  ])("refuses %s and writes nothing", async (forPlace) => {
+    await writeProject();
+    const r = await append(forPlace);
+    expect(r.ok).toBe(false);
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain(`for_place '${forPlace}'`);
+    expect(msg).toMatch(/place_search/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("names the remedy only: not the parent it resolved to, and not how to avoid the check", async () => {
+    await writeProject();
+    const msg = failure(await append("Helvesieck, Schneverdingen, Soltau, Hanover")).errors.join(" ");
+    expect(msg).not.toContain("Schneverdingen, Soltau, Hanover, Prussia");
+    expect(msg).toContain("Look up 'Helvesieck' with place_search, contextName 'Hanover'");
+    expect(msg).not.toMatch(/free text|single name|skip/i);
+  });
+
+  it("still refuses when the call turns off assertion geocoding", async () => {
+    await writeProject();
+    const r = await append("Helvesieck, Schneverdingen, Soltau, Hanover", { resolveStandardPlace: false });
+    expect(r.ok).toBe(false);
+    expect(checkFirstPlace).toHaveBeenCalledWith("Helvesieck, Schneverdingen, Soltau, Hanover");
+  });
+
+  it("writes with a warning when the lookup fails, never refuses", async () => {
+    await writeProject();
+    const r = await append("Somewhere Unlisted, Hanover");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/for_place 'Somewhere Unlisted, Hanover' could not be checked/);
+    expect((await readResearch()).localities).toHaveLength(1);
+  });
+
+  it("names the op in a batch's lookup warning", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal") },
+        { section: "localities", op: "append", entry: locality("Somewhere Unlisted, Hanover") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/ops\[1\]: for_place 'Somewhere Unlisted, Hanover' could not be checked/);
+  });
+
+  it("makes no lookup when an earlier gate already refused the batch", async () => {
+    await writeProject();
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
+        { section: "localities", op: "append", entry: locality("Sierkopas, Germany") },
+      ],
+    });
+    expect(failure(r).errors.join(" ")).toMatch(/'S999' not found/);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["West Bromwich and Darlaston, Staffordshire"],
+    ["Helvesieck AND Soltau, Hanover"],
+    ["Helvesieck (village, Hanover"],
+    ["Helvesieck village), Hanover"],
+    ["Helvesieck \u2014 Soltau, Hanover"],
+    ["Helvesieck \u2013 Soltau, Hanover"],
+    ["Helvesieck/Soltau, Hanover"],
+    ["Helvesieck; Soltau, Hanover"],
+    ["Helvesieck & Soltau, Hanover"],
+    ["Pennsylvania Anthracite Coal Region"],
+  ])("does not check %s (free text or a single name)", async (forPlace) => {
+    await writeProject();
+    const r = await append(forPlace);
+    expect(r.ok).toBe(true);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+  });
+
+  it("refuses an update that sets for_place, and skips one that does not", async () => {
+    await writeProject();
+    expect((await append("Ringebu, Oppland, Norway")).ok).toBe(true);
+    vi.mocked(checkFirstPlace).mockClear();
+
+    const quirks = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { quirks: ["Parish registers start 1717."] },
+    });
+    expect(quirks.ok).toBe(true);
+    expect(checkFirstPlace).not.toHaveBeenCalled();
+
+    const moved = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001",
+      fields: { for_place: "Sierkopas, Germany" },
+    });
+    expect(moved.ok).toBe(false);
+    expect((await readResearch()).localities[0].for_place).toBe("Ringebu, Oppland, Norway");
+  });
+
+  it("in a batch, names only the refused op and writes nothing", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: locality("Funchal, Madeira, Portugal") },
+        { section: "localities", op: "append", entry: locality("Sierkopas, Germany") },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors;
+    expect(errors.join(" ")).toMatch(/ops\[1\]/);
+    expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
   });
 });

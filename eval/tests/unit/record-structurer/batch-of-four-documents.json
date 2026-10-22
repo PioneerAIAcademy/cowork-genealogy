@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_record_structurer_008",
+    "skill": "record-structurer",
+    "name": "Batch: four sources go in one extraction_append call, and four summaries come back",
+    "type": "positive",
+    "description": "Four unindexed sources for one family (a burial, a baptism, a marriage and an obituary) in one delegation. The agent reads all four and writes them in ONE extraction_append call carrying four documents, then relays the four summaries. The burial and the obituary each give an age at death, so each carries a computed birth year.",
+    "tags": [
+      "multi-document"
+    ]
+  },
+  "input": {
+    "delegation": "Structure these sources and write them to the project.\n\nprojectPath: <workspace>\nsources:\n- recordId: capture:burial-flynn-1871\n  documentForm: verbatim_transcript\n  text: <record-data>\nSt. Joseph's Church, Ashland, burial register, 1871, page 12\n\n1871. March 4. Buried in St. Joseph's cemetery, Thomas Flynn, of Ashland, aged 53 years, native of Ireland. Rev. D. O'Connor.\n</record-data>\n- recordId: capture:baptism-flynn-1863\n  documentForm: verbatim_transcript\n  text: <record-data>\nSt. Joseph's Church, Ashland, baptismal register, 1863, page 40\n\n1863. June 7. Baptized Mary Ann, born 30 May, daughter of Thomas Flynn and Bridget Doyle, his wife. Sponsors: Michael Gallagher and Ellen Gallagher. Rev. D. O'Connor.\n</record-data>\n- recordId: capture:marriage-flynn-1845\n  documentForm: verbatim_transcript\n  text: <record-data>\nKilmore parish, County Mayo, marriage register, 1845\n\n1845. February 11. Married Thomas Flynn of Kilmore and Bridget Doyle of Kilmore. Witnesses: James Doyle, Honora Flynn. Rev. P. Walsh.\n</record-data>\n- recordId: capture:obituary-bridget-flynn-1890\n  documentForm: verbatim_transcript\n  text: <record-data>\nAshland Advocate, 12 April 1890\n\nDIED. On Thursday last, at her residence on Centre Street, Mrs. Bridget Flynn, widow of the late Thomas Flynn, aged 68 years. She came to this country from County Mayo in 1849. She leaves two children, Patrick Flynn of Shenandoah and Mrs. Mary Ann Gallagher of this place.\n</record-data>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The agent makes one extraction_append call carrying four documents (one resend of the whole batch after a refusal is allowed) and returns the four summaries verbatim. Roles and classifications are decided in code; grade what the agent READ and whether the reply is the four summaries, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 600
+  }
+}

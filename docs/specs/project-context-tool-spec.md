@@ -58,6 +58,7 @@ repo's identifier-casing rule):
   buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
   projectStatus: string | null,          // research.project.status
   objective: string | null,              // research.project.objective, verbatim
+  subjectPersonIds: string[],            // research.project.subject_person_ids; [] when absent
   openQuestions: [{
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
@@ -155,6 +156,9 @@ Projection rules:
   only surface that returns the objective: `research_query` serves array sections only, so without it a
   cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
   `research.json` whole.
+- **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only, `[]` when absent. The
+  router has no other way to see who the research is about, which the baseline step (extract and link
+  each subject's attached records before the first question) needs.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping
@@ -191,11 +195,12 @@ missing summary. A missing critique is never a next step.
 
 **Evidence nobody has linked to a person routes to person-evidence.** When a
 question has assertions extracted for it, none of them carries a live
-(`superseded_by` null) `person_evidence` row, and no proof summary exists yet, its
+(`superseded_by` null) `person_evidence` row other than an unchecked
+FamilySearch attachment link, and no proof summary exists yet, its
 `nextStep` reads `person-evidence — none of this question's N assertions is linked
 to a person`. It is zero links, not some: once a household's subject is linked, its
 children and wife routinely stay unlinked (some assertions unlinked on 53 of 230
-concluded e2e questions), and that is not a skipped identity step. It sits above the
+concluded e2e questions), and that is not a skipped identity step. An attachment link (`isAttachmentLink`) does not count, so a question resting only on an attached record still routes to person-evidence, which is where an attachment is checked inside /research. A speculative link the researcher confirmed does count, or the question would go back to person-evidence to ask again (lead, 2026-10-20). It sits above the
 disagreement rung because that rung pairs only *linked* assertions and cannot see a
 disagreement among unlinked ones. Left out, the ladder would send the router past
 person-evidence and hide the conflict too. It stops once a summary exists, because
@@ -288,11 +293,14 @@ open ones.
 Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `state`, `nextStep` or `openConflictIds` value.
 
-**A conclusion is not the end of the work.** The ladder tracks what was
-*produced*, and the `resolved` write produces nothing, so it has no rung of its
-own — but it is still outstanding, and it is the transition no skill body claims.
-A question that is `concluded` or `critiqued` and not yet resolved reports that
-resolve as its next step. `nextStep` is null only when the question has a proof
+**A conclusion on a question still open means it was written while blocked.**
+`proof-conclusion` resolves the question it concludes, in the same batch as the
+summary (its step 7), and leaves the question open only when its preconditions gate
+blocked the conclusion. So a question that is `concluded` or `critiqued` and not yet
+resolved reports `proof-conclusion — concluded while blocked: re-conclude <ps_id>`,
+naming its latest summary. That arm sits below the conflict arms, so while the
+blocking conflict is still open the question routes to `conflict-resolution` instead,
+and the two cannot loop. `nextStep` is null only when the question has a proof
 summary and is resolved.
 
 **Nothing gates on this field, and that is the design.** `research_append`

@@ -70,6 +70,10 @@ BIG_RESULT_CHARS = 50_000
 # A call reading 1-3 tokens less than the last one held is the cache boundary
 # moving; a rewrite misses at least the smallest cacheable prompt.
 REWRITE_MIN_TOKENS = 1_024
+# The two cache lifetimes the CACHE TTL table weighs: a write lives 5 minutes by default on
+# an API key, 1 hour when the CLI is told to; each read refreshes it.
+TTL_5M_S = 300
+TTL_1H_S = 3_600
 TOP_N = 10
 AGENT_TOOLS = ("Agent", "Task")
 COMPACTION_PREFIX = "This session is being continued"
@@ -318,6 +322,17 @@ def _rewrite_cost(tokens: int, usage: dict, model: Any) -> float:
     return write - read if write is not None and read is not None else 0.0
 
 
+def _premium_1h(tokens: int, model: Any) -> float:
+    """What `tokens` of cache write cost at the 1-hour rate above the 5-minute one."""
+    if tokens <= 0:
+        return 0.0
+    one_hour = pricing.estimate_message_cost(
+        {"cache_creation_input_tokens": tokens,
+         "cache_creation": {"ephemeral_1h_input_tokens": tokens}}, model)
+    five_min = pricing.estimate_message_cost({"cache_creation_input_tokens": tokens}, model)
+    return one_hour - five_min if one_hour is not None and five_min is not None else 0.0
+
+
 def _image_key(args: dict) -> str | None:
     """The page an `image_transcribe` call read, its ARK spelled one way."""
     for key in _IMAGE_KEYS:
@@ -467,6 +482,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                       "agent_id": r["agent_id"] if r else None})
     model_calls = []
     prev_ctx = 0
+    prev_start: float | None = None
     pending = compacted = False
     for mid, m in msgs.items():
         pending = pending or m["after_agent"]
@@ -479,13 +495,24 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
         latency = m["end"] - m["start"]
         covered = m["thinking_chars"] + m["text_chars"] >= GEN_CHARS_PER_S * latency
         rewritten, rewrite_cost = 0, 0.0
+        writes = _tokens(u, "cache_creation_input_tokens")
+        split = u.get("cache_creation") if isinstance(u.get("cache_creation"), dict) else {}
+        # A re-write a 1-hour cache would have avoided: the gap since the previous request
+        # (each read refreshes the entry, so request start to request start) outlived 5
+        # minutes but not an hour, and no compaction rebuilt the context in between.
+        expiry_tokens, expiry_after_agent = 0, False
         if ctx:
             shortfall = prev_ctx - _tokens(u, "cache_read_input_tokens")
             if pending and not compacted and prev_ctx and shortfall >= REWRITE_MIN_TOKENS:
-                rewritten = min(_tokens(u, "cache_creation_input_tokens"), shortfall)
+                rewritten = min(writes, shortfall)
                 rewrite_cost = _rewrite_cost(rewritten, u, m["model"])
+            gap = m["start"] - prev_start if prev_start is not None else 0.0
+            if (not compacted and prev_ctx and shortfall >= REWRITE_MIN_TOKENS
+                    and TTL_5M_S < gap <= TTL_1H_S):
+                expiry_tokens, expiry_after_agent = min(writes, shortfall), pending
             pending = compacted = False
             prev_ctx = ctx
+            prev_start = m["start"]
         cost = pricing.estimate_message_cost(u, m["model"])
         out = _tokens(u, "output_tokens")
         model_calls.append({
@@ -493,6 +520,10 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
             "out": out, "ctx": ctx, "model": m["model"], "stop": m["stop"], "cost": cost,
             "unpriced": cost is None and (ctx > 0 or out > 0),
             "rewritten": rewritten, "rewrite_cost": rewrite_cost,
+            "writes": writes, "writes_1h": min(writes, _tokens(split, "ephemeral_1h_input_tokens")),
+            "expiry_tokens": expiry_tokens, "expiry_after_agent": expiry_after_agent,
+            "expiry_saving": _rewrite_cost(expiry_tokens, u, m["model"]) if expiry_tokens else 0.0,
+            "premium_1h": _premium_1h(writes - expiry_tokens, m["model"]),
             "tool_names": [tool_uses[x]["name"] for x in m["tools"]]})
     for mc in model_calls:
         timeline.append((mc["t"], "model", mc))
@@ -572,6 +603,7 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
 
     transcript_calls = {a["meta"].get("toolUseId") for a in agents.values()}
     threads: list[tuple[str, dict]] = []
+    main_threads: dict[str, dict] = {}
     agent_parent: dict[str, str] = {}
     sessions_out = []
     segments: list[dict] = []
@@ -585,6 +617,7 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
             excluded_sessions += 1
             continue
         threads.append((f"main {sid[:8]}", thread))
+        main_threads[sid] = thread
         segments += [s for s in skill_segments(sid, thread)
                      if s["model_calls"] and in_window(s["model_calls"][-1]["t"])]
         rewrites = [mc for mc in thread["model_calls"] if mc["rewritten"]]
@@ -609,6 +642,7 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
     by_session = {s["session"]: s for s in sessions_out}
 
     runs: dict[str, list[dict]] = defaultdict(list)
+    session_agent_threads: dict[str, list[dict]] = defaultdict(list)
     excluded_runs = 0
     for aid, agent in agents.items():
         thread = agent_threads[aid]
@@ -620,6 +654,7 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
         sid = agent_parent.get(meta.get("toolUseId")) or agent["session"]
         if sid in by_session:
             by_session[sid]["agent_runs"] += 1
+            session_agent_threads[sid].append(thread)
         threads.append((f"{atype} {aid[:8]}", thread))
         runs[atype].append(thread)
 
@@ -671,8 +706,60 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
         "sessions": sorted(sessions_out, key=lambda s: s["start"] or ""),
         "agents": agents_out, "skills": skills_out, "tools": tools_out,
         "top": _top_lists(all_calls, all_models, threads),
+        "cache_ttl": cache_ttl(sessions_out, main_threads, session_agent_threads),
         "unpriced_model_calls": dict(Counter(str(mc["model"]) for _w, mc in all_models if mc["unpriced"])),
     }
+
+
+def _ttl_sums(threads: list[dict]) -> dict[str, float]:
+    mcs = [mc for th in threads for mc in th["model_calls"]]
+    return {
+        "writes": sum(mc["writes"] for mc in mcs),
+        "writes_1h": sum(mc["writes_1h"] for mc in mcs),
+        "saving_after_agent": sum(mc["expiry_saving"] for mc in mcs if mc["expiry_after_agent"]),
+        "saving_other": sum(mc["expiry_saving"] for mc in mcs if not mc["expiry_after_agent"]),
+        "premium": sum(mc["premium_1h"] for mc in mcs),
+    }
+
+
+def _ttl_row(main: dict[str, float], agents: dict[str, float]) -> dict[str, Any]:
+    """`net` is premium minus saving: negative means a 1-hour cache would have cost less."""
+    saving_main = main["saving_after_agent"] + main["saving_other"]
+    saving_all = saving_main + agents["saving_after_agent"] + agents["saving_other"]
+    premium_all = main["premium"] + agents["premium"]
+    return {
+        "share_1h_main": main["writes_1h"] / main["writes"] if main["writes"] else None,
+        "share_1h_agents": agents["writes_1h"] / agents["writes"] if agents["writes"] else None,
+        "saving_after_agent": round(main["saving_after_agent"], 4),
+        "saving_other": round(main["saving_other"], 4),
+        "premium_main": round(main["premium"], 4),
+        "net_main": round(main["premium"] - saving_main, 4),
+        "premium_all": round(premium_all, 4),
+        "net_all": round(premium_all - saving_all, 4),
+    }
+
+
+def cache_ttl(sessions_out: list[dict], main_threads: dict[str, dict],
+              session_agent_threads: dict[str, list[dict]]) -> dict[str, Any]:
+    """What a 1-hour cache would have cost or saved, per session and in total.
+
+    Saving: the re-writes a 1-hour entry would have avoided (`expiry_tokens`, priced as a
+    rewrite above a read). Premium: every other cache write, priced at 1h less 5m -- the
+    re-written tokens are left out of it, so nothing is counted on both sides."""
+    rows, mains, agents_all = [], [], []
+    for s in sessions_out:
+        sid = s["session"]
+        main = _ttl_sums([main_threads[sid]])
+        agents = _ttl_sums(session_agent_threads.get(sid, []))
+        mains.append(main)
+        agents_all.append(agents)
+        rows.append({"session": sid, **_ttl_row(main, agents)})
+
+    def total(parts: list[dict[str, float]]) -> dict[str, float]:
+        keys = ("writes", "writes_1h", "saving_after_agent", "saving_other", "premium")
+        return {k: sum(p[k] for p in parts) for k in keys}
+
+    return {"sessions": rows, "total": _ttl_row(total(mains), total(agents_all))}
 
 
 def _round(value: float | None, digits: int | None = 1) -> float | None:
@@ -779,6 +866,27 @@ def format_report(profile: dict[str, Any]) -> str:
           f"{_mins(a['active_min_total'])}/{_mins(a['active_min_p50'])}/{_mins(a['active_min_max'])}",
           f"{_usd(a['cost_total'])}/{_usd(a['cost_p50'])}/{_usd(a['cost_max'])}", _n(a["output_tokens"]),
           _n(a["tool_errors"]), _n(a["capped_turns"]), _n(a["big_results"])] for a in profile["agents"]])
+    ttl = profile["cache_ttl"]
+
+    def share(v: float | None) -> str:
+        return "-" if v is None else f"{v:.0%}"
+
+    def ttl_cells(label: str, r: dict) -> list[str]:
+        return [label, share(r["share_1h_main"]), share(r["share_1h_agents"]),
+                _usd(r["saving_after_agent"]), _usd(r["saving_other"]), _usd(r["premium_main"]),
+                _usd(r["net_main"]), _usd(r["premium_all"]), _usd(r["net_all"])]
+
+    lines += ["", f"CACHE TTL (what a 1-hour cache would cost; net = premium - saving, negative = "
+              f"1h is cheaper. saving = re-writes after a gap of {TTL_5M_S // 60}-{TTL_1H_S // 60} min "
+              "between requests, not after a compaction; premium = every other write at 1h less 5m)"]
+    lines += _table(
+        ["session", "1h share main", "1h share agents", "saving agent", "saving other",
+         "premium main", "net main", "premium all", "net all"],
+        [ttl_cells(r["session"][:8], r) for r in ttl["sessions"]] + [ttl_cells("TOTAL", ttl["total"])])
+    lines += ["  net main is the main-thread-only switch (CLAUDE_CODE_PROMPT_CACHE_TTL); net all is every "
+              "thread, for information.",
+              "  On CLI 2.1.215-2.1.220 bundles the session-start re-write (fixed in 2.1.294) sits in the "
+              "premium base, so premium is slightly overstated there and the table leans against 1h."]
     lines += ["", "MAIN-THREAD SKILLS (sticky: a skill owns the main thread until the next Skill call)"]
     lines += _table(
         ["skill", "segments", "$", "model min", "compactions"],

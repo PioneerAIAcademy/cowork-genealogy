@@ -762,7 +762,8 @@ the `max_cost_usd` note in §6 step 5.
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened." The init-message abort is command-proved by `make agent-smoke`'s
    dead-stub arm; the ToolSearch backstop and the `run_e2e_test`
-   fallback remain hand-proved only. `make agent-smoke` runs in no CI workflow.
+   fallback remain hand-proved only. Its dead-stub arm runs in no CI workflow;
+   only its registration arm runs in CI (`server-tests.yml`).
 
    **The printed error can now name the server's own cause.** The
    SDK's `stderr:` callback never receives the MCP child's output — verified

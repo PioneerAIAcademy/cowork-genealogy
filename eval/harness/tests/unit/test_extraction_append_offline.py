@@ -75,3 +75,23 @@ def test_expected_classifications_hold_offline(path: Path, tmp_path: Path):
     if not test.get("expected_classifications"):
         pytest.skip("no expected_classifications to check")
     check_classifications(before, after, {**test["test"], "expected_classifications": test["expected_classifications"]})
+
+
+@pytest.mark.requires_engine_build
+def test_a_person_id_call_stages_the_persons_attached_fixtures(tmp_path: Path):
+    """extraction_append({ personId }) reads the person's attached records
+    itself; the mock stages exactly the fixtures their ids name (issue #3516)."""
+    shutil.copy(SCENARIOS_DIR / "empty-project-just-created" / "research.json", tmp_path / "research.json")
+    tree = {
+        "persons": [{"id": "I1", "gender": "Male", "names": [{"id": "N1", "given": "A", "surname": "B"}], "sources": [{"ref": "S1"}]}],
+        "relationships": [],
+        "sources": [{"id": "S1", "title": "a record", "url": "https://familysearch.org/ark:/61903/1:1:68Q9-K34P"}],
+    }
+    for name in ("tree.gedcomx.json", "starting-tree.gedcomx.json"):
+        (tmp_path / name).write_text(json.dumps(tree), encoding="utf-8")
+    _s, _c, tools = create_mock_server(["record-read-68Q9-K34P"], FIXTURES_DIR, workspace=tmp_path)
+    out = json.loads(asyncio.run(tools["extraction_append"].handler({"projectPath": str(tmp_path), "personId": "I1"}))["content"][0]["text"])
+    assert out.get("ok"), out
+    assert out["extracted"] == 1, out
+    after = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    assert after["person_evidence"] and all(pe["confidence"] == "speculative" for pe in after["person_evidence"])

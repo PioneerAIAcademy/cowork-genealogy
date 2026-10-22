@@ -684,7 +684,10 @@ const TracePane = memo(function TracePane({
   skill: string;
   files: Record<string, string>;
 }) {
-  const run = entry.runs[0];
+  // A run that matches the test's outcome, so the trace agrees with the review
+  // scores: for a test that failed and then passed its fail-retries (issue
+  // #3733), a passing run. Same convention as lib/outcomeExplanation.ts.
+  const run = entry.runs.find((r) => r.outcome === entry.outcome) ?? entry.runs[entry.runs.length - 1];
   const output = run?.output as Record<string, unknown> | undefined;
   // useMemo so the reference is stable across re-renders when run.output is
   // undefined (the `?? []` fallback would otherwise create a fresh array).
