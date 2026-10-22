@@ -27,14 +27,27 @@ import { resolveStandardPlace, standardPlaceToCoords, type PlaceCoords } from ".
 import { normalizeFactType } from "../utils/record-extract.js";
 import { relationshipCategory } from "../utils/relationship-category.js";
 import { isIdentityConflict } from "../utils/question-state.js";
-import { CENSUS_TABLE, countryHasRows, isCoveredPlace, rowsForInterval, type CensusRow } from "../data/census-table.js";
+import {
+  CENSUS_TABLE,
+  countryHasRows,
+  isCoveredPlace,
+  rowsForInterval,
+  segments,
+  type CensusRow,
+} from "../data/census-table.js";
 import { haversineDistance } from "./distance.js";
 import { getPersonName } from "./person-warnings.js";
-import { researchAppend, timelineCensus1890Invariants, type ResearchAppendInput } from "./research-append.js";
+import {
+  researchAppend,
+  timelineCensus1890Invariants,
+  type ResearchAppendInput,
+  type ResearchAppendResult,
+} from "./research-append.js";
 
 const RESEARCH_FILE = "research.json";
 const TREE_FILE = "tree.gedcomx.json";
 const DEFAULT_DEADLINE_MS = 50_000;
+const CENSUS_YEARS = [...new Set(CENSUS_TABLE.map((r) => r.year))].sort((x, y) => x - y);
 
 /** timeline.md Step 3's event types, in its order. */
 const EVENT_TYPE_ORDER = [
@@ -251,6 +264,14 @@ function describe(e: Built, unverifiedPrefix: string | null): string {
   if (recorded && recorded.trim() !== e.date.date) body += ` (recorded as ${recorded.trim()})`;
   if (e.date.note) body += ` ${e.date.note}`;
   return unverifiedPrefix ? `${unverifiedPrefix} ${body}` : body;
+}
+
+/** The anchor's person timelines, newest first. */
+function personTimelines(research: any, persons: SimplifiedPerson[], anchorId: string): any[] {
+  const timelines: any[] = Array.isArray(research?.timelines) ? research.timelines : [];
+  return timelines
+    .filter((t) => isPersonTimeline(t, persons, anchorId))
+    .sort((x, y) => String(y.generated ?? "").localeCompare(String(x.generated ?? "")));
 }
 
 /** A person's own timeline: no hypothesis, and exactly one person who resolves
@@ -545,29 +566,56 @@ export async function timelineBuild(
   if (!plan) return { ok: true, status: "no_linked_evidence", summary: NOTHING_LINKED };
   const { events: timelineEvents, gaps: keptGaps, unverifiedEvents, unchecked, skipped } = plan;
 
-  // Write: append the person's timeline, or update the newest one in place.
-  const timelines: any[] = Array.isArray(research.timelines) ? research.timelines : [];
-  const mine = timelines
-    .filter((t) => isPersonTimeline(t, persons, anchorId))
-    .sort((x, y) => String(y.generated ?? "").localeCompare(String(x.generated ?? "")));
+  // Write: append the person's timeline, or update the newest one in place,
+  // keeping its person_ids. The choice is re-checked under the writer's lock; a
+  // person timeline written or restamped meanwhile sends it round again.
   const label = `${getPersonName(anchor)} — person timeline`;
-  const body = { label, person_ids: [anchorId], events: timelineEvents, gaps: keptGaps };
-  const opts = { allowedSections: new Set(["timelines"]), toolName: "timeline_build" };
-  const write = mine.length
-    ? await researchAppend(
-        {
-          projectPath: input.projectPath,
-          section: "timelines",
-          op: "update",
-          entryId: mine[0].id,
-          fields: { ...body, generated: now().toISOString().replace(/\.\d{3}Z$/, "Z") },
-        } as ResearchAppendInput,
-        opts,
-      )
-    : await researchAppend(
-        { projectPath: input.projectPath, section: "timelines", op: "append", entry: body } as ResearchAppendInput,
-        opts,
-      );
+  const content = { label, events: timelineEvents, gaps: keptGaps };
+  const shape = (r: any) => personTimelines(r, persons, anchorId).map((t) => `${t.id}@${t.generated ?? ""}`).join(",");
+  let mine: any[] = [];
+  let write: ResearchAppendResult = { ok: false, errors: [] };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      try {
+        research = await readProjectJson(input.projectPath, RESEARCH_FILE);
+      } catch (e) {
+        return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
+      }
+    }
+    mine = personTimelines(research, persons, anchorId);
+    const decided = shape(research);
+    let stale = false;
+    const opts = {
+      allowedSections: new Set(["timelines"]),
+      toolName: "timeline_build",
+      precondition: (r: any) => {
+        if (shape(r) === decided) return null;
+        stale = true;
+        return "Another run changed this person's timeline while this one was being built; it was not written.";
+      },
+    };
+    write = mine.length
+      ? await researchAppend(
+          {
+            projectPath: input.projectPath,
+            section: "timelines",
+            op: "update",
+            entryId: mine[0].id,
+            fields: { ...content, generated: now().toISOString().replace(/\.\d{3}Z$/, "Z") },
+          } as ResearchAppendInput,
+          opts,
+        )
+      : await researchAppend(
+          {
+            projectPath: input.projectPath,
+            section: "timelines",
+            op: "append",
+            entry: { ...content, person_ids: [anchorId] },
+          } as ResearchAppendInput,
+          opts,
+        );
+    if (!stale) break;
+  }
   if (!write.ok) return { ok: false, errors: write.errors };
   const timelineId = "entryId" in write ? write.entryId : String(mine[0]?.id ?? "");
 
@@ -613,14 +661,27 @@ function buildGaps(
   linksByAssertion: Map<string, any[]>,
 ): GapOut[] {
   const gaps: GapOut[] = [];
-  const deathIdx = sorted.findIndex((e) => e.type === "death");
+  // A burial ends the span as a death does.
+  const deathIdx = sorted.findIndex((e) => e.type === "death" || e.type === "burial");
   const beforeDeath = (i: number) => deathIdx === -1 || i < deathIdx;
+  // Census years stop at the earliest year the death allows. A death open on
+  // its earlier side ("before 1880") allows any earlier year, so they stop at
+  // the latest year the events before it allow.
+  const deathBounds = deathIdx === -1 ? null : sorted[deathIdx].date.bounds;
+  const deathLo =
+    deathBounds === null
+      ? null
+      : deathBounds.loOpen
+        ? Math.max(-Infinity, ...sorted.slice(0, deathIdx).map((e) => e.date.bounds.hi))
+        : deathBounds.lo;
 
   // Census.
   const births = sorted.filter((e) => e.type === "birth");
   // Heads-only schedules: the latest year any linked birth allows, so a man is
-  // expected only when he must have been 21.
-  const latestBirth = births.length ? Math.max(...births.map((b) => b.date.bounds.hi)) : null;
+  // expected only when he must have been 21. A birth open on its later side
+  // allows no latest year.
+  const latestBirth =
+    births.length && births.every((b) => !b.date.bounds.hiOpen) ? Math.max(...births.map((b) => b.date.bounds.hi)) : null;
   const inHand = (year: number) =>
     sorted.some((e) => e.date.bounds.lo === year && e.date.bounds.hi === year);
   const placed = sorted.map((e, i) => ({ e, i })).filter(({ e }) => e.standardPlace);
@@ -632,7 +693,7 @@ function buildGaps(
     const a = A.e.date.bounds;
     const b = B.e.date.bounds;
     if (a.hiOpen || b.loOpen) continue;
-    const years = [...new Set(CENSUS_TABLE.map((r) => r.year))].filter((y) => y > a.hi && y < b.lo).sort();
+    const years = CENSUS_YEARS.filter((y) => y > a.hi && y < b.lo && (deathLo === null || y < deathLo));
     const entries: string[] = [];
     for (const year of years) {
       if (inHand(year)) continue;
@@ -691,7 +752,7 @@ function buildGaps(
 /** The national row's label when a national and a state row both cover the
  *  year; otherwise the first row's. */
 function labelFor(rows: CensusRow[], place: string): string {
-  const country = segmentsOf(place).pop()?.toLowerCase();
+  const country = segments(place).pop();
   return (rows.find((r) => r.label.toLowerCase() === country) ?? rows[0]).label;
 }
 

@@ -1,6 +1,6 @@
 // Coordinates and the era-banded birthplace distance, shared by person_warnings
-// (birth far from the parents' residence) and research_append (the
-// contradicted-birthplace cap).
+// (birth far from the parents' residence), research_append (the
+// contradicted-birthplace cap) and timeline_build.
 import { mapWithConcurrency, type PlaceCoords } from "./place-resolver.js";
 
 const PLACE_LOOKUP_CONCURRENCY = 4;
@@ -16,15 +16,6 @@ export function birthThresholdMiles(minYear: number, maxYear: number): number {
   if (minYear <= 1949 && maxYear >= 1850) miles = Math.max(miles, 250);
   if (maxYear >= 1950) miles = Math.max(miles, 500);
   return miles;
-}
-
-/** Look up every distinct place once; a name not resolved within the budget stays null. */
-export async function lookupPlaceCoords(
-  names: string[],
-  resolver: PlaceCoordsResolver,
-  budgetMs: number,
-): Promise<Map<string, PlaceCoords | null>> {
-  return lookupWithin(names, resolver, budgetMs);
 }
 
 /** Answer every distinct name once through `resolver`, four at a time. A name

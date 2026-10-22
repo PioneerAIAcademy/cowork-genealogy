@@ -318,7 +318,8 @@ export const CENSUS_TABLE: readonly CensusRow[] = [
   census(1896, "Haute-Garonne", france("Haute-Garonne"), "5000057"), // 405k records
 ];
 
-function segments(place: string): string[] {
+/** A place's comma segments, trimmed and lowercased. */
+export function segments(place: string): string[] {
   return place
     .split(",")
     .map((s) => s.trim().toLowerCase())

@@ -360,6 +360,14 @@ describe("heads-only schedules", () => {
     expect(census(await born(woman, "1800"))).toEqual([]);
     expect(census(await born(man))).toEqual([]);
   });
+  it("a birth Aft 1800 has no latest year, so 1840 is not expected", async () => {
+    const p = await plan(project([
+      { fact: "birth", date: "after 1800", sp: PA, record: "ark:/61903/1:1:B" },
+      { fact: "residence", date: "1835", sp: PA },
+      { fact: "residence", date: "1845", sp: PA },
+    ]));
+    expect(census(p)).not.toContain("1840 United States census");
+  });
   it("a birth Bet 1795 and 1805 does not expect 1820 for a possible 15-year-old", async () => {
     const p = await plan(project([
       { fact: "birth", date: "between 1795 and 1805", sp: PA, record: "ark:/61903/1:1:B" },
@@ -401,6 +409,32 @@ describe("death, burial and the span (S1, S5)", () => {
   it("a burial with no death gives a medium death gap at the burial", async () => {
     const p = await plan(project([{ fact: "burial", date: "1908", sp: OHIO }]));
     expect(p!.gaps).toEqual([expect.objectContaining({ start: "1908", end: "1908", expected_events: ["death"], severity: "medium" })]);
+  });
+  it("an unplaced death ends the census years a later placed event would open", async () => {
+    const p = await plan(project([
+      { fact: "birth", date: "1800", sp: OHIO },
+      { fact: "residence", date: "1845", sp: OHIO },
+      { fact: "death", date: "1847" },
+      { fact: "probate", date: "1872", sp: OHIO },
+    ]));
+    expect(census(p)).toEqual(["1830 United States census", "1840 United States census"]);
+  });
+  it("a death open on its earlier side expects no census after the event before it", async () => {
+    const p = await plan(project([
+      { fact: "residence", date: "1850", sp: OHIO },
+      { fact: "death", date: "before 1880" },
+      { fact: "probate", date: "1900", sp: OHIO },
+    ]));
+    expect(census(p)).toEqual([]);
+  });
+  it("a burial with no death ends the span as a death does", async () => {
+    const p = await plan(project([
+      { fact: "residence", date: "1845", sp: OHIO },
+      { fact: "burial", date: "1847", sp: OHIO },
+      { fact: "probate", date: "1872", sp: OHIO },
+    ]));
+    expect(census(p)).toEqual([]);
+    expect(p!.gaps.filter((g: any) => g.expected_events.includes("residence"))).toEqual([]);
   });
   it("a probate 25 years after a linked death gives no 20-year gap", async () => {
     const p = await plan(project([
@@ -601,6 +635,29 @@ describe("timelineBuild on a project", () => {
     await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
     const second: any = await timelineBuild({ projectPath: dir, personId: "I1" }, deps);
     expect(second).toMatchObject({ status: "updated", timelineId: first.timelineId });
+    expect((await read()).timelines.find((t: any) => t.id === first.timelineId).person_ids).toEqual(["KWCJ-RN4"]);
+  });
+
+  it("a person timeline written while this run looks up places is updated, not duplicated", async () => {
+    let written = false;
+    const racing = {
+      ...deps,
+      placeCoords: async (sp: string) => {
+        if (!written) {
+          written = true;
+          const research = await read();
+          research.timelines.push({
+            id: "t_099", label: "other run", person_ids: ["I1"], generated: "2026-01-01T00:00:00Z", events: [], gaps: [],
+          });
+          await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+        }
+        return deps.placeCoords(sp);
+      },
+    };
+    const r: any = await timelineBuild({ projectPath: dir, personId: "I1" }, racing);
+    expect(written).toBe(true);
+    expect(r).toMatchObject({ ok: true, status: "updated", timelineId: "t_099" });
+    expect((await read()).timelines.filter((t: any) => t.person_ids.join() === "I1" && t.hypothesis_id == null)).toHaveLength(1);
   });
 
   it("a two-person timeline, and one naming a stale id, are left alone", async () => {

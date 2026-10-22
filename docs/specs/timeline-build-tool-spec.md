@@ -117,14 +117,17 @@ states named no preferred assertion (12 with no kind, 1 `synthesis`).
 
 `start` and `end` are copied from the bounding events and never padded. No gap
 has an empty `expected_events`. No census, marriage or 20-year gap starts at or
-after the earliest linked death.
+after the earliest linked death or burial, and no census year is expected at or
+after the earliest year that event allows. When its earlier side is open
+("before 1880"), that is the latest year any event before it allows.
 
 - **Census, `high`.** Between consecutive placed events A and B, year Y is
   expected when it falls after every year A allows and before every year B
   allows (an unbounded side expects nothing), one census-table row of year Y
   covers both A's and B's places, and no event's span is exactly Y. A heads-only
   row is expected only for a male whose latest possible linked birth year makes
-  him 21 or older in Y; with no linked birth, never. Each entry reads
+  him 21 or older in Y; with no linked birth, or one open on its later side,
+  never. Each entry reads
   `"<year> <label> census"`, the national row's label when a national and a
   state row both cover Y. Before the write, each entry is tested with
   `timelineCensus1890Invariants`; a refused one is dropped and noted.
@@ -156,8 +159,9 @@ collection's title, and a title naming a range gives no row. A collection whose
 indexed records are under 75% of that census's population (of households, for
 a heads-only schedule) gets no row, and a partial national index lists only
 the areas known covered (US federal 1790–1880 rows list their states). City
-censuses have no rows yet. Rows cover North and South America, Europe and
-Australia. A named fragment list stays out: US 1890, Ireland 1821–1851, New
+censuses have no rows yet. Rows were sought in North and South America, Europe
+and Australia; Australia has none. A
+named fragment list stays out: US 1890, Ireland 1821–1851, New
 South Wales 1841.
 
 A place no row covers is named in the summary as unchecked: its country, or its
@@ -202,7 +206,11 @@ indexed, and every place or country for which no census was checked.
 The person's timeline is one with no `hypothesis_id` and exactly one
 `person_ids` entry that resolves to the anchor (a FamilySearch id there matches;
 a stale one does not, and does not crash). None: append. One or more: update the
-newest in place, restamping `generated`, and name the others in `summary`. A
+newest in place, restamping `generated` and keeping its `person_ids`, and name
+the others in `summary`. The choice is re-checked on `research.json` as read
+under the writer's lock (`researchAppend`'s `precondition`); when a person
+timeline was written or restamped since the first read, the choice is made
+again, at most three times. A
 hypothesis or multi-person timeline is never touched. Ownership: the
 `timelines` row of `ownership.json` (`toolAuthorized`).
 
