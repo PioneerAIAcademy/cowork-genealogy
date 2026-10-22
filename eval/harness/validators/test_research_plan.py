@@ -282,11 +282,27 @@ def test_research_plan_new_plan_for_q_001(before_state, after_state, test):
 
 # --- Tag-gated: new plan items have status=planned, fallback_for=null
 
+def _enumerative_skip(item: dict, question: dict | None) -> bool:
+    """The one non-`planned` status a new item may carry: on an `enumerative`
+    question (#1830 item 1, the lead's 2026-08-31 ruling on #1917), each of
+    the five event types the plan does not cover is written as a `skipped`
+    item stating why — a category and a reason, both non-empty."""
+    return (
+        (question or {}).get("question_kind") == "enumerative"
+        and item.get("status") == "skipped"
+        and bool(str(item.get("skip_category") or "").strip())
+        and bool(str(item.get("skip_reason") or "").strip())
+    )
+
+
 def test_new_plan_items_planned_status(before_state, after_state, test):
     """Tag-gated: new plan items default to status='planned' (not
     in_progress) and fallback_for=null unless an explicit fallback chain
     is being set up. Items created mid-execution would have status set
-    by the search-* skills via log entries — never by research-plan."""
+    by the search-* skills via log entries — never by research-plan.
+    The one exception is `_enumerative_skip`; on a targeted or unlabelled
+    question a `skipped` item at creation still fails, which is what stops
+    the enumerative obligation over-firing."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
         pytest.skip("not a new-plan-items-planned-status scenario")
     before = before_state.get("research_json")
@@ -301,13 +317,16 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
             if item.get("id"):
                 before_item_ids.add(item["id"])
 
+    questions = {q.get("id"): q for q in after.get("questions", []) or []}
+
     errors: list[str] = []
     for plan in after.get("plans", []) or []:
+        question = questions.get(plan.get("question_id"))
         for item in plan.get("items", []) or []:
             if item.get("id") in before_item_ids:
                 continue  # pre-existing item, not our responsibility
             status = item.get("status")
-            if status != "planned":
+            if status != "planned" and not _enumerative_skip(item, question):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"

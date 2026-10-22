@@ -114,7 +114,7 @@ matches, call no tool, write nothing, and return one caller-facing line,
 | The request | Owner |
 |-------------|-------|
 | Run a search, with no plan to make or review ("go search the 1880 census", "execute pli_003"). A plan request that also authorizes execution is yours: Step 7 | search-records for FamilySearch, search-external-sites for any other site |
-| A record already in hand, to extract ("here is the death certificate — add its facts") | extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source |
+| A record already in hand, to extract ("here is the death certificate — add its facts"). A held record the objective names as the source of its facts is yours: plan it first, principle 7 | extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source |
 | Which question to research next | question-selection |
 | Whether research on a question is done ("are we done?", or "what's the next step?" after a search came back empty). Disposing of named items after research-exhaustiveness refused a declaration is yours: Dispose mode | research-exhaustiveness |
 
@@ -167,7 +167,8 @@ From the question's `rationale` and `selection_basis`, determine:
 You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
-the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
+the target question's own entry (`section: "questions"`, `questionId`) to read its
+`question_kind`, for the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
 `tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
 
@@ -502,7 +503,9 @@ Order items for efficient discovery (BCG Standard 15):
    speak to this question, don't manufacture one
 7. **Prioritize the objective's target record** — when the objective explicitly
    requests a particular record type and provides the jurisdiction needed to
-   search for it, that record is the first research target. Do not prioritize
+   search for it, or its facts came from a document the user holds, that record
+   is the first research target. Do not plan a fresh search for facts taken from
+   a document nobody has read. Do not prioritize
    indirect sources whose primary purpose is to re-establish information the
    objective already supplies. Corroborating and supporting records remain in
    the plan, but normally follow the target record rather than acting as a
@@ -541,7 +544,11 @@ sit inside this range while still failing the self-check below.
 user asks "was anything missed?"** Answer Appendix A's
 Standard 17 five self-check questions, plus a sixth, against the plan
 you are about to write:
-1. Sufficient breadth of record types (not just census/vital)?
+1. Sufficient breadth of record types (not just census/vital)? When the
+   target question's `question_kind` is `enumerative`, does the plan cover
+   birth, marriage, death, census and probate, with each one it does not
+   cover written as a `skipped` item whose `skip_category` and `skip_reason`
+   say why? A `targeted` or unlabelled question carries no such obligation.
 2. All relevant repositories identified (not just the most convenient)?
 3. Variant spellings/name forms accounted for?
 4. All relevant jurisdictions included (considering boundary changes)?
@@ -636,8 +643,10 @@ research_append({
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
   or null. The fallback is searched if the primary yields nothing.
 - `status`: the item's progress — exactly one of `planned`,
-  `in_progress`, `completed`, or `skipped`. New items are `planned`.
-  Never use any other value (e.g. not `not_started`, not `pending`).
+  `in_progress`, `completed`, or `skipped`. New items are `planned`,
+  except an event type an `enumerative` question's plan does not cover,
+  which is `skipped` with its `skip_category` and `skip_reason` (Step 4
+  self-check 1). Never use any other value (e.g. not `not_started`, not `pending`).
 - `skip_category`: required whenever `status` is `skipped` — exactly
   one of `answered`, `inaccessible`, `no_coverage`,
   `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`,

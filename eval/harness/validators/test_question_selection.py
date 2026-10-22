@@ -473,6 +473,32 @@ def test_new_question_not_vague(before_state, after_state):
     )
 
 
+_QUESTION_KINDS = ("enumerative", "targeted")
+
+
+def test_new_question_carries_question_kind(before_state, after_state):
+    """Universal: every question question-selection writes carries a
+    `question_kind` (issue #1830 item 1, the lead's 2026-08-31 ruling on
+    #1917). The field is optional in the schema only so older questions still
+    validate; research-plan reads it to decide whether the five-event breadth
+    obligation applies, so a question written without it silently opts out.
+    The engine already refuses an invalid value, so absence is what this
+    catches."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    offenders = [
+        f"{q.get('id')}: question_kind={q.get('question_kind')!r}"
+        for q in _new_questions(before, after)
+        if q.get("question_kind") not in _QUESTION_KINDS
+    ]
+    assert not offenders, (
+        f"new question(s) without a question_kind in {_QUESTION_KINDS}: "
+        + ", ".join(offenders)
+    )
+
+
 # --- Tag-gated: the timelines section must actually be queried (V3) ---
 
 def test_timelines_queried_before_deciding(before_state, tool_calls, test):

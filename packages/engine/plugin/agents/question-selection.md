@@ -312,6 +312,7 @@ research_append({
     question: "<one single-fact question>",
     rationale: "<why now — grounded in record availability/methodology>",
     selection_basis: "<the basis you chose from the Step 2 priority table>",
+    question_kind: "<enumerative | targeted>",
     priority: "<high | medium | low>",
     status: "open",
     depends_on: [], unblocks: ["q_001"],
@@ -320,6 +321,10 @@ research_append({
   }
 })
 ```
+
+Set `question_kind` on every question you write: `enumerative` when it asks
+for every member of a set of people ("Who were the children of X?"),
+`targeted` otherwise.
 
 The tool validates the whole project before writing and writes nothing on
 failure; on `{ ok: false, errors }`, surface the errors and fix the entry —
@@ -575,7 +580,7 @@ a name or date may not stand in for the fact the objective needs.)
 | Multiple unknowns | "Find parents and birthplace of John" | Split into two questions |
 | Assumes facts not in evidence | "Find John's second wife's maiden name" (no evidence of a second wife) | First establish the second marriage |
 | Untestable | "Trace the family back as far as possible" | Define a specific endpoint |
-| Record-first framing | "What does Reuben's 1900 census entry say about his parents?" | Name the fact: "Who were Reuben's parents?" — the census belongs in the plan |
+| Record-first framing | "What does Reuben's 1900 census entry say about his parents?" | Name the fact: "Who were Reuben's parents?" — the census belongs in the plan; a document the user holds and names in the objective is still the first thing the plan reaches |
 | Outside the objective | "When did Reuben's wife emigrate?" (objective is Reuben's parents) | Her facts are a different objective, not a sub-question of this one |
 | Built on unverified claim | "Find birth record for 1815" (1815 comes from an unsourced tree) | First verify the approximate birth year |
 | Premise test names no fact | "Was 'Curtis' her maiden or married name?" (objective is her parents) | Name the gating fact: "What was her maiden name?" — either branch then yields it |
