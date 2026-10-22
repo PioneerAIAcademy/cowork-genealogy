@@ -137,6 +137,8 @@ context compaction) is answered with that entry, not refused: the sidecar record
 the staged file it came from (`staged_ref`, research-schema-spec §5.4.1), the call
 returns that entry's `logId`, `resultsRef` and `returnedCount` with
 `alreadyLogged: true` and a warning naming the id, and writes nothing for that op.
+A re-send that names a different `tool`, `planItemId` or `outcome` than the
+entry is refused instead, naming the entry and each difference.
 In a batch, every other op is logged as usual. A ref no sidecar names keeps the
 "not in `results/.staging/`" refusal.
 
@@ -401,7 +403,9 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
-| `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
+| `stagedResultsRef` names no staged file and no sidecar records it — pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
+| `stagedResultsRef` names no staged file, but a sidecar records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
+| that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |

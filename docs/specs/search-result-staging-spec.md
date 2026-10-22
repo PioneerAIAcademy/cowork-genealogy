@@ -303,9 +303,11 @@ same ground truth production does.
 - **A successful log consumes it; a refused one never does.** `research_log_append`
   removes the staged file only after its `research.json` write commits (§6 step 5).
   Every refusal — whatever stage it comes from — leaves the file, so a corrected
-  re-send finds it. A ref that is missing gets a message saying each staged ref can
-  be logged once, and whether to re-run the search or leave it: already logged,
-  pruned, or never staged.
+  re-send finds it. A missing ref that a sidecar records as its `staged_ref` was
+  already logged, and is answered with that entry (`research-log-editor-spec.md`,
+  "A staged ref that was already logged"). Any other missing ref, pruned or never
+  staged, gets a message saying each staged ref can be logged once, and whether to
+  re-run the search or leave it.
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally
