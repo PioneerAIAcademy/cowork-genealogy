@@ -240,17 +240,6 @@ def _build_parser() -> argparse.ArgumentParser:
         "scratch_<ts>.json) and the run log records `tool_search: false`.",
     )
     parser.add_argument(
-        "--prune",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Keep-newest-K retention cleanup after a releasable write. ON by "
-        "default (the cap holds by construction). --no-prune keeps the run "
-        "fully releasable and gated but preserves ALL existing candidate run "
-        "logs instead of deleting the oldest; the operator prunes/commits "
-        "later. No effect on a non-releasable (scratch) run, which never "
-        "prunes.",
-    )
-    parser.add_argument(
         "--store",
         choices=("fs", "pg"),
         default="fs",
@@ -1542,7 +1531,6 @@ def main(argv: list[str] | None = None) -> int:
             log,
             runlogs_root=paths.runlogs_root,
             filename=filename,
-            prune=args.prune,
             on_prune=lambda removed: print(
                 f"  → pruned {len(removed)} file(s) beyond the newest "
                 f"{DEFAULT_KEEP_CANDIDATES} candidates — commit the deletions"

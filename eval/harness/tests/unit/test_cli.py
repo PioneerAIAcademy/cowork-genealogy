@@ -291,90 +291,6 @@ def test_main_tool_search_end_to_end(
     assert ("tool search: OFF (scratch log)" in capsys.readouterr().out) is not want_tool_search
 
 
-def test_prune_defaults_to_true():
-    assert run_tests._build_parser().parse_args(["--skill", "skill-a"]).prune is True
-
-
-def test_no_prune_sets_prune_false():
-    args = run_tests._build_parser().parse_args(["--skill", "skill-a", "--no-prune"])
-    assert args.prune is False
-
-
-def test_prune_explicit_true():
-    args = run_tests._build_parser().parse_args(["--skill", "skill-a", "--prune"])
-    assert args.prune is True
-
-
-@pytest.mark.parametrize(
-    "extra, want_prune",
-    [
-        ([], True),  # default -> prune on
-        (["--no-prune"], False),  # opt out of the keep-newest cleanup
-        (["--prune"], True),
-    ],
-)
-def test_main_prune_flag_reaches_write_run_log(
-    tmp_path, monkeypatch, capsys, extra, want_prune
-):
-    """The --prune/--no-prune value must reach write_run_log, and --no-prune must
-    NOT change releasability — the log stays a releasable v{N}, not scratch."""
-    from pathlib import Path
-    from harness.auth import AuthConfig
-
-    root = tmp_path / "unit"
-    skill_dir = root / "skill-a"
-    skill_dir.mkdir(parents=True)
-    (skill_dir / "rubric.md").write_text(
-        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
-        encoding="utf-8",
-    )
-    (skill_dir / "t0.json").write_text(json.dumps({
-        "test": {"id": "ut_a_000", "skill": "skill-a", "name": "n",
-                  "type": "positive", "description": "x", "tags": []},
-        "input": {"user_message": "m", "scenario": None},
-        "judge_context": [],
-    }), encoding="utf-8")
-    monkeypatch.setattr(
-        run_tests, "resolve_auth",
-        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
-    )
-    _stub_anthropic_ok(monkeypatch)
-
-    logs: list[tuple[str, dict, object]] = []
-
-    def fake_run(spec, **kwargs):
-        return _stub_log(spec.id, spec.skill, "pass")
-
-    def fake_write(log, *, runlogs_root, filename, **kwargs):
-        logs.append((filename, log, kwargs.get("prune", "MISSING")))
-        out = Path(runlogs_root) / "unit" / log["skill"] / filename
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("{}", encoding="utf-8")
-        return out
-
-    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
-    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
-    monkeypatch.setattr(
-        run_tests, "write_partial_runlog",
-        lambda log, *, runlogs_root, skill, timestamp:
-            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
-    )
-    runlogs = tmp_path / "runlogs"
-    runlogs.mkdir()
-    rc = run_tests.main([
-        "--skill", "skill-a",
-        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
-        *extra,
-    ])
-
-    assert rc == 0
-    filename, log, prune_seen = logs[0]
-    assert prune_seen is want_prune  # the flag reached write_run_log
-    # --no-prune must not touch releasability: still a releasable v{N} candidate.
-    assert not filename.startswith("scratch_")
-    assert log["releasable"] is True
-
-
 def _stub_log(test_id, skill, outcome, expected_outcome="pass", aborted_reason=None):
     """Return a minimal test ENTRY for exit-code logic tests.
 
@@ -1500,7 +1416,7 @@ def _stub_run_through(monkeypatch, tmp_path):
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename, on_prune=None, prune=True: Path(runlogs_root) / filename)
+                        lambda log, *, runlogs_root, filename, on_prune=None: Path(runlogs_root) / filename)
     monkeypatch.setattr(
         run_tests, "write_partial_runlog",
         lambda log, *, runlogs_root, skill, timestamp:

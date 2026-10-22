@@ -739,7 +739,6 @@ def write_run_log(
     runlogs_root: Path,
     filename: str,
     on_prune: Callable[[list[Path]], None] | None = None,
-    prune: bool = True,
 ) -> Path:
     """Write `log` to `<runlogs_root>/<unit_dir_name(store)>/<skill>/<filename>`.
 
@@ -750,12 +749,6 @@ def write_run_log(
     Raises `RunlogCollisionError` if the destination already exists —
     operators must wait one second and rerun or pick a non-conflicting
     timestamp.
-
-    `prune` (default True) gates the keep-newest-K cleanup below. It only
-    affects a releasable write — a scratch/partial write never prunes
-    regardless. Passing `prune=False` keeps the write releasable and fully
-    gated (snapshot/judge/instrument/annotation unchanged) but defers the
-    local retention cleanup to the operator; nothing on disk is deleted.
     """
     skill = log["skill"]
     target_dir = Path(runlogs_root) / unit_dir_name(log.get("store")) / skill
@@ -790,7 +783,7 @@ def write_run_log(
     # `on_prune` lets the CLI announce the deletions at the moment they happen.
     # Without it the junior meets them first in `git status` as changes they did
     # not make, which reads as a bug rather than as retention doing its job.
-    if prune and log.get("releasable"):
+    if log.get("releasable"):
         removed = prune_old_candidates(target_dir)
         if removed and on_prune is not None:
             on_prune(removed)
