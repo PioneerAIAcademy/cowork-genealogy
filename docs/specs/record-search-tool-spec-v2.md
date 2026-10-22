@@ -1016,7 +1016,7 @@ Each `RecordSearchResult`:
 | `birthPlace` | string \| undefined | Birth place as written. |
 | `deathDate` | string \| undefined | Death date as written. |
 | `deathPlace` | string \| undefined | Death place as written. |
-| `events` | Event[] | All other extracted facts that aren't already surfaced as birth/death (residence, immigration, marriage, etc.). |
+| `events` | Event[] | All other extracted facts that aren't already surfaced as birth/death (residence, immigration, marriage, etc.), plus the facts of every Couple relationship the persona is an endpoint of — many marriage records put the Marriage there, not on either spouse. |
 | `collectionId` | string \| undefined | The ID of the collection this record belongs to. Undefined when the upstream record carries no Collection-typed `sourceDescriptions[]` entry. |
 | `collectionTitle` | string \| undefined | Human-readable collection name. Undefined under the same conditions as `collectionId`. |
 | `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch (a web page, not an ARK). Undefined under the same conditions as `collectionId`. |
@@ -1751,6 +1751,20 @@ For each `entry` in `response.entries`:
    - `value` ← `fact.value`
    - Skip facts with none of date / place / value.
 
+   Then, when the persona has an `id`, append the facts of every
+   `gedcomx.relationships[]` entry whose `type` ends in `"/Couple"` and
+   whose `person1.resource` or `person2.resource` (leading `#` stripped)
+   equals that `id`, in document order, mapped the same way. Every fact
+   type on the Couple is taken (Marriage, MarriageRegistration, Divorce…);
+   ParentChild facts are not. A Couple-derived event whose `type` and
+   `date` match an event already in `events` is the person-level copy of
+   the same fact: it is not appended, but supplies the `place` or `value`
+   the kept copy lacks. Matching on `type` alone would hide a second,
+   different marriage. An undated event matches only an undated event
+   with the same `type`, `place` and `value`, so two undated marriages at
+   different places are both kept. The event carries no marker of where
+   it came from.
+
 8. (The persona ARK is surfaced as `recordId`; see step 2. There is no
    separate URL field.)
 
@@ -1848,12 +1862,17 @@ records are added.
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 `FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`, `FSField`,
-`FSFieldValue`) and tool I/O types (`RecordSearchInput`,
+`FSFieldValue`, `FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
 `RecordSearchResult`, `RecordSearchEvent`, `TreeMatch`,
 `RecordSearchToolResponse`).
 
 `FSField` / `FSFieldValue` declare the entry-level `fields[]` array that
 `FSGedcomx` now carries — the batch number's home.
+
+`FSRecordRelationship` declares `FSGedcomx.relationships`, read for the
+facts of the persona's Couple rows (mapping rule 7). Endpoints are matched
+on `resource: "#<persona id>"`; the payload also carries `resourceId`,
+which is not read and so not declared.
 
 ### `packages/engine/mcp-server/src/types/relative-terms.ts`
 
@@ -1998,11 +2017,20 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 70 | Fires on rows + `subjectResolvable: false`, says "did not identify the subject", precedes `results`, and is absent from the staged sidecar | The one branch that stages, so the only place "never staged" can be shown |
 | 71 | Emitted on `surnameAlt`, the maiden-name union | The field a woman's patronymic most often travels in |
 | 72 | `searchFoundNobody` true on a nil and on rows with `subjectResolvable: false`, false otherwise | One test for both hints |
+| 73 | A Marriage only on the persona's Couple reaches `events` | The issue's case; persona on `person2` |
+| 74 | A Couple the persona is not an endpoint of (the parents') contributes nothing | Endpoint filter; the persona has no Couple of its own, so dedup cannot mask a missing filter |
+| 75 | A Marriage on both the persona and the Couple appears once, with the Couple's place | type + date dedup; the kept copy gains the place it lacked |
+| 76 | A Couple Marriage with a different date is kept beside the persona's | Rejects a type-only dedup |
+| 77 | A `projectPath` search keeps the Couple-derived event, inline and in the sidecar | Staging deletes `gedcomx`, so the event must already be in `events` |
+| 78 | A persona with no `id` gets no Couple events, even from a Couple with no `resource` | A missing ref must not equal a missing id |
+| 79 | Undated Marriages on two Couples at different places are both kept | An absent date must not make two marriages equal |
+| 80 | An undated Marriage on both the persona and the Couple appears once | Undated dedup on the whole event |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
 cover `batchNumber`; 65–72 cover `surnameVariantHints`, whose rule is also
-unit-tested in `tests/utils/surname-variant-hints.test.ts`.
+unit-tested in `tests/utils/surname-variant-hints.test.ts`; 73–80 cover the
+Couple-relationship events.
 
 ### Smoke-test script
 

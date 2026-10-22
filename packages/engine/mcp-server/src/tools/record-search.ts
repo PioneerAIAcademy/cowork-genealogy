@@ -758,6 +758,50 @@ function extractBatchNumber(
   return undefined;
 }
 
+/**
+ * Appends to `events` the facts of every Couple relationship the persona is an
+ * endpoint of (#3695). Many marriage records hang the Marriage on the Couple,
+ * not on either spouse, so reading the persona's own facts alone leaves the hit
+ * with no marriage at all.
+ *
+ * A Couple fact whose `type` and `date` match an event already present is the
+ * same fact copied onto the persona: it is not appended, but fills in the
+ * `place` or `value` the kept copy lacks. Matching on type alone would hide a
+ * second, different marriage. An undated fact matches only an identical undated
+ * event, so two undated marriages at different places both survive.
+ */
+function appendCoupleEvents(
+  events: RecordSearchEvent[],
+  gedcomx: FSGedcomx | undefined,
+  personId: string | undefined,
+): void {
+  if (!personId) return;
+  const keyOf = (e: RecordSearchEvent) =>
+    e.date !== undefined
+      ? JSON.stringify([e.type, e.date])
+      : JSON.stringify([e.type, null, e.place ?? null, e.value ?? null]);
+  const seen = new Map(events.map((e) => [keyOf(e), e]));
+  const isSelf = (ref: { resource?: string } | undefined) =>
+    ref?.resource?.replace(/^#/, "") === personId;
+  for (const rel of gedcomx?.relationships ?? []) {
+    if (!rel.type?.endsWith("/Couple")) continue;
+    if (!isSelf(rel.person1) && !isSelf(rel.person2)) continue;
+    for (const fact of rel.facts ?? []) {
+      const event = extractEvent(fact);
+      if (!event) continue;
+      const key = keyOf(event);
+      const kept = seen.get(key);
+      if (kept) {
+        if (kept.place === undefined && event.place !== undefined) kept.place = event.place;
+        if (kept.value === undefined && event.value !== undefined) kept.value = event.value;
+        continue;
+      }
+      seen.set(key, event);
+      events.push(event);
+    }
+  }
+}
+
 export function mapEntry(
   entry: FSSearchEntry,
   terms: readonly KinTerm[] = [],
@@ -795,6 +839,7 @@ export function mapEntry(
     const event = extractEvent(fact);
     if (event) events.push(event);
   }
+  appendCoupleEvents(events, entry.content?.gedcomx, person.id);
 
   // Canonical 1:1: record-persona ARK. Prefer the persona's Persistent ARK
   // (the URL FamilySearch returns); fall back to constructing one from

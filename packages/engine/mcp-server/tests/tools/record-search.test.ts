@@ -1612,6 +1612,12 @@ function householdEntry(opts?: {
   spouseIsSelf?: boolean;
   personaHasId?: boolean;
   relationships?: "omit" | "empty";
+  /** Facts put on every Couple row (#3695). */
+  coupleFacts?: Record<string, unknown>[];
+  /** Facts put on the persona itself. */
+  personaFacts?: Record<string, unknown>[];
+  /** Add a Couple between the two parents, which the persona is not part of. */
+  parentsCouple?: boolean;
 }): FSSearchEntry {
   const father = opts?.father ?? "male";
   const mother = opts?.mother ?? "female";
@@ -1632,6 +1638,7 @@ function householdEntry(opts?: {
       principal: true,
       ...(personaHasId ? { id: "p_kid" } : {}),
       names: [rawName("Elisabetha", "Sugecz")],
+      ...(opts?.personaFacts ? { facts: opts.personaFacts } : {}),
       identifiers: {
         "http://gedcomx.org/Persistent": [
           "https://familysearch.org/ark:/61903/1:1:HHHH-1111",
@@ -1678,6 +1685,15 @@ function householdEntry(opts?: {
         ? { resource: "#p_kid" }
         : { resource: `#${id}` },
       person2: { resource: "#p_kid" },
+      ...(opts?.coupleFacts ? { facts: opts.coupleFacts } : {}),
+    });
+  }
+  if (opts?.parentsCouple) {
+    relationships.push({
+      type: "http://gedcomx.org/Couple",
+      person1: { resource: "#p_dad" },
+      person2: { resource: "#p_mom" },
+      ...(opts?.coupleFacts ? { facts: opts.coupleFacts } : {}),
     });
   }
 
@@ -2281,5 +2297,118 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
       );
       expect(JSON.stringify(staged)).not.toContain("surnameVariantHints");
     });
+  });
+});
+
+describe("#3695 Couple-relationship facts in events", () => {
+  const marriage = (date: string, place?: string) => ({
+    type: "http://gedcomx.org/Marriage",
+    date: { original: date },
+    ...(place ? { place: { original: place } } : {}),
+  });
+  const undatedMarriage = (place: string) => ({
+    type: "http://gedcomx.org/Marriage",
+    place: { original: place },
+  });
+  const marriagesIn = (entry: FSSearchEntry) =>
+    mapEntry(entry)!.events.filter((e) => e.type === "Marriage");
+
+  it("73. a Marriage only on the persona's Couple reaches events", () => {
+    const entry = householdEntry({
+      coupleFacts: [marriage("15. Februar 1867", "Arsdorf")],
+    });
+    expect(mapEntry(entry)!.events).toEqual([
+      { type: "Marriage", date: "15. Februar 1867", place: "Arsdorf" },
+    ]);
+  });
+
+  it("74. a Couple the persona is not an endpoint of contributes nothing", () => {
+    const entry = householdEntry({
+      spouses: 0,
+      parentsCouple: true,
+      coupleFacts: [marriage("3 May 1840", "Arsdorf")],
+    });
+    expect(mapEntry(entry)!.events).toEqual([]);
+  });
+
+  it("75. a Marriage on both the persona and the Couple appears once, keeping the Couple's place", () => {
+    const entry = householdEntry({
+      personaFacts: [marriage("15. Februar 1867")],
+      coupleFacts: [marriage("15. Februar 1867", "Arsdorf")],
+    });
+    expect(marriagesIn(entry)).toEqual([
+      { type: "Marriage", date: "15. Februar 1867", place: "Arsdorf" },
+    ]);
+  });
+
+  it("76. a Couple Marriage with a different date is kept beside the persona's", () => {
+    const entry = householdEntry({
+      personaFacts: [marriage("1860")],
+      coupleFacts: [marriage("15. Februar 1867", "Arsdorf")],
+    });
+    expect(marriagesIn(entry)).toEqual([
+      { type: "Marriage", date: "1860" },
+      { type: "Marriage", date: "15. Februar 1867", place: "Arsdorf" },
+    ]);
+  });
+
+  it("77. a projectPath search keeps the Couple-derived event, inline and in the sidecar", async () => {
+    // Staging deletes `gedcomx` from the rows, so the Couple's Marriage
+    // survives only if it was lifted into `events` before that.
+    const dir = await mkdtemp(join(tmpdir(), "record-search-couple-"));
+    try {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({
+          results: 1,
+          index: 0,
+          entries: [householdEntry({ coupleFacts: [marriage("15. Februar 1867", "Arsdorf")] })],
+        }),
+      );
+      const out = await recordSearchTool({ surname: "Sugecz", projectPath: dir }, LOCAL);
+      const expected = [{ type: "Marriage", date: "15. Februar 1867", place: "Arsdorf" }];
+
+      expect(out.staged).toBeTruthy();
+      expect(out.results![0].gedcomx).toBeUndefined();
+      expect(out.results![0].events).toEqual(expected);
+
+      const staged = JSON.parse(
+        await readFile(join(dir, out.staged!.resultsRef.replace(/^\.\//, "")), "utf-8"),
+      );
+      expect(staged.payload.results![0].events).toEqual(expected);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("78. a persona with no id gets no Couple events, even from a ref-less Couple", () => {
+    const entry = householdEntry({
+      personaHasId: false,
+      coupleFacts: [marriage("15. Februar 1867", "Arsdorf")],
+    });
+    // A missing `resource` must not compare equal to a missing persona id.
+    const rels = entry.content!.gedcomx!.relationships!;
+    for (const rel of rels) delete rel.person2;
+    expect(mapEntry(entry)!.events).toEqual([]);
+  });
+
+  it("79. undated Marriages on two Couples at different places are both kept", () => {
+    const entry = householdEntry({ spouses: 2 });
+    const [first, second] = entry.content!.gedcomx!.relationships!.filter((r) =>
+      r.type!.endsWith("/Couple"),
+    );
+    first.facts = [undatedMarriage("Arsdorf")];
+    second.facts = [undatedMarriage("Wiltz")];
+    expect(marriagesIn(entry)).toEqual([
+      { type: "Marriage", place: "Arsdorf" },
+      { type: "Marriage", place: "Wiltz" },
+    ]);
+  });
+
+  it("80. an undated Marriage on both the persona and the Couple appears once", () => {
+    const entry = householdEntry({
+      personaFacts: [undatedMarriage("Arsdorf")],
+      coupleFacts: [undatedMarriage("Arsdorf")],
+    });
+    expect(marriagesIn(entry)).toEqual([{ type: "Marriage", place: "Arsdorf" }]);
   });
 });
