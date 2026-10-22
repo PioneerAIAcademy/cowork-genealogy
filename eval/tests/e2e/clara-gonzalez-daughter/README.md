@@ -28,6 +28,6 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved: true match.** The birth registration of Zulema de Jesús Silva González (Entry 184, 1897 civil registration register, Colchagua) is confirmed from the index: both parents are named as Benjamín Silva Díaz and Clara González Pimienta, with birth date 12 November 1897 in the Pichilemu registration district, Colchagua. The compound surnames match the tree person across all known records for this family.
+**Resolved: true match.** The birth registration of Zulema de Jesús Silva González (Entry 184, 1897 civil registration register, Colchagua) is confirmed from the index: both parents are named as Benjamín Silva Díaz and Clara González Pimienta, with birth date 12 November 1897, registered at Pichilemu, Colchagua. The compound surnames match the tree person across all known records for this family.
 
 **Marriage record cross-check.** The marriage record names the groom's father's mother as Mercedes Díaz and the bride's mother as Antonia Pimienta, locking both compound second surnames to this specific family and ruling out coincidental name matches.

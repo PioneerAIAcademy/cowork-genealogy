@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Clara González Pimienta and Benjamín Silva Díaz had a daughter, Zulema de Jesús Silva González, born 12 November 1897 at Pichilemu, Colchagua, Chile.",
+      "description": "Clara González Pimienta and Benjamín Silva Díaz had a daughter, Zulema de Jesús Silva González, born 12 November 1897 and registered at Pichilemu, Colchagua, Chile.",
       "details": {
         "subject_person": "Clara González Pimienta (GJVV-FHW)",
         "relation": "child",
@@ -14,7 +14,7 @@
         "father": "Benjamín Silva Díaz"
       },
       "supporting_sources": [
-        "Chile, Civil Registration, 1880-1933 — birth registration of Zulema de Jesus Silva Gonzalez, born 12 Nov 1897, Pichilemu, Colchagua, parents Benjamín Silva Díaz and Clara Gonzalez Pimienta",
+        "Chile, Civil Registration, 1880-1933 — birth registration of Zulema de Jesus Silva Gonzalez, born 12 Nov 1897, registered at Pichilemu, Colchagua, parents Benjamín Silva Díaz and Clara Gonzalez Pimienta",
         "ark:/61903/1:1:Q2S2-PCBP"
       ],
       "required": true
