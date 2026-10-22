@@ -47,9 +47,9 @@ managed by GeneFun (the "Work"). "Submit" means any form of electronic,
 verbal, or written communication sent to GeneFun or its representatives,
 including but not limited to pull requests, commits, issues, and
 discussion in repositories managed by or on behalf of GeneFun. It
-includes Contributions you submitted before you signed this agreement. It
-excludes communication you conspicuously mark in writing as "Not a
-Contribution."
+includes work you submitted before you signed this agreement, unless an
+earlier version of this agreement that you signed covers it. It excludes
+communication you conspicuously mark in writing as "Not a Contribution."
 
 ### 2. Grant of copyright license
 
