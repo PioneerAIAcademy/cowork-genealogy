@@ -1386,8 +1386,18 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
-  it.each(["wiki_search", "wiki_read", "wikipedia_search", "historical_context"])(
-    "does not count %s as a positive search (#3244)",
+  it.each([
+    "wiki_search",
+    "wiki_read",
+    "wikipedia_search",
+    "historical_context",
+    "source_evaluation",
+    "check_warnings",
+    "translation",
+    "convert_dates",
+    "validate_schema",
+  ])(
+    "does not count %s as a positive search (#3244, #3524)",
     async (tool) => {
       await write(baseResearch([]));
       const op = { tool, query: { query: "Kingsclear" }, outcome: "positive", resultsExamined: 1, planItemId: null, notes: null };
