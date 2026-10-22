@@ -145,10 +145,12 @@ not the translation.
 
 If the Narration read found no `research.json`, skip this step.
 
-One `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "translation"`, `query: {language, recordType}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (records or terms translated), `notes` set to the **full** translation exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+Before you write your reply: one `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "translation"`, `query: {language, recordType}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (records or terms translated), `notes` set to the **full** translation exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
+
+Then return that same translation, in full, above the `---` line — never only a note that it was logged.
 
 A hand-off, or a return asking for the file path or a transcription, logs nothing.
 

@@ -25,21 +25,25 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_convert_dates import (  # noqa: E402
     test_only_convert_calendar_called as cd_allowlist,
+    test_reply_carries_logged_report as cd_reply,
     test_report_logged as cd_logged,
     test_research_json_only_logs_report as cd_state,
 )
 from test_check_warnings import (  # noqa: E402
+    test_reply_carries_logged_report as cw_reply,
     test_report_logged as cw_logged,
     test_research_json_only_logs_report as cw_state,
 )
 from test_translation import (  # noqa: E402
     test_only_logs_translation as tr_allowlist,
+    test_reply_carries_logged_report as tr_reply,
     test_report_logged as tr_logged,
     test_research_json_only_logs_report as tr_state,
 )
 from test_validate_schema import (  # noqa: E402
     test_does_not_modify_project_files as vs_state,
     test_only_calls_validate_research_schema as vs_allowlist,
+    test_reply_carries_logged_report as vs_reply,
     test_report_logged as vs_logged,
 )
 
@@ -175,3 +179,53 @@ def test_validate_schema_allows_one_log_call_beside_the_validator():
         vs_allowlist([_call("validate_research_schema")] + [_call("research_log_append")] * 2)
     with pytest.raises(AssertionError, match="should only call validate_research_schema"):
         vs_allowlist([_call("research_append")])
+
+
+# --- the logged report is also the reply (issue #3524 review) ---------------
+
+REPLY_AGENTS = [
+    pytest.param(cw_reply, "check-warnings", "check_warnings", id="check-warnings"),
+    pytest.param(tr_reply, "translation", "translation", id="translation"),
+    pytest.param(cd_reply, "convert-dates", "convert_dates", id="convert-dates"),
+    pytest.param(vs_reply, "validate-schema", "validate_schema", id="validate-schema"),
+]
+
+_REPORT = (
+    "WARNINGS FOR: Patrick Flynn (KWCJ-RN4). Contradiction: residence recorded "
+    "eighteen months after burial in Sherbrooke parish; verify the residence "
+    "source against the original census enumeration before correcting anything."
+)
+_DIRECT = {"type": "positive", "delegation": "Check Patrick Flynn for warnings.", "tags": ["direct-arm"]}
+
+
+def _logged(tool):
+    return _states(_research([]), _research([_entry(1, tool, notes=_REPORT)]))
+
+
+@pytest.mark.parametrize("check, agent, tool", REPLY_AGENTS)
+def test_a_reply_carrying_the_report_passes(check, agent, tool):
+    before, after = _logged(tool)
+    returns = [{"subagent_type": agent, "text": _REPORT + "\n\n---\nA plain summary."}]
+    check(before, after, _DIRECT, agent_returns=returns, text_response="relay")
+
+
+@pytest.mark.parametrize("check, agent, tool", REPLY_AGENTS)
+def test_a_note_that_it_was_logged_fails(check, agent, tool):
+    before, after = _logged(tool)
+    returns = [{"subagent_type": agent, "text": "The check has been logged (log_001 in research.json)."}]
+    with pytest.raises(AssertionError, match="not a note that it was logged"):
+        check(before, after, _DIRECT, agent_returns=returns, text_response=_REPORT)
+
+
+@pytest.mark.parametrize("check, agent, tool", REPLY_AGENTS)
+def test_the_dispatchers_relay_does_not_rescue_a_silent_agent(check, agent, tool):
+    before, after = _logged(tool)
+    with pytest.raises(AssertionError, match="carries 0%"):
+        check(before, after, _DIRECT, agent_returns=[], text_response=_REPORT)
+
+
+@pytest.mark.parametrize("check, agent, tool", REPLY_AGENTS)
+def test_no_logged_entry_skips(check, agent, tool):
+    before, after = _states(_research([]), _research([]))
+    with pytest.raises(pytest.skip.Exception):
+        check(before, after, _DIRECT, agent_returns=[], text_response="")

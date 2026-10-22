@@ -175,10 +175,12 @@ The full escalation table is in Appendix B.
 
 ### 5. Log the report
 
-After the report, including a report that found no warnings: one `research_log_append` call with the `projectPath` you passed `person_warnings` and one op: `tool: "check_warnings"`, `query: {personIds, request}` (the ids checked and the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (persons checked), `notes` set to the **full** report exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+Before you write your reply, including a report that found no warnings: one `research_log_append` call with the `projectPath` you passed `person_warnings` and one op: `tool: "check_warnings"`, `query: {personIds, request}` (the ids checked and the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (persons checked), `notes` set to the **full** report exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
+
+Then return that same report, in full, above the `---` line — never only a note that it was logged.
 
 A `Hand-back:` return logs nothing.
 

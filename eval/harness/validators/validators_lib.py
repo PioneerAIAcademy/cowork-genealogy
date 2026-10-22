@@ -20,6 +20,7 @@ small and lets each validator file decide how to handle missing state.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 import pytest
@@ -293,6 +294,33 @@ def assert_report_logged(
     notes = entry.get("notes")
     assert isinstance(notes, str) and notes.strip(), (
         f"the {tool} entry's notes must carry the reply; got none"
+    )
+
+
+#: Share of the logged report's words the reply must carry. Replayed over the
+#: committed logs: the nine replies that returned only a note that the report
+#: was logged scored 0.20–0.43, every reply that returned it scored 0.67+.
+_REPLY_CARRY_FLOOR = 0.6
+
+
+def assert_reply_carries_report(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    tool: str,
+    reply: str,
+) -> None:
+    """The logged report is also the reply (issue #3524): the agent returns the
+    report it logged, not a note that it was logged. Skips when no `tool`
+    entry was logged."""
+    entries = [e for e in new_log_entries(before_state, after_state) if e.get("tool") == tool]
+    if not entries:
+        pytest.skip(f"no {tool} entry logged")
+    words = lambda s: set(re.findall(r"[a-z0-9]{4,}", (s or "").lower()))  # noqa: E731
+    logged = words(entries[0].get("notes"))
+    carried = len(logged & words(reply)) / max(1, len(logged))
+    assert carried >= _REPLY_CARRY_FLOOR, (
+        f"the reply carries {carried:.0%} of the logged {tool} report; "
+        f"return the report you logged, not a note that it was logged"
     )
 
 

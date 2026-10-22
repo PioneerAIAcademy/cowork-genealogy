@@ -202,10 +202,12 @@ do not combine it with any other correction.
 
 If the Narration read found no `research.json`, skip this step.
 
-One `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+Before you write your reply: one `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
+
+Then return that same result, in full, above the `---` line — never only a note that it was logged.
 
 A hand-back logs nothing.
 

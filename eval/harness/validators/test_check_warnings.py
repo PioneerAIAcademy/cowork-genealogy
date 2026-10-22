@@ -19,7 +19,11 @@ import re
 
 import pytest
 
-from validators_lib import assert_only_logs_report, assert_report_logged
+from validators_lib import (
+    assert_only_logs_report,
+    assert_reply_carries_report,
+    assert_report_logged,
+)
 
 
 # --- Write enforcement ---
@@ -243,3 +247,13 @@ def test_no_project_hands_back_to_init_project(tool_calls, test, agent_returns=N
 # --- V3: An out-of-lane request is handed back to its owner ---
 
 # Lives in test_universal.py since tree-edit became its second user (issue #2805).
+
+
+def test_reply_carries_logged_report(before_state, after_state, test, agent_returns=None, text_response=None):
+    """The report logged as `check_warnings` is also what the agent returns (issue
+    #3524). Graded on the agent's own return (`subject_reply_text`), since the
+    judge on a direct test reads the dispatcher's relay."""
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "check-warnings", test)
+    assert_reply_carries_report(before_state, after_state, "check_warnings", reply)
