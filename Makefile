@@ -1170,6 +1170,10 @@ judge-report: ## Non-discrimination scan of the UNIT judge over committed run lo
 	# time by LLM judgment; this is the mechanical corpus-wide half.
 	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: eval-health
+eval-health: ## Weekly: unit tests below the 95% pass bar, and consistently-partial tests, from committed run logs: make eval-health [SKILL=<name>] [WINDOW=20]. No API calls.
+	cd eval/harness && uv run python -m eval_health_report $(if $(SKILL),--skill $(SKILL),) $(if $(WINDOW),--window $(WINDOW),)
+
 .PHONY: judge-regrade
 judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target

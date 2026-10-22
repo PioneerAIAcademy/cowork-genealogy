@@ -119,6 +119,12 @@ def _read_harness_version() -> str:
 
 HARNESS_VERSION = _read_harness_version()
 
+# A test whose single run fails is run again up to this many times, and every run
+# is kept in its `runs[]`. The modal aggregate then decides: three passing retries
+# make it a pass, any failed retry keeps it a fail (issue #3733). Only a releasable
+# suite run asks for retries; `run_one_test` defaults to none.
+FAIL_RETRIES = 3
+
 
 @dataclass
 class OrchestratorPaths:
@@ -171,6 +177,7 @@ def run_one_test(
     judge_model: str = DEFAULT_JUDGE_MODEL,
     timestamp: str | None = None,
     tool_search: bool = True,
+    fail_retries: int = 0,
 ) -> dict[str, Any]:
     """Run a single test; return the per-test entry dict for the envelope.
 
@@ -179,6 +186,9 @@ def run_one_test(
     envelope's timestamp; it's embedded into per-run `run_id`s for
     traceability. Pass `None` to generate one inline (single-test calls
     in tests).
+
+    `fail_retries` re-runs a test whose single run failed (see
+    `FAIL_RETRIES`). It stays 0 for `skill_gate.py`, which measures an edit.
     """
     paths = paths or OrchestratorPaths()
     from harness.versioning import now_utc_filename_timestamp
@@ -192,6 +202,7 @@ def run_one_test(
             judge_model=judge_model,
             timestamp=ts,
             tool_search=tool_search,
+            fail_retries=fail_retries,
         )
     )
 
@@ -205,6 +216,7 @@ async def _run_one_test_async(
     judge_model: str,
     timestamp: str,
     tool_search: bool = True,
+    fail_retries: int = 0,
 ) -> dict[str, Any]:
     # --- Runnability gate -----------------------------------------------
     gate = check_runnable(
@@ -298,6 +310,21 @@ async def _run_one_test_async(
         fixture_tools = {f"mcp__genealogy__{f['tool']}" for f in neg_fixtures}
         skill_baseline = list(set(skill_baseline) | fixture_tools)
 
+    async def _run(run_index: int) -> SingleRun:
+        return await _execute_single_run(
+            run_index=run_index,
+            spec=spec,
+            paths=paths,
+            rubric=rubric,
+            skill_frontmatter=skill_frontmatter,
+            scenario_brief=scenario_brief,
+            skill_baseline=skill_baseline,
+            auth=auth,
+            model=model,
+            judge_model=judge_model,
+            tool_search=tool_search,
+        )
+
     runs: list[SingleRun] = []
     n_runs = spec.runs_per_test
     # Per-run progress. Only emitted for multi-run tests (runs_per_test > 1).
@@ -316,19 +343,7 @@ async def _run_one_test_async(
                 flush=True,
             )
         _run_start = time.perf_counter()
-        single = await _execute_single_run(
-            run_index=run_index,
-            spec=spec,
-            paths=paths,
-            rubric=rubric,
-            skill_frontmatter=skill_frontmatter,
-            scenario_brief=scenario_brief,
-            skill_baseline=skill_baseline,
-            auth=auth,
-            model=model,
-            judge_model=judge_model,
-            tool_search=tool_search,
-        )
+        single = await _run(run_index)
         runs.append(single)
         if n_runs > 1:
             _elapsed = time.perf_counter() - _run_start
@@ -343,6 +358,18 @@ async def _run_one_test_async(
                 f"{_post_s:.0f}s judge/validators)",
                 flush=True,
             )
+
+    if n_runs == 1 and fail_retries > 0 and runs[0].outcome == "fail":
+        for retry in range(1, fail_retries + 1):
+            single = await _run(retry)
+            runs.append(single)
+            print(
+                f"      {spec.id} failed; retry {retry}/{fail_retries} -> "
+                f"{single.aborted_reason or single.outcome}",
+                flush=True,
+            )
+            if single.outcome in ("fail", "aborted"):
+                break
 
     mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
