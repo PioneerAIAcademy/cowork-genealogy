@@ -1939,6 +1939,12 @@ describe("catalog_search — the answer stays under the spill line", () => {
         expect(h.filmNotes).toHaveLength(2);
         expect(h).not.toHaveProperty("filmNotesTotal");
       }
+      // The room the nine small hits leave unused goes to the giant, so the
+      // budget is used and not left on the table. An equal share for every hit
+      // would list only the giant's first few entries and leave the answer far
+      // under the budget.
+      expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
+      expect(size(r)).toBeGreaterThan(ANSWER_CHAR_BUDGET - 1500);
     });
   });
 
