@@ -16,6 +16,7 @@ import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { collectSourceRefs } from "../utils/tree-person.js";
+import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -60,13 +61,7 @@ export interface ProjectContextLocality {
 }
 
 /** An external-site URL handed to the user and not yet answered (spec §2.3). */
-export interface ProjectContextAwaitingUser {
-  logId: string;
-  site: string;
-  urlGenerated: string;
-  planItemId: string | null;
-  performed: string | null;
-}
+export type ProjectContextAwaitingUser = AwaitingHandOff;
 
 export interface ProjectContextCollectionCounts {
   total: number;
@@ -145,49 +140,6 @@ function preferredDisplayName(person: any): string | null {
     (p: unknown): p is string => typeof p === "string" && p.trim() !== "",
   );
   return parts.length > 0 ? parts.join(" ") : null;
-}
-
-function externalSiteOf(entry: any): any | null {
-  if (!entry || typeof entry !== "object" || entry.tool !== "external_site") return null;
-  const ext = entry.external_site;
-  return ext && typeof ext === "object" && typeof ext.url_generated === "string" ? ext : null;
-}
-
-/**
- * Whether a later log entry ends the hand-off at `url` (spec §2.3): any entry
- * for the same URL whose outcome is not `partial`, whether or not a capture
- * came back. "I have no access" is logged as `error` with no capture, and after
- * it the user is not holding a link from us.
- */
-function closesHandOff(entry: any, url: string): boolean {
-  const ext = externalSiteOf(entry);
-  return ext !== null && ext.url_generated === url && entry.outcome !== "partial";
-}
-
-/**
- * Every in-flight hand-off still waiting on the user: an `external_site` entry
- * with `outcome: "partial"` and `capture_received: false` that no LATER entry
- * closes. Keyed on `partial`, not on `capture_received` alone: a `positive`
- * entry logged with `capture_received: false` already had its results in hand
- * (alpha feedback #2864, `log_012`/`log_013`) and is not waiting on anyone.
- */
-function awaitingUserHandOffs(log: unknown): ProjectContextAwaitingUser[] {
-  const entries: any[] = Array.isArray(log) ? log : [];
-  const open: ProjectContextAwaitingUser[] = [];
-  entries.forEach((entry, i) => {
-    const ext = externalSiteOf(entry);
-    if (ext === null || entry.outcome !== "partial" || ext.capture_received !== false) return;
-    if (typeof entry.id !== "string") return;
-    if (entries.slice(i + 1).some((later) => closesHandOff(later, ext.url_generated))) return;
-    open.push({
-      logId: entry.id,
-      site: typeof ext.site === "string" ? ext.site : "",
-      urlGenerated: ext.url_generated,
-      planItemId: typeof entry.plan_item_id === "string" ? entry.plan_item_id : null,
-      performed: typeof entry.performed === "string" ? entry.performed : null,
-    });
-  });
-  return open;
 }
 
 export async function projectContext(input: ProjectContextInput): Promise<ProjectContextResult> {

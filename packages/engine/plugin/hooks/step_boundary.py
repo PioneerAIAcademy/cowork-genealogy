@@ -259,6 +259,9 @@ def awaiting_upload_item_ids(research: dict) -> set[str]:
         ext = _external_site_of(entry)
         if ext is None or entry.get("outcome") != "partial" or ext.get("capture_received") is not False:
             continue
+        # The TS copy skips an entry with no string id; parity, not decoration.
+        if not isinstance(entry.get("id"), str):
+            continue
         url = ext["url_generated"]
         if any(_closes_hand_off(later, url) for later in entries[i + 1:]):
             continue
