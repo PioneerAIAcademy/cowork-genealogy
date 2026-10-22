@@ -1218,11 +1218,11 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`), and despite this section's name it enforces **three**
++ `guard_project_files.py`), and despite this section's name it enforces **four**
 rules, not one. Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — wider than
-the file-write tools, because two of the three rules act on `research_append`
-itself:
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — wider
+than the file-write tools, because two rules act on `research_append` itself and
+one on the delegation tools:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
    `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
@@ -1245,6 +1245,9 @@ itself:
    `research_append` writing *outside* its own set (a test requires the lane),
    added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
+4. **No fork subagents.** Denies `Agent` / `Task` with `subagent_type: "fork"`
+   (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
+   deny is what reaches Cowork.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
 the one thing no `tools:` list can express.** The deny message names the
