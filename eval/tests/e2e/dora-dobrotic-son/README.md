@@ -28,56 +28,59 @@ match strength.
 
 ## Notes for reviewers
 
+**Resolved 2026-10-22 (issue #3621): the hint is a true match.** The hint
+persona Dorothea Dobrotić (`ark:/61903/1:1:QKMG-HJF5`) is the tree's Dora
+Dobrotić (`fixture.json` `hint.identity: "same"`), and Jacobus, born 3 April
+1871, is a third son of hers and Franjo Korotaj's.
 
-**Resolved 2026-10-21 (issue #3621): the hint is a false match, and no
-substitute record answers it.** The hint persona Dorothea Dobrotić
-(`ark:/61903/1:1:QKMG-HJF5`) is **not** the tree's Dora Dobrotić
-(`fixture.json` `hint.identity: "different"`).
+**This corrects an earlier resolution.** On 2026-10-21 this fixture was
+resolved as a false match. That verdict read **entry 22** of the page image,
+Georgius, son of Josephus Horvath and Theresia of Virje No. 8, which is not
+the hinted entry. The hint is **entry 28** of the same image. Review on PR
+#3726 caught it.
 
-**What the index says.** "Croatia, Church Books, 1516-1994" indexes an entry
-for Jacobus Korota, Roman Catholic, baptised 3 April 1871 at Križovljan
-Radovečki, son of Franciscus Korota and Dorothea Dobrotić
-(`ark:/61903/1:1:QKMG-HJFG`). On names alone it looks strong: same parish as
-the couple's sons of 1863 and 1865, a father's name that matches Franjo, and
-the right age for Dora.
+**What the index says.** "Croatia, Church Books, 1516-1994" indexes Jacobus
+Korota, Roman Catholic, baptised 3 April 1871 at Križovljan Radovečki, son of
+Franciscus Korota and Dorothea Dobrotić (`ark:/61903/1:1:QKMG-HJFG`).
 
 **What the register says.** The genealogist read the page image
-(`ark:/61903/3:1:3QS7-L99C-YW38`) by hand on familysearch.org. Entry #22 is
-**Georgius, son of Josephus Horvat vel Korotaj and Theresia, of Virje N. 8.**
-That is a different Korotaj household: a different father (Josephus, not
-Franjo), a different mother (Theresia, not Dora) and a different house. It has
-no link to Dora Dobrotić of Veliki Lovrečan. The index's "Franciscus Korota"
-and "Dorothea Dobrotić" are not what the entry says. The image settled the
-call, so `image_basis` is `true`.
+(`ark:/61903/3:1:3QS7-L99C-YW38`) by hand on familysearch.org. Entry 28 reads:
+*Jacobus, filius legitimus, Franciscus Korotaj, et Dorothea Dobrotić conj.
+pleb., Lovrečan No. 4*, born 3 April 1871. Child, father, mother and birth
+date all match the index; the surname on the register is Korotaj, the tree's
+spelling, not the index's "Korota". The baptism date was read as 4 April
+1871 on one reading and 3 April on another (the index has 3 April), so `f1`
+pins the birth date and leaves the baptism day to the index. The image
+settled the call, so `image_basis` is `true`.
 
-**Calibration.** Before reading the target entry, the genealogist checked two
-other entries on the same page against the index:
+**Calibration.** Before reading entry 28, the genealogist checked the two
+entries above it against the index:
 
-- Philippus Daljevec, baptised 2 April 1871, parents Paulus Daljevec and Anna
-  Bogadi (`ark:/61903/1:1:QKMG-HJFN`)
-- Maria Premužić, baptised 3 April 1871, parents Simon Premužić and Anna
-  Veselić (`ark:/61903/1:1:QKMG-HJFK`)
+- Entry 26, Philippus, 2 April 1871, father Paulus Daljevec
+  (`ark:/61903/1:1:QKMG-HJFN`)
+- Entry 27, Maria, 3 April 1871, father Simon Premužić
+  (`ark:/61903/1:1:QKMG-HJFK`)
 
-Both matched their index, so the reading is licensed for the child's name,
-parents and date. It is not licensed for anything else; the house number is
-quoted only to show the household differs.
+Both matched, so the reading is licensed for child, parents and date. It is
+not licensed for residence: "Lovrečan No. 4" is quoted as corroboration only.
+It fits the tree, which places the couple at Veliki Lovrečan and their son
+Philippus's 1863 birth at Lovrečan.
+
+**Why it is the same couple.** Both parents' names match the tree couple
+(Franciscus = Franjo). The parish is the one where the couple's sons
+Philippus (1863) and Antonius (1865) were christened. Dora would have been
+about 30. The tree does not cite this entry, and none of its sources is dated
+after 1865, so it is not a re-index of an attached source.
 
 **The "Kotoriba death register" oddity.** The draft flagged that the image's
 catalogue metadata describes a Kotoriba (Međimurje) death register for
-1890-1917. Ten indexed entries point at this same image, and every one is a
-1871 Križovljan Radovečki baptism. The page is a baptism register, and the
-Kotoriba label is film-level metadata, not the record type.
+1890-1917. Every indexed entry pointing at this image is an 1871 Križovljan
+Radovečki baptism. The page is a baptism register; the Kotoriba label is
+film-level metadata, not the record type.
 
-**What was searched and came up empty.** Only the 1871 Križovljan Radovečki
-baptism register around entry #22 was examined. No entry there names Franjo
-Korotaj and Dora Dobrotić as parents. No wider search for a later child of
-the couple was made, so the required negative finding is scoped to that
-register only.
-
-**Findings.** `f1` is an `avoid` guard: the agent must not add an 1871 son
-(Jacobus or Georgius) to Dora and Franjo. `f2` requires the report to document
-the rejection and leave the couple's children as the tree already has them:
-Franja, 1855; Philippus, 1863; Antonius, 1865.
+**Findings.** `f1` (required): the agent should add Jacobus Korotaj, born
+3 April 1871 and baptised at Križovljan Radovečki, as a son of Dora and Franjo.
+There is no avoid guard.
 
 **Retrieval.** Index records were read with the `record_read` tool. The page
 image and the calibration were read by hand on familysearch.org. The identity

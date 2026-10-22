@@ -15,10 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 7, hint-samples.csv row 228, flag adds_son, confidence 3). Resolved 2026-10-21 as a false match (issue #3621): the hint's index entry (Jacobus Korota, bapt. 3 Apr 1871, Križovljan Radovečki, parents Franciscus Korota and Dorothea Dobrotić) does not match the register image, where entry #22 is Georgius, son of Josephus Horvat vel Korotaj and Theresia, of Virje N. 8. Findings are an avoid guard on that son plus a required negative conclusion. The image reading was calibrated against two other indexed entries on the same page.",
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 7, hint-samples.csv row 228, flag adds_son, confidence 3). Resolved 2026-10-22 as a true match (issue #3621), correcting a 2026-10-21 resolution that read entry 22 of the page instead of entry 28: entry 28 of the 1871 Križovljan Radovečki baptism register is Jacobus, son of Franciscus Korotaj and Dorothea Dobrotić of Lovrečan, born 3 April 1871. The image reading was calibrated against entries 26 and 27 on the same page. The Kotoriba death-register label on the image is film-level metadata; every indexed entry on the page is an 1871 Križovljan Radovečki baptism.",
   "image_basis": true,
   "hint": {
     "persona_ark": "ark:/61903/1:1:QKMG-HJF5",
-    "identity": "different"
+    "identity": "same"
   }
 }
