@@ -126,7 +126,7 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
-volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, summary: true })
 catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
 # then, once wiki_search returns a page URL:
@@ -135,7 +135,7 @@ wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 
 `collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).
 
-`volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. Results paginate. One page is usually enough for a survey, but it is never the whole picture on its own: check `totalResults` and `nextPageToken` against the volumes you actually detail, and when the token is present (or `totalResults` exceeds that count) say so in the guide with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
+`volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. `summary` counts every matching volume by record-type group (`browseOnly`, `fulltextOnly`) — use it for how many volumes of each kind exist, never a count of the page. The page details only its own volumes: when `totalResults` exceeds them, say so with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. On `summaryError`, or `complete: false`, say the counts are missing or partial. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
 
 `catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` (and each `filmNotes` entry's `copyLocation`) says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
 
@@ -172,7 +172,7 @@ research_append({
     for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
     time_period: "1840-1880",
     jurisdictions: [ /* from place_search_all — EACH entry is exactly { name, date_range }, no other keys */ ],
-    collections: [ /* from collections_search: { id, title, date_range } */ ],
+    collections: [ /* from collections_search: { id, title, date_range, person_count, record_count } — the counts are its personCount / recordCount */ ],
     quirks: [
       // short, actionable gotchas a searcher must know — distilled from the FamilySearch Wiki
       // research-tips / online-records pages. This is ALSO where any border/name
@@ -188,6 +188,13 @@ research_append({
       { section: "online_records", url: "...", found: true },
       { section: "research_tips", url: "...", found: false }   // 404 → found:false, still recorded; an outage adds outcome:"unreachable" and its quirk (Step 3)
     ],
+    registration_start: [
+      // from the {Jurisdiction}_Vital_Records page only; one per event and level; omit an event the page gives no year for
+      { event: "birth", level: "state", year: 1906, source_url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" }
+    ],
+    volume_summary: { /* volume_search's summary, copied in snake_case: start_year, end_year (the years you searched),
+                         total_volumes, complete, by_record_type: [{ group, volumes, browse_only, fulltext_only }],
+                         untyped: { volumes, browse_only, fulltext_only }. Omit on summaryError. */ },
     source: "locality-guide"
   }
 })
@@ -200,7 +207,7 @@ Do not put the applied per-search decision here; that goes in a plan item's
 
 **Stay inside the allowed fields — a stray key fails the whole write.** Each
 `jurisdictions[]` entry has exactly two keys, `name` and `date_range`; each
-`collections[]` entry exactly `id`, `title`, `date_range`. Do **not** add any
+`collections[]` entry only `id`, `title`, `date_range`, `person_count`, `record_count`. Do **not** add any
 other key (no `note`, `comment`, `records`, etc.) to these objects. When you have
 a sentence of searcher advice — a boundary/name succession like "records before
 1878 were filed under the predecessor county", an indexing gotcha, a language

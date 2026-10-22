@@ -38,6 +38,23 @@ returns. Measured on two hosted guides (2026-10-07 Antrim, 24.7k characters; 202
 Freeborn County, 25.2k), one-lining the unnamed record types alone cut 30-33%; research
 tips (3.6-4.6k) and the repository tables were the largest remaining sections.
 
+## Saved fields other agents read
+
+The `localities` entry carries what research-plan and research-exhaustiveness
+otherwise re-fetched:
+
+- `collections[].person_count` / `record_count`, copied from `collections_search`.
+  research-plan chooses a name search or an image browse on `person_count > 0`.
+- `registration_start[]` — `{ event, level, year, source_url }` from the
+  `{Jurisdiction}_Vital_Records` page, one per event and level, so
+  research-exhaustiveness need not re-read that page. An event the page gives
+  no year for is left out rather than guessed.
+- `volume_summary` — `volume_search`'s `summary` (asked for with `summary: true`
+  in the survey batch), copied in snake_case. Counts only, never a volume list:
+  hosted surveys matched up to 4,261 volumes, so a list is rarely complete and
+  research-plan's own narrow `volume_search` calls would not be replaced by it.
+  Omitted when the tool returns `summaryError`.
+
 ## Wiki outages
 
 `wiki_place_page` returns `No wiki page found` on a 404 and throws an error naming
