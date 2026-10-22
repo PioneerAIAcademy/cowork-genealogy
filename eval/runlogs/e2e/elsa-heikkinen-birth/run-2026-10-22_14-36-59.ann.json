@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "annotator": "mercyokum",
+  "findings_hash": "3d206c1047f68fae157b9806cd337f249dca24b700e11843ca33746fb6035dea",
+  "blind_bundle_digest": "ab2afee6adfd13c4cd41b8b235bd6ea4f77e8bc091f63aced626acf3c812bfbc"
+}
