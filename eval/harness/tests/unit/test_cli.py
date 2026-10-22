@@ -1987,8 +1987,9 @@ def test_abort_storm_breaker_does_not_trip_on_cap_aborts(
     assert counter["n"] == 5
 
 
+@pytest.mark.parametrize("on_retry", [False, True])
 def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, capsys, on_retry
 ):
     """The behaviour #2192 is actually about, and the one nothing covered.
 
@@ -2032,10 +2033,13 @@ def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
         # Two clean passes, then the seat's quota refuses. One is enough.
         if counter["n"] <= 2:
             return _stub_log(spec.id, spec.skill, "pass")
-        return _stub_log(
+        entry = _stub_log(
             spec.id, spec.skill, "aborted",
             aborted_reason=run_tests.QUOTA_ABORT_REASON,
         )
+        if on_retry:  # the quota hit a fail-retry: its reason is on the last run
+            entry["runs"].insert(0, {"aborted_reason": None})
+        return entry
 
     def fake_partial_write(log, *, runlogs_root, skill, timestamp):
         out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"

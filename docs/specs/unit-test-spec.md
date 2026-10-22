@@ -1651,7 +1651,7 @@ So in a *committed* run log `flaky` fires only on a fail-retried test (below), a
 
 Why three: a test passing at rate q survives its retries with probability q³. A healthy test (97.5%) clears them 93% of the time; a test a PR knocked to 50% gets through 12.5% of the time. Three is also the most for which the modal aggregate means "every retry passed" — with a fourth, `(fail, pass, pass, pass, fail)` would aggregate to `pass`.
 
-**Over time, `make eval-health` measures the rate.** It reads each test's **first** run (retries happen only after a fail, so counting them would skew the rate) across the suite's last 20 committed logs, and lists a test when its first-run fails would happen less than 10% of the time at a 95% pass rate — 2 fails for 5–10 logs, 3 for 11–20. It also lists tests that are `partial` in at least half their first runs. It is not a gate: each test it lists gets its own issue.
+**Over time, `make eval-health` estimates the rate, optimistically.** Rule 6 keeps out every log in which a test failed its retries, so committed first runs understate a flaky test's fail rate. It reads each test's **first** run (retries happen only after a fail, so counting them would skew the rate) across the suite's last 20 committed logs, and lists a test when its first-run fails would happen less than 10% of the time at a 95% pass rate — 2 fails for 5–10 logs, 3 for 11–20. It also lists tests that are `partial` in at least half their first runs. It is not a gate: each test it lists gets its own issue.
 
 ### Stability floor — ruled out
 

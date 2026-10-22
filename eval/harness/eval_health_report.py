@@ -123,8 +123,8 @@ def render(suites: list[tuple[str, int, list[dict[str, Any]]]], health: list[Tes
     out = [
         f"Unit test health — first runs in each suite's last {window} committed logs "
         f"(bar {BAR:.0%})",
-        "Logs committed before fail-retries existed read optimistic: rule 6 only let "
-        "clean ones land.",
+        "Committed logs read optimistic: rule 6 keeps out every log in which a test "
+        "failed its retries. A test left out is not proof of health.",
         "",
     ]
     for skill, total, logs in suites:
