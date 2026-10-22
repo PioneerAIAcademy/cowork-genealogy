@@ -18,11 +18,15 @@
  * field its `"key":value` text, and the printed reconciliation line must read
  * "0 unattributed", or the table does not add up to the answer it describes.
  *
+ * The tool fits an answer into ANSWER_CHAR_BUDGET: a hit whose film notes were
+ * cut shows `listed/total` in the filmNotes column and prints its hint, which is
+ * the live check that the answer is bounded (a unit test only pins fixtures).
+ *
  * Requires a prior `login` so ~/.familysearch-mcp/tokens.json exists.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { LOCAL } from "../src/auth/principal.js";
-import { catalogSearchTool } from "../src/tools/catalog-search.js";
+import { ANSWER_CHAR_BUDGET, catalogSearchTool } from "../src/tools/catalog-search.js";
 import type {
   CatalogHit,
   CatalogSearchInput,
@@ -164,15 +168,24 @@ async function main(): Promise<void> {
   console.log(`\nJSON.stringify(result).length = ${fmt(total)}  (spill line ${fmt(CLI_SPILL_CHARS)}: ${verdict})`);
 
   // ---- per hit -------------------------------------------------------------
-  console.log("\nper hit (chars of the hit object; filmNotes = how many film notes it carries)");
+  console.log(
+    "\nper hit (chars of the hit object; filmNotes = entries listed, or listed/total when the tool cut the list)",
+  );
   console.log("   #  hydrated   chars  filmNotes  notes  id / title");
   r.hits.forEach((h, i) => {
+    const listed = `${h.filmNotes?.length ?? 0}${h.filmNotesTotal !== undefined ? `/${h.filmNotesTotal}` : ""}`;
     console.log(
       `${String(i + 1).padStart(4)}  ${String(h.hydrated).padEnd(8)} ${col(chars(h), 7)}` +
-        `${String(h.filmNotes?.length ?? 0).padStart(10)}${String(h.notes?.length ?? 0).padStart(7)}  ` +
+        `${listed.padStart(10)}${String(h.notes?.length ?? 0).padStart(7)}  ` +
         `${h.id ?? "(none)"}  ${h.title.slice(0, 60)}`,
     );
   });
+  const cut = r.hits.filter((h) => h.filmNotesTotal !== undefined);
+  console.log(
+    `\nbudget ${fmt(ANSWER_CHAR_BUDGET)}: answer is ${fmt(total)}` +
+      (total <= ANSWER_CHAR_BUDGET ? " (within it)" : " (OVER it)") +
+      `; film notes cut on ${cut.length} of ${r.hits.length} hits, every hit listed: ${r.hits.length === r.returned}`,
+  );
   const group = (label: string, hs: CatalogHit[]): void => {
     if (hs.length === 0) return console.log(`${label}: none`);
     const sizes = hs.map((h) => chars(h));
@@ -268,6 +281,7 @@ async function main(): Promise<void> {
           (f.text ? ` "${f.text.slice(0, 44)}"` : ""),
       );
     }
+    if (h.filmNotesHint) console.log(`    hint: ${h.filmNotesHint}`);
     if (h.digitalLibraryUrl) console.log(`    book: ${h.digitalLibraryUrl}`);
   }
 }

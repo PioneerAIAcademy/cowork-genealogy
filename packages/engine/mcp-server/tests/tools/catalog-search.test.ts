@@ -4,7 +4,8 @@
  * issue #2547 names, each of which gives a wrong answer with everything green.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { LOCAL } from "../../src/auth/principal.js";
 
 vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
@@ -2064,5 +2065,37 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(r.hits).toHaveLength(200);
     expect(r.returned).toBe(200);
     expect(r.hits[0].filmNotesTotal).toBe(1804);
+  });
+});
+
+// ─── The recorded eval fixtures ─────────────────────────────────────────────────
+//
+// `eval/fixtures/mcp/catalog-search-*.json` stand in for the tool in every unit
+// eval run, so the agent is graded on what they say. They were reshaped with the
+// tool's own `shapeAnswer` (`dev/reshape-catalog-fixtures.ts`), not edited by
+// hand, and this keeps them there: a change to the answer's shape that does not
+// reshape them fails here, instead of leaving the evals graded on an answer the
+// tool no longer gives. `mcp-fixture-shape.test.ts` checks keys one level down
+// from the response and does not see film notes.
+
+describe("catalog_search — the recorded eval fixtures", () => {
+  const dir = fileURLToPath(new URL("../../../../../eval/fixtures/mcp/", import.meta.url));
+  const files = readdirSync(dir)
+    .filter((f) => /^catalog-search-.*\.json$/.test(f))
+    .sort();
+
+  it("finds the fixtures it guards (a glob that matches nothing checks nothing)", () => {
+    expect(files.length).toBeGreaterThanOrEqual(5);
+    expect(files).toContain("catalog-search-skofja-loka.json");
+    expect(files).toContain("catalog-search-gorenja-vas-poljane.json");
+  });
+
+  it.each(files)("%s is already in the shape the tool returns", (file) => {
+    const fixture = JSON.parse(readFileSync(`${dir}${file}`, "utf-8")) as { response: CatalogSearchResult };
+    // Shaping it changes nothing: one entry per reel, within the budget, and no
+    // cut list without its total and its hint.
+    expect(shapeAnswer(structuredClone(fixture.response))).toEqual(fixture.response);
+    // The two fields the answer no longer carries, anywhere in the file.
+    expect(JSON.stringify(fixture)).not.toMatch(/"(shelf|imageStartNumber)"/);
   });
 });
