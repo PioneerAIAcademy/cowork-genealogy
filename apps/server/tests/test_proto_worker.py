@@ -2901,6 +2901,25 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
         assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
         assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
         assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
+        # And a million 1-hour write tokens through the proxy's meter cost exactly the
+        # harness's write rate, which is the 1-hour one.
+        assert spend.price_usd((0, 10**6, 0, 0), model, cache_write_1h=10**6) == \
+            pytest.approx(theirs["cache_creation_input_tokens"]), model
+
+
+def test_1h_writes_are_clamped_to_the_write_total_and_default_to_none():
+    """The CLI's own cost line clamps `ephemeral_1h` to `cache_creation`; so does this, so a
+    malformed split can never price more 1h writes than were written."""
+    from app.agent import spend
+
+    writes = (0, 1_000, 0, 0)
+    all_1h = spend.price_usd(writes, "claude-sonnet-4-6", cache_write_1h=1_000)
+    assert spend.price_usd(writes, "claude-sonnet-4-6", cache_write_1h=5_000) == pytest.approx(all_1h)
+    assert all_1h == pytest.approx(1_000 * 6.00 / 1_000_000)
+    assert spend.price_usd(writes, "claude-sonnet-4-6", cache_write_1h=-3) == \
+        pytest.approx(spend.price_usd(writes, "claude-sonnet-4-6"))
+    assert spend.usage_cache_write_1h({"cache_creation": {"ephemeral_1h_input_tokens": 7}}) == 7
+    assert spend.usage_cache_write_1h({}) == 0
 
 
 def test_a_call_is_priced_at_its_own_models_rates():

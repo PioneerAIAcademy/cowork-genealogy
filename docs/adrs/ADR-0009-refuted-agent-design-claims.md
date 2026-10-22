@@ -192,6 +192,14 @@ a graduation, must satisfy all six:
    does not prove the call -- is therefore spent on the legitimate path: the
    check is now against a host-written record the model never touches.
 
+   One exemption, decided 2026-10-20 (lead, issue #3516). `extraction_append`
+   in `personId` mode appends unchecked FamilySearch attachment links with no
+   score: `speculative`, `match_score` null, the fixed `ATTACHMENT_LINK_RATIONALE`.
+   The baseline step assumes every attachment is correct and runs no
+   `same_person`. The exemption is an internal flag no tool input reaches, and
+   it applies only to that whole shape. An attachment link is then only ever
+   superseded, so raising one still goes through a recorded score and a new link.
+
    Three limits the refusal carries rather than resolves. The value-vs-presence
    gap above is the first. The score-TTL question was never answered, so it
    ships on option A ("a score from an earlier session still counts"), which is

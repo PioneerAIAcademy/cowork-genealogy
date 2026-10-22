@@ -1,0 +1,180 @@
+{
+ "log_id": "log_029",
+ "tool": "record_read",
+ "retrieved": "2026-10-20T17:58:34.399Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "recordId": "ark:/61903/1:1:MFSR-DYX"
+  },
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:MFSR-DYX",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_366806624",
+       "ark": "ark:/61903/1:1:MFSR-DYX",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "3e59b80f-398b-4fae-b4e2-a4e999dffc39",
+         "type": "BirthName",
+         "given": "Jonathan",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "id": "fc648667-f1a8-49f3-910f-67ce93f51489",
+         "type": "Birth",
+         "date": "1811",
+         "standard_date": "1811",
+         "place": "England"
+        },
+        {
+         "id": "00be64bc-af73-48c4-847a-d72011c21dcc",
+         "type": "Census",
+         "primary": true,
+         "date": "1870",
+         "standard_date": "1870",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_366806625",
+       "ark": "ark:/61903/1:1:MFSR-DYF",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "d19438b2-a5d5-4bd8-8a58-37da91a6478f",
+         "type": "BirthName",
+         "given": "Elizabeth",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "id": "59a4d0c2-808b-4acb-b717-4c7bc3b1f110",
+         "type": "Birth",
+         "date": "1823",
+         "standard_date": "1823",
+         "place": "Alabama"
+        },
+        {
+         "id": "83f9071c-bc94-49c1-80a6-f9f030d39a18",
+         "type": "Census",
+         "primary": true,
+         "date": "1870",
+         "standard_date": "1870",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_217739706",
+       "resource_type": "Record",
+       "title": "Household of Jonathan Barker, \"United States, Census, 1870\"",
+       "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFSR-DYX : Wed Jan 22 13:56:59 UTC 2025), Entry for Jonathan Barker and Elizabeth Barker, 1870.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:MHB5-6MW",
+       "coverage": {
+        "place_rep_id": "395845",
+        "date_range": "1870",
+        "record_type": "Census",
+        "standard_place": "Smith, Mississippi, United States"
+       }
+      },
+      {
+       "id": "sd_c_1438024",
+       "resource_type": "Collection",
+       "title": "United States, Census, 1870",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+       "coverage": {
+        "place_rep_id": "1",
+        "date_range": "1870/1870",
+        "record_type": "Census",
+        "standard_place": "United States"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-XHGS-2WS",
+       "coverage": {
+        "place_rep_id": "395845",
+        "date_range": "1870",
+        "record_type": "Census",
+        "standard_place": "Smith, Mississippi, United States"
+       }
+      },
+      {
+       "id": "sd_p_366806625",
+       "resource_type": "Person",
+       "title": "Elizabeth Barker, \"United States, Census, 1870\"",
+       "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFSR-DYF : Wed Jan 22 13:56:59 UTC 2025), Elizabeth Barker in entry for Jonathan Barker, 1870.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:MFSR-DYF"
+      },
+      {
+       "id": "sd_p_366806624",
+       "resource_type": "Person",
+       "title": "Jonathan Barker, \"United States, Census, 1870\"",
+       "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFSR-DYX : Wed Jan 22 13:56:59 UTC 2025), Jonathan Barker, 1870.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:MFSR-DYX"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "resource_type": "auto",
+       "title": "United States, Residences, Census, from 1793 to 1964",
+       "coverage": {
+        "place_rep_id": "1",
+        "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+        "standard_place": "United States"
+       }
+      }
+     ],
+     "places": [
+      {
+       "id": "place_395845"
+      }
+     ]
+    },
+    "indexFields": {
+     "p_366806624": {
+      "relationshipToHead": "Head",
+      "sortKey": "0000000004273807_00145_05528_0000000217739706_000",
+      "householdId": "61",
+      "age": "59"
+     },
+     "p_366806625": {
+      "sortKey": "0000000004273807_00145_05528_0000000217739706_001",
+      "householdId": "61",
+      "age": "47"
+     }
+    }
+   }
+  ]
+ }
+}

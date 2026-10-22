@@ -375,18 +375,20 @@
       "callers": [],
       "writerTools": [
         "research_append",
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "extraction_append"
       ],
       "toolAuthorized": [
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit",
         "hook"
       ],
-      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
-      "requires": "Only person-evidence links a persona to a tree person. Extraction is held off this section by tool identity: `extraction_append` does not accept it.",
-      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
+      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner, and `extraction_append` writes it only in `personId` mode, and only the unchecked attachment links it composes whole in code, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. The unit plane resolves `agent:person-evidence` via `writer_sets(..., subject=skill_name)` when person-evidence is the suite's own subject (issue #2799 ruling, issue #2821 conversion). Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
+      "requires": "Only person-evidence makes an identity decision linking a persona to a tree person. `extraction_append({ personId })` writes the one other kind of link, by tool identity: an unchecked FamilySearch attachment, always `speculative`, with no `match_score` and the fixed `ATTACHMENT_LINK_RATIONALE`. An attachment link is only ever superseded, never raised in place.",
+      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool. An attachment link raised in place would turn an unchecked attachment into an identity without `same_person`.",
       "remedy": "Route the identity link through person-evidence.",
       "override": "none",
       "hookCallers": [
@@ -542,8 +544,28 @@
       ],
       "enforceableAt": [],
       "requires": "Append-only; a justification entry is persisted by the warning gate as a side-effect of a justified tree write. Each entry carries warning_id, justification, person_ids, tool, and recorded_at.",
-      "failure": "A warning justification lost from the audit trail leaves gps-mentor unable to evaluate whether the researcher acknowledged and addressed each introduced warning.",
+      "failure": "A warning justification lost from the audit trail leaves no record of why a tree write that introduced a genealogical warning was accepted. No tool returns the section: research_query excludes it and project_context omits it.",
       "remedy": "The tree-writer tools persist justifications automatically through checkWarningGate. No manual write is needed.",
+      "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "namesakes",
+      "owner": null,
+      "reason": "No writer ships yet: search-records records rows in a later change (issue #3363, PR 2), which sets the owner and adds the section to its hook lane.",
+      "callers": [],
+      "writerTools": [
+        "research_append",
+        "merge_tree_persons"
+      ],
+      "toolAuthorized": [
+        "merge_tree_persons"
+      ],
+      "enforceableAt": [],
+      "notes": "The section ships before its writer: search-records records a row when a search turns up a different person with the subject's name in the subject's place and time, and that write lands in a later change. Until then no committed document carries the section, so research_append's namesake cap and warning, merge_tree_persons' namesake checks and materialize_facts' copy gate refuse and warn about nothing. merge_tree_persons re-keys a row onto the merge survivor through the person-id walker. Not enforceable on the unit plane: no suite writes the section yet.",
+      "requires": "One row per namesake, never retired. An update may change the descriptive fields but never `person_id`, the tree person the namesake is not; research_append refuses that update.",
+      "failure": "A row on the wrong person caps that person's links at speculative and leaves the namesake's records free to be linked to the subject.",
+      "remedy": "Record namesakes through search-records.",
       "override": "none"
     },
     {

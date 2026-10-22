@@ -200,6 +200,7 @@ def test_proxy_replaces_api_key_header(_mock_sandbox_exists, monkeypatch):
                 headers={
                     "x-api-key": token,
                     "anthropic-version": "2023-06-01",
+                    "anthropic-beta": "claude-code-20250219,extended-cache-ttl-2025-04-11",
                 },
                 json={"model": "claude-sonnet-4-6", "messages": []},
             )
@@ -208,6 +209,9 @@ def test_proxy_replaces_api_key_header(_mock_sandbox_exists, monkeypatch):
 
     assert captured_headers["x-api-key"] == "sk-ant-real-key"
     assert captured_headers["anthropic-version"] == "2023-06-01"
+    # The 1-hour cache beta must reach upstream intact, or a 1h TTL in the body is refused
+    # or ignored (the body itself is relayed byte for byte, pinned below).
+    assert captured_headers["anthropic-beta"] == "claude-code-20250219,extended-cache-ttl-2025-04-11"
 
 
 def test_proxy_streams_sse_response(_mock_sandbox_exists, monkeypatch):
@@ -498,6 +502,72 @@ def test_a_body_that_is_not_json_is_relayed_untouched_and_recorded_with_no_agent
     assert resp.status_code == 200 and resp.content == _STREAM
     [row] = _recorded()
     assert row.agent is None and row.output_tokens == _FINAL[3]
+
+
+@pytest.mark.parametrize("extra, effort", [
+    ({"output_config": {"effort": "medium"}}, "medium"),
+    ({"output_config": {"effort": "high", "format": None}}, "high"),
+    ({"effort": "medium"}, None),
+    ({"output_config": "medium"}, None),
+    ({"output_config": {"effort": 3}}, None),
+    ({}, None),
+], ids=["medium", "high", "top-level-only", "not-a-dict", "not-a-string", "absent"])
+def test_each_call_records_the_effort_it_asked_for(send, extra, effort):
+    """T4.1: read from `output_config.effort`, where the CLI puts it; anything else is null
+    and the call is still relayed and recorded."""
+    resp = send(_streamed(_STREAM), request_json={"model": "claude-sonnet-4-6", "messages": [],
+                                                  **extra})
+    assert resp.status_code == 200 and resp.content == _STREAM
+    [row] = _recorded()
+    assert row.effort == effort
+
+
+def _stream_with_split(model, split: dict) -> bytes:
+    return _sse(
+        ("message_start", {"type": "message_start", "message": {
+            "model": model,
+            "usage": {"input_tokens": 100, "cache_creation_input_tokens": 2000,
+                      "cache_read_input_tokens": 30000, "output_tokens": 1,
+                      **({"cache_creation": split} if split is not None else {})}}}),
+        ("message_delta", {"type": "message_delta", "delta": {"stop_reason": "end_turn"},
+                           "usage": {"output_tokens": 120}}),
+        ("message_stop", {"type": "message_stop"}),
+    )
+
+
+@pytest.mark.parametrize("model", ["claude-sonnet-4-6", None], ids=["known-model", "no-model"])
+def test_a_1h_cache_write_is_recorded_and_priced_at_2x_input(send, model):
+    """The split is a nested object, which the meter's int filter used to drop -- every
+    write priced at the 5-minute 1.25x. A call with no model still records a row, priced at
+    the PRICE_PER_MTOK fallback (a KeyError there would be swallowed and the row lost)."""
+    resp = send(_streamed(_stream_with_split(model, {"ephemeral_5m_input_tokens": 0,
+                                                     "ephemeral_1h_input_tokens": 2000})))
+    assert resp.status_code == 200
+    [row] = _recorded()
+    assert row.cache_creation_1h_input_tokens == 2000
+    assert row.cost_usd == pytest.approx(price_usd(_FINAL, model, cache_write_1h=2000))
+    assert row.cost_usd > price_usd(_FINAL, model)
+
+
+@pytest.mark.parametrize("split", [None, {}, {"ephemeral_1h_input_tokens": "2000"},
+                                   {"ephemeral_1h_input_tokens": 999_999}],
+                         ids=["absent", "empty", "not-an-int", "over-the-total"])
+def test_the_split_reads_0_unless_it_is_a_count_and_never_exceeds_the_writes(send, split):
+    send(_streamed(_stream_with_split("claude-sonnet-4-6", split)))
+    [row] = _recorded()
+    expect = 2000 if split and split.get("ephemeral_1h_input_tokens") == 999_999 else 0
+    assert row.cache_creation_1h_input_tokens == expect
+    assert row.cost_usd == pytest.approx(price_usd(_FINAL, "claude-sonnet-4-6", cache_write_1h=expect))
+
+
+def test_a_body_that_is_not_json_records_no_effort(send):
+    raw = b'{"model": "claude-sonnet-4-6", "output_config": {"effort": "medium"'  # cut off
+    resp = send(lambda req: httpx.Response(200, content=_STREAM,
+                                           headers={"content-type": "text/event-stream"}),
+                request_json=raw)
+    assert resp.status_code == 200 and resp.content == _STREAM
+    [row] = _recorded()
+    assert row.effort is None
 
 
 def test_the_agent_is_named_in_the_writer_thread_not_in_the_route(send, monkeypatch):

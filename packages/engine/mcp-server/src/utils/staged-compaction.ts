@@ -208,6 +208,10 @@ export function annotateResultsWithRanking(
     if (stub.candidateFactCount !== undefined) {
       row.candidateFactCount = stub.candidateFactCount;
     }
+    if (stub.birthYearConflict !== undefined) {
+      row.birthYearConflict = stub.birthYearConflict;
+    }
+    if (stub.birthYearGap !== undefined) row.birthYearGap = stub.birthYearGap;
     if (stub.attachedToSubject !== undefined) {
       row.attachedToSubject = stub.attachedToSubject;
     }

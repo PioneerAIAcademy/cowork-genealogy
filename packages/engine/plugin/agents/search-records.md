@@ -452,7 +452,9 @@ candidates; you still confirm the top ones:
   the top match — role against age, birth-year gap to the subject, place — into
   the log `notes` before you triage: a gap over two years or an impossible role
   makes it `needs-review` and bars extraction, whatever else in the record
-  aligns. A birth year that conflicts with
+  aligns. A result row carrying `birthYearConflict` (gap in `birthYearGap`) is
+  already flagged by the tool: it is `needs-review` and is never adopted on its
+  score or on an explanation of the gap. A birth year that conflicts with
   the known subject by more than a year or two is itself a different-person
   signal, not a rounding error to explain away: a high name-and-place score with
   the dates several years apart is the classic signature of a *namesake* in a

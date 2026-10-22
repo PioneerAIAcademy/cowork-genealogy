@@ -2062,6 +2062,36 @@ def _make_compiled_tool_handler(
     return handler
 
 
+_RECORD_TOKEN = re.compile(r"1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)", re.IGNORECASE)
+
+
+def _attached_record_ids(workspace: Path, person_id: str) -> list[str]:
+    """The bare `1:1:` ids attached to a tree person (by tree id, or by a
+    FamilySearch id their `ark` names), from the person's own, name and fact
+    refs: the set `extraction_append({ personId })` reads. Mirrors
+    `findAnchor` + `collectSourceRefs` closely enough to stage fixtures."""
+    try:
+        tree = json.loads((workspace / "tree.gedcomx.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    persons = [p for p in tree.get("persons") or [] if isinstance(p, dict)]
+    pid = person_id.strip()
+    person = next((p for p in persons if p.get("id") == pid), None) or next(
+        (p for p in persons if isinstance(p.get("ark"), str) and p["ark"].upper().endswith(pid.upper())), None
+    )
+    if person is None:
+        return []
+    url = {s.get("id"): s.get("url") or "" for s in tree.get("sources") or [] if isinstance(s, dict)}
+    out: list[str] = []
+    for holder in [person, *(person.get("names") or []), *(person.get("facts") or [])]:
+        for ref in (holder.get("sources") or []) if isinstance(holder, dict) else []:
+            sid = (ref.get("ref") or "").lstrip("#") if isinstance(ref, dict) else ""
+            m = _RECORD_TOKEN.search(url.get(sid, ""))
+            if m and m.group(1).upper() not in out:
+                out.append(m.group(1).upper())
+    return out
+
+
 def _make_extraction_append_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
@@ -2096,12 +2126,20 @@ def _make_extraction_append_handler(
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
             records: dict[str, Any] = {}
             predicated = (manifest.get("record_read") or {}).get("predicated") or []
-            for rid in input_obj.get("recordIds") or []:
-                if not isinstance(rid, str):
-                    continue
+            wanted = [r for r in (input_obj.get("recordIds") or []) if isinstance(r, str)]
+            if isinstance(input_obj.get("personId"), str):
+                # personId mode reads the person's attached records itself, as
+                # `ark:/61903/1:1:<id>`. Stage the fixtures for exactly those ids.
+                wanted += [f"ark:/61903/1:1:{b}" for b in _attached_record_ids(_ws, input_obj["personId"])]
+            for rid in wanted:
                 key = rid.strip()
+                bare = key.rsplit("1:1:", 1)[-1].rsplit("/", 1)[-1]
                 canned = next(
-                    (resp for pred, resp, *_ in predicated if matches(pred, {"recordId": key})),
+                    (
+                        resp
+                        for pred, resp, *_ in predicated
+                        if matches(pred, {"recordId": key}) or matches(pred, {"recordId": bare})
+                    ),
                     None,
                 )
                 if canned is None:

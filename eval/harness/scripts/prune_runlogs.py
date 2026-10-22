@@ -386,6 +386,11 @@ def replay_remnant(response_summary: Any) -> str | None:
     # irreversible, so the exclusion would silently revert itself on a 14-day
     # delay rather than failing anywhere visible.
     has_stale = STALE_JUSTIFICATION_MARKER in str(response_summary or "")
+    # extraction_append's plan-item completion (issue #3516). replay.py reads
+    # it off this field to report the completion it cannot apply; dropped, the
+    # 14-day strip would make every completing extraction replay as if it had
+    # completed nothing.
+    has_plan_items = "planItems" in str(response_summary or "")
     parsed = parse_tool_result(response_summary) or {}
     ids = parsed.get("ids") or []
     full_length = parsed.get("full_length")
@@ -439,6 +444,8 @@ def replay_remnant(response_summary: Any) -> str | None:
         # Re-emitted verbatim: the predicate matches the bare marker, so it
         # survives the escaped envelope the summarizer passes through.
         remnant["message"] = STALE_JUSTIFICATION_MARKER
+    if has_plan_items:
+        remnant["planItems"] = True
     return json.dumps(remnant)
 
 

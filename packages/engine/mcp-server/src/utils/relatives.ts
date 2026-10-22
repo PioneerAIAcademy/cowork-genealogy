@@ -147,6 +147,40 @@ export function gatherRelatives(
   };
 }
 
+// ─── Given names ─────────────────────────────────────────────────────────────
+
+/** Given-name words that record a missing name rather than a name, compared
+ *  after lower-casing and dropping dots ("N. N." → "nn"). "Unnamed" is the
+ *  tree-edit convention here; "ignoto"/"ignota" are the Italian form. */
+export const PLACEHOLDER_GIVEN: ReadonlySet<string> = new Set([
+  "unknown", "unk", "unkn", "nn", "fnu", "lnu", "living", "private",
+  "mr", "mrs", "miss", "ms", "infant", "baby", "child", "stillborn",
+  "son", "daughter", "wife", "husband", "boy", "girl", "male", "female",
+  "unnamed", "ignoto", "ignota",
+]);
+
+/** A given name is real when, with dots and brackets dropped, neither the whole
+ *  name ("N. N.", "[Unknown]") nor every word of it ("Infant Son") is a
+ *  placeholder — AND, when `selfGiven` is passed, what remains after dropping
+ *  placeholder words is not the subject's own given name ("Mrs. Ugo" is a
+ *  spouse placeholder when the subject is Ugo). */
+export function isRealGivenName(given: unknown, selfGiven?: Set<string>): boolean {
+  if (typeof given !== "string") return false;
+  const words = given.toLowerCase().replace(/[.[\]]/g, " ").split(/\s+/).filter(Boolean);
+  if (PLACEHOLDER_GIVEN.has(words.join(""))) return false;
+  const realWords = words.filter((w) => /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
+  if (realWords.length === 0) return false;
+  if (selfGiven && selfGiven.has(realWords.join(" "))) return false;
+  return true;
+}
+
+/** A relative separates namesakes only through a real given name: a
+ *  surname-only stub repeats what the subject's own name already says. */
+export function hasRealGivenName(person: SimplifiedPerson, selfGiven?: Set<string>): boolean {
+  const names = Array.isArray(person?.names) ? person.names : [];
+  return names.some((n) => isRealGivenName((n as any)?.given, selfGiven));
+}
+
 // ─── Per-role greedy pairing ─────────────────────────────────────────────────
 
 /**

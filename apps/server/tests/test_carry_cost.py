@@ -301,3 +301,16 @@ def test_positional_prices_each_part_of_the_span_where_the_call_holds_it():
         (5_000 * 0.30 + 3_000 * 3.75 + 2_000 * 3.0) / 1e6)
     assert c.carry_cost(10_000, 45_000, positional=False) == pytest.approx(
         10_000 * (2_000 * 3.0 + 3_000 * 3.75 + 50_000 * 0.30) / 55_000 / 1e6)
+
+
+def test_a_1h_cache_write_is_priced_at_2x_input_not_the_5_minute_rate():
+    """After the 1-hour switch, a main-thread call's writes are 1-hour: priced at the call's
+    own split, as the proxy meters them, never all at 1.25x."""
+    five = carry_cost.Call("claude-sonnet-4-6", (0, 51_000, 0, 0))
+    hour = carry_cost.Call("claude-sonnet-4-6", (0, 51_000, 0, 0), write_1h=51_000)
+    assert five.cost() == pytest.approx(51_000 * 3.75 / 1e6)
+    assert hour.cost() == pytest.approx(51_000 * 6.00 / 1e6)
+    for positional in (False, True):
+        assert hour.carry_cost(15_000, 45_000, positional) == pytest.approx(6_000 * 6.00 / 1e6)
+    half = carry_cost.Call("claude-sonnet-4-6", (0, 2_000, 0, 0), write_1h=1_000)
+    assert half.cost() == pytest.approx((1_000 * 3.75 + 1_000 * 6.00) / 1e6)

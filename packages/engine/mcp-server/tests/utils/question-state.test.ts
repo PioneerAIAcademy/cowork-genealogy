@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { questionStatus, questionStates } from "../../src/utils/question-state.js";
+import { ATTACHMENT_LINK_RATIONALE, countsForProofGate, isAttachmentLink } from "../../src/utils/tree-person.js";
+import { unlinkedProofInvariants } from "../../src/tools/research-append.js";
 
 /**
  * Vectors for the advisory per-question state.
@@ -306,6 +308,35 @@ describe("questionStatus — a question with no linked assertion routes to perso
     const s = questionStatus(doc({ assertions: extracted("a_1", "a_2", "a_3") }), question());
     expect(s.state).toBe("evidence-gathered");
     expect(s.nextStep).toBe("person-evidence — none of this question's 3 assertions is linked to a person");
+  });
+
+  const link = (rationale: string, extra: Record<string, unknown> = {}) => ({
+    id: "pe_1", assertion_id: "a_1", person_id: "I1", confidence: "speculative", match_score: null, rationale, superseded_by: null, ...extra,
+  });
+
+  it("an unchecked attachment link still counts as none; a speculative link the researcher confirmed does not (#3516)", () => {
+    const attachment = questionStatus(doc({ assertions: extracted("a_1"), person_evidence: [link(ATTACHMENT_LINK_RATIONALE)] }), question());
+    expect(attachment.nextStep).toMatch(/^person-evidence/);
+    const confirmed = questionStatus(
+      doc({ assertions: extracted("a_1"), person_evidence: [link("The researcher confirmed this weak match.")] }),
+      question(),
+    );
+    expect(confirmed.nextStep ?? "").not.toMatch(/^person-evidence/);
+  });
+
+  it("the researcher-confirmed speculative link satisfies the rung and not the proof gate; the rationale alone is not an attachment", () => {
+    const confirmed = link("The researcher confirmed this weak match.");
+    expect(countsForProofGate(confirmed)).toBe(false);
+    expect(isAttachmentLink(link(ATTACHMENT_LINK_RATIONALE))).toBe(true);
+    expect(isAttachmentLink(link(ATTACHMENT_LINK_RATIONALE, { confidence: "probable" }))).toBe(false);
+    expect(isAttachmentLink(link(ATTACHMENT_LINK_RATIONALE, { match_score: 0.8 }))).toBe(false);
+  });
+
+  it("the unlinked-proof gate refuses a proof resting only on speculative links, and accepts one link that is not", () => {
+    const research = (pe: any[]) => ({ assertions: [{ id: "a_1" }], person_evidence: pe });
+    const proof = { id: "ps_001", tier: "probable", supporting_assertion_ids: ["a_1"] };
+    expect(unlinkedProofInvariants(proof, research([link(ATTACHMENT_LINK_RATIONALE)])).join(" ")).toMatch(/not speculative/);
+    expect(unlinkedProofInvariants(proof, research([link("checked", { confidence: "probable", match_score: 0.9 })]))).toEqual([]);
   });
 
   it("one linked assertion clears it, though its household members stay unlinked", () => {

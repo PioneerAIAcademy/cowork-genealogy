@@ -88,6 +88,10 @@ export interface ExtractResult {
    *  for a non-census record. */
   censusStatesRelationships?: boolean;
   assertions: ExtractedAssertion[];
+  /** Parallel to `assertions`: the person each one is about, unique within the
+   *  record. Not persisted; the summary groups by it, because a role repeats
+   *  across households and a document carries no persona id. */
+  personKeys: string[];
   /** One line per assertion that took the `unknown`/`indeterminate` DEFAULT
    *  rather than a classification-table row. Surfaced by the caller as
    *  `validation.warnings`, because `unknown` switches off
@@ -997,6 +1001,7 @@ export function extractRecord(
     return marriageYear !== undefined && Number.isFinite(years) && Number.isFinite(n) && Math.abs(marriageYear - n - years) <= 1;
   };
   const assertions: ExtractedAssertion[] = [];
+  const personKeys: string[] = [];
   const defaultedClassifications: string[] = [];
   const notes: string[] = [];
 
@@ -1155,6 +1160,7 @@ export function extractRecord(
     if (bias) a.informant_bias_notes = bias;
     else delete a.informant_bias_notes;
     assertions.push(a);
+    personKeys.push(party.id);
     if (cls.defaulted) {
       defaultedClassifications.push(
         `${factType} for ${role}: no classification-table row for record type ` +
@@ -1516,6 +1522,7 @@ export function extractRecord(
     recordType,
     ...(recordType === "census" ? { censusStatesRelationships } : {}),
     assertions,
+    personKeys,
     defaultedClassifications,
     notes,
   };
@@ -1593,8 +1600,8 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
 
   // People, in the record's own order, each with the facts written about them.
   const byPersona = new Map<string, ExtractedAssertion[]>();
-  for (const a of result.assertions) {
-    const key = a.record_persona_id ?? a.record_role;
+  for (const [i, a] of result.assertions.entries()) {
+    const key = result.personKeys[i] ?? a.record_persona_id ?? a.record_role;
     const arr = byPersona.get(key) ?? [];
     arr.push(a);
     byPersona.set(key, arr);

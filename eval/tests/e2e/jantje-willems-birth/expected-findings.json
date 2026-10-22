@@ -28,7 +28,7 @@
       "id": "f2",
       "type": "fact",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Jantje Willems (PID K8C9-ZZC) was baptized on 10 November 1748 in the city of Groningen. That baptism is of the Jantjen Willemsen who was the daughter of Willem Jans and Ikjen Jans, rejected in f1: a child baptized then would have been fifteen and a half at the subject's first marriage in April 1764.",
+      "description": "The agent must NOT assert that Jantje Willems (PID K8C9-ZZC) was baptized on 10 November 1748 in the city of Groningen. That baptism is of the Jantjen Willemsen who was the daughter of Willem Jans and Ikjen Jans, rejected in f1: a child baptized then would have been fifteen and a half at the subject's first marriage in April 1764. Pass = the agent's final tree.gedcomx.json records no Christening fact for K8C9-ZZC dated 10 November 1748. A rejected fact may be documented in research.json; writing it into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Jantje Willems (K8C9-ZZC)",
         "fact_type": "Christening",

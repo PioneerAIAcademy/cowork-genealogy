@@ -41,6 +41,24 @@ from typing import Any
 
 from harness.context_policy import bare_tool_name
 
+#: The rationale `extraction_append({ personId })` writes on every link it makes
+#: from a FamilySearch attachment. A literal because this plane is Python;
+#: pinned to `ATTACHMENT_LINK_RATIONALE` in `src/utils/tree-person.ts` by
+#: `tests/packaging/attachment-link-rationale-drift.test.ts`.
+ATTACHMENT_LINK_RATIONALE = "Linked because FamilySearch has this record attached to this person; not verified."
+
+
+def is_attachment_link(pe: Any) -> bool:
+    """An unchecked FamilySearch attachment link, by its whole shape: the fixed
+    rationale, `speculative`, and no score. Mirrors `isAttachmentLink`."""
+    return (
+        isinstance(pe, dict)
+        and pe.get("rationale") == ATTACHMENT_LINK_RATIONALE
+        and pe.get("confidence") == "speculative"
+        and pe.get("match_score") is None
+    )
+
+
 GUARDRAIL_SKILLS = (
     "research-exhaustiveness",
     "proof-conclusion",
@@ -642,7 +660,11 @@ def find_effects_without_invocation(
         )
 
     person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
-    linked_person_ids = {pe.get("person_id") for pe in person_evidence if isinstance(pe, dict)}
+    # An unchecked attachment link is extraction_append's, not person-evidence's
+    # work, so it does not stand in for an identity step this run skipped.
+    linked_person_ids = {
+        pe.get("person_id") for pe in person_evidence if isinstance(pe, dict) and not is_attachment_link(pe)
+    }
 
     def _has_content(p: dict[str, Any]) -> bool:
         return bool(p.get("facts") or p.get("names"))
@@ -909,10 +931,12 @@ def unguarded_new_person_evidence_links(
     runs in shadow mode, because denying on it would fire in 65 of 81 fixtures
     (issue #1231). Returns ids in first-seen order, de-duped.
 
-    Keying the check on `research_append` is sound because it is the SOLE tool
-    that creates `person_evidence` entries: `extraction_append` explicitly does
-    not (see its tool header, "Identity links (`person_evidence`) are NOT
-    written here"), and the merge/`tree_forget` tools only re-point or count
+    Keying the check on `research_append` is sound because it is the only tool
+    that creates scored or judged `person_evidence` entries. `extraction_append`
+    creates one other kind, in `personId` mode only: an unchecked FamilySearch
+    attachment link (`is_attachment_link`), speculative and unscored by design
+    (lead, 2026-10-19: the baseline step has no same_person gate), and only
+    ever superseded. The merge/`tree_forget` tools only re-point or count
     existing entries. If a future tool starts creating `person_evidence` links,
     this gate (and the caller's `bare == "research_append"` fast-path) must be
     widened to cover it, or that tool becomes a bypass route."""
@@ -1172,7 +1196,9 @@ DEDICATED_AGENT_NAMES = frozenset(
         "research-exhaustiveness",
         # Same shape again, section-scoped, for identity links (issue #1853):
         # the hook routes the whole `person_evidence` section to this agent, so
-        # every legitimate link now arrives from it.
+        # every legitimate identity decision now arrives from it. The one other
+        # link, an unchecked attachment, comes from extraction_append, which
+        # the hook does not route.
         "person-evidence",
         # NOT the same shape (issue #2121). This pair is cost-motivated, not
         # attribution-motivated: no hook routes anything to it, and it writes no
@@ -1223,8 +1249,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # here as evidence of a hook route.
         "search-wikipedia",
         # Same shape again (issue #2797): a converted skill, no hook route.
-        # It writes one `timelines` entry, which `ownership.json` names
-        # `agent:timeline` on. Listed because the set is asserted equal to
+        # Its `research_append` writes stay in `timelines`, which
+        # `ownership.json` names `agent:timeline` on; its writes through any
+        # other writer tool are authorized by that tool's identity
+        # (`ownership.json` `toolAuthorized`). Listed because the set is asserted equal to
         # the shipped agent files.
         "timeline",
         # Same shape as search-images, and for the same reason (issue #2790):
@@ -1379,8 +1407,10 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     purpose, not folded into it: `owning_skills`'s contract is specifically
     "which of the four `GUARDRAIL_SKILLS` owns this" (relied on elsewhere,
     e.g. `find_effects_without_invocation`), and `extraction_append` is not
-    one of the four guardrail skills' writes at all — it's hard-restricted at
-    the TypeScript layer to exactly `sources`/`assertions`
+    one of the four guardrail skills' writes at all — it's restricted at the
+    TypeScript layer to per-call lanes code composes whole: `sources`/
+    `assertions` to extract and tie, `plan_items` to complete an item, and,
+    in `personId` mode only, unchecked attachment links in `person_evidence`
     (`extraction-append.ts`), and `record-structurer.md` and `search-records.md`
     are the only agent files that declare the tool. So its legitimate delegate
     is narrower than "any dedicated agent": only `agent_type ==

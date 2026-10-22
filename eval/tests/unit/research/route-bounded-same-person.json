@@ -1,0 +1,101 @@
+{
+  "test": {
+    "id": "ut_research_p3v",
+    "skill": "research",
+    "name": "A bounded same-person question hands off to person-evidence",
+    "type": "positive",
+    "tags": [
+      "routing",
+      "bounded-request",
+      "routes-to:person-evidence"
+    ],
+    "description": "Issue #3526 item 1. 'Whether two people are the same, or should be merged' is on the bounded list; its owner is @plugin:person-evidence, which holds same_person and merge_warnings and gives the verdict. A same-person question never goes to tree-edit, which would perform a merge the user only asked about."
+  },
+  "input": {
+    "user_message": "/research Is the Patrick Flynn in the 1870 and 1880 Schuylkill County censuses, born about 1832, the same man as my Patrick Flynn born about 1845?",
+    "scenario": "flynn-two-lives"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "source-evaluation",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-edit",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "check-warnings",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a BOUNDED-REQUEST ROUTING test. The message asks for ONE deliverable on the skill's bounded list, and its owner is person-evidence. A deterministic validator (test_routes_to_expected_skill) asserts the first hand-off is person-evidence. Do not grade the routing decision yourself.",
+    "The deliverable is a verdict on whether two people are the same. The owner is person-evidence. Handing off to tree-edit is wrong: the user asked a question and did not instruct a merge. Answering the identity question yourself in the reply is also wrong.",
+    "DO NOT REQUIRE ANY OTHER STEP FIRST. Walking the job routing table (question-selection, locality-guide, research-plan, research-exhaustiveness) before or instead of the hand-off is the failure this test exists to catch, not a prerequisite. Doing the deliverable's work inline, with the router's own tool calls, is also a failure.",
+    "EVERY CALLEE IS STUBBED, so nothing is written to the project. '(no research.json or tree.gedcomx.json changes)' is the EXPECTED state and is NOT a fabricated claim. The run ends at the first stubbed hand-off by design (execution.stop_at_stub), with no closing summary: do not mark a summary as missing.",
+    "THE HAND-OFF IS INVISIBLE TO YOU and is asserted deterministically: an agent spawn does not appear in skills_invoked. Do not conclude from its absence that the router did its own work. Grade only the router's own narration up to the hand-off: honest, and free of internal ids shown to the user."
+  ],
+  "judge_reads_files": true
+}

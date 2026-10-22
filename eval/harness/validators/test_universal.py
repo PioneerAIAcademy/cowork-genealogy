@@ -55,7 +55,7 @@ from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
 )
-from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions
+from harness.skill_invocation import find_tree_facts_disagreeing_with_assertions, is_attachment_link
 from harness.ts_validator import validate_parsed
 
 
@@ -652,6 +652,19 @@ def _explained_by_plan_completion(before_section, after_section) -> bool:
     return changed
 
 
+def _explained_by_attachment_links(before_section, after_section) -> bool:
+    """True when the whole `person_evidence` delta is `extraction_append`'s
+    `personId` mode: new links only, each an unchecked attachment
+    (`is_attachment_link`: the fixed rationale, speculative, no score), and
+    every existing link untouched. A scored link, a stronger one, or any edit
+    to an existing link fails (issue #3516).
+    """
+    if not _explained_by_appends(before_section, after_section):
+        return False
+    before_ids = {e.get("id") for e in before_section if isinstance(e, dict)}
+    return all(is_attachment_link(e) for e in after_section if e.get("id") not in before_ids)
+
+
 def _explained_by_question_tie(before_section, after_section, notes_ids: set[str]) -> bool:
     """True when the whole `assertions` delta is `extraction_append`'s.
 
@@ -886,6 +899,8 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
                     before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
                 )
                 if section == "assertions"
+                else _explained_by_attachment_links(before.get(section), after.get(section))
+                if section == "person_evidence"
                 else _explained_by_appends(before.get(section), after.get(section))
             ):
                 continue
