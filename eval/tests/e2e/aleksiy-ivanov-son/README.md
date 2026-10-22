@@ -1,4 +1,4 @@
-# Алексий Васильев Иванов — a son Павел born in Samara in November 1885
+# Алексий Васильев Иванов — the 1885 Samara "son Павел" hint is a false match
 
 **Source PID:** `L8PL-3W8`
 **Алексий Васильев Иванов is deceased.** (FamilySearch ToS requires
@@ -28,19 +28,53 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 22, `hint-samples.csv` row 758,
-flag `adds_son`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Россия, Самарские метрические книги, 1748-1934", a birth entry for Павел Иванов, born 2 November 1885 in Samara, naming his parents as Василий Иванов and Степанида Иванова.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Павел (born 1885) as his son, plus a `required` finding that the report documents
-the rejection.
+**Resolved: FALSE MATCH** (adjudicated 2026-10-22). Retrieval was tool-assisted
+(MCP `record_read` / `image_transcribe` / `record_search` against live
+FamilySearch); the identity judgement is the genealogist's. The hinted record —
+"Россия, Самарские метрические книги, 1748-1934", birth of Павел Иванов,
+2 November 1885, Samara (`ark:/61903/1:1:6V7Y-N9KZ`) — is **not** a son of the
+subject. Its parents are **Василий Иванов** and **Степанида Иванова**, peasants
+of the village of Sarbon; the subject is **Алексей (Алексий) Васильевич Иванов**
+of Samara, husband of **Елизавета**. The hinting engine matched only on the
+surname Ivanov (the commonest Russian surname), the Samara region, and the son's
+name Павел — a name the subject's family does carry, but for a different son born
+in **1902** (`L8PL-3WN`, already in the starting tree), not 1885.
 
-Probably a false match. Both parents' given names differ from the tree couple: the hint's father is **Василий**, where the subject is Алексий (Алексей) Васильевич, son of a Василий; the hint's mother is **Степанида**, where the subject's wife is Елизавета. The hinting engine appears to have matched on surname, place and the son's name Павел, which the tree already gives to a child born in 1902. Ivanov is the commonest surname in Russia, so a Samara couple of that name with a son Павел is weak evidence on its own.
+Two readings could have kept the hint alive; the register image closed both.
+(1) The indexer might have read the father's patronymic "Васильевъ" as the given
+name "Василий" — i.e. the father was really "Алексей Васильев" (the subject). The
+1885 page image (`ark:/61903/3:1:3QSQ-G99H-SF57`, entry 107) is written
+**"Василій Ивановъ"** — a given name Vasiliy, not a patronymic — so this is
+disproven, not a reading artefact; the mother is **Степанида**, not Елизавета.
+(2) The DigitalArtifact's catalogue coverage reads 1871–1875 against the indexed
+1885 date; the page header reads **"Метрической книги на 1885й годъ"**, confirming
+the page is 1885 and the indexed year is correct.
 
-Two readings would keep it alive. The indexer may have taken the father's patronymic for his given name ("Алексей Васильев" read as "Василий"), and Степанида could be an earlier wife, dead before the 1894 entry. Even then, the image's own catalogue coverage is 1871–1875 against an indexed date of 1885, so the date itself needs checking.
+**Image reading licensed (calibration).** Because the father's-name reading rested
+on the page image, two other indexed entries on the same image were read and
+compared to the FamilySearch index: entry 103 **Прасковья Ефимова**
+(`ark:/61903/1:1:6V7Y-N9KQ` — father Игнатій Ефимовъ, mother Екатерина Алексѣева,
+1 Nov 1885) and entry 106 **Димитрій Максимовъ** (`ark:/61903/1:1:6V7Y-N9VJ` —
+father Петръ Максимовъ, mother Агафья Егорова, 24 Oct 1885). Both matched the
+index exactly, so the reading of the target entry is licensed for
+child/father/mother/date (`image_basis: true`).
 
-The discriminating check is the 1885 register image: read the father's full entry (given name, patronymic and social estate) and the year at the head of the page. An entry reading "Алексей Васильев" makes this a candidate first marriage; "Василий" with any other patronymic settles it as someone else.
+**Searched and empty.** A collection search of "Россия, Самарские метрические
+книги" for Павел Иванов births in Samara, 1884–1886, returns many unrelated Ivanov
+families (the name is ubiquitous there), none tying to Алексей and Елизавета. No
+record establishes any additional child of the couple beyond Виктор (1894) and
+Павел (1902). The fixture therefore tests that the agent declines the hint and
+documents the negative conclusion rather than attaching the 1885 Pavel.
+
+**Second opinion (Isaac Boateng).** A second genealogist, Isaac Boateng,
+independently reviewed the case and concurs with the false-match conclusion: the
+1885 birth record is that of Павел, son of **Василий Иванов (Vasiliy Ivanov)** and
+**Степанида Иванова (Stepanida Ivanova)**, and **not** a son of Алексий Васильев
+Иванов (`L8PL-3W8`). As grounds he cites the differences between the two families
+in the **parents' given names**, **social class**, **residence**, and **parish**,
+and the fact that Алексий already has a **separate son Павел, born in 1902**
+(`L8PL-3WN`). This is a concurring genealogist's *assessment*, distinct from the
+primary record evidence set out above — the documentary basis for the conclusion
+remains the 1885 birth record (`ark:/61903/1:1:6V7Y-N9KZ`) and its page image
+(`ark:/61903/3:1:3QSQ-G99H-SF57`); Isaac's opinion corroborates that reading rather
+than adding new record evidence.
