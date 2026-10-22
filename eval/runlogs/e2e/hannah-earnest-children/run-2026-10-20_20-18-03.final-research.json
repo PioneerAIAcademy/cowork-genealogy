@@ -1,0 +1,2585 @@
+{
+  "project": {
+    "id": "rp_hannah_earnest_children",
+    "objective": "Besides their children John, Hannah Grace, Edwin, William, and James, did Hannah Earnest and Edwin Grice have any other children? Identify each additional child and their birth details.",
+    "subject_person_ids": [
+      "9DJ7-219"
+    ],
+    "status": "active",
+    "created": "2026-07-03",
+    "updated": "2026-07-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What is the correct birth date and christening record for Hannah Earnest (born circa 1857, Darlaston, Staffordshire), and do they belong to the same individual recorded in the 30 January 1868 Staffordshire church entry?",
+      "rationale": "Person warnings return two contradictions on Hannah Earnest: her 1861 Residence predates her recorded 1868 Baptism/Christening by more than 3 years, and events appear before her latest birth-like fact. The 1868 Staffordshire church record (citing her father Joseph Ernest) was attached to Hannah as a Baptism/Christening event, but she was born circa 1857 \u2014 making her approximately 11 at the time of that entry. This data inconsistency must be resolved before child-completeness research can reliably identify the correct mother and her reproductive timeline. England civil registration (GRO) birth indexes from 1857 onward and Staffordshire parish registers are the primary record sets to consult.",
+      "selection_basis": "unresolved_conflict",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-10-20"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-20",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Walsall Registration District, Staffordshire, England",
+          "date_range": "1855-1862",
+          "repository": "FamilySearch",
+          "rationale": "The tree records Hannah's birth as 1857 in Darlaston, Staffordshire, but no civil registration entry is attached. loc_001 confirms that Darlaston events are filed under the Walsall registration district, not under 'Darlaston'. The FamilySearch 'England and Wales Birth Registration Index, 1837-2008' (collection 2285338) is name-searchable. Searching for Earnest/Ernest variants in Walsall district, 1855\u20131862, should return a GRO quarterly index entry that pins the exact quarter and GRO reference for Hannah's birth registration, establishing the civil record of her birth and distinguishing it from the disputed 1868 church entry. Try Earnest, Ernest, and Hirnist as surname variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Darlaston, Staffordshire, England",
+          "date_range": "1855-1862",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch 'England, Staffordshire, Church Records, 1538-1944' (collection 2364451) is name-searchable and already produced the disputed 30 Jan 1868 entry. A separate name search for Hannah Earnest/Ernest in Darlaston, 1855\u20131862, tests whether a genuine baptism record for her exists in the indexed portion of the collection, predating the 1868 entry. The tree records no baptism for this period; if one exists it would be primary evidence of her birth year. loc_001 notes the collection is incomplete \u2014 not all Darlaston parishes are represented \u2014 so a negative result here requires the browse fallback in item 3. Try Earnest, Ernest, and phonetic variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Darlaston, Staffordshire, England",
+          "date_range": "1845-1886",
+          "repository": "FamilySearch",
+          "rationale": "volume_search returned multiple Darlaston baptism register image groups covering the critical period: 1845\u20131864 (image group 007566563_002) and 1864\u20131886 (image group 007566563_003), plus 1853\u20131865 (007566564_002) and 1865\u20131883 (007566564_003). All are browse-only (personCount 0), meaning they cannot be name-searched. A page-by-page browse of the Darlaston St George/St Lawrence baptism registers for 1855\u20131862 may locate Hannah's baptism entry directly, including the father's name (Joseph) to confirm identity. The 1864\u20131886 volume also covers the period of the disputed 1868 entry and may show whether that entry is for Hannah or a sibling. loc_001 notes that parish chest records for Darlaston at the FamilySearch Library have a gap in the 19th century in the catalog item, but these image groups confirm coverage survives.",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The 1861 census (src_001) establishes Hannah Earnest existed before 1868, resolving the core conflict. Browsing unindexed Darlaston register images is not required to answer whether the 1868 entry is a late baptism belonging to Hannah."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Darlaston, Staffordshire, England",
+          "date_range": "1861",
+          "repository": "FamilySearch",
+          "rationale": "The tree already records a 1861 residence fact for Hannah in Darlaston and source 9F5F-VZ7 ('England and Wales, Census, 1861', entry for Joseph Earnest and Diana Earnest) is attached to the tree. However the tree holds only the citation \u2014 the content of Hannah's age as recorded in that census has not been extracted into the tree as an assertion. The 1861 census predates the disputed 30 Jan 1868 christening by seven years and is the key evidence that Hannah already existed before that date. The census household entry should record Hannah's age (expected around 3\u20135), confirm the Darlaston address, and list all children present, providing context for evaluating whether the 1868 entry could be a sibling not yet in the tree. The 'England and Wales Census, 1861' on FamilySearch is name-searchable.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Wolverhampton, Staffordshire, England",
+          "date_range": "1871",
+          "repository": "FamilySearch",
+          "rationale": "Source 9V1G-YQQ ('England and Wales, Census, 1871', entry for Joseph Hirnist and Dianah Hirnist, Wolverhampton) is already attached to the tree, showing the family under the phonetic variant 'Hirnist'. The tree's 1871 residence fact for both Hannah and Joseph places them in Wolverhampton \u2014 the same location as the 30 Jan 1868 church entry (St. John, Wolverhampton). The census content needs to be read: Hannah's stated age in 1871 (expected ~13\u201314 if born 1857, or ~3 if the 1868 entry were her actual birth year) is the independent cross-check. The full household listing will also reveal whether any other children of the right age appear who might be the true subject of the 1868 baptism entry. The 'England and Wales Census, 1871' on FamilySearch is name-searchable.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Wolverhampton, Staffordshire, England",
+          "date_range": "1865-1872",
+          "repository": "FamilySearch",
+          "rationale": "Source SWZ4-P1R is the disputed entry: 'England, Staffordshire, Church Records, 1538-1944', 30 Jan 1868, recording Hannah Ernest with father Joseph Ernest. The tree attached this as Hannah's christening, but she appears in the 1861 census \u2014 making a 1868 baptism either an adult/confirmation rite, a late baptism, or a record for a different child (a sibling) misattributed to Hannah. The image behind SWZ4-P1R must be examined directly: the entry may name a parent's occupation, a mother's name, an address, or the child's birth date \u2014 details that would identify whether the subject is the same Hannah born 1857 or a younger sibling. A broader name search of the Staffordshire Church Records collection for Ernest/Earnest in the Wolverhampton area, 1865\u20131872, would surface any sibling baptisms around that date that might clarify which child the entry actually belongs to.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Walsall Registration District, Staffordshire, England",
+          "date_range": "1855-1862",
+          "repository": "Ancestry",
+          "rationale": "Fallback for item 1. The Ancestry collection 'Staffordshire, England, Birth, Marriage and Death Indexes, 1837-2017' and 'England & Wales, Civil Registration Birth Index, 1837-1915' (collection 8912) are name-searchable and cover the Walsall district. loc_001 notes that births near the Darlaston boundary may appear in adjacent Wednesbury or West Bromwich sub-districts \u2014 Ancestry's interface allows filtering by sub-district and cross-checking with staffordshirebmd.org.uk. FreeBMD (freebmd.org.uk) is a free alternative. If the FamilySearch GRO index search in item 1 finds no entry under Ernest/Earnest/Hirnist, these repositories should be searched with a wider phonetic net before concluding the birth was unregistered.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The christening-record conflict is resolved by two independent census cross-references. A civil birth registration via Ancestry would supplement but not alter the conclusion. Question answered by existing evidence."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-10-20T19:48:28.920Z",
+      "tool": "external_links_search",
+      "query": {
+        "place": "Staffordshire, England"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "notes": "Earlier staged external_links_search from locality-guide phase; logged to preserve audit trail."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-20T19:48:28.932Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Earnest",
+        "givenName": "Hannah",
+        "sex": "Female",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "birthPlace": "Staffordshire, England",
+        "collectionId": "2285338"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Tree-spelling 'Earnest' returns 0 results in GRO Births 1837-2006 (collection 2285338) for Staffordshire."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-20T19:48:28.934Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ernest",
+        "givenName": "Hannah",
+        "sex": "Female",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "birthPlace": "Staffordshire, England",
+        "collectionId": "2285338"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Father's surname spelling 'Ernest' also returns 0 results in same GRO collection for Staffordshire."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-20T19:48:28.934Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hirnist",
+        "givenName": "Hannah",
+        "sex": "Female",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1005,
+      "notes": "Phonetic 'Hirnist' variant across England: top match is only the attached 1871 census; all other 49 are Hurst/Hirst/Hurt in Yorkshire/Cheshire/Lancashire."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-20T19:48:28.953Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ern*",
+        "givenName": "Hannah",
+        "sex": "Female",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "birthPlace": "Staffordshire, England",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 9,
+      "notes": "Wildcard 'Ern*' with recordType=birth in Staffordshire returned 9 irrelevant results. No candidate above match score 0.01."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-20T19:48:28.965Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Joseph",
+        "fatherSurname": "Ernest",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "birthPlace": "Staffordshire, England",
+        "recordType": "birth",
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Father-anchor (Joseph Ernest, Staffordshire births 1852-1862) returns 0."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-20T19:48:28.965Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Joseph",
+        "fatherSurname": "Ernest",
+        "birthYearFrom": 1850,
+        "birthYearTo": 1865,
+        "recordType": "birth",
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Broadened father-anchor (England-wide, 1850-1865) also 0. GRO birth index lacks Walsall/Staffordshire coverage for Ernest births in this period or births were unregistered. Proceeding to church records (pli_002)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-20T19:50:07.291Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ernest",
+        "givenName": "Hannah",
+        "sex": "Female",
+        "birthYearFrom": 1850,
+        "birthYearTo": 1862,
+        "birthPlace": "Darlaston, Staffordshire, England",
+        "collectionId": "2364451"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No pre-1868 Hannah Ernest baptism in Staffordshire Church Records for Darlaston."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-20T19:50:07.291Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Earnest",
+        "givenName": "Hannah",
+        "sex": "Female",
+        "birthYearFrom": 1850,
+        "birthYearTo": 1870,
+        "birthPlace": "Staffordshire, England",
+        "collectionId": "2364451"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Broadened to 'Earnest' across all Staffordshire 1850-1870 \u2014 still 0 results."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-20T19:50:07.292Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Joseph",
+        "fatherSurname": "Ernest",
+        "birthYearFrom": 1845,
+        "birthYearTo": 1870,
+        "birthPlace": "Staffordshire, England",
+        "collectionId": "2364451",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 2,
+      "notes": "Father-anchor (Joseph Ernest, Staffordshire Church Records 1845-1870) returned 2 results: (1) Hannah Ernest baptism 30 Jan 1868 Wolverhampton \u2014 already attached to subject, matchScore 0.756; (2) Elizabeth Ernest baptism 30 Jan 1868 Wolverhampton \u2014 same day, same father, attachedToOther. Dual same-day baptism strongly indicates Hannah\u2019s 1868 entry was a late baptism alongside a younger sibling Elizabeth (born c.1867-68). No pre-1868 baptism found for Hannah in this indexed collection."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-20T19:53:25.707Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Joseph",
+        "surname": "Ernest",
+        "residenceYearFrom": 1861,
+        "residenceYearTo": 1861,
+        "residencePlace": "Staffordshire, England",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 76,
+      "notes": "Search for Joseph Ernest in 1861 Staffordshire. Key hit rank 5 (matchScore 0.666, attachedToSubject): ark:/61903/1:1:M7ZT-R6H \u2014 dwelling of Joseph Earnest, Blakemores Lane, Darlaston, 1861 census; family structure inferred from surname, ages, and listing order as the 1861 census has no relationship column. Also found Joseph Ernest as father in Elizabeth Ernest and Hannah Ernest 30-Jan-1868 baptisms (ranks 6-7), and as father in Hannah Ernest/Edwin Grice marriage records (ranks 8-9, not yet attached)."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-20T19:53:25.736Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M7ZT-R6H"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "notes": "1861 census, dwelling at Blakemores Lane, Darlaston; family structure inferred from surname, ages and order (no relationship column in 1861). Persons listed: Joseph Earnest b.1827 Potteries (iron worker, married); Diana Earnest b.1837 Darlaston (married); Elizabeth Earnest b.1851 Darlaston; Fanny Earnest b.1853 Darlaston; Hannah Earnest b.1858 Darlaston; John Earnest b.1861 Darlaston. Hannah confirmed born c.1858, establishing she was approx. 10 at her 30 Jan 1868 baptism \u2014 a late baptism. Elizabeth and Fanny are siblings not in the current project tree. The Elizabeth Ernest baptized 30 Jan 1868 in Wolverhampton may be the same Elizabeth b.1851 (also a late baptism) or a later child born after 1861."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-20T19:54:50.335Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:V5RF-F7V"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "notes": "1871 census, dwelling of Joseph Hirnist (=Ernest), Wolverhampton; family structure inferred from surname, ages, and listing order as the 1871 census has no relationship column. Persons listed: Joseph Hirnist b.1827 Longton (iron works labourer, married); Dianah Hirnist b.1827 Darlaston (married); Fanny Jones b.1853 Darlaston (married \u2014 inferred daughter now bearing husband's surname); Hannah Hirnist b.1857 Darlaston (scholar). Visitor: Ellen Powell b.1853 Hall Green (married). Elizabeth (b.1851, seen in 1861) is absent by 1871 \u2014 likely married before 1871. John (b.1861, seen in 1861) also absent. Hannah confirmed born 1857 Darlaston, age ~14 in 1871, consistent with c.1857-1858 birth. No additional Ernest/Earnest children visible in 1871 household. Record relationships show Joseph and Dianah as parents of both Hannah and Fanny (indexer-inferred from household structure)."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-20T19:56:04.853Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3T-C612"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "notes": "Read full 1868 church record: Hannah Ernest baptized 30 Jan 1868, Wolverhampton Staffordshire, father Joseph Ernest, mother Diana (no surname on record). No birth date or age stated in the record. Image ark available (3:1:3Q9M-C9Y4-63JN-5). Register covers 1863-1872. Record belongs to Hannah Earnest (9DJ7-219) \u2014 confirmed by census cross-check (b.1857-1858, Darlaston; family moved to Wolverhampton by 1868). Late baptism at approximately age 10. Resolves q_001: the 30 Jan 1868 entry is authentically Hannah's baptism, not a misattribution or different person."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": null,
+      "performed": "2026-10-20T19:56:32.705Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M7ZT-RWG"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_015.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-10-20T19:56:32.715Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:V5RF-F7V"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-10-20T19:56:32.724Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3T-C612"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_017.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England and Wales, Census, 1861\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M7ZT-R6H : Thu Sep 10 02:26:02 UTC 2026), Entry for Joseph Earnest and Diana Earnest, 1861.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Joseph Earnest, \"England and Wales, Census, 1861\"",
+        "when_created": "1861",
+        "when_accessed": "2026-10-20",
+        "where": "England and Wales, Census, 1861",
+        "where_within": "ark:/61903/1:1:M7ZT-RWG"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-20",
+      "log_entry_id": "log_015",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:16FP-DH5",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England and Wales, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V5RF-F7F : Tue Sep 08 22:03:16 UTC 2026), Entry for Joseph Hirnist and Dianah Hirnist, 1871.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Joseph Hirnist, \"England and Wales, Census, 1871\"",
+        "when_created": "1871",
+        "when_accessed": "2026-10-20",
+        "where": "England and Wales, Census, 1871",
+        "where_within": "ark:/61903/1:1:V5RF-F7V"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-20",
+      "log_entry_id": "log_016",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MC7-XK33",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"England, Staffordshire, Church Records, 1538-1944\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3T-C612 : Fri Aug 21 23:21:38 UTC 2026), Entry for Hannah Ernest and Joseph Ernest, 30 January 1868.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Hannah Ernest, \"England, Staffordshire, Church Records, 1538-1944\"",
+        "when_created": "1868",
+        "when_accessed": "2026-10-20",
+        "where": "England, Staffordshire, Church Records, 1538-1944",
+        "where_within": "ark:/61903/1:1:QL3T-C612"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-20",
+      "log_entry_id": "log_017",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPSM-59HB",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Earnest"
+      },
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "34 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Labourer Is An Iron Work",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Potteries, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Potteries, Staffordshire",
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "standard_place": "Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1827",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1827",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1861",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Blakemores Lane",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Blakemores Lane",
+      "record_persona_id": "p_130324898",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Diana Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Diana",
+        "surname": "Earnest"
+      },
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "24 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "1837",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1837",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Blakemores Lane",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Blakemores Lane",
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "census",
+      "value": "1861",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Elizabeth Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Earnest"
+      },
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "10 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1851",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "census",
+      "value": "1861",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Blakemores Lane",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Blakemores Lane",
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Fanny Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Fanny",
+        "surname": "Earnest"
+      },
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "8 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "census",
+      "value": "1861",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "1853",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1853",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Blakemores Lane",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Blakemores Lane",
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Hannah Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Earnest"
+      },
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "3 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "census",
+      "value": "1861",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "1858",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1858",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Blakemores Lane",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Blakemores Lane",
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "John Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John",
+        "surname": "Earnest"
+      },
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "age",
+      "value": "0 days",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "1861",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "census",
+      "value": "1861",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1861",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Blakemores Lane",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Blakemores Lane",
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Joseph Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_130324899",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_130324900",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_130324901",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_130324702",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:M7ZT-RWG",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "son of Joseph Earnest",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_130324703",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph Hirnist",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Hirnist"
+      },
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "44 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Longton, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Longton, Staffordshire",
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Longton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1827",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1827",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1871",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1871",
+      "place": "Wolverhampton, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Wolverhampton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Labourer Ironworks",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868665",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Dianah Hirnist",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Dianah",
+        "surname": "Hirnist"
+      },
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "44 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "census",
+      "value": "1871",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1871",
+      "place": "Wolverhampton, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Wolverhampton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "1827",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1827",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Fanny Jones",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Fanny",
+        "surname": "Jones"
+      },
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "18 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1853",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1853",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "census",
+      "value": "1871",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1871",
+      "place": "Wolverhampton, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Wolverhampton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Hannah Hirnist",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Hirnist"
+      },
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "14 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "census",
+      "value": "1871",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1871",
+      "place": "Wolverhampton, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Wolverhampton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Darlaston, Staffordshire",
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "1857",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1857",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "occupation",
+      "value": "Scholar",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Unknown",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "name",
+      "value": "Ellen Powell",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ellen",
+        "surname": "Powell"
+      },
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "age",
+      "value": "18 years",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "birth",
+      "value": "Hall Green, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Hall Green, Staffordshire",
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Green Heath, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "birth",
+      "value": "1853",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1853",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "census",
+      "value": "1871",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1871",
+      "place": "Wolverhampton, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Wolverhampton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "occupation",
+      "value": "Visitor",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "visitor_1",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13725868669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Joseph Hirnist",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_13725868666",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph Hirnist",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_13725868667",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:V5RF-F7V",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph Hirnist",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_13725868668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Hannah Ernest",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Ernest"
+      },
+      "record_persona_id": "p_102883215590",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "30 January 1868",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "30 January 1868",
+      "place": "Wolverhampton, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_102883215590",
+      "source_id": "src_003",
+      "standard_place": "Wolverhampton, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Joseph Ernest",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Ernest"
+      },
+      "record_persona_id": "p_102883215594",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102883215594",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Diana",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Diana",
+        "surname": ""
+      },
+      "record_persona_id": "p_102883215597",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102883215597",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Diana",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102883215590",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Joseph Ernest",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102883215590",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:QL3T-C612",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Diana",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102883215594",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Staffordshire, England, United Kingdom",
+      "for_place": "Darlaston, Staffordshire, England, United Kingdom",
+      "time_period": "1840-1910",
+      "jurisdictions": [
+        {
+          "name": "Darlaston, Staffordshire, England, United Kingdom",
+          "date_range": "1801-1974"
+        },
+        {
+          "name": "Darlaston St George, Staffordshire, England, United Kingdom",
+          "date_range": "1801-present"
+        },
+        {
+          "name": "Walsall, Staffordshire, England, United Kingdom",
+          "date_range": "1837-1974"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2364451",
+          "title": "England, Staffordshire, Church Records, 1538-1944",
+          "date_range": "1538-1944"
+        },
+        {
+          "id": "2285338",
+          "title": "England and Wales Birth Registration Index, 1837-2008",
+          "date_range": "1837-2008"
+        },
+        {
+          "id": "2285732",
+          "title": "England and Wales Marriage Registration Index, 1837-2005",
+          "date_range": "1837-2005"
+        },
+        {
+          "id": "2285341",
+          "title": "England and Wales Death Registration Index 1837-2007",
+          "date_range": "1837-2007"
+        },
+        {
+          "id": "3491898",
+          "title": "England, Staffordshire, Dioceses Of Lichfield and Coventry Wills and Probate, 1521-1860",
+          "date_range": "1521-1860"
+        },
+        {
+          "id": "2451051",
+          "title": "England and Wales, National Index of Wills and Administrations, 1858-1957",
+          "date_range": "1858-1957"
+        },
+        {
+          "id": "4229516",
+          "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+          "date_range": "1890-1960"
+        },
+        {
+          "id": "1952868",
+          "title": "United Kingdom, Chelsea Pensioners' Service Records, 1760-1913",
+          "date_range": "1760-1913"
+        },
+        {
+          "id": "2046942",
+          "title": "United Kingdom, Militia Service Records, 1806-1915",
+          "date_range": "1806-1915"
+        },
+        {
+          "id": "4325039",
+          "title": "England, Archdiocese of Birmingham, Roman Catholic Parish Records, 1539-1910",
+          "date_range": "1539-1910"
+        }
+      ],
+      "quirks": [
+        "Civil registration district for Darlaston is Walsall \u2014 GRO indexes file Darlaston events under the Walsall registration district, not under 'Darlaston'. Source: https://www.familysearch.org/en/wiki/Staffordshire_Civil_Registration",
+        "Registration compliance was not universal before 1874; roughly 10% of births may be unregistered in 1840s\u20131860s. Always search parish baptism registers alongside GRO indexes. Source: https://www.familysearch.org/en/wiki/England_Civil_Registration",
+        "The FamilySearch Staffordshire Church Records collection (2364451) is described as incomplete \u2014 not all parishes are represented. Cross-check Findmypast and Ancestry collections.",
+        "Parish chest records for Darlaston at the FamilySearch Library cover only 1690-1818 (and isolated pieces for 1793 and 1893); there is a significant gap for the 19th century in that catalog item. Darlaston burial registers 1860-1908 are on FamilySearch as full-text-searchable (not name-indexed) browse volumes.",
+        "Pre-1858 probate for Darlaston falls under the Court of the Bishop of Lichfield (Episcopal Consistory). Verify the exact peculiar court by using the parish lookup tables at https://www.familysearch.org/en/wiki/Staffordshire_Probate_Records",
+        "In 1974, Darlaston was transferred to the new metropolitan county of West Midlands. All 19th-century records remain filed under Staffordshire. Use pre-1974 boundaries for all research in 1840-1910.",
+        "Darlaston adjoins Wednesbury and West Bromwich (same Staffordshire registration district area) and Tipton/Dudley (partly Worcestershire). Births and marriages near district boundaries may appear in adjacent Wednesbury or West Bromwich sub-districts; search both.",
+        "English naming convention (per https://www.familysearch.org/en/wiki/England_Naming_Customs): first son typically named after paternal grandfather; first daughter after maternal grandmother. Useful for identifying children of Hannah Earnest and Edwin Grice among common given names.",
+        "A surname used as a second given name in working-class families pre-1900 almost always signals illegitimacy in England \u2014 flag any such entries among the Grice children's registrations."
+      ],
+      "guide_markdown": "# Locality Guide: Staffordshire, England (1840-1910)\n\nSee full guide in research log or as presented to user.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Staffordshire,_England_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/England_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-20"
+    }
+  ]
+}
