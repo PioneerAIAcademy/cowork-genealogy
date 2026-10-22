@@ -950,10 +950,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // so no spawn tool.
   "init-project.md": {
     tools: [
-      "Read",
-      "person_read",
+      "project_context",
       "project_create",
       "research_append",
+      "tree_edit",
     ],
     denies: [],
   },

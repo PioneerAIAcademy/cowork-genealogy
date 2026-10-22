@@ -842,6 +842,17 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("researcher_profile");
   });
 
+  it("denies the init-project agent a hand-written source: project_create writes the memories", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "sources", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type: IP_AGENT,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+  });
+
   it("denies the init-project agent the project status, which proof-conclusion owns", () => {
     const out = runGuard({
       tool_name: "mcp__genealogy__research_append",
@@ -857,12 +868,10 @@ describe("the guard script's decisions", () => {
     ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
     ["known_holdings", { section: "known_holdings", op: "append", entry: {} }],
-    ["sources (a memory's transcription)", { section: "sources", op: "append", entry: {} }],
-    ["all three in one batch", {
+    ["both in one batch", {
       ops: [
         { section: "researcher_profile", op: "update", fields: {} },
         { section: "known_holdings", op: "append", entry: {} },
-        { section: "sources", op: "append", entry: {} },
       ],
     }],
   ])("permits the init-project agent its own lane — %s", (_label, tool_input) => {

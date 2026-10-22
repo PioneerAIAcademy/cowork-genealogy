@@ -247,8 +247,39 @@ def test_the_generic_default_fails_when_an_objective_was_stated():
     ("Identify the Irish origins of Thomas Doyle: county, parish, or townland.", "irish"),
 ])
 def test_an_added_direction_fails(objective, added):
-    with pytest.raises(AssertionError, match=added):
+    with pytest.raises(AssertionError, match=rf"did not say \([^)]*\b{added}\b"):
         check_stated(_stored(objective), STATED)
+
+
+REDERIVE = {
+    "tags": ["objective-stated"],
+    "delegation": "Set up a project for Patrick Flynn so I can run a forget-and-rederive exercise "
+    "on his death; I want to test whether you can re-derive his death details from records.",
+}
+
+
+@pytest.mark.parametrize("objective", [
+    "Test whether death details for Patrick Flynn can be re-derived from records.",
+    "Re-derive Patrick Flynn's death detail from the record.",
+])
+def test_a_plain_ending_is_still_the_users_word(objective):
+    check_stated(_stored(objective), REDERIVE)
+
+
+@pytest.mark.parametrize("objective,added", [
+    ("Re-derive Patrick Flynn's death in Schuylkill from records.", "schuylkill"),
+    ("Re-derive Patrick Flynn's burial details from records.", "burial"),
+])
+def test_an_added_word_fails_beside_inflected_ones(objective, added):
+    with pytest.raises(AssertionError, match=rf"did not say \({added}\)"):
+        check_stated(_stored(objective), REDERIVE)
+
+
+def test_a_short_stem_is_not_the_users_word():
+    """'notes' is not the user's 'not': an ending comes off only while four letters remain."""
+    stated = {"tags": ["objective-stated"], "delegation": "I do not know who his parents were."}
+    with pytest.raises(AssertionError, match=r"did not say \(notes\)"):
+        check_stated(_stored("Notes on who his parents were."), stated)
 
 
 def test_reads_the_user_message_on_the_skill_arm():
