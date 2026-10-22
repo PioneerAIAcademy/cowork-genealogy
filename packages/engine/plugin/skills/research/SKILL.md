@@ -22,8 +22,6 @@ allowed-tools:
   - research_delivered
   - person_read
   - source_attachments
-  - image_transcribe
-  - sidecar_read
 ---
 
 # /research — Full GPS Research Workflow
