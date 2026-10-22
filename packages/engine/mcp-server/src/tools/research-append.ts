@@ -59,6 +59,7 @@ import {
   resolveStandardPlace,
   countryConsistency,
   isNonPlacePhrase,
+  checkFirstPlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
 import { birthThresholdMiles, lookupPlaceCoords } from "../utils/place-coords.js";
@@ -85,8 +86,11 @@ import {
   materializesToPersonFact,
   type AssertionFactAttr,
   factTypeKey,
+  isTwoParty,
   recordPartyKeyer,
 } from "../utils/record-persona.js";
+import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/relatives.js";
+import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
@@ -107,6 +111,9 @@ interface SectionConfig {
   };
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
+  /** List sections only: the fields an `update` op may set. Absent, every field
+   *  but `id` is updatable. `namesakes` uses it so a row is never re-pointed. */
+  updatableFields?: string[];
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
    *  `fields` (restricted to `allowedFields`) onto the object in place — no
    *  array, no id, no append. The tool stamps `stampTimestamp` on every write. */
@@ -167,6 +174,13 @@ const SECTIONS: Record<string, SectionConfig> = {
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
   localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
+  // A row is never retired and never re-pointed: person_id is the person it
+  // shadows, so it is not among the fields an update may set.
+  namesakes: {
+    prefix: "ns_",
+    stampTimestamp: CREATED_DATE,
+    updatableFields: ["name", "place", "time_period", "record_ids", "log_entry_ids", "notes"],
+  },
   // Singleton metadata (one object, not a list): update-only field writes.
   // proof-conclusion sets `project.status: "completed"` here at the end of a
   // GPS cycle; the tool stamps `project.updated` (iso_date).
@@ -1171,7 +1185,7 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
 /** Assertions naming two people. The link may be about either side, so the
  *  assertion's own party identifiers cannot be assumed to describe the person
  *  being linked. */
-const RELATIONAL_FACT_TYPES: ReadonlySet<string> = new Set([
+export const RELATIONAL_FACT_TYPES: ReadonlySet<string> = new Set([
   "relationship", "parentage", "parentchild", "marriage",
 ]);
 
@@ -1407,6 +1421,38 @@ function batchPersonLinks(research: any, ops: ResearchAppendOp[]): PersonLink[] 
     }
   }
   return out;
+}
+
+/** How a gate reads an assertion's record and party, and whether it names a
+ *  second person. */
+interface PartyKeys {
+  recordOf: (a: any) => unknown;
+  partyOf: (a: any) => unknown;
+  twoParty: (a: any) => boolean;
+}
+
+/** Whether `linked`, a two-party assertion, is about its OWN party when linked
+ *  to `entry.person_id`: true when some other link ties a one-party assertion of
+ *  the same record and the same party to that same person. `keys` says how
+ *  record and party are read. */
+function ownPartyLinkedTo(
+  linked: any,
+  entry: any,
+  recordId: unknown,
+  assertionById: ReadonlyMap<string, any>,
+  personLinks: ReadonlyArray<PersonLink> | undefined,
+  keys: PartyKeys,
+): boolean {
+  if (!personLinks || personLinks.length === 0) return false;
+  const party = keys.partyOf(linked);
+  if (party === null) return false;
+  return personLinks.some((l) => {
+    if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) return false;
+    const other = assertionById.get(l.assertion_id);
+    if (!other) return false;
+    if (keys.twoParty(other)) return false;
+    return keys.recordOf(other) === recordId && keys.partyOf(other) === party;
+  });
 }
 
 /** The two parties a two-party assertion names: its own, and the one its
@@ -2254,8 +2300,7 @@ export function mintedFromThisRecord(
   // in the write-once starting-tree baseline. Without them the exemption
   // refused 232 committed links, 206 of which were pre-existing people (184
   // caught by both discriminators, 22 by the starting-tree baseline alone).
-  if (FS_PERSON_PID.test(personId)) return false;
-  if (startingPersonIds?.has(personId)) return false;
+  if (pidOrStartingPerson(personId, startingPersonIds)) return false;
   // A person with an attachment link came from FamilySearch: only an imported
   // person has records attached there. Without this, reusing the import's S for
   // an attached record makes that person's only ref reach this record, and a
@@ -2266,47 +2311,1224 @@ export function mintedFromThisRecord(
   }
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
-  const refs = new Set<string>();
-  // Person-level refs count too (#2696): "only source ref" means every ref the
-  // person carries, and person_read attaches FamilySearch's at this level.
-  for (const src of (person.sources ?? []) as any[]) {
-    if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
-  }
-  for (const n of (person.names ?? []) as any[]) {
-    for (const src of (n?.sources ?? []) as any[]) {
-      if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
-    }
-  }
-  for (const f of (person.facts ?? []) as any[]) {
-    for (const src of (f?.sources ?? []) as any[]) {
-      if (typeof src?.ref === "string" && src.ref !== "") refs.add(src.ref);
-    }
-  }
+  const refs = personSourceRefs(person);
   if (refs.size === 0) return false; // provenance unknown, not circular
+  // Every record this person's refs reach is the one under scrutiny.
+  const { recordIds } = refsReach(refs, research);
+  return recordIds.size > 0 && [...recordIds].every((r) => r === recordId);
+}
 
-  const bySourceDescription = new Map<string, any>();
+/** Whether this person was not made during the run: a FamilySearch person id,
+ *  or a person in the write-once starting tree. The two discriminators
+ *  `mintedFromThisRecord` applies first, measured in its docblock. */
+export function pidOrStartingPerson(personId: string, startingPersonIds?: ReadonlySet<string>): boolean {
+  return FS_PERSON_PID.test(personId) || startingPersonIds?.has(personId) === true;
+}
+
+/** Every source ref a tree person carries. Person-level refs count too (#2696):
+ *  "only source ref" means every ref the person carries, and person_read
+ *  attaches FamilySearch's at this level. */
+export function personSourceRefs(person: any): Set<string> {
+  return new Set(
+    [
+      person,
+      ...((Array.isArray(person?.names) ? person.names : []) as any[]),
+      ...((Array.isArray(person?.facts) ? person.facts : []) as any[]),
+    ].flatMap(sourceRefsOf),
+  );
+}
+
+/** What tree source refs reach in research.json:
+ *
+ *    ref -> tree sources[].id -> research sources[].gedcomx_source_description_id
+ *        -> research sources[].id -> assertions[].record_id
+ *
+ *  An S entry reaches EVERY research source that cites it. Two sources can cite
+ *  one S entry (source reuse across repositories), and keeping only the last
+ *  one, as this walk once did, hid a record or showed one depending on source
+ *  order. A ref no research source cites reaches nothing. */
+export function refsReach(
+  refs: Iterable<string>,
+  research: any,
+): { sourceIds: Set<string>; recordIds: Set<string> } {
+  const sourcesByDescription = new Map<string, string[]>();
   for (const src of (research?.sources ?? []) as any[]) {
     const gid = src?.gedcomx_source_description_id;
-    if (typeof gid === "string" && gid !== "") bySourceDescription.set(gid, src);
+    if (typeof gid !== "string" || gid === "" || typeof src.id !== "string") continue;
+    const list = sourcesByDescription.get(gid);
+    if (list) list.push(src.id);
+    else sourcesByDescription.set(gid, [src.id]);
   }
-  const recordsBySourceId = new Map<string, Set<string>>();
-  for (const a of (research?.assertions ?? []) as any[]) {
-    const sid = a?.source_id;
-    const rec = a?.record_id;
-    if (typeof sid !== "string" || typeof rec !== "string" || rec === "") continue;
-    if (!recordsBySourceId.has(sid)) recordsBySourceId.set(sid, new Set());
-    recordsBySourceId.get(sid)!.add(rec);
-  }
-
-  const reached = new Set<string>();
+  const sourceIds = new Set<string>();
   for (const ref of refs) {
     const bare = ref.startsWith("#") ? ref.slice(1) : ref;
-    const src = bySourceDescription.get(bare);
-    if (!src || typeof src.id !== "string") continue;
-    for (const rec of recordsBySourceId.get(src.id) ?? []) reached.add(rec);
+    for (const id of sourcesByDescription.get(bare) ?? []) sourceIds.add(id);
   }
-  // Every record this person's refs reach is the one under scrutiny.
-  return reached.size > 0 && [...reached].every((r) => r === recordId);
+  const recordIds = new Set<string>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    if (typeof a?.record_id !== "string" || a.record_id === "") continue;
+    if (sourceIds.has(a.source_id)) recordIds.add(a.record_id);
+  }
+  return { sourceIds, recordIds };
+}
+
+/** Whether this person was made out of one document alone: not a FamilySearch
+ *  or starting-tree person, and every source its refs reach cites the same S
+ *  entry as research source `sourceId`. The namesake cap asks it of a relative,
+ *  who cannot vouch for the record it was made from. */
+export function mintedFromThisSource(
+  personId: string,
+  sourceId: string,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+): boolean {
+  if (pidOrStartingPerson(personId, startingPersonIds)) return false;
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person) return false;
+  const { sourceIds } = refsReach(personSourceRefs(person), research);
+  if (sourceIds.size === 0) return false;
+  const description = new Map<string, unknown>();
+  for (const src of (research?.sources ?? []) as any[]) {
+    if (typeof src?.id === "string") description.set(src.id, src.gedcomx_source_description_id);
+  }
+  const own = description.get(sourceId);
+  return typeof own === "string" && [...sourceIds].every((s) => description.get(s) === own);
+}
+
+// ─── The namesake cap (issue #3363) ─────────────────────────────────────────
+//
+// A recorded namesake (`namesakes[]`) is a different person who shares a tree
+// person's name, place and time. While one is recorded, a probable or confident
+// link to that person stands only when something in its record ties it to them:
+// (a) another party of the same source linked strongly to their spouse, parent or
+// child, or (b) the same street address or occupation as a record already
+// linked to them. A name, a date and a place alone fit the namesake as well.
+
+/** Probable or confident: the confidence a recorded namesake caps. */
+const isStrongConfidence = (c: unknown): boolean => c === "probable" || c === "confident";
+const CONFIDENCE_RANK: Readonly<Record<string, number>> = { speculative: 0, probable: 1, confident: 2 };
+
+function isLiveStrong(e: any): boolean {
+  return !!e && !e.superseded_by && isStrongConfidence(e.confidence);
+}
+
+/** A link's (assertion_id, person_id) pairing as one key. */
+export function pairingKey(e: { assertion_id?: unknown; person_id?: unknown }): string {
+  return `${String(e?.assertion_id)}\u0000${String(e?.person_id)}`;
+}
+
+/** The source a link is judged on. A document extracted with one record id per
+ *  persona keeps its parties together under its source. */
+function capSource(a: any): unknown {
+  return typeof a?.source_id === "string" && a.source_id !== "" ? a.source_id : (a?.record_id ?? null);
+}
+
+/** A record party: the bare record id with the party `recordPartyKeyer` reads
+ *  across that record's assertions. Under one source, two personas that share a
+ *  role on separate records stay apart. */
+function capPartyKeyer(assertions: Iterable<any>): (a: any) => string {
+  const byRecord = new Map<string | null, any[]>();
+  for (const a of assertions) {
+    const r = recordIdOf(a);
+    const list = byRecord.get(r);
+    if (list) list.push(a);
+    else byRecord.set(r, [a]);
+  }
+  const keyers = new Map<string | null, (a: any) => string | null>();
+  return (a) => {
+    const r = recordIdOf(a);
+    let keyer = keyers.get(r);
+    if (!keyer) {
+      keyer = recordPartyKeyer(byRecord.get(r) ?? [a]);
+      keyers.set(r, keyer);
+    }
+    const rec = typeof a?.record_id === "string" ? arkToBareId(a.record_id) : "";
+    return `${rec}\u0000${String(keyer(a))}`;
+  };
+}
+
+type NamesakeRelation = "parent" | "spouse" | "child";
+
+function relativesById(tree: any, personId: string): Map<string, { relation: NamesakeRelation; person: any }> {
+  const byRole = gatherRelatives(tree ?? {}, personId);
+  const out = new Map<string, { relation: NamesakeRelation; person: any }>();
+  for (const relation of ["parent", "spouse", "child"] as const) {
+    for (const p of byRole[relation]) {
+      if (typeof p.id === "string" && !out.has(p.id)) out.set(p.id, { relation, person: p });
+    }
+  }
+  return out;
+}
+
+/** The words of a given name that name someone: lower case, dots and brackets
+ *  dropped, placeholder words ("Mrs.", "Wife", "Unknown") and "of" left out. */
+function ownGivenWords(given: unknown): string[] {
+  if (typeof given !== "string") return [];
+  return given
+    .toLowerCase()
+    .replace(/[.[\]]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
+}
+
+/** Why a relative's names cannot separate namesakes, or null when one can. A
+ *  relative separates them only through a given name of their own: not a
+ *  placeholder, and not one that only repeats the given name of the relative's
+ *  own spouse, the way an unnamed wife is recorded ({prefix "Mrs.", given
+ *  "James"}, "Mrs. James", "Wife of James", "Mrs. J." for the wife of James). */
+function givenNameProblem(person: any, tree: any): string | null {
+  const names = (Array.isArray(person?.names) ? person.names : []) as any[];
+  if (!names.some((n) => isRealGivenName(n?.given))) return "has no given name";
+  const spouseGiven = new Set<string>();
+  for (const s of gatherRelatives(tree ?? {}, String(person?.id)).spouse) {
+    for (const n of (Array.isArray(s?.names) ? s.names : []) as any[]) {
+      const words = ownGivenWords(n?.given);
+      if (words.length > 0) spouseGiven.add(words.join(" "));
+    }
+  }
+  const own = names.some((n) => {
+    const words = ownGivenWords(n?.given);
+    if (!isRealGivenName(n?.given) || words.length === 0 || spouseGiven.has(words.join(" "))) return false;
+    const marked =
+      PLACEHOLDER_GIVEN.has(String(n?.prefix ?? "").toLowerCase().replace(/\./g, "").trim()) ||
+      String(n?.given).toLowerCase().replace(/[.[\]]/g, " ").split(/\s+/).some((w) => PLACEHOLDER_GIVEN.has(w));
+    return !(marked && words.length === 1 && words[0].length === 1 && [...spouseGiven].some((g) => g.startsWith(words[0])));
+  });
+  return own ? null : "has no given name of their own, only their spouse's";
+}
+
+/** A household head's role, whose co-residents' roles state their relation. */
+const HOUSEHOLD_HEADS: ReadonlySet<string> = new Set(["head", "head_of_household", "self"]);
+/** The relation a co-resident's role states, read from the head. */
+const HOUSEHOLD_RELATION: ReadonlyMap<string, NamesakeRelation> = new Map([
+  ["wife", "spouse"], ["husband", "spouse"], ["spouse", "spouse"],
+  ["son", "child"], ["daughter", "child"], ["child", "child"],
+  ["father", "parent"], ["mother", "parent"], ["parent", "parent"],
+]);
+const INVERSE_RELATION: ReadonlyMap<string, string> = new Map([
+  ["parent", "child"], ["child", "parent"], ["spouse", "spouse"], ["sibling", "sibling"],
+]);
+const NAME_SUFFIXES: ReadonlySet<string> = new Set(["jr", "sr", "ii", "iii", "iv", "junior", "senior"]);
+
+/** A name as the co-resident exclusion compares it: the first given name and
+ *  the surname, lower case, a generational suffix dropped. */
+function nameKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  let v = value.toLowerCase();
+  if (v.includes(",")) {
+    const [surname, given] = v.split(",", 2);
+    v = `${given} ${surname}`;
+  }
+  const words = v.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter((w) => w && !NAME_SUFFIXES.has(w));
+  if (words.length === 0) return null;
+  return words.length === 1 ? words[0] : `${words[0]} ${words[words.length - 1]}`;
+}
+
+function capNorm(v: unknown): string {
+  return String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** A house number: `#12`, `house 12`, `no. 12`; a number before a street name,
+ *  past a direction letter or as an ordinal street (`530 Baldwin`, `6906 W.
+ *  Lloyd`, `350 12th Street`); or a number after a street word (`Hauptstraße
+ *  12`, `Via Roma 12`). A number from 1000 to 2200 before a name reads as a
+ *  year unless a street suffix is present; a month, census or measure word
+ *  after the number is not a street; and a number after a division word
+ *  (`District No. 7`, `Ward 12`, `Route 2`, `Dwelling 45`) is the division's. */
+const HOUSE_TOKEN = new RegExp(
+  [
+    String.raw`(?:#\s?(\d+))`,
+    String.raw`(?:(?<![\p{L}\p{N}_])(?:house|no\.?|nr\.?)\s?#?\s?(\d+))`,
+    String.raw`(?:(?<![\p{L}\p{N}_#])(\d{1,5})[a-z]?\s+(?:(?:n|s|e|w|ne|nw|se|sw|north|south|east|west)\.?\s+)?(\p{L}\p{L}+|\d+(?:st|nd|rd|th)))`,
+    String.raw`(?:(?<![\p{L}\p{N}_])(?:\p{L}*(?:strasse|straße|gasse|straat|weg|laan|gracht|platz|allee)|(?:via|viale|calle|rue|rua|avenida|piazza|plaza|ulica)\s+\p{L}[\p{L}'.-]*(?:\s+\p{L}[\p{L}'.-]*){0,3})\s+(\d{1,4})[a-z]?(?![\p{L}\p{N}]))`,
+  ].join("|"),
+  "giu",
+);
+const NOT_A_STREET: ReadonlySet<string> = new Set([
+  "jan", "january", "feb", "february", "mar", "march", "apr", "april", "may", "jun", "june", "jul",
+  "july", "aug", "august", "sep", "sept", "september", "oct", "october", "nov", "november", "dec",
+  "december", "census", "district", "precinct", "ward", "militia", "township", "beat", "federal",
+  "national", "state", "and", "in", "of", "years", "yrs", "age", "ed", "ad", "mile", "miles", "mi",
+  "km", "dwelling", "dwellings", "family", "families", "line", "sheet", "page", "lot", "lots",
+  "block", "acre", "acres", "rods", "chains", "feet", "ft", "persons", "children", "index",
+]);
+/** A division whose number is not a house's: `District No. 7`, `Ward #3`,
+ *  `R.F.D. No. 2`, `Route 2`, `Ward 12 ED 83`, `Sheet 4A line 12`. */
+const DIVISION_WORDS: ReadonlySet<string> = new Set([
+  "district", "dist", "precinct", "pct", "ward", "militia", "township", "twp", "beat", "route", "rt",
+  "rte", "rfd", "rr", "box", "ed", "ad", "enumeration", "dwelling", "family", "line", "sheet", "page",
+  "lot", "block", "section", "sec", "range", "tract", "plat", "parish", "apt", "apartment", "unit",
+  "suite", "room",
+]);
+const STREET_SUFFIX =
+  /\b(?:st|street|ave|avenue|rd|road|lane|ln|blvd|boulevard|court|ct|row|terrace|square|sq|way|drive|dr|strasse|gasse|calle|rue)\b/;
+
+/** The word just before `index`, dots dropped (`r.f.d.` reads `rfd`). */
+function wordBefore(v: string, index: number): string {
+  const m = /([\p{L}.]+)[\s,;:]*$/u.exec(v.slice(0, index));
+  return m ? m[1].replace(/\./g, "").toLowerCase() : "";
+}
+
+function hasHouseNumber(v: string): boolean {
+  for (const m of v.matchAll(HOUSE_TOKEN)) {
+    if (DIVISION_WORDS.has(wordBefore(v, m.index ?? 0))) continue;
+    if (m[1] !== undefined || m[2] !== undefined || m[5] !== undefined) return true;
+    if (NOT_A_STREET.has(m[4].toLowerCase())) continue;
+    const n = Number(m[3]);
+    if (n >= 1000 && n <= 2200 && !STREET_SUFFIX.test(v)) continue;
+    return true;
+  }
+  return false;
+}
+
+type CapField = "occupation" | "street address";
+
+/** The occupation, or the street address of a residence or census entry, an
+ *  assertion records. A town, a district or a date is not an address: the
+ *  value must carry a house number and differ from the assertion's place. */
+function capFields(a: any): Array<{ field: CapField; value: string }> {
+  const type = String(a?.fact_type ?? "").toLowerCase();
+  const value = capNorm(a?.value);
+  if (!value) return [];
+  if (type === "occupation") return [{ field: "occupation", value }];
+  if (type !== "residence" && type !== "census") return [];
+  if (stdDate(value) !== "" || value === capNorm(a?.place) || !hasHouseNumber(value)) return [];
+  return [{ field: "street address", value }];
+}
+
+export type NamesakeTie =
+  | { kind: "a"; link: string; relative: string; relation: NamesakeRelation; crossRecord: boolean }
+  | { kind: "b"; voucher: string; field: CapField; value: string };
+
+export interface NamesakeVerdict {
+  allowed: boolean;
+  /** Every tie found; `crossRecord` marks a co-party on another record id of
+   *  the same source. */
+  ties: NamesakeTie[];
+  /** The link's source. */
+  source: string;
+  /** Why nothing ties the link, one clause each; empty when it is allowed. */
+  reasons: string[];
+  /** The rules that voided a tie the link would otherwise have had: the role
+   *  check, the co-resident exclusion, or grounding. Empty when allowed. */
+  blockedBy: NamesakeBlock[];
+}
+
+export type NamesakeBlock = "role" | "co-resident" | "grounding";
+
+export interface NamesakeVerdicts {
+  /** The person's namesake rows. */
+  rows: any[];
+  /** Keyed on person_evidence id: every live probable or confident link to the
+   *  person whose assertion is not absent basis. */
+  verdicts: Map<string, NamesakeVerdict>;
+}
+
+/** The cap's verdict on every live probable or confident link to `personId`,
+ *  or null when no namesake of theirs is recorded.
+ *
+ *  Tie (a) reads relatives from `tree` and links from `research`. Tie (b) takes
+ *  its voucher from the links whose pairing is in `voucherPairs` (default: every
+ *  judged link). A link whose assertion is absent basis is neither judged nor a
+ *  tie. */
+export function namesakeVerdicts(
+  personId: string,
+  research: any,
+  tree: any,
+  opts: {
+    startingPersonIds?: ReadonlySet<string>;
+    voucherPairs?: ReadonlySet<string>;
+    /** Judge only these links; every strong link still counts as a voucher. */
+    only?: ReadonlySet<string>;
+  } = {},
+): NamesakeVerdicts | null {
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []).filter(
+    (r: any) => r && r.person_id === personId,
+  );
+  if (rows.length === 0) return null;
+
+  const assertionById = new Map<string, any>();
+  const bySource = new Map<unknown, any[]>();
+  for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
+    if (!a || typeof a.id !== "string") continue;
+    assertionById.set(a.id, a);
+    const s = capSource(a);
+    const list = bySource.get(s);
+    if (list) list.push(a);
+    else bySource.set(s, [a]);
+  }
+  const capParty = capPartyKeyer(assertionById.values());
+  const capKeys: PartyKeys = { recordOf: capSource, partyOf: capParty, twoParty: (a) => isTwoParty(a?.fact_type) };
+  const absent = (a: any) => recordBasisOf(a) === "absent";
+  const live = (Array.isArray(research?.person_evidence) ? research.person_evidence : []).filter(
+    (e: any) => e && !e.superseded_by && typeof e.assertion_id === "string" && typeof e.person_id === "string",
+  ) as any[];
+  const liveLinks: PersonLink[] = live.map((e) => ({ assertion_id: e.assertion_id, person_id: e.person_id }));
+  const judged = live.filter(
+    (e) =>
+      e.person_id === personId &&
+      typeof e.id === "string" &&
+      isStrongConfidence(e.confidence) &&
+      assertionById.has(e.assertion_id) &&
+      !absent(assertionById.get(e.assertion_id)),
+  );
+  const relatives = relativesById(tree, personId);
+  const voucherPairs = opts.voucherPairs ?? new Set(judged.map(pairingKey));
+  const fieldKeys = (a: any) => new Set(capFields(a).map((f) => `${f.field}\u0000${f.value}`));
+  const linkFields = new Map<string, Set<string>>(
+    judged.map((m) => [m.id, fieldKeys(assertionById.get(m.assertion_id))]),
+  );
+
+  // Each record party's role and name, for the role check and the co-resident
+  // exclusion.
+  const partyRole = new Map<string, string>();
+  const partyName = new Map<string, { key: string; shown: string }>();
+  for (const x of assertionById.values()) {
+    const party = capParty(x);
+    if (typeof x.record_role === "string" && !partyRole.has(party)) partyRole.set(party, x.record_role.toLowerCase());
+    if (String(x.fact_type ?? "").toLowerCase() === "name" && !partyName.has(party)) {
+      const key = nameKey(x.value);
+      if (key) partyName.set(party, { key, shown: String(x.value) });
+    }
+  }
+  /** The name of another party of `source` that `party` shares, or null. */
+  const sameNamed = (source: unknown, party: string): string | null => {
+    const own = partyName.get(party);
+    if (!own) return null;
+    for (const b of bySource.get(source) ?? []) {
+      const other = partyName.get(capParty(b));
+      if (capParty(b) !== party && other?.key === own.key) return other.shown;
+    }
+    return null;
+  };
+  /** Why the record says the co-party is not Q's `relation` to P, or null. A
+   *  two-party assertion linked to the party it names is not checked. */
+  const roleProblem = (al: any, l: any, source: unknown, speaking: ReadonlySet<string>, relation: NamesakeRelation): string | null => {
+    if (isTwoParty(al.fact_type) && !ownPartyLinkedTo(al, l, source, assertionById, liveLinks, capKeys)) return null;
+    const party = capParty(al);
+    const listed = HOUSEHOLD_RELATION.get(String(al.record_role ?? "").toLowerCase().replace(/_\d+$/, ""));
+    for (const sp of speaking) {
+      if (HOUSEHOLD_HEADS.has(partyRole.get(sp) ?? "") && listed && listed !== relation) {
+        return `'${personId}''s party heads the household and the record lists that party as its '${al.record_role}'`;
+      }
+    }
+    const stated = new Set<string>();
+    for (const st of bySource.get(source) ?? []) {
+      if (String(st.fact_type ?? "").toLowerCase() !== "relationship") continue;
+      const type = relationshipCategory(st.structured_value?.relationship_type);
+      if (!type || type !== subjectRoleInValue(String(st.value ?? ""))) continue;
+      const related = String(st.structured_value?.related_person_role ?? "").toLowerCase();
+      for (const sp of speaking) {
+        if (capParty(st) === party && related === partyRole.get(sp)) stated.add(type);
+        else if (capParty(st) === sp && related === partyRole.get(party)) stated.add(INVERSE_RELATION.get(type) ?? type);
+      }
+    }
+    if (stated.size > 0 && !stated.has(relation)) {
+      return `the record states that party is '${[...stated].sort()[0]}' of '${personId}''s party`;
+    }
+    return null;
+  };
+
+  interface Pending {
+    e: any;
+    source: unknown;
+    tieA: NamesakeTie[];
+    reasons: string[];
+    fields: Array<{ field: CapField; value: string; vouchers: string[]; excluded: string[]; sameCall: boolean; sameNamed: string | null }>;
+    blocked: Set<NamesakeBlock>;
+  }
+  const pending: Pending[] = [];
+  for (const e of judged) {
+    const a = assertionById.get(e.assertion_id);
+    const source = capSource(a);
+    // The record parties this link speaks for: its own, unless its assertion
+    // names a second person and nothing else of that party is linked to this
+    // person; then the parties of this source whose own assertions are.
+    let speakers = new Set<string>([capParty(a)]);
+    if (isTwoParty(a.fact_type) && !ownPartyLinkedTo(a, e, source, assertionById, liveLinks, capKeys)) {
+      speakers = new Set();
+      for (const l of liveLinks) {
+        if (l.person_id !== personId) continue;
+        const x = assertionById.get(l.assertion_id);
+        if (x && !isTwoParty(x.fact_type) && capSource(x) === source) speakers.add(capParty(x));
+      }
+    }
+    const speaking = speakers.size > 0 ? speakers : new Set([capParty(a)]);
+
+    // Tie (a).
+    const ties: NamesakeTie[] = [];
+    const reasons: string[] = [];
+    const blocked = new Set<NamesakeBlock>();
+    let strongCoParty = false;
+    for (const l of live) {
+      if (l.person_id === personId) continue;
+      const al = assertionById.get(l.assertion_id);
+      if (!al || absent(al) || capSource(al) !== source || speakers.has(capParty(al))) continue;
+      const rel = relatives.get(l.person_id);
+      const who = `'${l.id}' links another party ('${al.record_role ?? "unknown role"}') to '${l.person_id}'`;
+      if (!isStrongConfidence(l.confidence)) {
+        if (rel) reasons.push(`${who}, '${personId}''s ${rel.relation}, only at '${l.confidence}'.`);
+        continue;
+      }
+      strongCoParty = true;
+      if (!rel) {
+        reasons.push(`${who}, who is not a spouse, parent or child of '${personId}' in the tree.`);
+      } else if (mintedFromThisSource(l.person_id, String(source), research, tree, opts.startingPersonIds)) {
+        reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' was created from this source alone.`);
+      } else {
+        const named = givenNameProblem(rel.person, tree);
+        const role = named ? null : roleProblem(al, l, source, speaking, rel.relation);
+        if (named) {
+          reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' ${named}.`);
+        } else if (role) {
+          reasons.push(`${who}, '${personId}''s ${rel.relation}, but ${role}.`);
+          blocked.add("role");
+        } else {
+          const crossRecord = arkToBareId(String(al.record_id ?? "")) !== arkToBareId(String(a.record_id ?? ""));
+          ties.push({ kind: "a", link: String(l.id), relative: l.person_id, relation: rel.relation, crossRecord });
+        }
+      }
+    }
+    if (!strongCoParty) {
+      reasons.unshift("No other party of this source is linked at 'probable' or better to anyone else in the tree.");
+    }
+
+    // Tie (b) candidates: a party the link speaks for has an occupation or
+    // street address on the source equal to one on another source's link to
+    // this person that was already standing. Neither record may list a second
+    // party of the same name, which the match could not tell apart.
+    const keys = new Map<string, { field: CapField; value: string; party: string }>();
+    for (const b of bySource.get(source) ?? []) {
+      if (!speaking.has(capParty(b)) || absent(b)) continue;
+      for (const k of capFields(b)) keys.set(`${k.field}\u0000${k.value}`, { ...k, party: capParty(b) });
+    }
+    const fields: Pending["fields"] = [];
+    for (const [key, k] of keys) {
+      const here = sameNamed(source, k.party);
+      const vouchers: string[] = [];
+      const excluded: string[] = [];
+      let shown: string | null = null;
+      let sameCall = false;
+      for (const m of judged) {
+        if (m.id === e.id || !linkFields.get(m.id)!.has(key)) continue;
+        const am = assertionById.get(m.assertion_id);
+        if (capSource(am) === source) continue;
+        if (!voucherPairs.has(pairingKey(m))) {
+          sameCall = true;
+          continue;
+        }
+        const theirs = here ?? sameNamed(capSource(am), capParty(am));
+        if (theirs) {
+          excluded.push(String(m.id));
+          shown ??= theirs;
+        } else {
+          vouchers.push(String(m.id));
+        }
+      }
+      fields.push({ field: k.field, value: k.value, vouchers, excluded, sameCall, sameNamed: shown });
+    }
+    pending.push({ e, source, tieA: ties, reasons, fields, blocked });
+  }
+
+  // Grounding: a voucher counts only when it is itself allowed, so the allowed
+  // set grows from the links tie (a) holds, through grounded vouchers, until
+  // nothing changes.
+  const allowedIds = new Set(pending.filter((j) => j.tieA.length > 0).map((j) => String(j.e.id)));
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const j of pending) {
+      if (allowedIds.has(String(j.e.id)) || !j.fields.some((f) => f.vouchers.some((v) => allowedIds.has(v)))) continue;
+      allowedIds.add(String(j.e.id));
+      grew = true;
+    }
+  }
+
+  const verdicts = new Map<string, NamesakeVerdict>();
+  for (const j of pending) {
+    if (opts.only && !opts.only.has(j.e.id)) continue;
+    const ties: NamesakeTie[] = [...j.tieA];
+    const reasons = [...j.reasons];
+    for (const f of j.fields) {
+      const grounded = f.vouchers.filter((v) => allowedIds.has(v));
+      for (const v of grounded) ties.push({ kind: "b", voucher: v, field: f.field, value: f.value });
+      if (grounded.length > 0) continue;
+      const head =
+        `The ${f.field} '${f.value}' on this source matches no record linked to '${personId}' at ` +
+        `'probable' or better before this call that is itself tied`;
+      if (f.excluded.length > 0) {
+        reasons.push(`${head} (its record lists another '${f.sameNamed}', so the match cannot tell them apart).`);
+        if (f.excluded.some((v) => allowedIds.has(v))) j.blocked.add("co-resident");
+      } else if (f.vouchers.length > 0) {
+        reasons.push(`${head} (its voucher '${f.vouchers[0]}' is not tied).`);
+        j.blocked.add("grounding");
+      } else {
+        reasons.push(head + (f.sameCall ? " (a link cannot vouch in the call that writes it)." : "."));
+      }
+    }
+    const allowed = ties.length > 0;
+    verdicts.set(j.e.id, {
+      allowed,
+      ties,
+      source: String(j.source),
+      reasons: allowed ? [] : reasons,
+      blockedBy: allowed ? [] : [...j.blocked].sort(),
+    });
+  }
+  return { rows, verdicts };
+}
+
+/** The reason clauses of a refused verdict, without the refusal's routing. */
+export function namesakeReasonText(verdict: NamesakeVerdict): string {
+  return verdict.reasons.join(" ");
+}
+
+function namesakeRowsText(rows: any[], addedInCall: ReadonlySet<string>): string {
+  const describe = (r: any) =>
+    [r.name, r.place, r.time_period].filter((s) => typeof s === "string" && s.trim() !== "").join(", ");
+  const parts = rows.filter((r) => !addedInCall.has(r.id)).map((r) => `${r.id}: ${describe(r)}`);
+  const fresh = rows.filter((r) => addedInCall.has(r.id)).map(describe);
+  if (fresh.length > 0) parts.push(`added in this call: ${fresh.join("; ")}`);
+  return parts.join("; ");
+}
+
+function namesakeRefusal(
+  entry: any,
+  rows: any[],
+  verdict: NamesakeVerdict,
+  addedInCall: ReadonlySet<string>,
+): string {
+  const p = entry.person_id;
+  return (
+    `confidence '${entry.confidence}' is not available on link '${entry.id}' to '${p}': namesake(s) of ` +
+    `'${p}' are recorded (${namesakeRowsText(rows, addedInCall)}), and nothing in source ` +
+    `'${verdict.source}' ties assertion '${entry.assertion_id}' to '${p}'. ${namesakeReasonText(verdict)} ` +
+    `A recorded namesake caps this link at 'speculative' whatever the match score. Write it as ` +
+    `'speculative' naming the namesake in the rationale; or, if the record belongs to '${p}', first link ` +
+    `what ties it: another party of this source to a spouse, parent or child of '${p}' (in this call or ` +
+    `earlier), or, in an earlier call, a record with the same street address or occupation that is itself ` +
+    `tied to '${p}'.`
+  );
+}
+
+/** The cap on one person_evidence entry, judged statically on `research` as it
+ *  stands: `[]` when the entry is allowed or not judged, one refusal otherwise.
+ *  The guard-case replay binds this; a write is judged by `namesakeCallCheck`. */
+export function namesakeTieInvariants(
+  entry: any,
+  research: any,
+  tree?: any,
+  startingPersonIds?: ReadonlySet<string>,
+): string[] {
+  if (!entry || typeof entry.person_id !== "string") return [];
+  const v = namesakeVerdicts(entry.person_id, research, tree, { startingPersonIds });
+  const verdict = v?.verdicts.get(entry.id);
+  if (!v || !verdict || verdict.allowed) return [];
+  return [namesakeRefusal(entry, v.rows, verdict, new Set())];
+}
+
+/** The links one research_append call ASSERTS to a person with a namesake row
+ *  after the call, each with the cap's verdict: a link live and probable or
+ *  confident after the call whose pairing was not before, or whose confidence
+ *  is above that pairing's strongest live link before the call (an append, a
+ *  re-point, an un-supersede, a raise). Only those links are judged. Vouchers are the
+ *  pairings live and probable or better both before and after the call, so a
+ *  link cannot vouch in the call that writes it. Links the call did not assert
+ *  are not returned. */
+export function assertedNamesakeVerdicts(
+  before: { research: any },
+  after: { research: any; tree: any },
+  startingPersonIds?: ReadonlySet<string>,
+): Array<{ entry: any; rows: any[]; verdict: NamesakeVerdict }> {
+  const rows = Array.isArray(after.research?.namesakes) ? after.research.namesakes : [];
+  if (rows.length === 0) return [];
+  const holders = new Set(rows.map((r: any) => r?.person_id).filter((p: unknown) => typeof p === "string"));
+  // The strongest live entry of each pairing before the call, so a weaker
+  // duplicate of a standing link never makes it read as raised.
+  const strongBefore = new Map<string, any>();
+  for (const e of (Array.isArray(before.research?.person_evidence) ? before.research.person_evidence : []) as any[]) {
+    if (!isLiveStrong(e)) continue;
+    const prev = strongBefore.get(pairingKey(e));
+    if (!prev || CONFIDENCE_RANK[e.confidence] > CONFIDENCE_RANK[prev.confidence]) strongBefore.set(pairingKey(e), e);
+  }
+  const assertedBy = new Map<string, Set<string>>();
+  for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
+    if (!isLiveStrong(e)) continue;
+    if (!holders.has(e.person_id) || typeof e.id !== "string") continue;
+    const prev = strongBefore.get(pairingKey(e));
+    if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
+    const ids = assertedBy.get(e.person_id);
+    if (ids) ids.add(e.id);
+    else assertedBy.set(e.person_id, new Set([e.id]));
+  }
+  if (assertedBy.size === 0) return [];
+  const voucherPairs = vouchingPairs(before, after);
+  const entryById = new Map<string, any>();
+  for (const e of (after.research.person_evidence ?? []) as any[]) if (e && typeof e.id === "string") entryById.set(e.id, e);
+
+  const out: Array<{ entry: any; rows: any[]; verdict: NamesakeVerdict }> = [];
+  for (const p of [...assertedBy.keys()].sort()) {
+    const v = namesakeVerdicts(p, after.research, after.tree, { startingPersonIds, voucherPairs, only: assertedBy.get(p) });
+    if (!v) continue;
+    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, verdict });
+  }
+  return out;
+}
+
+/** The pairings live and probable or better both before and after a call:
+ *  the links that may vouch in it, so a link cannot vouch in the call that
+ *  writes it. */
+function vouchingPairs(before: { research: any }, after: { research: any }): Set<string> {
+  const strong = (research: any) =>
+    new Set(
+      ((Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[])
+        .filter(isLiveStrong)
+        .map(pairingKey),
+    );
+  const was = strong(before.research);
+  return new Set([...strong(after.research)].filter((k) => was.has(k)));
+}
+
+/** Where a tree fact's evidence comes from, read as the namesake cap reads
+ *  parties: its `assertion_id`'s source and party when that resolves, else
+ *  every research source its refs reach, any party (`party: null`). */
+export function factEvidenceParties(
+  fact: any,
+  research: any,
+  partyOf: (a: any) => string = capPartyKeyer(Array.isArray(research?.assertions) ? research.assertions : []),
+  assertionOf: (id: string) => any = (id) =>
+    ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).find((x) => x?.id === id),
+): Array<{ source: unknown; party: string | null }> {
+  const a = typeof fact?.assertion_id === "string" ? assertionOf(fact.assertion_id) : undefined;
+  if (a) return [{ source: capSource(a), party: partyOf(a) }];
+  return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
+}
+
+/** What the namesake warning lists for one person. */
+export interface NamesakeRowListing {
+  personId: string;
+  /** The rows the call wrote for them. */
+  rows: any[];
+  /** The live probable or confident links to them the cap refuses. */
+  refused: any[];
+  /** The facts on them whose party holds a refused link and no allowed one. */
+  facts: any[];
+  /** Their names citing a refused link's source. */
+  names: any[];
+}
+
+/** For each person whose row the call appended or updated: the live probable
+ *  or confident links to them the cap refuses, judged as the call's own links
+ *  are (vouchers are the pairings strong before and after the call), and the
+ *  facts and names those links' parties carry onto them. A refused link the
+ *  call asserted already fails the call, so a call that succeeds lists only
+ *  links that stood before it. */
+export function namesakeRowListings(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string }>,
+  startingPersonIds?: ReadonlySet<string>,
+): NamesakeRowListing[] {
+  const written = new Set(applied.filter((a) => a.section === "namesakes").map((a) => a.entryId));
+  if (written.size === 0) return [];
+  const rows = (Array.isArray(after.research?.namesakes) ? after.research.namesakes : []) as any[];
+  const holders = [
+    ...new Set(
+      rows.filter((r) => r && written.has(r.id) && typeof r.person_id === "string").map((r) => r.person_id as string),
+    ),
+  ].sort();
+  const voucherPairs = vouchingPairs(before, after);
+  const assertions = (Array.isArray(after.research?.assertions) ? after.research.assertions : []) as any[];
+  const assertionById = new Map<string, any>(
+    assertions.filter((a) => a && typeof a.id === "string").map((a) => [a.id, a]),
+  );
+  const partyOf = capPartyKeyer(assertions);
+  const entries = (
+    (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]
+  ).filter((e) => e && typeof e.id === "string");
+  const sourceOf = (e: any) => capSource(assertionById.get(e.assertion_id));
+  const partyKey = (source: unknown, party: string) => `${String(source)}\u0000${party}`;
+  const partyKeyOf = (e: any) => {
+    const a = assertionById.get(e.assertion_id);
+    return a ? partyKey(capSource(a), partyOf(a)) : null;
+  };
+  const out: NamesakeRowListing[] = [];
+  for (const p of holders) {
+    const v = namesakeVerdicts(p, after.research, after.tree, { startingPersonIds, voucherPairs });
+    if (!v) continue;
+    const refused = entries.filter((e) => v.verdicts.get(e.id)?.allowed === false);
+    if (refused.length === 0) continue;
+    const allowed = entries.filter((e) => v.verdicts.get(e.id)?.allowed === true);
+    const refusedParties = new Set(refused.map(partyKeyOf));
+    const allowedParties = new Set(allowed.map(partyKeyOf));
+    const refusedSources = new Set(refused.map(sourceOf));
+    const allowedSources = new Set(allowed.map(sourceOf));
+    const person = ((after.tree?.persons ?? []) as any[]).find((x) => x?.id === p);
+    const facts = ((person?.facts ?? []) as any[]).filter((f) =>
+      factEvidenceParties(f, after.research, partyOf, (id) => assertionById.get(id)).some(({ source, party }) =>
+        party === null
+          ? refusedSources.has(source) && !allowedSources.has(source)
+          : refusedParties.has(partyKey(source, party)) && !allowedParties.has(partyKey(source, party)),
+      ),
+    );
+    const names = ((person?.names ?? []) as any[]).filter((n) =>
+      [...refsReach(sourceRefsOf(n), after.research).sourceIds].some((s) => refusedSources.has(s)),
+    );
+    out.push({ personId: p, rows: rows.filter((r) => r && r.person_id === p && written.has(r.id)), refused, facts, names });
+  }
+  return out;
+}
+
+function sourceRefsOf(x: any): string[] {
+  return ((Array.isArray(x?.sources) ? x.sources : []) as any[])
+    .map((s) => s?.ref)
+    .filter((r): r is string => typeof r === "string" && r !== "");
+}
+
+/** The namesake warning (spec §5.6): `namesakeRowListings`, one warning per
+ *  person. The row is written either way. */
+export function namesakeRowWarnings(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string }>,
+  startingPersonIds?: ReadonlySet<string>,
+): string[] {
+  const assertionById = new Map<string, any>(
+    ((Array.isArray(after.research?.assertions) ? after.research.assertions : []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  return namesakeRowListings(before, after, applied, startingPersonIds).map(({ personId: p, rows, refused, facts, names }) => {
+    const rowText = rows
+      .map((r) => {
+        const about = [r.name, r.place, r.time_period].filter((x) => typeof x === "string" && x !== "");
+        return about.length > 0 ? `'${r.id}' (${about.join(", ")})` : `'${r.id}'`;
+      })
+      .join(", ");
+    const linkText = refused
+      .map((e) => {
+        const a = assertionById.get(e.assertion_id);
+        return `'${e.id}' (assertion '${e.assertion_id}' on source '${String(capSource(a))}', ${String(a?.fact_type ?? "")})`;
+      })
+      .join(", ");
+    const factText =
+      facts.length === 0
+        ? ""
+        : ` ${facts.length} fact(s) on '${p}' were copied through them: ` +
+          facts
+            .map((f) => {
+              const refs = sourceRefsOf(f);
+              return `'${f.id}' ${String(f.type ?? "")}${refs.length > 0 ? ` (cites ${refs.join(", ")})` : ""}`;
+            })
+            .join(", ") +
+          ".";
+    const nameText =
+      names.length === 0
+        ? ""
+        : ` ${names.length} name(s) on '${p}' also cite those records and stay, since no tool removes a name.`;
+    return (
+      `namesake ${rowText} recorded for '${p}': ${refused.length} probable or confident link(s) to '${p}' ` +
+      `stand with nothing in their record tying them to '${p}': ${linkText}.${factText}${nameText} The row is recorded ` +
+      `and these stay as they are, but materialize_facts will not copy any further fact onto '${p}' through ` +
+      "these links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+      "namesake." +
+      (facts.length === 0
+        ? ""
+        : ` Remove a listed fact that belongs to the namesake with tree_correct (operation 'remove', its ` +
+          `factId and personId '${p}').`)
+    );
+  });
+}
+
+/** The namesake cap on one research_append call, judged on its end state: one
+ *  finding per asserted link the cap refuses (`assertedNamesakeVerdicts`),
+ *  keyed to the last op that wrote it. */
+export function namesakeCallCheck(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string }>,
+  startingPersonIds?: ReadonlySet<string>,
+): Array<{ index: number | null; message: string }> {
+  const rowIdsBefore = new Set(
+    (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []).map((r: any) => r?.id),
+  );
+  const addedInCall = new Set<string>(
+    (Array.isArray(after.research?.namesakes) ? after.research.namesakes : [])
+      .map((r: any) => r?.id)
+      .filter((id: unknown) => !rowIdsBefore.has(id)),
+  );
+  const findings: Array<{ index: number | null; message: string }> = [];
+  for (const { entry, rows, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds)) {
+    if (verdict.allowed) continue;
+    let index: number | null = null;
+    for (let i = applied.length - 1; i >= 0; i--) {
+      if (applied[i].section === "person_evidence" && applied[i].entryId === entry.id) {
+        index = i;
+        break;
+      }
+    }
+    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall) });
+  }
+  return findings;
+}
+
+// ─── The namesake checks on a merge (issue #3363) ───────────────────────────
+//
+// A merge moves the links of one person onto another. When either carries a
+// namesake row, each moved link must pass the cap as a link to the row holder
+// (part 1), and nothing may come across from a record whose links to the pair
+// all fail it (part 3). Both read the project as it stood before the merge,
+// keyed on whoever holds the row, so the order a pair is written in cannot
+// skip them. Pure and synchronous: merge_tree_persons calls them, never
+// researchAppend.
+
+/** One direction of one merge pair: `T` holds a namesake row, and the merge
+ *  would move the links of `G`, the other member, onto it. */
+export interface MergeDirection {
+  survivor: string;
+  folded: string;
+  T: string;
+  G: string;
+  rows: any[];
+  /** The cap's verdict on each of G's live probable or confident links,
+   *  judged as a link to T on the project before the merge. */
+  moved: Map<string, NamesakeVerdict>;
+  /** The same for T's own live probable or confident links, on the same
+   *  projection, so part 3 reads T's links as part 1 does. */
+  own: Map<string, NamesakeVerdict>;
+}
+
+function namesakeRowsOf(research: any, personId: string): any[] {
+  return (Array.isArray(research?.namesakes) ? research.namesakes : []).filter(
+    (r: any) => r && r.person_id === personId,
+  );
+}
+
+/** Every direction of every pair in which a member holds a row, with G's links
+ *  judged on T: G's links point at T, and only T's own links from before the
+ *  merge can vouch. A spouse, parent or child of T whom this call merges with
+ *  someone is judged as the person the merge makes, the way it will stand after
+ *  the merge: the survivor's id, both copies' names and refs, and each copy's
+ *  links pointed at it. */
+export function mergeDirections(
+  before: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): MergeDirection[] {
+  if (!Array.isArray(before.research?.namesakes) || before.research.namesakes.length === 0) return [];
+  const survivorOf = new Map<string, string>();
+  for (const [s, c] of merges) survivorOf.set(c, s);
+  const group = (id: string) => survivorOf.get(id) ?? id;
+  const evidence = (Array.isArray(before.research?.person_evidence) ? before.research.person_evidence : []) as any[];
+  const out: MergeDirection[] = [];
+  for (const [s, c] of merges) {
+    for (const [T, G] of [[s, c], [c, s]] as const) {
+      const rows = namesakeRowsOf(before.research, T);
+      if (rows.length === 0) continue;
+      // Each member of a merge group holding one of T's relatives, keyed to the
+      // group's survivor.
+      const merged = new Map<string, string>();
+      for (const r of relativesById(before.tree, T).keys()) {
+        const g = group(r);
+        if (r === s || r === c || g === T || g === G) continue;
+        const members = [g, ...[...survivorOf].filter(([, sv]) => sv === g).map(([m]) => m)];
+        if (members.length < 2) continue;
+        for (const m of members) merged.set(m, g);
+      }
+      const tree = merged.size === 0 ? before.tree : mergedPersonsTree(before.tree, merged);
+      const projected = {
+        ...before.research,
+        person_evidence: evidence.map((e) => {
+          if (!e || e.superseded_by || typeof e.person_id !== "string") return e;
+          if (e.person_id === G) return { ...e, person_id: T };
+          const g = merged.get(e.person_id);
+          return g === undefined || g === e.person_id ? e : { ...e, person_id: g };
+        }),
+      };
+      const voucherPairs = new Set(evidence.filter((e) => isLiveStrong(e) && e.person_id === T).map(pairingKey));
+      const v = namesakeVerdicts(T, projected, tree, { startingPersonIds, voucherPairs });
+      const moved = new Map<string, NamesakeVerdict>();
+      const own = new Map<string, NamesakeVerdict>();
+      for (const e of evidence) {
+        const verdict = e && !e.superseded_by ? v?.verdicts.get(e.id) : undefined;
+        if (!verdict) continue;
+        if (e.person_id === G) moved.set(e.id, verdict);
+        else if (e.person_id === T) own.set(e.id, verdict);
+      }
+      out.push({ survivor: s, folded: c, T, G, rows, moved, own });
+    }
+  }
+  return out;
+}
+
+/** The tree with each merge group in `merged` (member id to survivor id) made
+ *  one person under the survivor's id, holding every member's names, facts and
+ *  person-level sources, with every relationship pointed at it. */
+function mergedPersonsTree(tree: any, merged: ReadonlyMap<string, string>): any {
+  const persons = (Array.isArray(tree?.persons) ? tree.persons : []) as any[];
+  const members = new Map<string, any[]>();
+  for (const p of persons) {
+    const g = typeof p?.id === "string" ? merged.get(p.id) : undefined;
+    if (g === undefined) continue;
+    const list = members.get(g) ?? [];
+    if (p.id === g) list.unshift(p);
+    else list.push(p);
+    members.set(g, list);
+  }
+  const all = (list: any[], field: string) => list.flatMap((m) => (Array.isArray(m?.[field]) ? m[field] : []));
+  const outPersons: any[] = [];
+  for (const p of persons) {
+    const g = typeof p?.id === "string" ? merged.get(p.id) : undefined;
+    if (g === undefined) outPersons.push(p);
+    else if (p.id === g) {
+      const list = members.get(g) ?? [p];
+      outPersons.push({ ...p, names: all(list, "names"), facts: all(list, "facts"), sources: all(list, "sources") });
+    }
+  }
+  const map = (id: unknown) => (typeof id === "string" ? (merged.get(id) ?? id) : id);
+  const relationships = ((Array.isArray(tree?.relationships) ? tree.relationships : []) as any[]).map((r) =>
+    r
+      ? {
+          ...r,
+          ...(r.parent !== undefined ? { parent: map(r.parent) } : {}),
+          ...(r.child !== undefined ? { child: map(r.child) } : {}),
+          ...(r.person1 !== undefined ? { person1: map(r.person1) } : {}),
+          ...(r.person2 !== undefined ? { person2: map(r.person2) } : {}),
+        }
+      : r,
+  );
+  return { ...tree, persons: outPersons, relationships };
+}
+
+const MERGE_LINK_ROUTING =
+  "Nothing was written. Each person_evidence link listed above would stand under a recorded namesake with " +
+  "nothing in its record tying it to that person as the tree stood before this merge. To merge, tie each " +
+  "listed record to the row holder: if it names a spouse, parent or child whom the tree holds twice, once for " +
+  "each person in the pair, add that duplicate pair to this same merge; if it names a spouse, parent or child " +
+  "of the row holder not yet recorded as such, record that relationship first (tree_edit add_relationship), " +
+  "then merge again. A link not marked 'do not lower it' may instead be lowered to 'speculative' by " +
+  "person-evidence, naming the namesake; the facts and relationships listed from that record must then come " +
+  "off the other person too. If the record is the namesake's, do not merge.";
+
+/** Part 1: each probable or confident link the merge would move onto a person
+ *  with a namesake row must pass the cap as that person's link. One line per
+ *  refused link, then the routing; `[]` when nothing is refused. A link tied on
+ *  its own person (made from that record, or tied by that person's own
+ *  relatives or earlier links) is marked "do not lower it": lowering it would
+ *  give up a correct link to make the merge pass. */
+export function mergeNamesakeRefusals(
+  before: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): string[] {
+  const entryById = new Map<string, any>();
+  for (const e of (before.research?.person_evidence ?? []) as any[]) if (e && typeof e.id === "string") entryById.set(e.id, e);
+  const lines: string[] = [];
+  for (const d of mergeDirections(before, merges, startingPersonIds)) {
+    let onG: NamesakeVerdicts | null | undefined;
+    for (const [id, verdict] of d.moved) {
+      if (verdict.allowed) continue;
+      const e = entryById.get(id);
+      let mark = "";
+      if (mintedFromThisSource(d.G, verdict.source, before.research, before.tree, startingPersonIds)) {
+        mark = ` Do not lower it: '${d.G}' was created from this record.`;
+      } else {
+        onG ??= namesakeVerdicts(
+          d.G,
+          { ...before.research, namesakes: d.rows.map((r) => ({ ...r, person_id: d.G })) },
+          before.tree,
+          { startingPersonIds },
+        );
+        if (onG?.verdicts.get(id)?.allowed) {
+          mark =
+            ` Do not lower it: on '${d.G}' it is tied by '${d.G}''s own relatives or earlier links, which ` +
+            `'${d.T}' does not share in the tree.`;
+        }
+      }
+      const rows = d.rows.map((r) => `'${r.id}'`).join(", ");
+      lines.push(
+        `person_evidence '${id}' on '${d.G}' would stand under the namesake row${d.rows.length > 1 ? "s" : ""} ` +
+          `${rows} of '${d.T}' after this merge: nothing in source '${verdict.source}' ties assertion ` +
+          `'${e.assertion_id}' to '${d.T}'. ${namesakeReasonText(verdict)}${mark}`,
+      );
+    }
+  }
+  return lines.length > 0 ? [...lines, MERGE_LINK_ROUTING] : [];
+}
+
+/** Something the merge carries from G onto T, and the refs to judge it on. */
+interface CarriedItem {
+  label: string;
+  folded: boolean;
+  refs: string[];
+}
+
+function bareRefsOf(x: any): string[] {
+  const out: string[] = [];
+  for (const r of (Array.isArray(x?.sources) ? x.sources : []) as any[]) {
+    if (typeof r?.ref === "string" && r.ref !== "") out.push(r.ref.startsWith("#") ? r.ref.slice(1) : r.ref);
+  }
+  return out;
+}
+
+/** The merge's own equivalence classes: each item joins the first class with a
+ *  member it is equivalent to, in list order (mergeNames, mergeFacts). */
+function mergeClasses<X>(items: X[], equivalent: (a: X, b: X) => boolean): X[][] {
+  const classes: X[][] = [];
+  for (const item of items) {
+    const cls = classes.find((c) => c.some((m) => equivalent(m, item)));
+    if (cls) cls.push(item);
+    else classes.push([item]);
+  }
+  return classes;
+}
+
+/** G's names, facts, person-level refs and relationships as the merge would
+ *  carry them onto T. An item that folds into one of T's is judged only on the
+ *  refs it adds, and is left out when it adds none. A person-level ref T
+ *  already holds adds nothing. The relationship joining G and T is part 2's. */
+function carriedItems(tree: any, d: MergeDirection, survivorOf: ReadonlyMap<string, string>): CarriedItem[] {
+  const persons = new Map<string, any>();
+  for (const p of (Array.isArray(tree?.persons) ? tree.persons : []) as any[]) if (p && typeof p.id === "string") persons.set(p.id, p);
+  const survivor = persons.get(d.survivor);
+  const folded = persons.get(d.folded);
+  const g = persons.get(d.G);
+  const items: CarriedItem[] = [];
+  const unique = (refs: string[]) => [...new Set(refs)];
+
+  const judgeLists = <X>(field: "names" | "facts", equivalent: (a: X, b: X) => boolean, label: (x: X) => string) => {
+    const fromG = new Set<X>((g?.[field] ?? []) as X[]);
+    const classes = mergeClasses<X>([...((survivor?.[field] ?? []) as X[]), ...((folded?.[field] ?? []) as X[])], equivalent);
+    for (const cls of classes) {
+      const fromT = cls.filter((x) => !fromG.has(x));
+      const held = new Set(fromT.flatMap(bareRefsOf));
+      for (const x of cls) {
+        if (!fromG.has(x)) continue;
+        const refs = unique(bareRefsOf(x).filter((r) => fromT.length === 0 || !held.has(r)));
+        if (refs.length === 0) continue;
+        items.push({ label: label(x), folded: fromT.length > 0, refs });
+      }
+    }
+  };
+  judgeLists<any>("names", namesEquivalent, (n) => `name '${[n?.given, n?.surname].filter(Boolean).join(" ")}'`);
+  judgeLists<any>("facts", factsEquivalent, (f) => `fact '${f?.id}' (${f?.type})`);
+
+  const tHolds = new Set(bareRefsOf(persons.get(d.T)));
+  for (const r of unique(bareRefsOf(g))) {
+    if (!tHolds.has(r)) items.push({ label: `source ref '${r}'`, folded: false, refs: [r] });
+  }
+
+  const merged = (id: unknown) => (typeof id === "string" ? (survivorOf.get(id) ?? id) : id);
+  const remap = (r: any) => ({
+    ...r,
+    ...(r.parent !== undefined ? { parent: merged(r.parent) } : {}),
+    ...(r.child !== undefined ? { child: merged(r.child) } : {}),
+    ...(r.person1 !== undefined ? { person1: merged(r.person1) } : {}),
+    ...(r.person2 !== undefined ? { person2: merged(r.person2) } : {}),
+  });
+  const touches = (r: any, id: string) => r.parent === id || r.child === id || r.person1 === id || r.person2 === id;
+  const relRefs = (r: any) => [...bareRefsOf(r), ...((Array.isArray(r?.facts) ? r.facts : []) as any[]).flatMap(bareRefsOf)];
+  const rels = (Array.isArray(tree?.relationships) ? tree.relationships : []) as any[];
+  for (const r of rels) {
+    if (!r || !touches(r, d.G) || touches(r, d.T)) continue;
+    const mapped = remap(r);
+    const fromT = rels.filter((x) => x && x !== r && touches(x, d.T) && !touches(x, d.G) && relationshipMatches(remap(x), mapped));
+    const held = new Set(fromT.flatMap(relRefs));
+    const refs = unique(relRefs(r).filter((x) => fromT.length === 0 || !held.has(x)));
+    if (refs.length === 0) continue;
+    const other = [r.parent, r.child, r.person1, r.person2].find((id) => id !== undefined && id !== d.G);
+    items.push({ label: `relationship '${r.id}' (${r.type} with '${other}')`, folded: fromT.length > 0, refs });
+  }
+  return items;
+}
+
+/** Part 3's trigger for one direction: each research source that some link of
+ *  G or T comes from, at any confidence, live or withdrawn, and whose live
+ *  probable or confident links to them are all refused (both judged as part 1
+ *  judges them, in `d`), with the reason for each link. A link from an
+ *  absent-basis assertion is ignored both ways, and a source with no link to
+ *  either never triggers, which covers a relative's records. */
+export function carryTriggerSources(
+  before: { research: any; tree: any },
+  d: MergeDirection,
+): Map<string, string[]> {
+  const assertionById = new Map<string, any>();
+  for (const a of (before.research?.assertions ?? []) as any[]) if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  const bySource = new Map<string, any[]>();
+  for (const e of (before.research?.person_evidence ?? []) as any[]) {
+    if (!e || (e.person_id !== d.G && e.person_id !== d.T)) continue;
+    const a = assertionById.get(e.assertion_id);
+    if (!a || typeof a.source_id !== "string" || recordBasisOf(a) === "absent") continue;
+    const list = bySource.get(a.source_id);
+    if (list) list.push(e);
+    else bySource.set(a.source_id, [e]);
+  }
+  const out = new Map<string, string[]>();
+  for (const [sourceId, named] of bySource) {
+    const allowed = named.some(
+      (e) => isLiveStrong(e) && (e.person_id === d.G ? d.moved : d.own).get(e.id)?.allowed,
+    );
+    if (allowed) continue;
+    out.set(
+      sourceId,
+      named.map((e) =>
+        e.superseded_by
+          ? `'${e.id}' withdrawn`
+          : !isStrongConfidence(e.confidence)
+            ? `'${e.id}' ${e.confidence}`
+            : e.person_id === d.G
+              ? `'${e.id}' refused above`
+              : `'${e.id}' untied on '${d.T}'`,
+      ),
+    );
+  }
+  return out;
+}
+
+/** Part 3: nothing comes across onto T from a record that names G or T while
+ *  none of its probable or confident links to them passes the cap. One line
+ *  per item and source, then the routing for that pair; `[]` when nothing is
+ *  refused. Which sources trigger is `carryTriggerSources`. */
+export function mergeCarryRefusals(
+  before: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): string[] {
+  const directions = mergeDirections(before, merges, startingPersonIds);
+  if (directions.length === 0) return [];
+  const survivorOf = new Map<string, string>();
+  for (const [s, c] of merges) survivorOf.set(c, s);
+  const out: string[] = [];
+  for (const d of directions) {
+    const triggers = carryTriggerSources(before, d);
+    const lines: string[] = [];
+    for (const item of carriedItems(before.tree, d, survivorOf)) {
+      for (const ref of item.refs) {
+        for (const sourceId of refsReach([ref], before.research).sourceIds) {
+          const reasons = triggers.get(sourceId);
+          if (!reasons) continue;
+          const head = item.folded
+            ? `${item.label} on '${d.G}' would fold into '${d.T}''s and add the citation '${ref}' (research source '${sourceId}')`
+            : `${item.label} on '${d.G}' cites '${ref}' (research source '${sourceId}')`;
+          lines.push(
+            `${head}, and no probable or confident link from that record to '${d.G}' or '${d.T}' passes the ` +
+              `namesake cap (${reasons.join(", ")}). The merge would carry it onto '${d.T}', who has a recorded namesake.`,
+          );
+        }
+      }
+    }
+    if (lines.length === 0) continue;
+    out.push(
+      ...lines,
+      `Nothing was written. Remove each listed fact or relationship from '${d.G}' with tree_correct (operation ` +
+        `'remove', factId or relationshipId), then merge again; '${d.T}''s own matching fact or relationship ` +
+        `stays. Remove nothing from a record whose link above says 'do not lower it': that record is '${d.G}''s, ` +
+        `so tie it to '${d.T}' or do not merge. No tool removes a name or a person-level source, so for a listed ` +
+        `name or person-level source, or a citation a matching name would add: if the record belongs to ` +
+        `'${d.T}', have person-evidence tie a link from it to '${d.T}'; otherwise do not merge.`,
+    );
+  }
+  return out;
 }
 
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
@@ -2918,6 +4140,234 @@ export function unlinkedProofInvariants(entry: any, preCallResearch: any): strin
       `are about anyone. Run person-evidence on those assertions first (from an agent, hand back ` +
       `to the main thread and name it), then send this write again. Recording the attempt at ` +
       `'not_proved' is allowed now.`,
+  ];
+}
+
+const GRANDPARENT_ROLES = new Set(["father_of_mother", "mother_of_mother", "father_of_father", "mother_of_father"]);
+
+/** The parent side a record role names: `father`, `mother` or `parent`, read as
+ *  an underscore-delimited token because `record_role` is an open enum
+ *  (`father_of_deceased`, `mother_of_child_1`, `groom_father`, …). Grandparents,
+ *  godparents and in-laws are not the subject's parents. */
+export function parentSide(role: unknown): "father" | "mother" | "parent" | null {
+  if (typeof role !== "string") return null;
+  const r = role.toLowerCase();
+  if (GRANDPARENT_ROLES.has(r) || /grand|god|in_law/.test(r)) return null;
+  const tokens = r.split("_");
+  for (const side of ["father", "mother", "parent"] as const) {
+    if (tokens.includes(side)) return side;
+  }
+  return null;
+}
+
+/** A conclusion above `not_proved` may not rest on a parent nobody identified:
+ *  refused when a parent side the summary cites has no cited parent-role
+ *  assertion carrying a live, non-speculative `person_evidence` link
+ *  (`countsForProofGate`) in the pre-call document.
+ *
+ *  A side is cited by a parent-role assertion, or by an UNLINKED assertion whose
+ *  `structured_value.related_person_role` is a parent role ("child of William
+ *  Barker"), so dropping the parent's own assertions from the citation does not
+ *  evade it. A linked "child of" assertion cites nothing: its parent is usually
+ *  identified on another record, and counting it refused 26 legitimate e2e proofs.
+ *
+ *  Per side, not per persona: proof-conclusion's gate is satisfied per person, so
+ *  the father linked as `father_of_bride` on the marriage satisfies his unlinked
+ *  `father` persona on the baptism. A linked `parent` assertion satisfies either
+ *  side, and either side satisfies `parent`. Over the 251 committed proofs above
+ *  `not_proved` it refuses 5; one is a known false refusal (in-laws' fathers cited
+ *  as negative evidence), accepted because the rule cannot tell whose father a
+ *  role names without a tree lookup. Mined from MHGK-WT7 (#3659): `probable`
+ *  naming William Barker and Martha Edwards with every parent assertion unlinked. */
+export function unlinkedParentProofInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const byId = new Map<string, any>(
+    (Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [])
+      .filter((a: any) => typeof a?.id === "string")
+      .map((a: any) => [a.id, a]),
+  );
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...(Array.isArray(entry?.claims) ? entry.claims : []).flatMap((c: any) =>
+      Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [],
+    ),
+  ].filter((id: unknown, i: number, all: unknown[]) => typeof id === "string" && byId.has(id) && all.indexOf(id) === i);
+  const linked = new Set(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter(countsForProofGate)
+      .map((pe: any) => pe?.assertion_id),
+  );
+
+  const citing = new Map<string, string[]>();
+  const satisfied = new Set<string>();
+  for (const id of cited as string[]) {
+    const a = byId.get(id);
+    const side = parentSide(a?.record_role);
+    if (side) {
+      citing.set(side, [...(citing.get(side) ?? []), id]);
+      if (linked.has(id)) satisfied.add(side);
+    }
+    const related = a?.structured_value && typeof a.structured_value === "object"
+      ? parentSide(a.structured_value.related_person_role)
+      : null;
+    if (related && !linked.has(id)) citing.set(related, [...(citing.get(related) ?? []), id]);
+  }
+  const ok = (side: string) =>
+    satisfied.has(side) ||
+    (side === "parent" && (satisfied.has("father") || satisfied.has("mother"))) ||
+    (side !== "parent" && satisfied.has("parent"));
+  const unsatisfied = [...citing].filter(([side]) => !ok(side));
+  if (unsatisfied.length === 0) return [];
+  const detail = unsatisfied.map(([side, ids]) => `${side} (${ids.join(", ")})`).join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' cites a parent no identity ` +
+      `decision has identified — ${detail} — and none of the cited parent assertions on that side ` +
+      `is linked to a person in person_evidence, so nobody has decided who that parent is. ` +
+      `Removing these ids from supporting_assertion_ids or a claim and sending the write again ` +
+      `does NOT fix this: a conclusion that still names, relies on or encodes that parent is the ` +
+      `same unproved parentage with its evidence hidden. Do one of: (1) run person-evidence on ` +
+      `those assertions first (from an agent, hand back to the main thread and name it), then ` +
+      `send this write again with the ids still cited; (2) record the attempt at 'not_proved' ` +
+      `now; (3) only if the question does not ask who the parents are, rewrite the conclusion ` +
+      `so it no longer states or depends on who that parent is, and create no tree person or ` +
+      `ParentChild relationship for them.`,
+  ];
+}
+
+const PARENTAGE_FINDING =
+  /\b(?:(?:the\s+)?(?:son|daughter|child)\s+of|(?:his|her|their)\s+(?:father|mother|parents)\s+(?:was|were|is|are)|born\s+to)\b/gi;
+
+/** A record as the subject of a verb reporting what it says: "the index records
+ *  Jonathan, son of William". The verb alone is not enough: "the evidence shows",
+ *  "given the correlation" and "United States" open findings, not record reports. */
+const RECORD_REPORTING =
+  /\b(?:register|index|entry|record|certificate|census|transcript(?:ion)?|abstract|image|page)s?\s+(?:\w+\s+){0,2}?(?:reads?|reading|records?|recording|shows?|showing|lists?|listing|names?|naming|gives?|giving|states?|stating|describes?|describing|calls?|calling|transcribes?|transcribing)\b/i;
+
+/** Quoted record text says what a record reads, not what the proof concludes. */
+function stripQuoted(text: string): string {
+  return text
+    .replace(/"[^"\n]*"|“[^”\n]*”/g, " ")
+    .replace(/(^|[\s(])'[^'\n]+'(?=[\s.,;:)]|$)/g, "$1 ");
+}
+
+/** A conclusion above `not_proved` may not STATE a parent nobody identified.
+ *
+ *  `unlinkedParentProofInvariants` reads the citation, so dropping the parent's
+ *  assertions from it passes. This reads the prose: refused when the narrative
+ *  or a claim asserts parentage ("the son of", "his parents were", "born to")
+ *  naming, within the sentence, the given name of a parent who appears in an
+ *  unlinked parent-role name assertion on a record the summary cites, and no
+ *  name assertion linked (live, not speculative) to anyone but the subject
+ *  carries that name: a namesake son's own name does not identify his father. Quoted record text is ignored, and so is a phrase whose sentence reports
+ *  a record before it ("the index records Jonathan, son of William"): a proof
+ *  may report what a record reads, as may "the christening of a Jonathan, son of
+ *  William". The parent must be the SUBJECT's, the person most of the cited,
+ *  linked assertions are about: a bare `father` when the subject is linked on
+ *  that record, `father_of_bride` when the bride is (mcaloney-mother states the
+ *  mother's own parents, which concludes nothing about the subject). An
+ *  appositive with no reporting verb ("born
+ *  at Whitehaven, son of William Barker") is a finding, and is refused. So is
+ *  "the daughter of a different István", which sets a family aside rather than
+ *  naming a parent (rozal-sarman-daughter, the one false refusal measured).
+ *  Mined from ut_proof_conclusion_32f (#3659), which failed 3/3 with the ids
+ *  dropped and "the son of William Barker … and Martha Edwards" in the prose. */
+export function unlinkedParentNarrativeInvariants(entry: any, preCallResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const assertions: any[] = Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [];
+  const byId = new Map<string, any>(assertions.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const claims: any[] = Array.isArray(entry?.claims) ? entry.claims : [];
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...claims.flatMap((c: any) => (Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [])),
+  ];
+  const records = new Set(cited.map((id: unknown) => byId.get(id as string)?.record_id).filter((r) => typeof r === "string"));
+  if (records.size === 0) return [];
+  const personOf = new Map<string, string>(
+    (Array.isArray(preCallResearch?.person_evidence) ? preCallResearch.person_evidence : [])
+      .filter((pe: any) => countsForProofGate(pe) && typeof pe?.person_id === "string")
+      .map((pe: any) => [pe.assertion_id, pe.person_id]),
+  );
+  const linked = new Set(personOf.keys());
+  // The subject: the person most of the cited, linked assertions are about.
+  const counts = new Map<string, number>();
+  for (const id of cited) {
+    const p = personOf.get(id as string);
+    if (p) counts.set(p, (counts.get(p) ?? 0) + 1);
+  }
+  const subject = [...counts].sort((x, y) => y[1] - x[1])[0]?.[0];
+  if (!subject) return [];
+  // Whose parent a role names: `father_of_bride` and `groom_father` the named
+  // party's, a bare `father` or `mother_1` the record's principal's.
+  const isSubjectsParent = (a: any) => {
+    const role = String(a.record_role).toLowerCase();
+    const party = /^(?:father|mother|parent)_of_(.+)$/.exec(role)?.[1] ?? /^(.+)_(?:father|mother|parent)$/.exec(role)?.[1];
+    return assertions.some(
+      (b) =>
+        b?.record_id === a.record_id &&
+        personOf.get(b.id) === subject &&
+        (party ? String(b.record_role).toLowerCase() === party : !parentSide(b.record_role)),
+    );
+  };
+  const nameOf = (a: any) => {
+    const sv = a?.structured_value;
+    const given = sv && typeof sv === "object" && typeof sv.given === "string" ? sv.given.trim() : "";
+    const surname = sv && typeof sv === "object" && typeof sv.surname === "string" ? sv.surname.trim() : "";
+    return { given, surname };
+  };
+  const identified = assertions
+    .filter((a) => a?.fact_type === "name" && linked.has(a.id) && personOf.get(a.id) !== subject)
+    .map(nameOf);
+  const isIdentified = (n: { given: string; surname: string }) =>
+    identified.some(
+      (m) =>
+        m.given.toLowerCase() === n.given.toLowerCase() &&
+        (!m.surname || !n.surname || m.surname.toLowerCase() === n.surname.toLowerCase()),
+    );
+  const unidentified = new Map<string, string[]>();
+  for (const a of assertions) {
+    if (a?.fact_type !== "name" || linked.has(a.id) || !records.has(a.record_id) || !parentSide(a.record_role)) continue;
+    if (!isSubjectsParent(a)) continue;
+    const n = nameOf(a);
+    if (n.given.length < 2 || isIdentified(n)) continue;
+    unidentified.set(n.given, [...(unidentified.get(n.given) ?? []), a.id]);
+  }
+  if (unidentified.size === 0) return [];
+
+  const texts = [
+    typeof entry?.narrative_markdown === "string" ? entry.narrative_markdown : "",
+    ...claims.map((c: any) => (typeof c?.claim === "string" ? c.claim : "")),
+  ];
+  const named = new Map<string, string[]>();
+  for (const text of texts) {
+    const prose = stripQuoted(text);
+    for (const m of prose.matchAll(PARENTAGE_FINDING)) {
+      const rest = prose.slice(m.index! + m[0].length, m.index! + m[0].length + 160);
+      const sentence = rest.split(/\.\s|\n/)[0];
+      if (/^\s*[*_]*(?:a|an|another|some)\b/i.test(sentence)) continue;
+      const before = prose.slice(0, m.index!);
+      const opening = before.slice(Math.max(before.lastIndexOf(". "), before.lastIndexOf("\n")) + 1);
+      if (RECORD_REPORTING.test(opening)) continue;
+      // "the christening of a Jonathan, son of William": a record's child, not the subject.
+      if (/\b(?:a|an)\s+[A-Z][\w'’-]*,?\s*$/.test(opening)) continue;
+      for (const [given, ids] of unidentified) {
+        const escaped = given.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        if (new RegExp(`\\b${escaped}\\b`, "i").test(sentence)) named.set(given, ids);
+      }
+    }
+  }
+  if (named.size === 0) return [];
+  const detail = [...named].map(([given, ids]) => `${given} (${ids.join(", ")})`).join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: tier '${tier}' states as a finding that the ` +
+      `subject is the child of a parent no identity decision has identified — ${detail} — and no ` +
+      `name assertion for that parent is linked to a person in person_evidence. Do one of: ` +
+      `(1) run person-evidence on those assertions first (from an agent, hand back to the main ` +
+      `thread and name it), then send this write again; (2) record the attempt at 'not_proved' ` +
+      `now; (3) if the question does not ask who the parents are, remove the parentage from the ` +
+      `conclusion: the narrative may quote what a record reads ("child of William Barker") but ` +
+      `may not state "the son of", "his parents were" or "born to" that parent.`,
   ];
 }
 
@@ -4862,6 +6312,16 @@ function applyOne(
     if ("id" in op.fields && op.fields.id !== op.entryId) {
       throw new ResearchAppendError("update `fields` must not change the entry id");
     }
+    if (config.updatableFields) {
+      const allowed = new Set(config.updatableFields);
+      const rejected = Object.keys(op.fields).filter((k) => k !== "id" && !allowed.has(k));
+      if (rejected.length > 0) {
+        throw new ResearchAppendError(
+          `field(s) not updatable on '${section}': ${rejected.join(", ")} ` +
+            `(allowed: ${config.updatableFields.join(", ")})`,
+        );
+      }
+    }
     const existingIndex = array.findIndex((e) => e && e.id === op.entryId);
     if (existingIndex === -1) {
       throw new ResearchAppendError(`entryId '${op.entryId}' not found in '${section}'`);
@@ -5359,12 +6819,13 @@ function applyOne(
         ...scopedRelationalLinkInvariants(resultEntry, research, tree, personLinks, batchAssertions, birthPlaceCoords),
       );
     }
-    // An update re-checks the move only when it sets the tier or the bridge, or
-    // re-points the link (a new pairing, as the score gate below reads it), so a
-    // rationale edit on a link written before this rule stays possible.
+    // An update re-checks the move only when it sets the tier or the bridge,
+    // re-points the link (a new pairing, as the score gate below reads it), or
+    // clears `superseded_by` (a retired link brought back), so a rationale edit
+    // on a link written before this rule stays possible.
     const touchesMove =
       op.op !== "update" ||
-      ["confidence", "move_bridge", "assertion_id", "person_id"].some((f) =>
+      ["confidence", "move_bridge", "assertion_id", "person_id", "superseded_by"].some((f) =>
         Object.prototype.hasOwnProperty.call(op.fields ?? {}, f),
       );
     invariantErrors.push(
@@ -5435,6 +6896,16 @@ function applyOne(
       // Tier-gated like the line above, so a narrative edit to a summary that
       // predates the rule is not refused.
       invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...unlinkedParentProofInvariants(resultEntry, preCallResearch));
+    }
+    // Also on a narrative or claims edit: a parentage can be stated in prose
+    // after the tier is already set, by an update that leaves `tier` alone.
+    if (
+      tierTouchedThisOp ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "claims")
+    ) {
+      invariantErrors.push(...unlinkedParentNarrativeInvariants(resultEntry, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
@@ -5842,6 +7313,66 @@ function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set
     if (typeof rec === "string" && rec !== "") out.add(rec);
   }
   return out;
+}
+
+/** Free text and single names are not checked: a lone name is where FamilySearch
+ *  picks a wrong same-named place, and regions ("Pennsylvania Anthracite Coal
+ *  Region") are not in the standard at all. */
+const NOT_A_PLACE_LIST = /\sand\s|[()\u2014\u2013/;&]/i;
+
+function isCheckablePlaceList(forPlace: unknown): forPlace is string {
+  return (
+    typeof forPlace === "string" &&
+    !NOT_A_PLACE_LIST.test(forPlace) &&
+    placeSegments(forPlace).length >= 2
+  );
+}
+
+/**
+ * Refuse a `localities` write whose `for_place` names a first place FamilySearch's
+ * place standard does not have (issue #3696). Runs on an append, and on an update
+ * that sets `for_place`. A failed lookup writes with a warning, never refuses. Skipped
+ * when an earlier gate already refused the batch, so no lookup runs under the lock
+ * for a call that fails anyway.
+ * Deliberately not gated on `input.resolveStandardPlace`, which governs assertion
+ * geocoding only.
+ */
+async function checkLocalityFirstPlaces(
+  ops: ResearchAppendOp[],
+  errors: string[],
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): Promise<void> {
+  if (errors.length > 0) return;
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "localities") continue;
+    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    if (!body || typeof body !== "object" || !Object.hasOwn(body, "for_place")) continue;
+    const forPlace = (body as Record<string, unknown>).for_place;
+    if (!isCheckablePlaceList(forPlace)) continue;
+    const { status } = await checkFirstPlace(forPlace);
+    if (status === "lookup_failed") {
+      warnings.push(
+        fmt(
+          i,
+          `for_place '${forPlace}' could not be checked against FamilySearch's place standard ` +
+            "(the lookup failed); written unchecked",
+        ),
+      );
+    } else if (status === "mismatch" || status === "not_found") {
+      const segments = placeSegments(forPlace);
+      const [first, context] = [segments[0], segments[segments.length - 1]];
+      errors.push(
+        fmt(
+          i,
+          `for_place '${forPlace}': FamilySearch's place standard has no place '${first}' there. ` +
+            `Look up '${first}' with place_search, contextName '${context}'. If it returns a match, ` +
+            "write for_place from that standard place and re-send. If it returns nothing, do not " +
+            "write this entry: return to your caller saying the place did not resolve.",
+        ),
+      );
+    }
+  }
 }
 
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
@@ -6532,6 +8063,8 @@ async function prepareOps(
     errors.push(...reextractionCollisions(ops, research, fmt));
   }
 
+  await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
+
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -6808,6 +8341,12 @@ export async function researchAppend(
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
 
+    // The namesake cap (issue #3363), judged once on the call's end state, so op
+    // order cannot matter: a link and the row, assertion or tie it depends on
+    // may arrive in any order within the call.
+    const namesakeMsgs = namesakeCallCheck({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds)
+      .map((f) => (f.index === null ? f.message : fmt(f.index, f.message)));
+
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
@@ -6890,14 +8429,20 @@ export async function researchAppend(
         // from the real problem.
         const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
         return fail(
-          [...misrouteMsgs, ...mapped],
-          misrouteMsgs.length > 0
-            ? [{ section: "plans", op: "append" as const }]
-            : (blamed.length > 0 ? blamed : ops).map((o) => ({
-                section: String(o.section),
-                op: o.op === "update" ? ("update" as const) : ("append" as const),
-              })),
+          [...namesakeMsgs, ...misrouteMsgs, ...mapped],
+          [
+            ...(namesakeMsgs.length > 0 ? [{ section: "person_evidence", op: "append" as const }] : []),
+            ...(misrouteMsgs.length > 0
+              ? [{ section: "plans", op: "append" as const }]
+              : (blamed.length > 0 ? blamed : ops).map((o) => ({
+                  section: String(o.section),
+                  op: o.op === "update" ? ("update" as const) : ("append" as const),
+                }))),
+          ],
         );
+      }
+      if (namesakeMsgs.length > 0) {
+        return fail(namesakeMsgs, [{ section: "person_evidence", op: "append" }]);
       }
       validationWarnings = formatIssues(validation.warnings);
       // Verdict sidecar first: research.json's file_path pointer must never
@@ -6952,9 +8497,14 @@ export async function researchAppend(
     const transcriptionWarnings = anyMutation
       ? transcriptionWithoutImageWarnings(research, applied)
       : [];
+    // The namesake warning (#3363, spec §5.6): a row written over links that
+    // stand untied. Advisory, like the two above.
+    const namesakeWarnings = anyMutation
+      ? namesakeRowWarnings({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds)
+      : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -7036,6 +8586,7 @@ export const RESEARCH_APPEND_SECTIONS = [
   "evaluations",
   "known_holdings",
   "localities",
+  "namesakes",
   "project",
   "researcher_profile",
 ] as const;

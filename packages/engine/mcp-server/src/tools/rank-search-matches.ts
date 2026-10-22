@@ -9,7 +9,7 @@ import { sourceAttachmentsTool } from "./source-attachments.js";
 import { getDayRange } from "../utils/date-helpers.js";
 import { stdDate } from "../utils/date-standardize.js";
 import { MODIFIERS, MONTHS, normalizeAccents } from "../utils/date-constants.js";
-import { gatherRelatives } from "../utils/relatives.js";
+import { gatherRelatives, hasRealGivenName, isRealGivenName } from "../utils/relatives.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
@@ -414,31 +414,6 @@ function certainDate(a: any): unknown {
   return qualifyDate(a?.date, a?.date_certainty);
 }
 
-/** Given-name words that record a missing name rather than a name, compared
- *  after lower-casing and dropping dots ("N. N." → "nn"). "Unnamed" is the
- *  tree-edit convention here; "ignoto"/"ignota" are the Italian form. */
-const PLACEHOLDER_GIVEN = new Set([
-  "unknown", "unk", "unkn", "nn", "fnu", "lnu", "living", "private",
-  "mr", "mrs", "miss", "ms", "infant", "baby", "child", "stillborn",
-  "son", "daughter", "wife", "husband", "boy", "girl", "male", "female",
-  "unnamed", "ignoto", "ignota",
-]);
-
-/** A given name is real when, with dots and brackets dropped, neither the whole
- *  name ("N. N.", "[Unknown]") nor every word of it ("Infant Son") is a
- *  placeholder — AND, when `selfGiven` is passed, what remains after dropping
- *  placeholder words is not the subject's own given name ("Mrs. Ugo" is a
- *  spouse placeholder when the subject is Ugo). */
-function isRealGivenName(given: unknown, selfGiven?: Set<string>): boolean {
-  if (typeof given !== "string") return false;
-  const words = given.toLowerCase().replace(/[.[\]]/g, " ").split(/\s+/).filter(Boolean);
-  if (PLACEHOLDER_GIVEN.has(words.join(""))) return false;
-  const realWords = words.filter((w) => /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
-  if (realWords.length === 0) return false;
-  if (selfGiven && selfGiven.has(realWords.join(" "))) return false;
-  return true;
-}
-
 /** A full name's given part is every word before the last, so "Blyeberg"
  *  alone is a surname-only stub with no given name. A trailing generational
  *  suffix is NOT the surname — "Junior" in "Ugo Stella Junior" — so it is
@@ -451,13 +426,6 @@ function fullNameHasRealGiven(name: unknown, selfGiven?: Set<string>): boolean {
     words.pop();
   }
   return isRealGivenName(words.slice(0, -1).join(" "), selfGiven);
-}
-
-/** A relative separates namesakes only through a real given name: a
- *  surname-only stub repeats what the subject's own name already says. */
-function hasRealGivenName(person: SimplifiedPerson, selfGiven?: Set<string>): boolean {
-  const names = Array.isArray(person?.names) ? person.names : [];
-  return names.some((n) => isRealGivenName((n as any)?.given, selfGiven));
 }
 
 /** True when the tree records a spouse, parent or child of `subjectId` with a

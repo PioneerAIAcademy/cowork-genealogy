@@ -472,11 +472,14 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (summaries.length > 0 && !resolved) {
-    // A conclusion is not the end of the work: the `resolved` write is still
-    // outstanding, and it is the transition no skill body claims. Reporting null
-    // here would tell the router nothing is left to do on the one step this
-    // design most needs routed.
-    nextStep = "question-selection — concluded; mark the question resolved";
+    // A summary on a question still open was written while the preconditions
+    // gate blocked the conclusion: proof-conclusion resolves the question it
+    // concludes (its step 7) and leaves it open only when blocked. The conflict
+    // arms above found nothing open, so the blocker has settled and the next
+    // step is to conclude again. Reporting null here would tell the router
+    // nothing is left to do.
+    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
+    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.

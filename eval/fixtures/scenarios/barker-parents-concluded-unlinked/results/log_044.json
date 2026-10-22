@@ -1,0 +1,215 @@
+{
+ "log_id": "log_044",
+ "tool": "record_search",
+ "retrieved": "2026-10-20T18:19:45.647Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "count": 20,
+   "givenName": "William",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2",
+   "recordType": "census",
+   "residencePlace": "Whitehaven, Cumberland, England",
+   "residenceYearFrom": 1841,
+   "residenceYearTo": 1861,
+   "spouseGivenName": "Martha",
+   "surname": "Barker"
+  },
+  "totalMatches": 64,
+  "paginationCappedAt": 4999,
+  "returned": 20,
+  "offset": 0,
+  "hasMore": true,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:SGKP-TZB",
+    "events": [
+     {
+      "type": "Census",
+      "date": "1851",
+      "place": ", Cumberland, England"
+     },
+     {
+      "type": "Occupation",
+      "value": "Mariner"
+     },
+     {
+      "type": "MaritalStatus",
+      "value": "Widower"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "William Barker",
+    "score": 5.1256,
+    "confidence": 3,
+    "sex": "Male",
+    "birthDate": "1787",
+    "birthPlace": "Whitehaven, Cumberland, England, United Kingdom",
+    "collectionId": "2563939",
+    "collectionTitle": "England and Wales, Census, 1851",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2563939",
+    "recordTitle": "Household of William Barker, \"England and Wales, Census, 1851\"",
+    "recordArk": "ark:/61903/1:2:91C9-22B",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_2008634728",
+       "ark": "ark:/61903/1:1:SGKP-TZB",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "William",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1851",
+         "standard_date": "1851",
+         "place": ", Cumberland, England",
+         "standard_place": "Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1787",
+         "standard_date": "1787",
+         "place": "Whitehaven, Cumberland",
+         "standard_place": "Whitehaven, Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Occupation",
+         "value": "Mariner"
+        },
+        {
+         "type": "MaritalStatus",
+         "value": "Widower"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_2008634729",
+       "ark": "ark:/61903/1:1:SGKP-TZ1",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Elizabeth",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1851",
+         "standard_date": "1851",
+         "place": ", Cumberland, England",
+         "standard_place": "Cumberland, England, United Kingdom"
+        },
+        {
+         "type": "Birth",
+         "date": "1829",
+         "standard_date": "1829",
+         "place": "Whitehaven, Cumberland",
+         "standard_place": "Whitehaven, Cumberland, England, United Kingdom"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "relationships": [
+      {
+       "type": "ParentChild",
+       "parent": "p_2008634728",
+       "child": "p_2008634729"
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_1441035628",
+       "resource_type": "Record",
+       "title": "Household of William Barker, \"England and Wales, Census, 1851\"",
+       "citation": "\"England and Wales, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SGKP-TZB : Fri Aug 21 09:30:51 UTC 2026), Entry for William Barker and Elizabeth Barker, 1851.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:91C9-22B",
+       "coverage": {
+        "place_rep_id": "1106",
+        "date_range": "1851",
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_c_2563939",
+       "resource_type": "Collection",
+       "title": "England and Wales, Census, 1851",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/2563939",
+       "coverage": {
+        "place_rep_id": "10559523",
+        "date_range": "1851/1851",
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSQ7-NWPS-Y",
+       "coverage": {
+        "place_rep_id": "267",
+        "date_range": "1851",
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_auto_M9J1-9JC",
+       "resource_type": "auto",
+       "title": "United Kingdom, Residences, Census, from 1000 to 2024",
+       "coverage": {
+        "place_rep_id": "56",
+        "date_range": "+1000-01-01T00:00:00Z/+2024-12-31T23:59:59Z"
+       }
+      },
+      {
+       "id": "src_p_p_2008634728",
+       "resource_type": "Person",
+       "url": "#p_2008634728"
+      }
+     ],
+     "places": [
+      {
+       "id": "1106",
+       "name": "Cumberland, England, United Kingdom",
+       "latitude": 54.53065,
+       "longitude": -3.07617
+      },
+      {
+       "id": "3039342",
+       "name": "Whitehaven, Cumberland, England, United Kingdom",
+       "latitude": 54.548,
+       "longitude": -3.5877
+      }
+     ]
+    },
+    "primaryId": "p_2008634728",
+    "role": "Principal",
+    "relativeTerms": {
+     "spouse": {
+      "status": "absent"
+     }
+    }
+   }
+  ]
+ }
+}

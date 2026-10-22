@@ -1,0 +1,322 @@
+{
+ "log_id": "log_028",
+ "tool": "record_read",
+ "retrieved": "2026-10-20T17:58:34.709Z",
+ "returned_count": 1,
+ "payload": {
+  "query": {
+   "recordId": "ark:/61903/1:1:M6GV-MG5"
+  },
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:M6GV-MG5",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_334206684",
+       "ark": "ark:/61903/1:1:M6GV-MG5",
+       "principal": true,
+       "gender": "Male",
+       "names": [
+        {
+         "id": "5e7ca936-994d-44c1-a6b4-2d51d758806c",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Jonathan"
+        }
+       ],
+       "facts": [
+        {
+         "id": "363396b5-046c-4bba-9826-e4d4438c84ec",
+         "type": "Birth",
+         "date": "1821",
+         "standard_date": "1821",
+         "place": "England"
+        },
+        {
+         "id": "069cd0b2-5b87-4d7f-935c-c06de9fbd4e5",
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206685",
+       "ark": "ark:/61903/1:1:M6GV-MGR",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "c6915deb-13af-44ad-8cb9-907d7d0e8ce5",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Elizabeth"
+        }
+       ],
+       "facts": [
+        {
+         "id": "e0661652-5e37-4433-9a41-71af183898cb",
+         "type": "Birth",
+         "date": "1824",
+         "standard_date": "1824",
+         "place": "Alabama"
+        },
+        {
+         "id": "edbe45c9-e8e2-42fc-b52e-1d2579e65955",
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206686",
+       "ark": "ark:/61903/1:1:M6GV-MGT",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "beff90c5-15a9-4e1a-a7ce-3593a2d58509",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Sarah M"
+        }
+       ],
+       "facts": [
+        {
+         "id": "7628a894-5506-4fd9-b3ef-1fa90ecc5baf",
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "id": "5cd4cdfc-db01-408e-8758-cddf3aea78cd",
+         "type": "Birth",
+         "date": "1846",
+         "standard_date": "1846",
+         "place": "Mississippi"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206687",
+       "ark": "ark:/61903/1:1:M6GV-MGY",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "2d73d784-be05-4e88-b739-f7f19941eee3",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Amanda P"
+        }
+       ],
+       "facts": [
+        {
+         "id": "f04253a4-bdbc-489c-971f-1da133b834ba",
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "id": "fe5fa27c-c208-412d-8188-9646cea1fc2b",
+         "type": "Birth",
+         "date": "1849",
+         "standard_date": "1849",
+         "place": "Mississippi"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      },
+      {
+       "id": "p_334206688",
+       "ark": "ark:/61903/1:1:M6GV-MGB",
+       "principal": true,
+       "gender": "Female",
+       "names": [
+        {
+         "id": "eda7a792-614a-4fb2-96ae-6bbb783d7c03",
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Pernesia A J"
+        }
+       ],
+       "facts": [
+        {
+         "id": "64a9947b-3084-49f0-afa3-bf8fe88d3dcb",
+         "type": "Census",
+         "primary": true,
+         "date": "1860",
+         "standard_date": "1860",
+         "place": "Smith, Mississippi, United States"
+        },
+        {
+         "id": "79f2a93a-e686-4cc5-99b7-d4cc5b024efb",
+         "type": "Birth",
+         "date": "1855",
+         "standard_date": "1855",
+         "place": "Mississippi"
+        },
+        {
+         "type": "Race",
+         "value": "White"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_206823184",
+       "resource_type": "Record",
+       "title": "Household of Jonathan Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5 : Mon Jul 08 11:16:42 UTC 2024), Entry for Jonathan Barker and Elizabeth Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:MHFZ-3NQ",
+       "coverage": {
+        "record_type": "Census"
+       }
+      },
+      {
+       "id": "sd_c_1473181",
+       "resource_type": "Collection",
+       "title": "United States, Census, 1860",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1473181",
+       "coverage": {
+        "place_rep_id": "1",
+        "date_range": "1860/1860",
+        "record_type": "Census",
+        "standard_place": "United States"
+       }
+      },
+      {
+       "id": "sd_da1",
+       "resource_type": "DigitalArtifact",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9BSZ-H1W",
+       "coverage": {
+        "place_rep_id": "395845",
+        "date_range": "1860",
+        "record_type": "Census",
+        "standard_place": "Smith, Mississippi, United States"
+       }
+      },
+      {
+       "id": "sd_p_334206688",
+       "resource_type": "Person",
+       "title": "Pernesia A J Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MGB : Mon Jul 08 11:16:42 UTC 2024), Pernesia A J Barker in entry for Jonathan Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MGB"
+      },
+      {
+       "id": "sd_p_334206687",
+       "resource_type": "Person",
+       "title": "Amanda P Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MGY : Mon Jul 08 11:16:42 UTC 2024), Amanda P Barker in entry for Jonathan Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MGY"
+      },
+      {
+       "id": "sd_p_334206686",
+       "resource_type": "Person",
+       "title": "Sarah M Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MGT : Mon Jul 08 11:16:42 UTC 2024), Sarah M Barker in entry for Jonathan Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MGT"
+      },
+      {
+       "id": "sd_p_334206684",
+       "resource_type": "Person",
+       "title": "Jonathan Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5 : Mon Jul 08 11:16:42 UTC 2024), Jonathan Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5"
+      },
+      {
+       "id": "sd_p_334206685",
+       "resource_type": "Person",
+       "title": "Elizabeth Barker, \"United States, Census, 1860\"",
+       "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GV-MGR : Mon Jul 08 11:16:42 UTC 2024), Elizabeth Barker in entry for Jonathan Barker, 1860.",
+       "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MGR"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "resource_type": "auto",
+       "title": "United States, Residences, Census, from 1793 to 1964",
+       "coverage": {
+        "place_rep_id": "1",
+        "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+        "standard_place": "United States"
+       }
+      }
+     ]
+    },
+    "indexFields": {
+     "p_334206684": {
+      "sortKey": "000000000_005170171_00305_11685_00000667017000",
+      "age": "39"
+     },
+     "p_334206685": {
+      "sortKey": "000000000_005170171_00305_11686_00000667017001",
+      "age": "36"
+     },
+     "p_334206686": {
+      "sortKey": "000000000_005170171_00305_11687_00000667017002",
+      "age": "14"
+     },
+     "p_334206687": {
+      "sortKey": "000000000_005170171_00305_11688_00000667017003",
+      "age": "11"
+     },
+     "p_334206688": {
+      "sortKey": "000000000_005170171_00305_11689_00000667017004",
+      "age": "5"
+     }
+    }
+   }
+  ]
+ }
+}

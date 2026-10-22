@@ -673,11 +673,22 @@ async function recordIdsMode(
   //    record whichever persona's ARK requested it: each requested id is widened
   //    to every persona ARK of a `record_read` sidecar that lists it, then looked
   //    up by the record-id -> source mapping research_append's reuse detection
-  //    uses.
+  //    uses. A record that owns an uncited entry (an accepted hint, or an
+  //    earlier read of it) is skipped only on its own id, never through another
+  //    persona's: skipping it leaves that entry uncited, and the router sends
+  //    the record back on every pass.
   const groups = await personaGroups(input.projectPath, research);
   const widen = (b: string): ReadonlySet<string> => groups.get(b) ?? new Set([b]);
+  const citedLogIds = new Set(
+    (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
+  );
   for (const o of outcomes) {
-    const existing = sourceIdsForRecordIds(research, widen(arkToBareId(o.recordId)));
+    const bare = arkToBareId(o.recordId);
+    let existing = sourceIdsForRecordIds(research, widen(bare));
+    if (existing.size > 0 && sourceIdsForRecordIds(research, new Set([bare])).size === 0) {
+      const pending = await reusableLogEntry(input.projectPath, research, bare, citedLogIds);
+      if (pending) existing = new Set();
+    }
     if (existing.size > 0) {
       const srcId = [...existing][0];
       o.status = "already_extracted";
@@ -720,6 +731,59 @@ async function recordIdsMode(
       o.summary = `${o.recordId}: could not be read: ${e instanceof Error ? e.message : String(e)}.`;
     }
   });
+
+  // 3b. Household skip. Step 1 widens an id only by sidecars already logged,
+  //     so it cannot see a member of a record extracted under an accepted hint
+  //     (no sidecar), or two members of one record read in this call. The staged
+  //     record names every persona: a record whose persona ARKs are already
+  //     cited is skipped, and so is a later record in this call that is one
+  //     already in it. A record that owns an uncited entry (an accepted hint,
+  //     or a reused read) is never skipped, so that entry is cited. Nothing is
+  //     logged for a skipped record; its staged file ages out.
+  const owesEntry = (o: { hintLogId?: string; logId?: string }) => Boolean(o.hintLogId || o.logId);
+  const docs = new Map<string, ExtractDocument>();
+  const households = new Map<string, Set<string>>();
+  for (const o of outcomes) {
+    if (o.status !== "extracted" || !o.stagedRef) continue;
+    try {
+      const doc = findStagedDoc(await readStagedResults(input.projectPath, o.stagedRef), o.recordId);
+      if (!doc) continue;
+      docs.set(o.recordId, doc);
+      const arks = new Set<string>();
+      for (const p of Array.isArray(doc.gedcomx?.persons) ? doc.gedcomx.persons : []) {
+        const ark = (p as { ark?: unknown })?.ark;
+        if (typeof ark === "string" && ark.trim() !== "") arks.add(arkToBareId(ark));
+      }
+      if (arks.size > 0) households.set(o.recordId, arks);
+    } catch {
+      // Step 5 reads it again and reports the error.
+    }
+  }
+  const sameAs = new Map<string, RecordOutcome>();
+  const leads: RecordOutcome[] = [];
+  const ownersFirst = [...outcomes.filter(owesEntry), ...outcomes.filter((o) => !owesEntry(o))];
+  for (const o of ownersFirst) {
+    const arks = households.get(o.recordId);
+    if (o.status !== "extracted" || !arks) continue;
+    if (!owesEntry(o)) {
+      const existing = sourceIdsForRecordIds(research, arks);
+      if (existing.size > 0) {
+        o.status = "already_extracted";
+        o.srcId = [...existing][0];
+        o.summary = `${o.recordId}: already extracted as ${o.srcId} (same household); nothing written.`;
+        await tieOutcome(o, input.projectPath, research, input.questionIds, arks);
+        continue;
+      }
+      const own = arkToBareId(o.recordId);
+      const lead = leads.find((l) => households.get(l.recordId)!.has(own) || arks.has(arkToBareId(l.recordId)));
+      if (lead) {
+        o.status = "already_extracted";
+        sameAs.set(o.recordId, lead);
+        continue;
+      }
+    }
+    leads.push(o);
+  }
 
   const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
   if (staged.length > 0) {
@@ -764,14 +828,9 @@ async function recordIdsMode(
     //    leaves it to be written.
     for (const o of staged) {
       if (o.status !== "extracted" || !o.logId) continue;
-      let doc: ExtractDocument | undefined;
+      let doc = docs.get(o.recordId);
       try {
-        const rows = await readStagedResults(input.projectPath, o.stagedRef!);
-        const key = arkToBareId(o.recordId);
-        doc = rows.find((r: any) => {
-          const id = r?.recordId ?? r?.id;
-          return typeof id === "string" && arkToBareId(id) === key;
-        }) as ExtractDocument | undefined;
+        doc ??= findStagedDoc(await readStagedResults(input.projectPath, o.stagedRef!), o.recordId);
       } catch (e) {
         o.status = "refused";
         o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar could not be read: ${e instanceof Error ? e.message : String(e)}.`;
@@ -814,12 +873,33 @@ async function recordIdsMode(
     }
   }
 
+  // A household duplicate in this call takes its lead's result.
+  for (const [recordId, lead] of sameAs) {
+    const o = outcomes.find((x) => x.recordId === recordId)!;
+    if (lead.status === "extracted" && lead.srcId) {
+      o.srcId = lead.srcId;
+      o.summary = `${o.recordId}: already extracted as ${lead.srcId} (same household as ${lead.recordId}); nothing written.`;
+    } else {
+      o.status = "refused";
+      o.summary = `${o.recordId}: not extracted: same household as ${lead.recordId}, which was not extracted.`;
+    }
+  }
+
   const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes), groups);
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
     records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
+}
+
+/** The staged sidecar row for `recordId`, matched on its bare ARK id. */
+function findStagedDoc(rows: unknown[], recordId: string): ExtractDocument | undefined {
+  const key = arkToBareId(recordId);
+  return rows.find((r: any) => {
+    const id = r?.recordId ?? r?.id;
+    return typeof id === "string" && arkToBareId(id) === key;
+  }) as ExtractDocument | undefined;
 }
 
 /** The records this call extracted or found already extracted. */
@@ -1032,6 +1112,45 @@ function buildDocumentSource(
   };
 }
 
+const COMPUTED_ATTRS = ["value", "date", "place"] as const;
+const YEAR_LIKE = /^~?\d{3,4}$/;
+/** Facts whose missing date a stray year can be: a birth worked out from an age. */
+const YEAR_FILL_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism"]);
+
+/**
+ * A `computed` entry written as a value instead of an attribute name, fixed up
+ * before validation: one that equals exactly one of the fact's own `value`,
+ * `date` or `place` becomes that attribute's name, and a year (`~1862`) on a
+ * birth or christening with no `date` becomes the date, marked computed. Anything else is left
+ * for the validator to refuse.
+ */
+function coerceComputed(f: unknown): void {
+  if (!f || typeof f !== "object" || Array.isArray(f)) return;
+  const fact = f as Record<string, unknown>;
+  if (!Array.isArray(fact.computed)) return;
+  const out: unknown[] = [];
+  for (const c of fact.computed) {
+    if (typeof c !== "string" || (COMPUTED_ATTRS as readonly string[]).includes(c)) {
+      out.push(c);
+      continue;
+    }
+    const t = c.trim();
+    const same = COMPUTED_ATTRS.filter((k) => typeof fact[k] === "string" && (fact[k] as string).trim() === t);
+    if (same.length === 1) out.push(same[0]);
+    else if (
+      same.length === 0 &&
+      fact.date === undefined &&
+      YEAR_LIKE.test(t) &&
+      typeof fact.type === "string" &&
+      YEAR_FILL_FACTS.has(fact.type.trim().toLowerCase())
+    ) {
+      fact.date = t;
+      out.push("date");
+    } else out.push(c);
+  }
+  fact.computed = [...new Set(out)];
+}
+
 /**
  * `documents`: every document is validated before anything is written, so one
  * malformed document refuses the batch and writes nothing. Then, as for
@@ -1052,6 +1171,9 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     for (const p of Array.isArray(d?.document?.persons) ? d.document.persons : []) {
       if (p && typeof p === "object" && (p as { facts?: unknown }).facts === undefined) {
         (p as { facts: unknown[] }).facts = [];
+      }
+      for (const f of Array.isArray((p as { facts?: unknown })?.facts) ? (p as { facts: unknown[] }).facts : []) {
+        coerceComputed(f);
       }
     }
     errors.push(...validateStructuredDocument(d?.document, `documents[${i}].document`));
