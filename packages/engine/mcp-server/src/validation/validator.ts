@@ -670,7 +670,7 @@ export const RESEARCH_SHAPES = {
     "identity_question", "competing_assertion_ids", "status",
     "preferred_assertion_id", "resolution_rationale",
     "independence_analysis", "weighing_analysis", "blocks_question_ids",
-    "resolution_kind", "resolved_value",
+    "resolution_kind", "resolved_value", "weighed_log_entry_ids",
   ]),
   hypothesis: new Set([
     "id", "claim", "status", "supporting_assertion_ids",
@@ -1459,6 +1459,21 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if (ct === "identity" && !c.identity_question) {
       addError(report, cp, "identity conflict requires identity_question");
+    }
+    // The question's log entries conflict-resolution has weighed. Optional,
+    // and it mirrors search_stop.log_entry_ids, so it is checked the same
+    // way: an array whose every id resolves to a real log entry.
+    if ("weighed_log_entry_ids" in c && c.weighed_log_entry_ids !== null) {
+      const weighed = c.weighed_log_entry_ids;
+      if (!Array.isArray(weighed)) {
+        addError(report, cp, "weighed_log_entry_ids must be an array");
+      } else {
+        weighed.forEach((l: unknown, j: number) => {
+          const wp = `${cp}/weighed_log_entry_ids[${j}]`;
+          if (typeof l !== "string") addError(report, wp, "must be a string");
+          else checkRefExists(l, ids.log, "log entry", wp, report);
+        });
+      }
     }
     // identity_question is the question's text — schema type string|null. Reject
     // any other type (notably the boolean form that slipped past this validator
