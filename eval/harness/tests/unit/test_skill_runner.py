@@ -558,6 +558,91 @@ def test_wall_clock_fires_before_the_silence_watchdog(monkeypatch, tmp_path):
     assert state["closed"] is True  # cancellation unwound and close_query ran
 
 
+def _task_started(task_id):
+    from claude_agent_sdk import TaskStartedMessage
+    return TaskStartedMessage(
+        subtype="task_started", data={}, task_id=task_id,
+        description="d", uuid="u", session_id="s",
+    )
+
+
+def _task_notification(task_id):
+    from claude_agent_sdk import TaskNotificationMessage
+    return TaskNotificationMessage(
+        subtype="task_notification", data={}, task_id=task_id,
+        status="completed", output_file="", summary="", uuid="u", session_id="s",
+    )
+
+
+def _task_updated(task_id, status):
+    from claude_agent_sdk import TaskUpdatedMessage
+    return TaskUpdatedMessage(
+        subtype="task_updated", data={}, task_id=task_id,
+        patch={"status": status}, status=status,
+    )
+
+
+def _run_task_gap(monkeypatch, tmp_path, close, gap):
+    """task_started, then `close` messages, then a `gap`-second silence, then a
+    result. Silence window 0.2s, subagent-task window 0.6s."""
+    import asyncio
+
+    from harness import skill_runner as sr
+
+    monkeypatch.setattr(sr, "SUBAGENT_TASK_SILENCE_SECONDS", 0.6)
+
+    async def stream(*, prompt, options):
+        yield _task_started("t1")
+        for message in close:
+            yield message
+        await asyncio.sleep(gap)
+        yield _fake_assistant_message("done")
+        yield _result_message(is_error=False)
+
+    return _run_watchdog(
+        monkeypatch,
+        tmp_path,
+        stream,
+        sdk_message_silence_seconds=0.2,
+        max_wall_clock_seconds=5.0,
+    )
+
+
+def test_open_subagent_task_widens_the_silence_window(monkeypatch, tmp_path):
+    """CLI 2.1.294 streams nothing from a subagent's final turn. A gap past the
+    0.2s window but inside the 0.6s task window is not a stall while a task is
+    open (#3251)."""
+    result = _run_task_gap(monkeypatch, tmp_path, close=[], gap=0.4)
+    assert result.aborted_reason is None
+
+
+def test_open_subagent_task_still_aborts_past_its_window(monkeypatch, tmp_path):
+    result = _run_task_gap(monkeypatch, tmp_path, close=[], gap=1.5)
+    assert result.aborted_reason == "sdk_stream_silence"
+    assert "within 0.6s" in (result.error or "")
+
+
+def test_task_notification_restores_the_silence_window(monkeypatch, tmp_path):
+    result = _run_task_gap(
+        monkeypatch, tmp_path, close=[_task_notification("t1")], gap=0.4
+    )
+    assert result.aborted_reason == "sdk_stream_silence"
+
+
+def test_terminal_task_updated_restores_the_silence_window(monkeypatch, tmp_path):
+    result = _run_task_gap(
+        monkeypatch, tmp_path, close=[_task_updated("t1", "killed")], gap=0.4
+    )
+    assert result.aborted_reason == "sdk_stream_silence"
+
+
+def test_non_terminal_task_updated_keeps_the_task_open(monkeypatch, tmp_path):
+    result = _run_task_gap(
+        monkeypatch, tmp_path, close=[_task_updated("t1", "running")], gap=0.4
+    )
+    assert result.aborted_reason is None
+
+
 # --- the ownership deny, driven through the real hook (issue #2022) ----------
 #
 # These replace a source-grep guard that was green under two mutations its own
