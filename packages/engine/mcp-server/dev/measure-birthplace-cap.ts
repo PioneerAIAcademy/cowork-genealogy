@@ -24,7 +24,7 @@ import {
   birthPlaceCoordNames,
   type PersonLink,
 } from "../src/tools/research-append.js";
-import { lookupPlaceCoords } from "../src/utils/place-coords.js";
+import { lookupWithin } from "../src/utils/place-coords.js";
 import { standardPlaceToCoords, isNonPlacePhrase } from "../src/utils/place-resolver.js";
 import { haversineDistance } from "../src/tools/distance.js";
 
@@ -75,7 +75,7 @@ for (const doc of docs) {
 if (docs.length === 0) throw new Error("no committed documents matched — corpus path wrong?");
 if (entries.length === 0) throw new Error(`scanned ${docs.length} document(s) but found 0 confident/probable links — shape changed?`);
 
-const coords = await lookupPlaceCoords(names, (n) => standardPlaceToCoords(n), 600_000);
+const coords = await lookupWithin(names, (n) => standardPlaceToCoords(n), 600_000);
 const unresolved = [...coords].filter(([, c]) => c === null).map(([n]) => n);
 
 // Links on which the record's same party states a birth place that is a

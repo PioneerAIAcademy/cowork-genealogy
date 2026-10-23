@@ -1798,6 +1798,21 @@ def test_hand_edit_detector_passes_when_writer_tool_called():
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
+def test_hand_edit_detector_passes_when_timeline_build_wrote():
+    """timeline_build writes research.json itself; a run whose only writer it is
+    (a Mode A timeline after PR D) is not a hand edit."""
+    result = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__timeline_build",
+                "args": {"projectPath": "/p", "personId": "I1"},
+            }
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
 def test_hand_edit_detector_counts_the_url_builder_only_with_projectpath():
     """`build_external_search_url` writes its hand-off log entry only when it
     carries a projectPath, so only then may it account for a research.json change."""

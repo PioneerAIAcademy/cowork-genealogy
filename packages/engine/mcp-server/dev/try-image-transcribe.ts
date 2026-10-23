@@ -8,18 +8,20 @@
  *     ~/.familysearch-mcp). The --file form needs no FamilySearch login.
  *
  * Usage:
- *   npx tsx dev/try-image-transcribe.ts "<imageId>" ["<lookingFor>"] [--project <dir>]
- *   npx tsx dev/try-image-transcribe.ts "<ark>"     ["<lookingFor>"] [--project <dir>]
+ *   npx tsx dev/try-image-transcribe.ts --project <dir> "<imageId>" ["<lookingFor>"]
+ *   npx tsx dev/try-image-transcribe.ts --project <dir> "<ark>"     ["<lookingFor>"]
  *   npx tsx dev/try-image-transcribe.ts --project <dir> --file uploads/<name> ["<lookingFor>"]
  *
- * --file reads an uploaded image or PDF already inside the project folder
- * (issue #2048) — the path is project-relative, exactly what the tool takes.
- * With --project the tool also stages the transcription; the staged handle and
- * digest are printed so the round-trip to research_log_append can be checked.
+ * --project is required: this runs the MCP entry point, which stages the page
+ * and returns its ref, not the text (issue #2490). --file reads an uploaded
+ * image or PDF already inside the project folder (issue #2048). The staged
+ * handle and digest are printed, then the page is read back through
+ * sidecar_read, which is the round-trip a caller makes.
  */
 
 import { LOCAL } from "../src/auth/principal.js";
-import { imageTranscribeTool } from "../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "../src/tools/image-transcribe.js";
+import { sidecarRead } from "../src/tools/sidecar-read.js";
 import { isMemoryArtifactUrl } from "../src/utils/fs-image-fetch.js";
 import { memoryPageId } from "../src/utils/memories.js";
 
@@ -34,15 +36,11 @@ const projectPath = takeFlag("--project");
 const file = takeFlag("--file");
 const [value, lookingFor] = argv;
 
-if (!file && !value) {
+if ((!file && !value) || !projectPath) {
   console.error(
-    "Usage: npx tsx dev/try-image-transcribe.ts <imageId | ark> [lookingFor] [--project <dir>]\n" +
+    "Usage: npx tsx dev/try-image-transcribe.ts --project <dir> <imageId | ark> [lookingFor]\n" +
       "       npx tsx dev/try-image-transcribe.ts --project <dir> --file uploads/<name> [lookingFor]"
   );
-  process.exit(1);
-}
-if (file && !projectPath) {
-  console.error("--file needs --project <dir>: the path is relative to the project folder.");
   process.exit(1);
 }
 
@@ -59,7 +57,7 @@ const isImageId = value !== undefined && /^\d+_\d+$/.test(value);
 const isMemory =
   value !== undefined && (isMemoryArtifactUrl(value) || memoryPageId(value) !== null);
 
-const result = await imageTranscribeTool({
+const result = await imageTranscribeMcpTool({
   ...(file
     ? { file }
     : isImageId
@@ -68,7 +66,7 @@ const result = await imageTranscribeTool({
         ? { memoryArtifactUrl: value }
         : { ark: value }),
   ...(lookingFor ? { lookingFor } : {}),
-  ...(projectPath ? { projectPath } : {}),
+  projectPath,
 }, LOCAL);
 
 if ("ok" in result) {
@@ -77,8 +75,14 @@ if ("ok" in result) {
 }
 console.log("Metadata:", JSON.stringify(result.metadata, null, 2));
 if (result.found) console.log("Found:", result.found);
-if (result.staged !== undefined) console.log("Staged:", JSON.stringify(result.staged), result.stagingError ?? "");
+console.log("Staged:", JSON.stringify(result.staged), result.stagingError ?? "");
 if (result.digest) console.log("Digest:", JSON.stringify(result.digest, null, 2));
 if (result.truncated) console.log("TRUNCATED:", result.truncationNotice);
-console.log("\n--- Transcription ---\n");
-console.log(result.transcription);
+if (result.transcription !== undefined) {
+  console.log("\n--- Transcription (inline: staging failed) ---\n");
+  console.log(result.transcription);
+} else if (result.staged) {
+  const page = await sidecarRead({ projectPath, ref: result.staged.resultsRef });
+  console.log("\n--- Transcription (sidecar_read of staged.resultsRef) ---\n");
+  console.log(page.ok ? page.content : JSON.stringify(page));
+}

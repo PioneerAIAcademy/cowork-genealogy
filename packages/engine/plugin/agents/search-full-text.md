@@ -513,9 +513,9 @@ collision, not a match (step 8).
 
 For each promising record, name the record's `id` (ARK) and the context
 that survives staging — `names`/`places`/`dates`, `title`, `recordType`,
-`recordPlace`, `highlightTerms` — so the orchestrator can get each record's page text from
-the image-reader agent and route to the record-structurer agent. You do not
-invoke either yourself. The plan item's status stays as-is; extraction will
+`recordPlace`, `highlightTerms` — so the orchestrator can transcribe each record's page
+with `image_transcribe` and hand its `staged.resultsRef` to the record-structurer
+agent. You do neither yourself. The plan item's status stays as-is; extraction will
 complete it when it runs.
 
 ### 12. Present results
