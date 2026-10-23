@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "notes": {
+    "f1": "Hint (ark:/61903/1:1:7975-85ZM) is entirely absent from the tree — pass by omission; agent never encountered or evaluated the hint record.",
+    "f2": "Agent searched collection 1582573 (Rio de Janeiro) and 4473668 (Espirito Santo) and documented negative results with the question left open. However, the hint was never identified or explicitly rejected as belonging to a different woman, and no proof summary or exhaustive declaration was written."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "f072d899580ce705c84ac072d8015e6879ec7cddfa07a4a3c59ca90ab62c571f",
+  "blind_bundle_digest": "a956d621115cf5c3e11c25cc7753b1b3fe897e624ea01b8a8343563105812fd8"
+}
