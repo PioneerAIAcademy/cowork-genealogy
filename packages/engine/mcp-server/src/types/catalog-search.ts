@@ -26,11 +26,12 @@ export interface CatalogSearchInput {
   hydrate?: number;
 }
 
-/** One reel or digitization of an item: ONE entry per reel, however many film
+/** One reel or digitization of an item: one entry per reel, however many film
  *  notes the Catalog holds for it. Notes that agree on every field but `text`
- *  are one entry (`catalog-search.ts`, `mergeFilmNotes`). The Catalog's `shelf`
- *  and `item_image_start_no` are not carried: no plugin body, validator or
- *  fixture reads them. */
+ *  are one entry (`catalog-search.ts`, `mergeFilmNotes`). A reel whose joined
+ *  text is long is several entries in a row, each carrying the same numbers and
+ *  a run of whole note texts. The Catalog's `shelf` and `item_image_start_no`
+ *  are not carried: no plugin body, validator or fixture reads them. */
 export interface CatalogFilmNote {
   /** Legacy microfilm number. */
   filmNumber?: string;
@@ -39,7 +40,8 @@ export interface CatalogFilmNote {
   indexed?: string;
   copyLocation?: string;
   /** What that reel covers. When several notes were merged, their texts in the
-   *  order the Catalog gave them, joined with " | ". */
+   *  order the Catalog gave them, joined with " | ", up to a length cap per
+   *  entry (a note is never cut in two). */
   text?: string;
 }
 
@@ -63,16 +65,17 @@ export interface CatalogHit {
   notes?: string[];
   authors?: string[];
   subjects?: string[];
-  /** One entry per reel. When the answer is size-limited this is the FIRST
-   *  `filmNotes.length` of the item's entries, in order, and `filmNotesTotal`
-   *  and `filmNotesHint` say so. */
+  /** One entry per reel. When the answer is size-limited this is the entries of
+   *  the item that fit, in the order the item has them (an entry that did not
+   *  fit is skipped and the ones after it are still listed), and
+   *  `filmNotesTotal` and `filmNotesHint` say so. */
   filmNotes?: CatalogFilmNote[];
   /** How many entries the item has, in the unit `filmNotes` is listed in (after
    *  merging). Present ONLY when `filmNotes` was cut short to keep the answer
    *  under the size budget; absent when every entry is listed. */
   filmNotesTotal?: number;
   /** One line, present exactly when `filmNotesTotal` is: how many entries are
-   *  listed and how to get the rest. */
+   *  listed and a way to get the rest that can work for this hit. */
   filmNotesHint?: string;
   availableOnline?: boolean;
   /** FamilySearch Digital Library URL for a digitized book. Surfaced only; no

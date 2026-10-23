@@ -20,8 +20,11 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import {
   ANSWER_CHAR_BUDGET,
   catalogSearchTool,
+  FILM_FIELDS,
+  filmNotesHint,
   fitFilmNotes,
   mergeFilmNotes,
+  REEL_TEXT_CAP,
   shapeAnswer,
 } from "../../src/tools/catalog-search.js";
 import type { CatalogFilmNote, CatalogHit, CatalogSearchResult } from "../../src/types/catalog-search.js";
@@ -1619,6 +1622,17 @@ describe("catalog_search — one entry per reel", () => {
     ]);
   });
 
+  it("hydration reads neither shelf nor item_image_start_no, even when the service sends them", async () => {
+    const [entry] = await notesOf(note({ text: "a", shelf: "Film", item_image_start_no: "42" }));
+    expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text"]);
+    // A note with nothing but those two is no entry at all, not an empty one: it
+    // would claim the item was filmed while naming neither the film nor the DGS.
+    respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: { film_note: { shelf: "Film", item_image_start_no: "7" } } });
+    const r = await catalogSearchTool({ keywords: "x" }, LOCAL);
+    expect(r.hits[0].hydrated).toBe(true);
+    expect(r.hits[0].filmNotes).toEqual([]);
+  });
+
   describe("mergeFilmNotes", () => {
     it("is empty for no notes, and leaves a lone note as it was", () => {
       expect(mergeFilmNotes([])).toEqual([]);
@@ -1634,6 +1648,96 @@ describe("catalog_search — one entry per reel", () => {
       expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "indexed", "copyLocation", "text"]);
     });
 
+    // The reel key is derived from FILM_FIELDS, so these loop over it: a field
+    // added to the table is a field the key and the entry carry, with no second list.
+    const identity = FILM_FIELDS.map(([key]) => key).filter((key) => key !== "text");
+    const full = (o: CatalogFilmNote = {}): CatalogFilmNote => ({
+      filmNumber: "10",
+      imageGroupNumber: "20",
+      indexed: "Y",
+      copyLocation: "V",
+      text: "t",
+      ...o,
+    });
+
+    it("the reel key is every field of the film-note table but text", () => {
+      expect(identity.length).toBeGreaterThanOrEqual(4);
+      expect(FILM_FIELDS.map(([key]) => key)).toContain("text");
+      for (const key of identity) {
+        const entries = mergeFilmNotes([full(), full({ [key]: "other", text: "u" })]);
+        expect(entries, `a note differing only in ${key}`).toHaveLength(2);
+        // Every field of the table is carried by the entry, none stripped.
+        for (const [carried] of FILM_FIELDS) expect(entries[0], `${carried} on the entry`).toHaveProperty(carried);
+      }
+    });
+
+    it("the reel key cannot run one field into the next: filmNumber 1 with DGS 23 is not filmNumber 12 with DGS 3", () => {
+      for (const [i, key] of identity.slice(0, -1).entries()) {
+        const next = identity[i + 1];
+        const merged = mergeFilmNotes([
+          { [key]: "1", [next]: "23", text: "a" },
+          { [key]: "12", [next]: "3", text: "b" },
+        ]);
+        expect(merged, `${key} then ${next}`).toHaveLength(2);
+        expect(merged.map((e) => e.text)).toEqual(["a", "b"]);
+      }
+    });
+
+    it("a field absent and a field never set are the same reel", () => {
+      const merged = mergeFilmNotes([
+        { filmNumber: "1", text: "a" },
+        { filmNumber: "1", imageGroupNumber: undefined, text: "b" },
+      ]);
+      expect(merged).toEqual([{ filmNumber: "1", text: "a | b" }]);
+    });
+
+    it("a reel whose joined text passes the cap is several entries in a row, each with the reel's fields and whole notes", () => {
+      const texts = Array.from({ length: Math.ceil((3 * REEL_TEXT_CAP) / 300) }, (_, j) => `n${j}:`.padEnd(300, "x"));
+      const entries = mergeFilmNotes(texts.map((text) => full({ text })));
+      expect(entries.length).toBeGreaterThan(1);
+      for (const [i, e] of entries.entries()) {
+        const { text: _t, ...reel } = e;
+        expect(reel).toEqual({ filmNumber: "10", imageGroupNumber: "20", indexed: "Y", copyLocation: "V" });
+        expect((e.text ?? "").length).toBeLessThanOrEqual(REEL_TEXT_CAP);
+        // Each run is as full as it can be: the next note would have passed the cap.
+        const next = entries[i + 1]?.text?.split(" | ")[0];
+        if (next !== undefined) expect((e.text ?? "").length + 3 + next.length).toBeGreaterThan(REEL_TEXT_CAP);
+      }
+      // Nothing is lost and nothing moves: the notes' texts, in their order.
+      expect(entries.flatMap((e) => (e.text ?? "").split(" | "))).toEqual(texts);
+    });
+
+    it("a joined text of exactly the cap is one entry, and one character more is two", () => {
+      const first = Math.floor(REEL_TEXT_CAP / 2);
+      const a = "a".repeat(first);
+      const fits = "b".repeat(REEL_TEXT_CAP - first - 3);
+      expect(mergeFilmNotes([full({ text: a }), full({ text: fits })])).toHaveLength(1);
+      expect(mergeFilmNotes([full({ text: a }), full({ text: `${fits}b` })])).toHaveLength(2);
+    });
+
+    it("a note longer than the cap stands alone, whole, with the notes around it still in order", () => {
+      const huge = "h".repeat(REEL_TEXT_CAP + 500);
+      const entries = mergeFilmNotes([full({ text: "a" }), full({ text: huge }), full({ text: "b" })]);
+      expect(entries.map((e) => e.text)).toEqual(["a", huge, "b"]);
+    });
+
+    it("the entries of a dense reel stay together, ahead of the next reel", () => {
+      const dense = Array.from({ length: Math.ceil((3 * REEL_TEXT_CAP) / 400) }, (_, j) => full({ text: `${j}`.padEnd(400, "x") }));
+      const other = full({ filmNumber: "11", text: "o" });
+      const entries = mergeFilmNotes([dense[0], other, ...dense.slice(1)]);
+      expect(entries.length).toBeGreaterThan(2);
+      // The other reel's note came second, yet its entry comes after every run of the dense one.
+      expect(entries.map((e) => e.filmNumber)).toEqual([...Array(entries.length - 1).fill("10"), "11"]);
+      expect(entries.at(-1)).toEqual(other);
+    });
+
+    it("is idempotent on a dense reel: its runs do not join again", () => {
+      const dense = Array.from({ length: 40 }, (_, j) => full({ text: `${j}:`.padEnd(150 + (j % 7) * 90, "x") }));
+      const once = mergeFilmNotes(dense);
+      expect(once.length).toBeGreaterThan(1);
+      expect(mergeFilmNotes(once)).toEqual(once);
+    });
+
     it("is idempotent, and does not touch its input", () => {
       const input: CatalogFilmNote[] = [
         { filmNumber: "1", text: "a" },
@@ -1647,26 +1751,32 @@ describe("catalog_search — one entry per reel", () => {
     });
   });
 
-  it("on the saved Ireland answer, loses no text and no reel: 76 notes of one hit become one entry per reel", () => {
+  it("on the saved Ireland answer, loses no text and no reel: 76 notes of one hit become entries one reel after another", () => {
     const first = IRELAND.hits[0];
     const original = first.filmNotes ?? [];
     expect(original).toHaveLength(76);
     const merged = mergeFilmNotes(original);
     // The reel, as the rule defines it, counted here independently of the code.
-    const reels = new Set(
-      original.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.indexed ?? null, n.copyLocation ?? null])),
-    );
-    expect(merged).toHaveLength(reels.size);
+    const reelOfNote = (n: CatalogFilmNote): string =>
+      JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.indexed ?? null, n.copyLocation ?? null]);
+    const reels = [...new Set(original.map(reelOfNote))];
     expect(merged.length).toBeLessThan(original.length);
-    // Lossless: every text survives, once, whatever entry it moved to. No note
+    // Every reel is there, its entries sit together, and reels keep the order they first appeared in.
+    const sequence = merged.map(reelOfNote);
+    expect(sequence.filter((k, i) => k !== sequence[i - 1])).toEqual(reels);
+    // Lossless: every text survives, once, in the order its reel had it. No note
     // text contains the separator, so splitting gives the originals back.
     expect(original.every((n) => !n.text?.includes(" | "))).toBe(true);
-    const texts = merged.flatMap((e) => (e.text ?? "").split(" | "));
-    expect([...texts].sort()).toEqual(original.map((n) => n.text ?? "").sort());
-    // Every entry still carries what the plugin reads.
+    for (const reel of reels) {
+      const notes = original.filter((n) => reelOfNote(n) === reel).map((n) => n.text ?? "");
+      const entries = merged.filter((e) => reelOfNote(e) === reel).flatMap((e) => (e.text ?? "").split(" | "));
+      expect(entries).toEqual(notes);
+    }
+    // Every entry still carries what the plugin reads, and none passes the cap.
     for (const e of merged) {
       expect(e.filmNumber).toBeDefined();
       expect(e.imageGroupNumber).toBeDefined();
+      expect((e.text ?? "").length).toBeLessThanOrEqual(REEL_TEXT_CAP);
     }
   });
 });
@@ -1677,9 +1787,9 @@ describe("catalog_search — one entry per reel", () => {
 // agent a preview, and locality-guide has `Read` but no `Bash`, so the hits past
 // the preview were lost. A hydrated item can carry thousands of film notes
 // (`Norway` + `kirkebøker` was 1,476,812 characters), so the film notes are
-// fitted into ANSWER_CHAR_BUDGET: a hit that does not fit lists the first
-// entries that do and says how many it has. Hits are never dropped, and the
-// serialized answer is never truncated.
+// fitted into ANSWER_CHAR_BUDGET: a hit that does not fit lists the entries that
+// do, in the item's order, and says how many it has. The serialized answer is
+// never truncated.
 
 /** What the service would have answered to produce `saved`: the search body and
  *  one item body per hydrated hit, in hit order. `saved` is the tool's own
@@ -1728,6 +1838,18 @@ const reelKeys = (notes: readonly CatalogFilmNote[]): Set<string> =>
     notes.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.indexed ?? null, n.copyLocation ?? null])),
   );
 
+/** `small` is some of `big`'s entries, whole, in `big`'s order. */
+const isSubsequence = (small: readonly CatalogFilmNote[], big: readonly CatalogFilmNote[]): boolean => {
+  let at = 0;
+  for (const entry of small) {
+    const key = JSON.stringify(entry);
+    while (at < big.length && JSON.stringify(big[at]) !== key) at++;
+    if (at === big.length) return false;
+    at++;
+  }
+  return true;
+};
+
 const size = (r: unknown): number => JSON.stringify(r).length;
 
 /** Film notes in the service's shape, one reel (one DGS) each: the `Norway,
@@ -1759,8 +1881,21 @@ function answerWith(count: number, film: object[][]): void {
   );
 }
 
+/** A hydrated hit as the fit sees it, holding these entries already merged. */
+function hitOf(id: string, entries: CatalogFilmNote[], extra: Partial<CatalogHit> = {}): CatalogHit {
+  return { id, title: id, repositoryCalls: [], url: `https://example.test/${id}`, hydrated: true, filmNotes: entries, ...extra };
+}
+
+/** `entryFor` with a text of that length: an entry whose JSON is 124 characters more. */
+const bigEntry = (j: number, textLength: number): CatalogFilmNote => entryFor(j, textLength);
+
+/** An answer around those hits, as the fit sees it. */
+function answerOf(hits: CatalogHit[], hydrateRequested = 10): CatalogSearchResult {
+  return { totalHits: hits.length, returned: hits.length, placeResolved: true, hydrationTimedOut: false, hydrateRequested, hits };
+}
+
 describe("catalog_search — the answer stays under the spill line", () => {
-  it("the budget is the decided 40,000, with margin under the spill line", () => {
+  it("the budget is 40,000, at least 10,000 under the 50,000 spill line", () => {
     // Imported everywhere below, so a changed constant would keep every other
     // assertion here true; this one pins the value itself.
     expect(ANSWER_CHAR_BUDGET).toBe(40_000);
@@ -1807,7 +1942,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(r.hits[0].filmNotes?.[0]).toMatchObject({ filmNumber: "1701904", imageGroupNumber: "8100253" });
   });
 
-  it("on that call only the giant at rank 1 is cut, and it says how much and how to get the rest", async () => {
+  it("on that call only the giant at rank 1 is cut: it lists entries of its own in the item's order, keeps every reel's numbers, and says how much and how to get the rest", async () => {
     const { search, items } = upstreamFor(IRELAND);
     respond(search, ...items);
     const r = await catalogSearchTool({ standardPlace: "Ireland", keywords: "Catholic parish registers baptism marriage" }, LOCAL);
@@ -1816,15 +1951,26 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(cut.map((h) => h.id)).toEqual(["koha:449751"]);
     const giant = cut[0];
     const entries = mergeFilmNotes(IRELAND.hits[0].filmNotes ?? []);
-    expect(giant.filmNotesTotal).toBe(reelKeys(IRELAND.hits[0].filmNotes ?? []).size);
+    const listed = giant.filmNotes ?? [];
+    // The unit is the entry, and a dense reel is several of them.
     expect(giant.filmNotesTotal).toBe(entries.length);
-    expect(giant.filmNotes?.length).toBeGreaterThan(0);
-    expect(giant.filmNotes?.length).toBeLessThan(entries.length);
-    // What is listed is the FIRST entries, in order.
-    expect(giant.filmNotes).toEqual(entries.slice(0, giant.filmNotes?.length));
-    expect(giant.filmNotesHint).toContain(`${giant.filmNotes?.length} of ${entries.length} film-note entries are listed`);
-    expect(giant.filmNotesHint).toContain("hydrate fewer hits");
+    expect(entries.length).toBeGreaterThan(reelKeys(IRELAND.hits[0].filmNotes ?? []).size);
+    expect(listed.length).toBeGreaterThan(0);
+    expect(listed.length).toBeLessThan(entries.length);
+    // What is listed is some of the item's entries, whole, in the item's order.
+    expect(isSubsequence(listed, entries)).toBe(true);
+    // No reel loses its numbers while another keeps more text: all seven reels
+    // are listed, including the last two that a list ending at the first entry
+    // that did not fit used to lose, with the DGS image_search is handed.
+    expect(reelKeys(entries).size).toBe(7);
+    expect(reelKeys(listed)).toEqual(reelKeys(entries));
+    for (const dgs of ["8100258", "8098556"]) expect(JSON.stringify(r)).toContain(`"imageGroupNumber":"${dgs}"`);
+    // The hint says how many are listed, and the way back that can work for a hit
+    // at rank 1 of a call that hydrated ten: one hydrate away.
+    expect(giant.filmNotesHint).toContain(`${listed.length} of ${entries.length} film-note entries are listed`);
+    expect(giant.filmNotesHint).toContain("call again with hydrate: 1");
     expect(giant.filmNotesHint).toContain("keywords that name this item");
+    expect(giant.filmNotesHint).not.toContain("hydrate fewer");
     // The hit's url is the Catalog's item record (401 without a token): not a way back.
     expect(giant.url).toBeTruthy();
     expect(giant.filmNotesHint).not.toContain(giant.url as string);
@@ -1905,7 +2051,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
     });
   });
 
-  describe("the room is shared smallest need first", () => {
+  describe("the room is shared smallest demand first", () => {
     it("a hit that needs less than an equal share is listed whole, and what it leaves goes to the giant", async () => {
       // Eight small hits, one mid-size (12 entries of about 1 KB) and a giant
       // (100 of them), with about 34,000 characters of room. An equal share
@@ -1932,6 +2078,25 @@ describe("catalog_search — the answer stays under the spill line", () => {
       expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
       // And the budget is used, not left on the table.
       expect(size(r)).toBeGreaterThan(ANSWER_CHAR_BUDGET - 1500);
+    });
+
+    it("what a cut hit leaves unused goes on to the hits after it", () => {
+      // `a` asks for less than `b` and is cut anyway: its second entry cannot fit
+      // its offer, so it lists only the first and leaves the offer unused. That
+      // room is `b`'s. Charging `a` its whole offer would leave `b` about half.
+      const a = hitOf("a", [bigEntry(0, 100), bigEntry(1, 3_000)]);
+      const b = hitOf("b", Array.from({ length: 10 }, (_, j) => bigEntry(10 + j, 800)));
+      const r = answerOf([a, b]);
+      const base = size({ ...r, hits: r.hits.map((h) => ({ ...h, filmNotes: [] })) });
+      // The two floors and about 5,000 characters of surplus.
+      const budget = base + 6_600;
+      fitFilmNotes(r, budget);
+      expect(r.hits[0].filmNotes).toEqual([bigEntry(0, 100)]);
+      expect(r.hits[0].filmNotesTotal).toBe(2);
+      expect(r.hits[1].filmNotesTotal).toBe(10);
+      // The budget is used to within one entry of `b`.
+      expect(size(r)).toBeLessThanOrEqual(budget);
+      expect(budget - size(r)).toBeLessThan(size(bigEntry(10, 800)));
     });
 
     it("a giant at rank 1 does not starve the small hits behind it", async () => {
@@ -1988,7 +2153,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
       const short = fresh();
       fitFilmNotes(short, base + 2 * need - 1);
       expect(short.hits.some((h) => h.filmNotesTotal !== undefined)).toBe(true);
-      expect(size(short)).toBeLessThanOrEqual(base + 2 * need - 1 + 400);
+      expect(size(short)).toBeLessThanOrEqual(base + 2 * need - 1);
     });
 
     it("keeps at least one entry of every cut-short hit when the rest of the answer already exceeds the budget", () => {
@@ -2013,13 +2178,15 @@ describe("catalog_search — the answer stays under the spill line", () => {
       }
     });
 
-    it("says nothing about a hit it did not cut, and a hit with no url gets the same hint", () => {
+    it("says nothing about a hit it did not cut, and a hit with no url is offered only the keywords", () => {
       const r = answer(hitWith("a", 3), hitWith("b", 90, false));
       fitFilmNotes(r, 6_000);
       expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");
       expect(r.hits[0]).not.toHaveProperty("filmNotesHint");
       expect(r.hits[1].filmNotesTotal).toBe(90);
       expect(r.hits[1].filmNotesHint).toMatch(/^\d+ of 90 film-note entries are listed/);
+      expect(r.hits[1].filmNotesHint).toContain("search with keywords that name this item");
+      expect(r.hits[1].filmNotesHint).not.toMatch(/hydrate/i);
       expect(r.hits[1].filmNotesHint).not.toContain("catalog entry");
       expect(r.hits[1].filmNotesHint).not.toContain("\n");
     });
@@ -2054,17 +2221,476 @@ describe("catalog_search — the answer stays under the spill line", () => {
       expect(twice.hits[0].filmNotesHint).toBe(once.hits[0].filmNotesHint);
     });
 
-    it("lists a single huge entry whole and does not call it cut, and it costs the small hit beside it nothing", () => {
-      // Smallest need first, so the huge entry is settled last: the small hit has
-      // already taken what it needs, and the entry that cannot be cut by listing
-      // fewer of them goes over the budget alone.
+    it("lists a single huge entry whole and does not call it cut; no allocation fits, so the hit beside it is listed at its floor", () => {
+      // The entry cannot be cut by listing fewer of them, and at 60,000 it is
+      // over the budget alone. Nothing within the budget exists, so the hit
+      // beside it ends at its floor too: one entry of three, the cheapest cut.
       const huge: CatalogFilmNote = { filmNumber: "1", imageGroupNumber: "2", text: "t".repeat(60_000) };
       const r = answer({ ...hitWith("a", 0), filmNotes: [huge] }, hitWith("b", 3));
       fitFilmNotes(r);
       expect(r.hits[0].filmNotes).toEqual([huge]);
       expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");
-      expect(r.hits[1].filmNotes).toEqual(entries(3));
+      expect(r.hits[1].filmNotes).toEqual(entries(1));
+      expect(r.hits[1].filmNotesTotal).toBe(3);
+      expect(size(r)).toBeGreaterThan(ANSWER_CHAR_BUDGET);
+    });
+
+    it("lists a single huge entry whole when nothing else is competing: the answer is over the budget by that entry alone", () => {
+      const huge: CatalogFilmNote = { filmNumber: "1", imageGroupNumber: "2", text: "t".repeat(60_000) };
+      const r = answer({ ...hitWith("a", 0), filmNotes: [huge] });
+      fitFilmNotes(r);
+      expect(r.hits[0].filmNotes).toEqual([huge]);
+      expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");
+    });
+  });
+
+  describe("every hit's floor is reserved before the surplus is shared", () => {
+    it("a first entry too big to fit beside another hit does not push the answer over the budget", () => {
+      // X: a 30,000-character first entry, then two small ones. Y: three of 6,000.
+      // Settling Y whole first and then keeping X's first entry whatever it
+      // costs ended near 49,000, and shaping that again cut Y.
+      const x = hitOf("x", [bigEntry(0, 30_000), bigEntry(1, 100), bigEntry(2, 100)]);
+      const y = hitOf("y", [bigEntry(10, 6_000), bigEntry(11, 6_000), bigEntry(12, 6_000)]);
+      const r = answerOf([x, y]);
+      fitFilmNotes(r);
+      expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
+      // Y keeps all three; X lists the two it can, skipping the one it cannot.
+      expect(r.hits[1].filmNotes).toEqual([bigEntry(10, 6_000), bigEntry(11, 6_000), bigEntry(12, 6_000)]);
       expect(r.hits[1]).not.toHaveProperty("filmNotesTotal");
+      expect(r.hits[0].filmNotes).toEqual([bigEntry(1, 100), bigEntry(2, 100)]);
+      expect(r.hits[0].filmNotesTotal).toBe(3);
+      // And that is a fixed point.
+      const again = structuredClone(r);
+      fitFilmNotes(again);
+      expect(again).toEqual(r);
+    });
+
+    it("a lone 38,000-character entry beside a 15,000-character hit ends under the spill line, by cutting the hit", () => {
+      const a = hitOf("a", [bigEntry(0, 5_000), bigEntry(1, 5_000), bigEntry(2, 5_000)]);
+      const b = hitOf("b", [bigEntry(9, 38_000)]);
+      const r = answerOf([a, b]);
+      fitFilmNotes(r);
+      expect(size(r)).toBeLessThan(CLI_SPILL_CHARS);
+      // The entry that cannot be cut is listed whole and is not called cut.
+      expect(r.hits[1].filmNotes).toEqual([bigEntry(9, 38_000)]);
+      expect(r.hits[1]).not.toHaveProperty("filmNotesTotal");
+      // The hit beside it pays: one entry of three, and it says so.
+      expect(r.hits[0].filmNotes).toHaveLength(1);
+      expect(r.hits[0].filmNotesTotal).toBe(3);
+    });
+
+    it("the floor of a hit is its whole list when that costs no more than its cheapest cut, and the cheapest cut when it costs more", () => {
+      // Two entries of about 150 characters: whole they cost about 300, and a cut
+      // to one entry costs 150 plus the two fields, which is more.
+      const small = hitOf("s", [bigEntry(0, 27), bigEntry(1, 27)]);
+      // Three of about 725: whole about 2,200, and a cut to one costs 725 plus the fields.
+      const mid = hitOf("m", [bigEntry(5, 600), bigEntry(6, 600), bigEntry(7, 600)]);
+      const r = answerOf([small, mid]);
+      const expected = answerOf([
+        { ...small },
+        { ...mid, filmNotes: [bigEntry(5, 600)], filmNotesTotal: 3, filmNotesHint: filmNotesHint(1, 3, 2) },
+      ]);
+      // A budget of nothing: no allocation fits, so every hit ends at its floor.
+      fitFilmNotes(r, 0);
+      expect(r).toEqual(expected);
+    });
+  });
+
+  describe("shaping what was shaped changes nothing", () => {
+    it("on the shapes that used to move: a first entry kept whatever it cost, and a hit list that grew with the count", () => {
+      const cases: CatalogSearchResult[] = [];
+      // X and Y, and a lone big entry behind a small hit.
+      cases.push(answerOf([hitOf("x", [bigEntry(0, 30_000), bigEntry(1, 100), bigEntry(2, 100)]), hitOf("y", [bigEntry(10, 6_000), bigEntry(11, 6_000), bigEntry(12, 6_000)])]));
+      cases.push(answerOf([hitOf("a", [bigEntry(0, 5_000), bigEntry(1, 5_000), bigEntry(2, 5_000)]), hitOf("b", [bigEntry(9, 38_000)])]));
+      // A small hit and a giant whose first entry is big, beside a hit that takes nearly all the budget.
+      for (const pad of [38_000, 38_500, 39_000, 39_400]) {
+        cases.push(
+          answerOf([
+            hitOf("h1", [bigEntry(0, 60), bigEntry(1, 60), bigEntry(2, 60)]),
+            hitOf("h2", [bigEntry(10, 1_500), ...Array.from({ length: 50 }, (_, j) => bigEntry(11 + j, 60))]),
+            { id: "pad", title: "U".repeat(pad), repositoryCalls: [], hydrated: false },
+          ]),
+        );
+      }
+      // The saved Ireland answer padded with more of its own unhydrated hits, up to count 200.
+      for (const count of [25, 50, 75, 86, 88, 90, 92, 96, 100, 150, 200]) {
+        const padded = structuredClone(IRELAND);
+        const bare = padded.hits.filter((h) => !h.hydrated);
+        for (let k = 0; padded.hits.length < count; k++) padded.hits.push({ ...structuredClone(bare[k % bare.length]), id: `pad:${k}` });
+        padded.returned = padded.hits.length;
+        cases.push(padded);
+      }
+      for (const [i, a] of cases.entries()) {
+        const once = shapeAnswer(structuredClone(a));
+        expect(shapeAnswer(structuredClone(once)), `case ${i}`).toEqual(once);
+      }
+    });
+  });
+
+  describe("a cut never costs as much as listing the hit whole", () => {
+    it("ten hits of two 150-character entries, each offered 250 characters, are all listed whole", () => {
+      // Whole, a hit costs 301. Cut to one entry it costs 150 plus the two
+      // fields, which is more: the answer used to grow by about 440 characters
+      // and every hit lost an entry.
+      const make = () =>
+        answerOf(Array.from({ length: 10 }, (_, i) => hitOf(`h${i}`, [bigEntry(i * 2, 27), bigEntry(i * 2 + 1, 27)])));
+      const before = make();
+      const base = size({ ...before, hits: before.hits.map((h) => ({ ...h, filmNotes: [] })) });
+      const r = make();
+      fitFilmNotes(r, base + 10 * 250);
+      expect(r).toEqual(before);
+      expect(size(r)).toBeLessThanOrEqual(size(before));
+    });
+
+    it("on saved answers padded to count 100, no cut hit is bigger than the same hit whole", () => {
+      for (const saved of [IRELAND]) {
+        const padded = structuredClone(saved);
+        const bare = padded.hits.filter((h) => !h.hydrated);
+        for (let k = 0; padded.hits.length < 100; k++) padded.hits.push({ ...structuredClone(bare[k % bare.length]), id: `pad:${k}` });
+        padded.returned = padded.hits.length;
+        const whole = padded.hits.map((h) => ({ ...h, filmNotes: h.filmNotes ? mergeFilmNotes(h.filmNotes) : undefined }));
+        const shaped = shapeAnswer(structuredClone(padded));
+        for (const [i, h] of shaped.hits.entries()) {
+          if (h.filmNotesTotal === undefined) continue;
+          expect(size(h)).toBeLessThan(size(whole[i]));
+        }
+      }
+    });
+  });
+
+  describe("a cut lists every entry that fits, and the first entry of every reel before any reel's later ones", () => {
+    it("skips an entry that does not fit and goes on listing the ones after it", () => {
+      const g = hitOf("g", [bigEntry(0, 100), bigEntry(1, 30_000), bigEntry(2, 100), bigEntry(3, 100)]);
+      const r = answerOf([g]);
+      fitFilmNotes(r, 2_000);
+      expect(r.hits[0].filmNotes).toEqual([bigEntry(0, 100), bigEntry(2, 100), bigEntry(3, 100)]);
+      expect(r.hits[0].filmNotesTotal).toBe(4);
+      expect(r.hits[0].filmNotesHint).toMatch(/^3 of 4 film-note entries are listed/);
+      expect(size(r)).toBeLessThanOrEqual(2_000);
+    });
+
+    it("tries the first entry of every reel before a reel's later entries", () => {
+      // Reel A has three entries (a dense reel), reel B one. Room for two: listing
+      // in order would give A's first two and lose B's numbers altogether.
+      const e = (reel: string, j: number): CatalogFilmNote => ({
+        filmNumber: reel,
+        imageGroupNumber: `${reel}0`,
+        text: `${j}:`.padEnd(1_000, "x"),
+      });
+      const hitAB = hitOf("ab", [e("1", 0), e("1", 1), e("1", 2), e("2", 3)]);
+      const wanted = { ...hitAB, filmNotes: [e("1", 0), e("2", 3)], filmNotesTotal: 4, filmNotesHint: filmNotesHint(2, 4, undefined) };
+      const r = answerOf([hitAB], 1);
+      fitFilmNotes(r, size(answerOf([wanted], 1)));
+      expect(r.hits[0].filmNotes).toEqual([e("1", 0), e("2", 3)]);
+      expect(r.hits[0].filmNotesTotal).toBe(4);
+    });
+
+    it("lists a reel by a later entry when its first does not fit", () => {
+      const e = (reel: string, j: number, len: number): CatalogFilmNote => ({
+        filmNumber: reel,
+        imageGroupNumber: `${reel}0`,
+        text: `${j}:`.padEnd(len, "x"),
+      });
+      const h = hitOf("h", [e("1", 0, 100), e("2", 1, 30_000), e("2", 2, 100)]);
+      const r = answerOf([h], 1);
+      fitFilmNotes(r, 2_000);
+      expect(r.hits[0].filmNotes).toEqual([e("1", 0, 100), e("2", 2, 100)]);
+    });
+
+    it("lists some of the entries, whole, in the item's order", () => {
+      const original = Array.from({ length: 12 }, (_, j) => bigEntry(j, 40 + 90 * (j % 5)));
+      const r = answerOf([hitOf("g", structuredClone(original))]);
+      fitFilmNotes(r, 2_500);
+      const listed = r.hits[0].filmNotes ?? [];
+      expect(listed.length).toBeGreaterThan(1);
+      expect(listed.length).toBeLessThan(12);
+      expect(isSubsequence(listed, original)).toBe(true);
+      expect(size(r)).toBeLessThanOrEqual(2_500);
+    });
+  });
+
+  describe("the hint offers only a way back that can work", () => {
+    const keywordsWay = "search with keywords that name this item";
+
+    it("names the hydrate value that reaches the hit only when one is given, and always the keywords", () => {
+      expect(filmNotesHint(3, 40)).toBe(
+        `3 of 40 film-note entries are listed, to keep this answer under the size limit. For the rest, ${keywordsWay}.`,
+      );
+      expect(filmNotesHint(3, 40, 2)).toBe(
+        "3 of 40 film-note entries are listed, to keep this answer under the size limit. " +
+          `For the rest, call again with hydrate: 2, or ${keywordsWay}.`,
+      );
+    });
+
+    it("at hydrate 1 never says to hydrate fewer: there is nothing fewer", async () => {
+      answerWith(3, [reels(1804)]);
+      const r = await catalogSearchTool({ standardPlace: "Norway", keywords: "kirkebøker", hydrate: 1 }, LOCAL);
+      expect(r.hits[0].filmNotesTotal).toBe(1804);
+      expect(r.hits[0].filmNotesHint).toContain(keywordsWay);
+      expect(r.hits[0].filmNotesHint).not.toMatch(/hydrate/i);
+    });
+
+    it("a giant at rank 2 of a call that hydrated ten is told to call again with hydrate 2", async () => {
+      // `hydrate` is a prefix count: 2 reaches the giant and leaves the hits below it unhydrated.
+      answerWith(5, [reels(2), reels(1804), reels(2), reels(2), reels(2)]);
+      const r = await catalogSearchTool({ standardPlace: "Norway", keywords: "kirkebøker" }, LOCAL);
+      expect(r.hits[1].filmNotesTotal).toBe(1804);
+      expect(r.hits[1].filmNotesHint).toContain("call again with hydrate: 2");
+      expect(r.hits[1].filmNotesHint).toContain(keywordsWay);
+      expect(r.hits[1].filmNotesHint).not.toContain("hydrate fewer");
+    });
+
+    it("a giant at the last rank a call hydrated is offered only the keywords: a smaller hydrate would un-hydrate it", async () => {
+      answerWith(5, [reels(2), reels(2), reels(1804)]);
+      const r = await catalogSearchTool({ standardPlace: "Norway", keywords: "kirkebøker", hydrate: 3 }, LOCAL);
+      expect(r.hits[2].filmNotesTotal).toBe(1804);
+      expect(r.hits[2].filmNotesHint).toContain(keywordsWay);
+      expect(r.hits[2].filmNotesHint).not.toMatch(/hydrate/i);
+    });
+
+    it("the position that counts is among the hits that carry a url: an off-host hit above does not move it", async () => {
+      // `hydrate` reaches the first N hits with a usable url. The giant is second
+      // in the list and first among those, so hydrate 1 reaches it.
+      const elsewhere = { metadataHit: { metadata: { title: [{ value: "elsewhere" }], identifier: { value: "https://example.test/x" }, repositoryCalls: [] } } };
+      respond(
+        { totalHits: 4, searchHits: [elsewhere, hit("olib:1"), hit("olib:2")] },
+        { source: { film_note: reels(1804) } },
+        { source: { film_note: reels(2) } },
+      );
+      const r = await catalogSearchTool({ standardPlace: "Norway", keywords: "kirkebøker" }, LOCAL);
+      expect(r.hits[0].hydrated).toBe(false);
+      expect(r.hits[1].filmNotesTotal).toBe(1804);
+      expect(r.hits[1].filmNotesHint).toContain("call again with hydrate: 1");
+    });
+
+    it("a hit with no url is offered only the keywords", () => {
+      const r = answerOf([hitOf("a", Array.from({ length: 90 }, (_, j) => bigEntry(j, 60)), { url: undefined })]);
+      fitFilmNotes(r, 6_000);
+      expect(r.hits[0].filmNotesTotal).toBe(90);
+      expect(r.hits[0].filmNotesHint).toContain(keywordsWay);
+      expect(r.hits[0].filmNotesHint).not.toMatch(/hydrate/i);
+    });
+  });
+
+  describe("a dense reel", () => {
+    it("720 notes on one reel, at the default count, come back within the budget and say what was left out", async () => {
+      // One reel joined into one entry was 50,033 characters at count 25, past the
+      // spill line, with no total and no hint, since nothing could cut a lone entry.
+      const notes = Array.from({ length: 720 }, (_, j) => note({ text: `Item ${j}: Kirchenbuch, 1700-1800, Taufen, Heiraten, Tote` }));
+      answerWith(25, [notes]);
+      const r = await catalogSearchTool({ standardPlace: "Germany", keywords: "kirchenbücher" }, LOCAL);
+      expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
+      expect(size(r)).toBeLessThan(CLI_SPILL_CHARS);
+      const h = r.hits[0];
+      const listed = h.filmNotes ?? [];
+      expect(h.filmNotesTotal).toBeGreaterThan(listed.length);
+      expect(h.filmNotesHint).toMatch(new RegExp(`^${listed.length} of ${h.filmNotesTotal} film-note entries are listed`));
+      for (const e of listed) {
+        expect(e).toMatchObject({ filmNumber: "100", imageGroupNumber: "900", indexed: "Y" });
+        expect((e.text ?? "").length).toBeLessThanOrEqual(REEL_TEXT_CAP);
+      }
+      // Whole notes only: every entry's text splits back into notes the Catalog sent.
+      const sent = new Set(notes.map((n) => n.text));
+      for (const e of listed) for (const text of (e.text ?? "").split(" | ")) expect(sent.has(text)).toBe(true);
+    });
+  });
+
+  describe("over random answers", () => {
+    // Examples show that the fit does what its author expected. These ask whether
+    // it does something else on answers nobody wrote. Every case is drawn from a
+    // seeded generator, so a failure names the seed that replays it.
+    const CASES = 300;
+
+    /** mulberry32: a small seeded generator. */
+    function seeded(seed: number): () => number {
+      let a = seed >>> 0;
+      return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = Math.imul(a ^ (a >>> 15), a | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const TEXT_LENGTHS = [0, 8, 40, 150, 400, 1_200, 3_000, 9_000];
+
+    /** A random answer: hits with notes and hits without, entries of every size. With `raw`, film notes as the
+     *  service sends them (several to a reel); without, one note per reel, so merging changes nothing. */
+    function randomAnswer(
+      rand: () => number,
+      shape: { hits: number; entries: number; raw: boolean },
+    ): CatalogSearchResult {
+      const int = (lo: number, hi: number): number => lo + Math.floor(rand() * (hi - lo + 1));
+      const hits: CatalogHit[] = [];
+      for (let i = 0; i < shape.hits; i++) {
+        const hasUrl = rand() < 0.9;
+        const hydrated = hasUrl && rand() < 0.8;
+        const h: CatalogHit = {
+          id: `h${i}`,
+          title: "t".repeat(int(1, 120)),
+          repositoryCalls: rand() < 0.5 ? ["Online"] : [],
+          ...(hasUrl ? { url: `https://example.test/h${i}` } : {}),
+          hydrated,
+        };
+        if (hydrated) {
+          if (rand() < 0.3) h.notes = ["n".repeat(int(1, 300))];
+          const n = rand() < 0.1 ? 0 : int(1, shape.entries);
+          h.filmNotes = Array.from({ length: n }, (_, j) => {
+            const reel = shape.raw ? int(0, Math.floor(n / 3)) : j;
+            const length = TEXT_LENGTHS[int(0, TEXT_LENGTHS.length - 1)];
+            return {
+              filmNumber: String(100 + reel),
+              imageGroupNumber: String(900 + reel),
+              indexed: "Y",
+              copyLocation: "Vault",
+              ...(length > 0 ? { text: `${j}:`.padEnd(Math.max(length, 3), "x") } : {}),
+            };
+          });
+        }
+        hits.push(h);
+      }
+      return answerOf(hits, int(1, 25));
+    }
+
+    /** The `hydrate` value that reaches a hit, when it is fewer than the call used. */
+    function reachedBy(r: CatalogSearchResult, h: CatalogHit): number | undefined {
+      if (!h.url) return undefined;
+      const position = r.hits.slice(0, r.hits.indexOf(h) + 1).filter((x) => x.url).length;
+      return position < r.hydrateRequested ? position : undefined;
+    }
+
+    /** What listing the entries at `pick` of a hit's `costs` adds to its hit: the entries, their commas, and, unless
+     *  they are all of them, the two fields a cut adds. Counted from the JSON of those two fields. */
+    function listCost(costs: number[], pick: number[], way: number | undefined): number {
+      const entries = pick.reduce((a, k) => a + costs[k], 0) + pick.length - 1;
+      if (pick.length === costs.length) return entries;
+      const fields = size({ filmNotesTotal: costs.length, filmNotesHint: filmNotesHint(pick.length, costs.length, way) });
+      return entries + fields - 1;
+    }
+
+    /** The least a hit's list can cost, found by trying every non-empty subset of its entries. */
+    function cheapestList(costs: number[], way: number | undefined): number {
+      let best = Infinity;
+      for (let mask = 1; mask < 1 << costs.length; mask++) {
+        const pick = costs.map((_, k) => k).filter((k) => mask & (1 << k));
+        best = Math.min(best, listCost(costs, pick, way));
+      }
+      return best;
+    }
+
+    const carriesList = (h: CatalogHit): boolean => (h.filmNotes?.length ?? 0) > 0;
+    const costsOf = (entries: CatalogFilmNote[]): number[] => entries.map((e) => size(e));
+    /** The answer with every film-note list emptied and no cut field: what the lists have to fit around. */
+    const baseOf = (r: CatalogSearchResult): number =>
+      size({
+        ...r,
+        hits: r.hits.map((h) => {
+          const { filmNotesTotal: _t, filmNotesHint: _h, ...rest } = h;
+          return carriesList(h) ? { ...rest, filmNotes: [] } : rest;
+        }),
+      });
+
+    it("ends within the budget whenever an allocation within it exists, and otherwise at the least it can be", () => {
+      for (let seed = 1; seed <= CASES; seed++) {
+        const rand = seeded(seed);
+        const a = randomAnswer(rand, { hits: 1 + Math.floor(rand() * 6), entries: 7, raw: false });
+        // Brute force: the cheapest list of every hit, found by trying all of its subsets.
+        const least =
+          baseOf(a) +
+          a.hits.filter(carriesList).reduce((sum, h) => sum + cheapestList(costsOf(h.filmNotes ?? []), reachedBy(a, h)), 0);
+        const whole = size(a);
+        for (const budget of [least - 1, least, least + 1, Math.floor((least + whole) / 2), whole - 1, whole]) {
+          const shaped = shapeAnswer(structuredClone(a), budget);
+          const message = `seed ${seed}, budget ${budget} (least ${least}, whole ${whole})`;
+          if (least <= budget) expect(size(shaped), message).toBeLessThanOrEqual(budget);
+          else expect(size(shaped), message).toBe(least);
+          // An answer that fits is left exactly as it came.
+          if (whole <= budget) expect(shaped, message).toEqual(a);
+          expect(shaped.hits, message).toHaveLength(a.hits.length);
+        }
+      }
+    });
+
+    it("is idempotent, lists whole entries of its own in order, counts every character, and never cuts a hit into something bigger", () => {
+      for (let seed = 1; seed <= CASES; seed++) {
+        const rand = seeded(10_000 + seed);
+        const a = randomAnswer(rand, {
+          hits: 1 + Math.floor(rand() * 30),
+          entries: 1 + Math.floor(rand() * 60),
+          raw: rand() < 0.6,
+        });
+        const merged = structuredClone(a);
+        for (const h of merged.hits) if (h.filmNotes) h.filmNotes = mergeFilmNotes(h.filmNotes);
+        const whole = size(merged);
+        const budget = rand() < 0.2 ? ANSWER_CHAR_BUDGET : Math.max(50, Math.floor(whole * (0.05 + rand() * 1.1)));
+        const shaped = shapeAnswer(structuredClone(a), budget);
+        const message = `seed ${seed}, budget ${budget}`;
+
+        // Idempotent: shaping what was shaped changes nothing.
+        expect(shapeAnswer(structuredClone(shaped), budget), message).toEqual(shaped);
+        // And an answer that fits, merged, is left exactly so.
+        if (whole <= budget) expect(shaped, message).toEqual(merged);
+
+        let added = 0;
+        for (const [i, h] of shaped.hits.entries()) {
+          const was = merged.hits[i];
+          const { filmNotes: _f, filmNotesTotal: _t, filmNotesHint: _h, ...rest } = h;
+          const { filmNotes: _wf, ...restWas } = was;
+          expect(rest, message).toEqual(restWas);
+          if (!carriesList(was)) {
+            expect(h.filmNotes, message).toEqual(was.filmNotes);
+            expect(h, message).not.toHaveProperty("filmNotesTotal");
+            continue;
+          }
+          const entries = was.filmNotes ?? [];
+          const listed = h.filmNotes ?? [];
+          const costs = costsOf(entries);
+          const way = reachedBy(shaped, h);
+          if (h.filmNotesTotal === undefined) {
+            expect(listed, message).toEqual(entries);
+            expect(h, message).not.toHaveProperty("filmNotesHint");
+            added += listCost(costs, costs.map((_, k) => k), way);
+            continue;
+          }
+          // Cut: some of the item's entries, whole, in its order, never none and never all.
+          expect(h.filmNotesTotal, message).toBe(entries.length);
+          expect(listed.length, message).toBeGreaterThan(0);
+          expect(listed.length, message).toBeLessThan(entries.length);
+          expect(isSubsequence(listed, entries), message).toBe(true);
+          expect(h.filmNotesHint, message).toBe(filmNotesHint(listed.length, entries.length, way));
+          const picked: number[] = [];
+          let at = 0;
+          for (const e of listed) {
+            while (JSON.stringify(entries[at]) !== JSON.stringify(e)) at++;
+            picked.push(at++);
+          }
+          const cost = listCost(costs, picked, way);
+          // A cut costs less than the whole list.
+          expect(cost, message).toBeLessThan(listCost(costs, costs.map((_, k) => k), way));
+          added += cost;
+        }
+        // Every character is counted: the answer is its base plus what the lists cost.
+        expect(size(shaped), message).toBe(baseOf(shaped) + added);
+      }
+    });
+
+    it("merging is idempotent and loses no text, on random reels of every density", () => {
+      for (let seed = 1; seed <= CASES; seed++) {
+        const rand = seeded(20_000 + seed);
+        const a = randomAnswer(rand, { hits: 3, entries: 80, raw: true });
+        for (const h of a.hits) {
+          const notes = h.filmNotes ?? [];
+          const once = mergeFilmNotes(notes);
+          expect(mergeFilmNotes(once), `seed ${seed}`).toEqual(once);
+          expect(once.flatMap((e) => (e.text ?? "").split(" | ")).filter(Boolean).sort(), `seed ${seed}`).toEqual(
+            notes.map((n) => n.text ?? "").filter(Boolean).sort(),
+          );
+          for (const e of once) {
+            // A run is over the cap only when it is one note.
+            if ((e.text ?? "").length > REEL_TEXT_CAP) expect((e.text ?? "").includes(" | "), `seed ${seed}`).toBe(false);
+          }
+        }
+      }
     });
   });
 
