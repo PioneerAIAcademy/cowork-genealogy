@@ -186,7 +186,8 @@ the system, has never been audited.
 
 **None — convention only.** No lint detects a cross-turn invariant written as
 prose. The check is review. Both gates once flagged here have since moved out of
-prose and into the tool: the **mentor gate** as a refusal (PR #1685), and the
+prose and into the tool: the **mentor gate** as a refusal (PR #1685; since
+removed with gps-mentor off the default path, issue #2951), and the
 **tree-encoding gate** as a warning that diffs the final tree against a
 write-once opening-tree baseline (issue #1490) — warn-only, not a refusal, per
 the 2026-08-24 no-override ruling.

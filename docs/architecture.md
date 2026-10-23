@@ -565,7 +565,7 @@ agents.**
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses run the hosted CLI, 2.1.294). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
@@ -800,6 +800,11 @@ tool it holds — "Give an agent a new tool", §5). Register it in the worker's
 what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
 agent trips". Then run `make agent-smoke` (§8) — its registration arm now runs
 in CI (`server-tests.yml`, keyless), but its dead-stub arm does not.
+A new agent is a new hand-off option for `research`, but nothing stales
+`research`'s run log over it: the snapshot fingerprints the frontmatter of the
+agents it **lists**, and a new file is not listed until the next run. Run
+`make eval-skill SKILL=research` yourself when the new agent's `description`
+could pull a routing test toward it.
 
 ---
 
@@ -954,6 +959,26 @@ they have different fixes, and only one of them is a description problem.
    that corpus, and **refuses to run** when that set has no positives (it used to
    report a pass without scoring anything). It makes real paid model calls, is not
    in CI, and only *proposes* text you then apply by hand.
+
+   **`make optimize-skill` reaches exactly one of the 32 routing targets.**
+   `build_eval_set.py --skill <name>` exits `ERROR: no skill` unless
+   `plugin/skills/<name>/` exists, so it cannot be pointed at `agents/<name>.md`;
+   of the two skill directories left, only `research` has trigger queries. Its
+   runner credits a trigger only on a `Skill` or `Read` call naming the target
+   and returns *not triggered* on any other tool, an `Agent` spawn included, so
+   pointing it at an agent would score every correct hand-off as a miss.
+
+   **The instrument for an agent is a routing negative**, not the optimizer: a
+   test with a `user_message`, no `grade_on_invariant`, and a
+   `negative.correct_skill` naming the agent asserts that the utterance routes
+   there, and the harness resolves an agent file as a valid target.
+   **No agent carries one today.** All 18 committed negatives that name an agent
+   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
+   routing branch, so the verdict is the tag-gated invariant validator alone and
+   the hand-off is never checked. A miss against any agent is therefore
+   unmeasured, not evidence about its description. Add the missed utterance as
+   such a negative first, and diagnose the delegation before editing any
+   description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
@@ -1037,8 +1062,8 @@ bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
-probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165,
-same result): under `bypassPermissions` **both**
+probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165
+and 2026-10-22 on 2.1.308 / SDK 0.2.172, same result): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
 `research_append`, and its deny restated that rather than being the last line.
@@ -1218,11 +1243,11 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`), and despite this section's name it enforces **three**
++ `guard_project_files.py`), and despite this section's name it enforces **four**
 rules, not one. Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — wider than
-the file-write tools, because two of the three rules act on `research_append`
-itself:
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — wider
+than the file-write tools, because two rules act on `research_append` itself and
+one on the delegation tools:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
    `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
@@ -1245,6 +1270,9 @@ itself:
    `research_append` writing *outside* its own set (a test requires the lane),
    added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
+4. **No fork subagents.** Denies `Agent` / `Task` with `subagent_type: "fork"`
+   (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
+   deny is what reaches Cowork.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
 the one thing no `tools:` list can express.** The deny message names the
