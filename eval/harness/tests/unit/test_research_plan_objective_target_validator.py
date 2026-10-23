@@ -230,6 +230,13 @@ def test_held_certificate_passes_when_it_leads_under_any_place_spelling(juris):
     check_target_leads({}, after, HELD)
 
 
+def test_held_certificate_passes_when_filed_as_other():
+    """Reading a document the user holds is not a record search, so `other`
+    is a fair `record_type` for it."""
+    after = _state([_cert(1, rtype="other"), _item(2, "census", "Chicago, Illinois")])
+    check_target_leads({}, after, HELD)
+
+
 def test_held_certificate_fires_when_a_census_leads_it():
     after = _state([_item(1, "census", "Chicago, Illinois"), _cert(2)])
     with pytest.raises(AssertionError, match="sequenced\s+ahead of it"):

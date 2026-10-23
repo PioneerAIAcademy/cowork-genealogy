@@ -395,7 +395,8 @@ _OBJECTIVE_TARGET_BY_TEST_ID: dict[str, _ObjectiveTarget] = {
     "ut_research_plan_hdo": _ObjectiveTarget(
         "Anna Kovač's 1952 death certificate, which the user holds",
         r"cook|chicago",
-        ("vital_record", "death", "death_record", "death_certificate", "civil_registration"),
+        ("vital_record", "death", "death_record", "death_certificate", "civil_registration",
+         "other"),
         rationale=r"\bdeath\b|\bcertificate\b",
     ),
 }
@@ -594,14 +595,20 @@ _FIVE_EVENTS = {
 
 
 def _covered_events(item: dict) -> set[str]:
+    """A `skipped` item is credited from its `skip_reason` too, whatever its
+    `record_type`: the agent is told to write the reason, not which type to
+    file the skip under."""
     record_type = str(item.get("record_type") or "")
-    text = f"{record_type} {item.get('rationale') or ''} {item.get('skip_reason') or ''}"
+    skip_reason = str(item.get("skip_reason") or "")
+    text = f"{record_type} {item.get('rationale') or ''} {skip_reason}"
     events: set[str] = set()
-    if re.search(r"census", record_type, re.IGNORECASE):
+    if re.search(r"census", record_type, re.IGNORECASE) or re.search(r"\bcensus", skip_reason, re.IGNORECASE):
         events.add("census")
-    if re.search(r"probate|estate|will", record_type, re.IGNORECASE):
+    if re.search(r"probate|estate|will", record_type, re.IGNORECASE) or re.search(
+        r"\bprobate|\bestates?\b|\bwills?\b", skip_reason, re.IGNORECASE
+    ):
         events.add("probate")
-    if _VITAL_RECORD_TYPES.search(record_type):
+    if _VITAL_RECORD_TYPES.search(record_type) or skip_reason.strip():
         events |= {name for name, pattern in _FIVE_EVENTS.items() if pattern.search(text)}
     if re.search(r"cemetery|burial", record_type, re.IGNORECASE):
         events.add("death")

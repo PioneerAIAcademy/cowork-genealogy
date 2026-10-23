@@ -72,6 +72,17 @@ def test_passes_when_an_absent_event_is_a_skip_with_category_and_reason():
     _check(*_states(items))
 
 
+@pytest.mark.parametrize("n,reason", [
+    (5, "No probate file survives for Greene County before 1870."),
+    (1, "Thomas died before the first census to name children, 1850."),
+    (3, "The county's marriage registers before 1820 are lost."),
+])
+def test_a_skip_filed_as_other_is_credited_from_its_reason(n, reason):
+    items = _without(n) + [_item(9, "other", "", status="skipped",
+                                 skip_category="no_coverage", skip_reason=reason)]
+    _check(*_states(items))
+
+
 @pytest.mark.parametrize("record_type,rationale", [
     ("church", "A baptism register could name each child."),
     ("Vital Records", "Birth registrations name both parents."),

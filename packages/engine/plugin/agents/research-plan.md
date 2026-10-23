@@ -168,7 +168,7 @@ You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
 the target question's own entry (`section: "questions"`, `questionId`) to read its
-`question_kind`, for the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
+`question_kind`, `research_query` for the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
 `tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
 

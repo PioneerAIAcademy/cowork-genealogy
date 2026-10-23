@@ -95,6 +95,7 @@ const EXAMPLES: Record<string, string> = {
 }`,
   questions: `{
   "question": "Who were the parents of Patrick Flynn (b. abt 1845, Ireland)?",
+  "question_kind": "targeted",
   "rationale": "The death certificate names a father (Thomas Flynn) on a single uncorroborated reading; no record yet names the mother.",
   "selection_basis": "unresolved_conflict",
   "priority": "high",
