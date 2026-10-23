@@ -1914,6 +1914,12 @@ describe("catalog_search — the answer stays under the spill line", () => {
     expect(CLI_SPILL_CHARS - ANSWER_CHAR_BUDGET).toBeGreaterThanOrEqual(10_000);
   });
 
+  it("a reel's text is split into entries of at most 2,000 characters, the figure the spec gives", () => {
+    // The dense-reel tests derive their notes from the constant, so a changed cap
+    // would keep them true; this one pins the value the spec states.
+    expect(REEL_TEXT_CAP).toBe(2_000);
+  });
+
   it("turns the saved Ireland answer back into the search response and the ten item responses", () => {
     // The inverse the next tests rest on: the upstream responses the tool would
     // have fetched for `IRELAND`. The next test runs them through the tool and
@@ -2408,6 +2414,28 @@ describe("catalog_search — the answer stays under the spill line", () => {
       fitFilmNotes(r, 2_000);
       expect(r.hits[0].filmNotes).toEqual([e("1", 0, 100), e("2", 2, 100)]);
     });
+
+    it.each([10, 100])(
+      "charges the longer hint when the entries listed gain a digit: the exact size of %i entries lists them all, one character less lists one fewer",
+      (k) => {
+        // "9 of 215" becomes "10 of 215": the two fields grow by a character, and a cap measured once for
+        // one digit count would let the tenth (or hundredth) entry in a character over the budget.
+        const original = Array.from({ length: 2 * k + 5 }, (_, j) => bigEntry(j, 60));
+        const listing = (n: number): CatalogSearchResult =>
+          answerOf([
+            { ...hitOf("g", original.slice(0, n)), filmNotesTotal: original.length, filmNotesHint: filmNotesHint(n, original.length, 1) },
+          ]);
+        const exact = size(listing(k));
+        const at = answerOf([hitOf("g", structuredClone(original))]);
+        fitFilmNotes(at, exact);
+        expect(at.hits[0].filmNotes).toHaveLength(k);
+        expect(size(at)).toBe(exact);
+        const under = answerOf([hitOf("g", structuredClone(original))]);
+        fitFilmNotes(under, exact - 1);
+        expect(under.hits[0].filmNotes).toHaveLength(k - 1);
+        expect(size(under)).toBeLessThanOrEqual(exact - 1);
+      },
+    );
 
     it("lists some of the entries, whole, in the item's order", () => {
       const original = Array.from({ length: 12 }, (_, j) => bigEntry(j, 40 + 90 * (j % 5)));
@@ -2971,10 +2999,15 @@ describe("catalog_search — the recorded eval fixtures", () => {
       withCutHit(small).filmNotesTotal = withCutHit(small).filmNotes?.length;
       expect(cutFieldProblems(small)).toEqual([expect.stringContaining("not more than the entries listed")]);
       // The review's plant: a total on a hit of a recorded answer that lists everything, with no hint.
+      // Whatever cut fields the recorded answer carries are removed first, so the plant is the same defect
+      // whatever the file holds.
       const planted = JSON.parse(readFileSync(`${dir}catalog-search-skofja-loka.json`, "utf-8")) as { response: CatalogSearchResult };
       const hitWithNotes = planted.response.hits.find((h) => (h.filmNotes?.length ?? 0) > 0) as CatalogHit;
+      delete hitWithNotes.filmNotesTotal;
+      delete hitWithNotes.filmNotesHint;
+      expect(cutFieldProblems(planted.response)).toEqual([]);
       hitWithNotes.filmNotesTotal = 9;
-      expect(cutFieldProblems(planted.response).length).toBeGreaterThan(0);
+      expect(cutFieldProblems(planted.response)).toEqual([expect.stringContaining("filmNotesTotal without its hint")]);
     });
 
     it("fails an omitted count without its hint, a hint without its count, a count that is not a count, and a `returned` that is not the hits listed", () => {
