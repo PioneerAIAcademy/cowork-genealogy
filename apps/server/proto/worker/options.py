@@ -814,6 +814,9 @@ def build_worker_options(
     project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
+        # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
+        # main thread's context and tools, not a plugin agent's `tools:` list.
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

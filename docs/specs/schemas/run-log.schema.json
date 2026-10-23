@@ -72,7 +72,7 @@
           "required": ["suite", "shared"],
           "properties": {
             "suite": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `eval/harness/validators/test_<skill>.py` (an absent marker when the suite has none) and of every sibling module in `validators/` it imports. A change blocks." },
-            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py` and `validators_lib.py`. A change warns." }
+            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py`, `validators_lib.py` and every harness module the validator files import, transitively. A change warns." }
           }
         },
         "tools": {

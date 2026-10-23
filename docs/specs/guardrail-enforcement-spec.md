@@ -1776,7 +1776,7 @@ before — in Cowork, the one environment the closure was built for. Every test
 was green, including the one named "matches every tool the guard script itself
 denies", which restated the three raw-write tool names inline instead of reading
 them from the script. The matcher is now
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — `.*`-prefixed on the
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — `.*`-prefixed on the
 namespaced arms so they bind under an anchored full match as well as a substring
 search, and against both the bare and the `mcp__remote-devices__`-namespaced
 spelling — and `tests/packaging/plugin-hooks.test.ts` derives the expected tool
@@ -1814,7 +1814,7 @@ here that is NOT a deny: it allows the call and rewrites `run_in_background` to
 the matcher cannot reach is inert with the suite green. And it is **not** "the
 plugin's minus `.*research_append`" — it is that minus `.*research_append`
 **plus `Bash`, `Read`, `Grep` and `Glob`**. The plugin's is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`.
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`.
 `research_append` is absent here because this hook returns `{}` for it, so
 binding it would only widen the blast radius of a starved callback; `Bash` is
 present because this hook carries the credential-exfiltration arm; `Read`, `Grep`
