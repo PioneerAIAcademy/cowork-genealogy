@@ -109,3 +109,37 @@ def test_the_schema_admits_the_three_modes_and_nothing_else():
     field = schema["properties"]["execution"]["properties"]["step_mode"]
     assert field["enum"] == ["step", "job", "wrapup"]
     assert "step_mode" not in (schema["properties"]["execution"].get("required") or [])
+
+
+# ── rider 3: three planes, one file ─────────────────────────────────────────────
+
+
+def test_all_three_planes_load_the_same_boundary_file():
+    """The worker, the unit harness and the e2e orchestrator each load the plugin's
+    `step_boundary.py` with importlib. Three loaders, ONE file -- which is the whole
+    reason StepGate lives in the plugin rather than in the worker.
+
+    A plane that grew its own copy would drift exactly as the write-lockdown's three
+    copies did, one of which was a silent no-op on Windows for two releases (#1228).
+    """
+    sys.path.insert(0, str(REPO / "apps" / "server"))
+    from e2e import orchestrator
+    from proto.worker import options
+
+    expected = REPO / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
+    assert skill_runner._STEP_BOUNDARY == expected
+    assert orchestrator._STEP_BOUNDARY == expected
+    # The worker resolves its path through ENGINE_PLUGIN_DIR, so compare what it loads.
+    assert options._default_plugin_dir() / "hooks" / "step_boundary.py" == expected
+
+
+def test_each_plane_gets_a_module_carrying_the_gate():
+    sys.path.insert(0, str(REPO / "apps" / "server"))
+    from e2e import orchestrator
+    from proto.worker import options
+
+    for load in (skill_runner.load_step_boundary, orchestrator.load_step_boundary,
+                 options.load_step_boundary):
+        module = load()
+        assert callable(module.step_allowed), load
+        assert hasattr(module, "StepGate"), load

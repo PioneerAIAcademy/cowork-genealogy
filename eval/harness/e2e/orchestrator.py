@@ -14,6 +14,7 @@ running tests).
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import json
 import os
 import posixpath
@@ -587,6 +588,23 @@ def project_read_denied(
         "not readable directly. Read it through the MCP tools instead: "
         f"{_project_read_route(t_r, root_r)}."
     )
+
+
+_STEP_BOUNDARY = (
+    Path(__file__).resolve().parents[3]
+    / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
+)
+
+
+def load_step_boundary():
+    """The plugin's step boundary, loaded as a library -- the SAME file the worker and
+    the unit harness load, so the three planes cannot drift apart (rider 3)."""
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", _STEP_BOUNDARY)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {_STEP_BOUNDARY}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _pretool_deny(reason: str) -> dict[str, Any]:
@@ -1996,6 +2014,7 @@ async def _run_agent(
     tool_search: bool = True,
     single_ask: bool = False,
     user_message: str | None = None,
+    step_mode: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -2184,6 +2203,15 @@ async def _run_agent(
             flush=True,
         )
 
+    # The step boundary (decision 25, rider 3). OFF unless the run asks for it: an e2e
+    # run drives a whole research flow, so enforcing by default would end every fixture
+    # at its first step. Section F turns it on for real, when the orchestrator replies
+    # to each turn with `next_auto_reply` instead of running one long turn.
+    _step_gate = None
+    if step_mode:
+        _boundary = load_step_boundary()
+        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode)
+
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
         # spec §11 Step 0 — record caller identity for EVERY call, including ones
@@ -2200,6 +2228,24 @@ async def _run_agent(
         # skill writes nothing. The mcp__-only budget cap is tool_call_count,
         # incremented separately below.
         activity_count["n"] += 1
+
+        # The boundary sits AFTER attribution and the activity count, so a denied
+        # crossing is still attributed and still counts as progress -- a turn that
+        # tried to take a second step plainly did work.
+        if _step_gate is not None:
+            try:
+                _verdict = _step_gate.check(
+                    tool_name, input_data.get("tool_input") or {},
+                    subagent=bool(input_data.get("agent_id")),
+                )
+            except Exception:  # noqa: BLE001 - a hook that raises fails a call the agent was entitled to make
+                _verdict = None
+            if _verdict is not None:
+                _out = _pretool_deny(_verdict[1])
+                if _verdict[0] == "halt":
+                    _out["continue_"] = False
+                    _out["stopReason"] = _verdict[1]
+                return _out
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
