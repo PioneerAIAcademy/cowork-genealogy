@@ -1509,8 +1509,8 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
     `image_read` returns inline base64; in the router's context the bytes
     accumulate and overflow the transport's ~1 MiB per-turn buffer, crashing
-    the run. Image reads must be delegated to the image-reader subagent, which
-    absorbs the base64 in a throwaway context and returns text.
+    the run. A page is read with `image_transcribe` instead, which OCRs it
+    host-side and stages the text, so no image bytes reach the context.
 
     `extraction_append` was the other guarded tool (#942) until issue #2937
     routed indexed-record extraction through code called from the main thread.
@@ -1529,12 +1529,12 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     if not blocked_context_calls:
         return
 
-    # Per-tool fix text: the owning subagent and the reason differ, and a
+    # Per-tool fix text: the replacement and the reason differ, and a
     # message naming the wrong one sends the reader after the wrong bug.
     owners = {
         "image_read": (
-            "image_read → @plugin:image-reader, so the base64 never enters the "
-            "router's context"
+            "image_read → image_transcribe (staged; read with sidecar_read), so "
+            "the base64 never enters the router's context"
         ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
@@ -1546,7 +1546,7 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         f"subagent-only tool(s) called from the main session: "
         f"{', '.join(offending_tools)} "
         f"({len(blocked_context_calls)} call(s), denied by the hook). "
-        f"Delegate to the owning subagent — {fixes}."
+        f"Do the work the sanctioned way — {fixes}."
     )
 
 
