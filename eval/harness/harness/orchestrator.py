@@ -1022,6 +1022,20 @@ def _is_retryable_abort(result) -> bool:
     return _is_zero_progress_timeout(result)
 
 
+_STALL_ABORTS = {"sdk_stream_silence"}
+
+
+def retry_delay_for(aborted_reason: str | None, base_delay: float) -> float:
+    """The FIRST backoff before re-running after `aborted_reason`.
+
+    Only the reason measured to need it gets the long wait; an unknown reason keeps
+    the fast retry rather than silently inheriting minutes of delay.
+    """
+    if aborted_reason in _STALL_ABORTS:
+        return max(base_delay, DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6)
+    return base_delay
+
+
 async def _execute_skill_with_retry(
     *,
     run_index: int,
@@ -1075,7 +1089,6 @@ async def _execute_skill_with_retry(
        test and stays non-retryable; one that burned the whole budget
        without a single turn never started, which is the same transient
        class as (1) and (2).
-
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
     delay = base_delay
@@ -1177,8 +1190,8 @@ async def _execute_skill_with_retry(
             f"(attempt {attempt + 2}/{attempts})",
             file=sys.stderr,
         )
-        await asyncio.sleep(delay)
-        delay *= 2
+        await asyncio.sleep(retry_delay_for(result.aborted_reason, delay))
+        delay = retry_delay_for(result.aborted_reason, delay) * 2
 
     # Unreachable: the final attempt always returns above. Present so
     # type-checkers see a definite return.
