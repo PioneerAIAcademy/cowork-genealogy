@@ -10,6 +10,7 @@ spawns the wrong agent, or hands off nowhere, must still fail.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -17,7 +18,7 @@ import pytest
 
 from harness.loader import load_test_from_dict
 from harness.orchestrator import _stub_agents
-from harness.skill_runner import handoffs, spawn_stub_denial
+from harness.skill_runner import default_spawn_denial, handoffs, spawn_stub_denial
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO_ROOT / "eval" / "harness" / "validators"))
@@ -223,9 +224,12 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
     assert _stub_agents(spec, tmp_path) == {"locality-guide": "r"}
 
 
-def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn(tmp_path):
-    """A paired name that ships as both a skill and an agent is not stubbed at
-    its spawn — the skill directory makes `_stub_agents` return None.
+def test_a_stub_that_is_still_a_skill_is_denied_at_its_spawn_by_the_default(tmp_path):
+    """A paired name that ships as both a skill and an agent is not in
+    `_stub_agents` — the skill directory makes it return None — but its spawn
+    is still denied, by `default_spawn_denial` (#3568), and with the entry's
+    canned text. It cannot be opted in either: runnability refuses a name in
+    both `run_agents` and `stub_skills`.
 
     After issue #2738 deleted `research-exhaustiveness`'s skill directory, no
     paired names remain in the shipped plugin.  This test uses `tmp_path` to
@@ -234,8 +238,13 @@ def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn(tmp_path):
     hand-off anyway: `stop_at_stub`.
     """
     (tmp_path / "fake-paired-skill").mkdir()
-    spec = _stub_spec(["fake-paired-skill"])
+    spec = _stub_spec([{"skill": "fake-paired-skill", "response": "canned"}])
     assert _stub_agents(spec, tmp_path) is None
+    spawn = {"tool_input": {"subagent_type": "fake-paired-skill"}}
+    assert spawn_stub_denial("Agent", spawn, {}) is None
+    denial = default_spawn_denial("Agent", spawn, {"research"}, {"fake-paired-skill": "canned"})
+    assert denial is not None
+    assert "canned" in json.dumps(denial)
 
 
 def test_a_stub_with_no_skill_directory_is_stubbed_at_its_spawn():

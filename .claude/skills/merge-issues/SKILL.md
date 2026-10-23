@@ -54,7 +54,9 @@ The pool is **unassigned non-icebox Backlog plus unassigned Ready**. An assigned
 Review card are someone's work: never merge one, in either direction. An *unassigned*
 Ready card is both in the pool and its slot's holder, which makes it the natural target
 — it is furthest along. An agent-body card also queues under each skill naming it via
-`@plugin:`; a deleted `skills/<x>/` queues under `agent:<x>`. Both read the checkout:
+`@plugin:`, each suite whose tests run it via `run_agents`, and `research`, which
+fingerprints every agent's frontmatter; a deleted `skills/<x>/` queues under
+`agent:<x>`. Both read the checkout:
 run `slots.py` from an up-to-date `main`.
 
 **A slot can be held and show no block above.** `block()` runs only for a queue of

@@ -90,6 +90,7 @@ UNMODELLED_WRITERS = frozenset(
         "tree_forget",
         "materialize_facts",
         "merge_tree_persons",
+        "timeline_build",
     }
 )
 
@@ -124,6 +125,8 @@ SECTION_ID_PREFIX = {
     "proof_summaries": "ps_",
     "evaluations": "ev_",
     "localities": "loc_",
+    "namesakes": "ns_",
+    "rejected_links": "rj_",
     "known_holdings": "kh_",
 }
 

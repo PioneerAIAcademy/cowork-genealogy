@@ -250,6 +250,17 @@ const EXAMPLES: Record<string, string> = {
   "promoted": false,
   "created": "2026-07-18"
 }`,
+
+  namesakes: `{
+  "person_id": "I1",
+  "name": "John Smith",
+  "place": "San Francisco, California, United States",
+  "time_period": "born about 1873",
+  "record_ids": ["ark:/61903/1:1:Q295-JLGZ"],
+  "log_entry_ids": ["log_004"],
+  "notes": "A different John Smith, a clerk, in the 1880 census of San Francisco",
+  "created": "2026-10-16"
+}`,
 };
 
 /** `project` is a singleton: update-only field writes, no `entry`. */

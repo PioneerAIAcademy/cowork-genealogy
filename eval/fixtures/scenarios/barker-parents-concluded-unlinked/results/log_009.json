@@ -1,0 +1,19 @@
+{
+ "log_id": "log_009",
+ "tool": "fulltext_search",
+ "retrieved": "2026-10-20T16:01:22.740Z",
+ "returned_count": 0,
+ "payload": {
+  "query": {
+   "count": 20,
+   "imageGroupNumber": "005826810_004_M99N-VDK",
+   "keywords": "+Barker",
+   "projectPath": "C:\\Users\\Paaboat\\Documents\\barker-research-2"
+  },
+  "totalResults": 3,
+  "returned": 3,
+  "offset": 0,
+  "hasMore": false,
+  "results": []
+ }
+}

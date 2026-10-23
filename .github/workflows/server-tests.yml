@@ -28,7 +28,7 @@ name: Server tests
 # — the only check that reads what the RUNTIME resolved the hosted agent options
 # to. It is keyless (the handshake registers agents with no credential, so the
 # "no secrets" property above holds), using the CLI bundled in the
-# `claude-agent-sdk` wheel that `apps/server/uv.lock` pins (0.2.128, CLI 2.1.220,
+# `claude-agent-sdk` wheel that `apps/server/uv.lock` pins (0.2.172, CLI 2.1.308,
 # the binary the hosted control plane spawns), and run under AGENT_SMOKE=1 so a
 # missing prerequisite fails loudly
 # rather than skipping green (issue #1142). Still NOT covered here: `make

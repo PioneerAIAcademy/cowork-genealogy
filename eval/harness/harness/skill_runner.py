@@ -50,6 +50,7 @@ from harness.context_policy import (
     subagent_only_denial,
     subagent_only_violation,
 )
+from harness.delegation import foreground_rewrite
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
@@ -94,40 +95,6 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 # requires longer thinking should also bump `execution.max_wall_clock_
 # seconds` (see eval/tests/unit/record-extraction/*.json).
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
-
-
-# Spec §15 "Known risks": disallowed_tools must actually block unlisted
-# tools — verify on every SDK version bump. We pin a known-good version
-# range and warn loudly if the installed SDK is outside it.
-# Update _KNOWN_GOOD_SDK_RANGE after running the e2e against a newer
-# version and confirming disallowed_tools still denies unlisted tools.
-_KNOWN_GOOD_SDK_RANGE = (">=0.1.81", "<0.2")
-
-
-def _check_sdk_version() -> str | None:
-    """Return a warning string if the SDK version is outside the
-    tested-known-good range; None when in range or undeterminable."""
-    try:
-        from importlib.metadata import PackageNotFoundError, version
-        installed = version("claude-agent-sdk")
-    except (ImportError, Exception):
-        return None
-    # Crude comparison: split on dots and compare tuples. Good enough
-    # for "0.1.x" vs "0.2.x" granularity.
-    try:
-        parts = tuple(int(p) for p in installed.split(".")[:2])
-        if parts < (0, 1) or parts >= (0, 2):
-            return (
-                f"claude-agent-sdk version {installed} is outside the "
-                f"harness's tested-known-good range "
-                f"{_KNOWN_GOOD_SDK_RANGE[0]},{_KNOWN_GOOD_SDK_RANGE[1]}. "
-                f"Spec §15 known-risks: verify disallowed_tools "
-                f"still blocks unlisted tools, then update "
-                f"_KNOWN_GOOD_SDK_RANGE in skill_runner.py."
-            )
-    except (ValueError, TypeError):
-        pass
-    return None
 
 
 # When the harness abandons a run mid-stream (wall-clock / silence abort or
@@ -510,6 +477,32 @@ def spawn_stub_denial(
     if name not in stub_agents:
         return None
     return stub_denial(name, stub_agents[name])
+
+
+def default_spawn_denial(
+    tool_name: str,
+    input_data: dict[str, Any],
+    live_agents: set[str] | None,
+    stub_skills: dict[str, str | None],
+) -> dict[str, Any] | None:
+    """The stub denial for a main-thread spawn of any agent not in `live_agents`.
+
+    Deny-by-default (#3568): the orchestrator passes the suite's own agent plus
+    the test's `execution.run_agents`, and every other spawn — a built-in type
+    such as `general-purpose` included — is denied, so an agent no test opts in
+    never runs and its body cannot change the result. A spawn with no
+    `subagent_type` is a general-purpose spawn and is named so. A name the test
+    also lists in `stub_skills` (a skill-and-agent name) keeps its canned text.
+    `live_agents=None` (callers outside the unit orchestrator) denies nothing.
+    The hook reaches this only after the routing short-circuit, `stop_at_stub`
+    and explicit `spawn_stub_denial` branches have passed on the spawn.
+    """
+    if live_agents is None or tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
+        return None
+    name = (input_data.get("tool_input") or {}).get("subagent_type") or "general-purpose"
+    if name in live_agents:
+        return None
+    return stub_denial(name, stub_skills.get(name))
 
 
 def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
@@ -899,6 +892,7 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
     tool_search: bool = True,
@@ -973,6 +967,10 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
+    # Deny-by-default (#3568): the agents a main-thread spawn may reach for real.
+    # Any other spawn is denied after the branches above (`default_spawn_denial`).
+    # None = deny nothing (callers outside the unit orchestrator).
+    _live_agents = set(live_agents) if live_agents is not None else None
     # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
     # stubbed name, by `Skill` call or agent spawn, ends the run through the
     # stop path of the negative-test short-circuit above, once the turn that
@@ -1003,6 +1001,8 @@ async def run_skill(
         routing_resolved["tool_use_id"] = tool_use_id
         if name in _stub_skills:
             denial = stub_denial(name, _stub_skills[name])
+            # Its hand-back tells the caller its turn goes on; this one ends.
+            denial["hookSpecificOutput"].pop("additionalContext", None)
         else:
             callee = repr(name) if name else "a callee whose name cannot be read"
             denial = {
@@ -1133,6 +1133,10 @@ async def run_skill(
             return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
+        elif (denial := default_spawn_denial(tool_name, input_data, _live_agents, _stub_skills)):
+            # Last on purpose: the short-circuit, the stop and an explicit stub's
+            # canned text all win over the default (#3568).
+            return denial
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
         # left the set in issue #2937) on
@@ -1231,7 +1235,7 @@ async def run_skill(
                     "continue_": False,
                     "stopReason": "max_tool_calls",
                 }
-        return {}
+        return foreground_rewrite(tool_name, input_data.get("tool_input")) or {}
 
     options = ClaudeAgentOptions(
         cwd=str(workspace),

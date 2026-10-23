@@ -21,6 +21,8 @@ from pathlib import Path
 from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
+    NEVER_INHERITED_AGENT_ENV,
+    OPTIONAL_AGENT_ENV,
     PROJECT_DIR,
     SECRETS_PATH,
     ConnectURL,
@@ -30,6 +32,7 @@ from .base import (
     SandboxProvider,
     SandboxSpec,
     SandboxState,
+    optional_agent_env,
 )
 
 # apps/server, so the WS-server subprocess can `python -m app.sandbox_server`.
@@ -254,6 +257,9 @@ class LocalProvider(SandboxProvider):
             # IDENTICAL string and each reads the other's as its own.
             OWNER_ENV_VAR: OWNER_TOKEN,
         }
+        for name in (*OPTIONAL_AGENT_ENV, *NEVER_INHERITED_AGENT_ENV):
+            env.pop(name, None)
+        env.update(optional_agent_env(settings))
         from ..anthropic_proxy import proxy_active
         if proxy_active():
             env["ANTHROPIC_BASE_URL"] = f"{settings.public_url}/api/anthropic-proxy"

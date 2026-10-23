@@ -10,7 +10,8 @@
       "doctrine",
       "re-read-before-detach",
       "census-variance-trap",
-      "direct-arm"
+      "direct-arm",
+      "logs-report"
     ]
   },
   "input": {

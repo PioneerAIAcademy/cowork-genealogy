@@ -1,6 +1,6 @@
 # Conclusion tree — one evidence/conclusion model for facts and relationships
 
-**Status:** Stage 1a under way: PRs #3398, #3400, #3453, #3457 and #3470 merged (2026-10-14/15); its avoid-guard item was redesigned per the lead's 2026-10-21 ruling (a provenance/edge/value guard plus a writer-tool removal rule, both in one PR — Decision 20, the minted-persons model, and the Stage 1a guard block below). Stage 1b onward not started. `/critique-plan` closed after 17 rounds (2026-10-07).
+**Status:** Stage 1a under way: PRs #3398, #3400, #3453, #3457 and #3470 merged (2026-10-14/15); its avoid-guard item was redesigned per the lead's 2026-10-21 ruling (a provenance/edge/value guard plus a writer-tool removal rule, both in one PR — Decision 20, the minted-persons model, and the Stage 1a guard block below). Stage 1b not started, except its Decision 13 merge refusal, which issue #3363's PR 1b ships ahead of that stage. `/critique-plan` closed after 17 rounds (2026-10-07).
 
 **Decision record:** issue #3032. Its body is rewritten from this plan.
 
@@ -275,6 +275,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
   - **`primary`** (Decision 34): `add_fact`, `add_person`'s inline facts, `add_relationship`'s inline Couple facts and `update_fact` set `primary: true` only on a fact an affirmed claim at `probable` or better covers. Warns until Stage 1c.
   - `add_relationship`, and its corroborate path, refuse a pair a `disproved` claim covers. This refuses at once: no `disproved` claim exists before this stage, so there is nothing to measure.
   - `merge_tree_persons` refuses a merge of two persons an edge joins, naming the edge (Decision 13). It refuses at once, with no warn mode: the merge would turn the edge into a self-relationship that `dedupRelationships` (`src/utils/merge-gedcomx.ts`) drops silently, an impossibility like an ancestry cycle, so there is no false positive to measure.
+    - **Shipped** ahead of this stage, in every project, by issue #3363's PR 1b: `joinedPairRefusals` in `src/tools/merge-tree-persons.ts`, pinned by MF3 and MF3c in `tests/tools/merge-tree-persons.test.ts` (MF3 is the acceptance case below, "a merge of a parent into its own child is refused and names the edge"), so this stage builds nothing for it.
   - Each of these raises a synthetic introduced warning, which a persisted `warningJustifications` entry must cover:
     - `remove` of an import with no disproof;
     - `update_relationship` when no claim names that subtype;

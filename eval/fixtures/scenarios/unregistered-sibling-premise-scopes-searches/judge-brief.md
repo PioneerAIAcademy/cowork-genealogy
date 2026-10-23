@@ -1,0 +1,5 @@
+The researcher is looking for the parents of Elizabeth Stouer (also spelled Stower or Stowers), born about 1910 in South Dakota, and has said no direct statement of parentage should be assumed. One search is done: the 1920 census found Nora Stowers (b. about 1890, South Dakota) and her sister Lois E. Stowers (b. about 1905, South Dakota), whose father's and mother's birthplaces are recorded as Massachusetts. No record in the project links Nora or Lois to Elizabeth. The log note for that search treats them as Elizabeth's older sisters and concludes from that that her parents were a Massachusetts-born couple.
+
+Every assertion from that census is extracted and linked to its own tree person. The tree records no relationship between Elizabeth, Nora and Lois, and the project has no hypotheses. The next planned item searches the 1910 South Dakota census. The researcher's message asks to keep researching the project.
+
+The project state staged for this test is the state immediately before this message arrived. The model is graded only on its response to this message.
