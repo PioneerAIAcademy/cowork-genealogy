@@ -276,14 +276,13 @@ individual image is well under the ceiling. (Observed: an e2e run made **17**
 crashed — no single image was near the ceiling.) Lowering the ceiling does
 **not** fix this.
 
-The accumulation fix is the **`image-reader` subagent**
-(`packages/engine/plugin/agents/image-reader.md`, spec:
-`docs/specs/image-reader-agent-spec.md`): callers that need a scan's text
-(currently the `search-records` and `search-full-text` skills) delegate to it via `Task` instead of
-calling `image_read` directly. The subagent reads the image in an isolated
-context and returns only a text transcription, so the base64 never enters —
-or accumulates in — the main transcript. `image_read` itself is unchanged; it
-keeps the floor above.
+The accumulation fix is **`image_transcribe`**
+(`docs/specs/image-transcribe-tool-spec.md`): callers that need a scan's text
+call it instead of `image_read`. It OCRs the scan host-side, stages the page and
+returns its ref (§5.5 there), so no base64 ever enters — or accumulates in — the
+caller's transcript. (An `image-reader` subagent once wrapped it to the same
+end; it was retired on 2026-10-16.) `image_read` itself is unchanged; it keeps the
+floor above.
 
 Making large scans **readable** (rather than refused) would mean
 downscaling/re-encoding to fit, which needs an image-processing dependency

@@ -180,7 +180,10 @@ def test_is_error_fixture_sets_is_error_only_on_its_own_match():
         refused = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00021"})
         assert refused.get("is_error") is True
         assert _extract_response_dict(refused) == {"error": "Image cap reached: ..."}
-        ok = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00001"})
+        # projectPath: without it the mock refuses the call, as production does (#2490).
+        ok = _invoke(
+            tools_by_name, "image_transcribe", {"imageId": "004452257_00001", "projectPath": str(tmp)}
+        )
         assert "is_error" not in ok
 
 
@@ -1918,3 +1921,165 @@ def test_live_log_append_applies_the_census_check_to_a_staged_1850_search(tmp_pa
         assert "relationship-to-head" in json.dumps(out), out
     else:
         assert out.get("ok") is True, out
+
+
+# --- image_transcribe returns a ref, not the page (#2490) ----------------------
+
+_WILL_ARGS = {"imageId": "007936749_00008", "lookingFor": "Thomas Flynn"}
+
+
+def _transcribe(tmp_path, args):
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "image_transcribe", args))
+    return body, tools_by_name
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_stages_the_page_and_drops_the_inline_text(tmp_path):
+    """Production stages the page and strips `transcription` from the response;
+    the fixture keeps the full text, and the staged element is what it carries."""
+    full = json.loads(
+        (FIXTURES_DIR / "image-transcribe-schuylkill-probate-flynn-will.json").read_text(
+            encoding="utf-8"
+        )
+    )["response"]["transcription"]
+    body, _t = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    assert body.get("staged"), body.get("stagingError")
+    assert "transcription" not in body, "the page went back inline although it was staged"
+    assert body["digest"]["chars"] == len(full)
+    assert body["digest"]["excerpt"] == full[:300]
+    assert body["digest"]["id"] == "007936749_00008"
+    assert body["metadata"]["model"]
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["tool"] == "image_transcribe"
+    assert envelope["payload"]["query"] == _WILL_ARGS
+    [element] = envelope["payload"]["results"]
+    assert element["id"] == "007936749_00008"
+    assert element["source"] == {"imageId": "007936749_00008"}
+    assert element["transcription"] == full
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_keeps_the_text_inline_when_staging_fails(tmp_path, monkeypatch):
+    """The other direction: with no staged copy, the inline text is the only
+    one, so it stays, beside `staged: null` and a `stagingError`."""
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _boom)
+    with pytest.warns(UserWarning, match="could not be staged"):
+        body, _t = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    assert body["staged"] is None
+    assert body["stagingError"]
+    assert body["transcription"].startswith("Will Book G, page 112.")
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_path):
+    """The read the callers are told to make: sidecar_read on `staged.resultsRef`
+    returns the page the response no longer carries."""
+    body, tools_by_name = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    assert body.get("staged"), body.get("stagingError")
+    read = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "sidecar_read",
+            {"projectPath": str(tmp_path), "ref": body["staged"]["resultsRef"]},
+        )
+    )
+    assert read.get("ok") is not False, read
+    assert "In the name of God, Amen" in json.dumps(read)
+
+
+def test_image_transcribe_without_project_path_is_refused_not_served(tmp_path):
+    """Production refuses a call with no projectPath before any OCR, so the
+    fixture's page must not reach the agent either."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "image_transcribe", dict(_WILL_ARGS))
+    body = _extract_response_dict(result)
+    assert result.get("is_error") is True, body
+    assert body == {"error": mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
+    assert "In the name of God" not in json.dumps(body)
+
+
+def test_image_transcribe_needs_project_message_has_not_drifted_from_the_typescript_source():
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tools/image-transcribe.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE =(.*?);\n", src, re.DOTALL)
+    assert decl, "IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE is gone from image-transcribe.ts"
+    ts_msg = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+    assert ts_msg, "parsed an empty message — the declaration's shape changed"
+    assert ts_msg == mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE
+
+
+def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
+    """A `file` has no FamilySearch identifier; its element id is
+    `capture:<basename without extension>`, production's captureIdFor."""
+    seen = {}
+
+    def _capture(script, stdin, timeout):
+        seen.update(json.loads(stdin))
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(
+            tmp_path, {"file": "uploads/will-scan.page1.jpg"}, {"transcription": "x"}
+        )
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen["element"]["id"] == "capture:will-scan.page1"
+    assert seen["element"]["source"] == {"file": "uploads/will-scan.page1.jpg"}
+
+
+@pytest.mark.parametrize("args,expected", [
+    ({"imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"}, "ark:/61903/3:1:3Q9M-CS80-L7Q2"),
+    ({"ark": "  ", "imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"}, "ark:/61903/3:1:3Q9M-CS80-L7Q2"),
+    ({"ark": "ark:/61903/3:1:AAAA-BBBB-CCC", "imageArk": "  "}, "ark:/61903/3:1:AAAA-BBBB-CCC"),
+])
+def test_image_transcribe_folds_image_ark_into_ark(tmp_path, monkeypatch, args, expected):
+    """record_read hands back `imageArk`; production folds it into `ark`, so the
+    staged page is keyed and sourced by it rather than staged with an empty id."""
+    seen = {}
+
+    def _capture(script, stdin, timeout):
+        seen.update(json.loads(stdin))
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(tmp_path, args, {"transcription": "x"})
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen["element"]["id"] == expected
+    assert seen["element"]["source"] == {"ark": expected}
+
+
+def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypatch):
+    """Production stages the retained scan's imageRef as `image_ref`, which
+    extraction_append cites as the source's image_filename; a response with no
+    imageRef stages none."""
+    seen = []
+
+    def _capture(script, stdin, timeout):
+        seen.append(json.loads(stdin)["element"])
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(
+            tmp_path, {"imageId": "007936749_00008"},
+            {"transcription": "x", "imageRef": "images/007936749_00008.jpg"},
+        )
+        mock_mcp._stage_image_transcribe(tmp_path, {"imageId": "007936749_00008"}, {"transcription": "x"})
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen[0]["image_ref"] == "images/007936749_00008.jpg"
+    assert "image_ref" not in seen[1]
