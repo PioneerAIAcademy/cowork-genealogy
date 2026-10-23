@@ -19,7 +19,7 @@
     ]
   },
   "input": {
-    "delegation": "Execute plan item pli_001 — the 1860 census search for Sarah in Dodge County. She has two name entries in the tree: her birth name 'Sarah Ann Mullen' and her married name 'Sarah Mullen Price'. Since 1860 is before her 1872 marriage, use the birth name for the search.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Execute plan item pli_001 — the 1860 census search for Sarah in Dodge County. She has two name entries in the tree: her birth name 'Sarah Ann Mullen' and her married name 'Sarah Mullen Price'. Since 1860 is before her 1872 marriage, use the birth name for the search.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Dodge County, Wisconsin\",\n  \"date_range\": \"1860\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1860 census should show Sarah Ann Mullen (age ~8) in her father William Mullen's household, confirming the birth name before any marriage-related name changes.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Sarah Ann\",\n      \"surname\": \"Mullen\",\n      \"type\": \"BirthName\"\n    },\n    {\n      \"given\": \"Sarah Mullen\",\n      \"surname\": \"Price\",\n      \"type\": \"MarriedName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1852-03-15\",\n    \"place\": \"Dodge County, Wisconsin\"\n  },\n  \"death\": {\n    \"date\": \"1921-09-03\",\n    \"place\": \"Fond du Lac, Fond du Lac County, Wisconsin\"\n  }\n}",
     "scenario": "maiden-to-married-name-shift"
   },
   "execution": {

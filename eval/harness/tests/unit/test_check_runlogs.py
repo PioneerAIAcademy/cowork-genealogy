@@ -2829,11 +2829,161 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
         "engine-lockfile", "suite-validator", "unknown-suite", "e2e", "engine-tests", "docs",
     ],
 )
-def test_instrument_touched_suites(paths, expected):
+def test_instrument_touched_suites(paths, expected, monkeypatch):
     """Both directions: the fingerprint's own inputs mark every suite (so a change
     to them is graded on the PR that makes it, not the next unrelated one), and
     paths no unit run reads (must-pass 3: `eval/harness/e2e/`) mark none."""
+    _base_is_head(monkeypatch)
     assert check_runlogs.instrument_touched_suites(set(paths), {"demo", "convert-dates"}) == expected
+
+
+def _base_is_head(monkeypatch):
+    """The merge base reads as the working tree: no import changed."""
+
+    def show(path):
+        f = check_runlogs.REPO_ROOT / path
+        return f.read_text(encoding="utf-8") if f.is_file() else None
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", show)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "eval/harness/harness/dates.py",
+        "eval/harness/harness/fixtures.py",
+        "eval/harness/harness/__init__.py",
+        "eval/harness/provenance_report.py",
+    ],
+    ids=["direct", "transitive", "package-init", "top-level"],
+)
+def test_a_module_in_the_validators_import_closure_marks_every_suite(path, monkeypatch):
+    """Issue #3691: a harness module a validator imports, directly or through
+    another module, can move `validators.shared`, so its edit opens rule 2c on
+    every suite."""
+    _base_is_head(monkeypatch)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == {"demo", "convert-dates"}
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["eval/harness/harness/judge.py", "eval/harness/judge_report.py", "eval/harness/tests/unit/test_instrument.py"],
+    ids=["judge", "top-level-outside", "harness-test"],
+)
+def test_a_harness_module_outside_the_closure_marks_no_suite(path, monkeypatch):
+    _base_is_head(monkeypatch)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == set()
+
+
+def test_a_deleted_harness_module_marks_every_suite(monkeypatch):
+    """Deleted, it is absent from the closure computed at head, though the base's
+    closure may have held it."""
+    _base_is_head(monkeypatch)
+    assert check_runlogs.instrument_touched_suites(
+        {"eval/harness/harness/no_longer_here.py"}, {"demo", "convert-dates"}
+    ) == {"demo", "convert-dates"}
+
+
+@pytest.mark.parametrize(
+    "base_extra, head_extra, expected",
+    [
+        ("", "", {"convert-dates"}),
+        ("", "from harness.dates import parse_date\n", {"demo", "convert-dates"}),
+        ("from harness.dates import parse_date\n", "", {"demo", "convert-dates"}),
+        ("import json\n", "import re\n", {"convert-dates"}),
+    ],
+    ids=["unchanged", "added-import", "removed-import", "stdlib-only-change"],
+)
+def test_a_suite_validator_whose_harness_imports_changed_marks_every_suite(
+    monkeypatch, tmp_path, base_extra, head_extra, expected
+):
+    """Every validator file seeds the closure, so a suite file that adds or drops
+    a harness import can move `shared` for every suite; one that keeps its harness
+    imports moves only its own suite."""
+    path = "eval/harness/validators/test_convert_dates.py"
+    (tmp_path / "eval" / "harness" / "validators").mkdir(parents=True)
+    (tmp_path / "eval" / "harness" / "harness").mkdir()
+    (tmp_path / "eval" / "harness" / "harness" / "dates.py").write_text("def parse_date():\n    pass\n", encoding="utf-8")
+    (tmp_path / path).write_text(head_extra + "def test_x():\n    assert True\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        check_runlogs, "git_show_at_merge_base", lambda p: base_extra + "def test_x():\n    assert True\n"
+    )
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == expected
+
+
+@pytest.mark.parametrize(
+    "base, head, expected",
+    [
+        (None, "from harness.dates import parse_date\n", {"demo", "convert-dates"}),
+        (None, "def test_x():\n    assert True\n", {"convert-dates"}),
+        ("from harness.dates import parse_date\n", None, {"demo", "convert-dates"}),
+    ],
+    ids=["new-file-with-harness-import", "new-file-without", "deleted-file-with-harness-import"],
+)
+def test_a_new_or_deleted_suite_validator_is_judged_by_its_harness_imports(monkeypatch, tmp_path, base, head, expected):
+    path = "eval/harness/validators/test_convert_dates.py"
+    (tmp_path / "eval" / "harness" / "validators").mkdir(parents=True)
+    (tmp_path / "eval" / "harness" / "harness").mkdir()
+    (tmp_path / "eval" / "harness" / "harness" / "dates.py").write_text("def parse_date():\n    pass\n", encoding="utf-8")
+    if head is not None:
+        (tmp_path / path).write_text(head, encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda p: base)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == expected
+
+
+def test_an_unreadable_base_opens_every_suite_and_says_so(monkeypatch, capsys):
+    def unreadable(path):
+        raise check_runlogs.BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", unreadable)
+    path = "eval/harness/validators/test_convert_dates.py"
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == {"demo", "convert-dates"}
+    out = capsys.readouterr().out
+    assert "::warning" in out and path in out
+
+
+def test_git_show_at_merge_base_refuses_without_the_shas(monkeypatch):
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    with pytest.raises(check_runlogs.BaseUnreadable):
+        check_runlogs.git_show_at_merge_base("eval/harness/harness/dates.py")
+
+
+def test_git_show_at_merge_base_reads_the_merge_base_not_either_tip(monkeypatch, tmp_path):
+    """A throwaway repo where main moved on after the branch forked: the read must
+    return the fork point's content, not main's tip (BASE_SHA) or the branch's
+    (HEAD_SHA) -- either would hide an import the branch changed."""
+
+    def git(*args):
+        return subprocess.check_output(["git", *args], text=True, encoding="utf-8", cwd=tmp_path).strip()
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    target = tmp_path / "eval" / "harness" / "validators" / "test_x.py"
+    target.parent.mkdir(parents=True)
+
+    def commit(text):
+        target.write_text(text, encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", text)
+        return git("rev-parse", "HEAD")
+
+    fork = commit("fork\n")
+    git("checkout", "-q", "-b", "branch")
+    head = commit("branch\n")
+    git("checkout", "-q", "main")
+    base = commit("main\n")
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert fork not in (base, head)
+    assert check_runlogs.git_show_at_merge_base("eval/harness/validators/test_x.py") == "fork\n"
+    assert check_runlogs.git_show_at_merge_base("eval/harness/validators/never_existed.py") is None
+
 
 
 def _seed_instrument_suite(tmp_path, monkeypatch, stored):
@@ -2901,6 +3051,48 @@ def test_main_rule2c_recomputes_for_real_and_a_moved_validator_blocks(monkeypatc
     assert "skill `convert-dates`" in out and "validators.suite" in out
 
 
+def test_main_rule2c_warns_when_a_harness_module_the_validators_import_moves(monkeypatch, capsys, tmp_path):
+    """Issue #3691, end to end with nothing stubbed but the catalog and the base
+    read: stamp the real fingerprint over copies of the real files, then change
+    what `harness/dates.py` (imported by `validators_lib.py`) decides. Rule 2c
+    warns on `validators.shared` and passes; a docstring-only edit stays quiet."""
+    from harness import instrument as instr_mod
+
+    repo = tmp_path / "repo"
+    real = check_runlogs.REPO_ROOT
+    for rel in (
+        "eval/harness/validators/test_universal.py",
+        "eval/harness/validators/validators_lib.py",
+        "eval/harness/validators/test_convert_dates.py",
+        "eval/harness/harness/dates.py",
+    ):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text((real / rel).read_text(encoding="utf-8"), encoding="utf-8")
+    catalog = {n: {"description": n, "inputSchema": {}} for n in instr_mod.LIVE_TOOLS}
+    stored = instr_mod.instrument_for("convert-dates", repo, catalog=catalog, live_called=[])
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    _seed_instrument_suite(runlogs, monkeypatch, stored)
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    monkeypatch.setattr(check_runlogs, "_tool_catalog", lambda: catalog)
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/harness/harness/dates.py"])
+
+    dates = repo / "eval" / "harness" / "harness" / "dates.py"
+    original = dates.read_text(encoding="utf-8")
+    assert '"""Pull the first embedded' in original, "premise gone: extract_year's docstring"
+    dates.write_text(original.replace('"""Pull the first embedded', '"""Reworded: pull the first embedded', 1),
+                     encoding="utf-8")
+    assert check_runlogs.main() == 0
+    assert "validators.shared" not in capsys.readouterr().out
+
+    assert r"(1\d{3}|20\d{2})" in original, "premise gone: EMBEDDED_YEAR_RE"
+    dates.write_text(original.replace(r"(1\d{3}|20\d{2})", r"(1\d{3})", 1), encoding="utf-8")
+    assert check_runlogs.main() == 0
+    out = capsys.readouterr().out
+    assert "skill `convert-dates`" in out and "validators.shared" in out and "::warning" in out
+    assert "validators.suite" not in out
+
+
 @pytest.mark.parametrize(
     "labels, expect_rc",
     [
@@ -2943,9 +3135,10 @@ def test_the_cosmetic_skip_label_waives_rule2c_for_its_skill_only(
 
 
 
-def test_a_non_test_validator_module_marks_every_suite():
+def test_a_non_test_validator_module_marks_every_suite(monkeypatch):
     """A suite file can import a sibling module (`extraction_validators.py`), so an
     edit there is graded on every suite; rule 2c's recompute decides which moved."""
+    _base_is_head(monkeypatch)
     for path in (
         "eval/harness/validators/extraction_validators.py",
         "eval/harness/validators/conftest.py",
@@ -2974,3 +3167,252 @@ def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeyp
     out = capsys.readouterr().out
     assert rc == 1, out
     assert "skill `convert-dates`" in out and "tools.fixture" in out
+
+
+# --- #3568: a touched agent gates a suite only if its graded log can see it -----
+
+_AGENT_REL = "packages/engine/plugin/agents/callee.md"
+_CALLEE = "---\nname: callee\ndescription: Does x.\ntools:\n  - Read\n---\nbody v1\n"
+
+
+def _routing_repo(tmp_path, monkeypatch, snapshot=None, *, released=True):
+    """A routing suite `router` (SKILL.md naming @plugin:callee, plus a test
+    directory) whose graded run log holds `snapshot` (None: no run log at all)."""
+    repo = tmp_path / "repo"
+    skills = repo / "packages/engine/plugin/skills"
+    (skills / "router").mkdir(parents=True)
+    (skills / "router" / "SKILL.md").write_text(
+        "---\nname: router\n---\nDelegate via `@plugin:callee`.\n", encoding="utf-8"
+    )
+    (repo / _AGENT_REL).parent.mkdir(parents=True)
+    (repo / _AGENT_REL).write_text(_CALLEE, encoding="utf-8")
+    tests_unit = repo / "eval/tests/unit"
+    (tests_unit / "router").mkdir(parents=True)
+    (tests_unit / "router" / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_router_001"}}), encoding="utf-8"
+    )
+    runlogs = repo / "eval/runlogs/unit"
+    runlogs.mkdir(parents=True)
+    if snapshot is not None:
+        (runlogs / "router").mkdir()
+        name = "v1.json" if released else "v1_2026-10-21_10-00-00.json"
+        (runlogs / "router" / name).write_text(json.dumps({"snapshot": snapshot}), encoding="utf-8")
+    for attr, value in (
+        ("REPO_ROOT", repo), ("RUNLOGS_DIR", runlogs), ("PLUGIN_SKILLS_DIR", skills),
+        ("TEST_ONLY_SKILLS_DIR", repo / "eval/skills"), ("TESTS_UNIT_DIR", tests_unit),
+    ):
+        monkeypatch.setattr(check_runlogs, attr, value)
+    return repo
+
+
+def _frontmatter_digest(text):
+    from harness.snapshot import hash_content
+
+    return hash_content(
+        check_runlogs.frontmatter_fingerprint_text(normalize(_AGENT_REL, text.encode("utf-8")))
+    )
+
+
+def _changed(value):
+    def fake(agent, **_):
+        return value
+    return fake
+
+
+def test_a_body_only_edit_to_a_frontmatter_fingerprinted_agent_gates_nothing(tmp_path, monkeypatch):
+    """The point of #3568: the routing suite's graded log holds the agent's
+    `#frontmatter` key and the PR left the frontmatter alone."""
+    _routing_repo(tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)})
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == set()
+
+
+def test_a_frontmatter_edit_gates_the_routing_suite(tmp_path, monkeypatch):
+    _routing_repo(tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)})
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(True))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"router"}
+
+
+def test_a_graded_log_holding_the_full_key_gates_on_any_edit(tmp_path, monkeypatch):
+    """An opted-in agent, or any agent in a log written before #3568. The
+    frontmatter comparison is not even consulted."""
+    _routing_repo(tmp_path, monkeypatch, {_AGENT_REL: "0" * 64})
+
+    def must_not_run(agent, **_):
+        raise AssertionError("a full key must gate without a frontmatter comparison")
+
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", must_not_run)
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"router"}
+
+
+def test_a_suite_with_no_graded_log_is_gated_so_rule_2_can_report_it(tmp_path, monkeypatch):
+    _routing_repo(tmp_path, monkeypatch, snapshot=None)
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"router"}
+
+
+def test_a_graded_log_with_no_key_for_the_agent_is_not_gated(tmp_path, monkeypatch):
+    """Rule 2 never reports a path its snapshot does not list, so gating here
+    would only run the other rules on a suite the edit cannot reach."""
+    _routing_repo(tmp_path, monkeypatch, {"packages/engine/plugin/skills/router/SKILL.md": "0" * 64})
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == set()
+
+
+def test_the_agents_own_suite_is_gated_though_its_log_has_no_key_for_it(tmp_path, monkeypatch):
+    """A skill converted to an agent keeps its suite, and that suite's graded log
+    can predate the conversion (search-records' graded log was v7.json, written
+    while it was still a skill, until v8). Its next run embeds the agent in full, so the edit
+    reaches it: the own suite is gated whatever key form its log holds."""
+    repo = _routing_repo(tmp_path, monkeypatch, {"packages/engine/plugin/skills/router/SKILL.md": "0" * 64})
+    (repo / "eval/tests/unit/callee").mkdir()
+    (repo / "eval/runlogs/unit/callee").mkdir()
+    (repo / "eval/runlogs/unit/callee/v1.json").write_text(
+        json.dumps({"snapshot": {"packages/engine/plugin/skills/callee/SKILL.md": "0" * 64}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"callee"}
+
+
+def test_the_log_this_pr_adds_decides_over_the_released_one(tmp_path, monkeypatch):
+    """The released v1 holds the bare key, the PR's own candidate the reduced one:
+    the PR is graded on the log it ships."""
+    repo = _routing_repo(tmp_path, monkeypatch, {_AGENT_REL: "0" * 64})
+    added = "v2_2026-10-21_10-00-00.json"
+    (repo / "eval/runlogs/unit/router" / added).write_text(
+        json.dumps({"snapshot": {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {"router": [added]}) == set()
+
+
+def test_main_blocks_a_description_edit_on_a_stale_routing_log(tmp_path, monkeypatch, capsys):
+    """End to end: the graded log fingerprinted the old description, the PR
+    changed it, so research-like suites go stale and rule 2 blocks."""
+    repo = _routing_repo(
+        tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)}
+    )
+    (repo / _AGENT_REL).write_text(_CALLEE.replace("Does x.", "Does y."), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(True))
+    _patch_diffs(monkeypatch, [_AGENT_REL])
+
+    rc = check_runlogs.main()
+
+    out = capsys.readouterr().out
+    assert rc == 1, out
+    assert "skill `router`" in out
+    assert "#frontmatter" in out
+
+
+def test_main_lets_a_body_only_edit_through(tmp_path, monkeypatch, capsys):
+    repo = _routing_repo(
+        tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)}
+    )
+    (repo / _AGENT_REL).write_text(_CALLEE.replace("body v1", "body v2"), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    _patch_diffs(monkeypatch, [_AGENT_REL])
+
+    rc = check_runlogs.main()
+
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "skill `router`" not in out
+
+
+def test_agent_gates_suite_reads_the_key_form():
+    key = _AGENT_REL
+    assert check_runlogs.agent_gates_suite("callee", None) is True
+    assert check_runlogs.agent_gates_suite("callee", {key: "x"}) is True
+    assert check_runlogs.agent_gates_suite("callee", {"other": "x"}) is False
+
+
+# The merge-base comparison, against a REAL git repository: a monkeypatched
+# helper cannot show the three-dot convention holds (the phantom it guards
+# against was only ever found against real commits).
+
+
+def _git(repo, *args):
+    subprocess.run(
+        ["git", "-c", "user.email=t@example.com", "-c", "user.name=t", *args],
+        cwd=repo, check=True, capture_output=True,
+    )
+
+
+def _rev(repo, ref="HEAD"):
+    return subprocess.run(
+        ["git", "rev-parse", ref], cwd=repo, check=True, capture_output=True,
+        text=True, encoding="utf-8",
+    ).stdout.strip()
+
+
+@pytest.fixture
+def agent_git_repo(tmp_path):
+    """A0 adds the agent; `main` edits its description after the fork; the PR
+    branch is created from A0."""
+    repo = tmp_path / "git"
+    (repo / "packages/engine/plugin/agents").mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    (repo / _AGENT_REL).write_text(_CALLEE, encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "A0")
+    a0 = _rev(repo)
+    (repo / _AGENT_REL).write_text(_CALLEE.replace("Does x.", "Does main's thing."), encoding="utf-8")
+    _git(repo, "commit", "-q", "-am", "main moves the description")
+    return repo, a0, _rev(repo)
+
+
+def _pr_branch(repo, a0, name, edit):
+    _git(repo, "checkout", "-q", "-b", name, a0)
+    edit(repo / _AGENT_REL)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", name)
+    return _rev(repo)
+
+
+@pytest.mark.parametrize(
+    ("edit", "expected"),
+    [
+        (lambda p: p.write_text(_CALLEE.replace("body v1", "body v2"), encoding="utf-8"), False),
+        (lambda p: p.write_text(_CALLEE.replace("  - Read\n", "  - Read\n  - Write\n"), encoding="utf-8"), True),
+        (lambda p: p.write_text(_CALLEE.replace("Does x.", "Does z."), encoding="utf-8"), True),
+        (lambda p: p.unlink(), True),
+    ],
+    ids=["body-only-while-main-moved-the-description", "tools", "description", "deleted"],
+)
+def test_agent_frontmatter_changed_against_a_real_merge_base(agent_git_repo, monkeypatch, edit, expected):
+    repo, a0, main_tip = agent_git_repo
+    head = _pr_branch(repo, a0, "pr", edit)
+    monkeypatch.setenv("BASE_SHA", main_tip)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert check_runlogs.agent_frontmatter_changed("callee", cwd=repo) is expected
+
+
+def test_agent_frontmatter_changed_fails_closed_without_the_shas(monkeypatch):
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    assert check_runlogs.agent_frontmatter_changed("callee") is True
+
+
+def test_agent_frontmatter_changed_fails_closed_on_a_git_error(agent_git_repo, monkeypatch):
+    repo, _, main_tip = agent_git_repo
+    monkeypatch.setenv("BASE_SHA", main_tip)
+    monkeypatch.setenv("HEAD_SHA", "0" * 40)  # no such commit
+    assert check_runlogs.agent_frontmatter_changed("callee", cwd=repo) is True
+
+
+def test_every_embedded_agent_reaches_its_suite_through_the_superset():
+    """Corpus property: every agent a suite's snapshot embeds (any form) is one
+    whose edit the superset maps back to that suite, so no embedded agent can be
+    edited with its suite left unexamined."""
+    from harness.snapshot import agent_embed_forms
+
+    referencing = check_runlogs.skills_referencing_agents(check_runlogs.PLUGIN_SKILLS_DIR)
+    missed = []
+    suites = [p.name for p in sorted(check_runlogs.TESTS_UNIT_DIR.iterdir()) if p.is_dir()]
+    assert "research" in suites
+    for suite in suites:
+        for agent in agent_embed_forms(suite, check_runlogs.REPO_ROOT):
+            if suite not in check_runlogs.skills_gated_by_agent(agent, referencing):
+                missed.append(f"{suite} embeds {agent}")
+    assert not missed, missed

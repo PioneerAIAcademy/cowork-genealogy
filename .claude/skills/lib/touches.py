@@ -58,7 +58,9 @@ SNAPSHOT = (
 # The name of the eval slot a snapshot path belongs to. The slot is what a paid run
 # buys, so it -- not the file, and not the skill named in the title -- is the unit
 # the merge pass queues against. An agent is its own slot because one agent body
-# gates every skill that delegates to it via `@plugin:`.
+# gates every skill that delegates to it via `@plugin:`, every suite whose tests
+# run it via `run_agents`, and every routing suite (`research`), which fingerprints
+# its frontmatter -- `slots.embedders` expands it.
 #
 # A skill converted to an agent keeps its suite: `eval/tests/unit/<x>/` stays, the
 # skill directory goes, and `build_snapshot` embeds `agents/<x>.md` in that suite by

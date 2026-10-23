@@ -714,7 +714,10 @@ atomically with it. Check `state` before you write a note naming one.
 - `packages/engine/plugin/skills/<skill>/**` — including `references/` and comments
 - `eval/tests/unit/<skill>/**` — `rubric.md` and the test JSON
 - `packages/engine/plugin/agents/<agent>.md` for an agent the skill references via
-  `@plugin:` — that is **every** skill naming it, so check the fan-out:
+  `@plugin:` or one of its tests runs via `execution.run_agents`, and for **every**
+  agent on `research`, which fingerprints each agent's frontmatter (a body-only
+  edit leaves `research` active). That is **every** skill naming it, so check the
+  fan-out:
   `grep -rl "@plugin:<agent>" packages/engine/plugin/skills/*/SKILL.md`
 
 **Key it on paths, not on the skill's name in the title.** Two PRs can both be
@@ -775,7 +778,8 @@ PY
 no `Touches:` line and the skill name merely appears somewhere in its prose — open it and
 decide. An issue that cites a SKILL.md as *evidence* and edits none of its files is not a
 sharer, and treating it as one writes a false note. An `AGENT:` row covers **every** skill
-naming that agent via `@plugin:` — check the fan-out with the grep above.
+naming that agent via `@plugin:`, every suite running it via `run_agents`, and
+`research` — check the fan-out with the grep above.
 
 **Neither shortcut works, and they fail in opposite directions.** Keying on the title
 misses a sharer whose title names none of its skills — one issue's `Touches:` line

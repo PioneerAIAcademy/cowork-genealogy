@@ -11,8 +11,9 @@
     "user_message": "Search the 1850 U.S. census index for Patrick Flynn in Schuylkill County, Pennsylvania.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["volume-search-any", "image-search-any"],
+  "mcp_fixtures": ["volume-search-any", "image-search-any", "image-transcribe-any"],
   "execution": {
+    "run_agents": ["search-images"],
     "max_wall_clock_seconds": 600
   },
   "negative": {

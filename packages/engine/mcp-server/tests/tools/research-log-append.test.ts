@@ -1595,6 +1595,31 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     },
   );
 
+  it.each(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"])(
+    "tells the agent to return the %s report it just logged (#3524)",
+    async (tool) => {
+      await write(baseResearch([]));
+      const op = { tool, query: { request: "x" }, outcome: "positive", resultsExamined: 1, planItemId: null, notes: "the report" };
+      const single = await researchLogAppend({ projectPath: dir, ...op });
+      expect(single.ok).toBe(true);
+      expect((single as any).next).toMatch(/return the report you just logged, in full/);
+      const batch = await researchLogAppend({ projectPath: dir, ops: [op] });
+      expect((batch as any).next).toMatch(/return the report you just logged, in full/);
+    },
+  );
+
+  it("carries no report reminder for a record search or a reference lookup (#3524)", async () => {
+    await write(baseResearch([]));
+    for (const tool of ["record_search", "historical_context"]) {
+      const op = { tool, query: { query: "Kingsclear" }, outcome: "negative", resultsExamined: 0, planItemId: null, notes: null };
+      const single = await researchLogAppend({ projectPath: dir, ...op });
+      expect(single.ok).toBe(true);
+      expect(single).not.toHaveProperty("next");
+      const batch = await researchLogAppend({ projectPath: dir, ops: [op] });
+      expect(batch).not.toHaveProperty("next");
+    }
+  });
+
   it("does not count reference lookups (#3244), and still counts record searches", async () => {
     const wiki = (n: number) => ({ ...pos(n), tool: "wikipedia_search", query: { query: "Schuylkill County" } });
     await write(baseResearch([wiki(1), wiki(2)]));

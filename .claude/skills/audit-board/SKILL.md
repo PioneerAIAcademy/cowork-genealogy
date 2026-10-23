@@ -457,8 +457,11 @@ only if its work lands under that skill's snapshot set:
 
 - `packages/engine/plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**`
-- a plugin agent the skill references via `@plugin:` — `record-extractor.md` is
-  on every skill naming it, so one agent edit can touch several snapshots at once
+- a plugin agent the skill references via `@plugin:` or one of its tests runs via
+  `execution.run_agents` — `record-extractor.md` is on every skill naming it, so
+  one agent edit can touch several snapshots at once. Every agent is also on
+  `research`'s snapshot, by its frontmatter: a body-only edit leaves `research`'s
+  run log active, but a `**Touches:**` line cannot say which kind of edit it is
 
 Issues that only touch tool or harness code are **not** on the snapshot even when
 their title names the skill. The `**Touches:**` line is what makes this decidable.
