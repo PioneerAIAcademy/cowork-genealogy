@@ -266,6 +266,7 @@ describe("error classes", () => {
       ["410 record", () => fetchMock.mockResolvedValue(res(410)), () => tools.recordRead(ark("QQQQ-118")), "permanent"],
       ["deleted person", () => fetchMock.mockResolvedValue(res(410)), () => tools.personRead("KWCB-QZ3"), "permanent"],
       ["tombstoned quality", () => fetchMock.mockResolvedValue(res(200, { isValid: true, visibility: "TOMBSTONED" })), () => tools.personQuality("KWCB-QZ4"), "permanent"],
+      ["404 compiled tree", () => fetchMock.mockResolvedValue(res(404)), () => tools.compiledTreeRead("ark:/61903/2:2:TEST-2A3"), "permanent"],
     ];
     const got: Record<string, string> = {};
     const want: Record<string, string> = {};
@@ -284,7 +285,7 @@ describe("error classes", () => {
     expect(classifyError("Person KWCB-429 not found in the FamilySearch Family Tree.")).toBe("permanent");
   }, 30_000);
 
-  it("stops the run on a 429 from every one of the five tools", async () => {
+  it("stops the run on a 429 from every one of the six tools", async () => {
     fetchMock.mockImplementation(async () => res(429));
     const gx = { persons: [{ id: "p1", names: [{ given: "A", surname: "B" }] }] };
     const calls: [string, () => Promise<unknown>][] = [
@@ -293,13 +294,14 @@ describe("error classes", () => {
       ["source_attachments", () => tools.sourceAttachments([ark("QQQQ-121")])],
       ["person_quality", () => tools.personQuality("KWCB-QZ5")],
       ["same_person", () => tools.samePerson({ gedcomx1: gx, primaryId1: "p1", gedcomx2: gx, primaryId2: "p1" })],
+      ["compiled_tree_read", () => tools.compiledTreeRead("ark:/61903/2:2:TEST-2A2")],
     ];
     const got: Record<string, string> = {};
     for (const [name, act] of calls) {
       const msg = await messageOf(act());
       got[name] = `${classifyError(msg)} <- ${msg}`;
     }
-    expect(Object.values(got).map((v) => v.split(" <- ")[0]), JSON.stringify(got, null, 2)).toEqual(Array(5).fill("stop"));
+    expect(Object.values(got).map((v) => v.split(" <- ")[0]), JSON.stringify(got, null, 2)).toEqual(Array(6).fill("stop"));
   }, 60_000);
 
   it("counts only the relationship note as a partial read", () => {

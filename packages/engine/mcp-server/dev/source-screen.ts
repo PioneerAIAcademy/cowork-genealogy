@@ -226,6 +226,7 @@ export async function fetchCompiledTree(ark: string, principal: Principal): Prom
     headers: { Accept: "application/x-gedcomx-v1+json", "User-Agent": BROWSER_USER_AGENT },
   });
   if (res.status === 404 || res.status === 410) throw new Error(`Compiled tree entry ${ark} was not found (${res.status}).`);
+  if (res.status === 429) throw new Error("FamilySearch rate limit reached on a compiled tree read.");
   if (!res.ok) throw new Error(`FamilySearch compiled tree read failed: ${res.status} ${res.statusText}.`);
   return res.json();
 }
