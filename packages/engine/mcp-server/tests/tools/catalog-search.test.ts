@@ -2661,14 +2661,19 @@ describe("catalog_search — the answer stays under the spill line", () => {
           const fitted = structuredClone(a);
           fitFilmNotes(fitted, budget);
           expect(size(fitted), message).toBe(least);
-          // ...and hits are left off the end, one at a time, until it fits or one is left.
-          const leftOff = (k: number): CatalogSearchResult =>
+          // ...so hits are left off the end, one at a time, until the rest at their floors fit or one is left...
+          const leftOff = (from: CatalogSearchResult, k: number): CatalogSearchResult =>
             k === n
-              ? fitted
-              : { ...fitted, hits: fitted.hits.slice(0, k), returned: k, hitsOmitted: n - k, hitsOmittedHint: omittedHint(n - k) };
+              ? from
+              : { ...from, hits: from.hits.slice(0, k), returned: k, hitsOmitted: n - k, hitsOmittedHint: omittedHint(n - k) };
           let keep = n;
-          while (keep > 1 && size(leftOff(keep)) > budget) keep--;
-          expect(shaped, message).toEqual(leftOff(keep));
+          while (keep > 1 && size(leftOff(fitted, keep)) > budget) keep--;
+          // ...and the hits that stay are fitted into the room the others freed, not held at their floors.
+          const kept = structuredClone(leftOff(a, keep));
+          fitFilmNotes(kept, budget);
+          expect(shaped, message).toEqual(kept);
+          expect(size(shaped), message).toBeGreaterThanOrEqual(size(leftOff(fitted, keep)));
+          if (keep > 1) expect(size(shaped), message).toBeLessThanOrEqual(budget);
         }
       }
     });
@@ -2880,6 +2885,19 @@ describe("catalog_search — the answer stays under the spill line", () => {
       expect(twice.hitsOmitted).toBe(60 - twice.hits.length);
       expect(twice.returned).toBe(twice.hits.length);
       expect(twice.hitsOmittedHint).toBe(omittedHint(60 - twice.hits.length));
+    });
+
+    it("the room the hits left off free goes to the film notes of the hits that stay", () => {
+      // Cut first and left off after, the hit that stays kept only its floor, one
+      // entry, and the room the 39,000-character hit freed went unused.
+      const entries = Array.from({ length: 5 }, (_, j) => bigEntry(j, 1_000));
+      const tail: CatalogHit = { ...bare(9), hydrated: true, notes: ["n".repeat(39_000)] };
+      const r = shapeAnswer(answerOf([hitOf("a", entries), tail]));
+      expect(r.hits.map((h) => h.id)).toEqual(["a"]);
+      expect(r.hitsOmitted).toBe(1);
+      expect(r.hits[0].filmNotes).toEqual(entries);
+      expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");
+      expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
     });
 
     it("keeps one hit however small the budget", () => {

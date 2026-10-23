@@ -532,6 +532,9 @@ serialized answer is never truncated.
 
 When the answer is still over the budget with every film-note list at its floor,
 hits are left off the END, one at a time, until it fits. One hit is always kept.
+Which hits stay is decided first, and the film notes of the hits that stay are
+then fitted into what is left of the budget, so the room a hit left off frees goes
+to them rather than unused.
 `hitsOmitted` says how many went, `hitsOmittedHint` says to ask with a smaller
 `count` or a narrower query, and `returned` is the number listed. The two fields
 are counted in the budget. An answer that fits loses no hit and carries neither
@@ -781,11 +784,12 @@ readers and every access uses one of them:
 | the hint names the hydrate value that reaches the hit only when one is given, and always the keywords; at `hydrate` 1 it never says to hydrate, a giant at rank 2 of a call that hydrated ten is told `hydrate: 2`, a giant at the last rank a call hydrated and a hit with no `url` are offered only the keywords, and an off-host hit above a giant does not move the value | `hydrate` is a prefix count over the hits that carry a `url`, so "hydrate fewer" at hydrate 1, or for a hit below rank 1, un-hydrates the hit |
 | a cut keeps at least one entry when the rest of the answer already exceeds the budget; a single huge entry is listed whole and is not called cut, and the hit beside it is listed at its floor; one hit whose fields other than the film notes pass the budget is listed whole with the rest left off | the two cases the bound allows to go over |
 | every character is counted, the two fields a cut hit adds included, at five budgets; over random answers the answer is its base plus what the lists cost | the serialized answer is at most the budget |
-| over random answers the answer ends within the budget whenever a brute-force search finds a listing within it, and otherwise every hit is at its floor with hits left off the end only as far as it takes; an answer that fits is left exactly as it came | the floors are reserved, and nothing is left off that need not be |
+| over random answers the answer ends within the budget whenever a brute-force search finds a listing within it, and otherwise hits are left off the end only as far as it takes with every hit at its floor, and the hits that stay are then fitted into the room the others freed; an answer that fits is left exactly as it came | the floors are reserved, nothing is left off that need not be, and the room a hit left off frees is not wasted |
 | over random answers shaping a shaped answer changes nothing, every cut is some of the item's entries whole and in order, never none and never all, and a cut hit costs less than the whole hit; shaping is also idempotent on the shapes the first version moved | cutting it again would count the entries it lists as the entries it has, and `filmNotesTotal` would understate the item |
 | a hit that was not cut carries neither `filmNotesTotal` nor `filmNotesHint`, and the hint never names the hit's `url` | the two fields appear only when something was left out, and the `url` is an API record nobody can open |
 | counts 100, 120 and 200 at the defaults come back within the budget with the hits left off their end counted (`returned`, `hitsOmitted`, `hitsOmittedHint`); count 200 with no hydration is bounded by the hits alone; count 25 is unchanged and carries neither field | the film notes were fitted, yet the hits alone passed the spill line |
 | hits are left off the end until the answer fits and exactly as many as it takes; an answer that fits loses none and carries neither field; an answer shaped again into a smaller budget adds to its count; one hit is kept however small the budget; `1 more hit was` for one | the bound on the hit list |
+| a hit beside a 39,000-character hit is listed whole once that hit is left off, not held at its floor | a fit made before hits are left off cuts the hits that stay for room nobody then uses |
 | an `{ error }` envelope comes back from `shapeAnswer` as it came | it has no hits, and a tool can return that envelope |
 | every `catalog-search-*.json` under `eval/fixtures/mcp/` is unchanged by shaping, carries neither `shelf` nor `imageStartNumber`, and has no cut field without its partner, and the glob finds the files it guards; the guard on the cut fields rejects a total without its hint, a hint without its total, a total that is not more than the entries listed, and the same slips in the two hit-list fields, and passes a cut answer, an uncut one and an error envelope | the recorded evals are graded on an answer the tool still gives. `mcp-fixture-shape.test.ts` reads keys one level below the response and does not see film notes |
 

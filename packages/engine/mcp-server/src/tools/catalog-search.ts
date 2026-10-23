@@ -607,34 +607,40 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
   });
 }
 
+/** Leave the last `count` hits off `result`, and say so in the two fields. An
+ *  answer shaped again adds to the count it already carries. */
+function leaveOff(result: CatalogSearchResult, count: number): void {
+  const left = (result.hitsOmitted ?? 0) + count;
+  result.hits.splice(result.hits.length - count);
+  result.returned = result.hits.length;
+  result.hitsOmitted = left;
+  result.hitsOmittedHint = hitsOmittedHint(left);
+}
+
 /**
  * Leave hits off the END of the list until the answer fits `budget`, or one hit
- * is left. It runs after the film notes are fitted, so what is left over the
+ * is left. Run on an answer whose film notes are fitted, what is left over the
  * budget is the hits themselves: at a large `count` even a hit with no detail
  * takes a few hundred characters. An answer that fits loses no hit. The two
- * fields it adds say how many went and what to ask instead, and `returned`
- * follows `hits`. Counted from the answer as it stands, so an answer shaped again
- * into a smaller budget adds to the count it already carries.
+ * fields count toward the budget, so they are in place before each measure.
  */
 function leaveHitsOff(result: CatalogSearchResult, budget: number): void {
-  const already = result.hitsOmitted ?? 0;
-  let left = 0;
-  while (result.hits.length > 1 && chars(result) > budget) {
-    result.hits.pop();
-    left++;
-    result.returned = result.hits.length;
-    result.hitsOmitted = already + left;
-    result.hitsOmittedHint = hitsOmittedHint(already + left);
-  }
+  while (result.hits.length > 1 && chars(result) > budget) leaveOff(result, 1);
 }
 
 /**
  * Everything that shapes an answer once its hits are hydrated: one entry per
- * reel, the film notes fitted into the budget, then, if the hits alone are still
- * over it, hits left off the end. The tool ends in it, and a recorded answer can
- * be run through it (the eval fixtures were reshaped that way), so there is one
- * code path and not a copy of it. An `{ error }` envelope has no hits and comes
- * back as it came.
+ * reel, then the film notes fitted into the budget, and, if the hits alone are
+ * still over it, hits left off the end. The tool ends in it, and a recorded
+ * answer can be run through it (the eval fixtures were reshaped that way), so
+ * there is one code path and not a copy of it. It shapes `result` in place. An
+ * `{ error }` envelope has no hits and comes back as it came.
+ *
+ * Which hits stay is decided on a copy first. Hits are left off only when the
+ * answer is over the budget with every film-note list at its floor, so the fit
+ * that decided it cut the hits that stay to their floors, and the room the hits
+ * left off free would go unused. The hits are left off first, and the film notes
+ * of the ones that stay are fitted into what is then left of the budget.
  */
 export function shapeAnswer(
   result: CatalogSearchResult,
@@ -646,8 +652,12 @@ export function shapeAnswer(
     // again could join two of a reel's runs that were kept apart on purpose.
     if (h.filmNotes && h.filmNotesTotal === undefined) h.filmNotes = mergeFilmNotes(h.filmNotes);
   }
+  const trial = structuredClone(result);
+  fitFilmNotes(trial, budget);
+  leaveHitsOff(trial, budget);
+  const left = result.hits.length - trial.hits.length;
+  if (left > 0) leaveOff(result, left);
   fitFilmNotes(result, budget);
-  leaveHitsOff(result, budget);
   return result;
 }
 
