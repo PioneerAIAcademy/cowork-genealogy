@@ -693,7 +693,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 **Run extraction only when the delegation itself says to extract** ("…and extract them"), and only for records that clear `needs-review`. Otherwise name the promising records in your return as ready for extraction and stop: the caller confirms, and you do not extract on your own. When it does say so, extraction is one call: `extraction_append({ projectPath, recordIds, questionIds })`, with each promising result's `recordId` field (never `arkId`, `ark`, `id` or `url`). It reads each record live, logs it and extracts it in code, so do not `record_read` first. Relay its summary verbatim.
 
 1. If a record ID is available, put it in `recordIds`.
-2. If the full record is unavailable but an image exists, record the image URL in the log. Name `image-reader` (page text), then `record-structurer`, in the caller-facing lines as the route; you spawn neither.
+2. If the full record is unavailable but an image exists, record the image URL in the log. Name `image_transcribe` (which stages the page), then `record-structurer` with its `staged.resultsRef`, in the caller-facing lines as the route; you call neither.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located." Never treat an index entry as equivalent to examining the original.
 
 **Passenger lists:** Starting 1820, US passenger manifests list every person aboard by name, including infants and young children — not just heads of household. (Canadian passenger lists are the exception, scarce before 1865.) When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.
@@ -778,7 +778,7 @@ Return **≤12 lines** to the caller, in this order:
 - the top match(es) with `matchScore`, attachment status, the cross-check result and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
-- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer` / `image-reader`, or `research-exhaustiveness`
+- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
 
