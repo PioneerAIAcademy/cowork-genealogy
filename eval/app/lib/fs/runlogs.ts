@@ -211,7 +211,9 @@ export async function readRunLogById(
  * This is current content, not the content the run saw. For an *active* run
  * log those are the same by definition, and the results page already shows an
  * active/inactive badge (`detectActiveRunLog`) so a stale log is visibly
- * flagged before anyone reads its panes. Missing/unreadable paths are omitted;
+ * flagged before anyone reads its panes. A `#frontmatter` key names no file
+ * (`AGENT_FRONTMATTER_SUFFIX` in `lib/snapshot.ts`), so it is omitted with the
+ * missing ones. Missing/unreadable paths are omitted;
  * every consumer already treats an absent key as "nothing to show".
  */
 export async function readSnapshotFiles(

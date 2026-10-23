@@ -61,7 +61,7 @@ import {
   standardPlaceToCoords,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { birthThresholdMiles, lookupPlaceCoords, type PlaceCoordsResolver } from "../utils/place-coords.js";
+import { birthThresholdMiles, lookupWithin, type PlaceCoordsResolver } from "../utils/place-coords.js";
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
 import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -4446,7 +4446,7 @@ export async function personWarningsTool(
 
   const pairs = birthResidencePairs(mob);
   if (pairs.length > 0) {
-    const coords = await lookupPlaceCoords(
+    const coords = await lookupWithin(
       pairs.flatMap((p) => [p.birth.place, p.residence.place]),
       opts.placeCoords ?? ((name) => standardPlaceToCoords(name)),
       opts.lookupBudgetMs ?? PLACE_LOOKUP_BUDGET_MS,
