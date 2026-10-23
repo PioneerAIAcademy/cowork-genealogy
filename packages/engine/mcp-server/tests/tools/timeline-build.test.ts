@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copyFile, mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { readFileSync } from "fs";
 import { join, resolve } from "path";
@@ -643,6 +643,35 @@ describe("places and the deadline", () => {
     expect(census(p)).toEqual([]);
     expect(p!.events.every((e: any) => e.distance_from_previous_km === null)).toBe(true);
     expect(p!.skipped.length).toBeGreaterThan(0);
+  });
+  describe("with the wall clock stopped while the deadline timer runs", () => {
+    let clock: ReturnType<typeof vi.spyOn>;
+    beforeEach(() => {
+      clock = vi.spyOn(Date, "now").mockReturnValue(Date.now());
+    });
+    afterEach(() => clock.mockRestore());
+    const hangs = () => new Promise<any>(() => {});
+    it("a place resolution the deadline cut short is still reported", async () => {
+      const p = await plan(project([{ fact: "residence", date: "1850", place: "Columbus, Ohio" }]), man, {
+        resolvePlace: hangs, placeCoords: hangs, deadlineMs: 200,
+      });
+      expect(p!.skipped).toContain("standardizing some places");
+    });
+    it("a coordinates lookup the deadline cut short is still reported", async () => {
+      const p = await plan(project([{ fact: "residence", date: "1850", sp: PA }, { fact: "residence", date: "1860", sp: OHIO }]), man, {
+        ...places(), placeCoords: hangs, deadlineMs: 200,
+      });
+      expect(p!.skipped).toContain("some distances");
+    });
+  });
+  it("a lookup that answers null with no time left is not reported as skipped", async () => {
+    const p = await plan(
+      project([{ fact: "residence", date: "1850", place: "Nowhere" }, { fact: "residence", date: "1860", sp: PA }]),
+      man,
+      { ...places(), deadlineMs: 0 },
+    );
+    expect(p!.events.every((e: any) => e.distance_from_previous_km === null)).toBe(true);
+    expect(p!.skipped).toEqual([]);
   });
 });
 
