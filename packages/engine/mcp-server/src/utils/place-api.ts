@@ -119,10 +119,17 @@ export function extractPrimaryId(
 // because those were never wildcards to escape.
 //
 // `~` is stripped even though it is a capability rather than a hazard: a `~` in
-// RECORDED TEXT would silently enable fuzzy matching nobody asked for. Using
-// fuzzy deliberately belongs in an explicit option applied AFTER sanitising,
-// the way `date` is — not in leaving caller text unsanitised. Its corpus
-// incidence as a place character is zero.
+// RECORDED TEXT would silently enable fuzzy matching nobody asked for. Its
+// corpus incidence as a place character is zero. Deliberate fuzzy is the
+// explicit `fuzzy` option on searchPlace, applied AFTER sanitising, the way
+// `date` is — so a caller `~` is stripped first and exactly one deliberate
+// suffix is sent. The option's caller contract is a SINGLE TOKEN: the value
+// goes unquoted, because quoting makes `"..."~` Lucene phrase-proximity, not
+// fuzzy (live, `name:"Sierkopas, Germany"~` returns "Germany" at 90 and no
+// Sierokopaß), and an unquoted multi-token value is an OR of fuzzied tokens
+// (live, `name:Klein~ Kozlau~` returns 349 hits led by "Klin, Croatia"). The
+// place_search fallback enforces the single-token limit; a new in-server
+// caller must too.
 //
 // Only characters with measured evidence are listed. `!`, `^` and `|` were in
 // an earlier draft on the assumption that they were operators too; no probe
@@ -136,7 +143,10 @@ export function extractPrimaryId(
 const AMPERSAND = /&/g;
 const QUERY_OPERATORS = /[?*#~]/g;
 
-function sanitizeForNameQuery(name: string): string {
+// Exported for the tool layer: place_search's fuzzy fallback must check the
+// SANITIZED leaf for single-token-ness (a wildcard sanitises to a space, so a
+// raw check would under-count tokens) before building its fuzzy query.
+export function sanitizeForNameQuery(name: string): string {
   return name
     .replace(AMPERSAND, " and ")
     .replace(QUERY_OPERATORS, " ")
@@ -146,7 +156,7 @@ function sanitizeForNameQuery(name: string): string {
 
 export async function searchPlace(
   name: string,
-  opts: { date?: number } & PlaceFetchOptions = {},
+  opts: { date?: number; fuzzy?: boolean } & PlaceFetchOptions = {},
 ): Promise<SearchPlaceResult[]> {
   // Phrase-quote the value: an unquoted multi-word `name:` query is parsed by
   // FamilySearch's search as an OR of tokens, so a place literally named just
@@ -165,7 +175,11 @@ export async function searchPlace(
     opts.date === undefined ? "" : encodeURIComponent(` +date:+${opts.date}`);
   const safeName = sanitizeForNameQuery(name);
   if (!safeName) return [];
-  const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(`"${safeName}"`)}${dateQualifier}`;
+  // Fuzzy goes UNQUOTED: a phrase-quoted `name:"..."~` is Lucene
+  // phrase-proximity, not fuzzy. Single-token values only — the caller
+  // contract above QUERY_OPERATORS.
+  const nameValue = opts.fuzzy ? `${safeName}~` : `"${safeName}"`;
+  const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(nameValue)}${dateQualifier}`;
 
   const response = await fetchWithRetry(url, {
     headers: {

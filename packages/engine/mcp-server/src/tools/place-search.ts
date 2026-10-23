@@ -5,6 +5,7 @@ import type {
 } from "../types/place.js";
 import {
   searchPlace,
+  sanitizeForNameQuery,
   getPlaceById,
   getPlaceByPrimaryId,
   getPlaceRepIds,
@@ -91,11 +92,29 @@ export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
   };
 }
 
+/**
+ * What the internal placeSearch returns. `matchType` is present only when the
+ * results came from the fuzzy "sounds like" fallback after the exact query
+ * matched nothing; on an exact hit the field is absent. Top-level rather than
+ * per-result because every result in one outcome comes from one query.
+ */
+export interface PlaceSearchOutcome {
+  results: PlaceResult[];
+  matchType?: "fuzzy";
+}
+
+// A fuzzy result set is unbounded — live, a bare "Brixtol" returns 319
+// entries, and each entry costs a description + Wikipedia fetch (uncapped,
+// place_search_all exceeded the 60s bridge abort at ~1,500 requests). Exact
+// results are never capped.
+const MAX_FUZZY_ENTRIES = 10;
+
 // In-memory cache of internal place-search results, keyed by the normalized
 // (placeName, contextName) pair. Lives for the life of the MCP server process;
 // no TTL. There is no cross-session host storage (see CLAUDE.md), so this only
-// memoizes within a single running server.
-const placeSearchCache = new Map<string, PlaceResult[]>();
+// memoizes within a single running server. Stores the whole outcome, so a
+// cache hit returns `matchType: "fuzzy"` again rather than dropping it.
+const placeSearchCache = new Map<string, PlaceSearchOutcome>();
 
 function placeSearchCacheKey(placeName: string, contextName?: string): string {
   return `${placeName.trim().toLowerCase()} ${(contextName ?? "").trim().toLowerCase()}`;
@@ -129,14 +148,15 @@ async function buildPlaceResult(
  *                    (e.g. "Idaho" or "France"); matched as a case-insensitive
  *                    substring of each candidate's full jurisdictional name
  *
- * Steps: search -> filter by context (keep unfiltered if nothing matches) ->
- * fetch a description per surviving rep ID -> enrich with Wikipedia -> build
- * PlaceResult[]. Results are cached by (placeName, contextName).
+ * Steps: search (with a fuzzy fallback on zero exact hits) -> filter by
+ * context (keep unfiltered if nothing matches) -> fetch a description per
+ * surviving rep ID -> enrich with Wikipedia -> build the outcome. Outcomes
+ * are cached by (placeName, contextName), match type included.
  */
 export async function placeSearch(
   placeName: string,
   contextName?: string
-): Promise<PlaceResult[]> {
+): Promise<PlaceSearchOutcome> {
   if (!placeName || !placeName.trim()) {
     throw new Error("placeName is required");
   }
@@ -145,6 +165,25 @@ export async function placeSearch(
   if (cached) return cached;
 
   let entries = await searchPlace(placeName);
+  let matchType: "fuzzy" | undefined;
+
+  // A misspelled place returns zero exact hits and the agent has no other
+  // automated way to identify it. Retry once with the Places API's fuzzy
+  // ("sounds like") query, built from the leaf — the first comma segment of
+  // the SANITIZED name — and only when that leaf is a single token: unquoted
+  // multi-token fuzzy is an OR of tokens (the measured hazard in
+  // place-api.ts's caller contract). Only an empty SUCCESS triggers it;
+  // a thrown search error still propagates.
+  if (entries.length === 0) {
+    const leaf = sanitizeForNameQuery(placeName).split(",")[0].trim();
+    if (leaf && !leaf.includes(" ")) {
+      const fuzzyEntries = await searchPlace(leaf, { fuzzy: true });
+      if (fuzzyEntries.length > 0) {
+        entries = fuzzyEntries;
+        matchType = "fuzzy";
+      }
+    }
+  }
 
   // When no explicit context is supplied, derive one from a comma-qualified
   // placeName (e.g. "Bristol, England" -> "England"). This closes #609, where
@@ -162,19 +201,37 @@ export async function placeSearch(
     }
   }
 
-  const results = await mapWithConcurrency(entries, 8, (e) =>
+  // Cap AFTER the context filter, so an in-context match is never cut, and
+  // before the per-entry fetches. Entries arrive ranked and the intended
+  // correction sits in the top few (live: Bristol is rank 2 for "Brixtol",
+  // Sierokopaß rank 3 for "Sierkopas").
+  const toFetch =
+    matchType === "fuzzy" ? entries.slice(0, MAX_FUZZY_ENTRIES) : entries;
+  const results = await mapWithConcurrency(toFetch, 8, (e) =>
     buildPlaceResult(e.placeRepId, e)
   );
 
-  placeSearchCache.set(key, results);
-  return results;
+  const outcome: PlaceSearchOutcome = {
+    results,
+    ...(matchType ? { matchType } : {}),
+  };
+  placeSearchCache.set(key, outcome);
+  return outcome;
 }
 
 export async function placeSearchTool(
   input: PlaceSearchToolInput
 ): Promise<PlaceSearchToolResponse> {
-  const results = await placeSearch(input.placeName, input.contextName);
-  return { results: results.map(simplifyPlaceResult) };
+  const { results, matchType } = await placeSearch(
+    input.placeName,
+    input.contextName
+  );
+  // Spread rather than assign: an exact hit's response must stay
+  // byte-identical to the pre-fallback shape (no `matchType` key at all).
+  return {
+    results: results.map(simplifyPlaceResult),
+    ...(matchType ? { matchType } : {}),
+  };
 }
 
 /**
@@ -191,7 +248,7 @@ export async function placeSearchAllTool(
   const base = await placeSearch(input.placeName, input.contextName);
 
   const pids = Array.from(
-    new Set(base.map((r) => r.placeId).filter((p): p is string => !!p))
+    new Set(base.results.map((r) => r.placeId).filter((p): p is string => !!p))
   );
 
   const repIdSets = await mapWithConcurrency(pids, 8, (pid) => getPlaceRepIds(pid));
@@ -204,7 +261,12 @@ export async function placeSearchAllTool(
     return simplifyPlaceResult(toPlaceResult(placeData, wikipediaUrl));
   });
 
-  return { results: built.filter((r): r is SimplifiedPlaceResult => r !== null) };
+  // Unflagged fuzzy results from the sibling tool are the failure the flag
+  // exists to prevent — carry the base search's match type unchanged.
+  return {
+    results: built.filter((r): r is SimplifiedPlaceResult => r !== null),
+    ...(base.matchType ? { matchType: base.matchType } : {}),
+  };
 }
 
 /**
@@ -220,6 +282,9 @@ export const placeSearchToolSchema = {
     "Paris in Idaho, while contextName 'France' returns Paris in France. " +
     "Each result includes the standardized place name (standardPlace), place type, date range," +
     "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
+    'If the response carries matchType: "fuzzy", the name you sent matched ' +
+    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    "before using it. " +
     "Use place_search_all instead when you need every historical jurisdiction a " +
     "place has belonged to over time.",
   inputSchema: {
@@ -255,7 +320,10 @@ export const placeSearchAllToolSchema = {
     "historical representations — useful when boundaries or parent jurisdictions " +
     "changed across the time period you're researching. Each result includes the " +
     "standardized place name (standardPlace), place type, date range, coordinates, a " +
-    "FamilySearch link, and (when available) a Wikipedia link.",
+    "FamilySearch link, and (when available) a Wikipedia link. " +
+    'If the response carries matchType: "fuzzy", the name you sent matched ' +
+    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    "before using it.",
   inputSchema: {
     type: "object",
     properties: {

@@ -74,10 +74,14 @@ HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
 from harness.snapshot import (  # noqa: E402
+    AGENT_FRONTMATTER_SUFFIX,
     agent_refs_in_text,
     collect_refs,
     diff_snapshot_vs_disk,
+    frontmatter_fingerprint_text,
     hash_file,
+    normalize,
+    router_suites,
 )
 from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
 from harness.versioning import (  # noqa: E402
@@ -111,11 +115,12 @@ TEST_ONLY_SKILLS_DIR = REPO_ROOT / "eval" / "skills"
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
-# An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
-# (the agent body is embedded in those skills' run-log snapshots), exactly
-# like an edit inside the skill dir itself — plus `eval/tests/unit/<name>/`
-# itself when that agent has its own agent-keyed suite (issue #1253), which
-# no SKILL.md scan can reach because there is no SKILL.md.
+# An agent edit can reach every suite whose snapshot embeds the agent
+# (`skills_gated_by_agent`): its own agent-keyed suite (issue #1253), a suite
+# whose tests run it live (`execution.run_agents`), and every routing suite,
+# which fingerprints every agent's frontmatter (#3568). Whether the edit gates
+# one of them is decided per suite by `agent_gates_suite`: a body-only edit to
+# an agent the suite fingerprints by frontmatter gates nothing.
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 # Match a shared fixture the run-log snapshot embeds:
@@ -337,7 +342,10 @@ def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
 
 
 def skills_gated_by_agent(
-    agent: str, referencing: dict[str, set[str]], tests_root: Path | None = None
+    agent: str,
+    referencing: dict[str, set[str]],
+    tests_root: Path | None = None,
+    skills_dirs: tuple[Path, ...] | None = None,
 ) -> set[str]:
     """The skills whose run-log snapshot embeds `agents/<agent>.md`.
 
@@ -353,11 +361,158 @@ def skills_gated_by_agent(
     Keyed on directory existence rather than a name list, so a suite arms itself
     when it lands instead of waiting for someone to also remember to edit a
     constant here — the same discipline as the `exempt_suiteless` filter.
+
+    Since #3568 this is the SUPERSET of suites that may embed the agent, and two
+    more arms join: every suite whose tests name the agent in
+    `execution.run_agents` (it runs live there, so its full body is embedded),
+    and every routing suite (`snapshot.router_suites`), which fingerprints every
+    staged agent's frontmatter. Whether an edit actually gates one of these is
+    `agent_gates_suite`'s call; the issue-side slot warning, which has no diff
+    to look at, stays on this superset.
     """
     out = set(referencing.get(agent, set()))
     # Read at call time, not bound as a default: tests monkeypatch TESTS_UNIT_DIR.
-    if (Path(tests_root if tests_root is not None else TESTS_UNIT_DIR) / agent).is_dir():
+    root = Path(tests_root if tests_root is not None else TESTS_UNIT_DIR)
+    if (root / agent).is_dir():
         out.add(agent)
+    if root.is_dir():
+        for suite_dir in sorted(root.iterdir()):
+            if suite_dir.is_dir() and agent in collect_refs(suite_dir, None)["run_agents"]:
+                out.add(suite_dir.name)
+    # `skills_dirs` defaults to this module's globals, read at call time (tests
+    # monkeypatch them); a caller rooted elsewhere (slots.py) passes its own.
+    out |= router_suites(skills_dirs or (PLUGIN_SKILLS_DIR, TEST_ONLY_SKILLS_DIR), root)
+    return out
+
+
+def added_runlogs_by_skill(
+    changes: list[tuple[str, str | None]], touched_paths: list[str]
+) -> dict[str, list[str]]:
+    """The released and candidate run logs this PR adds, per skill.
+
+    Intersected with `touched_paths` because the two git views disagree:
+    `git_diff_changes` is a TWO-dot `A..B` and `git_diff_touched_paths` a
+    THREE-dot `A...B`. When a branch's base has moved past a prune commit the
+    branch has not rebased onto, the two-dot view reports that pruned run log as
+    ADDED while the three-dot view does not see it at all — so rule 6 would
+    grade, and block on, a log the PR never touched. Verified against commit
+    1f8a6001. Shared by `main()` and check_slot_queue.py's PR side.
+    """
+    added_runlog_paths = {p for _, p in changes if p is not None}
+    added_by_skill: dict[str, list[str]] = {}
+    for path in sorted(added_runlog_paths & set(touched_paths)):
+        m = RUNLOG_PATH_RE.match(path)
+        if not m or path.endswith(".ann.json"):
+            continue
+        if classify(m.group(2)).kind in ("released", "candidate"):
+            added_by_skill.setdefault(m.group(1), []).append(m.group(2))
+    return added_by_skill
+
+
+def graded_snapshot(suite: str, added_by_skill: dict[str, list[str]]) -> dict[str, str] | None:
+    """The snapshot of the run log rules 2, 2b and 3 grade for `suite`.
+
+    The log this PR adds (`pr_added_runlog`), else the latest committed one
+    (`resolve_latest_runlog`) — the same choice `main()` makes. None when there
+    is no such log, or it cannot be read.
+    """
+    skill_dir = RUNLOGS_DIR / suite
+    try:
+        added_name = pr_added_runlog(skill_dir, added_by_skill.get(suite, []))
+        if added_name is not None:
+            log = json.loads((skill_dir / added_name).read_text(encoding="utf-8"))
+        else:
+            _, target = resolve_latest_runlog(skill_dir)
+            if target is None:
+                return None
+            log = target[1]
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    snapshot = log.get("snapshot") if isinstance(log, dict) else None
+    return snapshot if isinstance(snapshot, dict) else None
+
+
+def _git_show(sha: str, rel: str, cwd: Path | None) -> bytes | None:
+    """`git show <sha>:<rel>` as bytes, or None when the blob is absent."""
+    proc = subprocess.run(["git", "show", f"{sha}:{rel}"], capture_output=True, cwd=cwd)
+    return proc.stdout if proc.returncode == 0 else None
+
+
+def agent_frontmatter_changed(agent: str, *, cwd: Path | None = None) -> bool:
+    """Whether this PR changed the part of `agents/<agent>.md` a router reads.
+
+    Compares `frontmatter_fingerprint_text` of the agent at the merge-base of
+    BASE_SHA and HEAD_SHA with the agent at HEAD_SHA — the three-dot convention
+    of `git_diff_touched_paths`, so a frontmatter change main made after the
+    branch forked is not counted as this PR's. Fails CLOSED (True, so the suite
+    is gated): either environment variable unset, the blob missing on either
+    side (an added, deleted or renamed agent), or any git error.
+    """
+    base = os.environ.get("BASE_SHA")
+    head = os.environ.get("HEAD_SHA")
+    if not base or not head:
+        return True
+    rel = f"packages/engine/plugin/agents/{agent}.md"
+    try:
+        merge_base = subprocess.check_output(
+            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=cwd
+        ).strip()
+        before = _git_show(merge_base, rel, cwd)
+        after = _git_show(head, rel, cwd)
+    except (subprocess.CalledProcessError, OSError):
+        return True
+    if before is None or after is None:
+        return True
+    return frontmatter_fingerprint_text(normalize(rel, before)) != frontmatter_fingerprint_text(
+        normalize(rel, after)
+    )
+
+
+def agent_gates_suite(agent: str, snapshot: dict[str, str] | None) -> bool:
+    """Whether a touched agent gates a suite, decided by the suite's graded log.
+
+      - no graded log (or an unreadable one): gated, so rule 2's 'no run logs'
+        errors still fire for it;
+      - the log holds the agent's bare key (full body): gated on any change;
+      - the log holds the `#frontmatter` key: gated only if
+        `agent_frontmatter_changed` — a body-only edit to an agent the suite
+        never runs is not this suite's concern (#3568);
+      - the log holds no key for the agent: not gated. Rule 2 could not see the
+        edit either, since a snapshot never reports a path it does not list —
+        which is also why ADDING a new agent stales no routing suite until its
+        next run (an accepted gap, unit-test-spec.md).
+
+    Not consulted for the agent's OWN suite, which `suites_gated_by_touched_agents`
+    gates outright: its next run always embeds the agent in full, so a log with
+    no key for it (one written before a skill became that agent) is stale, not
+    unreachable.
+    """
+    if snapshot is None:
+        return True
+    key = f"packages/engine/plugin/agents/{agent}.md"
+    if key in snapshot:
+        return True
+    if key + AGENT_FRONTMATTER_SUFFIX in snapshot:
+        return agent_frontmatter_changed(agent)
+    return False
+
+
+def suites_gated_by_touched_agents(
+    touched_agents: set[str], added_by_skill: dict[str, list[str]]
+) -> set[str]:
+    """The suites a set of touched agent bodies gates: for each agent, its own
+    suite (always — issue #1253), plus the rest of the `skills_gated_by_agent`
+    superset narrowed by `agent_gates_suite` on each suite's graded log. Shared
+    by `main()` and check_slot_queue.py's PR side, so the slot warning and rule 2
+    cannot disagree about which suites an agent edit buys a run for."""
+    referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
+    out: set[str] = set()
+    for agent in sorted(touched_agents):
+        for suite in sorted(skills_gated_by_agent(agent, referencing)):
+            if suite in out:
+                continue
+            if suite == agent or agent_gates_suite(agent, graded_snapshot(suite, added_by_skill)):
+                out.add(suite)
     return out
 
 
@@ -1721,20 +1876,9 @@ def main() -> int:
     deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
 
-    # Intersected with `touched_paths` because the two git views disagree:
-    # `git_diff_changes` is a TWO-dot `A..B` and `git_diff_touched_paths` a THREE-dot
-    # `A...B`. When a branch's base has moved past a prune commit the branch has not
-    # rebased onto, the two-dot view reports that pruned run log as ADDED while the
-    # three-dot view does not see it at all -- so rule 6 would grade, and block on, a
-    # log the PR never touched. Verified against commit 1f8a6001. Rule 1 is insulated
+    # Two-dot vs three-dot: see `added_runlogs_by_skill`. Rule 1 is insulated
     # because it counts released logs only and a pruned candidate is never released.
-    added_by_skill: dict[str, list[str]] = {}
-    for path in sorted(added_runlog_paths & set(touched_paths)):
-        m = RUNLOG_PATH_RE.match(path)
-        if not m or path.endswith(".ann.json"):
-            continue
-        if classify(m.group(2)).kind in ("released", "candidate"):
-            added_by_skill.setdefault(m.group(1), []).append(m.group(2))
+    added_by_skill = added_runlogs_by_skill(changes, touched_paths)
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
     touched_fixtures: set[tuple[str, str]] = set()
@@ -1773,13 +1917,12 @@ def main() -> int:
             touched_fixtures.add((m.group(1), m.group(2)))
             touched_fixture_paths.add(path)
 
-    # A touched plugin agent gates every skill whose snapshot embeds it — see
-    # skills_gated_by_agent, shared with check_slot_queue.py so the PR-time slot
-    # warning and this rule cannot disagree about which skills an agent reaches.
+    # A touched plugin agent gates the suites whose graded log can see the edit —
+    # see suites_gated_by_touched_agents (#3568), shared with check_slot_queue.py
+    # so the PR-time slot warning and this rule cannot disagree about which
+    # suites an agent edit reaches.
     if touched_agents:
-        referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
-        for agent in sorted(touched_agents):
-            touched_skills |= skills_gated_by_agent(agent, referencing)
+        touched_skills |= suites_gated_by_touched_agents(touched_agents, added_by_skill)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it

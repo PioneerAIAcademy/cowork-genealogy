@@ -62,7 +62,7 @@ import {
   checkFirstPlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { birthThresholdMiles, lookupPlaceCoords } from "../utils/place-coords.js";
+import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
@@ -7375,7 +7375,7 @@ async function prefetchBirthPlaceCoords(
     }
   }
   if (names.length === 0) return new Map();
-  return lookupPlaceCoords(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
+  return lookupWithin(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
 }
 
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {
@@ -8191,6 +8191,10 @@ export interface ResearchAppendOptions {
    *  second pass over a copy of the document, and its answer is thrown away. Never
    *  set by a tool caller. */
   firstFailureOnly?: boolean;
+  /** Run on research.json as read under the lock, before any op: a returned
+   *  message refuses the call, so a caller that chose its op from an earlier
+   *  read writes nothing when that read went stale. */
+  precondition?: (research: any) => string | null;
 }
 
 /**
@@ -8302,6 +8306,8 @@ export async function researchAppend(
   return withProjectLock(projectPath, async () => {
   try {
     const research = await readJson(projectPath, "research.json");
+    const stale = options.precondition?.(research);
+    if (stale) return fail([stale]);
     // Snapshot BEFORE any op in this call/batch applies — see
     // proofSummaryInvariants. Must be taken here, not read off `research`
     // later, since applyOne mutates `research` in place per op.
