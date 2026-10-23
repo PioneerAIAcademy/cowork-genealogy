@@ -38,6 +38,8 @@ import { personWarningsTool } from "../src/tools/person-warnings.js";
 import { samePerson } from "../src/tools/same-person.js";
 import { sanitizeTree } from "../src/validation/tree-sanitize.js";
 import { arkToBareId, toArk } from "../src/utils/ark.js";
+import { fsFetch } from "../src/utils/fs-fetch.js";
+import { BROWSER_USER_AGENT } from "../src/constants.js";
 import type { PersonReadResult, TreeSource } from "../src/types/person-read.js";
 import type { SourceAttachmentsResult } from "../src/types/source-attachments.js";
 
@@ -86,7 +88,8 @@ export const unplantedKey = (hostId: string) => `${hostId}.unplanted`;
 
 // ─── audit list ─────────────────────────────────────────────────────────────
 
-export type AuditClass = "persona" | "record_only" | "no_index";
+/** `tree_person`: a `4:1:` link to another Family Tree person. `compiled_tree`: a `2:2:`/`2:3:` user-submitted tree entry. */
+export type AuditClass = "persona" | "record_only" | "tree_person" | "compiled_tree" | "no_index";
 export type AuditLevel = "subject" | "relationship";
 
 export interface AuditEntry {
@@ -108,8 +111,15 @@ export interface AuditList {
 export function classifyArk(ark: string | null): AuditClass {
   if (ark && /^ark:\/61903\/1:1:/.test(ark)) return "persona";
   if (ark && /^ark:\/61903\/1:2:/.test(ark)) return "record_only";
+  if (ark && /^ark:\/61903\/4:1:[A-Z0-9]{4}-[A-Z0-9]{3,4}$/.test(ark)) return "tree_person";
+  if (ark && /^ark:\/61903\/2:[23]:/.test(ark)) return "compiled_tree";
   return "no_index";
 }
+
+/** The Family Tree person id in a `4:1:` ARK. */
+export const treePersonId = (ark: string) => ark.split("4:1:")[1];
+/** Cache file name for a compiled-tree ARK: the two id spaces are kept apart. */
+export const compiledTreeFile = (ark: string) => `${ark.replace(/^ark:\/61903\//, "").replace(/:/g, "-")}.json`;
 
 /**
  * The sources this person's audit covers: the subject's own refs, sources on
@@ -171,6 +181,7 @@ const PERMANENT_PATTERNS = [
   /is tombstoned in the FamilySearch tree/i,
   /No quality scores found for person .*not found or not visible/i,
   /no persona matching the ARK/i,
+  /Compiled tree entry .* was not found/i,
 ];
 
 /** Unknown messages are transient: a pattern we miss costs a retry, never a corrupt snapshot. */
@@ -205,6 +216,18 @@ export interface Tools {
   personQuality(personId: string): Promise<Json>;
   personWarnings(projectPath: string, personId: string): Promise<Json>;
   samePerson(input: Json): Promise<Json>;
+  /** A `2:2:`/`2:3:` compiled-tree entry, read from its ARK URL (record_read refuses these). */
+  compiledTreeRead(ark: string): Promise<Json>;
+}
+
+/** GET a compiled-tree ARK as GedcomX. */
+export async function fetchCompiledTree(ark: string, principal: Principal): Promise<Json> {
+  const res = await fsFetch(principal, `https://www.familysearch.org/${ark}`, {
+    headers: { Accept: "application/x-gedcomx-v1+json", "User-Agent": BROWSER_USER_AGENT },
+  });
+  if (res.status === 404 || res.status === 410) throw new Error(`Compiled tree entry ${ark} was not found (${res.status}).`);
+  if (!res.ok) throw new Error(`FamilySearch compiled tree read failed: ${res.status} ${res.statusText}.`);
+  return res.json();
 }
 
 /** An empty OpenRouter key: person_read then transcribes no memory scan, so no
@@ -218,6 +241,7 @@ export function liveTools(principal: Principal = localPrincipal({ openRouterApiK
     personWarnings: (projectPath, personId) =>
       personWarningsTool({ projectPath, personId }, { placeCoords: async () => null }),
     samePerson: (input) => samePerson(input, principal),
+    compiledTreeRead: (ark) => fetchCompiledTree(ark, principal),
   };
 }
 
@@ -384,6 +408,94 @@ async function snapshotAttachments(
   return a.value;
 }
 
+const compiledTreePath = (out: string, ark: string) => join(out, "trees", compiledTreeFile(ark));
+
+/**
+ * Subject-level tree links: each `4:1:` person into `others/` (person_read),
+ * each `2:2:`/`2:3:` entry into the shared `trees/` cache (its ARK URL). A read
+ * already on disk is reused.
+ */
+async function snapshotTreeSources(
+  ctx: Ctx,
+  calls: Record<string, number>,
+  errors: CallError[],
+  dir: string,
+  entries: AuditEntry[],
+): Promise<void> {
+  for (const e of entries.filter((x) => x.level === "subject" && x.ark)) {
+    if (e.class === "tree_person") {
+      const pid = treePersonId(e.ark!);
+      const path = join(dir, "others", `${pid}.json`);
+      const have = readJsonIf(path);
+      if (have && !have.is_error) continue;
+      const o = await call(ctx, calls, errors, "person_read", pid, () => ctx.tools.personRead(pid));
+      writeJson(path, o.ok ? o.value : errorBody(o.error));
+    } else if (e.class === "compiled_tree") {
+      const path = compiledTreePath(ctx.out, e.ark!);
+      if (existsSync(path)) continue;
+      const t = await call(ctx, calls, errors, "compiled_tree_read", e.ark!, () => ctx.tools.compiledTreeRead(e.ark!));
+      if (t.ok) writeJson(path, t.value);
+      else if (t.class === "permanent") writeJson(path, errorBody(t.error));
+    }
+  }
+}
+
+export interface TreeSourcesLedger {
+  started: string;
+  calls: Record<string, number>;
+  copies: number;
+  by_class: Record<string, number>;
+  /** Subject-level tree links, and how many now have a read on disk. */
+  tree_links: number;
+  tree_links_read: number;
+  errored: number;
+  finished?: string;
+  stopped?: string;
+}
+
+/**
+ * Reclassify every truth-set copy's audit list with the current classes and
+ * fetch the tree links it holds, reusing any read already on disk. Plant
+ * copies are left alone.
+ */
+export async function runTreeSources(out: string, tools: Tools): Promise<TreeSourcesLedger> {
+  const run: RunJson = readJson(join(out, "run.json"));
+  const ledger: TreeSourcesLedger = {
+    started: new Date().toISOString(), calls: {}, copies: 0, by_class: {}, tree_links: 0, tree_links_read: 0, errored: 0,
+  };
+  const ctx: Ctx = { out, tools, samePerson: false, ledger: newLedger() };
+  try {
+    for (const copyKey of new Set(Object.values(run.map))) {
+      const dir = personsDir(out, copyKey);
+      const audit: AuditList | undefined = readJsonIf(join(dir, "audit.json"));
+      const meta = readJsonIf(join(dir, "meta.json"));
+      if (!audit || !meta || meta.living) continue;
+      ledger.copies += 1;
+      for (const e of audit.entries) {
+        e.class = classifyArk(e.ark);
+        ledger.by_class[e.class] = (ledger.by_class[e.class] ?? 0) + 1;
+      }
+      writeJson(join(dir, "audit.json"), audit);
+      const calls: Record<string, number> = {};
+      const errors: CallError[] = [];
+      await snapshotTreeSources(ctx, calls, errors, dir, audit.entries);
+      if (errors.length) ledger.errored += 1;
+      for (const e of audit.entries.filter((x) => x.level === "subject" && (x.class === "tree_person" || x.class === "compiled_tree"))) {
+        ledger.tree_links += 1;
+        const read = e.class === "tree_person" ? readJsonIf(join(dir, "others", `${treePersonId(e.ark!)}.json`)) : readJsonIf(compiledTreePath(out, e.ark!));
+        if (read && !read.is_error) ledger.tree_links_read += 1;
+      }
+    }
+  } catch (e) {
+    if (!(e instanceof StopRun)) throw e;
+    ledger.stopped = e.message;
+  }
+  ledger.calls = ctx.ledger.calls;
+  ledger.finished = new Date().toISOString();
+  writeJson(join(out, "runs", `tree-sources-${ledger.started.replace(/[:.]/g, "-")}.json`), ledger);
+  return ledger;
+}
+
 export interface RefreshLedger {
   started: string;
   tree: string;
@@ -546,6 +658,7 @@ export async function snapshotPerson(ctx: Ctx, inputPid: string, opts: SnapshotP
   }
 
   await snapshotAttachments(ctx, calls, errors, dir, personas, sid, inputPid);
+  await snapshotTreeSources(ctx, calls, errors, dir, audit.entries);
 
   const q = await call(ctx, calls, errors, "person_quality", sid, () => ctx.tools.personQuality(sid));
   writeJson(join(dir, "quality.json"), q.ok ? q.value : errorBody(q.error));
@@ -1266,6 +1379,7 @@ function intFlag(flags: Record<string, string[]>, name: string, fallback: number
 const ALLOWED: Record<string, string[]> = {
   snapshot: ["--pids", "--out", "--sample", "--seed", "--tree"],
   attachments: ["--snapshot", "--tree"],
+  "tree-sources": ["--snapshot"],
   baseline: ["--snapshot", "--threshold"],
   plant: ["--spec", "--out"],
   score: ["--spec", "--findings"],
@@ -1274,7 +1388,7 @@ const PATH_FLAGS = new Set(["--pids", "--out", "--snapshot", "--findings", "--sp
 
 export async function main(argv: string[], tools?: Tools): Promise<number> {
   const { cmd, flags, bools } = parseArgs(argv);
-  if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|attachments|baseline|plant|score [flags]`);
+  if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|attachments|tree-sources|baseline|plant|score [flags]`);
   for (const b of bools) {
     if (b !== "--no-same-person" || !["snapshot", "plant"].includes(cmd)) throw new Error(`${cmd} does not take ${b}`);
   }
@@ -1300,6 +1414,11 @@ export async function main(argv: string[], tools?: Tools): Promise<number> {
       tools: tools ?? liveTools(undefined, flags["--tree"]?.[0]),
       handleInterrupt: true,
     });
+    console.log(JSON.stringify(ledger, null, 2));
+    return ledger.stopped ? 2 : 0;
+  }
+  if (cmd === "tree-sources") {
+    const ledger = await runTreeSources(one("--snapshot"), tools ?? liveTools());
     console.log(JSON.stringify(ledger, null, 2));
     return ledger.stopped ? 2 : 0;
   }
