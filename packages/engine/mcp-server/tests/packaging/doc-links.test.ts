@@ -145,9 +145,19 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "a change list written when the agent existed; the agent was deleted when extraction moved into code (issues #2937, #2939), and rewriting the list would falsify the record of what that change touched",
   },
   {
-    file: "docs/specs/image-reader-agent-spec.md",
-    path: "packages/engine/plugin/skills/record-extraction/SKILL.md",
-    why: "a change list naming the skill as it stood when image-reader was specced; the skill was deleted with the extraction rewrite (issues #2937, #2939)",
+    file: "docs/specs/image-transcribe-tool-spec.md",
+    path: "packages/engine/plugin/agents/image-reader.md",
+    why: "change lists naming the agent as it stood when `image_transcribe` shipped; the agent was retired when the tool began returning a staged ref (issue #2490), and §5.5 says so",
+  },
+  {
+    file: "docs/specs/image-transcribe-tool-spec.md",
+    path: "docs/specs/image-reader-agent-spec.md",
+    why: "change lists naming the agent's spec as it stood when `image_transcribe` shipped; it was deleted with the agent (issue #2490)",
+  },
+  {
+    file: "docs/e2e-run-latency-findings.md",
+    path: "packages/engine/plugin/agents/image-reader.md",
+    why: "a measurement write-up of the agent's re-read bound as it stood when measured; the agent was retired by issue #2490",
   },
   {
     file: "docs/specs/image-transcribe-tool-spec.md",
