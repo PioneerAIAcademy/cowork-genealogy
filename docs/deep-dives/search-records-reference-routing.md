@@ -45,7 +45,7 @@ does not expose.
 | US federal census · 1790–1840 · 1850 · 1860 · 1870 · 1880 · 1890 · 1900 · 1910 · 1920 · 1930 · 1940 · 1950 | **wiki** — `United_States_Census`, and its own per-year `United_States_Census_{year}` links |
 | England & Wales census · 1841 · 1851 onward | **wiki** — `England_Census`, which carries more than this file did (1921, 1931, the 1939 Register) |
 | Applying this | **body** — Step 4: state what the schedule recorded, label the rest inferred **for any uncollected field**; a missing field is not a defective record; a blank field that did exist is meaningful; state censuses follow their own schedules; an immigration-year mismatch is not automatically a conflict |
-| Phrasing a pre-1880 household | **tool (already)** — `requirePre1880CensusHedge` in `research-log-append.ts` refuses the unhedged claim at the write boundary, and `test_pre1880_census_structure_marked_inferred` checks that a refused search is logged again. `rubric.md` forbids the judge re-grading it |
+| Phrasing a pre-1880 household | **tool (already)** — `requirePre1880CensusHedge` in `research-log-append.ts` refuses the unhedged claim at the write boundary, and `test_pre1880_census_structure_marked_inferred` checks that a refused search is logged again. |
 | Sources | delete — superseded by the probe table below |
 
 **Read the gate's real scope before trusting it.** It skips Ireland, Canada,

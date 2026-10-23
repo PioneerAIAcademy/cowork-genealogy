@@ -12,9 +12,9 @@ and the other corpus readers. Reads committed run JSONs only.
 ## The join (issue #2561's decided reproduce script)
 
 The link is a chain, NOT positional adjacency in `tool_calls[]`. `image_transcribe`
-and `extraction_append` are granted to different agents (`image-reader` vs
-`record-extractor`), so no thread calls both and their order in `tool_calls[]`
-carries no relationship. The real chain is:
+and `extraction_append` are called by different threads (the reader that
+transcribed the page, and the agent that extracted it), so their order in
+`tool_calls[]` carries no relationship. The real chain is:
 
     assertions[].log_entry_id
       -> log[].id            (where log[].tool is a transcribe entry and
@@ -39,6 +39,14 @@ call persists none). The report prints the denominator and labels it a floor, no
 a rate: a stripped run's transcriptions have unknown completeness and a pre-v5
 log's are truncated, so the corpus this can answer completely for is smaller than
 the corpus that exists.
+
+## Two capture shapes
+
+Through #2490 the page came back inline as `transcription`, and
+`response_summary` carries it. Since then a staged read returns only
+`staged.resultsRef` and a `digest`; the orchestrator saves the staged page
+under the call's `staged_transcription` key. A staged call with neither is
+`staged_uncaptured`: its summary is complete JSON, but not the page.
 """
 
 from __future__ import annotations
@@ -59,6 +67,10 @@ from harness.since_window import (
 
 TRANSCRIBE_SUFFIX = "image_transcribe"
 
+#: Mirrors `e2e.orchestrator.STAGED_TRANSCRIPTION_KEY`; not imported, because
+#: that module pulls in the agent SDK and this reader runs without it.
+STAGED_TRANSCRIPTION_KEY = "staged_transcription"
+
 
 @dataclass
 class ScanResult:
@@ -67,6 +79,7 @@ class ScanResult:
     truncated: int = 0  # measurable, harness-truncated
     error: int = 0  # measurable, is_error
     no_summary: int = 0  # measurable, empty response_summary (pre-#1182)
+    staged_uncaptured: int = 0  # measurable, staged ref only, page text not saved
     stripped_captures: int = 0  # captures in stripped runs (completeness unknown)
     stripped_runs: int = 0
     chained_assertions: int = 0  # assertions on a transcribe log entry
@@ -77,7 +90,10 @@ class ScanResult:
 
     @property
     def measurable_captures(self) -> int:
-        return self.complete + self.truncated + self.error + self.no_summary
+        return (
+            self.complete + self.truncated + self.error + self.no_summary
+            + self.staged_uncaptured
+        )
 
 
 def _is_truncated_summary(summary: str) -> bool:
@@ -96,6 +112,15 @@ def _is_truncated_summary(summary: str) -> bool:
     return "[truncated by harness" in summary or (
         summary.endswith("...") and len(summary) >= 500
     )
+
+
+def _is_staged_ref_only(summary: str) -> bool:
+    """Whether a summary is a staged read's response (#2490), which carries a
+    `resultsRef` only when the page was staged, and so no inline `transcription`.
+    Unescaped first, so the escaped and the unwrapped `response_summary` shapes
+    match alike."""
+    s = summary.replace('\\"', '"')
+    return '"resultsRef"' in s
 
 
 def _summary_text(rs: object) -> str:
@@ -154,11 +179,18 @@ def _scan_one(run_path: Path, result: ScanResult) -> None:
         if bool(tc.get("is_error")):
             result.error += 1
             continue
+        staged_text = tc.get(STAGED_TRANSCRIPTION_KEY)
         text = _summary_text(tc.get("response_summary"))
-        if not text:
+        if isinstance(staged_text, str) and staged_text:
+            result.complete += 1
+            if key:
+                complete_keys.add(key)
+        elif not text:
             result.no_summary += 1
         elif _is_truncated_summary(text):
             result.truncated += 1
+        elif _is_staged_ref_only(text):
+            result.staged_uncaptured += 1
         else:
             result.complete += 1
             if key:
@@ -262,6 +294,8 @@ def format_report(result: ScanResult) -> str:
     out.append(f"  error payloads:               {result.error}")
     if result.no_summary:
         out.append(f"  no response_summary:          {result.no_summary}")
+    if result.staged_uncaptured:
+        out.append(f"  staged, page not captured:    {result.staged_uncaptured}")
     out.append("")
 
     out.append(
@@ -296,6 +330,10 @@ def format_report(result: ScanResult) -> str:
     if result.truncated:
         floors.append(
             f"{result.truncated} were truncated by the harness (pre-v5)"
+        )
+    if result.staged_uncaptured:
+        floors.append(
+            f"{result.staged_uncaptured} were staged with no page captured"
         )
     if floors:
         out.append(

@@ -426,7 +426,7 @@ measured rather than argued.
    omitted deliberately and the write landed (issue #1509);
    `device_commit_files` was omitted by accident, which left the route open
    after all three predicate copies had been taught to deny it. The matcher is
-   now `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`, and a
+   now `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`, and a
    packaging test derives the expected set from the guard script instead of
    restating it — including the `research_append` arm, which the caller-ownership
    rules added and which is required whenever `OWNED_SECTIONS` is non-empty.

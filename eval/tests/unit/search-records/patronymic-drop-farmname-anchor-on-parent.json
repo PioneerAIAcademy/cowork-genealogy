@@ -17,7 +17,7 @@
     ]
   },
   "input": {
-    "delegation": "Execute plan item pli_001 — search FamilySearch's Norwegian church books for Anders Moen's christening (born about October 1868, Ringsaker, Hedmark) to confirm his parents.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Execute plan item pli_001 — search FamilySearch's Norwegian church books for Anders Moen's christening (born about October 1868, Ringsaker, Hedmark) to confirm his parents.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"church\",\n  \"jurisdiction\": \"Ringsaker, Hedmark, Norway\",\n  \"date_range\": \"1868-1869\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Anders's Norwegian christening should name his parents directly and give their patronymic identities, confirming the given names (Hans, Marit) recovered from US records.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Anders\",\n      \"surname\": \"Moen\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1868-10\",\n    \"place\": \"Norway\"\n  },\n  \"death\": null\n}",
     "scenario": "norwegian-patronymic-nil-recovery"
   },
   "mcp_fixtures": [

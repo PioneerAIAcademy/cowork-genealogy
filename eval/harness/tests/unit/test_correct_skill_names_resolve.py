@@ -37,6 +37,13 @@ population, mirroring nothing, asserts nothing.
 needs a skill directory (plugin or `eval/skills/`, via `skill_dir_for`), and
 only a direct-agent test (`input.delegation` set) may fall back to
 `agents/<name>.md`.
+
+`execution.run_agents` (#3568) IS walked, with its own stricter rule: an entry
+resolves only to `agents/<name>.md`, never to a skill directory, mirroring the
+`run_agents` refusal in `runnability.py`. Every spawn a test does not opt in is
+denied by default, so a dead opt-in does not abort — the agent is simply denied
+and the invariant it was meant to give teeth to passes vacuously. That makes it
+the arm where silence is likeliest.
 """
 
 from __future__ import annotations
@@ -70,6 +77,17 @@ def _resolves(name: str, skills_dir: Path, agents_dir: Path) -> bool:
     if not name or not name.strip() or name.strip(".") == "":
         return False
     return (skills_dir / name).is_dir() or (agents_dir / f"{name}.md").is_file()
+
+
+def _is_agent(name: str, agents_dir: Path) -> bool:
+    """The `run_agents` rule: an agent file only, never a skill directory.
+
+    Not `_resolves`, which would accept a skill-only name that `runnability.py`
+    refuses for `run_agents`. Same falsy/dot guard.
+    """
+    if not name or not name.strip() or name.strip(".") == "":
+        return False
+    return (agents_dir / f"{name}.md").is_file()
 
 
 def dead_callee_entries(
@@ -121,6 +139,12 @@ def dead_callee_entries(
             if not _resolves(name, skills_dir, agents_dir):
                 dead.append((path, "execution.stub_skills", None, name))
 
+        # `run_agents` (#3568) — every test, agent files only (`_is_agent`).
+        run_agents = execution.get("run_agents")
+        for name in run_agents if isinstance(run_agents, list) else []:
+            if not isinstance(name, str) or not _is_agent(name, agents_dir):
+                dead.append((path, "execution.run_agents", None, str(name)))
+
         # `test.skill` — runnability.py:179-191. Routed: skill dir only.
         # Direct-agent (input.delegation): the agent file is the fallback.
         skill = test.get("skill")
@@ -156,7 +180,7 @@ def test_the_walk_saw_the_shapes_it_claims_to_check():
     them, and pinning one would fail the PR that performs the conversion rather
     than the PR that breaks a name.
     """
-    negatives = stubbing = 0
+    negatives = stubbing = run_agents_entries = 0
     correct_skill_via_agent = stub_via_agent = direct_via_agent = 0
     for path in sorted(CORPUS.rglob("*.json")):
         try:
@@ -185,8 +209,14 @@ def test_the_walk_saw_the_shapes_it_claims_to_check():
             for name in stubs:
                 if not (DEFAULT_PLUGIN_SKILLS / name).is_dir():
                     stub_via_agent += 1
+        run_agents_entries += len((raw.get("execution") or {}).get("run_agents") or [])
 
     assert negatives, "walked no non-xfail negatives — the correct_skill arm checked nothing"
+    # A floor: the six #3568 opt-ins (rpn x2, 024, 018, 016, 017).
+    assert run_agents_entries >= 6, (
+        f"walked only {run_agents_entries} run_agents entries — the arm checked "
+        f"less than the corpus is known to carry"
+    )
     assert stubbing, "walked no stubbing tests — the stub_skills arm checked nothing"
     assert correct_skill_via_agent, (
         "no correct_skill entry resolved through agents/ only, so this run does "
@@ -319,4 +349,29 @@ def test_accepts_a_direct_agent_test_whose_skill_is_only_an_agent(tmp_path):
            "input": {"delegation": "Do this specific thing."}}
     dirs = _corpus(tmp_path, doc, skills=["live"], agents=["converted"])
     (dirs[1] / "converted").rmdir()
+    assert dead_callee_entries(*dirs) == []
+
+
+# --- run_agents arm (#3568) ------------------------------------------------
+
+
+def _run_agents_doc(names) -> dict:
+    return {"test": {"id": "ut_x_007", "skill": "some-skill", "type": "negative"},
+            "negative": {"correct_skill": []},
+            "execution": {"run_agents": names}}
+
+
+def test_run_agents_arm_fires_on_a_dead_name(tmp_path):
+    dirs = _corpus(tmp_path, _run_agents_doc(["gone"]), skills=["live"], agents=["live-agent"])
+    assert [(d[1], d[3]) for d in dead_callee_entries(*dirs)] == [("execution.run_agents", "gone")]
+
+
+def test_run_agents_arm_fires_on_a_name_that_is_only_a_skill(tmp_path):
+    """runnability refuses a skill-only run_agents name; `_resolves` would not."""
+    dirs = _corpus(tmp_path, _run_agents_doc(["live"]), skills=["live"])
+    assert [(d[1], d[3]) for d in dead_callee_entries(*dirs)] == [("execution.run_agents", "live")]
+
+
+def test_run_agents_arm_accepts_a_live_agent(tmp_path):
+    dirs = _corpus(tmp_path, _run_agents_doc(["live-agent"]), skills=["live"], agents=["live-agent"])
     assert dead_callee_entries(*dirs) == []

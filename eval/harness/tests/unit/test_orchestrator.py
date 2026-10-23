@@ -665,10 +665,13 @@ def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatc
 # skill has none. These specs are synthetic labels, so the name only has to be a skill
 # that still ships.
 def _positive_spec(skill="research"):
+    # A stub, because a positive test in a routing suite (research) with none is
+    # refused at the runnability gate (#3568).
     return load_test_from_dict({
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
+        "execution": {"stub_skills": ["question-selection"]},
         "judge_context": [],
     })
 
@@ -2223,6 +2226,36 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     ))
     assert seen.get("stub_agents") == {"gps-mentor": None}
     assert seen.get("stub_skills") == {"gps-mentor": None, "research": None}
+
+
+def test_run_agents_reaches_run_skill_as_the_live_set(tmp_path, monkeypatch):
+    """The orchestrator hop of deny-by-default (#3568). `live_agents=None` means
+    'deny nothing', so dropping the keyword at `_execute_single_run` or the retry
+    wrapper would switch the default off with every unit test still green. Uses
+    the committed ut_research_rpn, whose two opt-ins are the point."""
+    import asyncio
+
+    spec = load_test(REPO_ROOT / "eval/tests/unit/research/handle-negative-probate-result.json")
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-21_10-00-00",
+    ))
+    assert seen.get("live_agents") == {"research", "research-plan", "question-selection"}
 
 
 # --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----

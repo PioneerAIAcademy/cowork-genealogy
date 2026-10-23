@@ -66,6 +66,52 @@ describe("research_append from a caller — assertions are extraction's", () => 
     expect(r.errors[0]).toMatch(/^ops\[0\]: research_append does not write assertions/);
   });
 
+  // `ops` is decoded once, in one place, and the guard judges that decode. It used to be decoded
+  // here and again in `researchAppend`, so a batch stringified twice was an empty list to the
+  // guard and a batch of assertions writes to the tool.
+  describe("an `ops` value is decoded once, so the guard judges what is applied", () => {
+    const append = { section: "assertions", op: "append", entry: { record_role: "principal", fact_type: "name", value: "Z" } };
+    const notesOnly = { section: "assertions", op: "update", entryId: "a_001", fields: { informant_bias_notes: "re-read" } };
+    const questionUpdate = { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } };
+
+    it("refuses an assertions append stringified twice, and writes nothing", async () => {
+      const before = await files();
+      const r = await researchAppendFromCaller({ projectPath: dir, ops: JSON.stringify(JSON.stringify([append])) } as never);
+      expect(r.ok).toBe(false);
+      expect(await files()).toEqual(before);
+    });
+
+    it("refuses any batch stringified twice: still a string after one decode, it is not a batch", async () => {
+      const before = await files();
+      const r = await researchAppendFromCaller({ projectPath: dir, ops: JSON.stringify(JSON.stringify([questionUpdate])) } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/`ops` must be a non-empty array/);
+      expect(await files()).toEqual(before);
+    });
+
+    it.each([
+      ["an array", [append]],
+      ["stringified once", JSON.stringify([append])],
+    ])("still refuses an assertions append sent as %s", async (_label, ops) => {
+      const before = await files();
+      const r = await researchAppendFromCaller({ projectPath: dir, ops } as never);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/^ops\[0\]: research_append does not write assertions/);
+      expect(await files()).toEqual(before);
+    });
+
+    it.each([
+      ["a notes-only update as an array", [notesOnly]],
+      ["a notes-only update stringified once", JSON.stringify([notesOnly])],
+      ["another section stringified once", JSON.stringify([questionUpdate])],
+    ])("still accepts %s", async (_label, ops) => {
+      const r = await researchAppendFromCaller({ projectPath: dir, ops } as never);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+  });
+
   it("accepts an update that sets only informant_bias_notes", async () => {
     const r = await researchAppendFromCaller({
       projectPath: dir,
