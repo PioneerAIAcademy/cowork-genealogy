@@ -90,6 +90,7 @@ UNMODELLED_WRITERS = frozenset(
         "tree_forget",
         "materialize_facts",
         "merge_tree_persons",
+        "timeline_build",
     }
 )
 

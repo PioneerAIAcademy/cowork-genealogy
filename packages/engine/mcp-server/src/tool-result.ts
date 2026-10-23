@@ -65,6 +65,7 @@ export const OK_FALSE_IS_FAILURE = [
   "tree_forget",
   "convert_calendar",
   "census_children_gap",
+  "timeline_build",
   "build_external_search_url",
   "research_query",
   "project_context",

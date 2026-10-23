@@ -188,9 +188,11 @@ def test_declared_matches_the_real_committed_agents():
     """The frontmatter `name` values must be the exact `agent_type` strings the
     corpus records, or every diff silently misses."""
     declared = declared_tools_by_agent()
-    assert {"gps-mentor", "record-structurer", "image-reader"} <= set(declared)
-    # Retired with the switch to Gemini (issue #2013), and with extraction in code.
+    assert {"gps-mentor", "record-structurer", "search-images"} <= set(declared)
+    # Retired with the switch to Gemini (issue #2013), and with extraction in code;
+    # image-reader with image_transcribe returning a staged ref (#2490).
     assert "image-reader-opus" not in declared
+    assert "image-reader" not in declared
     assert "record-extractor" not in declared
     assert {"wiki_place_page", "wiki_search"} <= declared["gps-mentor"]
 

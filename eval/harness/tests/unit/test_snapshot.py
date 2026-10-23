@@ -176,10 +176,10 @@ def test_hash_file_matches_normalize(tmp_path: Path):
 
 def test_agent_refs_dedupes_and_sorts():
     text = (
-        "Delegate to `@plugin:image-reader`, the same way /research invokes\n"
+        "Delegate to `@plugin:search-images`, the same way /research invokes\n"
         "`@plugin:gps-mentor`. Then call @plugin:gps-mentor again.\n"
     )
-    assert agent_refs_in_text(text) == ["gps-mentor", "image-reader"]
+    assert agent_refs_in_text(text) == ["gps-mentor", "search-images"]
 
 
 def test_agent_refs_empty_when_no_references():
