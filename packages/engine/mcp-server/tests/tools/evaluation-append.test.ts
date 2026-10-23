@@ -98,8 +98,8 @@ describe("evaluation_append (lane gate)", () => {
       op: "append",
       entry: {
         focus: "conclusion-readiness",
-        target_id: "q_001",
-        target_type: "question",
+        target_id: "project",
+        target_type: "project",
         verdict: "looks_solid",
         file_path: "evaluations/ev_001.md",
         superseded_by: null,

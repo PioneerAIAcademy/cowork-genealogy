@@ -18,7 +18,6 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
-  - research_append
   - extraction_append
   - research_delivered
   - person_read

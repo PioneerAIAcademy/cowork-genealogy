@@ -33,6 +33,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { LOCAL } from "../../src/auth/principal.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
+import { evaluationAppend } from "../../src/tools/evaluation-append.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
@@ -98,6 +99,11 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
     tool: "research_append",
     call: (projectPath) =>
       researchAppend({ projectPath, section: "sources", op: "append", entry: { id: "src_001" } } as any),
+  },
+  {
+    tool: "evaluation_append",
+    call: (projectPath) =>
+      evaluationAppend({ projectPath, section: "evaluations", op: "append", entry: { id: "ev_001" } } as any),
   },
   {
     tool: "extraction_append",
