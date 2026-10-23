@@ -1,7 +1,36 @@
 # Research as a job — phase 2 status log
 
-**Branch:** `research-as-a-job-phase2`. **Draft PR #3262.**
-**Last updated:** 2026-10-13. Update this file whenever the branch moves.
+**Branch:** `research-as-a-job-phase2`, **closed unmerged 2026-10-23** at tag
+`phase2-final`. **PR #3262 closed.**
+**Last updated:** 2026-10-23. **This log is finished — the branch no longer moves.**
+
+**Final entry.** The branch was closed rather than merged. Measured against `main` that
+day, most of the 1,124 lines it still held were the PRE-REVIEW ancestors of code `main`
+already carried in reviewed form, and a trial merge dropped branch lines in 12
+NON-conflicted files with no conflict marker — including `validator.ts`'s whole
+`supporting_assertion_ids` block, which the 232-test validation suite passed with and
+without. Re-cutting what had genuinely not landed was smaller and safer than resolving
+40 conflicts to reach code `main` already had.
+
+| Landed from the branch | |
+|---|---|
+| #3577 | the front door, `rejected_links`, the reading experience, and the viewer's job-state half |
+| #3589 | step-mode phase 0 measurements and decisions 23-25 |
+| #3662 | the orphan reaper, the web-tier routes, `job_state.py` |
+| #3674 | the step-mode plan scope correction |
+
+| Re-cut from `main` afterwards | |
+|---|---|
+| #3794 | `tool_calls.wrote` — the writer-record unit and its migration |
+| #3795 | the `person_search` probe evidence this repo's docs cite |
+| #3801 | the stall backoff, and the nudge that named a retired skill |
+
+**Not carried forward, and why:** the phase-3 decision exit (phase-3 scope — see
+`docs/plan/research-as-a-job-phase3-loop.md`); `person-search-hales-namesakes.json`
+(referenced by zero tests anywhere); `person-search-flynn.json`'s rework (mutates a
+shared fixture's recorded values with no justification found);
+`open-ask-still-a-job.json` (two `judge_context` lines that would owe a paid run); and
+several stale assertions `main` has moved past. All recoverable from `phase2-final`.
 
 **Everything this file said was blocking is now closed:** #2793 and #2927 (2026-10-03),
 #3119 (2026-10-08), #2122 (2026-10-12). Nothing external gates this branch.
