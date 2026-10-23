@@ -262,7 +262,10 @@ These formats govern the *bookkeeping* fields above. They do **not** govern
 `assertions[].date` or `timelines[].events[].date`, which hold genealogical
 dates as encountered in records and are deliberately free-form — see
 Sections 5.6 and 5.10, and `simplified-gedcomx-spec.md` Section 4.5 for the
-date patterns the standardizer recognizes.
+date patterns the standardizer recognizes. One writer is stricter: `timeline_build`
+writes event dates year-first (`YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `~` for an
+approximate date, `YYYY-YYYY` for a range) and keeps the record's own wording in
+the event's `description` (`timeline-build-tool-spec.md`).
 
 ---
 
@@ -297,7 +300,7 @@ described under "Who actually writes a row" below.
 | `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
-| `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
+| `timelines` | timeline; `timeline_build` (person timelines, by tool identity) | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated. `timeline_build` writes only a person's own timeline (no `hypothesis_id`) and updates it in place on a rerun |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
@@ -949,8 +952,8 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `standard_place` | string or null | no | Standardized place name (the `standardPlace` field from the `place_search` tool) for `place`. Null if unresolvable or `place` is null. |
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
-| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, via `place_distance` on the two `standard_place` names. Null for the first event, or when either event lacks a resolved `standard_place`. |
-| `conflict_ids` | string[] or null | no | `c_` references to open conflicts this event relates to. Provides bidirectional traceability between timeline events and conflict entries. |
+| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, between the two `standard_place` names (`place_distance`, or the same haversine computation inside `timeline_build`). Null for the first event, or when either event lacks a resolved `standard_place`. |
+| `conflict_ids` | string[] or null | no | `c_` references to the conflicts this event relates to: an open conflict it is part of, or a resolved one whose preferred assertion it carries. Provides bidirectional traceability between timeline events and conflict entries. |
 | `conflict_note` | string or null | no | Brief note about how this event relates to the conflicts (e.g., "contradicts birth year in c_002"). |
 
 **Timeline gaps:**

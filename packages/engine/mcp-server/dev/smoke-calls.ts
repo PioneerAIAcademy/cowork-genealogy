@@ -347,6 +347,14 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // Nothing in this plan links P1, so this reaches `no_linked_evidence`: the
+    // transport and the read, not the event logic (Vitest covers that).
+    tool: "timeline_build",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, personId: "P1" }),
+    expect: okTrue,
+  },
+  {
     tool: "merge_warnings",
     offline: true,
     args: (ctx) => ({

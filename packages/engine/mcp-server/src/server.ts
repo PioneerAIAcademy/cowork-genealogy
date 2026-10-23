@@ -111,6 +111,8 @@ import {
   type ProjectContextInput,
 } from "./tools/project-context.js";
 import { extractionAppend } from "./tools/extraction-append.js";
+import { timelineBuild } from "./tools/timeline-build.js";
+import type { TimelineBuildInput } from "./types/timeline-build.js";
 import { materializeFacts } from "./tools/materialize-facts.js";
 import type { MaterializeFactsInput } from "./types/materialize-facts.js";
 import {
@@ -721,6 +723,16 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as CensusChildrenGapInput;
         const result = await censusChildrenGapTool(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "timeline_build") {
+      try {
+        const args = request.params.arguments as unknown as TimelineBuildInput;
+        const result = await timelineBuild(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
