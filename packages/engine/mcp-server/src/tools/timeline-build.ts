@@ -683,8 +683,8 @@ function buildGaps(
   const latestBirth =
     births.length && births.every((b) => !b.date.bounds.hiOpen) ? Math.max(...births.map((b) => b.date.bounds.hi)) : null;
   // A heads-only schedule names only household heads, and a man of 21 was often
-  // not yet one; he is expected only once a linked marriage has certainly ended
-  // before the census year (lead, 2026-10-23).
+  // not yet one; he is expected only once a linked marriage has certainly taken
+  // place before the census year (lead, 2026-10-23).
   const marriedBefore = (year: number) =>
     sorted.some((e) => e.type === "marriage" && !e.date.bounds.hiOpen && e.date.bounds.hi < year);
   const inHand = (year: number) =>
@@ -740,16 +740,21 @@ function buildGaps(
   for (const { from: _f, to: _t, ...g } of censusGaps) gaps.push(g);
   gaps.push(...longGaps);
 
+  // An undated linked assertion makes no event, but its record is still in hand.
+  const linked = [...linksByAssertion.keys()].map((id) => assertionsById.get(id));
+  const linkedType = (t: string) => linked.some((a) => eventTypeOf(a) === t);
+  const undatedMarriage = linked.some((a) => eventTypeOf(a) === "marriage" && !formatEventDate(a.date, a.date_certainty));
+
   // Marriage before the first child's birth.
-  const marriage = marriageGap(sorted, research, assertionsById, linksByAssertion, beforeDeath);
+  const marriage = marriageGap(sorted, research, assertionsById, linksByAssertion, beforeDeath, undatedMarriage);
   if (marriage) gaps.push(marriage);
 
   // Death without burial, or burial without death.
   const death = sorted.find((e) => e.type === "death");
   const burial = sorted.find((e) => e.type === "burial");
-  if (death && !burial) {
+  if (death && !linkedType("burial")) {
     gaps.push({ start: death.date.date, end: death.date.date, expected_events: ["burial"], severity: "medium", notes: null });
-  } else if (burial && !death) {
+  } else if (burial && !linkedType("death")) {
     gaps.push({ start: burial.date.date, end: burial.date.date, expected_events: ["death"], severity: "medium", notes: null });
   }
 
@@ -769,7 +774,10 @@ function marriageGap(
   assertionsById: Map<string, any>,
   linksByAssertion: Map<string, any[]>,
   beforeDeath: (i: number) => boolean,
+  undatedMarriage: boolean,
 ): GapOut | null {
+  // An undated linked marriage can precede any child.
+  if (undatedMarriage) return null;
   const all: any[] = Array.isArray(research.assertions) ? research.assertions : [];
   // The person's own role(s) in each linked record.
   const rolesByRecord = new Map<string, Set<string>>();
@@ -804,7 +812,11 @@ function marriageGap(
   if (!first) return null;
   const marriages = sorted.filter((e) => e.type === "marriage");
   if (marriages.some((m) => m.date.bounds.lo <= first!.hi)) return null;
-  const recordEvents = sorted.map((e, i) => ({ e, i })).filter(({ e }) => e.record === first!.record);
+  // The record's first event that can follow the child's birth: in a census,
+  // the person's own age-derived birth comes earlier and would reverse the gap.
+  const recordEvents = sorted
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => e.record === first!.record && e.date.bounds.hi >= first!.lo);
   if (recordEvents.length === 0) return null;
   const endIdx = recordEvents[0].i;
   let startIdx = -1;

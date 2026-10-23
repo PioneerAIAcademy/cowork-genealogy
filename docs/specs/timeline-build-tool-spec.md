@@ -141,10 +141,14 @@ after the earliest year that event allows. When its earlier side is open
   `structured_value.relationship_type` reads as child (not `_inferred`) and whose
   `related_person_role` is the person's own role there. The first child's birth
   is that persona's own `birth` assertion in the record (not linked to the
-  person). A gap when no linked marriage can precede it; `start` is the person's
-  latest event before it, `end` the record's first event.
+  person). A gap when no linked marriage can precede it; an undated linked
+  marriage can precede any child, so it gives none. `start` is the person's
+  latest event before the birth, `end` the record's first event that can follow
+  it (in a census, the person's own age-derived birth comes earlier and is
+  skipped).
 - **Death without burial, or burial without death, `medium`.** `start` = `end` =
-  the date of the one present.
+  the date of the one present. A linked assertion of the other type counts as
+  present even when undated.
 
 ### 4.5 The census table
 

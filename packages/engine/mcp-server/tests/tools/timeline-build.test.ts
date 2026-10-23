@@ -466,6 +466,20 @@ describe("death, burial and the span (S1, S5)", () => {
     expect(census(p)).toEqual([]);
     expect(p!.gaps.filter((g: any) => g.expected_events.includes("residence"))).toEqual([]);
   });
+  it("a dated death and an undated linked burial give no burial gap", async () => {
+    const p = await plan(project([
+      { fact: "death", date: "1908", sp: OHIO, record: "ark:/61903/1:1:D", role: "deceased" },
+      { fact: "burial", place: "Green Lawn Cemetery", record: "ark:/61903/1:1:B", role: "deceased" },
+    ]));
+    expect(p!.gaps).toEqual([]);
+  });
+  it("an undated linked death and a dated burial give no death gap", async () => {
+    const p = await plan(project([
+      { fact: "death", place: "Columbus", record: "ark:/61903/1:1:D", role: "deceased" },
+      { fact: "burial", date: "1908", sp: OHIO, record: "ark:/61903/1:1:B", role: "deceased" },
+    ]));
+    expect(p!.gaps).toEqual([]);
+  });
   it("a probate 25 years after a linked death gives no 20-year gap", async () => {
     const p = await plan(project([
       { fact: "residence", date: "1880", sp: OHIO },
@@ -495,6 +509,29 @@ describe("the marriage gap (S3)", () => {
     expect(p!.gaps.filter((g: any) => g.expected_events.includes("marriage"))).toEqual([
       expect.objectContaining({ start: "1880", end: "1880", severity: "high", expected_events: ["marriage"] }),
     ]);
+  });
+  it("a census child record that also carries the subject's age-derived birth: the gap ends at the census", async () => {
+    const p = await plan(project([
+      { fact: "residence", date: "1856", sp: OHIO, record: "ark:/61903/1:1:R1856" },
+      { fact: "birth", date: "abt 1840", record: "ark:/61903/1:1:C1880", role: "head_of_household", persona: "p_head" },
+      { fact: "residence", date: "1880", sp: OHIO, record: "ark:/61903/1:1:C1880", role: "head_of_household", persona: "p_head" },
+      { fact: "relationship", record: "ark:/61903/1:1:C1880", role: "child_1", persona: "p_son", value: "son",
+        structured: { relationship_type: "son", related_person_role: "head_of_household" }, linked: false },
+      { fact: "birth", date: "1860", record: "ark:/61903/1:1:C1880", role: "child_1", persona: "p_son", linked: false },
+    ]));
+    expect(p!.gaps.filter((g: any) => g.expected_events.includes("marriage"))).toEqual([
+      expect.objectContaining({ start: "1856", end: "1880", expected_events: ["marriage"] }),
+    ]);
+  });
+  it("an undated linked marriage can precede the first child, so no gap", async () => {
+    const research = household(null);
+    research.assertions.push({
+      id: "a_009", record_id: "ark:/61903/1:1:D", record_role: "spouse", record_persona_id: null,
+      fact_type: "marriage", value: "wife of Tom Test", date: null, date_certainty: null, place: null, standard_place: null,
+    });
+    link(research, "I1", ["a_009"]);
+    const p = await plan(research);
+    expect(p!.gaps.some((g: any) => g.expected_events.includes("marriage"))).toBe(false);
   });
   it("the subject's own household-child assertion ('son') gives no marriage gap", async () => {
     const p = await plan(project([
