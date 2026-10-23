@@ -12,33 +12,47 @@ not the payload. A diff needs to know what moved, and storing whole entries woul
 every record body in the call log.
 """
 
-from proto.worker.writer_record import writer_record
+import re
+
+from pathlib import Path
+
+from proto.worker.writer_record import _WRITERS, writer_record
 
 
 def test_a_section_append_records_section_op_and_id():
     out = writer_record(
         "mcp__genealogy__research_append",
+        # An APPENDED entry carries no id: the tool assigns it, and research_append
+        # refuses one that arrives with it. An append's recordable ids are the ones it
+        # REFERENCES. Rebuilt from the tool schema in review.
         {"projectPath": "/project", "section": "questions", "op": "append",
-         "entry": {"id": "q_001", "question": "Who?"}},
+         "entry": {"question": "Who?", "person_id": "P-1"}},
     )
-    assert out == {"section": "questions", "op": "append", "ids": ["q_001"]}
+    assert out == {"section": "questions", "op": "append", "ids": ["P-1"]}
 
 
 def test_a_multi_op_call_records_every_section_it_touched():
     out = writer_record(
         "mcp__genealogy__research_append",
         {"ops": [
-            {"section": "plans", "op": "append", "entry": {"id": "pl_001"}},
-            {"section": "log", "op": "append", "entry": {"id": "log_004"}},
+            {"section": "plans", "op": "update", "entryId": "pl_001"},
+            {"section": "plan_items", "op": "update", "entryId": "pli_004", "planId": "pl_001"},
         ]},
     )
-    assert out == {"section": "plans,log", "op": "append", "ids": ["pl_001", "log_004"]}
+    # `pl_001` appears on both ops (as entryId, then as planId) and is recorded once:
+    # a diff wants the set of things touched, not a tally.
+    assert out == {"section": "plans,plan_items", "op": "update",
+                   "ids": ["pl_001", "pli_004"]}
 
 
 def test_a_log_append_is_recorded_like_any_other_write():
+    # The real parameters: this tool has no `entry`, and the id it can reach back to is
+    # the plan item the search served. Rebuilt from the tool schema in review.
     out = writer_record("mcp__genealogy__research_log_append",
-                        {"entry": {"id": "log_009", "query": {"surname": "Mogan"}}})
-    assert out["ids"] == ["log_009"]
+                        {"projectPath": "/project", "tool": "record_search",
+                         "query": {"surname": "Mogan"}, "outcome": "negative",
+                         "resultsExamined": 0, "planItemId": "pli_003"})
+    assert out == {"section": "log", "op": "append", "ids": ["pli_003"]}
 
 
 def test_a_read_records_nothing():
@@ -218,3 +232,36 @@ def test_a_malformed_id_shape_is_ignored_rather_than_crashing():
     there fails a tool call the user was entitled to make."""
     out = writer_record("merge_tree_persons", {"merges": [None, ["I1", 7], "nope", []]})
     assert out is not None and out["ids"] == ["I1"]
+
+
+# ── the list cannot silently fall behind the engine ─────────────────────────────
+
+TOOL_RESULT_TS = (
+    Path(__file__).resolve().parents[3]
+    / "packages" / "engine" / "mcp-server" / "src" / "tool-result.ts"
+)
+
+
+def _ts_list(name: str) -> set[str]:
+    body = re.search(
+        rf"export const {name} = \[(.*?)\] as const",
+        TOOL_RESULT_TS.read_text(encoding="utf-8"),
+        re.S,
+    )
+    assert body, f"{name} not found in tool-result.ts"
+    return set(re.findall(r'"([a-z_]+)"', body.group(1)))
+
+
+def test_every_engine_document_writer_is_characterised():
+    """Read the ENGINE's list, never a hand copy of it.
+
+    The sibling tests restate the tool names, so they pass while a real writer
+    records NULL -- which is how `tree_forget`, `timeline_build` and
+    `build_external_search_url` were missed until review. Derived from
+    `tool-result.ts`, adding a writer there fails here until it is characterised.
+    """
+    writers = _ts_list("OK_FALSE_IS_FAILURE") - _ts_list("NOT_A_DOCUMENT_WRITER")
+    assert set(_WRITERS) == writers, {
+        "missing": sorted(writers - set(_WRITERS)),
+        "extra": sorted(set(_WRITERS) - writers),
+    }

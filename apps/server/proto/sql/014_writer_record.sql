@@ -1,4 +1,5 @@
--- What a write wrote, so "what changed this session" is answerable.
+-- The shape of each writer call the worker's hook ALLOWED. Not proof it landed: the
+-- plugin hook can still deny the call, and the tool can still refuse the write.
 --
 -- `tool_calls` stored tool_name and input_path and no payload, so the structured
 -- table could not say what any write touched -- the captured session made 173 writes

@@ -13,6 +13,8 @@ kilobytes each.
 
 from __future__ import annotations
 
+import json
+
 from typing import Any
 
 # Only these change project state, and each one carries its section IMPLICITLY -- a
@@ -35,6 +37,13 @@ _WRITERS: dict[str, tuple[str, str]] = {
     "merge_tree_persons":   ("tree",        "merge"),
     "materialize_facts":    ("tree",        "materialize"),
     "project_create":       ("project",     "create"),
+    # Found by review: the engine's own writer list carries three more
+    # (`tool-result.ts`, OK_FALSE_IS_FAILURE minus NOT_A_DOCUMENT_WRITER), and all
+    # three recorded `wrote = NULL`. `test_every_engine_document_writer_is_characterised`
+    # reads that list rather than restating it, so the next one cannot slip.
+    "tree_forget":          ("tree",        "forget"),
+    "timeline_build":       ("timelines",   "append"),
+    "build_external_search_url": ("log",    "append"),
 }
 
 # Fields that name something a diff should be able to reach back to.
@@ -58,6 +67,34 @@ _ID_FIELDS = (
     "assertionId", "assertion_id", "personId", "person_id",
     "log_entry_id", "relationshipId", "sourceAssertionId", "factId", "recordId",
 )
+
+
+# The engine runs `coerceJsonArg` on these, so a stringified one is decoded and
+# APPLIED. A recorder that does not decode them records the write as empty -- a
+# stringified research_append update came out as {"section": "", "op": "append", "ids": []}.
+_JSON_ARGS = ("ops", "entry", "fields", "merges")
+
+
+def _decoded(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except (ValueError, RecursionError):
+        return value
+
+
+def _with_json_args(value: Any) -> Any:
+    """Decode ONLY the four keys the engine coerces.
+
+    Not every field: an id like "12345" would become a number, and a value that
+    explodes under inspection must still be swallowed rather than decoded.
+    """
+    value = _decoded(value)
+    if not isinstance(value, dict):
+        return value
+    decoded = {k: _decoded(value.get(k)) for k in _JSON_ARGS}
+    return {**value, **{k: v for k, v in decoded.items() if v is not None}}
 
 
 def _bare(tool_name: str) -> str:
@@ -106,6 +143,7 @@ def writer_record(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
         entry = _WRITERS.get(_bare(tool_name))
         if entry is None or not isinstance(tool_input, dict):
             return None
+        tool_input = _with_json_args(tool_input)
         implicit_section, default_op = entry
 
         ops = tool_input.get("ops")
@@ -114,12 +152,16 @@ def writer_record(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
             kinds: list[str] = []
             ids: list[str] = []
             for op in ops:
+                op = _with_json_args(op)
                 if not isinstance(op, dict):
                     continue
                 if isinstance(op.get("section"), str):
                     sections.append(op["section"])
-                if isinstance(op.get("op"), str):
-                    kinds.append(op["op"])
+                # `operation`, not `op`, on tree_edit and tree_correct -- without it a
+                # `remove` was recorded as the tool's default label.
+                kind = op.get("op") or op.get("operation")
+                if isinstance(kind, str):
+                    kinds.append(kind)
                 # Ids live BOTH inside `entry` and on the op itself -- a log op carries
                 # `planItemId` directly, and a diff must reach the plan item it belongs
                 # to, not only the log row.
@@ -139,7 +181,8 @@ def writer_record(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
             }
 
         section = tool_input.get("section")
-        op = tool_input.get("op")
+        # `operation` is tree_edit/tree_correct's spelling of the same field.
+        op = tool_input.get("op") or tool_input.get("operation")
         ids = _id_of(tool_input.get("entry")) + _id_of(tool_input)
         for nested in ("assertions", "entries"):
             value = tool_input.get(nested)
