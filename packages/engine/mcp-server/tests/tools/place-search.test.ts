@@ -239,6 +239,87 @@ const bristolSearchResponse: FSPlaceSearchResponse = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// Sierkopas fixtures — the fuzzy fallback (misspelling of Sierokopaß). The
+// exact query returns nothing; the unquoted fuzzy query returns BOTH East
+// Prussia's Sierokopaß and West Prussia's Scherokopaß, and both match a
+// "Germany" context — so tests assert the Neidenburg entry is present and the
+// response flagged, never that it is the only result.
+// ---------------------------------------------------------------------------
+
+const sierkopasFuzzyResponse: FSPlaceSearchResponse = {
+  entries: [
+    {
+      id: "500",
+      score: 85.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id: "500",
+              display: {
+                name: "Sierokopaß",
+                fullName:
+                  "Sierokopaß, Neidenburg, East Prussia, Prussia, Germany",
+                type: "City",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/8500",
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      id: "600",
+      score: 80.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id: "600",
+              display: {
+                name: "Scherokopaß",
+                fullName: "Scherokopaß, Culm, West Prussia, Germany",
+                type: "City",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/8600",
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
+  ],
+};
+
+/** Routes for the Sierkopas fuzzy-fallback flow: empty exact, 2-hit fuzzy. */
+function sierkopasRoutes(): Route[] {
+  return [
+    { match: "search?q=name:%22Sierkopas%22", json: { entries: [] } },
+    { match: "search?q=name:Sierkopas~", json: sierkopasFuzzyResponse },
+    {
+      match: "description/500",
+      json: description(
+        "500",
+        "Sierokopaß, Neidenburg, East Prussia, Prussia, Germany",
+        "8500"
+      ),
+    },
+    {
+      match: "description/600",
+      json: description("600", "Scherokopaß, Culm, West Prussia, Germany", "8600"),
+    },
+    { match: "attributes", ok: false, status: 404 },
+  ];
+}
+
 function description(
   id: string,
   fullName: string,
@@ -529,9 +610,9 @@ describe("placeSearch (internal)", () => {
 
     const result = await placeSearch("Paris", "Idaho");
 
-    expect(result).toHaveLength(1);
-    expect(result[0].placeId).toBe("9001");
-    expect(result[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].placeId).toBe("9001");
+    expect(result.results[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
     expect(mockFetch).not.toHaveBeenCalledWith(
       expect.stringContaining("description/200"),
       expect.anything()
@@ -554,7 +635,7 @@ describe("placeSearch (internal)", () => {
 
     const result = await placeSearch("Paris", "Nowhereland");
 
-    expect(result.map((r) => r.placeId).sort()).toEqual(["9001", "9002"]);
+    expect(result.results.map((r) => r.placeId).sort()).toEqual(["9001", "9002"]);
   });
 
   it("caches results so a repeat call does not re-fetch", async () => {
@@ -572,7 +653,7 @@ describe("placeSearch (internal)", () => {
     const second = await placeSearch("Paris", "Idaho");
 
     expect(mockFetch.mock.calls.length).toBe(callsAfterFirst);
-    expect(second[0].placeId).toBe("9001");
+    expect(second.results[0].placeId).toBe("9001");
   });
 
   it("falls back to search-entry data when a description 404s", async () => {
@@ -584,9 +665,9 @@ describe("placeSearch (internal)", () => {
 
     const result = await placeSearch("Paris", "Idaho");
 
-    expect(result).toHaveLength(1);
-    expect(result[0].placeId).toBe("9001");
-    expect(result[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].placeId).toBe("9001");
+    expect(result.results[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
   });
 
   // #609: with no explicit contextName, derive one from a comma-qualified
@@ -604,12 +685,176 @@ describe("placeSearch (internal)", () => {
 
     const result = await placeSearch("Bristol, England");
 
-    expect(result).toHaveLength(1);
-    expect(result[0].fullName).toBe("Bristol, England, United Kingdom");
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].fullName).toBe("Bristol, England, United Kingdom");
     // The higher-scored Virginia hit must never be fetched or returned.
     expect(mockFetch).not.toHaveBeenCalledWith(
       expect.stringContaining("description/400"),
       expect.anything()
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fuzzy fallback — a misspelled single-token name retries as name:<leaf>~
+// ---------------------------------------------------------------------------
+
+describe("fuzzy fallback", () => {
+  it("falls back to the fuzzy query on zero exact hits and flags the response", async () => {
+    routeByUrl(sierkopasRoutes());
+
+    const result = await placeSearchTool({
+      placeName: "Sierkopas",
+      contextName: "Germany",
+    });
+
+    expect(result.matchType).toBe("fuzzy");
+    // Present and flagged — NOT the only result: Scherokopaß, Culm also
+    // matches under a Germany context.
+    expect(result.results.map((r) => r.standardPlace)).toContain(
+      "Sierokopaß, Neidenburg, East Prussia, Prussia, Germany"
+    );
+  });
+
+  it("applies the context filter to fuzzy entries (unmatched context keeps all)", async () => {
+    routeByUrl(sierkopasRoutes());
+
+    const filtered = await placeSearchTool({
+      placeName: "Sierkopas",
+      contextName: "Neidenburg",
+    });
+    expect(filtered.results.map((r) => r.standardPlace)).toEqual([
+      "Sierokopaß, Neidenburg, East Prussia, Prussia, Germany",
+    ]);
+    expect(filtered.matchType).toBe("fuzzy");
+  });
+
+  it("has no matchType key on an exact hit", async () => {
+    routeByUrl([
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
+      {
+        match: "description/100",
+        json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchTool({
+      placeName: "Paris",
+      contextName: "Idaho",
+    });
+
+    expect("matchType" in result).toBe(false);
+  });
+
+  it("returns the fuzzy flag again on a cache hit without re-fetching", async () => {
+    routeByUrl(sierkopasRoutes());
+
+    const first = await placeSearchTool({
+      placeName: "Sierkopas",
+      contextName: "Germany",
+    });
+    expect(first.matchType).toBe("fuzzy");
+
+    const callsAfterFirst = mockFetch.mock.calls.length;
+    const second = await placeSearchTool({
+      placeName: "Sierkopas",
+      contextName: "Germany",
+    });
+
+    expect(mockFetch.mock.calls.length).toBe(callsAfterFirst);
+    expect(second.matchType).toBe("fuzzy");
+  });
+
+  it("makes no second fetch for a multi-word leaf with an empty exact result", async () => {
+    // Unquoted multi-token fuzzy is an OR of tokens (live: name:Klein~ Kozlau~
+    // returns 349 hits led by "Klin, Croatia") — so it must never be sent.
+    routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
+
+    const result = await placeSearchTool({ placeName: "Klein Kozlau" });
+
+    expect(result).toEqual({ results: [] });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns an unflagged empty response when the fuzzy query also matches nothing", async () => {
+    routeByUrl([
+      { match: "search?q=name:%22Blorp%22", json: { entries: [] } },
+      { match: "search?q=name:Blorp~", json: { entries: [] } },
+    ]);
+
+    const result = await placeSearchTool({ placeName: "Blorp" });
+
+    expect(result).toEqual({ results: [] });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("caps a fuzzy result set before the per-entry fetches", async () => {
+    // Live, a bare "Brixtol" returns 319 fuzzy entries; uncapped, each costs a
+    // description + Wikipedia fetch and place_search_all exceeds the 60s
+    // bridge abort. Exact results are never capped.
+    const manyFuzzy: FSPlaceSearchResponse = {
+      entries: Array.from({ length: 12 }, (_, i) => ({
+        id: `7${String(i).padStart(2, "0")}`,
+        score: 100 - i,
+        content: {
+          gedcomx: {
+            places: [
+              {
+                id: `7${String(i).padStart(2, "0")}`,
+                display: {
+                  name: `Brixtol${i}`,
+                  fullName: `Brixtol${i}, Nowhere`,
+                  type: "City",
+                },
+              },
+            ],
+          },
+        },
+      })),
+    };
+    routeByUrl([
+      { match: "search?q=name:%22Brixtol%22", json: { entries: [] } },
+      { match: "search?q=name:Brixtol~", json: manyFuzzy },
+      { match: "description/", ok: false, status: 404 },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearchTool({ placeName: "Brixtol" });
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results).toHaveLength(10);
+    const descriptionFetches = mockFetch.mock.calls.filter(([url]) =>
+      (url as string).includes("description/")
+    ).length;
+    expect(descriptionFetches).toBe(10);
+  });
+
+  it("carries the flag through place_search_all", async () => {
+    routeByUrl([
+      ...sierkopasRoutes(),
+      {
+        match: "places/8500",
+        json: {
+          places: [{ id: "8500" }, { id: "500", place: { resourceId: "8500" } }],
+        },
+      },
+      {
+        match: "places/8600",
+        json: {
+          places: [{ id: "8600" }, { id: "600", place: { resourceId: "8600" } }],
+        },
+      },
+    ]);
+
+    const result = await placeSearchAllTool({
+      placeName: "Sierkopas",
+      contextName: "Germany",
+    });
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results.map((r) => r.standardPlace)).toContain(
+      "Sierokopaß, Neidenburg, East Prussia, Prussia, Germany"
     );
   });
 });

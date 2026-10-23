@@ -24,7 +24,7 @@ import { join, dirname } from "node:path";
 import { execFileSync } from "node:child_process";
 import * as ra from "../src/tools/research-append.js";
 import * as rp from "../src/utils/record-persona.js";
-import { lookupPlaceCoords } from "../src/utils/place-coords.js";
+import { lookupWithin } from "../src/utils/place-coords.js";
 import { standardPlaceToCoords } from "../src/utils/place-resolver.js";
 
 const LIST = process.argv.includes("--list");
@@ -118,7 +118,7 @@ for (const { label, research, tree } of docs) {
   if (COORDS) {
     const names = new Set<string>();
     for (const e of live) for (const n of ra.birthPlaceCoordNames(e, research, tree, personLinks)) names.add(n);
-    coords = names.size ? await lookupPlaceCoords([...names], (n) => standardPlaceToCoords(n), 60_000) : new Map();
+    coords = names.size ? await lookupWithin([...names], (n) => standardPlaceToCoords(n), 60_000) : new Map();
   }
   const noConflicts = { ...research, conflicts: [] };
 
