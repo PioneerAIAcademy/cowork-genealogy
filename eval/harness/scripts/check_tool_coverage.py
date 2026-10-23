@@ -55,6 +55,7 @@ if str(HARNESS_DIR) not in sys.path:
 from harness.instrument import LIVE_TOOLS  # noqa: E402
 
 SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
+AGENTS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 FIXTURES_DIR = REPO_ROOT / "eval" / "fixtures" / "mcp"
 
@@ -75,8 +76,11 @@ EXEMPT_TOOLS: dict[str, str] = {
 }
 
 
-def declared_tools(skill_md: Path) -> list[str]:
+def declared_tools(skill_md: Path, key: str = "allowed-tools") -> list[str]:
     """Parse the `allowed-tools` block-list from a SKILL.md frontmatter.
+
+    `key="tools"` reads a plugin agent's `tools:` block instead, which has the
+    same block shape (`run_agent_tools`).
 
     Stdlib only — no yaml dependency (the CI workflow installs none).
     Handles the block style used throughout packages/engine/plugin/skills/:
@@ -105,14 +109,14 @@ def declared_tools(skill_md: Path) -> list[str]:
     in_block = False
     for line in parts[1].splitlines():
         if not in_block:
-            if line.strip() == "allowed-tools:":
+            if line.strip() == f"{key}:":
                 in_block = True
             continue
         stripped = line.strip()
         if stripped.startswith("- "):
             out.append(stripped[2:].strip().split("__")[-1])
-        elif stripped == "":
-            continue
+        elif stripped == "" or stripped.startswith("#"):
+            continue  # agents' `tools:` blocks open with a comment
         else:
             break  # a new frontmatter key ended the allowed-tools block
     return out
@@ -148,6 +152,22 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
                 if test_path.name not in refs[tool]:
                     refs[tool].append(test_path.name)
     return refs
+
+
+def run_agent_tools(skill: str, test_name: str) -> set[str]:
+    """The bare tools declared by the agents a test runs live
+    (`execution.run_agents`, #3568). Those agents' fixtures are not surplus:
+    runnability.py refuses the test without them."""
+    try:
+        test = json.loads((TESTS_DIR / skill / test_name).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return set()
+    agents = (test.get("execution") or {}).get("run_agents") or []
+    out: set[str] = set()
+    for agent in agents:
+        if isinstance(agent, str):
+            out |= set(declared_tools(AGENTS_DIR / f"{agent}.md", key="tools"))
+    return out
 
 
 #: Every LIVE_TOOL is exempt by construction: the mock registers it
@@ -204,11 +224,14 @@ def main() -> int:
         # allowed-tools does not declare. The session grants the tool
         # (issue #1748), so the call succeeds, but the fixture suggests
         # the skill should declare the tool — otherwise the advisory
-        # test_tool_allowlist validator will warn.
+        # test_tool_allowlist validator will warn. A tool an agent the test
+        # runs live declares is that agent's fixture, not a gap.
         for tool in sorted(refs):
             if tool in declared:
                 continue
             for test_name in refs[tool]:
+                if tool in run_agent_tools(skill, test_name):
+                    continue
                 reverse_gaps += 1
                 gh_warning(
                     f"test `{test_name}` (skill `{skill}`) references an "

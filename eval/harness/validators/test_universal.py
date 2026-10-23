@@ -453,8 +453,8 @@ def test_id_references_resolve(after_state):
 #    correct writes, which is what a replay of the old literals over the
 #    committed corpus measured.
 #
-# A skill named by no row is read-only (convert-dates, translation);
-# it fails these checks if it touches a project file at all.
+# A skill named by no row is read-only; it fails these checks if it touches a
+# project file at all.
 
 
 def _healer_normalized(tree: dict) -> dict:
@@ -663,6 +663,38 @@ def _explained_by_attachment_links(before_section, after_section) -> bool:
         return False
     before_ids = {e.get("id") for e in before_section if isinstance(e, dict)}
     return all(is_attachment_link(e) for e in after_section if e.get("id") not in before_ids)
+
+
+def _is_person_timeline(entry) -> bool:
+    return (
+        isinstance(entry, dict)
+        and entry.get("hypothesis_id") is None
+        and isinstance(entry.get("person_ids"), list)
+        and len(entry["person_ids"]) == 1
+    )
+
+
+def _explained_by_person_timeline(before_section, after_section) -> bool:
+    """True when the whole `timelines` delta is `timeline_build`'s: a person
+    timeline appended, or one updated in place, and every other timeline
+    untouched. An edit to a hypothesis or multi-person timeline, or a removal,
+    fails (issue #3516).
+    """
+    before_ids, after_ids = _ids_unique(before_section), _ids_unique(after_section)
+    if before_ids is None or after_ids is None or not set(before_ids) <= set(after_ids):
+        return False
+    before_by_id = dict(zip(before_ids, before_section))
+    changed = False
+    for tid, new in zip(after_ids, after_section):
+        old = before_by_id.get(tid)
+        if old == new:
+            continue
+        if not _is_person_timeline(new) or (old is not None and not _is_person_timeline(old)):
+            return False
+        if old is not None and old.get("person_ids") != new.get("person_ids"):
+            return False
+        changed = True
+    return changed
 
 
 def _explained_by_question_tie(before_section, after_section, notes_ids: set[str]) -> bool:
@@ -885,6 +917,15 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
                 "merge_tree_persons" in called
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
+                continue
+            # timeline_build: a person timeline composed whole in code, so any
+            # skill may call it. Authorized for appending or updating a person's
+            # own timeline; a hypothesis timeline stays the timeline agent's.
+            if "timeline_build" in (identity_tools.get(section) or set()) and (
+                "timeline_build" in called
+            ) and section == "timelines" and _explained_by_person_timeline(
+                before.get(section), after.get(section)
+            ):
                 continue
             # extraction_append: roles and classifications are set in code, so
             # any skill may call it. Authorized for appends, and for the two
@@ -1394,6 +1435,7 @@ PROJECT_WRITER_TOOLS = {
     "tree_correct",
     "materialize_facts",
     "merge_tree_persons",
+    "timeline_build",
 }
 # Writers only when called with a projectPath: `build_external_search_url`
 # appends its in-flight hand-off log entry then, and writes nothing otherwise.

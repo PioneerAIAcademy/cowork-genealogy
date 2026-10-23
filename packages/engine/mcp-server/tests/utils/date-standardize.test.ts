@@ -15,7 +15,7 @@ import {
   WFT_PATTERN,
 } from "../../src/utils/date-constants.js";
 import { stdDate } from "../../src/utils/date-standardize.js";
-import { earliestYear, latestYear, minDaysDiff, maxDaysDiff } from "../../src/utils/date-helpers.js";
+import { earliestYear, getDayRange, latestYear, minDaysDiff, maxDaysDiff, parseStdDate } from "../../src/utils/date-helpers.js";
 
 describe('normalizeAccents', () => {
   test('strips diacritics from French month names', () => {
@@ -647,6 +647,83 @@ describe('latestYear', () => {
   test('split year', () => { expect(latestYear('28 Feb 1623/24')).toBe(1624); });
   test('quarter', () => { expect(latestYear('Q4 1850')).toBe(1850); });
   test('empty', () => { expect(latestYear('')).toBeNull(); });
+});
+
+describe('getDayRange', () => {
+  const year = (n: number) => n * 365;
+  test('year only spans the year', () => {
+    expect(getDayRange('1850')).toEqual({ min: year(1850) + 1, max: year(1850) + 365 });
+  });
+  test('Abt widens a year each side', () => {
+    expect(getDayRange('Abt 1850')).toEqual({ min: year(1850) + 1 - 365, max: year(1850) + 365 + 365 });
+  });
+  test('range runs from the start date to the end date', () => {
+    expect(getDayRange('Bet 1836 and 1848')).toEqual({ min: year(1836) + 1, max: year(1848) + 365 });
+  });
+  test('range with an unparseable side is null', () => {
+    expect(getDayRange('Bet 1836 and soon')).toBeNull();
+  });
+  test('or takes the outer bounds', () => {
+    expect(getDayRange('1850 or 1851')).toEqual({ min: year(1850) + 1, max: year(1851) + 365 });
+  });
+  test('quarter spans its months', () => {
+    expect(getDayRange('Q2 1850')).toEqual({ min: year(1850) + 90 + 1, max: year(1850) + 151 + 30 });
+  });
+  test('parenthetical is stripped', () => {
+    expect(getDayRange('1845 (?)')).toEqual(getDayRange('1845'));
+  });
+  test('empty is null', () => { expect(getDayRange('')).toBeNull(); });
+});
+
+describe('parseStdDate', () => {
+  test('single date gives its parts', () => {
+    expect(parseStdDate('12 Mar 1908')).toEqual({
+      kind: 'single',
+      date: { modifier: null, day: 12, month: 3, year: 1908, quarter: null },
+    });
+  });
+  test('modifier is kept', () => {
+    expect(parseStdDate('Abt 1845')).toEqual({
+      kind: 'single',
+      date: { modifier: 'Abt', day: null, month: null, year: 1845, quarter: null },
+    });
+  });
+  test('a trailing (?) does not make the date unparseable', () => {
+    expect(parseStdDate('1845 (?)')).toEqual(parseStdDate('1845'));
+  });
+  test('Bet X and Y is a range', () => {
+    const r = parseStdDate('Bet 1836 and 1848');
+    expect(r?.kind).toBe('range');
+    if (r?.kind === 'range') {
+      expect(r.start.year).toBe(1836);
+      expect(r.end.year).toBe(1848);
+    }
+  });
+  test('X or Y is an alternative', () => {
+    const r = parseStdDate('9 Mar 1978 or 3 Sep 1978');
+    expect(r?.kind).toBe('or');
+    if (r?.kind === 'or') {
+      expect(r.a.month).toBe(3);
+      expect(r.b.month).toBe(9);
+    }
+  });
+  test('quarter and split year', () => {
+    expect(parseStdDate('Q1 1850')).toEqual({
+      kind: 'single',
+      date: { modifier: null, day: null, month: null, year: 1850, quarter: 1 },
+    });
+    expect(parseStdDate('28 Feb 1623/24')).toEqual({
+      kind: 'single',
+      date: { modifier: null, day: 28, month: 2, year: 1624, quarter: null },
+    });
+  });
+  test('a range with one unparseable side is null', () => {
+    expect(parseStdDate('Bet 1836 and soon')).toBeNull();
+  });
+  test('nothing parseable is null', () => {
+    expect(parseStdDate('')).toBeNull();
+    expect(parseStdDate('(in infancy)')).toBeNull();
+  });
 });
 
 describe('minDaysDiff', () => {

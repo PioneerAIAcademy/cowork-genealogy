@@ -77,6 +77,11 @@ Current live tools:
   own `evaluations/` or `uploads/` — deterministic in workspace state like
   research_query, so a fixture could only drift from what was actually
   written. gps-mentor reads a prior verdict body through it.
+- timeline_build: runs the compiled tool against the workspace, so the person
+  timeline it writes is computed from the links the run actually made. Its
+  Places lookups are answered from the test's own `place_search` fixtures
+  (`_make_timeline_build_handler`); a place no fixture matches resolves to null,
+  and the handler never makes a request.
 """
 
 from __future__ import annotations
@@ -133,6 +138,7 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     # the read not happening — a failure the agent must see as one.
     "sidecar_read",
     "project_create",
+    "timeline_build",
     # Its `ok: false` means the requested correction could not be applied (an
     # impossible date, a doubleYear inconsistent with the year, a quakerMonth
     # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
@@ -1494,6 +1500,8 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "timeline_build":
+        return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
@@ -1536,6 +1544,103 @@ def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str 
         first = results[0] if results and isinstance(results[0], dict) else {}
         table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
     return table
+
+
+def _timeline_place_tables(
+    workspace: Path, place_predicated: list
+) -> tuple[dict[str, str | None], dict[str, dict[str, float] | None]]:
+    """`timeline_build`'s Places answers, from the test's own `place_search`
+    fixtures: each assertion `place` matched as a `placeName` (the first
+    result's `standardPlace`), and coordinates for every standard place a
+    fixture result names. `_place_table` cannot serve this — it reads places
+    from the call's `tree` argument, and this tool takes only a person id."""
+    research_path = workspace / "research.json"
+    try:
+        research = json.loads(research_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        research = {}
+    places: set[str] = set()
+    for a in research.get("assertions") or []:
+        if isinstance(a, dict) and isinstance(a.get("place"), str) and a["place"].strip():
+            places.add(a["place"])
+    coords: dict[str, dict[str, float] | None] = {}
+    for (_pred, resp, _src) in place_predicated:
+        for result in (resp or {}).get("results") or []:
+            if not isinstance(result, dict) or not isinstance(result.get("standardPlace"), str):
+                continue
+            lat, lon = result.get("latitude"), result.get("longitude")
+            if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+                coords.setdefault(result["standardPlace"], {"latitude": lat, "longitude": lon})
+    table: dict[str, str | None] = {}
+    for place in places:
+        hit = next(
+            (resp for (pred, resp, _src) in place_predicated if matches(pred, {"placeName": place})),
+            None,
+        )
+        results = (hit or {}).get("results") or []
+        first = results[0] if results and isinstance(results[0], dict) else {}
+        table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
+    return table, coords
+
+
+def _make_timeline_build_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    place_predicated: list,
+):
+    """Build the live handler for timeline_build.
+
+    Calls the compiled `timelineBuild` against the workspace with its Places
+    lookups injected from the test's `place_search` fixtures
+    (`_timeline_place_tables`), so the run stays offline. Census years come from
+    the compiled census table, as in production. Everything else — events,
+    conflicts, gaps, the write — is production's compiled code.
+    """
+    tool_js = _MCP_BUILD / "tools" / "timeline-build.js"
+
+    async def handler(args, _ws=workspace, _tjs=tool_js):
+        if _ws is None or not _tjs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"timeline_build: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            places, coords = _timeline_place_tables(_ws, place_predicated)
+            script = (
+                f"import {{ timelineBuild }} from '{_node_module_url(_tjs)}';"
+                " import { readFileSync } from 'node:fs';"
+                " const payload = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const deps = {"
+                " resolvePlace: async (t) => payload.places[t] ?? null,"
+                " placeCoords: async (s) => payload.coords[s] ?? null };"
+                " const r = await timelineBuild(payload.input, deps);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            stdin_obj = {"input": input_obj, "places": places, "coords": coords}
+            try:
+                proc = _run_node_eval(script, json.dumps(stdin_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"timeline_build: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"timeline_build: {e}"]}
+
+        call_log.append({
+            "tool": "mcp__genealogy__timeline_build",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:timeline_build",
+            "response": response,
+        })
+        return _tool_envelope("timeline_build", response)
+
+    return handler
 
 
 def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
