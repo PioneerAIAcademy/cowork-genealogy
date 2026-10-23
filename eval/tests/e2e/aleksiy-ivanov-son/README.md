@@ -32,8 +32,9 @@ match strength.
 (MCP `record_read` / `image_transcribe` / `record_search` against live
 FamilySearch); the identity judgement is the genealogist's. The hinted record —
 "Россия, Самарские метрические книги, 1748-1934", birth of Павел Иванов,
-2 November 1885, Samara (`ark:/61903/1:1:6V7Y-N9KZ`) — is **not** a son of the
-subject. Its parents are **Василий Иванов** and **Степанида Иванова**, peasants
+2 November 1885, Samara (`ark:/61903/1:1:6V7Y-N9KZ`, Pavel's child persona; the
+hinted persona is his father Vasiliy, `ark:/61903/1:1:6V7Y-N9K6`, used as
+`hint.persona_ark`) — is **not** a son of the subject. Its parents are **Василий Иванов** and **Степанида Иванова**, peasants
 of the village of Sarbon; the subject is **Алексей (Алексий) Васильевич Иванов**
 of Samara, husband of **Елизавета**. The hinting engine matched only on the
 surname Ivanov (the commonest Russian surname), the Samara region, and the son's
