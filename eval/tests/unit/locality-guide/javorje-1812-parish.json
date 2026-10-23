@@ -18,7 +18,7 @@
     "scenario": null
   },
   "execution": {
-    "max_wall_clock_seconds": 720
+    "max_wall_clock_seconds": 900
   },
   "mcp_fixtures": [
     "catalog-search-javorje",

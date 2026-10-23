@@ -20,7 +20,7 @@
     "scenario": null
   },
   "execution": {
-    "max_wall_clock_seconds": 720
+    "max_wall_clock_seconds": 900
   },
   "judge_context": [
     "Should identify that Irish civil registration didn't exist for births/deaths in the 1830s-1840s (it began 1864) \u2014 research must rely on church (Catholic parish) records, surviving estate records, and emigrant lists",

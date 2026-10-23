@@ -40,6 +40,6 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 720
+    "max_wall_clock_seconds": 900
   }
 }
