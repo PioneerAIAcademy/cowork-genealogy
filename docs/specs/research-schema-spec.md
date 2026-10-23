@@ -302,7 +302,7 @@ described under "Who actually writes a row" below.
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
-| `namesakes` | search-records (in a later change; nothing writes it yet) | `research_append` (the namesake cap), `merge_tree_persons` | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` (Section 5.15). Optional section — absent until a namesake is recorded |
+| `namesakes` | search-records (in a later change; nothing writes it yet) | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` (Section 5.15). Optional section — absent until a namesake is recorded |
 | `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
@@ -661,7 +661,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 
 Array of log entry objects. **Append-only — entries are never modified or deleted.** This is the core GPS audit trail. Every tool call that searches for records must produce a log entry, including searches that return no results.
 
-Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes` (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing, or a `wikipedia_search` that answered not-found, is `negative` with `results_examined: 0` and `notes` null — skipping the entry would leave no trace that the topic was tried, so the next session repeats the lookup; any other `wikipedia_search` error is a failed lookup, not an answer, and is not logged). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
+Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read`, `historical_context`, or one of the report-only agents' tools `source_evaluation`, `check_warnings`, `translation`, `convert_dates`, `validate_schema`) record a looked-up article, wiki guidance, overview or report rather than a record search: the reference text itself is carried in `notes` (a report entry carries the agent's full reply) (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing, or a `wikipedia_search` that answered not-found, is `negative` with `results_examined: 0` and `notes` null — skipping the entry would leave no trace that the topic was tried, so the next session repeats the lookup; any other `wikipedia_search` error is a failed lookup, not an answer, and is not logged). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1177,7 +1177,10 @@ yields it, so the validator reports a row keyed on a person not in the tree,
 orphan a row (`tree-forget-tool-spec.md` §4).
 
 What a row does to a link, the ties that allow one and the refusal, is specified
-in `research-append-tool-spec.md` §5, the namesake cap row.
+in `research-append-tool-spec.md` §5, the namesake cap row. A row written over
+links the cap refuses is recorded with a warning listing them (§5.6 there), and
+`materialize_facts` copies nothing onto the row holder through such a link
+(`tree-materialization-spec.md` §4.3).
 
 ---
 

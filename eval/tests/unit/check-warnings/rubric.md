@@ -2,6 +2,8 @@
 
 Grading dimensions for check-warnings unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+Inside a project the agent ends with one `research_log_append` call logging its report; that entry appears in the file changes summary, and its shape is checked by validators, not by you. With **no project** the call, if made, answers `ok: false`, `reason: "no_project"`: that is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+
 **Grading constraints (read before scoring any dimension).** When grading a check-warnings test, you do not have direct access to the test scenario's `research.json` or `tree.gedcomx.json` files. The only sources of truth available to you are: the scenario README (a prose summary of the project state), the user message, the skill's tool calls and the tool responses returned, and the skill's final text response.
 
 Do not assert that a specific fact is or is not present in the tree, in `research.json`, or in any source document unless the scenario README or a tool response explicitly says so. Do not infer counts, dates, names, or relationships from the README's summary beyond what it states verbatim. If a deduction or credit you want to give would require inspecting tree or research.json contents you cannot see in your inputs, do not make it.

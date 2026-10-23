@@ -1384,3 +1384,84 @@ def test_the_conditional_detach_guard_fires_on_exactly_the_known_corpus_cases():
         f"issue #2481 names as must-fire; if the corpus changed, re-measure "
         f"rather than shrinking the expectation."
     )
+
+
+# --- the research.json write: one logged report, nothing else (#3524) -----
+
+_only_logs = _VALIDATOR.test_research_json_only_logs_report
+_report_logged = _VALIDATOR.test_report_logged
+_POSITIVE = {"type": "positive", "tags": ["logs-report"]}
+
+
+def _research(log, **extra):
+    return {"project": {"id": "p1"}, "log": log, "sources": [], **extra}
+
+
+def _entry(n, tool="source_evaluation", notes="SOURCES ON: Christian P. Hole"):
+    return {"id": f"log_{n:03d}", "tool": tool, "plan_item_id": None, "notes": notes}
+
+
+_PRIOR = _entry(1, tool="record_search", notes=None)
+
+
+def _states(before_research, after_research):
+    return {"research_json": before_research}, {"research_json": after_research}
+
+
+def test_one_logged_report_passes_both_validators():
+    before, after = _states(_research([_PRIOR]), _research([_PRIOR, _entry(2)]))
+    _only_logs(before, after, _POSITIVE)
+    _report_logged(before, after, _POSITIVE)
+
+
+def test_no_write_passes_the_write_guard_and_fails_the_logged_guard():
+    before, after = _states(_research([_PRIOR]), _research([_PRIOR]))
+    _only_logs(before, after, _POSITIVE)
+    with pytest.raises(AssertionError, match="exactly one new source_evaluation"):
+        _report_logged(before, after, _POSITIVE)
+
+
+def test_a_second_report_fails():
+    before, after = _states(
+        _research([_PRIOR]), _research([_PRIOR, _entry(2), _entry(3)])
+    )
+    with pytest.raises(AssertionError, match="one audit is one entry"):
+        _only_logs(before, after, _POSITIVE)
+    with pytest.raises(AssertionError, match="exactly one new source_evaluation"):
+        _report_logged(before, after, _POSITIVE)
+
+
+def test_an_entry_under_another_tool_fails():
+    before, after = _states(
+        _research([_PRIOR]), _research([_PRIOR, _entry(2, tool="conflict_resolution")])
+    )
+    with pytest.raises(AssertionError, match="its only log entry"):
+        _only_logs(before, after, _POSITIVE)
+
+
+def test_a_write_outside_the_log_fails():
+    before, after = _states(
+        _research([_PRIOR]),
+        _research([_PRIOR, _entry(2)], sources=[{"id": "s_001"}]),
+    )
+    with pytest.raises(AssertionError):
+        _only_logs(before, after, _POSITIVE)
+
+
+def test_an_edited_prior_entry_fails():
+    edited = dict(_PRIOR, notes="rewritten")
+    before, after = _states(_research([_PRIOR]), _research([edited, _entry(2)]))
+    with pytest.raises(AssertionError):
+        _only_logs(before, after, _POSITIVE)
+
+
+def test_a_report_with_empty_notes_fails_the_logged_guard():
+    before, after = _states(_research([_PRIOR]), _research([_PRIOR, _entry(2, notes="  ")]))
+    with pytest.raises(AssertionError, match="notes must carry the report"):
+        _report_logged(before, after, _POSITIVE)
+
+
+def test_no_project_passes_when_nothing_is_created_and_fails_when_it_is():
+    _only_logs({"research_json": None}, {"research_json": None}, _POSITIVE)
+    with pytest.raises(AssertionError, match="created research.json with no project"):
+        _only_logs({"research_json": None}, {"research_json": _research([_entry(1)])}, _POSITIVE)

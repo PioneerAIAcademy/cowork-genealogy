@@ -1228,9 +1228,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # an unnamed-delegate bypass. Do not read its presence here as evidence
         # of a hook route.
         "question-selection",
-        # A converted skill that writes nothing at all (issue #2118): its only
-        # MCP tool is the read-only `person_warnings`. Listed solely because the
-        # set is asserted equal to the shipped agent files.
+        # A converted skill (issue #2118) with no hook route. Its one write is a
+        # `log` entry through `research_log_append` (#3524), which carries no
+        # `section`. Listed because the set is asserted equal to the shipped
+        # agent files.
         "check-warnings",
         # Same shape as `search-images` and `citation` (issue #2795): a
         # cost-motivated conversion, no hook route. It writes only one `log`
@@ -1248,10 +1249,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # the shipped agent files.
         "timeline",
         # Same shape as search-images, and for the same reason (issue #2790):
-        # a converted skill, not a hook-routed pair. It writes nothing at all,
-        # so no hook routes anything to it and `ownership.json` names it on no
-        # row. Listed because the set is asserted equal to the shipped agent
-        # files.
+        # a converted skill, not a hook-routed pair. Its one write is a `log`
+        # entry through `research_log_append` (#3524), so no hook routes
+        # anything to it. Listed because the set is asserted equal to the
+        # shipped agent files.
         "convert-dates",
         # Same shape again (issue #2794): a converted skill with no hook route.
         # It writes only one `log` entry per search through
@@ -1272,10 +1273,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # that row. Do not read its presence here as evidence of a hook route.
         "hypothesis-tracking",
         # Same shape as `search-images`, `citation`, and `search-wikipedia`
-        # (issue #2804): a cost-motivated conversion, no hook route, and it
-        # writes no project state. Listed because the set is asserted equal to
-        # the shipped agent files. Do not read its presence here as evidence of
-        # a hook route.
+        # (issue #2804): a cost-motivated conversion, no hook route. Its one
+        # write is a `log` entry through `research_log_append` (#3524). Listed
+        # because the set is asserted equal to the shipped agent files. Do not
+        # read its presence here as evidence of a hook route.
         "translation",
         # Same shape as citation (issue #2805): a converted skill, not a
         # hook-routed pair. It writes tree persons, relationships and sources,
@@ -1284,14 +1285,14 @@ DEDICATED_AGENT_NAMES = frozenset(
         # because the set is asserted equal to the shipped agent files.
         "tree-edit",
         # Same shape as convert-dates (issue #2798): a converted skill with no
-        # hook route. It writes nothing at all, so `ownership.json` names it on
-        # no row. Listed because the set is asserted equal to the shipped agent
-        # files.
+        # hook route. Its one write is a `log` entry through
+        # `research_log_append` (#3524). Listed because the set is asserted
+        # equal to the shipped agent files.
         "validate-schema",
         # Same shape as convert-dates (issue #2796): a converted skill with no
-        # hook route. It writes nothing at all, so `ownership.json` names it on
-        # no row. Listed because the set is asserted equal to the shipped agent
-        # files.
+        # hook route. Its one write is a `log` entry through
+        # `research_log_append` (#3524), which carries no `section`. Listed
+        # because the set is asserted equal to the shipped agent files.
         "source-evaluation",
         # Same shape as citation (issue #2117): a converted skill. The hook lanes
         # it to `localities` and routes nothing to it; `ownership.json` names

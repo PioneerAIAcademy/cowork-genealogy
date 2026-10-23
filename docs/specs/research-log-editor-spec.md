@@ -126,7 +126,12 @@ sidecar.
 **Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
 `{ ok: true, results: [...], filesWritten, validation }` for a batch. Either may
-carry `escalationDue: string`, present only when §8.1's nil-escalation note fires.
+carry `escalationDue: string`, present only when §8.1's nil-escalation note fires,
+and `next: string`, present only when the call logged a report-only agent's own
+entry (`source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
+`validate_schema`): it tells the agent to return the report it just logged, in
+full, as its reply — not a note that it was logged, and not a pointer to text it
+wrote before the call, which the caller never receives.
 
 **camelCase at the boundary; snake_case on disk.** The tool renames on persist
 (`planItemId → plan_item_id`, `resultsExamined → results_examined`,
@@ -411,9 +416,11 @@ are two that do block, and the distinction is what makes them legitimate.
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
   Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
-  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
-  `positive` entries carry a looked-up article or overview in `notes`, not a
-  record to persist. The pre-1880 census hedge is unaffected.
+  `wiki_read`, `wikipedia_search`, `historical_context`, and the report-only agents'
+  reports `source_evaluation`, `check_warnings`, `translation`, `convert_dates`,
+  `validate_schema`) are not counted: their `positive` entries carry a looked-up
+  article, overview or report in `notes`, not a record to persist. The pre-1880
+  census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 

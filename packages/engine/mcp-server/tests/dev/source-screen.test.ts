@@ -429,7 +429,7 @@ describe("attachments refresh", () => {
     calls: [],
   });
 
-  it("keeps the Family Tree answer, writes the tree's, and re-reads others from it", async () => {
+  it("keeps the Family Tree answer, writes the tree's, and adds the tree's others to the reads already held", async () => {
     const out = mkTmp();
     const ft = familyTree();
     await snap(out, ["AAAA-111"], ft);
@@ -440,8 +440,8 @@ describe("attachments refresh", () => {
     expect(ledger).toMatchObject({ refreshed: 1, skipped: 0, errored: 0, subject_arks: 2, subject_arks_naming_subject: 2 });
     expect(readJson(join(dir, "attachments.family-tree.json")).attachments[ark("REC1-111")][0].personId).toBe("FTCP-111");
     expect(readJson(join(dir, "attachments.json")).attachments[ark("REC1-111")][0].personId).toBe("AAAA-111");
-    expect(existsSync(join(dir, "others.family-tree", "FTCP-111.json"))).toBe(true);
-    expect(readdirSync(join(dir, "others"))).toEqual(["OTHR-222.json"]);
+    expect(readdirSync(join(dir, "others")).sort()).toEqual(["FTCP-111.json", "OTHR-222.json"]);
+    expect(existsSync(join(dir, "others.family-tree"))).toBe(false);
     expect(readJson(join(dir, "attachments-tree.json")).tree).toBe("9NMM-TEST");
   });
 

@@ -2393,7 +2393,9 @@ describe("materialize_facts", () => {
     expect(second.refsAttached).toBe(0);
     expect(findPerson(await readTree(), "I5").names).toHaveLength(1);
 
-    // And the same in ONE batch: two mirrored records naming the same woman.
+    // In ONE batch a re-run of the same op stays idempotent, but the groom's
+    // name may not land on the bride's stub: I6 was minted from the bride's
+    // party, and nothing on it comes from the groom's (item 34).
     const batched = await materializeFacts({
       projectPath: dir,
       ops: [
@@ -2401,7 +2403,19 @@ describe("materialize_facts", () => {
         { personId: "I6", assertionId: "a_003", relatedRole: "groom", name: { given: "Thomas", surname: "Flynn" } },
       ],
     });
-    expect(batched.ok).toBe(true);
+    expect(batched.ok).toBe(false);
+    if (batched.ok) return;
+    expect(batched.errors[0]).toMatch(
+      /^ops\[1\]: 'I6' was created from record 'REC-MARR', but nothing on it \(.*\) comes from this party, so it is not this party's stub\./,
+    );
+    const rerun = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { personId: "I6", assertionId: "a_002", relatedRole: "bride", name: { given: "Mary", surname: "Doyle" } },
+        { personId: "I6", assertionId: "a_002", relatedRole: "bride", name: { given: "Mary", surname: "Doyle" } },
+      ],
+    });
+    expect(rerun.ok).toBe(true);
   });
 
   it("(51) the refusal carries the personId the caller supplied, so following it cannot duplicate", async () => {

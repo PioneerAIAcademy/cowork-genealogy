@@ -49,9 +49,8 @@ beforeEach(() => {
 
 describe('EvaluationsSection', () => {
   it('renders the verdict — the reason this section exists (#1223)', () => {
-    // The mentor gate is mandatory to invoke and record, and an `address_first`
-    // verdict is the mentor saying a proof needs work before it stands. It was
-    // recorded and invisible until this section existed.
+    // An `address_first` verdict is the mentor saying a proof needs work before
+    // it stands. It was recorded and invisible until this section existed.
     mockResearch({ evaluations: [proofCritique] })
     render(<EvaluationsSection />)
     expect(screen.getByText('address first')).toBeInTheDocument()
