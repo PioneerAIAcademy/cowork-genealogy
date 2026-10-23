@@ -1194,9 +1194,9 @@ live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
 Cowork is a different loader and has no instrument but a live
 session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `bypassPermissions`). Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`: the raw
-file-write tools, the device bridge's `device_commit_files`, and — since the
-caller-ownership rules shipped — `research_append`. It still never sees an
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`: the raw
+file-write tools, the device bridge's `device_commit_files`, `research_append`
+(since the caller-ownership rules shipped), and `Agent` / `Task`, for the fork deny. It still never sees an
 `extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the

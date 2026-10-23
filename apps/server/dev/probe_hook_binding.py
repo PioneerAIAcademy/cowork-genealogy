@@ -83,6 +83,16 @@ VERDICTS
   VOID       - the preflight failed, arm B also denied (attribution broken), or
                the model never made the call
 
+THE FORK CASE
+
+A second pair of arms provokes an `Agent` call with `subagent_type: "fork"`, which
+the guard denies (`FORK_REASON`) because Cowork's Claude Code offers forks by default
+from 2.1.302 and every path we test turns them off. These arms DROP
+`CLAUDE_CODE_FORK_SUBAGENT` from the options `build_options` returned, so the CLI
+offers a fork as Cowork's would; arm B, with `hooks/` removed, is therefore also
+the evidence that a fork is reachable at all. Same attribution rule: the verdict
+is the guard's own imported reason text on the `Agent` tool_result.
+
 WHAT A PASS DOES NOT PROVE
 
 The hosted SDK loader is not Cowork's loader. Cowork is reachable only by a human
@@ -90,7 +100,7 @@ running a live session, so issue #1160 stays on the `nothing-checks` register
 whatever this reports. Per `docs/architecture.md` §9.4, no CI job can verify
 binding.
 
-Costs two short sessions. Needs a compiled engine (`make engine-build`) and a
+Costs four short sessions. Needs a compiled engine (`make engine-build`) and a
 key in $ANTHROPIC_API_KEY or eval/.env. Run it with `make hook-smoke`.
 """
 from __future__ import annotations
@@ -153,6 +163,15 @@ def expected_reason() -> str:
     )
 
 
+def expected_fork_reason() -> str:
+    """The guard's fork deny text from its first word after the tool name, which
+    the marker must not depend on."""
+    sys.path.insert(0, str(PLUGIN_DIR / "hooks"))
+    import guard_project_files as guard
+
+    return guard.FORK_REASON.format(tool="").lstrip()
+
+
 def preflight(plugin: Path) -> tuple[bool, str]:
     """Run the guard script the way `hooks.json` does, and require a deny.
 
@@ -212,7 +231,33 @@ def preflight(plugin: Path) -> tuple[bool, str]:
     got = (out.get("hookSpecificOutput") or {}).get("permissionDecision")
     if got != "deny":
         return False, f"guard script did not deny this payload (decision={got!r})"
-    return True, "guard script denies the probe payload when run directly"
+    fork = subprocess.run(
+        ["python3", str(script)],
+        input=json.dumps({"tool_name": "Agent", "tool_input": {"subagent_type": "fork"}}),
+        capture_output=True, text=True, encoding="utf-8", timeout=20, check=False,
+    )
+    try:
+        fork_got = (json.loads(fork.stdout or "{}").get("hookSpecificOutput") or {}).get(
+            "permissionDecision")
+    except json.JSONDecodeError:
+        fork_got = None
+    if fork_got != "deny":
+        return False, f"guard script did not deny a fork (decision={fork_got!r})"
+    return True, "guard script denies both probe payloads when run directly"
+
+
+FORK_QUERY = (
+    "Call the `Agent` tool exactly once, then stop. Call it with EXACTLY these "
+    "arguments and no others:\n\n"
+    '  {"subagent_type": "fork", "description": "probe", '
+    '"prompt": "Reply with the single word OK and do nothing else."}\n\n'
+    "Then output ONE line and nothing else:\n"
+    "  - if the call returned a result, write:  PROBE_RESULT: ALLOWED\n"
+    "  - if the call was refused, blocked or denied, write:  "
+    "PROBE_RESULT: DENIED <the exact refusal text>\n\n"
+    "Do not retry. Do not call any other tool. Do not ask for permission. Do not "
+    "explain. Do not do anything else."
+)
 
 
 QUERY = (
@@ -233,7 +278,7 @@ QUERY = (
 )
 
 
-async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
+async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict:
     from claude_agent_sdk import (
         AssistantMessage,
         ClaudeSDKClient,
@@ -244,7 +289,7 @@ async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
     )
     from app.agent import real_agent
 
-    arm = "a-hooks-present" if hooks_present else "b-hooks-removed"
+    arm = f"{case}/{'a-hooks-present' if hooks_present else 'b-hooks-removed'}"
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
         plugin = tmp / "plugin"
@@ -262,6 +307,9 @@ async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
         # today, but relying on that is relying on a neighbouring file not to
         # change.
         options.hooks = {}
+        if case == "fork":
+            # Cowork's default: the CLI offers a fork unless this is set.
+            options.env.pop("CLAUDE_CODE_FORK_SUBAGENT", None)
 
         calls: dict[str, dict] = {}
         results: dict[str, dict] = {}
@@ -270,7 +318,9 @@ async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
-            await client.query(QUERY.format(project=str(project).replace("\\", "/")))
+            query = FORK_QUERY if case == "fork" else QUERY.format(
+                project=str(project).replace("\\", "/"))
+            await client.query(query)
             async for msg in client.receive_response():
                 if isinstance(msg, (AssistantMessage, UserMessage)):
                     for block in msg.content if isinstance(msg.content, list) else []:
@@ -306,8 +356,12 @@ async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
     # and the escaped one matches.
     marker = json.dumps(reason[:60])[1:-1]
     called, denied_by_guard, deny_texts = False, False, []
+    target = ("Agent", "Task") if case == "fork" else None
     for cid, call in calls.items():
-        if not call["name"].endswith("research_append"):
+        if target is not None:
+            if call["name"] not in target or '"fork"' not in call["input"]:
+                continue
+        elif not call["name"].endswith("research_append"):
             continue
         called = True
         res = results.get(cid) or {}
@@ -327,13 +381,14 @@ async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
     )
 
     if not called:
-        verdict = "VOID (never called research_append)"
+        verdict = f"VOID (never called {'a fork' if case == 'fork' else 'research_append'})"
     elif denied_by_guard:
         verdict = "DENIED_BY_GUARD"
     else:
         verdict = "NOT_DENIED"
 
     return {
+        "case": case,
         "arm": arm,
         "hooks_present": hooks_present,
         "verdict": verdict,
@@ -360,7 +415,7 @@ async def main() -> None:
     if not ENGINE_BUILD.exists():
         sys.exit(f"no compiled engine at {ENGINE_BUILD} - run `make engine-build`")
 
-    reason = expected_reason()
+    reasons = {"owner": expected_reason(), "fork": expected_fork_reason()}
     ok, detail = preflight(PLUGIN_DIR)
     print(f"preflight: {'PASS' if ok else 'FAIL'} - {detail}", flush=True)
     if not ok:
@@ -372,63 +427,72 @@ async def main() -> None:
         )
 
     rows = []
-    for hooks_present in (True, False):
-        label = "a-hooks-present" if hooks_present else "b-hooks-removed"
-        print(f"... running {label}", flush=True)
-        try:
-            rows.append(await asyncio.wait_for(run_arm(hooks_present, key, reason), timeout=300))
-        except Exception as exc:  # noqa: BLE001
-            rows.append({
-                "arm": label,
-                "hooks_present": hooks_present,
-                "verdict": f"VOID ({type(exc).__name__}: {exc})",
-                "probe_line": "",
-                "tool_calls": [],
-                "guard_deny_text": [],
-            })
+    for case in ("owner", "fork"):
+        for hooks_present in (True, False):
+            label = f"{case}/{'a-hooks-present' if hooks_present else 'b-hooks-removed'}"
+            print(f"... running {label}", flush=True)
+            try:
+                rows.append(await asyncio.wait_for(
+                    run_arm(case, hooks_present, key, reasons[case]), timeout=300))
+            except Exception as exc:  # noqa: BLE001
+                rows.append({
+                    "case": case,
+                    "arm": label,
+                    "hooks_present": hooks_present,
+                    "verdict": f"VOID ({type(exc).__name__}: {exc})",
+                    "probe_line": "",
+                    "tool_calls": [],
+                    "guard_deny_text": [],
+                })
 
     print("\n" + "=" * 78)
-    print(f"{'arm':<20}{'hooks/':<10}{'verdict':<20}probe line")
+    print(f"{'arm':<26}{'hooks/':<10}{'verdict':<20}probe line")
     print("-" * 78)
     for r in rows:
         present = "present" if r["hooks_present"] else "removed"
-        print(f"{r['arm']:<20}{present:<10}{r['verdict'][:19]:<20}{r['probe_line'][:26]}")
+        print(f"{r['arm']:<26}{present:<10}{r['verdict'][:19]:<20}{r['probe_line'][:20]}")
     print("=" * 78)
     print("\nfull rows:")
     for r in rows:
         print(json.dumps(r, indent=2))
 
-    arm_a = next((r for r in rows if r["hooks_present"]), {})
-    arm_b = next((r for r in rows if not r["hooks_present"]), {})
-
-    if arm_b.get("verdict") != "NOT_DENIED":
-        sys.exit(
-            f"\n*** VOID: arm B was {arm_b.get('verdict')!r}, not 'NOT_DENIED'. "
-            "The control arm has to run the same turn with hooks/ REMOVED and "
-            "come back undenied. Anything else -- a deny carrying the guard's "
-            "own text, a turn that never called the tool, an exception -- "
-            "leaves arm A unattributed. ***"
-        )
-    if arm_a.get("verdict") == "DENIED_BY_GUARD":
-        print(
-            "\nBOUND: the hosted SDK loader read hooks.json, matched "
-            "research_append, shelled guard_project_files.py and blocked the "
-            "call -- and the same turn was NOT denied with hooks/ removed.\n"
-            "This says nothing about Cowork's loader; #1160 stays on the "
-            "nothing-checks register."
-        )
-        return
-    if str(arm_a.get("verdict", "")).startswith("VOID"):
-        sys.exit(
-            f"\n*** VOID: arm A was {arm_a.get('verdict')!r}. The turn produced "
-            "no research_append tool_result to read a verdict off, so this run "
-            "says nothing about binding either way. Re-run it. ***"
-        )
-    sys.exit(
-        f"\n*** NOT_BOUND: arm A was {arm_a.get('verdict')!r}. The preflight "
-        "passed, so the guard script runs and denies this payload when invoked "
-        "directly -- the loader is not binding it. ***"
+    tool = {"owner": "research_append", "fork": "an Agent call with subagent_type fork"}
+    failures = []
+    for case in ("owner", "fork"):
+        arm_a = next((r for r in rows if r["case"] == case and r["hooks_present"]), {})
+        arm_b = next((r for r in rows if r["case"] == case and not r["hooks_present"]), {})
+        if arm_b.get("verdict") != "NOT_DENIED":
+            failures.append(
+                f"VOID ({case}): arm B was {arm_b.get('verdict')!r}, not 'NOT_DENIED'. "
+                "The control arm has to run the same turn with hooks/ REMOVED and "
+                "come back undenied. Anything else -- a deny carrying the guard's "
+                "own text, a turn that never made the call, an exception -- "
+                "leaves arm A unattributed."
+            )
+        elif arm_a.get("verdict") == "DENIED_BY_GUARD":
+            print(
+                f"\nBOUND ({case}): the hosted SDK loader read hooks.json, matched "
+                f"{tool[case]}, shelled guard_project_files.py and blocked the "
+                "call -- and the same turn was NOT denied with hooks/ removed."
+            )
+        elif str(arm_a.get("verdict", "")).startswith("VOID"):
+            failures.append(
+                f"VOID ({case}): arm A was {arm_a.get('verdict')!r}. The turn made "
+                "no call to read a verdict off, so this run says nothing about "
+                "binding either way. Re-run it."
+            )
+        else:
+            failures.append(
+                f"NOT_BOUND ({case}): arm A was {arm_a.get('verdict')!r}. The "
+                "preflight passed, so the guard script denies this payload when "
+                "invoked directly -- the loader is not binding it."
+            )
+    print(
+        "\nThis says nothing about Cowork's loader; #1160 stays on the "
+        "nothing-checks register."
     )
+    if failures:
+        sys.exit("\n" + "\n".join(f"*** {f} ***" for f in failures))
 
 
 if __name__ == "__main__":

@@ -1121,6 +1121,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.resume is None and opts.session_id is None
     assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     [matcher] = opts.hooks["PreToolUse"]
@@ -1211,6 +1212,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
     on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
     assert on.env["ENABLE_TOOL_SEARCH"] == "true"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
@@ -1324,7 +1326,7 @@ def test_worker_dockerfile_shape():
     # mode (test_proto_config checks the export is current and the install shape).
     assert re.search(r"^COPY apps/server/proto/worker/requirements\.txt\s", body, re.M)
     requirements = (PROTO / "worker" / "requirements.txt").read_text(encoding="utf-8")
-    assert re.search(r"^claude-agent-sdk==0\.2\.128 ", requirements, re.M)
+    assert re.search(r"^claude-agent-sdk==0\.2\.172", requirements, re.M)
     assert re.search(r"^psycopg==", requirements, re.M) and re.search(r"^psycopg-binary==", requirements, re.M)
     # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
     assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"

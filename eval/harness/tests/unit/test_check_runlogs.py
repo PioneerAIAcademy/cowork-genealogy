@@ -2830,11 +2830,161 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
         "engine-lockfile", "suite-validator", "unknown-suite", "e2e", "engine-tests", "docs",
     ],
 )
-def test_instrument_touched_suites(paths, expected):
+def test_instrument_touched_suites(paths, expected, monkeypatch):
     """Both directions: the fingerprint's own inputs mark every suite (so a change
     to them is graded on the PR that makes it, not the next unrelated one), and
     paths no unit run reads (must-pass 3: `eval/harness/e2e/`) mark none."""
+    _base_is_head(monkeypatch)
     assert check_runlogs.instrument_touched_suites(set(paths), {"demo", "convert-dates"}) == expected
+
+
+def _base_is_head(monkeypatch):
+    """The merge base reads as the working tree: no import changed."""
+
+    def show(path):
+        f = check_runlogs.REPO_ROOT / path
+        return f.read_text(encoding="utf-8") if f.is_file() else None
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", show)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "eval/harness/harness/dates.py",
+        "eval/harness/harness/fixtures.py",
+        "eval/harness/harness/__init__.py",
+        "eval/harness/provenance_report.py",
+    ],
+    ids=["direct", "transitive", "package-init", "top-level"],
+)
+def test_a_module_in_the_validators_import_closure_marks_every_suite(path, monkeypatch):
+    """Issue #3691: a harness module a validator imports, directly or through
+    another module, can move `validators.shared`, so its edit opens rule 2c on
+    every suite."""
+    _base_is_head(monkeypatch)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == {"demo", "convert-dates"}
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["eval/harness/harness/judge.py", "eval/harness/judge_report.py", "eval/harness/tests/unit/test_instrument.py"],
+    ids=["judge", "top-level-outside", "harness-test"],
+)
+def test_a_harness_module_outside_the_closure_marks_no_suite(path, monkeypatch):
+    _base_is_head(monkeypatch)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == set()
+
+
+def test_a_deleted_harness_module_marks_every_suite(monkeypatch):
+    """Deleted, it is absent from the closure computed at head, though the base's
+    closure may have held it."""
+    _base_is_head(monkeypatch)
+    assert check_runlogs.instrument_touched_suites(
+        {"eval/harness/harness/no_longer_here.py"}, {"demo", "convert-dates"}
+    ) == {"demo", "convert-dates"}
+
+
+@pytest.mark.parametrize(
+    "base_extra, head_extra, expected",
+    [
+        ("", "", {"convert-dates"}),
+        ("", "from harness.dates import parse_date\n", {"demo", "convert-dates"}),
+        ("from harness.dates import parse_date\n", "", {"demo", "convert-dates"}),
+        ("import json\n", "import re\n", {"convert-dates"}),
+    ],
+    ids=["unchanged", "added-import", "removed-import", "stdlib-only-change"],
+)
+def test_a_suite_validator_whose_harness_imports_changed_marks_every_suite(
+    monkeypatch, tmp_path, base_extra, head_extra, expected
+):
+    """Every validator file seeds the closure, so a suite file that adds or drops
+    a harness import can move `shared` for every suite; one that keeps its harness
+    imports moves only its own suite."""
+    path = "eval/harness/validators/test_convert_dates.py"
+    (tmp_path / "eval" / "harness" / "validators").mkdir(parents=True)
+    (tmp_path / "eval" / "harness" / "harness").mkdir()
+    (tmp_path / "eval" / "harness" / "harness" / "dates.py").write_text("def parse_date():\n    pass\n", encoding="utf-8")
+    (tmp_path / path).write_text(head_extra + "def test_x():\n    assert True\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        check_runlogs, "git_show_at_merge_base", lambda p: base_extra + "def test_x():\n    assert True\n"
+    )
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == expected
+
+
+@pytest.mark.parametrize(
+    "base, head, expected",
+    [
+        (None, "from harness.dates import parse_date\n", {"demo", "convert-dates"}),
+        (None, "def test_x():\n    assert True\n", {"convert-dates"}),
+        ("from harness.dates import parse_date\n", None, {"demo", "convert-dates"}),
+    ],
+    ids=["new-file-with-harness-import", "new-file-without", "deleted-file-with-harness-import"],
+)
+def test_a_new_or_deleted_suite_validator_is_judged_by_its_harness_imports(monkeypatch, tmp_path, base, head, expected):
+    path = "eval/harness/validators/test_convert_dates.py"
+    (tmp_path / "eval" / "harness" / "validators").mkdir(parents=True)
+    (tmp_path / "eval" / "harness" / "harness").mkdir()
+    (tmp_path / "eval" / "harness" / "harness" / "dates.py").write_text("def parse_date():\n    pass\n", encoding="utf-8")
+    if head is not None:
+        (tmp_path / path).write_text(head, encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda p: base)
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == expected
+
+
+def test_an_unreadable_base_opens_every_suite_and_says_so(monkeypatch, capsys):
+    def unreadable(path):
+        raise check_runlogs.BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", unreadable)
+    path = "eval/harness/validators/test_convert_dates.py"
+    assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == {"demo", "convert-dates"}
+    out = capsys.readouterr().out
+    assert "::warning" in out and path in out
+
+
+def test_git_show_at_merge_base_refuses_without_the_shas(monkeypatch):
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    with pytest.raises(check_runlogs.BaseUnreadable):
+        check_runlogs.git_show_at_merge_base("eval/harness/harness/dates.py")
+
+
+def test_git_show_at_merge_base_reads_the_merge_base_not_either_tip(monkeypatch, tmp_path):
+    """A throwaway repo where main moved on after the branch forked: the read must
+    return the fork point's content, not main's tip (BASE_SHA) or the branch's
+    (HEAD_SHA) -- either would hide an import the branch changed."""
+
+    def git(*args):
+        return subprocess.check_output(["git", *args], text=True, encoding="utf-8", cwd=tmp_path).strip()
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    target = tmp_path / "eval" / "harness" / "validators" / "test_x.py"
+    target.parent.mkdir(parents=True)
+
+    def commit(text):
+        target.write_text(text, encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", text)
+        return git("rev-parse", "HEAD")
+
+    fork = commit("fork\n")
+    git("checkout", "-q", "-b", "branch")
+    head = commit("branch\n")
+    git("checkout", "-q", "main")
+    base = commit("main\n")
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert fork not in (base, head)
+    assert check_runlogs.git_show_at_merge_base("eval/harness/validators/test_x.py") == "fork\n"
+    assert check_runlogs.git_show_at_merge_base("eval/harness/validators/never_existed.py") is None
+
 
 
 def _seed_instrument_suite(tmp_path, monkeypatch, stored):
@@ -2902,6 +3052,48 @@ def test_main_rule2c_recomputes_for_real_and_a_moved_validator_blocks(monkeypatc
     assert "skill `convert-dates`" in out and "validators.suite" in out
 
 
+def test_main_rule2c_warns_when_a_harness_module_the_validators_import_moves(monkeypatch, capsys, tmp_path):
+    """Issue #3691, end to end with nothing stubbed but the catalog and the base
+    read: stamp the real fingerprint over copies of the real files, then change
+    what `harness/dates.py` (imported by `validators_lib.py`) decides. Rule 2c
+    warns on `validators.shared` and passes; a docstring-only edit stays quiet."""
+    from harness import instrument as instr_mod
+
+    repo = tmp_path / "repo"
+    real = check_runlogs.REPO_ROOT
+    for rel in (
+        "eval/harness/validators/test_universal.py",
+        "eval/harness/validators/validators_lib.py",
+        "eval/harness/validators/test_convert_dates.py",
+        "eval/harness/harness/dates.py",
+    ):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text((real / rel).read_text(encoding="utf-8"), encoding="utf-8")
+    catalog = {n: {"description": n, "inputSchema": {}} for n in instr_mod.LIVE_TOOLS}
+    stored = instr_mod.instrument_for("convert-dates", repo, catalog=catalog, live_called=[])
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    _seed_instrument_suite(runlogs, monkeypatch, stored)
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    monkeypatch.setattr(check_runlogs, "_tool_catalog", lambda: catalog)
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/harness/harness/dates.py"])
+
+    dates = repo / "eval" / "harness" / "harness" / "dates.py"
+    original = dates.read_text(encoding="utf-8")
+    assert '"""Pull the first embedded' in original, "premise gone: extract_year's docstring"
+    dates.write_text(original.replace('"""Pull the first embedded', '"""Reworded: pull the first embedded', 1),
+                     encoding="utf-8")
+    assert check_runlogs.main() == 0
+    assert "validators.shared" not in capsys.readouterr().out
+
+    assert r"(1\d{3}|20\d{2})" in original, "premise gone: EMBEDDED_YEAR_RE"
+    dates.write_text(original.replace(r"(1\d{3}|20\d{2})", r"(1\d{3})", 1), encoding="utf-8")
+    assert check_runlogs.main() == 0
+    out = capsys.readouterr().out
+    assert "skill `convert-dates`" in out and "validators.shared" in out and "::warning" in out
+    assert "validators.suite" not in out
+
+
 @pytest.mark.parametrize(
     "labels, expect_rc",
     [
@@ -2944,9 +3136,10 @@ def test_the_cosmetic_skip_label_waives_rule2c_for_its_skill_only(
 
 
 
-def test_a_non_test_validator_module_marks_every_suite():
+def test_a_non_test_validator_module_marks_every_suite(monkeypatch):
     """A suite file can import a sibling module (`extraction_validators.py`), so an
     edit there is graded on every suite; rule 2c's recompute decides which moved."""
+    _base_is_head(monkeypatch)
     for path in (
         "eval/harness/validators/extraction_validators.py",
         "eval/harness/validators/conftest.py",
