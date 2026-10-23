@@ -830,12 +830,14 @@ into the run; it would exist only to fool the gate. **And do not point
 skill's rubric, snapshot and eval slot.
 
 **An agent-keyed suite's snapshot embeds the agent body.** `build_snapshot`
-embeds `packages/engine/plugin/agents/<skill>.md` whenever one exists — not only
-when a SKILL.md names it via `@plugin:`, since there is no SKILL.md to scan —
-and `check_runlogs.py` marks the suite touched when that file changes. Without
-both, editing the agent leaves the suite's run log **active** and its grades are
-quoted forward against prose that changed. For a paired skill the `@plugin:`
-scan already embeds the same path, so neither rule moves an existing snapshot.
+embeds `packages/engine/plugin/agents/<skill>.md` whenever one exists, since there
+is no SKILL.md to scan, and `check_runlogs.py` marks the suite touched when that
+file changes. Without both, editing the agent leaves the suite's run log
+**active** and its grades are quoted forward against prose that changed. Which
+other agents a snapshot embeds, and in which form, is `agent_embed_forms`
+(`eval/harness/harness/snapshot.py`; see "`run_agents`" in §5.7): an agent a test
+runs live gets its full body, and a routing suite fingerprints every other agent
+by its frontmatter only.
 
 **An `agent:` caller in `ownership.json` is readable here only when it is the
 suite's subject.** `test_ownership_table` compares the sections a run modified
@@ -963,6 +965,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `run_agents` | array | `[]` | **Any test type, routed tests only.** Agents this test lets run LIVE when the skill under test spawns them; every other spawn except the suite's own agent is denied by default — see below |
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
@@ -1048,9 +1051,10 @@ alter that test's behaviour with no diff in the test file.
 
 Opt-in, not automatic. `search-records` names four callees but any one test
 drives at most one, so unioning every `Skill()` reference would arm that abort
-across the whole suite to serve the one test that wants it. A callee that is
-neither in `run_skills` nor in `stub_skills` behaves exactly as it did before
-this field existed — it runs without its own tools.
+across the whole suite to serve the one test that wants it. A `Skill()` callee
+that is neither in `run_skills` nor in `stub_skills` behaves exactly as it did
+before this field existed — it runs without its own tools. An *agent* the skill
+spawns is different: it is denied by default unless `run_agents` names it (below).
 
 **The two fields are mutually exclusive for the same callee, and naming one in
 both is refused before the run starts.** The runnability gate
@@ -1086,10 +1090,71 @@ limit: for a `Skill` call the harness records the skill **name** only, not the
 crossed a `Skill` seam.
 
 A `stub_skills` entry may name an agent with no skill directory; the hook then
-denies that agent's main-thread spawn the same way it denies a `Skill` call. A
-name that is still a skill is stubbed at its `Skill` call only, except on a test
-that sets `stop_at_stub`, where a main-thread spawn of any stubbed name is denied
-too and ends the run.
+denies that agent's main-thread spawn the same way it denies a `Skill` call,
+with the entry's canned text when it has one. On a test that sets
+`stop_at_stub`, a main-thread spawn of any stubbed name is denied too and ends
+the run.
+
+**`run_agents` — every agent spawn is denied unless the test opts it in.** The
+harness passes the hook a live set: the suite's own agent plus the test's
+`execution.run_agents`. Every other main-thread spawn is denied with a stub —
+built-in types such as `general-purpose` included, named so even though such a
+spawn carries no `subagent_type`. The denial comes last: the negative-test
+routing short-circuit, `stop_at_stub` and an explicit stub's canned text all win
+over it, and a name the test also lists in `stub_skills` keeps that canned text.
+It applies to negative tests as well as positive ones; every shipped opt-in is
+on a negative test.
+
+Opt an agent in when a test's verdict depends on what that agent can **do**, not
+on the hand-off alone — typically a `grade_on_invariant` negative whose "nothing
+was written" invariant has teeth only if a writer can really run. Denied, the
+writer cannot write, and the invariant passes without testing anything. Each
+opted-in agent's fixture-backed tools must be stocked in `mcp_fixtures` (a
+catch-all `<tool>-any` fixture is usually enough). The runnability gate checks
+that, and refuses an entry that could never fire: a name with no agent file, the
+suite's own agent, a name also in `stub_skills`, a negative test's
+`correct_skill` (the short-circuit stops that spawn first), and any `run_agents`
+on a direct-arm test, whose dispatcher spawns only the suite's own agent.
+
+A positive test in a **routing suite** must list a non-empty `stub_skills`. A
+routing suite is one with a unit-test directory whose SKILL.md names at least one
+`@plugin:` agent (`snapshot.router_suites`; today only `research`). Its spawns
+are denied by default either way, but the ownership validators skip only on a
+*listed* stub, so a positive with an empty list would have them grade the
+router's denied hand-offs as its own writes.
+
+**Why the snapshot stops tracking the bodies of agents nobody runs.** An agent
+that is denied at its spawn cannot change a run's result through its body; only
+the frontmatter a router reads when it picks a hand-off can (`name`,
+`description`, `tools`, `disallowedTools`). So `agent_embed_forms` gives:
+
+- the suite's own agent, and every agent an included test names in
+  `run_agents`, the full-body key `packages/engine/plugin/agents/<name>.md`;
+- in a routing suite, every other staged agent the key
+  `packages/engine/plugin/agents/<name>.md#frontmatter`, whose digest covers only
+  `frontmatter_fingerprint_text` of the file.
+
+Every staged agent, not only those the SKILL.md names: the harness stages all of
+them, so a router reads all their descriptions. A body-only edit to an agent no
+test runs leaves a routing suite's run log active; a frontmatter edit does not.
+The fingerprint is the raw text of those four keys' blocks, so a comment line
+inside `tools:` counts too. That over-inclusion is accepted, being the safe
+direction. Python and TypeScript must agree on it exactly, so both read the same
+vectors (`docs/specs/schemas/agent-frontmatter-vectors.json`).
+
+`check_runlogs.py` follows the graded log's own key form. A suite whose log holds
+an agent's full-body key is gated on any edit to that agent. One holding the
+`#frontmatter` key is gated only if the frontmatter changed between the merge-base
+and HEAD, so a frontmatter change main made after the branch forked is not
+counted against the PR. The check fails closed (gates the suite) when it cannot
+tell, and a suite with no graded log at all is gated so rule 2 can report it.
+
+Two gaps are accepted. Adding a new agent stales no routing suite's log until
+that suite's next run, because a snapshot never reports a path it does not
+list. And the first run log written in the new form shows, in "what changed"
+views, each agent key as removed and its `#frontmatter` twin as added; opting an
+agent in or out does the same. `extraction-append`, the test-only skill, names no
+agent, so it is not a routing suite even though every agent is staged for it too.
 
 ### 5.8 `intentionally_invalid`
 
@@ -1856,8 +1921,11 @@ The harness refuses to execute a test if any of the following are true. The chec
 | The skill referenced by `test.skill` does not exist in `packages/engine/plugin/skills/` | Test points at a skill that has been removed or renamed |
 | The skill's `rubric.md` does not exist or fails to parse per the format in Section 7 | The harness can't compute `rubric_hash`, can't load dimensions, and the judge prompt slot would be empty. Block rather than grade against an empty rubric |
 | For MCP-calling skills (`allowed-tools` non-empty in frontmatter), the `rubric.md` has no tool-usage dimension | Section 7 requires at least one tool-usage dimension (substring match against `tool usage`, `argument quality`, `response interpretation`, `tool selection`, `mcp tool`, `tool work`, `tool call`, or `fixture` in any dimension name). Block rather than grade tool quality with no rubric dimension covering it |
-| For negative tests, any entry in `negative.correct_skill` is not a directory under `packages/engine/plugin/skills/` | A typo silently produces an unsatisfiable test — Claude can route correctly and the test still fails. Catch at gate time with a clear "correct_skill[i]='X' is not an existing skill" message |
-| Any entry in `execution.stub_skills` (Section 5.7) is not a directory under `packages/engine/plugin/skills/` | The hook matches a stub by exact name, so a typo is a silent no-op: the callee executes for real and the run log looks identical to a working stub. Unlike `correct_skill` there is no xfail exemption — a stub naming a not-yet-built skill could never fire, so it is always a typo |
+| For negative tests, any entry in `negative.correct_skill` is neither a directory under `packages/engine/plugin/skills/` nor a file under `packages/engine/plugin/agents/` | A typo silently produces an unsatisfiable test — Claude can route correctly and the test still fails. Catch at gate time with a clear "correct_skill[i]='X' is neither an existing skill … nor an existing agent" message |
+| Any entry in `execution.stub_skills` (Section 5.7) is neither a directory under `packages/engine/plugin/skills/` nor a file under `packages/engine/plugin/agents/` | The hook matches a stub by exact name, so a typo is a silent no-op: a `Skill()` callee executes for real, and an agent is denied by default but without the stub's canned text; either way the run log looks identical to a working stub. Unlike `correct_skill` there is no xfail exemption — a stub naming a not-yet-built skill could never fire, so it is always a typo |
+| Any entry in `execution.run_agents` (Section 5.7) names no file under `packages/engine/plugin/agents/`, names the suite's own agent, is also in `stub_skills`, or is a negative test's `correct_skill`; or a direct-arm test sets `run_agents` at all | Each is an opt-in that could never take effect: a typo matches no spawn, the own agent already runs live, a name in both lists is ambiguous, the negative-routing short-circuit denies a `correct_skill` spawn before the opt-in is read, and a direct-arm dispatcher spawns only the suite's own agent |
+| An agent named in `execution.run_agents` calls a fixture-backed tool that no `mcp_fixtures` entry covers | The agent runs live, so its first call to that tool trips `unmatched_tool_call` and aborts the run. The message lists each uncovered tool per agent |
+| A positive test in a routing suite (a unit-test directory whose SKILL.md names an `@plugin:` agent) lists no `execution.stub_skills` | Every hand-off is denied by default, but the ownership validators skip only on a listed stub, so they would grade the router's denied hand-offs as its own writes |
 
 The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnable tests so authors can see their tests are waiting on dev work without burning runs.
 
@@ -2044,7 +2112,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 - **`outcome`** — the real aggregate across runs per Section 7 (`pass | partial | fail | aborted`). Suppression is read from the `expected_outcome` marker beside it: a `fail` on an `xfail`-marked test is a suppressed failure (the bug is still there, as expected — not a regression), and a `pass` on one is an unexpected pass (investigate — the marker may be stale). Matches pytest convention.
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the version of the harness package. Not an invalidation signal: it is a hand-bumped literal that nothing gates on. `instrument` is.
-- **`instrument`** (envelope, optional) — what produced and graded the run: a normalised-AST hash of the suite's validator file and of the shared ones, the advertised tool schemas split into the suite's fixture-served tools and the LIVE_TOOLS, and the compiled module of each live tool the run called. Computed by `eval/harness/harness/instrument.py`; checked by `check_runlogs.py` rule 2c (see `eval/CLAUDE.md`).
+- **`instrument`** (envelope, optional) — what produced and graded the run: a normalised-AST hash of the suite's validator file and of the shared ones (`test_universal.py`, `validators_lib.py`, and every harness module the validator files import, transitively), the advertised tool schemas split into the suite's fixture-served tools and the LIVE_TOOLS, and the compiled module of each live tool the run called. Computed by `eval/harness/harness/instrument.py`; checked by `check_runlogs.py` rule 2c (see `eval/CLAUDE.md`).
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
 - **`judge_model`** — identifier of the judge model used for this run log (optional, envelope-level; absent on logs committed before the field was added). Lets a judge-model change be dated and compared rather than silently invalidating historical scores. Reversed the earlier "project-global, not per-run-versioned" rule (`eval/CLAUDE.md` § "Model Pinning"); `make judge-regrade` stamps this field alongside the refreshed `judge_prompt_hash` on each regraded log.
 - **`store`** (envelope) — `"pg"` under `--store pg`; absent on the file store, as on every earlier log. Also picks the directory: `unit-pg/` instead of `unit/`.
@@ -2480,7 +2548,7 @@ should be updated.
 
 **The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
 
-The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while a skill that reaches `image_read` only through `@plugin:image-reader` must delegate. **The clause is now REACHED**, by a different tool than the one it guards: `extraction_append` was the set's second member until indexed-record extraction moved into code, and `research` now declares it and calls it on the main thread, so the tool left the set entirely. The one remaining member, `image_read`, is declared by no skill — `search-images` used to declare it directly and moved to delegating via `@plugin:image-reader` (2026-07-17). The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while a skill that needs a page's text calls `image_transcribe` instead. **The clause is now REACHED**, by a different tool than the one it guards: `extraction_append` was the set's second member until indexed-record extraction moved into code, and `research` now declares it and calls it on the main thread, so the tool left the set entirely. The one remaining member, `image_read`, is declared by no skill — `search-images` used to declare it directly, moved to delegating via `@plugin:image-reader` (2026-07-17), and since 2026-10-16 calls `image_transcribe` itself. The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked`: the PreToolUse hook, and slash entry
 
