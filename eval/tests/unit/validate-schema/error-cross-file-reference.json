@@ -16,7 +16,7 @@
     "Should report that validation FAILED — must not claim the files are valid",
     "Should surface the specific error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' is not found among the sources in tree.gedcomx.json",
     "Should explain that this is a cross-file link — every source in research.json must point (via gedcomx_source_description_id) to a source that actually exists in tree.gedcomx.json — and suggest a fix (correct the id, or add the matching source to tree.gedcomx.json)",
-    "Should NOT silently edit either file",
+    "Should NOT silently edit either file to fix an error; its one write is a validate_schema log entry",
     "Should NOT route to check-warnings or proof-conclusion — a broken cross-file link is a structural integrity error this skill owns"
   ]
 }

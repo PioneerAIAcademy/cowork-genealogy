@@ -800,6 +800,11 @@ tool it holds — "Give an agent a new tool", §5). Register it in the worker's
 what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
 agent trips". Then run `make agent-smoke` (§8) — its registration arm now runs
 in CI (`server-tests.yml`, keyless), but its dead-stub arm does not.
+A new agent is a new hand-off option for `research`, but nothing stales
+`research`'s run log over it: the snapshot fingerprints the frontmatter of the
+agents it **lists**, and a new file is not listed until the next run. Run
+`make eval-skill SKILL=research` yourself when the new agent's `description`
+could pull a routing test toward it.
 
 ---
 

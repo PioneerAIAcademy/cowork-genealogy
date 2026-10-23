@@ -1,0 +1,198 @@
+{
+  "run_log": "v33.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "It declined to plan, explained why the nil probate result changes nothing (three converging sources), and named the one remaining step (q_002's proof summary). That's the direct status answer the test accepts. Minor: longer than the \"one paragraph\" the explanation suggests."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The judge graded this as if research-plan were under test. It is the research router, and the test's explanation lists answering the status question directly as a correct response. That's what it did: nothing written (test_no_new_plan, test_no_plan_writes_when_resolved and test_resolved_question_not_reopened all passed). Facts check out against flynn-resolved: pl_002's items pli_004–006 all completed, FamilySearch/Ancestry/MyHeritage searched, overturn risk low, c_001 resolved, q_002 resolved without a proof summary."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context plus research_query for questions and plans, all with the correct projectPath and valid sections. Read-only, no fixture misses."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The reply says the project \"records Patrick Flynn as born ca. 1845 in Pennsylvania — meaning he was born in the United States, not Ireland.\" That contradicts resolved conflict c_001 (Ireland preferred: the 1850/1860 censuses outweigh the 1908 certificate's son-in-law informant) and the tree's Birth fact (Ireland). The PA wording is only in the objective text. Its clarifying questions build on that wrong premise. Routing itself was correct."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and research_query (section=questions), correct projectPath, read-only. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "The judge's reason is wrong: this is the research router, and it made all three hand-offs (proof-conclusion for q_002 and q_001, question-selection for the Irish-origins question). The gap is that it then stopped to ask clarifying questions, built on its wrong PA premise, instead of continuing to the locality guide and research plan. Same pattern scored 2 in earlier 004 runs."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "All six reads (project_context, research_query on plans, log and assertions) had the correct projectPath and filters, then research_delivered with an accurate summary. No writes, no browse tools. The judge docked them only for being made at all."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The request was fully answered from the existing results of all three repositories (FamilySearch positive, Ancestry positive, MyHeritage nil), with counts, record ids and the extracted assertions, then closed with research_delivered. Minor: the summary is printed twice."
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The judge graded this as a \"decline\" test, but it is grade_on_invariant: the gate is that no image browse happens. None did: no volume_search or image_search, search-images never ran, and test_no_browse_executed_on_indexed_search passed. The router found the 1850 search already done (q_002 resolved, log_001–003, S1 cited on I1) and reported it rather than re-searching. Every figure matches the scenario: dwelling 84, age 5, 8 / 12 / 0 results examined, ARK MXYZ."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One Agent hand-off to question-selection, the test's correct_skill. It never spawned research-exhaustiveness, made no writes, and test_no_gate_stop passed. q_001 and q_002 are unchanged. Correction to the judge: question-selection was invoked once, not twice."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply is empty because the harness stops a negative test the moment it sees the correct hand-off (\"verdict decided, stopping\"). That is the designed end, not a stall."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls; the only call is the Agent hand-off, whose prompt has the right project path."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply makes no factual claim and the spawn went to research-plan, the test's correct_skill. No volume_search or image_search call, nothing written, and the no-browse validator passed. Facts in the hand-off prompt match the scenario (1860 census age 15 in Thomas's household, death certificate informant James Brown, pli_006 in progress). Minor slip in the prompt only: Schuylkill County was never in the Diocese of Scranton."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Negative test with correct_skill research-plan. The harness ends the run the moment research-plan is spawned, so the one-line hand-off is complete by design. It didn't answer the planning question itself or stop to ask."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context, then research_query on q_001's plans and log, all with the correct projectPath and filters. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked against the scenario: the project exists and is active with no questions, and the quoted objective matches word for word. It describes writing the first question as question-selection's next step, not as done."
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "For an objective with no questions, the one hand-off to question-selection is the correct first step (test_routes_to_expected_skill passed). It stopped where the stub told it to, without asking permission."
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the correct projectPath, then the Agent hand-off with the objective. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The h_002 contradiction is right and stated conditionally. But the reply adds a residence the researcher never gave (\"the Eastham family (James and Elizabeth) is now placed directly in Pulaski County… they name the head of the Eastham household in Pulaski County\") and uses it as weight for a Robert–Polley link, the failure this test targets. It also says James and Elizabeth are \"not previously represented by any assertion in the project\", which is false: a_192 (James) and a_202 (Elizabeth) are already in the 1850 census, src_008."
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Weighed both hypotheses (h_002 contradicted by a death before the 1870 marriage) and followed the record as a new lead: research-plan was asked to search Kentucky Deaths and Burials (1674848) and to research James and Elizabeth. It also asked for the record's identifier, which the test allows."
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and research_query on hypotheses and conflicts, all with correct arguments. The errors carried into the hand-off prompts are scored under Correctness."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The reply decides identity, which the test forbids: Edinburgh 1716 is \"almost certainly a different William Honniman… registered as a namesake\", the 1719 Hutton Rudby baptism is \"the correct one\", and the hand-off orders \"do NOT link a_005/a_006 to I1\". Two facts are wrong. Age 66 at the 27 Mar 1783 burial puts birth Mar 1716–Mar 1717 (a_008), which fits Edinburgh 2 Dec 1716, not Apr 1719, yet the reply calls it consistent with 1719. And it claims a tree error for a_004 (1721 Eliz), but the tree's I6 Elizebeth was christened in 1742"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read project_context and all 13 q_001 and 5 q_002 assertions, handed off to person-evidence (test_routes_to_expected_skill passed), and explained why linking must come before the conclusion. It didn't claim the stubbed agent wrote anything."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and research_query on assertions for q_001 and q_002, all correct. The leading hand-off prompt is graded under Correctness.\n\n"
+    }
+  ]
+}

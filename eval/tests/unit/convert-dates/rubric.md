@@ -2,6 +2,8 @@
 
 Grading dimensions for convert-dates unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+Inside a project the agent ends with one `research_log_append` call logging its result; that entry appears in the file changes summary, and its shape is checked by validators, not by you. With **no project** the call, if made, answers `ok: false`, `reason: "no_project"`: that is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+
 ## Conversion accuracy
 
 Did the skill apply the correct calendar conversion rules for the time period and jurisdiction? Julian-to-Gregorian shifts vary by country and year of adoption.
@@ -35,7 +37,7 @@ Score this dimension strictly on FORMAT and PRESERVATION: does the output preser
 
 Did the skill present what `convert_calendar` actually returned, rather than its own arithmetic dressed up as the tool's answer?
 
-The skill holds exactly one tool and its body forbids hand arithmetic. So the graded question is not whether a call happened (Tool Arguments covers the call itself) but whether the RESPONSE drove the output: the stated rule and day offset should come from the tool's `applied[]` entries, and an `{ ok: false }` should be surfaced as the finding it is — with what to fix — not silently replaced by a hand-computed date.
+The skill holds one calendar tool and its body forbids hand arithmetic; its log call is graded by validators. So the graded question is not whether a call happened (Tool Arguments covers the call itself) but whether the RESPONSE drove the output: the stated rule and day offset should come from the tool's `applied[]` entries, and an `{ ok: false }` should be surfaced as the finding it is — with what to fix — not silently replaced by a hand-computed date.
 
 Score N/A when no conversion arithmetic was warranted, so no call was needed (a notation-only or routing question).
 

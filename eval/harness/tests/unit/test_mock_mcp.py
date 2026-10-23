@@ -862,6 +862,62 @@ def test_census_children_gap_runs_live(tmp_path):
     assert malformed.get("is_error") is True
 
 
+_ENGLAND = REPO_ROOT / "eval/fixtures/scenarios/england-census-timeline"
+_ATTACHMENT = "Linked because FamilySearch has this record attached to this person; not verified."
+
+
+def _england_workspace(tmp_path, links):
+    research = json.loads((_ENGLAND / "research.json").read_text(encoding="utf-8"))
+    research["person_evidence"] = links(research["person_evidence"])
+    (tmp_path / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    (tmp_path / "tree.gedcomx.json").write_text(
+        (_ENGLAND / "tree.gedcomx.json").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+
+
+@pytest.mark.requires_engine_build
+def test_timeline_build_runs_live_with_places_from_the_test_fixtures(tmp_path):
+    """One attachment link gives one unverified event, placed from the test's own
+    place_search fixture rather than a request."""
+    if not (BUILD_TOOLS / "timeline-build.js").exists():
+        pytest.skip("compiled MCP build absent")
+    _england_workspace(
+        tmp_path,
+        lambda pes: [{**pes[0], "confidence": "speculative", "match_score": None, "rationale": _ATTACHMENT}],
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        ["place-search-canterbury"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "timeline_build", {"projectPath": "/elsewhere", "personId": "I1"})
+    )
+    assert body.get("ok") is True, body
+    assert body["status"] == "written" and body["events"] == 1 and body["unverifiedEvents"] == 1
+    written = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
+    mine = next(t for t in written["timelines"] if t["id"] == body["timelineId"])
+    assert mine["events"][0]["standard_place"] == "Canterbury, Kent, England"
+    assert mine["events"][0]["description"].startswith("Unverified attachment:")
+    assert call_log[-1]["matched"] == {"kind": "live", "index": None}
+
+
+@pytest.mark.requires_engine_build
+def test_timeline_build_with_nothing_linked_writes_nothing(tmp_path):
+    if not (BUILD_TOOLS / "timeline-build.js").exists():
+        pytest.skip("compiled MCP build absent")
+    _england_workspace(tmp_path, lambda pes: [])
+    before = (tmp_path / "research.json").read_text(encoding="utf-8")
+    server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    result = _invoke(tools_by_name, "timeline_build", {"projectPath": "/p", "personId": "I1"})
+    body = _extract_response_dict(result)
+    assert body == {
+        "ok": True,
+        "status": "no_linked_evidence",
+        "summary": "No record yet places this person; no timeline was written.",
+    }
+    assert "is_error" not in result
+    assert (tmp_path / "research.json").read_text(encoding="utf-8") == before
+
+
 def test_census_children_gap_tree_mode_reads_the_workspace_tree(tmp_path):
     """Tree mode (motherId) reads the mother's children from the WORKSPACE's
     tree via the injected projectPath -- what check-warnings' census tests grade.
