@@ -1330,8 +1330,9 @@ resolve check passes the exact entry the rule exists to stop.
 - **When the rule runs.** On a `localities` `append`, and on an `update` whose
   `fields` sets `for_place`. Every op in a batch is checked, and the refusals are
   collected into one `ResearchAppendError`. The stage is skipped when an earlier
-  `prepareOps` check has already refused the batch, so no lookup runs under the
-  project lock for a call that fails anyway. It ignores `resolveStandardPlace:
+  `prepareOps` check has already refused the batch. A call refused by a later
+  check (schema validation, an `applyOne` precondition) still makes its lookups.
+  It ignores `resolveStandardPlace:
   false`, which governs assertion geocoding only, and it never reads
   `placeTableForTests`.
 - **The two skips.** A value is not checked when:
@@ -1347,9 +1348,12 @@ resolve check passes the exact entry the rule exists to stop.
   Parish" is Schneverdingen. The parents are searched without their type words,
   because with "Schneverdingen Parish" in the query FamilySearch returns no
   Schneverdingen result at all. A parent containing "of" ("District of Columbia")
-  is kept whole, since stripping it leaves "Columbia". A real place written under
-  the wrong parent ("Helvesiek, Schneverdingen, Hanover", "London, Hampshire,
-  England") is refused. When no result is under the parent, every result is kept.
+  is kept whole, since stripping it leaves "Columbia". When a search result is
+  under the parent, a real place written under the wrong parent ("Helvesiek,
+  Schneverdingen, Hanover", "London, Hampshire, England") is refused. When no
+  result is under the parent, every result is kept and the parent goes unchecked:
+  "Ringebu, Bavaria, Norway" passes. The "contains" test is a plain substring, so
+  "York" is found in "New York".
 - **Which results are compared.** Every result tied for the top score in that
   filtered set, not only the first. "Mt. Pleasant, Iowa" ties the town with a
   Quaker meeting, and the meeting comes first.
@@ -1361,7 +1365,8 @@ resolve check passes the exact entry the rule exists to stop.
   Both are needed, and so is `anyLanguage: true`. The English-only name list is
   empty for Schneverdingen and leaves out "Forfarshire", which FamilySearch tags
   as non-English. Measured 2026-10-21 over the 78 plain e2e `for_place` values
-  (before the parent check was added): English-only names alone refuse 39,
+  (under the original single-result compare, before ties, name folding and the
+  retry were added): English-only names alone refuse 39,
   including Ringebu, Funchal and Wanroij; English names plus the first segment
   refuse 2; all-language names plus the first segment refuse 1. These counts
   move when the corpus or FamilySearch's name lists change.
@@ -1377,18 +1382,21 @@ resolve check passes the exact entry the rule exists to stop.
     similar) and an "X of" prefix ("Borough of", "Parish of", …) are ignored,
     never down to nothing. A period with no space after it, or a hyphen, ends a
     word here, so "Co.Cork" is Cork and "Stagstrup-Sogn" is Stagstrup.
-- **One retry.** When nothing matches and the first name carried a type word, the
-  text is searched once more with that word removed ("Ringebu Parish, Oppland,
+- **One retry.** When nothing matches and dropping type words changes the first
+  name (a type word, an "X of" prefix on a name of more than two words, or a period
+  with no space after it, as in "St.Louis"), the text is searched once more with
+  the stripped name ("Ringebu Parish, Oppland,
   Norway" as "Ringebu, Oppland, Norway"). The retry's answer is used when it is a
   match or a `lookup_failed`; otherwise the first answer stands.
 - **The failure behaviour.** `checkFirstPlace` returns one of four statuses:
   - `match`: written.
   - `mismatch` (no compared result matches) and `not_found` (the search returned
     nothing): **refused**.
-  - `lookup_failed`: written, with a warning naming the op. It covers a search or
-    name fetch that fails, a best result with no place id whose first segment does
+  - `lookup_failed`: written, with a warning (naming the op in a batch). It covers a
+    search or name fetch that throws, a best result with no place id whose first segment does
     not match, and the five-fetch cap leaving tied results unchecked. A tied result
-    with no place id is skipped. A failed request is never a refusal.
+    with no place id is skipped. A request that throws is never a refusal. A 404 on the name fetch counts as an
+    empty name list, not a failure, so it can still end in `mismatch`.
 
   Name fetches are capped at five per search, because every fetch runs under the
   project lock: "Nowhereville, Springfield" ties 189 results.
@@ -1404,13 +1412,17 @@ resolve check passes the exact entry the rule exists to stop.
 
   It does not quote the place the search returned: for the Helvesieck text that
   is the parent Schneverdingen, and re-sending it passes the check.
-- **Known limits.** A first place under a historical or local-language parent
-  the standard does not use is refused: "London, Middlesex, England", "Munich,
-  Bayern, Germany", "Nueva Italia, Parácuaro, Michoacan, Mexico". Measured live
-  2026-10-21, the remedy recovers each in one `place_search` call. A real place
-  that is not the top-scored result ("Mecklenburg-Schwerin, Germany") is refused,
-  and so is "Bohemia, Austria". A misspelled parent that no result contains
-  ("London, Hampshyre, England") falls back to every result and passes.
+- **Known limits.** A first place is refused when the top-scored results
+  containing the parent's text are other places: "London, Middlesex, England"
+  (Middlesex is its own standard place), "Munich, Bayern, Germany" ("Bayern" is
+  inside "Oberbayern"), "Nueva Italia, Parácuaro, Michoacan, Mexico". The remedy
+  returns London and Munich first; for Nueva Italia it lists a Guerrero hamlet
+  first and the right place second. A Danish or Norwegian "St." (Store) is not
+  found by FamilySearch's search, so "St. Heddinge, Præstø, Denmark" is refused
+  and the remedy finds nothing. A real place that is not the top-scored result
+  ("Mecklenburg-Schwerin, Germany") is refused, and so is "Bohemia, Austria". A
+  parent no result is under, misspelled or simply wrong, is not checked (see the
+  parent check).
 - **Measured** (2026-10-21, `checkFirstPlace` live over every distinct
   `for_place` in the tracked `eval/runlogs/e2e/*/*.final-research.json`): 78
   checkable, 1 refused ("Nueva Italia, Parácuaro, Michoacan, Mexico"), 0
