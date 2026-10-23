@@ -55,6 +55,7 @@ from typing import Iterator
 from harness.auth import AuthError, resolve_auth
 from harness.loader import InvalidTestError, TestSpec, load_test
 from harness.orchestrator import (
+    FAIL_RETRIES,
     HARNESS_VERSION,
     OrchestratorPaths,
     REPO_ROOT,
@@ -171,6 +172,14 @@ def _positive_int(value: str) -> int:
             f"must be a positive integer (>= 1), got {n}"
         )
     return n
+
+
+def _runs_note(entry: dict) -> str:
+    """` (runs: fail, pass, pass, pass)` for a fail-retried test, else ``."""
+    runs = entry.get("runs") or []
+    if len(runs) < 2:
+        return ""
+    return f" (runs: {', '.join(str(r.get('outcome')) for r in runs)})"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -596,7 +605,7 @@ def _print_summary(rows: list[dict]) -> None:
     for row in rows:
         print(
             f"{row['test_id']:<40} {row['skill']:<24} {row['outcome']:<10} "
-            f"{row.get('reason', '')}"
+            f"{row.get('reason', '')}{row.get('runs_note', '')}"
         )
     print()
     _print_outcome_counts(rows)
@@ -1181,6 +1190,7 @@ def main(argv: list[str] | None = None) -> int:
                     paths=paths,
                     timestamp=invocation_timestamp,
                     tool_search=args.tool_search,
+                    fail_retries=FAIL_RETRIES if releasable else 0,
                 )
                 inflight[fut] = (idx, spec)
 
@@ -1219,7 +1229,10 @@ def main(argv: list[str] | None = None) -> int:
                     results_by_index[idx] = entry
 
                     if outcome == "aborted":
-                        reason = entry["runs"][0].get("aborted_reason")
+                        # The last run is the one that ended the test: a quota
+                        # hit during a fail-retry (FAIL_RETRIES) must stop the
+                        # suite too. Identical to runs[0] for a single run.
+                        reason = entry["runs"][-1].get("aborted_reason")
                         # not_runnable (pre-execution gate) and Type 1
                         # unmatched_tool_call (calling a tool that doesn't
                         # exist) are test-corpus issues — exit 2. Every other
@@ -1304,12 +1317,13 @@ def main(argv: list[str] | None = None) -> int:
                     # here is what made issue #1245's 19 of 20 unexplainable
                     # after the fact. The reason is already on the entry.
                     why = ""
-                    if entry.get("runs") and entry["runs"][0].get("aborted_reason"):
-                        r0 = entry["runs"][0].get("aborted_reason") or "unrecorded"
+                    if entry.get("runs") and entry["runs"][-1].get("aborted_reason"):
+                        r0 = entry["runs"][-1].get("aborted_reason") or "unrecorded"
                         # A V7-demoted fail (issue #1866) carries a cap reason
                         # but is a real defect, not an abort — label it so the
                         # two don't read alike on the line an operator watches.
                         why = f" [{r0}]" if outcome == "aborted" else f" [hit {r0}]"
+                    why += _runs_note(entry)
                     print(
                         f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
                         f"— {outcome}{marker}{why} ({dur:.0f}s skill)",
@@ -1374,10 +1388,11 @@ def main(argv: list[str] | None = None) -> int:
                 # stopped hiding behind a timeout only for the timeout to start
                 # hiding behind the fail.
                 "reason": (
-                    (entry["runs"][0].get("aborted_reason") or "")
-                    if entry.get("runs") and entry["runs"][0].get("aborted_reason")
+                    (entry["runs"][-1].get("aborted_reason") or "")
+                    if entry.get("runs") and entry["runs"][-1].get("aborted_reason")
                     else ""
                 ),
+                "runs_note": _runs_note(entry),
                 # Judge-rule violations for _print_judge_warnings. The
                 # advisories themselves stay in the run log; the summary
                 # only needs to say which kinds fired and where.

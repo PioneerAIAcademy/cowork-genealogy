@@ -26,6 +26,7 @@ const CONSTRAINED = [
 /** Render the URL as its own visible text: the reader can see the destination. */
 const GENERIC = [
   'shared/Linkify.tsx',
+  'shared/ExternalLinksResults.tsx',
   'sections/SourcesSection.tsx',
   'sections/ResearchLogSection.tsx'
 ] as const

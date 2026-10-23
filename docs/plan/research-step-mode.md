@@ -588,11 +588,12 @@ that apply:
     record-structurer spawn covers other sources. That call completes every item whose search
     lists an extracted record, including a record two items both found
     (`docs/plan/attached-records-baseline.md`, PR B).
-- **Handing each agent its state comes later.** That means the item, the person's attached
-  records and the locality facts, as the 10x plan advises. Issue #2243 is "ids only" by lead
-  ruling (2026-10-06), and it files the handed-state follow-up. That follow-up also has to
-  change the router's "read nothing beyond the ids you are passing"
-  (`skills/research/SKILL.md:293-298`) for search spawns.
+- **Handing each agent its state is half done.** Issue #3581 delivered the plan item (with
+  its `planId`) and the subject (`subjectId`, names, birth, death) to `search-records`; the
+  router's "read nothing beyond the ids you are passing" now allows exactly those two for
+  search spawns, and the agent skips its `research_query` and the tree `Read` when they
+  arrive. What D still owes is the person's attached records and the locality facts, as
+  the 10x plan advises, and the same handing for the other agents.
 - **The early stop comes back through the plan.** A plan for an easy question leads with one or
   two decisive primaries and puts the broader sweeps behind them as fallbacks. A completeness
   question needs its enumerating sources as primaries (issue #1830, `question_kind`).
@@ -736,11 +737,9 @@ that apply:
     entry, `research-schema-spec.md`'s conflicts table, `RESEARCH_SHAPES.conflict`'s allowed
     keys and a type check in `validator.ts`'s conflicts block, and the `Conflict` interface
     in `packages/schema/src/index.ts` (optional, not nullable).
-- **After the round settles the conflict,** the ladder's "concluded; mark the question
-  resolved" arm (`question-state.ts:429-434`) would send the question to question-selection,
-  which writes no resolution. It routes to proof-conclusion instead, which refreshes the summary
-  in place and resolves (`agents/proof-conclusion.md:152-153`, `:313-317`). Update
-  `question-state.test.ts:68` and `:91`.
+- **After the round settles the conflict,** the ladder's concluded-but-open arm routes the
+  question to proof-conclusion ("concluded while blocked: re-conclude <ps_id>"), which refreshes
+  the summary in place and resolves. **Done in issue #3689; nothing left here.**
 - **`docs/specs/project-context-tool-spec.md`** documents the ladder's order (`:187-189`, "an
   unresolved conflict outranks…") and the concluded arm (`:252-257`). Update both for B's
   branch, E's rule and this arm.

@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SidecarPanel from '../SidecarPanel'
 import { patrickFlynnSidecar } from '../../../lib/__fixtures__/patrick-flynn-sidecar'
+import { flynnRecordReadSidecar } from '../../../lib/__fixtures__/flynn-record-read-sidecar'
+import { externalLinksSidecar } from '../../../lib/__fixtures__/external-links-sidecar'
 import type { SidecarState } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
 
@@ -214,5 +216,67 @@ describe('SidecarPanel — clearFocusPersona', () => {
     render(<SidecarPanel />)
     await userEvent.click(screen.getByRole('dialog'))
     expect(clearFocusPersona).not.toHaveBeenCalled()
+  })
+})
+
+/** Routing by tool (#3594): every non-record_search tool used to get the full-text card. */
+describe('SidecarPanel — routing by tool', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('opens a record_read sidecar expanded, with its title and household', () => {
+    mountWithState({
+      status: 'loaded',
+      logId: 'log_001',
+      payload: flynnRecordReadSidecar,
+      focusPersonaId: 'p_3',
+      lastMtime: 1
+    })
+    render(<SidecarPanel />)
+    expect(screen.getByRole('heading', { level: 2, name: 'Record' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Entry for Thomas Flynn and Mary Flynn, "United States, Census, 1850"')
+    ).toBeInTheDocument()
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
+    expect(screen.getByText('Mary Flynn')).toBeInTheDocument()
+    expect(document.querySelector('[data-focused="true"]')?.textContent).toContain('Patrick Flynn')
+    expect(screen.getByRole('button', { name: /Open in FamilySearch/ })).toBeInTheDocument()
+    expect(screen.queryByText('Untitled record')).toBeNull()
+  })
+
+  it('lists external_links_search links under an External Links header', () => {
+    mountWithState({
+      status: 'loaded',
+      logId: 'log_007',
+      payload: externalLinksSidecar,
+      lastMtime: 1
+    })
+    render(<SidecarPanel />)
+    expect(screen.getByRole('heading', { level: 2, name: 'External Links' })).toBeInTheDocument()
+    expect(screen.getByText('United States Records')).toBeInTheDocument()
+    expect(screen.getByText('Schuylkill County archive')).toBeInTheDocument()
+    expect(screen.queryByText('Untitled record')).toBeNull()
+  })
+
+  it('renders a neutral note for any other tool, never a result card', () => {
+    mountWithState({
+      status: 'loaded',
+      logId: 'log_012',
+      payload: {
+        log_id: 'log_012',
+        tool: 'person_read',
+        retrieved: '2026-09-30T12:00:00Z',
+        returned_count: 2,
+        payload: { results: [{ id: 'a' }, { id: 'b' }] as never }
+      },
+      lastMtime: 1
+    })
+    render(<SidecarPanel />)
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'person_read results' })
+    ).toBeInTheDocument()
+    expect(screen.getByText(/person_read returned 2 results\./)).toBeInTheDocument()
+    expect(screen.queryByRole('article')).toBeNull()
+    expect(document.querySelector('article')).toBeNull()
+    expect(screen.queryByText('Untitled record')).toBeNull()
   })
 })
