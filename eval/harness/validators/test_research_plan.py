@@ -583,15 +583,31 @@ def test_pension_item_reaches_past_window(before_state, after_state, test):
 # writing why any is absent. "In writing" is a `skipped` item with a category
 # and a reason (`_enumerative_skip`). `record_type` alone cannot separate the
 # three vital events — the five enumerative corpus plans file birth, marriage and
-# death alike as `vital_record` — so those match on a vital-type item whose
-# rationale names the event. Death is not matched on a probate rationale that
-# merely says the subject died.
+# death alike as `vital_record` — so a vital-type item counts for the one event
+# its record_type names, else the first event its rationale names. Only the
+# first: in 8 of the 9 pre-edit `ut_research_plan_enm` runs a marriage or
+# cemetery item's rationale mentioned children "born", and no item searched for
+# a birth. Death is not matched on a probate rationale that merely says the
+# subject died.
 _VITAL_RECORD_TYPES = re.compile(r"vital|church|parish|civil|registr|birth|marriage|death|cemetery|burial", re.IGNORECASE)
 _FIVE_EVENTS = {
     "birth": re.compile(r"\b(?:births?|born|baptisms?|baptized|baptised|christenings?|christened)\b", re.IGNORECASE),
     "marriage": re.compile(r"\b(?:marriages?|married|marry|banns|wedding)\b", re.IGNORECASE),
     "death": re.compile(r"\b(?:deaths?|died|burials?|buried|obituary|obituaries)\b", re.IGNORECASE),
 }
+_EVENT_IN_RECORD_TYPE = {
+    "birth": re.compile(r"birth|baptis|christen", re.IGNORECASE),
+    "marriage": re.compile(r"marri|wedding", re.IGNORECASE),
+    "death": re.compile(r"death|burial|cemetery|obit", re.IGNORECASE),
+}
+
+
+def _vital_events(record_type: str, rationale: str) -> set[str]:
+    named = {name for name, pattern in _EVENT_IN_RECORD_TYPE.items() if pattern.search(record_type)}
+    if named:
+        return named
+    hits = [(m.start(), name) for name, pattern in _FIVE_EVENTS.items() if (m := pattern.search(rationale))]
+    return {min(hits)[1]} if hits else set()
 
 
 def _covered_events(item: dict) -> set[str]:
@@ -600,7 +616,6 @@ def _covered_events(item: dict) -> set[str]:
     file the skip under."""
     record_type = str(item.get("record_type") or "")
     skip_reason = str(item.get("skip_reason") or "")
-    text = f"{record_type} {item.get('rationale') or ''} {skip_reason}"
     events: set[str] = set()
     if re.search(r"census", record_type, re.IGNORECASE) or re.search(r"\bcensus", skip_reason, re.IGNORECASE):
         events.add("census")
@@ -608,10 +623,9 @@ def _covered_events(item: dict) -> set[str]:
         r"\bprobate|\bestates?\b|\bwills?\b", skip_reason, re.IGNORECASE
     ):
         events.add("probate")
-    if _VITAL_RECORD_TYPES.search(record_type) or skip_reason.strip():
-        events |= {name for name, pattern in _FIVE_EVENTS.items() if pattern.search(text)}
-    if re.search(r"cemetery|burial", record_type, re.IGNORECASE):
-        events.add("death")
+    if _VITAL_RECORD_TYPES.search(record_type):
+        events |= _vital_events(record_type, str(item.get("rationale") or ""))
+    events |= {name for name, pattern in _FIVE_EVENTS.items() if pattern.search(skip_reason)}
     return events
 
 

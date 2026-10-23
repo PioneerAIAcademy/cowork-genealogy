@@ -72,6 +72,24 @@ def test_passes_when_an_absent_event_is_a_skip_with_category_and_reason():
     _check(*_states(items))
 
 
+@pytest.mark.parametrize("record_type,rationale", [
+    ("vital_record", "Marriage records for the children, all born in Greene County, name their parents."),
+    ("marriage", "Hale marriages trace each child born to Thomas and Sarah."),
+    ("cemetery", "Children born and buried before 1850 appear only on headstones."),
+])
+def test_an_item_mentioning_births_in_passing_is_not_birth_coverage(record_type, rationale):
+    items = _without(2) + [_item(10, record_type, rationale)]
+    with pytest.raises(AssertionError, match="reason for: birth"):
+        _check(*_states(items))
+
+
+def test_a_birth_item_mentioning_marriage_and_death_covers_only_birth():
+    items = [i for i in FULL if i["id"] not in ("pli_003", "pli_004")]
+    items[1] = _item(2, "vital_record", "Children born after their marriage and before Thomas's death.")
+    with pytest.raises(AssertionError, match="reason for: marriage, death"):
+        _check(*_states(items))
+
+
 @pytest.mark.parametrize("n,reason", [
     (5, "No probate file survives for Greene County before 1870."),
     (1, "Thomas died before the first census to name children, 1850."),
