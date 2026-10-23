@@ -25,7 +25,11 @@ sys.path.insert(0, os.path.join(_HERE, "..", "lib"))
 sys.path.insert(0, os.path.join(_HERE, "..", "..", "..", "eval", "harness", "scripts"))
 
 import touches  # noqa: E402
-from check_runlogs import AGENT_PATH_RE, skills_referencing_agents  # noqa: E402
+from check_runlogs import (  # noqa: E402
+    AGENT_PATH_RE,
+    skills_gated_by_agent,
+    skills_referencing_agents,
+)
 from touches import (  # noqa: E402
     in_snapshot,
     paths_from_touches,
@@ -63,11 +67,32 @@ def labels_of(issue):
 
 
 def embedders():
-    """agent name -> the skills whose SKILL.md delegates to it via `@plugin:`. The
-    scan check_runlogs.py's rule 2 uses, so an agent edit queues on exactly the
-    skills whose run logs it flips."""
-    return skills_referencing_agents(
-        Path(touches.REPO_ROOT) / "packages" / "engine" / "plugin" / "skills")
+    """agent name -> the skills an edit to that agent's body may stale.
+
+    `check_runlogs.skills_gated_by_agent`, the superset rule 2 and
+    check_slot_queue's issue side use (#3568): the skills naming the agent via
+    `@plugin:`, the suites whose tests run it live, and every routing suite, which
+    fingerprints every staged agent's frontmatter. A `**Touches:**` line cannot say
+    whether an edit is body-only or frontmatter, so this over-counts on purpose --
+    folding queued work into a run is free, missing it is not. The agent's own
+    suite is left to `expand`'s `agent:<name>` slot, unless a skill of that name
+    delegates to it (person-evidence), whose skill slot stands for both.
+    """
+    root = Path(touches.REPO_ROOT)
+    skills_dirs = (
+        root / "packages" / "engine" / "plugin" / "skills",
+        root / "eval" / "skills",
+    )
+    referencing = skills_referencing_agents(skills_dirs[0])
+    tests_root = root / "eval" / "tests" / "unit"
+    out = {name: set(skills) for name, skills in referencing.items()}
+    for path in sorted((root / "packages" / "engine" / "plugin" / "agents").glob("*.md")):
+        name = path.stem
+        gated = skills_gated_by_agent(name, referencing, tests_root, skills_dirs)
+        if name not in referencing.get(name, set()):
+            gated.discard(name)
+        out[name] = gated
+    return out
 
 
 def expand(path, slot, embedded_by):

@@ -715,3 +715,79 @@ def test_the_board_lib_test_suite_is_actually_collected():
         "eval/harness/pyproject.toml's testpaths entry no longer resolves — "
         "test_touches.py has stopped running and pytest will not say so"
     )
+
+
+# --------------------------------------------------------------------------
+# #3568: routing suites, and the PR side going through rule 2's own helper
+# --------------------------------------------------------------------------
+
+
+def _routing_layout(repo_root, monkeypatch):
+    """A routing suite (`routerx`: SKILL.md naming an agent, plus a test dir) and a
+    suite-less skill that also names agents (forget-and-rederive's shape)."""
+    skills = repo_root / "packages" / "engine" / "plugin" / "skills"
+    for name in ("routerx", "no-suite-router"):
+        (skills / name).mkdir(parents=True, exist_ok=True)
+        (skills / name / "SKILL.md").write_text(
+            f"---\nname: {name}\n---\nUse `@plugin:proof-conclusion`.\n", encoding="utf-8"
+        )
+    (repo_root / "eval" / "tests" / "unit" / "routerx").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(check_slot_queue.check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    monkeypatch.setattr(
+        check_slot_queue.check_runlogs, "TEST_ONLY_SKILLS_DIR", repo_root / "eval" / "skills"
+    )
+
+
+def test_the_issue_side_reaches_a_routing_suite_through_an_agent_it_never_names(
+    repo_root, monkeypatch
+):
+    """A routing suite fingerprints every staged agent's frontmatter, so an issue
+    touching an agent its SKILL.md never names still queues on it (the superset).
+    A skill with @plugin: refs but no suite is not a routing suite."""
+    _routing_layout(repo_root, monkeypatch)
+    got = check_slot_queue.path_to_skills("packages/engine/plugin/agents/unnamed-agent.md", {})
+    assert "routerx" in got
+    assert "no-suite-router" not in got
+
+
+def test_the_pr_side_routes_agent_bodies_through_the_rule_2_helper(monkeypatch):
+    seen = {}
+
+    def fake(agents, added):
+        seen["agents"], seen["added"] = set(agents), added
+        return {"sentinel-suite"}
+
+    monkeypatch.setattr(check_slot_queue.check_runlogs, "suites_gated_by_touched_agents", fake)
+    got = check_slot_queue.pr_affected_skills(
+        [
+            "packages/engine/plugin/agents/proof-conclusion.md",
+            "packages/engine/plugin/skills/citation/SKILL.md",
+        ],
+        AGENT_MAP,
+        {"routerx": ["v1.json"]},
+    )
+    assert got == {"sentinel-suite", "citation"}
+    assert seen == {"agents": {"proof-conclusion"}, "added": {"routerx": ["v1.json"]}}
+
+
+def test_main_does_not_queue_a_body_only_agent_edit_rule_2_would_not_gate(monkeypatch, capsys):
+    """End to end through _run: with rule 2's helper saying the edit gates nothing,
+    the PR buys no run and the issue list is never fetched. Before #3568 the same PR
+    would have been told it bought a run for every suite naming the agent."""
+    monkeypatch.setattr(
+        check_slot_queue.check_runlogs,
+        "git_diff_touched_paths",
+        lambda: ["packages/engine/plugin/agents/proof-conclusion.md"],
+    )
+    monkeypatch.setattr(
+        check_slot_queue.check_runlogs, "suites_gated_by_touched_agents", lambda agents, added: set()
+    )
+
+    def fail(*a, **k):
+        raise AssertionError("fetch_open_issues must not be called")
+
+    monkeypatch.setattr(check_slot_queue, "fetch_open_issues", fail)
+
+    assert check_slot_queue.main() == 0
+    assert _recorded() == []
+    assert "no eval snapshot input" in capsys.readouterr().out
