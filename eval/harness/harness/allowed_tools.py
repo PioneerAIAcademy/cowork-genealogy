@@ -374,15 +374,75 @@ def uncovered_callee_fixtures(
         for agent in agent_refs_for_skill(callee_md):
             agent_fm = load_skill_frontmatter(Path(agents_dir) / f"{agent}.md")
             entries.extend(agent_fm.get("tools", []) or [])
-        for entry in entries:
-            bare = entry.rsplit("__", 1)[-1] if "__" in entry else entry
-            if bare[:1].isupper():
-                continue  # built-in (Read, Write); not fixture-backed
-            if bare in LIVE_TOOLS:
-                continue  # served by the real compiled server, always present
-            if bare not in registered_tools:
-                missing.add((callee, bare))
+        missing.update(
+            (callee, bare) for bare in _unbacked_tools(entries, registered_tools, LIVE_TOOLS)
+        )
     return sorted(missing)
+
+
+def _unbacked_tools(
+    entries: Iterable[str], registered_tools: set[str], live_tools: set[str]
+) -> set[str]:
+    """The fixture-backed MCP tools among `entries` that no fixture registers.
+
+    Built-ins (Read, Write) and LIVE_TOOLS (served by the real compiled server)
+    need no fixture. Shared by both callee preflights so they cannot disagree on
+    what a fixture-backed tool is.
+    """
+    out: set[str] = set()
+    for entry in entries:
+        bare = entry.rsplit("__", 1)[-1] if "__" in entry else entry
+        if bare[:1].isupper():
+            continue  # built-in (Read, Write); not fixture-backed
+        if bare in live_tools:
+            continue  # served by the real compiled server, always present
+        if bare not in registered_tools:
+            out.add(bare)
+    return out
+
+
+def uncovered_agent_fixtures(
+    agents: Iterable[str],
+    *,
+    registered_tools: set[str],
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> list[tuple[str, str]]:
+    """Tools an opted-in agent (`execution.run_agents`, #3568) will need that no
+    fixture registered, as sorted `(agent, tool)` pairs.
+
+    The agent counterpart of `uncovered_callee_fixtures`: an agent the test runs
+    live calls its own `tools:`, and a fixture-backed one with no fixture trips
+    the uncovered-tool-call gate mid-run. Checked by the runnability gate, so a
+    gap refuses this one test rather than ending the suite.
+    """
+    from harness.instrument import LIVE_TOOLS
+
+    missing: set[tuple[str, str]] = set()
+    for agent in agents:
+        agent_fm = load_skill_frontmatter(Path(agents_dir) / f"{agent}.md")
+        entries = list(agent_fm.get("tools", []) or [])
+        missing.update(
+            (agent, bare) for bare in _unbacked_tools(entries, registered_tools, LIVE_TOOLS)
+        )
+    return sorted(missing)
+
+
+def format_uncovered_agent_fixtures(test_id: str, missing: list[tuple[str, str]]) -> str:
+    """Human-facing message for `uncovered_agent_fixtures` output."""
+    by_agent: dict[str, list[str]] = {}
+    for agent, tool in missing:
+        by_agent.setdefault(agent, []).append(tool)
+    lines = [
+        f"{test_id}: an agent in execution.run_agents runs live but its tools have no fixtures."
+    ]
+    for agent, tools in sorted(by_agent.items()):
+        lines.append(f"  {agent} will call: {', '.join(sorted(tools))}")
+    lines.append(
+        "Either stock a fixture for each tool above (a catch-all `<tool>-any` fixture "
+        "is usually enough), or remove the agent from execution.run_agents — it is "
+        "then denied by default."
+    )
+    return "\n".join(lines)
 
 
 def format_uncovered_callee_fixtures(

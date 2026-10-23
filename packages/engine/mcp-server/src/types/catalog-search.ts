@@ -26,18 +26,23 @@ export interface CatalogSearchInput {
   hydrate?: number;
 }
 
-/** One reel or digitization of an item. */
+/** One reel or digitization of an item: one entry per reel, however many film
+ *  notes the Catalog holds for it. Notes that agree on every field but `text`
+ *  are one entry (`catalog-search.ts`, `mergeFilmNotes`). A reel whose joined
+ *  text is long is several entries in a row, each carrying the same numbers and
+ *  a run of whole note texts. The Catalog's `shelf` and `item_image_start_no`
+ *  are not carried: no plugin body, validator or fixture reads them. */
 export interface CatalogFilmNote {
   /** Legacy microfilm number. */
   filmNumber?: string;
   /** DGS — feeds `image_search`/`fulltext_search` as their `imageGroupNumber`. */
   imageGroupNumber?: string;
   indexed?: string;
-  shelf?: string;
   copyLocation?: string;
-  /** What that reel covers. */
+  /** What that reel covers. When several notes were merged, their texts in the
+   *  order the Catalog gave them, joined with " | ", up to a length cap per
+   *  entry (a note is never cut in two). */
   text?: string;
-  imageStartNumber?: string;
 }
 
 export interface CatalogHit {
@@ -60,7 +65,18 @@ export interface CatalogHit {
   notes?: string[];
   authors?: string[];
   subjects?: string[];
+  /** One entry per reel. When the answer is size-limited this is the entries of
+   *  the item that fit, in the order the item has them (an entry that did not
+   *  fit is skipped and the ones after it are still listed), and
+   *  `filmNotesTotal` and `filmNotesHint` say so. */
   filmNotes?: CatalogFilmNote[];
+  /** How many entries the item has, in the unit `filmNotes` is listed in (after
+   *  merging). Present ONLY when `filmNotes` was cut short to keep the answer
+   *  under the size budget; absent when every entry is listed. */
+  filmNotesTotal?: number;
+  /** One line, present exactly when `filmNotesTotal` is: how many entries are
+   *  listed and a way to get the rest that can work for this hit. */
+  filmNotesHint?: string;
   availableOnline?: boolean;
   /** FamilySearch Digital Library URL for a digitized book. Surfaced only; no
    *  tool here reaches the service behind it. */
@@ -69,6 +85,8 @@ export interface CatalogHit {
 
 export interface CatalogSearchResult {
   totalHits: number;
+  /** How many hits `hits` lists: fewer than the `count` asked for only when the
+   *  Catalog had fewer, or when some were left off the end (`hitsOmitted`). */
   returned: number;
   /** False when `standardPlace` could not be resolved to a rep id and the
    *  query fell back to matching the place by name. */
@@ -86,4 +104,11 @@ export interface CatalogSearchResult {
    *  and needs no retry of the whole search. */
   hydrateRequested: number;
   hits: CatalogHit[];
+  /** How many hits were left off the END of `hits` because the answer was still
+   *  over its size budget with every film-note list at its smallest. Present
+   *  ONLY when some were; absent when every hit the Catalog sent is listed. */
+  hitsOmitted?: number;
+  /** One line, present exactly when `hitsOmitted` is: how many were left off and
+   *  how to see them. */
+  hitsOmittedHint?: string;
 }

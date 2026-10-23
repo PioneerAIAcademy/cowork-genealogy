@@ -400,3 +400,18 @@ def test_a_pr_on_an_agent_holds_every_embedding_skill(repo_root):
 
     assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "skill:zz-embedder")
     assert "holder: PR #900 (open, touches the snapshot)" in lines_of(out, "agent:zz-agent")
+
+
+def test_an_agent_no_skill_names_queues_on_a_routing_suite(repo_root):
+    """#3568: a routing suite (a SKILL.md naming at least one agent, plus a unit-test
+    directory) fingerprints EVERY staged agent's frontmatter, so a card touching an
+    agent no SKILL.md names still queues on it. A skill that names agents but has no
+    suite (forget-and-rederive's shape) is not a routing suite and gains nothing."""
+    make_tree(repo_root, skills=["zz-router", "zz-no-suite"], agents=["zz-agent", "zz-other"],
+              plugin_refs={"zz-router": ["zz-other"], "zz-no-suite": ["zz-other"]})
+    (repo_root / "eval" / "tests" / "unit" / "zz-router").mkdir(parents=True)
+    out = run([issue(11, touches=AGENT), issue(12, touches=AGENT)], tmp_path=repo_root)
+
+    assert depth(out, "skill:zz-router") == 2
+    assert depth(out, "agent:zz-agent") == 2
+    assert depth(out, "skill:zz-no-suite") is None

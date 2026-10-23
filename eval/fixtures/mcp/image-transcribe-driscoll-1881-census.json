@@ -1,0 +1,17 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe response for image 004022578_00190 — page 14 of the 1881 Census of Canada for Sherbrooke, Quebec, carrying the Cornelius Driscoll household. Written for the research suite's bounded-transcription tests (ut_research_020, ut_research_c1k), where the router delivers a transcription itself since the image-reader agent was retired (#2490). The response keeps the full page: with a projectPath the mock stages it and returns `staged` + `digest` with no inline `transcription`, as production does, so the router has to `sidecar_read` the staged ref to show it. `viewerUrl` is what imageViewerUrl builds for this imageId (zero-indexed `i=`).",
+  "args": {
+    "imageId": "004022578_00190"
+  },
+  "response": {
+    "transcription": "1881 Census of Canada, Sherbrooke, Quebec, page 14.\nLine 7: Driscoll, Cornelius, M, 67, Ireland, Irish, R. Catholic, Labourer.\nLine 8: Driscoll, Johanna, F, 61, Ireland, Irish, R. Catholic.\nLine 9: Driscoll, Mary, F, 24, Quebec, Irish, R. Catholic.\nNothing else on the page concerns this household.",
+    "viewerUrl": "https://www.familysearch.org/search/film/004022578?i=189",
+    "metadata": {
+      "imageId": "004022578_00190",
+      "contentType": "image/jpeg",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702114
+    }
+  }
+}
