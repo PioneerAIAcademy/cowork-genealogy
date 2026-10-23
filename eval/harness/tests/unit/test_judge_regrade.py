@@ -345,6 +345,44 @@ def test_collect_takes_a_log_with_no_render_hash(disk_tree):
     assert targets[0].reason_refused is None
 
 
+def test_regrade_stamps_both_fingerprints_and_clears_rule_2b(disk_tree, monkeypatch):
+    """The stamp half of the regrade contract.
+
+    This card traded the live `make judge-regrade` break row for this
+    assertion, so without it the one line that writes `judge_render_hash` has
+    no test at all: deleting it leaves the suite green (verified).
+
+    A log with no `tests[]` reaches the envelope stamp without a judge call,
+    which is what keeps this free.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _minimal_run_log(scenario="demo-scenario")
+    log["tests"] = []
+    log["judge_render_hash"] = "0" * 64  # stale on purpose
+    # `_minimal_run_log` carries `totals: {}`, which no other test notices
+    # because none of them writes through the regrade's pre-write schema
+    # validation. This one does, and `totals` has ten required fields.
+    log["totals"] = {
+        k: 0
+        for k in (
+            "duration_ms", "input_tokens", "cached_input_tokens", "output_tokens",
+            "judge_input_tokens", "judge_cached_input_tokens", "judge_output_tokens",
+            "skill_cost_usd", "judge_cost_usd", "total_cost_usd",
+        )
+    }
+    path = _write_log(disk_tree, log)
+
+    judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written["judge_prompt_hash"] == judge.judge_prompt_hash()
+    assert written["judge_render_hash"] == judge_render_hash()
+    # That the refreshed hash then CLEARS the gate is the paired assertion in
+    # test_check_runlogs.py::test_rule2b_render_passes_when_touched_but_hash_unchanged
+    # — `check_runlogs` is a script loaded by importlib there, not a module to
+    # import here.
+
+
 def test_collect_takes_a_log_whose_render_hash_is_stale(disk_tree):
     """The prompt is current and only the render code moved — still eligible,
     which is the whole point of the render half."""
