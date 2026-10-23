@@ -470,7 +470,7 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    the behaviour table. The example a reader would copy carried no `pick`.
 
 16. **The deferred "candidate cards" item is smaller than the parent plan thought, and
-   measured now.** `dev/probe-candidate-distinguishability.ts`, four live queries: every
+   measured now.** `dev/probe-candidate-distinguishability.json`, four live queries: every
    flood query returned birth/death facts on **5 of 5** top candidates, distinguishable
    4/5 (hales), 2/5 (smith), 5/5 (hales-year-place). So lifespan and places need no
    enrichment — `person_search` already carries them and the ask is answerable today.

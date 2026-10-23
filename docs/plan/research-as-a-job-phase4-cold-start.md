@@ -88,7 +88,7 @@ alone does not separate the cases, and an absent score counts as not decisive.
 
 ### Step 0 DONE: probed live, 2026-09-30 — and the rule I proposed was wrong
 
-`dev/probe-person-search-decisiveness.ts`, eight live queries spanning qualified, flood and
+`dev/probe-person-search-decisiveness.json`, eight live queries spanning qualified, flood and
 the middle cases, responses committed beside it. What it found:
 
 | Probe | totalMatches | top-5 scores | tied at top |
@@ -167,7 +167,7 @@ Adding a signal to `person_search`'s response is not one file:
   looked. The parent asks for cards showing what FamilySearch uses to tell namesakes
   apart: lifespan, places, **parents and spouse**. Two of those four already arrive.
 
-  `dev/probe-candidate-distinguishability.ts`, four live queries, responses committed
+  `dev/probe-candidate-distinguishability.json`, four live queries, responses committed
   beside it (2026-09-30). Every flood query returned birth/death facts on **5 of 5** of
   its top candidates, and the top five were distinguishable from one another 4/5
   (hales-flood), 2/5 (smith-flood) and 5/5 (hales-year-place):
