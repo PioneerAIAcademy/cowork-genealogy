@@ -3511,3 +3511,23 @@ def test_every_embedded_agent_reaches_its_suite_through_the_superset():
             if suite not in check_runlogs.skills_gated_by_agent(agent, referencing):
                 missed.append(f"{suite} embeds {agent}")
     assert not missed, missed
+
+
+def test_trigger_paths_cover_every_module_the_render_graph_reaches():
+    """Finding 6: `JUDGE_RENDER_TRIGGER_PATHS` is hand-written. If the graph
+    grows into a sixth module, a PR editing that module moves the hash but
+    matches no trigger path, so `rule2b_judge_render` takes the
+    "not this PR's doing" branch and WARNS on the PR that caused it.
+
+    Derived from the same walk the hash uses, so this cannot drift.
+    """
+    from harness.instrument import judge_render_graph_modules
+
+    reached = judge_render_graph_modules()
+    triggers = {
+        "harness." + Path(p).stem for p in check_runlogs.JUDGE_RENDER_TRIGGER_PATHS
+    }
+    assert reached <= triggers, (
+        f"render graph reaches {sorted(reached - triggers)}, which no trigger "
+        f"path covers — a PR editing those would warn instead of blocking"
+    )

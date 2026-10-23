@@ -403,8 +403,9 @@ export interface RunLogFile {
   tool_search?: boolean;
   judge_prompt_hash: string;
   /** SHA-256 of the normalized AST of the code that RENDERS the judge's input — the call
-   *  graph reached from judge.render_prompt_parts, judge._grading_tool_for_rubric and
-   *  orchestrator.build_judge_grade_kwargs, plus the constants they read and the whole of
+   *  graph reached from orchestrator._run_judge, judge.grade,
+   *  judge._create_message_with_retry, judge.render_prompt_parts and
+   *  judge._grading_tool_for_rubric — the bytes sent to the judge — plus the constants they read and the whole of
    *  harness/scenario_brief.py. judge_prompt_hash covers the prompt TEMPLATE; this covers
    *  the code that fills its slots. Optional — absent in logs pre-dating the field, which
    *  rule 2b warns on rather than blocking. The app does NOT recompute it: the digest is a

@@ -957,7 +957,7 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
         else:
-            print("All committed run logs are already on the current judge prompt.")
+            print("All committed run logs are already on the current judge prompt and render code.")
         return 0
 
     refused = [t for t in targets if t.reason_refused is not None]

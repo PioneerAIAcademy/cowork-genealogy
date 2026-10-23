@@ -801,16 +801,28 @@ def rule2b_judge_render(
     Returns 1 on block, 0 otherwise.
     """
     expected = log.get("judge_render_hash") or ""
-    actual = judge_render_hash()
     if not expected:
         if judge_render_touched:
+            # Only suggest the regrade when it would actually be taken: a
+            # skill-side-stale log is REFUSED by `collect_regradeable_logs`,
+            # so naming the command there sends the reader at a no-op.
+            snap = log.get("snapshot") or {}
+            remedy = (
+                "it owes a paid `make eval-skill` run first (rule 2), which "
+                "stamps one"
+                if len(diff_snapshot_vs_disk(snap, REPO_ROOT)) > 0
+                else "`make judge-regrade` stamps one"
+            )
             gh_warning(
                 f"skill `{skill}`: `{filename}`, {graded}, carries no "
                 f"`judge_render_hash`, so this PR's change to the judge's render "
-                f"code cannot be checked against it. `make judge-regrade` stamps "
-                f"one.",
+                f"code cannot be checked against it. {remedy}.",
             )
         return 0
+    # Computed only past the absent-field path: today no committed log carries
+    # the field, so hashing first made every call pay a ~5,700-line parse and
+    # discard it. (`judge_render_hash` is memoized too.)
+    actual = judge_render_hash()
     if expected == actual:
         return 0
     snap = log.get("snapshot") or {}
