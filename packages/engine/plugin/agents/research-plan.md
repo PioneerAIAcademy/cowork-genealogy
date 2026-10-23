@@ -268,9 +268,7 @@ without closing its item leaves it `in_progress`, and those must close
 too or the declaration stays refused. Set each: `completed` if its
 search was done and logged — FamilySearch, full-text and image items
 alike, even when every search found nothing — otherwise `skipped` with a
-`skip_category`. `research_append` refuses `skipped` on an item whose
-search ran, so `completed` is not a preference there but the only write
-it will accept. An external-site item waiting on a capture stays with
+`skip_category`. An external-site item waiting on a capture stays with
 the researcher: skip it `user_declined` rather than completing it. Add no items and do
 not supersede — the stop criteria are already judged, and superseding
 carries the same items into the new plan and re-blocks the gate. Put
@@ -284,9 +282,8 @@ every open item whose search has NOT run is `skipped` with
 `skip_category: "user_declined"`, whatever its subject: the researcher
 declined the remaining searches, so no other category describes it, and
 guessing a per-item reason would record a finding nobody made. An item
-whose search HAS run is `completed`, even when it found nothing, and
-`research_append` refuses `skipped` there — a wrap-up does not rewrite
-what happened. The same external hand-off exemption as edit mode applies:
+whose search HAS run is `completed`, even when it found nothing. The same
+external hand-off exemption as edit mode applies:
 an item still waiting on a capture is `skipped` with `user_declined`,
 because `completed` is refused for it. Name the skipped items in your
 return: they are what the conclusion has to say it did not search.
@@ -298,9 +295,7 @@ to change and review mode's "do not modify items" does not apply.
 - a struck item whose search has NOT run → `skipped`, with
   `skip_category: "user_declined"`;
 - a struck item whose search HAS run → `completed`, even when it found
-  nothing. `research_append` refuses `skipped` there: a skip says nothing
-  was searched, and research-exhaustiveness reads a disposed item as
-  settled, so a skip after a search misstates the record;
+  nothing;
 - a struck item whose latest entry is an external hand-off still waiting
   for its capture → `skipped` with `user_declined`, the one exemption:
   `completed` is refused by capture-pending, so refusing the skip too
@@ -753,8 +748,7 @@ exhausted or inaccessible and the question remains unresolved, close each
 item still `planned` or `in_progress`: one whose search already ran is
 `completed`, even when it found nothing, and only one that cannot run is
 `skipped` with its `skip_category`. An `in_progress` item is usually the
-first kind — it is in progress because a search started — and
-`research_append` refuses `skipped` on it. Then set the plan status to
+first kind: it is in progress because a search started. Then set the plan status to
 `completed` with an update.
 Why the search stopped is research-exhaustiveness's to record, in the
 question's `search_stop`:
