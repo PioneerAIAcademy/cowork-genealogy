@@ -8,12 +8,17 @@
  *   npx tsx dev/reshape-catalog-fixtures.ts           # rewrite the fixtures
  *   npx tsx dev/reshape-catalog-fixtures.ts --check   # change nothing; exit 1 if any fixture would change
  *
+ * `--check` is the only argument. Anything else is refused, since a typo such as
+ * `--chek` would otherwise read as "rewrite", and exit 0 having rewritten.
+ *
  * Only each fixture's `response` is touched, through `shapeAnswer`, the function
- * the tool ends in. The files are hand-formatted (2-space objects, scalar arrays
- * on one line), so a reshape that went through `JSON.stringify(x, null, 2)` would
+ * the tool ends in; a response that is an `{ error }` envelope has no hits and is
+ * left as it is. The files are hand-formatted (2-space objects, scalar arrays on
+ * one line), so a reshape that went through `JSON.stringify(x, null, 2)` would
  * rewrite every array and bury the real change. The writer below reproduces that
- * format, and BEFORE it rewrites anything it is run over the file as it stands: a
- * file it does not reproduce byte for byte is refused, not rewritten.
+ * format. Before anything is rewritten, it is run over EVERY file as it stands,
+ * and a file it does not reproduce byte for byte refuses the whole run: no
+ * fixture is written until all of them have been checked and shaped.
  *
  * Idempotent: a second run changes nothing. `tests/tools/catalog-search.test.ts`
  * asserts the same of every fixture, so the fixtures cannot drift from the tool.
@@ -56,7 +61,13 @@ function countKey(value: unknown, key: string): number {
   return 0;
 }
 
-const check = process.argv.includes("--check");
+const args = process.argv.slice(2);
+const unknownArgs = args.filter((a) => a !== "--check");
+if (unknownArgs.length > 0) {
+  console.error(`unknown argument ${unknownArgs.join(" ")}\nusage: npx tsx dev/reshape-catalog-fixtures.ts [--check]`);
+  process.exit(1);
+}
+const check = args.includes("--check");
 const files = readdirSync(FIXTURES)
   .filter((f) => /^catalog-search-.*\.json$/.test(f))
   .sort();
@@ -65,21 +76,35 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-let changed = 0;
-for (const file of files) {
+/** Film-note entries across a response's hits; none for an `{ error }` envelope, which has no hits. */
+const entryCount = (response: CatalogSearchResult): number =>
+  Array.isArray(response.hits) ? response.hits.reduce((n, h) => n + (h.filmNotes?.length ?? 0), 0) : 0;
+
+// Everything is read and checked first. Nothing is shaped, let alone written, until
+// every file is one the writer reproduces byte for byte.
+const loaded = files.map((file) => {
   const path = join(FIXTURES, file);
   const original = readFileSync(path, "utf-8");
-  const parsed = JSON.parse(original) as { response: CatalogSearchResult };
-
-  if (`${format(parsed)}\n` !== original) {
-    console.error(`${file}: the writer does not reproduce this file byte for byte, so it will not be rewritten`);
-    process.exit(1);
+  return { file, path, original, parsed: JSON.parse(original) as { response: CatalogSearchResult } };
+});
+const refused = loaded.filter(
+  ({ parsed, original }) =>
+    parsed.response === null || typeof parsed.response !== "object" || `${format(parsed)}\n` !== original,
+);
+if (refused.length > 0) {
+  for (const { file } of refused) {
+    console.error(`${file}: no response object, or the writer does not reproduce this file byte for byte, so nothing was rewritten`);
   }
+  process.exit(1);
+}
 
-  const before = parsed.response.hits.reduce((n, h) => n + (h.filmNotes?.length ?? 0), 0);
+let changed = 0;
+const rewrites: { path: string; next: string }[] = [];
+for (const { file, path, original, parsed } of loaded) {
+  const before = entryCount(parsed.response);
   const shelves = countKey(parsed, "shelf") + countKey(parsed, "imageStartNumber");
   shapeAnswer(parsed.response);
-  const after = parsed.response.hits.reduce((n, h) => n + (h.filmNotes?.length ?? 0), 0);
+  const after = entryCount(parsed.response);
   const next = `${format(parsed)}\n`;
   const differs = next !== original;
   if (differs) changed++;
@@ -87,7 +112,9 @@ for (const file of files) {
     `${file.padEnd(46)} ${differs ? (check ? "WOULD CHANGE" : "CHANGED     ") : "unchanged   "}  film-note entries ${before} -> ${after}; ` +
       `shelf/imageStartNumber keys removed: ${shelves - countKey(parsed, "shelf") - countKey(parsed, "imageStartNumber")}`,
   );
-  if (differs && !check) writeFileSync(path, next, "utf-8");
+  if (differs && !check) rewrites.push({ path, next });
 }
+// Written last, once every file has been shaped without an error.
+for (const { path, next } of rewrites) writeFileSync(path, next, "utf-8");
 console.log(`\n${files.length} fixtures, ${changed} ${check ? "would change" : "rewritten"}`);
 if (check && changed > 0) process.exit(1);
