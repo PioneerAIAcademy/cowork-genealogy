@@ -42,7 +42,7 @@ import { treeForget } from "../../src/tools/tree-forget.js";
 import { projectContext } from "../../src/tools/project-context.js";
 import { researchQuery } from "../../src/tools/research-query.js";
 import { sidecarRead } from "../../src/tools/sidecar-read.js";
-import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
@@ -161,7 +161,9 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
   {
     tool: "image_transcribe",
-    call: (projectPath) => imageTranscribeTool({ projectPath, file: "uploads/scan.jpg" } as any, LOCAL),
+    // An imageId, not a `file`: the MCP entry classifies the project before any
+    // fetch for every input form (#2490), not only for an upload.
+    call: (projectPath) => imageTranscribeMcpTool({ projectPath, imageId: "004884748_02613" } as any, LOCAL),
   },
   {
     tool: "merge_tree_persons",
