@@ -39,6 +39,7 @@
   "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
-    "max_tool_calls": 90
+    "max_tool_calls": 90,
+    "sdk_message_silence_seconds": 360
   }
 }
