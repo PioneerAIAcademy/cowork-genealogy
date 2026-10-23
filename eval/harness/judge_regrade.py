@@ -49,7 +49,7 @@ from typing import Any
 
 from harness import judge, loader, rubric, snapshot, validator_runner
 from harness.auth import resolve_auth
-from harness.instrument import judge_render_hash
+from harness.judge_render import judge_render_hash
 from harness.judge import (
     DEFAULT_JUDGE_MODEL,
     JUDGE_PROMPT_PATH,

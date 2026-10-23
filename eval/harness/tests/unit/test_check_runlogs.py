@@ -3521,7 +3521,7 @@ def test_trigger_paths_cover_every_module_the_render_graph_reaches():
 
     Derived from the same walk the hash uses, so this cannot drift.
     """
-    from harness.instrument import judge_render_graph_modules
+    from harness.judge_render import judge_render_graph_modules
 
     reached = judge_render_graph_modules()
     triggers = {

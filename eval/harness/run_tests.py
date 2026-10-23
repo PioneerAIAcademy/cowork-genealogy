@@ -72,10 +72,10 @@ from harness.runlog import (
     unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
+from harness.judge_render import judge_render_hash
 from harness.instrument import (
     CatalogUnavailable,
     instrument_for,
-    judge_render_hash,
     live_modules_fingerprint,
     live_tools_called,
     load_tool_catalog,

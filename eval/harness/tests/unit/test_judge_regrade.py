@@ -32,7 +32,7 @@ from types import SimpleNamespace
 import pytest
 
 from harness import judge
-from harness.instrument import judge_render_hash
+from harness.judge_render import judge_render_hash
 from harness import orchestrator as _orchestrator
 from harness import validator_runner
 from harness.scenario_brief import load_scenario_brief

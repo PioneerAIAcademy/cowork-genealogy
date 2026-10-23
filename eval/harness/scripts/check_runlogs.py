@@ -91,11 +91,11 @@ from harness.versioning import (  # noqa: E402
     prunable_candidates,
 )
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
+from harness.judge_render import judge_render_hash  # noqa: E402
 from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
     harness_import_closure,
     instrument_for,
-    judge_render_hash,
     load_tool_catalog,
     suite_validator_file,
     validator_harness_imports,
