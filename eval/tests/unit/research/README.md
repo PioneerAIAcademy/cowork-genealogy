@@ -168,17 +168,20 @@ job" section: an open ask must still walk the routing table, and a bounded ask
 must not enter the question/plan chain. They are paired deliberately — neither
 passes a body that classifies everything one way.
 
-**Both are deterministic, and both were briefly not.** Each carries a `routes-to:`
-tag and so fires `test_routes_to_expected_skill`, which reads hook records rather
-than the model's narration: 019 `routes-to:question-selection`, 020
-`routes-to:image-reader`. 020 was first written with the `routing` tag and no
-`routes-to:` tag — the one combination that validator *skips* (`test_research.py:58`),
-and a skipped validator records `passed=True`. It was therefore judge-only while
-three places (this README, the commit message, the plan) claimed it was
-deterministic. Nothing lints for that, which is why it is written down here.
-image-reader is 020's destination because its own description owns "transcribe this
-register page" / "OCR this scan", and the router holds no `image_transcribe`, so
-doing it inline is not available.
+**Both are deterministic, and both were briefly not.** 019 carries
+`routes-to:question-selection` and so fires `test_routes_to_expected_skill`, which
+reads hook records rather than the model's narration. 020 was first written with
+the `routing` tag and no `routes-to:` tag — the one combination that validator
+*skips*, and a skipped validator records `passed=True`. It was therefore
+judge-only while three places (this README, the commit message, the plan) claimed
+it was deterministic. Nothing lints for that, which is why it is written down here.
+020 routed to the image-reader agent until #2490 retired it; the router now
+delivers a transcription itself, so 020 (and `ut_research_c1k`'s transcription
+half) carries `transcribes-in-place` instead, and
+`test_bounded_transcription_is_delivered_in_place` asserts from the call records
+that it called `image_transcribe` with a `projectPath`, read the staged page with
+`sidecar_read` on the returned `staged.resultsRef`, and — on a single bounded ask —
+handed off to nothing.
 
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius

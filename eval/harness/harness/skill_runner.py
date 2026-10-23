@@ -584,31 +584,31 @@ _AGENT_RETURN_TRAILERS = (
 )
 
 
-# CLI 2.1.294 wraps the return in a one-line `[Subagent hand-back]` frame ending
-# "The report follows:", and indents every line of the report by two spaces
-# (source-evaluation v3, 2026-10-22; ut_locality_guide_027, #3251). Notes may sit
-# above the frame. Left in, a line-anchored check (`^## Available record types`)
-# misses a heading the agent wrote.
-_HAND_BACK_FRAME = re.compile(r"(?m)^\[Subagent hand-back\][^\n]*\n")
-_HAND_BACK_INDENT = "  "
+# Claude Code 2.1.294 (SDK 0.2.165) wraps a subagent's return in a one-line
+# "[Subagent hand-back] ... The report follows:" header and indents every line
+# of the report by two spaces. Graded raw, no line of the agent's own text starts
+# at column zero, so every line-anchored check fails on a correct return. The
+# header may follow runtime notes ("Notes above this frame…"), so it is found at
+# the start of any line, never inside one.
+_HAND_BACK_HEADER = re.compile(r"^\[Subagent hand-back\][^\n]*\n", re.M)
 
 
-def _unwrap_hand_back(text: str) -> str:
-    """The report inside a hand-back frame, de-indented; `text` when unframed."""
-    frame = _HAND_BACK_FRAME.search(text)
-    if frame is None:
+def strip_agent_return_frame(text: str) -> str:
+    """The report inside the runtime's hand-back frame, at its own indentation,
+    after any notes the runtime put above the frame."""
+    m = _HAND_BACK_HEADER.search(text)
+    if not m:
         return text
-    lines = text[frame.end():].split("\n")
-    if not all(line.startswith(_HAND_BACK_INDENT) or not line.strip() for line in lines):
-        return text[frame.end():]
-    return "\n".join(line[len(_HAND_BACK_INDENT):] if line.strip() else "" for line in lines)
+    lines = text[m.end():].split("\n")
+    return text[: m.start()] + "\n".join(line[2:] if line.startswith("  ") else line for line in lines)
 
 
 def strip_agent_return_trailer(text: str) -> str:
-    """The agent's own text, with the runtime's hand-back frame and trailers removed."""
+    """The agent's own text, with the runtime's frame and trailers removed."""
+    text = strip_agent_return_frame(text)
     for pattern in _AGENT_RETURN_TRAILERS:
         text = pattern.sub("", text)
-    return _unwrap_hand_back(text).strip()
+    return text.strip()
 
 
 def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) -> str:
