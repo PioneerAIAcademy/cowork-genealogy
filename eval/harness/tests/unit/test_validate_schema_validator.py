@@ -1,12 +1,13 @@
-"""Direct tests for the validate-schema read-only-files validator.
+"""Direct tests for the validate-schema other-files validator.
 
 Same reason as `test_init_project_validator.py`: `pyproject.toml` sets
 `testpaths = ["tests"]`, so nothing under `validators/` is collected by
 `make harness-test` and a validator's real pass/fail set would otherwise
 appear only inside a paid per-skill run.
 
-What it guards: `validate-schema` is read-only for EVERY file. The existing
-`test_does_not_modify_project_files` covers research.json and tree.gedcomx.json;
+What it guards: `validate-schema` edits no file but its one log entry. The
+existing `test_does_not_modify_project_files` covers research.json (one
+`validate_schema` log entry, nothing else) and tree.gedcomx.json;
 `test_does_not_modify_sidecars_or_other_files` covers the `files` map —
 `results/*.json` sidecars and anything else — which that check never inspects
 (e.g. the skill "fixing" the bad sidecar in ut_validate_schema_009 instead of
@@ -80,7 +81,7 @@ def test_negative_test_skips():
 def test_main_json_edits_are_not_this_validators_job():
     """research.json / tree.gedcomx.json live in their own snapshot keys, not
     the `files` map, so this validator ignores them — that protection stays
-    with `test_does_not_modify_project_files`, unweakened."""
+    with `test_does_not_modify_project_files`."""
     before = state({})
     before["research_json"] = {"a": 1}
     after = state({})
