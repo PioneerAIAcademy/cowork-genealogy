@@ -767,6 +767,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "Read",
       "catalog_search",
       "extraction_append",
+      "project_context",
       "rank_search_matches",
       "record_read",
       "record_search",
