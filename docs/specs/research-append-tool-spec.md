@@ -2207,7 +2207,7 @@ document travels as a tool parameter.
 | `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
-| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the log entry that names it, and nothing new is logged; a finalized ref no entry names refuses that document. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. |
 | `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
 | `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
@@ -2218,8 +2218,11 @@ is logged `tool: "user_provided"` with no sidecar.
 **Validated before any write.** Every document is validated before anything is
 written: one malformed document refuses the call, naming its index and JSON
 path, and writes nothing. After validation, the writes are §11.6's. There is one
-log batch, then one `research_append` per source, so a refusal on document *k*
-leaves the earlier ones written. The resend skip (a `recordId` that already has
+log batch, with one op per distinct staged ref, so documents for two entries on
+one page share its log entry. Then there is one `research_append` per source, in
+document order, so a refusal on document *k* leaves the earlier ones written. A
+document citing an already-finalized page is written even when the staged batch
+beside it is refused. The resend skip (a `recordId` that already has
 a source is skipped and named) makes a corrected resend of the whole batch
 safe. It ties a re-sent document to the call's `questionIds`, and plan-item
 completion runs afterwards, both as in §11.6.
@@ -2255,7 +2258,7 @@ document: {
       type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
       value?: string, date?: string, place?: string,
       computed?: ("value" | "date" | "place")[],   // which attributes the text does NOT give
-      uncertain?: true,                // the reading is doubted: [?] stays in the value; no layer changes
+      uncertain?: true,                // the reading is doubted: [?] stays in the value (added when absent); no layer changes
       note?: string,
     }],
   }],
@@ -2270,6 +2273,16 @@ document: {
 has no stated/computed field. The adapter builds an `ExtractDocument` and
 passes these fields to `extractRecord` **alongside** it, as a document-mode
 options argument. The shape is never widened to fit them.
+
+**`uncertain` reaches the value.** The flag puts a `[?]` the agent may have left
+out into the stored assertion's `value`, once. For a name it is appended to the
+surname (the given name when there is none). For a fact it is appended to the
+assertion's value, which for a dated fact is the date, so the flag's marker never
+reaches the `date` or `place`; a marker the agent typed into either stays where it
+typed it. The summary does not print the flag's marker twice, and the calendar flag and the census surname
+comparison read the value without it. The `person_evidence` `confident`
+precondition above reads `value`, so a doubt the flag alone recorded would
+otherwise never reach it.
 
 **What the document cannot say** is the reason it exists. It has no key for
 `record_role`, `record_basis`, `informant_proximity`, `information_quality`,
@@ -2337,7 +2350,13 @@ submitting family knows them firsthand, as with a surviving spouse's name.
   when the file holds a will and `decedent` when it is intestate. On a
   newspaper announcement, the event's subject: `child` for a birth, `bride` /
   `groom` for an engagement or wedding, `husband` / `wife` for an
-  anniversary, and `principal` otherwise.
+  anniversary, and `principal` otherwise. A pair event (marriage, engagement,
+  anniversary) beats a birth, whatever the order of the facts and however many
+  principals there are, so a wedding notice that gives the groom's birthplace is
+  still a wedding. Among pair events, the one every principal carries wins, and
+  then the first listed. When only one principal is marked, that principal's sole
+  couple partner takes the other side, unless the text names that partner's
+  relation (a late husband); a second couple partner never does.
 - **Other parties' roles** come from `statedRelation` through
   `roleFromRelationship` (son → `child_N`, daughter-in-law →
   `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text

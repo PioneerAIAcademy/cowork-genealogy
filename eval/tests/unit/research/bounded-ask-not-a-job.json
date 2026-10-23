@@ -4,10 +4,9 @@
     "skill": "research",
     "name": "A bounded ask is not routed into the question/plan chain",
     "type": "positive",
-    "description": "The other direction of the same rule. 'Transcribe image <id> for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. `routes-to:image-reader` makes `test_routes_to_expected_skill` assert the first hand-off from hook records, which the judge cannot see (agent spawns are absent from `skills_invoked`). image-reader is the destination because its own description owns 'transcribe this register page' / 'OCR this scan', and the router holds no `image_transcribe`, so inline is not an option. Paired with ut_research_019 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way. The message NAMES an image because `image-reader`'s invocation contract requires an `imageId`; without one the correct router behaviour is to ask which page, which makes no hand-off at all and reds the deterministic validator on a message-authoring choice rather than on the rule. ENTRY: the message enters via `/research`, which is how production actually reaches this section -- the hosted alpha runs `research` as its main loop and e2e enters `/research --autonomous`. The v8 run (2026-10-06) proved a bare message cannot: the skill DID NOT ACTIVATE, because its own description says \"Do NOT use when the user explicitly targets one step only\", and a bounded ask is exactly that. The description was right and the test was wrong -- it measured activation, not the rule. Gradable now that PR #3146 has merged, which records the skill for a slash entry.",
+    "description": "The other direction of the same rule. 'Transcribe image <id> for me' asks for ONE deliverable, so the 'Bounded request or job' section must stop it entering the question-selection / research-plan chain that a job walks. The project has an objective and zero questions, so a router that ignored the section would call question-selection first -- exactly what ut_research_011 asserts for an open ask. Here that call is the FAILURE. GRADING: deterministic. Since #2490 retired the image-reader agent the router transcribes in place: `transcribes-in-place` makes `test_bounded_transcription_is_delivered_in_place` assert from the call records that it handed off to NOTHING, called image_transcribe on the named image with a projectPath, and read the staged page with sidecar_read on the returned `staged.resultsRef`. The `routing`/`routes-to:` pair it carried while the destination was an agent is gone: a bare `routing` tag is the combination that validator skips. Paired with ut_research_019 (open ask -> question-selection) so both directions are pinned deterministically: neither passes a body that classifies everything one way. The message NAMES an image because image_transcribe needs one; without it the correct router behaviour is to ask which page. ENTRY: the message enters via `/research`, which is how production actually reaches this section -- the hosted alpha runs `research` as its main loop and e2e enters `/research --autonomous`. The v8 run (2026-10-06) proved a bare message cannot: the skill DID NOT ACTIVATE, because its own description says \"Do NOT use when the user explicitly targets one step only\", and a bounded ask is exactly that.",
     "tags": [
-      "routing",
-      "routes-to:image-reader",
+      "transcribes-in-place",
       "bounded-request",
       "ends-with-delivery"
     ]
@@ -16,6 +15,9 @@
     "user_message": "/research Transcribe image 004022578_00190 for me, and leave it at that.",
     "scenario": "empty-project-just-created"
   },
+  "mcp_fixtures": [
+    "image-transcribe-driscoll-1881-census"
+  ],
   "execution": {
     "max_turns": 20,
     "max_wall_clock_seconds": 600,
@@ -67,18 +69,13 @@
       {
         "skill": "search-images",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "image-reader",
-        "response": "TRANSCRIPTION of image 004022578_00190, 1881 Census of Canada, Sherbrooke, Quebec, page 14:\nLine 7: Driscoll, Cornelius, M, 67, Ireland, Irish, R. Catholic, Labourer.\nLine 8: Driscoll, Johanna, F, 61, Ireland, Irish, R. Catholic.\nLine 9: Driscoll, Mary, F, 24, Quebec, Irish, R. Catholic.\nNothing else on the page concerns this household. No project state was changed."
       }
     ]
   },
   "judge_context": [
     "This is a BOUNDED-REQUEST test. The reply must show the router treating this as one deliverable: it must NOT invoke question-selection or research-plan, and must not start deriving research questions from the objective.",
-    "A transcription is named in the skill's own bounded list, and the body sends it to @plugin:image-reader. Walking the routing table from the top -- which on this scenario reaches question-selection -- is the failure. The hand-off itself is asserted deterministically; grade only the framing of the reply.",
-    "Do not grade transcription quality -- no record is attached in this scenario. Grade only whether the request was treated as bounded.",
-    "The hand-off to image-reader is asserted deterministically and is INVISIBLE to you: agent spawns do not appear in `skills_invoked`. The v8 run graded this Correctness 1 for 'performed its own transcription' when the agent call list was literally ['image-reader'] and the validator passed. Do NOT infer an inline transcription from transcription text being present: that text came from the delegated agent and the router relays it. The router holds no `image_transcribe`, so transcribing inline is not available to it."
+    "A transcription is named in the skill's own bounded list. Walking the routing table from the top -- which on this scenario reaches question-selection -- is the failure. Grade only the framing of the reply.",
+    "The router delivers a transcription ITSELF: it calls image_transcribe (which stages the page and returns `staged.resultsRef`, a digest and `viewerUrl`, not the text), reads the page with sidecar_read on that ref, shows it, and gives `viewerUrl` as a link. That is the correct route — there is no transcription agent to hand off to — and the calls are asserted deterministically by test_bounded_transcription_is_delivered_in_place, so do not grade them. Do NOT treat a transcription the router shows as fabricated: it came from the staged page."
   ],
   "judge_reads_files": true
 }
