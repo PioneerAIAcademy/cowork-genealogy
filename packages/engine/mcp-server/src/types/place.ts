@@ -105,4 +105,11 @@ export interface SimplifiedPlaceResult {
 
 export interface PlaceSearchToolResponse {
   results: SimplifiedPlaceResult[];
+  // Present only when the results came from the fuzzy "sounds like" fallback
+  // after the exact query matched nothing; absent on an exact hit, keeping
+  // that response byte-identical to the pre-fallback shape. Top-level rather
+  // than per-result because every result in one response comes from one
+  // query. Must stay OPTIONAL: mcp-fixture-shape.test.ts fails a new required
+  // field across the eval/fixtures/mcp files.
+  matchType?: "fuzzy";
 }

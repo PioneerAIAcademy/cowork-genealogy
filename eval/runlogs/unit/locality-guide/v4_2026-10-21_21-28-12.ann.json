@@ -1,0 +1,438 @@
+{
+  "run_log": "v4_2026-10-21_21-28-12.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_027`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified and addressed the false premise in the delegation. It explicitly cited the FamilySearch Massachusetts_Vital_Records page stating that recording was ordered from 1639 and that the 1841 act created a statewide system, not the first recording requirement. Town clerk vital records for 1820-1850 are correctly presented as a primary source, not excluded. The guide accurately distinguishes town-level recording (1639 onward) from statewide registration (1841). All factual claims about record types, repositories, and jurisdictions are supported by the tool responses (collections_search, volume_search, wiki_read results). No fabricated material.\n\nJunior: (Pass - Excellent handling of a false premise. The response correctly distinguished town-level vital records (1639 onward) from statewide registration (1841) and appropriately retained town clerk records as primary sources for 1820-1850 research.)"
+    },
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_027`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: corrected the delegation's false premise with explicit citation to the Massachusetts_Vital_Records page; provided jurisdiction overview including formation date (1761), boundary changes, and border-town context; enumerated all major record types (vital, church, cemetery, census, probate, land, military, immigration, tax, newspapers); identified specific FamilySearch collections by ID and title; distinguished searchable from browse-only digitized volumes; named physical repositories (Berkshire Athenaeum, Probate Court, Registry of Deeds, NEHGS, denominational archives); provided research strategy with search order and cross-border guidance; and flagged known pitfalls (unindexed volumes, membership dismission records as migration tools, border-town church records in adjacent states).\n\nJunior: (Pass - The tool fully addressed every required component of the task, including correcting the false premise, covering all major record categories, identifying relevant collections and repositories, explaining browse-only versus indexed resources, and providing practical research strategies and pitfalls.)"
+    },
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_027`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed arguments matching expected_args semantically. place_search calls for 'Berkshire County, Massachusetts' matched ~Berkshire; collections_search and volume_search used standardPlace 'Berkshire, Massachusetts, United States' matching ~Berkshire; wiki_read calls targeted Massachusetts_Vital_Records and other state-level pages matching ~Massachusetts; wiki_search queries included 'Massachusetts' and 'Berkshire' matching ~Massachusetts. The place_search calls for Williamstown and Adams returned Massachusetts state-level results (fixture limitation, not malformed args). No calls landed in fixture_not_found. The research_append call to a non-existent project returned 'no_project' error, which is expected behavior when no research.json exists (the skill correctly noted this in its response).\n\nJunior: (Pass - Tool arguments were well-formed and targeted the correct jurisdictions and resources. The skill also appropriately handled expected tool limitations and surfaced the no_project error transparently.)"
+    },
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_027`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Berkshire County formation date (1761 from Hampshire County) is correct. The guide correctly identifies that records before 1761 are in Hampshire County. Boundary changes are accurately described: the county's external boundaries were stable 1820-1850, but individual towns were still being carved out (Florida 1805, Hinsdale 1804). The guide correctly notes that western border towns (Williamstown, Clarksburg, Florida, Monroe) run along Bennington County, Vermont and Rensselaer/Columbia County, New York lines. The guide explicitly instructs researchers to search those adjacent jurisdictions' records. The statewide registration system (1841) is correctly distinguished from town-level recording (1639 onward), addressing the temporal jurisdiction issue.\n\nJunior: (Pass - Strong jurisdictional analysis with correct handling of county formation, boundary context, and cross-border research. Properly distinguished local record creation from statewide registration systems.)"
+    },
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_027`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The guide names specific record classes with start dates and repositories: town vital records (1639 onward, town clerks); church records (Congregational from late 17th-early 18th century, Methodist circuits by early 19th, Baptist, Episcopal, Quaker, Dutch Reformed); cemetery records (town and church burial grounds throughout); federal census (1820, 1830, 1840, 1850); probate (1761 onward, Berkshire Probate Court); land records (1761 onward, Registry of Deeds); military (War of 1812, Mexican-American War); immigration (Boston passenger lists 1820-1891). Distinguishes indexed collections (Massachusetts Town Vital Records id 2061550, Church Records id 1921657, Probate id 1678901) from browse-only volumes (DGS 004500891 and 004500892, both 0% indexed, not full-text searchable). Identifies current repositories: FamilySearch, Berkshire Athenaeum, NEHGS, individual town clerks, denominational archives. Correctly notes that most church registers outside Pittsfield Congregational are not digitized online.\n\nJunior: (Pass - Complete and accurate coverage of record availability, repositories, and collection accessibility. Strong distinction between indexed and browse-only resources, helping researchers understand actual record access limitations.)"
+    },
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_027`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The guide provides actionable search order: (1) FamilySearch indexed collection 2061550 for town vital records; (2) published 'Vital Records to 1850' volumes at NEHGS/Berkshire Athenaeum; (3) browse DGS 004500891 image by image; (4) FamilySearch Church Records collection 1921657; (5) browse DGS 004500892 for Pittsfield Congregational; (6) Find A Grave and DAR cemetery transcriptions. Includes specific pitfalls: unindexed volumes require image-by-image browsing; marriage intentions recorded in bride's, groom's, and current residence towns (search all three); membership dismission records track congregation-to-congregation moves; border-town families may have records in Vermont/New York archives; tax lists anchor families in intercensal years; probate files reveal family structure when vital records absent. Recommends cross-border searches in Bennington County, Vermont and Rensselaer/Columbia County, New York. Cites FamilySearch Wiki URLs for Massachusetts Vital Records and Land and Property. Addresses the delegation's false premise directly with evidence from the wiki page.\n\nJunior: (Pass - Strong, actionable research plan that prioritizes the best sources and highlights key pitfalls. Excellent use of tool evidence to guide researchers toward both indexed and difficult-to-find records.)"
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_locality_guide_028`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The response is mostly factually correct about 1812 Carniola, Catholic parish registers, and Matricula Online as a primary source. However, it contains an unsupported claim: 'civil registration had not yet begun' in 1812 is stated without grounding. The response correctly identifies that civil registration was mandated in 1784 for duplicate registers (with Catholic originals remaining with the parish), which actually contradicts the claim that civil registration 'did not exist' in 1812. The response also states 'civil-only registration came much later' without support. These are minor mischaracterizations of the civil registration timeline that could mislead a researcher about what records might exist.\n\nJunior: (Partial - The response is largely correct in directing the researcher to Catholic parish registers, Matricula Online, and diocesan archives for an 1812 marriage. However, it makes unsupported and internally inconsistent claims about civil registration. It states that civil registration \"did not exist\" in 1812, while also acknowledging a registration system involving duplicate registers beginning in 1784. These statements blur the distinction between civil registration, parish registers, and state-required duplicates and are not grounded in the cited tool evidence.)"
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_028`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The response addresses all required elements: it correctly broadened the search from Javorje to Škofja Loka when the initial catalog search returned 0 hits, reported the actual catalog results (trade accounts 1739–1763, church affairs 1550–1747, house book, 1870 census), presented the parish affiliation as unconfirmed, and directed the user to diocesan/archdiocesan archives per the Slovenia_Church_Records wiki page. It did not name a specific mother parish, as required. All substantive requirements from the per-test context were met.\n\nJunior: (Pass - Complete response that follows the evidence closely. Good restraint in leaving parish affiliation unconfirmed while still providing practical next research steps.)"
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_028`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. Critical identifier fields (place names, URLs) were correct. The agent called catalog_search for Javorje first (returning 0 hits), then broadened to Škofja Loka (returning 36 hits with 4 hydrated). The wiki_read call for Slovenia_Church_Records matched the expected URL substring. No calls landed in fixture_not_found errors. Arguments were appropriate and well-formed throughout.\n\nJunior: (Pass - Tool usage was precise and adaptive. The agent broadened scope appropriately after an initial zero-result search and consistently used valid, well-targeted arguments throughout.)"
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_028`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> The response correctly identifies that in 1812 Javorje was in the Duchy of Carniola (Krain), part of the Austrian Empire. It accurately notes that Emperor Joseph II restructured parishes in the early 1780s, establishing defined parish boundaries by 1812. It correctly identifies the Diocese of Ljubljana (Archdiocese of Ljubljana, formerly Diocese of Labacensis) as the relevant ecclesiastical jurisdiction. The historical context and jurisdictional framework are accurate for the 1812 time period.\n\nJunior: (Pass - Accurate historical and ecclesiastical jurisdictional context for the period. Good use of evidence and proper restraint where parish-level jurisdiction could not be confirmed.)"
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_028`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The response identifies the correct record type (Catholic parish marriage register / Trauungsbuch / matična knjiga porok) for 1812 and explains why civil registration records do not apply. It names specific repositories: Matricula Online (primary online source for digitized registers), the Archdiocesan Archive in Ljubljana (for pre-1880s originals), FamilySearch Catalog (with specific search results), and Archive of Slovenia (for non-Catholic records). It distinguishes between indexed/digitized records (Matricula Online) and physical originals requiring onsite research (archdiocesan archives). Start dates and repository information are accurate.\n\nJunior: (Pass - Strong coverage of record availability and repositories with appropriate distinction between online and archival sources. Minor deduction for oversimplifying the civil registration context."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_028`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The response provides actionable, specific guidance: (1) start with Matricula Online at https://data.matricula-online.eu/en/slovenia/, navigate to Diocese of Ljubljana; (2) contact Archdiocesan Archive in Ljubljana with full address and email; (3) browse FamilySearch Catalog for Škofja Loka (noting 36 total hits, 4 hydrated, none being parish marriage registers for 1812); (4) check Archive of Slovenia as secondary option. It includes specific pitfalls: registers are in Latin and German (not Slovenian), standard entry headings are Matrimonium/Copulati, duplicate registers only mandated from 1835, and Status Animarum records (from ~1750) can help if the marriage register is damaged. The strategy is concrete, prioritized, and grounded in tool results.\n\nJunior: (Pass - Well-prioritized research plan with concrete next steps and useful warnings about record availability and language. Strong use of tool findings to guide efficient follow-up research.)"
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The response accurately identifies Pennsylvania's lack of statewide vital registration during 1840-1860s, correctly names the 1850 and 1860 federal censuses as available, accurately describes the Lutheran church records volume (browse-only, 0% indexed, English/German), correctly identifies the probate collection as 3.2M images with 0 indexed records, and accurately notes the 1850-1860 census volume as 96% indexed. All FamilySearch collection IDs and dates are verified against tool responses. The response appropriately excludes the synthetic test fixture (SYNTH-PA-CHURCH) from the guide. Historical context about coal mining, Irish immigration post-1845, and the Reading Railroad is accurate. Repository information (Schuylkill County Courthouse, Pennsylvania State Archives, Schuylkill County Historical Society) is correctly identified. No fabricated material or unsupported claims.\n\nJunior: (Pass - Accurate use of collection metadata and repository information. Strong distinction between indexed, full-text searchable, and browse-only resources, with no reliance on synthetic fixture data.)"
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The response addresses all required elements: identifies specific record classes (federal census, church records, probate, land, tax, military, naturalization, cemetery, newspaper); notes Pennsylvania's 1906 vital registration start date; references actual FamilySearch collections from the fixture data (collections 1999196, 1571957, 1502909, 2255317); identifies multiple repositories beyond FamilySearch (county courthouse, state archives, historical society, NARA, diocesan archives); surfaces the unindexed Lutheran volume (imageGroupNumber 004288771) as browse-only; distinguishes the probate volume (4% indexed, full-text searchable) from the census volume (96% indexed); and explicitly lists records NOT online. The guide covers jurisdiction formation (1811), boundary stability, ethnic composition, denominations, and key historical events. Research tips section addresses the critical absence of civil vital records and the importance of church registers, tax lists, and the Miners' Journal.\n\nJunior: (Pass - Complete and researcher-focused response with strong coverage of available and unavailable records. Excellent differentiation between indexed, partially indexed, and browse-only sources, with useful guidance for pre-1906 Pennsylvania research.)"
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed arguments matching expected_args semantically. place_search used 'Schuylkill County, Pennsylvania' matching ~Schuylkill; collections_search and volume_search used standardPlace 'Schuylkill, Pennsylvania, United States' matching ~Schuylkill and ~Pennsylvania; external_links_search and wiki_place_page calls used correct standardPlace; wiki_read calls used appropriate URLs for Pennsylvania genealogy topics. No calls returned fixture_not_found errors. The wiki_read calls all resolved to a generic fallback page (as noted by Claude), which is a tool limitation, not an argument error. All critical identifiers (place names, date ranges) were correct.\n\nJunior: (Pass - Tool arguments were accurate and appropriately scoped to the research question. The response handled tool limitations correctly without introducing argument-related errors.)"
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_001`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> The response correctly identifies Schuylkill County as formed in 1811 from Berks and Northampton Counties, with stable boundaries throughout the 1840s-1860s target period. It accurately notes that pre-1811 records for the territory are held by Berks County (Reading) and Northampton County (Easton). The response correctly identifies Pottsville as the county seat. No anachronistic jurisdictions are recommended; all jurisdictions named (Schuylkill, Berks, Northampton, Carbon, Dauphin, Lebanon) existed during the period or are correctly contextualized as adjoining counties for border research.\n\nJunior: (Pass - Accurate treatment of county formation, parent jurisdictions, and adjacent-county research. Clear guidance on where records should be sought before and after Schuylkill County's creation.)"
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_001`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The response identifies specific record classes with start dates and repositories: federal census (1850, 1860 indexed on FamilySearch and Ancestry; 1840 indexed on Ancestry); church records (Lutheran 1840-1875 on FamilySearch, browse-only; Catholic parishes at Diocese of Allentown; other denominations at local parishes); probate (1811 forward, FamilySearch collection 1999196 browse-only, volume 004812990 4% indexed; originals at courthouse); land records (state warrants/patents at Pennsylvania State Archives; deeds at county courthouse; no online digitization confirmed); tax records (courthouse and historical society, not online); naturalization (county courthouse, some on FamilySearch microfilm); military (NARA, Fold3/Ancestry for Civil War); cemetery (FindAGrave, BillionGraves, local churches, Schuylkill County Historical Society). Distinguishes indexed from browse-only, and online from physical-only repositories.\n\nJunior: (Pass - Thorough inventory of available records with clear repository and accessibility guidance. Strong differentiation between indexed resources and browse-only or physical records, helping researchers plan efficient searches.)"
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_001`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The response provides actionable guidance with specific search order and pitfalls: start with federal census (1850-1860, indexed and free on FamilySearch); use church records as vital-event substitute (naming denominations present and noting German-language entries require competency); consult tax lists as annual locators between censuses; browse probate images at courthouse first before FamilySearch; check Miners' Journal for obituaries naming place of origin (microfilm at historical society); search naturalization in multiple courts (county, federal, state); use Civil War records for 1860s research; consult adjoining counties for border families. Specific pitfalls identified: no civil vital registration 1840-1869; most church records physical or browse-only; probate collection largely unindexed; naturalization records scattered; German-language competency needed; courthouse fires/record losses (though none confirmed for this county). Includes specific FamilySearch collection IDs and external repositories.\n\nJunior: (Pass - Actionable and researcher-focused guidance with strong source prioritization and useful warnings about record access limitations. The identified pitfalls help prevent common dead ends and inefficient searches.)"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_locality_guide_007`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The response contains mostly accurate information about California Gold Rush records but includes one significant unsupported claim: the assertion that 'California had no statewide birth or death registration during the 1850s-1860s' is stated as fact in the prose response without citation to the tool results. The wiki_read tool returned only generic boilerplate content that did not confirm California-specific registration dates. The response correctly cites the 1852 state census (88% indexed, DGS 006601001) and identifies key repositories (Bancroft Library, California State Library, NARA), which are grounded in tool responses. However, the claim about statewide registration lacks support from the fetched sources and represents an unsupported assertion that changes the research guidance.\n\nJunior: (Partial - Good overall guidance, but avoid stating California vital-registration timelines as fact when the sources do not confirm them. The response should acknowledge the uncertainty and rely only on evidence returned by the tools.)"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request comprehensively. It identified California as the jurisdiction, covered the 1848-1870 Gold Rush period, named specific record types (mining claims, court files, tax records, church records, census), identified repositories (county courthouses, FamilySearch, state archives, Bancroft Library, California State Library), and provided actionable guidance (start with 1852 state census when 1850 is missing, consult county-level records, use newspaper collections). The locality guide entry was created with detailed sections on jurisdiction overview, boundary changes, available record types, repositories, and research tips. The response did not omit major portions of what was asked.\n\nJunior: (Pass - Complete and actionable response with strong coverage of California Gold Rush-era records. Provides clear research pathways, relevant repositories, and useful alternatives when federal census records are missing.)"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_007`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. place_search_all and place_search both used 'California' (matching ~California). place_population, collections_search, external_links_search, volume_search, and wiki_place_page all used 'California, United States' (matching ~California). wiki_read calls used URLs matching the expected ~pattern. The research_append call correctly structured the locality entry with all required fields. No calls landed in fixture_not_found; all matched.kind values were 'predicate' or 'live'. Arguments were appropriate and well-formed throughout.\n\nJunior: (Pass - Tool arguments were precise, consistent, and semantically aligned with the intended locality. Good use of jurisdictional identifiers and proper handling of research record creation.)"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_007`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> The response correctly identifies California as a state formed in 1850, bypassing territorial status entirely. It accurately notes that before statehood (1848-1850) California was under U.S. military government following the Treaty of Guadalupe Hidalgo. The guide correctly states that county-level records dominate the 1850s-1870s period and that no prior U.S. territorial period existed. Boundary changes are addressed: the response notes that county boundaries shifted considerably in the early 1850s as new counties were created from larger ones, and advises researchers to check when a specific mining county was formed. The jurisdiction overview correctly reflects what existed during the target time period (1848-1870).\n\nJunior: (Pass - Accurate treatment of California's unique transition to statehood and early county development. Strong emphasis on checking county formation dates when researching records from the 1850s.)"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_007`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The response names specific record classes with start dates and repositories: County Births (1850-1919, FamilySearch collection 2017276); County Marriages (1850-1952, collection 1452832); Great Registers (1866-1910, collection 1923340); Mission Records (1769-1850, collection 1804372); 1852 State Census (88% indexed, DGS 006601001, full-text searchable); Mining Claim Registers (DGS 006601002, browse-only); Sacramento Port Arrivals (DGS 006601003, browse-only). It distinguishes indexed/searchable from browse-only records and identifies repositories: FamilySearch, Ancestry.com, NARA Pacific Region (San Bruno), California State Archives, Bancroft Library, county courthouses, and BLM GLO. The guide correctly notes that statewide birth/death registration did not exist in the 1850s and that county-level records are the primary source. Church records, probate, court, land, and military records are all addressed with start dates and locations.\n\nJunior: (Pass - Thorough treatment of record availability with clear guidance on where records exist and how to access them. Strong distinction between searchable and browse-only sources, helping researchers prioritize their efforts.)"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_007`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The response provides actionable search order and specific guidance: Start with the 1852 state census (88% indexed, DGS 006601001) when the 1850 federal census return is missing; use county-level records as the unavoidable foundation; consult ship passenger manifests for sea arrivals but recognize that overland migrants will not appear in manifests. It names specific pitfalls: the 1850 federal census was partially destroyed (some county returns missing); mining claim registers (DGS 006601002) and Sacramento port registers (DGS 006601003) are browse-only with no name index; the Great Registers begin in 1866, missing the 1848-1865 peak Gold Rush years; many miners left no vital record at all; overland migrants are undocumented in official arrival records. It references specific repositories (Bancroft Library, California State Library) for manuscript collections and county histories. The strategy includes FamilySearch collection IDs (2017276, 1452832, 1923340, 1804372) and DGS numbers (006601001, 006601002, 006601003), and cites the California Digital Newspaper Collection (cdnc.ucr.edu) as a free online resource for the Alta California and other newspapers.\n\nJunior: (Pass - Strong research plan with clear source prioritization and realistic expectations about record survival and access. Excellent identification of Gold Rush-era record gaps and browse-only collection limitations.)"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_locality_guide_009`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> Claude's response contains a significant factual error: it claims the 1790 Virginia federal census 'was destroyed when the British burned Washington in 1814.' This is incorrect—the British burned Washington in 1814, but the 1790 census was destroyed in a fire at the Patent Office in 1836, not by the British. The wiki_search results returned by the tool do repeat this false claim, but Claude should not have propagated a factually incorrect statement without verification. The rest of the locality guide is well-researched and accurate, including correct identification of military records (NARA RG 93, RG 15), pension files, tax lists as census substitutes, church records, and repositories. The guide correctly notes the absence of statewide vital registration during 1775-1783 and identifies county-level alternatives. However, the census destruction date error is a material factual claim that undermines credibility.\n\nJunior: (Partial - Mostly strong research guidance, but a significant historical error about the destruction of the 1790 census was repeated from the source material. Models should verify major historical claims and avoid propagating known inaccuracies from tool outputs.)"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_009`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude comprehensively addressed the user's request for Virginia Revolutionary War records and repositories. The response covers military service records (Continental Line, militia, State Navy), pension and bounty-land warrant files, county court records, church records, tax lists as census substitutes, land records, probate records, and cemetery records. Repositories are identified (National Archives, Library of Virginia, county courthouses, Fold3, FamilySearch). The guide includes specific FamilySearch collection IDs, discusses record availability and gaps, and provides actionable research strategy. The locality guide was properly persisted to research.json. All major record types relevant to the 1775-1783 period and military service research were addressed.\n\nJunior: (Pass - Thorough coverage of both military and civilian record sets, with clear repository guidance and actionable research steps. Effectively addresses the full range of records relevant to Virginia Revolutionary War research.)"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_009`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching expected_args semantically. place_search used 'Virginia, United States' matching ~Virginia. collections_search, place_population, external_links_search, volume_search, and wiki_place_page calls all used standardPlace ~Virginia correctly. wiki_search queries used ~Virginia-related terms appropriately. wiki_read calls used URLs matching ~ expectations. The final research_append call to persist the locality guide had no expected_args (it was a live write operation) and succeeded with ok: true. No tool calls returned fixture_not_found errors. Arguments were well-formed and semantically appropriate throughout.\n\nJunior: (Pass - Tool arguments were consistently well-formed and geographically appropriate. Efficient use of locality, collection, and wiki tools with no argument mismatches or fixture failures.)"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_009`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified Virginia as a state-land jurisdiction (not federal land) and accurately noted that Virginia's county-level record-keeping infrastructure dates to the 1630s. The guide correctly states Virginia ratified the Constitution in 1788 and that county boundaries were fluid during 1775-1783, with new counties being carved from existing ones. It accurately notes Kentucky County was created from Fincastle in 1776 and that West Virginia did not separate until 1863. The guide correctly identifies that records for families in what is now Kentucky before 1776 are held under parent Virginia counties. The jurisdictional context for the Revolutionary War period (1775-1783) is accurate, including the transition from colonial to Commonwealth status in 1776.\n\nJunior: (Pass - Accurate treatment of Virginia's evolving jurisdictions during 1775-1783. Good explanation of county formation, Kentucky's origins, and where researchers should expect records to be filed.)"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_009`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> Claude identified specific record classes with start dates and repositories: military records (NARA RG 93 service records, RG 15 pension/bounty files), church records (Anglican/Episcopal, Baptist, Presbyterian, Methodist, Quaker—with FamilySearch collection 1598230 covering 1680-1929), tax records (1782 onward, FamilySearch 1456723), county court records (FamilySearch 1734285 for land/marriage/wills, 1650-1920), and land records (state-land system, Library of Virginia). The guide distinguishes indexed/searchable collections (military 1945678, tax 1456723) from browse-only volumes (Revolutionary War land bounty warrants, image group 005301447, 0% indexed). It correctly notes the absence of statewide vital registration 1775-1783 and identifies county court marriage bonds as the civil alternative. Repositories are clearly named: National Archives, Library of Virginia, county courthouses, Fold3, FamilySearch.\n\nJunior: (Pass - Comprehensive overview of record availability with clear repository guidance and access distinctions. Strong handling of indexed versus browse-only resources and appropriate substitution of county-level records where statewide vital records did not exist.)"
+    },
+    {
+      "test_id": "ut_locality_guide_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_009`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> Claude provided actionable, specific research guidance: (1) Start with pension files (NARA RG 15) via Fold3 because they contain family depositions, marriage dates, and children's names—more genealogical detail than service records. (2) Use 1782-1785 personal property tax lists (FamilySearch 1456723) as the census substitute, tracking families year by year. (3) Recognize Virginia is state-land, not federal-land—search Library of Virginia, not BLM GLO. (4) Search scattered church records at county courthouses, Library of Virginia, and denominational archives after 1776 disestablishment. (5) Check Virginia Military District of Ohio bounty-land warrant records for post-war relocation. (6) Do not overlook Loyalist records (confiscation, escheat, British claims commission files at The National Archives, Kew). (7) County-level research is essential; trace boundary changes. (8) Augusta County records (image group 005301448, 61% indexed) are a useful starting point for western Virginia. The guide includes specific FamilySearch collection IDs and URLs, identifies known pitfalls (missing 1790 census, scattered church records, browse-only volumes), and provides a clear search order.\n\nJunior: (Pass - Excellent research strategy with a logical search order and strong attention to Virginia-specific challenges. Effectively highlights substitute sources, boundary issues, and overlooked record groups that can break genealogical brick walls.)"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The response accurately identifies Chicago, Cook County, Illinois as the jurisdiction for 1860-1885 and correctly emphasizes the Great Chicago Fire of October 8-10, 1871 as the defining record-loss event. All major claims are supported by tool responses: FamilySearch collections (birth, death, marriage, church records with specific record counts), the Burnt Record Act of 1872, surviving federal censuses (1850, 1860, 1870), city directories at Newberry Library, and the Chicago History Museum's holdings of insurance records. The response accurately distinguishes pre-fire record loss from post-fire civil registration (1871 onward) and correctly identifies substitute sources. No fabricated material or unsupported claims detected.\n\nJunior: (Pass - Accurate and well-grounded assessment of Chicago research during the Great Fire era. Strong emphasis on record loss, surviving substitutes, and the unusually limited digitized court/property coverage revealed by the volume search results.)"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The response comprehensively addresses the user's question about records and repositories for Chicago during the Great Fire period. It covers vital records, church records, census records, probate/court records, land records, military records, cemetery records, newspapers, immigration records, tax records, city directories, and insurance records. It names specific repositories (Chicago History Museum, Newberry Library, IRAD-NEIU, Archdiocese of Chicago, BLM GLO, NARA). It explicitly addresses record loss and substitutes as required by the per-test context. The locality guide entry was successfully persisted to research.json with full detail.\n\nJunior: (Pass - Comprehensive coverage of both record loss and substitute sources. Strong repository guidance and appropriate emphasis on newspapers, insurance records, reconstructed deeds, and surviving federal records following the fire.)"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_016`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All 21 MCP tool calls passed with arguments matching expected_args semantically. place_search, place_search_all, wikipedia_search, wiki_search, collections_search, external_links_search, volume_search, wiki_place_page, and wiki_read calls all used correct place names and queries. The research_append call correctly passed the standardPlace, section, op, and entry parameters with valid JSON structure. No fixture_not_found errors occurred. Arguments were appropriate and well-formed throughout.\n\nJunior: (Pass - Tool usage was precise and appropriate throughout. Arguments consistently targeted the correct locality and repositories, with proper handling of the final research_append operation.)"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_016`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> The response correctly identifies Cook County (formed 1831) and Chicago (incorporated as town 1833, city 1837) as the relevant jurisdictions for the 1860-1885 period. It accurately notes that Cook County boundaries were stable during this period and that no record-custody split requiring a different parent jurisdiction occurred. The response correctly emphasizes that the Great Chicago Fire of October 8-10, 1871 is the critical boundary for record availability, treating 1871 as a hard break between pre-fire and post-fire record series.\n\nJunior: (Pass - Accurate jurisdictional context and excellent handling of the 1871 record-loss boundary. Correctly ties research strategy to the shift from pre-fire to post-fire record sets.)"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_016`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The response identifies specific record classes with start dates and current repositories: FamilySearch collections (birth certificates 1871-1940, death records 1871-1947, marriage records 1871-1920, church records 1833-1925 with specific record counts); federal censuses (1850, 1860, 1870 survived; 1880 available); city directories 1840s onward at Newberry Library; BLM GLO federal land patents; reconstructed deeds at Chicago History Museum; post-fire court records at IRAD-NEIU; Catholic parish registers at Archdiocese of Chicago; cemetery records at individual cemeteries and FindAGrave. It distinguishes indexed/imaged collections from browse-only volumes (DGS 009982110: 0% indexed, browse-only; DGS 009982111: 41% indexed). It clearly states that pre-fire civil vital records do not exist and that post-fire registration begins 1871.\n\nJunior: (Pass - Thorough record availability coverage with strong repository guidance and clear handling of record loss. Excellent distinction between indexed collections and limited browse-only surviving volumes.)"
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_016`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The response provides actionable, specific guidance: start with the 1870 federal census (last pre-fire enumeration); use city directories from Newberry Library as the key substitute source for tracking families year-by-year; consult Chicago Title and Trust collection at Chicago History Museum for pre-fire property; search BLM GLO for federal land patents; examine post-fire newspaper issues (October-December 1871) for victim and relief lists; contact Archdiocese of Chicago for Catholic parish registers in heritage languages; search all three court series (circuit, probate, federal) for pre-1906 naturalizations; note that DGS 009982110 is browse-only with no name index. It identifies specific pitfalls: record loss from the fire, destroyed courthouse records, scattered naturalization records, language barriers in ethnic registers, and the need to search variant name spellings. FamilySearch Wiki references are provided (e.g., https://www.familysearch.org/en/wiki/Cook_County,_Illinois_Genealogy#Great_Fire).\n\nJunior: (Pass - Excellent research strategy with clear next steps and strong emphasis on substitute sources after record loss. Effectively highlights common pitfalls, browse-only collections, and the need to search across multiple record sets and jurisdictions.)"
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_020`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill's output is factually accurate. It correctly identifies that the 1890 federal census was destroyed by fire in 1921, that statewide vital registration did not exist in Oklahoma Territory before 1907, that homestead files are held at NARA and searchable on BLM GLO website, and that the Oklahoma Historical Society holds the 1890 territorial special census. The distinction between Oklahoma Territory and Indian Territory is correctly stated. All major claims are supported by the tool responses (wiki search results, collections search, volume search, Wikipedia article on the Land Run). No fabricated material or unsupported assertions appear.\n\nJunior: (Pass - Accurate use of jurisdictional context and record availability. Strong emphasis on homestead files, territorial records, and census substitutes without overstating the existence of territorial vital records.)"
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_020`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements from the per-test context: it mentions the Land Run of 1889 prominently, highlights homestead applications and territorial court records as key sources, and explicitly states that statewide vital registration did not exist during this period (avoiding the error of recommending it). The response covers record types, repositories, jurisdictional structure, and research strategy comprehensively. The locality guide entry written to research.json includes all major record classes, boundary changes, and pitfalls relevant to the 1889-1910 period.\n\nJunior: (Pass - Complete and well-targeted locality guide. Strong focus on the Land Run era and appropriate source substitution, while correctly avoiding assumptions about statewide vital records before they existed.)"
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_020`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. place_search, collections_search, volume_search, external_links_search, wiki_search, and wiki_place_page calls all used 'Oklahoma, United States' or 'Oklahoma Territory' as the standardPlace/placeName, matching the ~Oklahoma expectation. wiki_read calls used appropriate FamilySearch Wiki URLs. The research_append call correctly structured the locality entry with all required fields. No calls returned fixture_not_found errors; all matched successfully.\n\nJunior: (Pass - Tool arguments were consistently well-targeted and matched the intended jurisdiction. The structured research output was correctly assembled and submitted without tool-use errors.)"
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_020`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> The skill correctly identifies the relevant jurisdictions for the 1889-1910 period: Unassigned Lands (pre-1889), Oklahoma Territory (1890-1907), Indian Territory (pre-1907), and Oklahoma State (1907-present). It explicitly notes that Oklahoma Territory and Indian Territory were separate jurisdictions with distinct record systems, which is historically accurate. The guide correctly states that county boundaries changed rapidly after 1889 and advises researchers to verify which county held authority at the event date, not modern boundaries. The Organic Act of May 2, 1890 is correctly cited as the formation date for Oklahoma Territory.\n\nJunior: (Pass - Excellent jurisdictional treatment. Correctly separates Oklahoma Territory from Indian Territory and appropriately warns researchers about changing county boundaries and record custody over time.)"
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_020`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The skill identifies specific record classes with start dates and repositories: homestead files (1889-1907, NARA RG 49 and BLM GLO website); county marriages (1890 onward, FamilySearch collection 2134789); church records (1820-1965, FamilySearch collection 1654321); territorial court records (1890-1907, NARA Fort Worth and Oklahoma State Archives); Dawes Commission rolls (1898-1914, FamilySearch collection 1987432); and the 1890 territorial special census (Oklahoma Historical Society). It distinguishes indexed/imaged collections from those requiring onsite research. It correctly notes that no statewide vital registration existed before 1907, eliminating a common research error.\n\nJunior: (Pass - Comprehensive treatment of record availability with accurate distinctions between territorial, tribal, and state-era records. Good guidance on collection access and pre-1907 record limitations.)"
+    },
+    {
+      "test_id": "ut_locality_guide_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_020`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The skill provides actionable, specific guidance: start with land records (homestead applications and final proofs) because vital registration did not exist; determine which territory (Oklahoma or Indian) first; search the departure state (Kansas, Missouri, Texas, Arkansas) in 1880 census and county records; use BLM GLO website for free searchable patents; consult the 1900 census as the first reliable post-Run enumeration; verify county formation dates; check rejected homestead claims; and search Dawes Rolls for Five Tribes ancestry. It names specific FamilySearch collection IDs (1541872, 2134789, 1654321, 1987432) and specific repositories (NARA Fort Worth, Oklahoma Historical Society). It includes pitfalls: the destroyed 1890 federal census, rapid county boundary changes, the need to distinguish Oklahoma Territory from Indian Territory, and the value of rejected applications and territorial newspaper legal notices.\n\nJunior: (Pass - Excellent research guidance with a logical search sequence and strong jurisdiction awareness. The inclusion of specific collections, repositories, and common pitfalls makes the strategy highly actionable.)"
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_022`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The guide accurately reflects the tool responses and FamilySearch wiki content. Schuylkill County was correctly identified as formed 1811 from Berks and Northampton. Record types, dates, and repositories are factually grounded in the tool responses. The Lackawanna Valley Anthracite Index (1855-1898, ~41,000 names) is correctly cited from the Pennsylvania Coal Region Records wiki page. Diocesan jurisdiction changes (Philadelphia pre-1868, then Scranton/Harrisburg for other counties, Schuylkill remaining Philadelphia until 1961) are accurately stated. The 1890 census destruction, triennial state tax assessments from 1853, and the 1880 census relationship-to-head-of-household feature are all correctly sourced. No fabricated material or unsupported claims.\n\nJunior: (Pass - Accurate and well-grounded use of source material. Strong incorporation of the coal-region wiki content, especially the Lackawanna Valley Anthracite Index and other specialized record substitutes.)"
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_022`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request fully: built a locality research guide for Schuylkill County (the heart of the anthracite coal region where Patrick Flynn died in 1908), and read the FamilySearch Pennsylvania Coal Region Records wiki page as requested. The guide covers jurisdiction overview, boundary changes, all major record types (vital, church, census, probate, land, military, cemetery, newspaper, immigration, coal-region specialized indexes, tax), repository guide (online and physical), known record losses, and research tips. The guide explicitly names the Lackawanna Valley Anthracite Index and other coal-region specialized sources. The skill also noted that guides for the other four anthracite counties (Luzerne, Lackawanna, Northumberland, Carbon) remain to be produced.\n\nJunior: (Pass - Complete and well-scoped locality guide. Strong incorporation of coal-region-specific resources and appropriate acknowledgment that guides for the remaining anthracite counties were still pending.)"
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_022`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed arguments matching expected_args semantically. place_search and place_search_all correctly used 'Schuylkill County, Pennsylvania' (matched ~Schuylkill). place_population, collections_search, and volume_search all used standardPlace ~Schuylkill. external_links_search and wiki_place_page calls used standardPlace ~. wiki_search queries included 'coal' (matched ~coal). wiki_read calls targeted Pennsylvania-related pages and the Pennsylvania_Coal_Region_Records page (matched ~). No fixture_not_found errors. The research_append call correctly structured the locality entry with all required fields. No critical argument errors; all calls were well-formed.\n\nJunior: (Pass - Tool usage was precise and consistent throughout. Appropriate search terms and place parameters were used, with no argument mismatches or fixture errors.)"
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_022`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> Schuylkill County formation date (1811 from Berks and Northampton) is correctly stated and sourced from place_search_all response. The guide correctly identifies that the county's boundaries were stable throughout 1860-1890. Diocesan jurisdiction changes are accurately detailed: all five anthracite counties under Philadelphia pre-1868, then Luzerne/Lackawanna to Scranton, Northumberland to Harrisburg, Schuylkill/Carbon remaining Philadelphia until Diocese of Allentown erected in 1961. This is critical for locating Catholic records and is correctly explained. The guide notes that records predating 1811 are held by parent counties Berks and Northampton. All historical boundary information is accurate and relevant to the 1860-1890 research window.\n\nJunior: (Pass - Strong jurisdiction analysis with accurate county and diocesan boundaries. Correctly explains where records would be held before 1811 and how church jurisdiction changes affect Catholic research.)"
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_022`** — `rubric` / `Record availability`\nLLM: 3 → Junior: 3\n\n> The guide names specific record classes with start dates and repositories: vital records (civil marriage from 1870 via volume 007936753; no reliable statewide birth/death registration 1860-1890); church records (1842-1895 via volume 007936751, Diocese of Philadelphia); census (1860, 1870, 1880, 1900 federal; 1890 destroyed; state tax assessments from 1853); probate (1811 onward, volume 007936749 1851-1930); naturalization (1849-1915 via volume 007936750, pre-1906 in county courts, post-1906 in federal courts); land/deeds (1815-1900 via volume 007936752, 22% indexed); military (Civil War service at NARA, pension files, draft registrations). Repositories are clearly identified: FamilySearch (digitized volumes with indexing status), Ancestry, county courthouse, Pennsylvania State Archives, Diocese of Philadelphia, NARA, Schuylkill County Historical Society. The guide distinguishes indexed from browse-only collections and notes which records require onsite research.\n\nJunior: (Pass - Comprehensive record coverage with clear repository guidance and access expectations. Good distinction between indexed and browse-only resources, helping researchers prioritize their searches effectively.)"
+    },
+    {
+      "test_id": "ut_locality_guide_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_022`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The guide provides actionable search order and specific pitfalls. It recommends starting with coal-region specialized indexes (Lackawanna Valley Anthracite Index, payroll-derived sources) before standard civil records, because civil vital registration was absent/unreliable 1860-1890. It specifies that Catholic parish baptismal and burial registers (Diocese of Philadelphia for Schuylkill) are the primary substitute for vital events. It names the triennial state tax assessments (1853 onward) as a 1890-census substitute. It warns to search all three pre-1906 courts (Quarter Sessions, Common Pleas, Orphans' Court) for naturalizations, not just one. It flags that the 1880 census is the first to record household relationships. It cautions that many miners never owned land (company patch towns) so absence from deed records does not mean absence from county. It recommends checking the Miners' Journal for accident/inquest reports. It notes that payroll indexes name individual workers while accident reports are organized by colliery. It explains diocesan jurisdiction changes so researchers search the correct archive. All recommendations are grounded in the tool responses and wiki content.\n\nJunior: (Pass - Excellent research guidance that goes beyond generic genealogy advice. Strong use of coal-region resources, record substitutes, and jurisdiction-specific archive recommendations.)"
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_023`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request fully: it built a locality research guide for Vermont covering the pre-statehood period (late 1700s, before 1791), pulled the Vermont FamilySearch wiki place page (via multiple wiki_place_page calls with different sections), and incorporated the distinctive content from that response (1771 Grant Survey Schedule, 1857 registration start, town histories). The guide covers jurisdiction overview, boundary changes, available record types (vital, church, census, probate, land, military, cemetery, newspaper, tax), repository guide (online and physical), records not online, known record losses, and research tips. The guide explicitly addresses the pre-statehood period's three jurisdictional identities (New Hampshire Grants, New York contested authority, Vermont Republic). No major required element was omitted.\n\nJunior: (Pass - Complete and well-balanced guide. Strong handling of Vermont's overlapping pre-statehood jurisdictions (New Hampshire Grants, New York, and Vermont Republic) and effective integration of the distinctive wiki content into practical research guidance.)"
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_locality_guide_023`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The guide contains substantial accurate content grounded in the wiki_place_page response (1771 Grant Survey Schedule, 1857 civil registration start date, town histories reprinting colonial records). However, multiple concrete factual claims lack grounding in the tool responses returned. The guide names specific FamilySearch collections (e.g., 'indexed + images' for 1790 census, 'subscription' access levels for Ancestry/Fold3) without any collections_search or volume_search tool call to support these claims. The guide also attributes content to FamilySearch Wiki pages (Vermont Vital Records, Land and Property, Church Records, Probate Records, Census, Naming Customs) that were actually called but returned only generic Genealogy Records content, not Vermont-specific information. The guide correctly notes this gap in a quirk ('The FamilySearch Wiki pages...resolved to a generic Genealogy Records page'), but then proceeds to make specific claims about record types and repositories as if they were Vermont-verified, when they are actually generic guidance. The guide's statement that 'The external_links_search returned 6 curated links for Vermont, all generic national-level repositories' is accurate attribution. The core Vermont-specific facts (1771 Grant Survey Schedule with ~1,800 grantees, New Hampshire Grants vs. New York competing authority, 1857 statewide registration, town histories) are well-grounded and correct.\n\nJunior: (Partial - Strong on the Vermont-specific facts returned by the tools, but some collection descriptions and repository claims exceeded the available evidence. Keep record-access and collection-specific statements tightly tied to what the tools actually returned.)"
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_023`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. The place_search calls used 'Vermont' and 'United States' context (expected ~placeName). The wiki_place_page calls used 'Vermont, United States' standardPlace with various sections (home, getting_started, online_records, research_tips) matching expected ~Vermont. The wiki_search query was semantically appropriate for the topic. The external_links_search and wikipedia_search calls used appropriate arguments. The research_append call successfully persisted the locality entry with valid schema. No critical identifiers were wrong, no calls landed in fixture_not_found, and no validation errors occurred. One call (place_population) returned empty results, but the args were correct; the tool simply had no data for that query.\n\nJunior: (Pass - Tool arguments were consistently well-formed and matched the intended jurisdiction. The skill handled empty-result tools appropriately and successfully persisted the locality entry without validation errors.)"
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_023`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> The guide correctly identifies and explains the three successive jurisdictions for Vermont during the target period: New Hampshire Grants (ca. 1749–1764), Province of New York contested authority (1764–1777), and Vermont Republic (1777–1791), with Vermont statehood in 1791. The guide accurately notes that Benning Wentworth issued New Hampshire grants, that New York then asserted authority and issued competing grants, and that Vermont declared independence in 1777. The boundary changes section correctly explains that the Connecticut River forms the eastern boundary with New Hampshire and that county structure was rudimentary in the early Republic. The guide properly accounts for the fact that no modern Vermont county system existed during the pre-statehood period and that the town was the operative record-keeping unit. The jurisdictional framework directly addresses how record-set splits occurred (New Hampshire records, New York records, Vermont Republic records, and post-1791 Vermont records are held in different repositories).\n\nJunior: (Pass - Excellent treatment of Vermont's overlapping jurisdictions and record custody issues. Clearly explains why records may appear in New Hampshire, New York, Vermont Republic, or post-statehood Vermont collections depending on the date of the event.)"
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_locality_guide_023`** — `rubric` / `Record availability`\nLLM: 2 → Junior: 2\n\n> The guide names specific record classes (vital records, church registers, census, probate, land grants, military, cemetery, newspaper, tax lists) with start dates and repositories. However, the grounding of specific record availability is partial. For records directly mentioned in the wiki_place_page response, the guide is accurate: the 1771 Grant Survey Schedule (1,800 grantees), 1857 statewide civil registration start, town clerk records surviving unevenly from 1770s, town histories reprinting colonial proprietors' records. But for many other record types (probate, church, land), the guide provides generic guidance without Vermont-specific confirmation of what actually exists or is indexed. The guide correctly notes that the FamilySearch Wiki topic-specific pages (Vital Records, Land and Property, Church Records, Probate Records, Census, Naming Customs) returned only generic content, not Vermont-specific details. The guide then acknowledges this as a 'coverage gap in wiki coverage' but proceeds to describe record types and repositories in general terms. The guide does not assign specific digitization levels (indexed/imaged vs. physical-only) to Vermont records except where grounded in the wiki response (1790 census 'indexed + images' on Ancestry/FamilySearch, Revolutionary War pension files on Fold3/Ancestry). The guide appropriately distinguishes what is online vs. physical-only, but the Vermont-specific availability claims beyond the wiki_place_page response are not independently verified.\n\nJunior: (Partial - Good acknowledgment of source limitations, but the guide relies too heavily on generic record descriptions where Vermont-specific availability was not confirmed. Stronger separation between verified local evidence and general genealogical guidance would improve completeness.)"
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_locality_guide_023`** — `rubric` / `Research strategy`\nLLM: 3 → Junior: 3\n\n> The guide provides actionable, specific research strategy grounded in the wiki_place_page response. The research tips section includes: (1) Start with the 1771 Grant Survey Schedule (named specifically, with ~1,800 grantees and New Hampshire-grants-rejected-by-New-York provenance from the wiki response); (2) Identify the town first, then county (town-based record-keeping); (3) Search both New Hampshire and New York grant records (addressing the competing grant systems); (4) Town histories are a primary finding aid (directly from wiki response, noting 1860–1900 publication and reprinting of colonial proprietors' records); (5) Use 1790 federal census as an anchor; (6) Check Revolutionary War military records; (7) Cross the Connecticut River into New Hampshire; (8) Cross into New York; (9) Cross into Quebec; (10) Tax lists substitute for missing census. The guide also names specific pitfalls: no statewide civil vital registration before 1857, competing land-grant systems creating overlapping claims, frontier settlement meaning many events were never recorded, town-level rather than county-level record-keeping. The strategy is specific, actionable, and grounded in the wiki_place_page response and the historical context of the pre-statehood period.\n\nJunior: (Pass - Well-grounded research plan with clear next steps and strong treatment of competing jurisdictions, cross-border research, and missing records. Most recommendations are directly supported by the locality evidence and historical context.)"
+    }
+  ]
+}
