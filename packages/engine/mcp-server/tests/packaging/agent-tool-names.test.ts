@@ -164,8 +164,8 @@ const manifestTools = new Set<string>(
  *   Its tools list resolved to nothing: unrecognized [ToolSearch].
  *
  * The three MCP entries are not named as unrecognized: the deny had already
- * removed them. `image-reader` grants exactly one tool, so it is one entry from
- * this shape.
+ * removed them. An agent that grants exactly one tool is one entry from this
+ * shape.
  *
  * No agent ships a deny today (see the header), so the per-agent arm below
  * cannot fail on the current corpus — which is why the rule is ALSO pinned
@@ -295,7 +295,8 @@ describe("plugin agent tool names", () => {
         if (key === "disallowedTools" && entries.length === 0) continue;
 
         // An agent whose AGENT_PERMISSIONS row contains no manifest MCP tool
-        // holds none by design (currently: translation, which holds only Read).
+        // holds none by design (currently none; translation was the last, until
+        // #3524 gave it `research_log_append`).
         // AGENT_PERMISSIONS stores BARE names ("research_append"), so testing
         // for mcp__ prefix — as the previous version did — was always false and
         // always waived the assertion. Test manifest membership instead.
@@ -474,10 +475,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
-  "image-reader.md": {
-    tools: ["image_transcribe"],
-    denies: [],
-  },
   // Reads text and writes it through extraction_append's `documents` input,
   // which classifies in code and refuses any classification field (spec §11.7).
   // No research_log_append: extraction_append writes the log entry itself.
@@ -551,12 +548,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // is weaker than a hook and is stated so a reviewer weighs it rather than
   // assuming a guard exists.
   //
-  // `image_transcribe` is the page reader the monolithic skill reached by
-  // delegating to `@plugin:image-reader` — a route an agent does not have. The
-  // base64 rationale for that delegation does not transfer: `image_transcribe`
-  // OCRs host-side and returns text, so nothing accumulates in this agent's
-  // context. `image_read` is deliberately NOT granted; it returns the page
-  // inline and a volume browse overflows the transport (PR #718).
+  // `image_transcribe` is the page reader: it OCRs host-side and returns a
+  // staged ref, a digest and `found`, not the text (#2490), and `sidecar_read`
+  // reads a page the agent needs by that ref. `image_read` is deliberately NOT
+  // granted; it returns the page inline and a volume browse overflows the
+  // transport (PR #718).
   // citation (issue #2799) holds exactly what the skill it replaced declared —
   // `research_append` and `validate_research_schema` — plus two additions with
   // a reason each. `wiki_read`: the probate-office lookup that replaced the
@@ -605,12 +601,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
-  // research.json. It persists nothing, so it holds no writer tool and no hook
-  // routes anything to it.
+  // research.json. `research_log_append` (#3524): inside a project it logs its
+  // result as one `convert_dates` entry; that tool carries no `section`, so no
+  // hook routes anything to it.
   "convert-dates.md": {
     tools: [
       "Read",
       "convert_calendar",
+      "research_log_append",
     ],
     denies: [],
   },
@@ -738,8 +736,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
   // `person_record_matches` for the pending matches, `research_query` to find a
   // hint the project already extracted, `record_read` per hint,
-  // `image_transcribe` to read the image before recommending against a hint (it
-  // calls the tool itself; an agent cannot spawn image-reader), `person_read`
+  // `image_transcribe` + `sidecar_read` to read the image before recommending
+  // against a hint (the tool stages the page and returns its ref, #2490), `person_read`
   // and `Read` for the tree person. Record mode writes one log entry per decided
   // hint through `research_log_append`. No `research_append`, so no hook lane.
   "search-hints.md": {
@@ -751,6 +749,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_read",
       "research_log_append",
       "research_query",
+      "sidecar_read",
     ],
     denies: [],
   },
@@ -785,6 +784,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "image_transcribe",
       "research_append",
       "research_log_append",
+      "sidecar_read",
       "volume_search",
     ],
     denies: [],
@@ -875,17 +875,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `Read` after issue #3260: `census_children_gap` reads the mother's children
   // from the tree itself (tree mode), and an empty folder is detected from
   // `person_warnings`' own `no_project` answer, so neither needs a file read.
-  // Writes nothing.
+  // `research_log_append` (#3524): inside a project it logs its report as one
+  // `check_warnings` entry, and writes nothing else.
   "check-warnings.md": {
-    tools: ["person_warnings", "census_children_gap"],
+    tools: ["person_warnings", "census_children_gap", "research_log_append"],
     denies: [],
   },
 
   // The folded validate-schema skill (issue #2798) holds the one tool that skill
   // declared. No `Read`: the tool reads both project files itself, and nothing
-  // in the body reads a file directly. Writes nothing, so no hook route.
+  // in the body reads a file directly. `research_log_append` (#3524): inside a
+  // project it logs its report as one `validate_schema` entry; that tool carries
+  // no `section`, so no hook route.
   "validate-schema.md": {
-    tools: ["validate_research_schema"],
+    tools: ["validate_research_schema", "research_log_append"],
     denies: [],
   },
 
@@ -937,8 +940,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // translation holds `Read` for an image file and the Narration line, and
+  // `research_log_append` (#3524): inside a project it logs its translation as
+  // one `translation` entry. No other MCP tool.
   "translation.md": {
-    tools: ["Read"],
+    tools: ["Read", "research_log_append"],
     denies: [],
   },
 

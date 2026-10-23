@@ -437,7 +437,7 @@ probe-bash-deny: $(ENGINE_BUILD) ## D1–2 probe: is disallowed_tools=["Bash",�
 	  uv run python -m dev.p1.probe_bash_deny
 
 .PHONY: probe-registration
-probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn image-reader by that name? (1 billed session + 1 subagent turn)
+probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn convert-dates by that name? (1 billed session + 1 subagent turn)
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python -m dev.p1.probe_registration

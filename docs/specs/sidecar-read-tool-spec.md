@@ -293,8 +293,8 @@ the §6 classification is unchanged.
   three spellings and **`Read` leaves the list**. Two consequences, recorded in
   `gps-mentor-agent-spec.md`: the mentor no longer holds any route to a project
   file other than the MCP tools, and it is now exposed to a registrar move
-  exactly as the other MCP-only agents (`record-structurer`, `image-reader`,
-  `person-evidence`) are — the built-in `Read` is a grant that can never miss, so an agent
+  exactly as the other MCP-only agents (`record-structurer`, `person-evidence`)
+  are — the built-in `Read` is a grant that can never miss, so an agent
   holding it spawns with `Read` alone on a registrar miss instead of being
   refused. gps-mentor was one such agent; `proof-conclusion` and
   `research-exhaustiveness` still declare a bare `Read` and still are.
