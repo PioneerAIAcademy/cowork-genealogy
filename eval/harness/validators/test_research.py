@@ -751,11 +751,16 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
 
     Deliberately narrow. A blanket "questions[] must not change" would
     false-fail the legitimate routes — `question-selection` may append a
-    follow-on question, which is one of this test's `correct_skill` answers.
+    follow-on question, which the explanation names as a legitimate answer.
     So this names the specific deltas that are never legitimate here: the
     target question's `status` and `search_stop`, and
     `project.status`. Same shape as
     `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
+
+    Only a writer the test lets run can trip it: every agent spawn a test does
+    not name in `execution.run_agents` is denied. ut_research_rpn runs
+    `research-plan` and `question-selection`, so a reopen by `proof-conclusion`
+    is not observable there.
     """
     if "no-plan-writes-when-resolved" not in test.get("tags", []):
         pytest.skip("not a no-plan-writes-when-resolved scenario")
@@ -828,7 +833,9 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     research/SKILL.md's Second-opinion section requires both on the gps-mentor
     delegation. Both sit verbatim in the recorded spawn args, so they are read
     from the hook records rather than left to the judge, which cannot see them
-    and has scored a spawn 3/3 on prose alone.
+    and has scored a spawn 3/3 on prose alone. Matched case-insensitively: the
+    agent reads "Focus: on-demand. Target_id: project." as both named, and a
+    case-sensitive match failed exactly that spawn.
     """
     if _DELEGATION_FOCUS_TAG not in (test.get("tags") or []):
         pytest.skip("not a delegation-focus test")
@@ -846,7 +853,7 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     missing = [
         field
         for field in ("focus:", "target_id:")
-        if not any(field in p for p in prompts)
+        if not any(field in p.lower() for p in prompts)
     ]
     assert not missing, (
         f"The '{expected}' delegation omits {missing}. research/SKILL.md "
