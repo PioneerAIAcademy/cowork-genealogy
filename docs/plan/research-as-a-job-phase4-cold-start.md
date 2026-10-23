@@ -223,7 +223,7 @@ Adding a signal to `person_search`'s response is not one file:
 ## Acceptance — runnable, with a named test
 
 "Ends the turn `decision`, not `no_progress`" was **unrunnable as written**: the `decision`
-outcome and its card exist only on the unmerged `research-as-a-job-phase2` branch, and no
+outcome and its card exist only on the closed `research-as-a-job-phase2` branch (tag `phase2-final`), and no
 Mary-Hales-shaped test exists anywhere — the captures are one-off feeds, not repeatable
 fixtures.
 

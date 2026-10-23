@@ -81,10 +81,14 @@ The other three #2813 items are deliberately NOT here:
   Whichever of #2813-item-3 and #2122 lands second carries the other's edit and re-runs
   `make eval-skill SKILL=init-project`.
 - **Item 7** (viewer) costs no eval run at all — `packages/viewer-ui/` is in no snapshot —
-  but #2813 says to build it with phase 2's "One view of job state", which is **DONE on the
-  unmerged `research-as-a-job-phase2` branch** (29 viewer files, including the `offPlan.ts`
-  group item 7 names), not on `main`. It is independent of this batch and should be planned
-  separately, against whichever base that work ends up on.
+  but #2813 says to build it with phase 2's "One view of job state". **Corrected
+  2026-10-23: that work is now ON `main`** — it landed with #3662, and `offPlan.ts`,
+  `JobStateBadge.tsx` and `job_state.py` are all there. This paragraph previously said it
+  was only on the `research-as-a-job-phase2` branch, which was true when written and is
+  not now; the branch itself was closed unmerged on 2026-10-23 (tag `phase2-final`).
+
+  So item 7 no longer waits on a base. It is independent of this batch and can be planned
+  against `main` directly.
 
 ## Blocking dependency
 

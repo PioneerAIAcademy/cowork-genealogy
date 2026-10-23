@@ -1,7 +1,7 @@
 # Research as a job — phases 2 to 5, at intent only
 
 > **Status:** PARTLY BUILT. *Before phase 2* and phases 2-5 are built on the
-> unmerged `research-as-a-job-phase2` branch; the `delivered` exit landed separately on
+> closed `research-as-a-job-phase2` branch (tag `phase2-final`); the `delivered` exit landed separately on
 > `main`. The rest is **deliberately not specified**. Phases 0 and 1 were built by
 > PR #2870, whose body lists each item (S2, 0a, 0b, 1a–1e); their plan is deleted. This file
 > records where that design goes next, at the level of what and why, with acceptance criteria
