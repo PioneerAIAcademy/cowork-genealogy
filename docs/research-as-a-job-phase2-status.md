@@ -470,8 +470,10 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    the behaviour table. The example a reader would copy carried no `pick`.
 
 16. **The deferred "candidate cards" item is smaller than the parent plan thought, and
-   measured now.** `dev/probe-candidate-distinguishability.json`, four live queries: every
-   flood query returned birth/death facts on **5 of 5** top candidates, distinguishable
+   measured now.** `dev/probe-candidate-distinguishability.ts` (`3551593027`, at tag
+   `phase2-final`; not on `main`), four live queries: every
+   flood query returned birth/death FACT TYPES on **5 of 5** top candidates (dated on
+   3 of 5 and 1 of 5 in the two flood queries), distinguishable
    4/5 (hales), 2/5 (smith), 5/5 (hales-year-place). So lifespan and places need no
    enrichment — `person_search` already carries them and the ask is answerable today.
    Only parents and spouse are genuinely absent. The parent's "its top candidate had
@@ -480,7 +482,8 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    20 by default and all 20 share the top score.
 
    **And the flood fixture was unrealistic — now FIXED.**
-   `person-search-hales-namesakes.json` gave its five tied candidates no facts at all,
+   `person-search-hales-namesakes.json` (at tag `phase2-final`; not on `main`, where
+   no test references it) gave its five tied candidates no facts at all,
    so `ut_init_project_012` measured an ask over five identical blank options. Replaced
    with a **live capture used verbatim**: 20 tied (not 5), 8 distinct given names, 10 of
    20 with a birth date, 17 with a residence, and **0 of 20 with no facts at all**. The
