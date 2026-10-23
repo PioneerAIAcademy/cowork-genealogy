@@ -72,6 +72,15 @@ FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 # refuse them; the false deny is the worse failure. See the guardrail spec.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
+# The delegation tools, denied only for `subagent_type: "fork"`. From Claude Code
+# 2.1.302 the SDK and the desktop app offer a fork by default: a copy of the main
+# thread with its context and tools, which runs a step without the plugin agent's
+# instructions or `tools:` list. The hosted path, both harnesses and the prototype
+# worker set CLAUDE_CODE_FORK_SUBAGENT=0, so no test ever sees one; Cowork's
+# environment is not ours to set, and this hook is the one thing that reaches it.
+DELEGATION_TOOLS = ("Agent", "Task")
+FORK_SUBAGENT_TYPE = "fork"
+
 # A path never contains a newline, and is never longer than the platform allows.
 # Both bounds exist to keep the scan below off file CONTENT travelling in the
 # same payload — but only the newline bound does real work there, since content
@@ -334,6 +343,13 @@ REASON = (
     "external-collections.json is written only by external_links_search given a projectPath."
 )
 
+FORK_REASON = (
+    '{tool} with subagent_type "fork" is disabled in this plugin: a fork runs the step '
+    "without the plugin agent's instructions and tool limits. Delegate to the named "
+    "plugin agent the step calls for (its name is the subagent_type), or do the step "
+    "yourself."
+)
+
 
 def _basename(value: str) -> str:
     """The trailing segment, under either separator. Splitting on "/" alone made
@@ -586,6 +602,15 @@ def decision(payload: dict) -> dict:
     tool_input = payload.get("tool_input")
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     tool_name = str(payload.get("tool_name") or "")
+
+    if tool_name in DELEGATION_TOOLS and tool_input.get("subagent_type") == FORK_SUBAGENT_TYPE:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": FORK_REASON.format(tool=tool_name),
+            },
+        }
 
     denied = owner_denied(tool_name, tool_input, payload)
     if denied is not None:
