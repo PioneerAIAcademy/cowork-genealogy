@@ -160,6 +160,10 @@ def classify(response_summary: str) -> str:
     responses falling into `unclassified`. Unescaping below is what makes the
     `"error":` key match safe on both shapes — and the key match is in turn what
     keeps a transcription that merely quotes the word from reading as a failure.
+
+    Since #2490 a staged read carries `staged`/`digest` and no `transcription`,
+    so the summary holds only the 300-char `digest.excerpt` of the page; every
+    marker below is a response key, not page text, so both eras classify alike.
     """
     # Unescaped before matching. `response_summary` has two shapes, and in the
     # escaped one the document's own keys read `\"error\"` — which contains

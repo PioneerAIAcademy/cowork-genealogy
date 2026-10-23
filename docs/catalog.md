@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 54 tools.
+The MCP server exposes 55 tools.
 
 ### FamilySearch records and places
 
@@ -83,6 +83,7 @@ way project state changes.
 | `rank_search_matches` | Rank search results against a named subject | None |
 | `convert_calendar` | Convert between Julian/Gregorian, Quaker, and French Republican dates | None |
 | `census_children_gap` | From a mother's 1900/1910 US census children-born and children-living counts, work out how many of her children the tree is missing and each one's exact birth window, bounded by the census days | None |
+| `timeline_build` | Build or refresh a person's timeline in code from the records linked to them (never tree facts): one event per record and event, with the gaps a researcher would chase — census years FamilySearch has indexed for the place (a table in code, never the catalog), a missing marriage, 20+ silent years, a death without a burial — written to `research.json` `timelines` | None |
 | `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, a state/regional digital newspaper archive, the National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, American Ancestors, or the Italian Genealogy forum) from structured search attributes, or a parish-page link for the Archion and Matricula church-book browse sites, including each site's access classification (free, free-but-bot-protected, or subscription) | None |
 
 ### Reference and context
@@ -93,7 +94,7 @@ way project state changes.
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
-| `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
+| `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter). Requires `projectPath`: the page is staged and the tool returns `staged.resultsRef`, a `digest` and `found`, not the text — read it with `sidecar_read`, extract it by handing the ref to `record-structurer`. No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. | OpenRouter (+ OAuth for imageId/ark) |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
@@ -182,7 +183,7 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships thirty Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-nine Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -207,7 +208,6 @@ don't load it explicitly.
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Given a mother's 1900 or 1910 US census counts of children born and living, it also reports which of her children the tree is missing and when each was born. With no project yet, it hands you to project creation first. Inside a project, saves its report as one research-log entry; writes nothing else. The tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" / "The 1900 census says she had 6 children, 5 living — who is missing?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Returns narrative context and, inside a project, logs it to the research log: one entry per wiki/Wikipedia lookup and one `historical_context` entry carrying the full overview, plus a Search implications block handed back to hypothesis-tracking and research-plan. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
-| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `search-records` and `search-full-text` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and records the guidance, citing the wiki pages it came from, as one entry in the project's research log (an empty search is logged as a nil entry). With no project it returns the guidance in the reply instead. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and records the article summary as one entry in the project's research log. One lookup, a template it carries in its own body, one log entry. With no project it returns the filled template in the reply instead. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
 | **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. Inside a project, saves its result as one research-log entry; writes nothing else. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |

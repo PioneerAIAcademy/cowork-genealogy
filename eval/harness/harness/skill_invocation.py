@@ -1171,9 +1171,17 @@ EXTRACTION_AGENT_NAMES = frozenset(
     {"record-structurer", "search-records", "record-extractor"}
 )
 
+#: Members of DEDICATED_AGENT_NAMES whose agent file no longer ships. Kept in
+#: that set, as `record-extractor` is kept above, so committed runs that spawned
+#: them replay under the verdict they were graded with; no new run can carry
+#: one. `image-reader` was retired by #2490: pages are read with
+#: `image_transcribe` directly.
+RETIRED_DEDICATED_AGENT_NAMES = frozenset({"image-reader"})
+
 DEDICATED_AGENT_NAMES = frozenset(
     {
         "record-structurer",
+        # Retired (#2490); see RETIRED_DEDICATED_AGENT_NAMES below.
         "image-reader",
         "gps-mentor",
         # Added when proof_summaries moved behind the hook's caller check: the

@@ -479,6 +479,32 @@ def spawn_stub_denial(
     return stub_denial(name, stub_agents[name])
 
 
+def default_spawn_denial(
+    tool_name: str,
+    input_data: dict[str, Any],
+    live_agents: set[str] | None,
+    stub_skills: dict[str, str | None],
+) -> dict[str, Any] | None:
+    """The stub denial for a main-thread spawn of any agent not in `live_agents`.
+
+    Deny-by-default (#3568): the orchestrator passes the suite's own agent plus
+    the test's `execution.run_agents`, and every other spawn — a built-in type
+    such as `general-purpose` included — is denied, so an agent no test opts in
+    never runs and its body cannot change the result. A spawn with no
+    `subagent_type` is a general-purpose spawn and is named so. A name the test
+    also lists in `stub_skills` (a skill-and-agent name) keeps its canned text.
+    `live_agents=None` (callers outside the unit orchestrator) denies nothing.
+    The hook reaches this only after the routing short-circuit, `stop_at_stub`
+    and explicit `spawn_stub_denial` branches have passed on the spawn.
+    """
+    if live_agents is None or tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
+        return None
+    name = (input_data.get("tool_input") or {}).get("subagent_type") or "general-purpose"
+    if name in live_agents:
+        return None
+    return stub_denial(name, stub_skills.get(name))
+
+
 def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
     """Whether a streamed ToolUseBlock hands off to a name in `stub_skills`.
 
@@ -542,8 +568,28 @@ _AGENT_RETURN_TRAILERS = (
 )
 
 
+# Claude Code 2.1.294 (SDK 0.2.165) wraps a subagent's return in a one-line
+# "[Subagent hand-back] ... The report follows:" header and indents every line
+# of the report by two spaces. Graded raw, no line of the agent's own text starts
+# at column zero, so every line-anchored check fails on a correct return. The
+# header may follow runtime notes ("Notes above this frame…"), so it is found at
+# the start of any line, never inside one.
+_HAND_BACK_HEADER = re.compile(r"^\[Subagent hand-back\][^\n]*\n", re.M)
+
+
+def strip_agent_return_frame(text: str) -> str:
+    """The report inside the runtime's hand-back frame, at its own indentation,
+    after any notes the runtime put above the frame."""
+    m = _HAND_BACK_HEADER.search(text)
+    if not m:
+        return text
+    lines = text[m.end():].split("\n")
+    return text[: m.start()] + "\n".join(line[2:] if line.startswith("  ") else line for line in lines)
+
+
 def strip_agent_return_trailer(text: str) -> str:
-    """The agent's own text, with runtime-appended trailers removed."""
+    """The agent's own text, with the runtime's frame and trailers removed."""
+    text = strip_agent_return_frame(text)
     for pattern in _AGENT_RETURN_TRAILERS:
         text = pattern.sub("", text)
     return text.strip()
@@ -866,6 +912,7 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
     tool_search: bool = True,
@@ -940,6 +987,10 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
+    # Deny-by-default (#3568): the agents a main-thread spawn may reach for real.
+    # Any other spawn is denied after the branches above (`default_spawn_denial`).
+    # None = deny nothing (callers outside the unit orchestrator).
+    _live_agents = set(live_agents) if live_agents is not None else None
     # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
     # stubbed name, by `Skill` call or agent spawn, ends the run through the
     # stop path of the negative-test short-circuit above, once the turn that
@@ -1101,6 +1152,10 @@ async def run_skill(
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
             return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
+            return denial
+        elif (denial := default_spawn_denial(tool_name, input_data, _live_agents, _stub_skills)):
+            # Last on purpose: the short-circuit, the stop and an explicit stub's
+            # canned text all win over the default (#3568).
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
