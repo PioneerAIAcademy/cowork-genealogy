@@ -2,7 +2,7 @@
 
 **Status, 2026-10-23:** PR #3262 is CLOSED and its branch will not be merged, so the
 "before un-draft" framing below is spent. The walkthrough is NOT: what it tests is the
-phase-2 UX, which shipped through #3662 and is on `main`. Kept rather than deleted
+phase-2 UX, which shipped through #3577 and #3662 and is on `main`. Kept rather than deleted
 because it is the hand-test script for that UX and the step-mode work will want it.
 Anything it says is only on the branch now lives at tag `phase2-final`.
 

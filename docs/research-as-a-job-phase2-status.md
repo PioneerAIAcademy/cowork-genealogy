@@ -14,9 +14,9 @@ without. Re-cutting what had genuinely not landed was smaller and safer than res
 
 | Landed from the branch | |
 |---|---|
-| #3577 | step-mode phase 0 measurements |
-| #3589 | phase-0 records |
-| #3662 | the orphan reaper, the web-tier routes, job state |
+| #3577 | the front door, `rejected_links`, the reading experience, and the viewer's job-state half |
+| #3589 | step-mode phase 0 measurements and decisions 23-25 |
+| #3662 | the orphan reaper, the web-tier routes, `job_state.py` |
 | #3674 | the step-mode plan scope correction |
 
 | Re-cut from `main` afterwards | |

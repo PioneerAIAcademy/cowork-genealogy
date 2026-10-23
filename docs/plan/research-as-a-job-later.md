@@ -68,7 +68,8 @@ remains the switch (the alpha is not hardened, ruled 2026-09-25).
 **The default web path never enters the router.** The web client prefixes the first message
 so `init-project` runs; it hands to `question-selection` and `research-plan`, and nothing in
 that chain invokes `research`. The Stop hook still keeps the run going, but its nudge only
-asks for "the next GPS sub-skill", so the router's contracts — the second question,
+asks for "the next GPS sub-skill" — reworded to name the `research` skill, which exists —
+so the router's contracts — the second question,
 completion routing — hold only if the model happens to choose it. In issue #2864 it did not,
 and issue #2927 has it skipped about half the time on drive-forward messages. Phase 1's PASS
 entered as `/research --autonomous` on a seeded fixture, so this path is unmeasured.

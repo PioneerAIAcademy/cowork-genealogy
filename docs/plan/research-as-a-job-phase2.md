@@ -44,7 +44,8 @@ Three findings bind this plan, each measured rather than assumed:
 ## R1 — re-enter the router from `PreToolUse`
 
 **The problem, restated against the code.** `CONTINUE_REASON`
-(`app/agent/continue_policy.py:170`) says *"invoke the next GPS sub-skill now"*. It
+(`app/agent/continue_policy.py:331-337`) said *"invoke the next GPS sub-skill now"*, now
+reworded to name the `research` skill. It
 never names the router, so the router's contracts — the second question, completion
 routing — hold only when the model happens to pick it. And it rides `make_stop_hook`,
 which fires only at a voluntary yield.

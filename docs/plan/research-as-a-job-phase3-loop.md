@@ -1,7 +1,8 @@
 # Phase 3 — the loop (detailed pass)
 
 **Status, corrected 2026-10-23:** this said "`main` has none of it", and that is no
-longer true. Items 3, 4 and 5, and item 1's UI half, landed with #3662 — `rejected-links.ts`,
+longer true. Items 3, 4 and 5, and item 1's UI half, landed with #3577 (`9bb384fd5d`) —
+`rejected-links.ts`,
 `review-ranking.ts`, `plan-item-plausibility.ts` and `DecisionCard.tsx` are all on `main`.
 
 What is NOT on `main` is item 1's **back half**, the decision exit itself
