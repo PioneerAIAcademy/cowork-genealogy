@@ -188,7 +188,7 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 - [ ] **Gaps.** Copy `start` and `end` from the bounding events, and never pad them. The tool writes four kinds:
   - **Census, `high`.** A census year in which any event falls is in hand, whatever the event's type. Each other year the rules below expect is one `expected_events` entry. It names the year and the table row's jurisdiction label just before "census" ("1870 United States census", "1855 New York census", "1890 Denmark census"), so that `timelineCensus1890Invariants` keeps a non-US 1890 census. When a national row and a state or provincial row both cover a year, use the national label.
     - **Which years:** judge them per interval, strictly between consecutive events that carry a `standard_place`. A year inside an interval counts only when both events are in the same country (the last comma segment) and a table row for that year covers the earlier event's place. A row covers a place when its `covers` value is one of that place's comma suffixes, compared as standard-place text. A year between events in two countries expects no census; the 20-year rule covers a long gap there. The span ends at the last record-backed event, or at a linked death.
-    - **Heads-only years.** A row marked `heads_only` is expected only when the tree person is male and a linked birth event puts him at 21 or older that year. With no linked birth, the year is not expected.
+    - **Heads-only years.** A row marked `heads_only` is expected only when the tree person is male, a linked birth event puts him at 21 or older that year, and a linked marriage ends before it. With no linked birth or marriage, the year is not expected (lead, 2026-10-23: a heads-only schedule names only household heads, and a missed gap is better than a false one).
     - **The 1890 check.** Before the write, test each census `expected_events` entry with `timelineCensus1890Invariants` (`research-append.ts`). Drop any entry it refuses, note the drop in that gap's `notes`, and drop a gap left with no entry. Otherwise one refused entry refuses the whole timeline write.
   - **Marriage, `high`.** A linked assertion names a child of the person, and no marriage event comes before the first child's birth.
   - **Twenty or more years between consecutive events, `high`.**
@@ -239,7 +239,7 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
   - a Places lookup that never answers leaves its census years and distances out, and the call still returns before the deadline;
   - against the table:
     - Ohio gets the federal years, and a state census year counts for a place in that state, never for a place in another state;
-    - a US man born 1800 expects 1830 and 1840; a US woman, and a man with no linked birth, expect neither;
+    - a US man born 1800 and married in 1824 expects 1830 and 1840; one married in 1838 expects 1840 only; an unmarried man, a US woman, and a man with no linked birth expect neither;
     - Ireland expects 1901 and 1911, and never 1821–1851;
     - an Ontario place expects the 1891 Canada census;
   - a US subject alive across 1890: the timeline is written, and no entry names an 1890 census;

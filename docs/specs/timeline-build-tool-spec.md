@@ -126,8 +126,10 @@ after the earliest year that event allows. When its earlier side is open
   allows (an unbounded side expects nothing), one census-table row of year Y
   covers both A's and B's places, and no event's span is exactly Y. A heads-only
   row is expected only for a male whose latest possible linked birth year makes
-  him 21 or older in Y; with no linked birth, or one open on its later side,
-  never. Each entry reads
+  him 21 or older in Y and whose linked marriage ends before Y; with no linked
+  birth or marriage, or a birth or marriage open on its later side, never. Such
+  a schedule names only household heads, and a man of 21 was often not yet one;
+  a missed gap is better than a false one (lead, 2026-10-23). Each entry reads
   `"<year> <label> census"`, the national row's label when a national and a
   state row both cover Y. Before the write, each entry is tested with
   `timelineCensus1890Invariants`; a refused one is dropped and noted.

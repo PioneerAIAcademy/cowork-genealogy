@@ -344,25 +344,52 @@ describe("census gaps", () => {
 });
 
 describe("heads-only schedules", () => {
-  const born = (who: any, date?: string) =>
+  // A heads-only schedule names only household heads, so a man is expected in
+  // one only once he must be 21 and a linked marriage has ended before it.
+  const born = (who: any, date?: string, married?: string) =>
     plan(
       project([
         ...(date ? [{ fact: "birth", date, sp: PA, record: "ark:/61903/1:1:B" }] : []),
+        ...(married ? [{ fact: "marriage", date: married, sp: PA, record: "ark:/61903/1:1:M" }] : []),
         { fact: "residence", date: "1825", sp: PA },
         { fact: "residence", date: "1845", sp: PA },
       ]),
       who,
     );
-  it("a US man born 1800 expects 1830 and 1840", async () => {
-    expect(census(await born(man, "1800"))).toEqual(["1830 United States census", "1840 United States census"]);
+  it("a US man born 1800, married 1824, expects 1830 and 1840", async () => {
+    expect(census(await born(man, "1800", "1824"))).toEqual(["1830 United States census", "1840 United States census"]);
+  });
+  it("an unmarried man of 21 or older expects neither", async () => {
+    expect(census(await born(man, "1800"))).toEqual([]);
+  });
+  it("a man married in 1838 expects 1840 but not 1830", async () => {
+    expect(census(await born(man, "1800", "1838"))).toEqual(["1840 United States census"]);
+  });
+  it("a marriage open on its later side does not count", async () => {
+    // Unplaced, so it is not a census interval's end and only the married test sees it.
+    const p = await plan(project([
+      { fact: "birth", date: "1800", sp: PA, record: "ark:/61903/1:1:B" },
+      { fact: "marriage", date: "after 1828", record: "ark:/61903/1:1:M" },
+      { fact: "residence", date: "1825", sp: PA },
+      { fact: "residence", date: "1845", sp: PA },
+    ]));
+    expect(census(p)).toEqual([]);
+  });
+  it("a man born 1815 who married in 1845 does not expect 1840", async () => {
+    const p = await plan(project([
+      { fact: "birth", date: "1815", sp: OHIO, record: "ark:/61903/1:1:B" },
+      { fact: "marriage", date: "1845", sp: OHIO, record: "ark:/61903/1:1:M" },
+    ]));
+    expect(census(p)).not.toContain("1840 United States census");
   });
   it("a US woman, and a man with no linked birth, expect neither", async () => {
-    expect(census(await born(woman, "1800"))).toEqual([]);
-    expect(census(await born(man))).toEqual([]);
+    expect(census(await born(woman, "1800", "1824"))).toEqual([]);
+    expect(census(await born(man, undefined, "1824"))).toEqual([]);
   });
   it("a birth Aft 1800 has no latest year, so 1840 is not expected", async () => {
     const p = await plan(project([
       { fact: "birth", date: "after 1800", sp: PA, record: "ark:/61903/1:1:B" },
+      { fact: "marriage", date: "1830", sp: PA, record: "ark:/61903/1:1:M" },
       { fact: "residence", date: "1835", sp: PA },
       { fact: "residence", date: "1845", sp: PA },
     ]));
@@ -371,6 +398,7 @@ describe("heads-only schedules", () => {
   it("a birth Bet 1795 and 1805 does not expect 1820 for a possible 15-year-old", async () => {
     const p = await plan(project([
       { fact: "birth", date: "between 1795 and 1805", sp: PA, record: "ark:/61903/1:1:B" },
+      { fact: "marriage", date: "1814", sp: PA, record: "ark:/61903/1:1:M" },
       { fact: "residence", date: "1815", sp: PA },
       { fact: "residence", date: "1823", sp: PA },
     ]));
@@ -411,8 +439,10 @@ describe("death, burial and the span (S1, S5)", () => {
     expect(p!.gaps).toEqual([expect.objectContaining({ start: "1908", end: "1908", expected_events: ["death"], severity: "medium" })]);
   });
   it("an unplaced death ends the census years a later placed event would open", async () => {
+    // Married, so the heads-only 1830 and 1840 are expected; nothing from 1850 on.
     const p = await plan(project([
       { fact: "birth", date: "1800", sp: OHIO },
+      { fact: "marriage", date: "1824" },
       { fact: "residence", date: "1845", sp: OHIO },
       { fact: "death", date: "1847" },
       { fact: "probate", date: "1872", sp: OHIO },

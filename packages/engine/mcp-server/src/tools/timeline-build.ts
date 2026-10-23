@@ -682,6 +682,11 @@ function buildGaps(
   // allows no latest year.
   const latestBirth =
     births.length && births.every((b) => !b.date.bounds.hiOpen) ? Math.max(...births.map((b) => b.date.bounds.hi)) : null;
+  // A heads-only schedule names only household heads, and a man of 21 was often
+  // not yet one; he is expected only once a linked marriage has certainly ended
+  // before the census year (lead, 2026-10-23).
+  const marriedBefore = (year: number) =>
+    sorted.some((e) => e.type === "marriage" && !e.date.bounds.hiOpen && e.date.bounds.hi < year);
   const inHand = (year: number) =>
     sorted.some((e) => e.date.bounds.lo === year && e.date.bounds.hi === year);
   const placed = sorted.map((e, i) => ({ e, i })).filter(({ e }) => e.standardPlace);
@@ -699,7 +704,9 @@ function buildGaps(
       if (inHand(year)) continue;
       let rows = rowsForInterval(A.e.standardPlace!, B.e.standardPlace!, year);
       rows = rows.filter(
-        (r) => !r.headsOnly || (isMale(person) && latestBirth !== null && year - latestBirth >= 21),
+        (r) =>
+          !r.headsOnly ||
+          (isMale(person) && latestBirth !== null && year - latestBirth >= 21 && marriedBefore(year)),
       );
       if (rows.length === 0) continue;
       entries.push(`${year} ${labelFor(rows, A.e.standardPlace!)} census`);
