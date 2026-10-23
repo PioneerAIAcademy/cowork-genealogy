@@ -14,7 +14,7 @@ legitimate. This scenario is what stops the enumerative rule from over-firing.
 - **Questions:** q_001 (Thomas's birth county, in_progress, `question_kind: "targeted"`, no `search_stop`)
 - **Plans, log, sources, assertions, conflicts, hypotheses, proof summaries:** all empty — this is a first plan
 - **Localities:** loc_001, Greene County, Ohio, 1830–1880 — identical to `hale-children-enumerative`
-- **Tree:** identical to `hale-children-enumerative`: Thomas Hale (I1), Sarah Hale (I2), one couple relationship, no children, no sources.
+- **Tree:** identical to `hale-children-enumerative`: Thomas Hale (I1), Sarah Hale (I2) and their five known children, seven persons and eleven relationships, no sources.
 
 ## Grading
 

@@ -40,6 +40,111 @@
         }
       ],
       "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "given": "Mary",
+          "surname": "Hale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "about 1836",
+          "standard_date": "1836",
+          "place": "Greene County, Ohio, United States",
+          "standard_place": "Greene, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "given": "John",
+          "surname": "Hale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "about 1838",
+          "standard_date": "1838",
+          "place": "Greene County, Ohio, United States",
+          "standard_place": "Greene, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Rebecca",
+          "surname": "Hale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "about 1841",
+          "standard_date": "1841",
+          "place": "Greene County, Ohio, United States",
+          "standard_place": "Greene, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N6",
+          "given": "William",
+          "surname": "Hale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "about 1844",
+          "standard_date": "1844",
+          "place": "Greene County, Ohio, United States",
+          "standard_place": "Greene, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Joseph",
+          "surname": "Hale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "about 1847",
+          "standard_date": "1847",
+          "place": "Greene County, Ohio, United States",
+          "standard_place": "Greene, Ohio, United States"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -49,6 +154,76 @@
       "person1": "I1",
       "person2": "I2",
       "facts": []
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I7",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I7",
+      "subtype": "Biological"
     }
   ],
   "sources": []

@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_001",
-    "objective": "Identify all the children of Thomas Hale and his wife Sarah of Greene County, Ohio",
+    "objective": "Besides their children Mary, John, Rebecca, William and Joseph, did Thomas Hale and his wife Sarah of Greene County, Ohio, have any other children? Identify each additional child.",
     "subject_person_ids": [
       "I1",
       "I2"
@@ -18,8 +18,8 @@
   "questions": [
     {
       "id": "q_001",
-      "question": "Who were the children of Thomas Hale (b. about 1810, Pennsylvania; d. 1868, Greene County, Ohio) and his wife Sarah?",
-      "rationale": "Primary research objective. The tree holds Thomas and Sarah as a couple but no children, and no records have been searched yet.",
+      "question": "Besides Mary, John, Rebecca, William and Joseph, who were the other children of Thomas Hale (b. about 1810, Pennsylvania; d. 1868, Greene County, Ohio) and his wife Sarah?",
+      "rationale": "Primary research objective. The tree holds the couple and five children; no records have been searched yet for any others.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
       "status": "in_progress",
@@ -84,6 +84,11 @@
           "id": "1614804",
           "title": "Ohio, County Marriages, 1789-2016",
           "date_range": "1789-2016"
+        },
+        {
+          "id": "1992421",
+          "title": "Ohio, Probate Records, 1789-1996",
+          "date_range": "1789-1996"
         }
       ],
       "quirks": [

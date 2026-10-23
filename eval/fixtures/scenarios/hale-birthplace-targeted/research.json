@@ -83,6 +83,11 @@
           "id": "1614804",
           "title": "Ohio, County Marriages, 1789-2016",
           "date_range": "1789-2016"
+        },
+        {
+          "id": "1992421",
+          "title": "Ohio, Probate Records, 1789-1996",
+          "date_range": "1789-1996"
         }
       ],
       "quirks": [

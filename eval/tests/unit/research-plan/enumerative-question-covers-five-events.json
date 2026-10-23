@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "type": "positive",
     "name": "An enumerative question's plan accounts for birth, marriage, death, census and probate",
-    "description": "Issue #1830 item 1, the lead's 2026-08-31 ruling on #1917. q_001 asks for every child of Thomas and Sarah Hale and carries question_kind: enumerative. The plan must cover birth, marriage, death, census and probate, writing any it does not cover as a skipped item with skip_category and skip_reason. Gated by test_enumerative_plan_accounts_for_five_events, and by the amended test_new_plan_items_planned_status, which allows exactly that skip. Synthetic scenario — no PII.",
+    "description": "Issue #1830 item 1, the lead's 2026-08-31 ruling on #1917. q_001 asks for every child of Thomas and Sarah Hale beyond the five already in the tree, on the shape of the hannah-earnest-children e2e fixture, and carries question_kind: enumerative. The plan must cover birth, marriage, death, census and probate, writing any it does not cover as a skipped item with skip_category and skip_reason. Gated by test_enumerative_plan_accounts_for_five_events, and by the amended test_new_plan_items_planned_status, which allows exactly that skip. Synthetic scenario — no PII.",
     "tags": [
       "planning",
       "record-type-selection",
@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "delegation": "Create the first research plan for q_001 — who were the children of Thomas Hale and his wife Sarah?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Create the first research plan for q_001 — besides Mary, John, Rebecca, William and Joseph, who were the other children of Thomas Hale and his wife Sarah?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "hale-children-enumerative"
   },
   "judge_reads_files": true,
