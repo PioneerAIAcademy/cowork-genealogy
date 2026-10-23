@@ -1440,10 +1440,12 @@ resolve check passes the exact entry the rule exists to stop.
   Schneverdingen result at all. A parent containing "of" ("District of Columbia")
   is kept whole, since stripping it leaves "Columbia". When a search result is
   under the parent, a real place written under the wrong parent ("Helvesiek,
-  Schneverdingen, Hanover", "London, Hampshire, England") is refused. When no
-  result is under the parent, every result is kept and the parent goes unchecked:
-  "Ringebu, Bavaria, Norway" passes. The "contains" test is a plain substring, so
-  "York" is found in "New York".
+  Schneverdingen, Hanover", "London, Hampshire, England") is refused, unless the wrong parent's text is part
+  of the place's full name: the "contains" test is a plain substring, so "Albany,
+  York, United States" passes because "York" is in "New York". When no result is
+  under the parent, every result is kept and the parent goes unchecked: "Ringebu,
+  Bavaria, Norway" passes. Only segment 2 is checked, so "Paris, Texas, France"
+  passes.
 - **Which results are compared.** Every result tied for the top score in that
   filtered set, not only the first. "Mt. Pleasant, Iowa" ties the town with a
   Quaker meeting, and the meeting comes first.
@@ -1455,8 +1457,7 @@ resolve check passes the exact entry the rule exists to stop.
   Both are needed, and so is `anyLanguage: true`. The English-only name list is
   empty for Schneverdingen and leaves out "Forfarshire", which FamilySearch tags
   as non-English. Measured 2026-10-21 over the 78 plain e2e `for_place` values
-  (under the original single-result compare, before ties, name folding and the
-  retry were added): English-only names alone refuse 39,
+  (before the parent check, ties and the retry were added): English-only names alone refuse 39,
   including Ringebu, Funchal and Wanroij; English names plus the first segment
   refuse 2; all-language names plus the first segment refuse 1. These counts
   move when the corpus or FamilySearch's name lists change.
@@ -1505,12 +1506,12 @@ resolve check passes the exact entry the rule exists to stop.
 - **Known limits.** A first place is refused when the top-scored results
   containing the parent's text are other places: "London, Middlesex, England"
   (Middlesex is its own standard place), "Munich, Bayern, Germany" ("Bayern" is
-  inside "Oberbayern"), "Nueva Italia, Parácuaro, Michoacan, Mexico". The remedy
+  inside "Oberbayern"), "Nueva Italia, Parácuaro, Michoacan, Mexico", "Bohemia, Austria". The remedy
   returns London and Munich first; for Nueva Italia it lists a Guerrero hamlet
-  first and the right place second. A Danish or Norwegian "St." (Store) is not
-  found by FamilySearch's search, so "St. Heddinge, Præstø, Denmark" is refused
+  first and the right place second; for Bohemia it returns only Austria. Some Danish
+  and Norwegian "St." (Store) names are not found by FamilySearch's search, so "St. Heddinge, Præstø, Denmark" is refused
   and the remedy finds nothing. A real place that is not the top-scored result
-  ("Mecklenburg-Schwerin, Germany") is refused, and so is "Bohemia, Austria". A
+  ("Mecklenburg-Schwerin, Germany") is refused. A
   parent no result is under, misspelled or simply wrong, is not checked (see the
   parent check).
 - **Measured** (2026-10-21, `checkFirstPlace` live over every distinct
