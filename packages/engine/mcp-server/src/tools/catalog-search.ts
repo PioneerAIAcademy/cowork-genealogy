@@ -6,6 +6,10 @@
  * collections: a parish register filmed but never indexed is invisible there
  * and present here. Spec: docs/specs/catalog-search-tool-spec.md. Every
  * figure cited below is measured in dev/probe-catalog.ts.
+ *
+ * An answer is SIZED, not just shaped: see `shapeAnswer`. A hydrated item can
+ * carry thousands of film notes, and Claude Code saves any tool result over
+ * 50,000 characters to a file an agent may not be able to read back.
  */
 import type { Principal } from "../auth/principal.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
@@ -38,6 +42,15 @@ const DEFAULT_COUNT = 25;
 const MAX_COUNT = 200;
 const DEFAULT_HYDRATE = 10;
 const MAX_HYDRATE = 25;
+
+/** What the film notes of an answer are fitted into: the whole answer, as the
+ *  server serializes it (`JSON.stringify(result)`, compact), stays at or under
+ *  this many characters. Under the 50,000 at which Claude Code saves a tool
+ *  result to a file instead of handing it to the agent
+ *  (docs/specs/sidecar-read-tool-spec.md section 4), with margin. It caps this
+ *  tool's whole answer, which is not what `SIDECAR_READ_MAX_CHARS` caps (one
+ *  `sidecar_read` page); the two values happen to be equal. */
+export const ANSWER_CHAR_BUDGET = 40_000;
 
 /** Anchored at tool ENTRY, under Cowork's 60s MCP bridge abort. Bounds
  *  hydration; place resolution exposes no budget to bound. */
@@ -134,7 +147,7 @@ function textOf(v: Collapsed | undefined): string | undefined {
  *  number and DROPS `{value:"x"}`, `{text:"x"}` and `["x"]` — the same shapes
  *  every container-level reader here defends against. Every scalar taken off
  *  a response body goes through this, so a new field cannot be half-defended
- *  the way the seven FILM_FIELDS keys, `available_online`, `totalHits` and
+ *  the way the film-note fields, `available_online`, `totalHits` and
  *  `note.type` each were. */
 function scalarOf(v: unknown): string | undefined {
   return str(v) ?? textOf(asArray(v)[0]);
@@ -284,6 +297,23 @@ function renderNote(n: Collapsed | undefined): string {
   return text && text !== href ? `${text} (${href})` : href;
 }
 
+/** One table, read once per field: the key a film note carries here, and the
+ *  `film_note` key it comes from. Written as seven `str(x) ? {k: str(x)}`
+ *  spreads it named each source key twice, so a single mistyped repeat would be
+ *  invisible to both review and tests. The DGS is image_search's and
+ *  fulltext_search's `imageGroupNumber`. `shelf` and `item_image_start_no` are
+ *  deliberately not read: no plugin body, validator or fixture uses them (spec,
+ *  Response). A reel's identity is derived from this table (`REEL_KEY_FIELDS`),
+ *  so a field added here is part of the reel key and of its entry with no second
+ *  edit. */
+export const FILM_FIELDS: readonly (readonly [keyof CatalogFilmNote, string])[] = [
+  ["filmNumber", "filmno"],
+  ["imageGroupNumber", "digital_film_no"],
+  ["indexed", "fs_indexed"],
+  ["copyLocation", "copy_location"],
+  ["text", "text"],
+];
+
 /** Reads across EVERY source block. The upstream's repeated-element rule
  *  applies to `<source>` itself, so the repeated children are gathered from
  *  all of them rather than from whichever happened to be first. */
@@ -328,19 +358,6 @@ function hydrateFromSource(hit: CatalogHit, sources: Collapsed[]): void {
   hit.authors = across("author").map((a) => textOf(a) ?? "").filter(Boolean);
   hit.subjects = across("subject").map((x) => textOf(x) ?? "").filter(Boolean);
 
-  // One table, read once per field. Written as seven `str(x) ? {k: str(x)}`
-  // spreads it named each source key twice, so a single mistyped repeat
-  // would be invisible to both review and these tests.
-  // The DGS is image_search's and fulltext_search's `imageGroupNumber`.
-  const FILM_FIELDS: [keyof CatalogFilmNote, string][] = [
-    ["filmNumber", "filmno"],
-    ["imageGroupNumber", "digital_film_no"],
-    ["indexed", "fs_indexed"],
-    ["shelf", "shelf"],
-    ["copyLocation", "copy_location"],
-    ["text", "text"],
-    ["imageStartNumber", "item_image_start_no"],
-  ];
   hit.filmNotes = across("film_note").map((f) => {
     const note: CatalogFilmNote = {};
     for (const [key, from] of FILM_FIELDS) {
@@ -371,6 +388,277 @@ function hydrateFromSource(hit: CatalogHit, sources: Collapsed[]): void {
     }
   }
   hit.hydrated = true;
+}
+
+/** The text of every film note on one reel joins with this, in the order the
+ *  Catalog gave them. */
+const FILM_TEXT_SEPARATOR = " | ";
+
+/** The film-note fields that identify a reel: every field of `FILM_FIELDS` but
+ *  `text`, which is what varies. Notes that agree on ALL of them are one reel.
+ *  `copyLocation` is among them on purpose: the same reel held in two places is
+ *  two entries, and the plugin reads `copyLocation` off each one. */
+const REEL_KEY_FIELDS = FILM_FIELDS.map(([key]) => key).filter((key) => key !== "text");
+
+/** The reel a film note or an entry belongs to. The values are JSON-quoted, so
+ *  one field cannot run into the next: filmNumber "1" with DGS "23" and "12" with
+ *  "3" are two reels. An absent field is written `null`, so it keys the same
+ *  whichever way it is absent. */
+const reelOf = (n: CatalogFilmNote): string => JSON.stringify(REEL_KEY_FIELDS.map((f) => n[f]));
+
+/** A reel's joined text is split into entries of at most this many characters (a
+ *  note is never cut in two, so one longer than this stands alone). Small enough
+ *  that the fit can list part of a dense reel when it cannot list all of it, and
+ *  large enough that an ordinary reel stays one entry. */
+export const REEL_TEXT_CAP = 2_000;
+
+/**
+ * One entry per reel. Film notes that agree on every field but `text` are
+ * merged, their texts joined with " | " in the order they came. Nothing is
+ * dropped: the keys the plugin reads stay on each entry, and notes that differ
+ * in ANY other field stay apart. Entries keep the order their reel first
+ * appeared in. A reel whose joined text would pass `REEL_TEXT_CAP` is several
+ * entries in a row, each with the reel's fields and a run of whole note texts, so
+ * the fit can still cut it. Only the fields of `FILM_FIELDS` survive, so a saved
+ * answer that still carries `shelf` or `imageStartNumber` comes out without them.
+ */
+export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNote[] {
+  const reels = new Map<
+    string,
+    { identity: CatalogFilmNote; runs: { texts: string[]; length: number }[] }
+  >();
+  for (const n of notes) {
+    const key = reelOf(n);
+    let reel = reels.get(key);
+    if (!reel) {
+      const identity: CatalogFilmNote = {};
+      for (const f of REEL_KEY_FIELDS) if (n[f] !== undefined) identity[f] = n[f];
+      reel = { identity, runs: [{ texts: [], length: 0 }] };
+      reels.set(key, reel);
+    }
+    // A note with no text adds nothing, and so no separator either.
+    if (!n.text) continue;
+    let run = reel.runs[reel.runs.length - 1];
+    // A note never splits, so one that would take the run past the cap starts the
+    // next run, and a note longer than the cap stands alone in its own.
+    if (run.texts.length > 0 && run.length + FILM_TEXT_SEPARATOR.length + n.text.length > REEL_TEXT_CAP) {
+      run = { texts: [], length: 0 };
+      reel.runs.push(run);
+    }
+    run.length += (run.texts.length > 0 ? FILM_TEXT_SEPARATOR.length : 0) + n.text.length;
+    run.texts.push(n.text);
+  }
+  return [...reels.values()].flatMap(({ identity, runs }) =>
+    runs.map(({ texts }) =>
+      texts.length > 0 ? { ...identity, text: texts.join(FILM_TEXT_SEPARATOR) } : { ...identity },
+    ),
+  );
+}
+
+/** Characters of a value as the server sends it, compact. */
+const chars = (v: unknown): number => JSON.stringify(v).length;
+
+/** The one line a cut-short hit carries: how many entries are listed and the way
+ *  back. `hydrateFor` is the `hydrate` value that reaches this hit, given only
+ *  when it is fewer than the hydrate the call used. `hydrate` is a prefix count
+ *  over the hits that carry a url, so a smaller value un-hydrates the hits below
+ *  that position and leaves this one more room, while at hydrate 1, or for a hit
+ *  already at the last position hydrated, "fewer" is no remedy. A search with
+ *  keywords that name the item hydrates it nearly alone, so that way is always
+ *  offered. Names no input the tool does not have, and not the hit's `url`: that
+ *  is the Catalog's item record, which answers 401 without a sign-in token, so
+ *  neither an agent nor a person can open it. */
+export function filmNotesHint(listed: number, total: number, hydrateFor?: number): string {
+  const way =
+    hydrateFor === undefined
+      ? "search with keywords that name this item"
+      : `call again with hydrate: ${hydrateFor}, or search with keywords that name this item`;
+  return (
+    `${listed} of ${total} film-note entries are listed, to keep this answer under the size limit. ` +
+    `For the rest, ${way}.`
+  );
+}
+
+/** The one line an answer carries when hits were left off its end. */
+function hitsOmittedHint(omitted: number): string {
+  return (
+    `${omitted} more ${omitted === 1 ? "hit was" : "hits were"} left off the end, to keep this answer ` +
+    "under the size limit. Ask with a smaller count, or a narrower query."
+  );
+}
+
+/**
+ * Fit the film notes into the answer budget. They are what make an answer big
+ * (a hydrated item can carry thousands), so they are the only thing cut here, and
+ * the cut is a list: a hit that does not fit lists the entries that do, in the
+ * order the item has them, says how many it has in `filmNotesTotal`, and carries
+ * `filmNotesHint`. An entry that does not fit what is left of the hit's room is
+ * skipped and the ones after it are still listed, so one large entry does not end
+ * the list while room stays; the first entry of every reel is tried before any
+ * reel's later ones, so no reel loses its numbers while another keeps more text.
+ * Neither field is present on a hit that lists everything. No hit is dropped
+ * here, nothing is cut mid-entry, and the serialized answer is never truncated.
+ *
+ * Every hit with film notes has a FLOOR, the least it can cost: its whole list
+ * when that is no more than its cheapest cut (one entry and the two fields a cut
+ * adds), else that cheapest cut. All the floors are reserved first, so the answer
+ * ends within `budget` whenever any allocation within it exists. What is left is
+ * the SURPLUS, shared smallest demand first: with `m` hits left, a hit is offered
+ * its floor plus the surplus divided by `m`, and one whose whole list costs no more
+ * than that is listed whole, leaving the rest of the surplus to the others. So one
+ * giant at rank 1 cannot starve the small hits behind it, and the room small hits
+ * leave goes to the giant. When the floors alone do not fit, every hit is listed at
+ * its floor, and the answer is as small as this tool will make it.
+ *
+ * Every character is counted exactly, the two fields a cut-short hit adds
+ * included. A hit is cut only when its whole list costs more than its offer, and
+ * a cut stays within the offer, so a cut hit never costs as much as the whole
+ * list.
+ *
+ * A hit that already carries `filmNotesTotal` is final and counted as it is, so
+ * shaping a shaped answer changes nothing.
+ */
+export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWER_CHAR_BUDGET): void {
+  const open = result.hits.filter(
+    (h) => h.filmNotes && h.filmNotes.length > 0 && h.filmNotesTotal === undefined,
+  );
+  if (open.length === 0) return;
+
+  // The answer with those lists emptied: what the entries have to fit around.
+  const emptied = new Set<CatalogHit>(open);
+  const base = chars({
+    ...result,
+    hits: result.hits.map((h) => (emptied.has(h) ? { ...h, filmNotes: [] } : h)),
+  });
+
+  // `hydrate` is a prefix count over the hits that carry a url, so the value that
+  // reaches a hit is its position among them.
+  const position = new Map<CatalogHit, number>();
+  let withUrl = 0;
+  for (const h of result.hits) if (h.url) position.set(h, ++withUrl);
+
+  const plans = open.map((hit) => {
+    const entries = hit.filmNotes as CatalogFilmNote[];
+    const total = entries.length;
+    // What a list of entries adds to its hit: the entries and their commas, not
+    // the brackets, which `base` already holds as `[]`.
+    const costs = entries.map(chars);
+    const need = costs.reduce((a, b) => a + b, 0) + total - 1;
+    const at = position.get(hit);
+    const hydrateFor = at !== undefined && at < result.hydrateRequested ? at : undefined;
+    // What the two fields a cut-short hit adds take, for `listed` entries. The
+    // hint's length moves only with the digits of `listed`.
+    const byDigits = new Map<number, number>();
+    const cap = (listed: number): number => {
+      const digits = String(listed).length;
+      let c = byDigits.get(digits);
+      if (c === undefined) {
+        c = chars({ filmNotesTotal: total, filmNotesHint: filmNotesHint(listed, total, hydrateFor) }) - 1;
+        byDigits.set(digits, c);
+      }
+      return c;
+    };
+    // A cut lists at least one entry and adds the two fields, so the cheapest cut of
+    // an item with one entry costs more than listing it: its floor is the entry.
+    const cheapestCut = costs.reduce((a, b) => Math.min(a, b)) + cap(1);
+    const floor = Math.min(need, cheapestCut);
+    return { hit, entries, costs, total, need, hydrateFor, cap, floor, demand: need - floor };
+  });
+
+  // What is left under the budget once the base and every floor are paid. None
+  // when no allocation within the budget exists: every hit then gets its floor
+  // and nothing more.
+  let surplus = Math.max(0, budget - base - plans.reduce((a, p) => a + p.floor, 0));
+  const order = [...plans].sort((a, b) => a.demand - b.demand);
+  order.forEach((p, i) => {
+    const room = p.floor + Math.floor(surplus / (order.length - i));
+    if (p.need <= room) {
+      surplus -= p.demand;
+      return;
+    }
+    // Every entry that fits what is left of the room, skipping one that does not,
+    // so a large entry does not end the list while room stays. The first entry of
+    // every reel is tried before any reel's later ones: those carry the numbers
+    // the plugin reads, where a later entry of a dense reel adds only text. The
+    // entries come out in the order the item has them. The room is at least the
+    // cheapest cut, so one is always listed.
+    const seen = new Set<string>();
+    const firsts: number[] = [];
+    const laters: number[] = [];
+    p.entries.forEach((entry, k) => {
+      const reel = reelOf(entry);
+      (seen.has(reel) ? laters : firsts).push(k);
+      seen.add(reel);
+    });
+    const chosen = new Set<number>();
+    let content = 0;
+    for (const k of [...firsts, ...laters]) {
+      const next = content + (chosen.size > 0 ? 1 : 0) + p.costs[k];
+      if (next + p.cap(chosen.size + 1) <= room) {
+        chosen.add(k);
+        content = next;
+      }
+    }
+    const kept = p.entries.filter((_, k) => chosen.has(k));
+    p.hit.filmNotes = kept;
+    p.hit.filmNotesTotal = p.total;
+    p.hit.filmNotesHint = filmNotesHint(kept.length, p.total, p.hydrateFor);
+    surplus -= content + p.cap(kept.length) - p.floor;
+  });
+}
+
+/** Leave the last `count` hits off `result`, and say so in the two fields. An
+ *  answer shaped again adds to the count it already carries. */
+function leaveOff(result: CatalogSearchResult, count: number): void {
+  const left = (result.hitsOmitted ?? 0) + count;
+  result.hits.splice(result.hits.length - count);
+  result.returned = result.hits.length;
+  result.hitsOmitted = left;
+  result.hitsOmittedHint = hitsOmittedHint(left);
+}
+
+/**
+ * Leave hits off the END of the list until the answer fits `budget`, or one hit
+ * is left. Run on an answer whose film notes are fitted, what is left over the
+ * budget is the hits themselves: at a large `count` even a hit with no detail
+ * takes a few hundred characters. An answer that fits loses no hit. The two
+ * fields count toward the budget, so they are in place before each measure.
+ */
+function leaveHitsOff(result: CatalogSearchResult, budget: number): void {
+  while (result.hits.length > 1 && chars(result) > budget) leaveOff(result, 1);
+}
+
+/**
+ * Everything that shapes an answer once its hits are hydrated: one entry per
+ * reel, then the film notes fitted into the budget, and, if the hits alone are
+ * still over it, hits left off the end. The tool ends in it, and a recorded
+ * answer can be run through it (the eval fixtures were reshaped that way), so
+ * there is one code path and not a copy of it. It shapes `result` in place. An
+ * `{ error }` envelope has no hits and comes back as it came.
+ *
+ * Which hits stay is decided on a copy first. Hits are left off only when the
+ * answer is over the budget with every film-note list at its floor, so the fit
+ * that decided it cut the hits that stay to their floors, and the room the hits
+ * left off free would go unused. The hits are left off first, and the film notes
+ * of the ones that stay are fitted into what is then left of the budget.
+ */
+export function shapeAnswer(
+  result: CatalogSearchResult,
+  budget: number = ANSWER_CHAR_BUDGET,
+): CatalogSearchResult {
+  if (!Array.isArray(result.hits)) return result;
+  for (const h of result.hits) {
+    // A hit already cut is final: its entries are a selection, and merging them
+    // again could join two of a reel's runs that were kept apart on purpose.
+    if (h.filmNotes && h.filmNotesTotal === undefined) h.filmNotes = mergeFilmNotes(h.filmNotes);
+  }
+  const trial = structuredClone(result);
+  fitFilmNotes(trial, budget);
+  leaveHitsOff(trial, budget);
+  const left = result.hits.length - trial.hits.length;
+  if (left > 0) leaveOff(result, left);
+  fitFilmNotes(result, budget);
+  return result;
 }
 
 export async function catalogSearchTool(
@@ -728,7 +1016,7 @@ export async function catalogSearchTool(
       ? upstreamTotal
       : hits.length;
 
-  return {
+  return shapeAnswer({
     totalHits,
     returned: hits.length,
     // Boolean(repId), matching buildQuery's own `if (repId)`: `"" !== null`
@@ -737,7 +1025,7 @@ export async function catalogSearchTool(
     hydrationTimedOut,
     hydrateRequested: hydrate,
     hits,
-  };
+  });
 }
 
 export const catalogSearchSchema = {

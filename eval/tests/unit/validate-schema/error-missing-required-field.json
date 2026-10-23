@@ -16,7 +16,7 @@
     "Should report that validation FAILED — must not claim the files are valid",
     "Should surface the specific error: questions[0] (q_001) is missing the required field 'rationale'",
     "Should explain that 'rationale' is a required field on every question and suggest a fix (add a rationale describing why the question is being pursued)",
-    "Should NOT silently edit research.json — this is a read-only skill; it reports and explains",
+    "Should NOT silently edit research.json — it edits no file to fix an error; its one write is a validate_schema log entry; it reports and explains",
     "Should NOT route to check-warnings or proof-conclusion — a missing required field is a structural schema error this skill owns"
   ]
 }

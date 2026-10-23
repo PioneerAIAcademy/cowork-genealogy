@@ -70,13 +70,18 @@ def test_env_for_sdk_subscription_mode_sets_tool_search_and_suppresses_key():
     """Subscription mode sets ENABLE_TOOL_SEARCH=true and suppresses any
     inherited ANTHROPIC_API_KEY="" so the CLI falls back to its OAuth session."""
     cfg = auth.AuthConfig(skill_runner_mode="subscription", api_key=None, detail="x")
-    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
+    assert auth.env_for_sdk(cfg) == {
+        "ENABLE_TOOL_SEARCH": "true",
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        "ANTHROPIC_API_KEY": "",
+    }
 
 
 def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     cfg = auth.AuthConfig(skill_runner_mode="api_key", api_key="sk-x", detail="x")
     assert auth.env_for_sdk(cfg) == {
         "ENABLE_TOOL_SEARCH": "true",
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
         "ANTHROPIC_API_KEY": "sk-x",
     }
 
@@ -88,7 +93,11 @@ def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
     cfg = auth.AuthConfig(
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
-    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
+    assert auth.env_for_sdk(cfg) == {
+        "ENABLE_TOOL_SEARCH": "true",
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        "ANTHROPIC_API_KEY": "",
+    }
 
 
 @pytest.mark.parametrize("mode, key", [("subscription", None), ("api_key", "sk-x")])

@@ -570,6 +570,21 @@ describe("namesake cap", () => {
       expect(errors.some((e) => /^ops\[1\]: .*namesakes\[1\].*'place'/.test(e))).toBe(true);
     });
 
+    it("still holds the link that applied to the cap when another op in the call fails, labelled with its own index", async () => {
+      // ops[0] fails on its own, so only ops[1] applies; the cap's refusal of it must
+      // still come back, as ops[1] (its place in the call), not ops[0] (its place among
+      // the ops that applied), and in the same response as the failure.
+      await setup();
+      await attest(["a_020", P]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await call({ section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } }, link("a_020", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toMatch(/^ops\[0\]: entryId 'c_999' not found in 'conflicts'/m);
+      expect(capErrors(r)).toHaveLength(1);
+      expect(capErrors(r)[0]).toMatch(/^ops\[1\]: confidence 'probable' is not available on link 'pe_001'/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
     it("keys the refusal to the last op that wrote the link", async () => {
       await setup(research({ person_evidence: [standing("pe_001", "a_020", N, "speculative")] }));
       await attest(["a_020", P]);

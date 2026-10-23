@@ -73,6 +73,9 @@ MODEL_RATES = {
                           "cache_read_input_tokens": 0.20, "cache_creation_input_tokens": 4.00},
     "claude-haiku-4-5": {"input_tokens": 1.00, "output_tokens": 5.00,
                          "cache_read_input_tokens": 0.10, "cache_creation_input_tokens": 2.00},
+    # Prompts over 100K bill 5x; the CLI's small-model calls send none.
+    "claude-haiku-5-5": {"input_tokens": 0.10, "output_tokens": 0.50,
+                         "cache_read_input_tokens": 0.01, "cache_creation_input_tokens": 0.20},
     "claude-opus-4-8": {"input_tokens": 5.00, "output_tokens": 25.00,
                         "cache_read_input_tokens": 0.50, "cache_creation_input_tokens": 10.00},
 }

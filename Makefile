@@ -366,6 +366,8 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
 	# moves, or before adding a deny on the strength of it binding.
 	# Re-run 2026-10-20 (Claude Code 2.1.294, SDK 0.2.165): BOTH bind, all 12 arms.
+	# Re-run 2026-10-22 (Claude Code 2.1.308, SDK 0.2.172): BOTH bind, all 12 arms, twice
+	# (the second with the plugin hook also matching Agent|Task).
 	# Bills ~$3.60 (hosted and prototype option sets, 6 arms each).
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
@@ -388,7 +390,7 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	  uv run python dev/probe_agent_nesting.py
 
 .PHONY: hook-smoke
-hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? (issue #1160; 2 short sessions)
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing and the fork deny (issue #1160; 4 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
 	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
 	# call, shells the command and blocks. Nothing else checks that, in any
@@ -406,6 +408,9 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# loader DOES bind it -- arm A denied with the guard's own reason text,
 	# arm B (hooks/ removed) did not. Re-run when the CLI or the SDK moves.
 	# Re-run 2026-10-20 (Claude Code 2.1.294, SDK 0.2.165): BOUND, same verdict.
+	# Re-run 2026-10-22 (Claude Code 2.1.308, SDK 0.2.172): BOUND on both cases. The
+	# fork case runs with CLAUDE_CODE_FORK_SUBAGENT unset, as Cowork does: arm A was
+	# denied with FORK_REASON, and arm B (hooks/ removed) ran a real fork.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the
@@ -432,7 +437,7 @@ probe-bash-deny: $(ENGINE_BUILD) ## D1–2 probe: is disallowed_tools=["Bash",�
 	  uv run python -m dev.p1.probe_bash_deny
 
 .PHONY: probe-registration
-probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn image-reader by that name? (1 billed session + 1 subagent turn)
+probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn convert-dates by that name? (1 billed session + 1 subagent turn)
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python -m dev.p1.probe_registration
@@ -1024,14 +1029,14 @@ prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runl
 	  $(if $(DRY),--dry-run,)
 
 .PHONY: optimize-skill
-optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
+optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=research
 	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the
 	# vendored skill-creator run_loop (real `claude -p`, blinded train/test split,
 	# best-by-held-out-score). Tunes the DESCRIPTION only — never runs the skill or
 	# any MCP tool. NOT in CI (incurs model cost). Apply best_description as a
 	# human-reviewed SKILL.md edit. Output (results.json + report.html) lands in
 	# eval/runlogs/optimizer/<ts>/. Override the model with MODEL=<id>.
-	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=tree-edit" >&2; exit 1; }
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make optimize-skill SKILL=research" >&2; exit 1; }
 	cd eval/triggering && uv run python build_eval_set.py --skill $(SKILL)
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \

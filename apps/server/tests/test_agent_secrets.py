@@ -69,6 +69,9 @@ def test_build_options_passes_the_current_token_to_the_sdk(tmp_path, monkeypatch
 
     opts = real_agent.build_options(tmp_path)
     assert opts.env["ANTHROPIC_API_KEY"] == token
+    # No fork subagents (CLI 2.1.302's SDK default); the harness proves the variable
+    # binds on the pinned CLI (eval/harness/tests/unit/test_fork_subagent_off.py).
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
 
 
 def test_build_options_forwards_base_url_when_set(tmp_path, monkeypatch):
