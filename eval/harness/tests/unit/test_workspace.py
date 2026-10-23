@@ -45,7 +45,8 @@ def test_workspace_stages_plugin_agents(tmp_path):
         target_dir=tmp_path,
     )
     assert (ws / ".claude/agents/gps-mentor.md").exists()
-    assert (ws / ".claude/agents/image-reader.md").exists()
+    assert (ws / ".claude/agents/search-images.md").exists()
+    assert not (ws / ".claude/agents/image-reader.md").exists()  # retired, #2490
 
 
 def test_workspace_agents_dir_override(tmp_path):

@@ -140,6 +140,30 @@ describe("searchPlace query sanitisation", () => {
   });
 });
 
+describe("searchPlace fuzzy option", () => {
+  const q = (i = 0) =>
+    new URL(mockFetch.mock.calls[i][0] as string).searchParams.get("q") ?? "";
+
+  it("sends an UNQUOTED name:<token>~ query", async () => {
+    // Quoting would make it Lucene phrase-proximity, not fuzzy: live,
+    // name:"Sierkopas, Germany"~ returns "Germany" at 90 and no Sierokopaß,
+    // while unquoted name:Sierkopas~ ranks Sierokopaß, Neidenburg 3rd of 5.
+    await searchPlace("Sierkopas", { fuzzy: true });
+    expect(q(0)).toBe("name:Sierkopas~");
+    expect(mockFetch.mock.calls[0][0] as string).not.toContain("%22");
+  });
+
+  it("strips a caller ~ before appending the single deliberate one", async () => {
+    await searchPlace("Wanrooij~", { fuzzy: true });
+    expect(q(0)).toBe("name:Wanrooij~");
+  });
+
+  it("leaves the exact (non-fuzzy) query phrase-quoted and tilde-free", async () => {
+    await searchPlace("Sierkopas");
+    expect(q(0)).toBe('name:"Sierkopas"');
+  });
+});
+
 describe("searchPlace date qualifier", () => {
   it("omits +date: entirely when no date is given", async () => {
     await searchPlace("Rochdale, England");

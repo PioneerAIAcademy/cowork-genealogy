@@ -72,8 +72,9 @@ hook bound under both.
 whether the script runs at all, so a tool the script would deny but the matcher
 omits is a hole the script can never close — which is exactly what the probe
 above demonstrates from the other direction. The shipped matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`; it must stay at least
-as wide as the script's own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`, plus
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`; it must stay at
+least as wide as the script's own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS` +
+`DELEGATION_TOOLS`, plus
 `research_append` whenever `OWNED_SECTIONS` is non-empty — the arm the
 caller-ownership rules added — and
 `tests/packaging/plugin-hooks.test.ts` derives the expected set from the script
