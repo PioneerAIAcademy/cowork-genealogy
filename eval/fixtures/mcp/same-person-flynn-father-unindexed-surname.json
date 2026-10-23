@@ -9,9 +9,16 @@
     "matched": true,
     "confidence": 6,
     "score": 0.58,
-    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
-    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:QRST-1234",
-    "apiTitle": "Matches for ark:/61903/1:1:FLYN-MARR",
-    "updated": "2026-08-01T00:00:00Z"
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "F1",
+      "name": "Thomas [surname not indexed]",
+      "role": "father_of_groom"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Thomas Flynn"
+    }
   }
 }

@@ -425,6 +425,29 @@ function projectable(a: any): boolean {
 const nonEmpty = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
 
 /**
+ * persona id -> the distinct roles the assertions of ONE record give it, in the
+ * order they first appear. Pass every assertion of that record.
+ *
+ * `absent` (negative evidence) is not a role a persona carries, and an assertion
+ * with no persona id or no role says nothing here. A persona id with more than
+ * one role in its set was stamped on several parties and names none of them:
+ * `recordPartyKeyer` keys such an assertion on its role, and `same_person` will
+ * not resolve a party through it. One rule, here, so the two cannot disagree.
+ */
+export function personaRolesById(recordAssertions: Iterable<any>): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const a of recordAssertions) {
+    const pid = nonEmpty(a?.record_persona_id);
+    const role = nonEmpty(a?.record_role);
+    if (pid === null || role === null || role === "absent") continue;
+    const roles = out.get(pid) ?? new Set<string>();
+    roles.add(role);
+    out.set(pid, roles);
+  }
+  return out;
+}
+
+/**
  * The party key of each assertion of ONE record: which person on the record it
  * describes. Pass every assertion of that record; the returned function keys any
  * of them.
@@ -453,7 +476,7 @@ const nonEmpty = (v: unknown): string | null => (typeof v === "string" && v !== 
 export function recordPartyKeyer(recordAssertions: Iterable<any>): (a: any) => string | null {
   const list = [...recordAssertions];
   const logOf = (a: any) => nonEmpty(a?.log_entry_id) ?? "";
-  const rolesByPid = new Map<string, Set<string>>();
+  const rolesByPid = personaRolesById(list);
   const logsWithPid = new Set<string>();
   const namesByLogRole = new Map<string, Set<string>>();
   for (const a of list) {
@@ -466,10 +489,6 @@ export function recordPartyKeyer(recordAssertions: Iterable<any>): (a: any) => s
       names.add(String(a?.value ?? ""));
       namesByLogRole.set(k, names);
     }
-    if (pid === null || role === null || role === "absent") continue;
-    const roles = rolesByPid.get(pid) ?? new Set<string>();
-    roles.add(role);
-    rolesByPid.set(pid, roles);
   }
   const pidsByRole = new Map<string, Set<string>>();
   for (const [pid, roles] of rolesByPid) {

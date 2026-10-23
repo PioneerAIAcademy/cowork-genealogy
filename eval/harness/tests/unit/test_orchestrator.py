@@ -13,6 +13,7 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
+    _other_suite_names,
     _stop_at_stub,
     _stopped_at_a_handoff,
     _routing_short_circuit_skills,
@@ -2880,3 +2881,29 @@ def test_pg_store_faults_reach_the_run_logs_warnings(tmp_path, monkeypatch):
     (w,) = [w for w in warnings if w["kind"] == "pg_store_fault"]
     assert w["faults"] == [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
     assert seen_workspaces, "the faults were read for the run's workspace"
+
+
+def test_other_suite_names_counts_plugin_agents(tmp_path):
+    """A skill converted to an agent still names a hand-off: ut_survey_surname_d4's
+    decline named `search-records`, an agent since #3567, and read as activation."""
+    from harness.runlog import derive_activated
+
+    skills = tmp_path / "skills"
+    agents = tmp_path / "agents"
+    (skills / "research").mkdir(parents=True)
+    agents.mkdir()
+    for name in ("search-records", "survey-surname"):
+        (agents / f"{name}.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+
+    names = _other_suite_names("survey-surname", skills, agents)
+    assert names == {"research", "search-records"}
+
+    assert derive_activated(
+        skill="survey-surname",
+        skills_invoked=[],
+        file_changes=None,
+        files_created=[],
+        text_response="That's a search for one person's record \u2014 please use search-records.",
+        other_skill_names=names,
+        agents_spawned=["survey-surname"],
+    ) is False
