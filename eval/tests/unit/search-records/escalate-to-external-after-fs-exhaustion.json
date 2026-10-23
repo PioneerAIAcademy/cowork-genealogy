@@ -20,7 +20,7 @@
     ]
   },
   "input": {
-    "delegation": "Execute pli_001 — search FamilySearch for Patrick Flynn in the 1850 US census.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Execute pli_001 — search FamilySearch for Patrick Flynn in the 1850 US census.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1850\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1850 census places Patrick in a household, identifying candidate parents.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"~1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": null\n}",
     "scenario": "flynn-census-nil"
   },
   "mcp_fixtures": [

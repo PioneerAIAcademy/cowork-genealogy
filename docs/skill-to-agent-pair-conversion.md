@@ -576,6 +576,15 @@ up while the body ran on the main thread, and each cost a run to find.
   was pruned from the tree and lives in commit b147b57fe; its MCP count was a
   median of 2 and a mean of 1.7. The follow-up that hands the plan item's state in
   the delegation (cost-latency plan §6) is measured against these.
+  Handed state (#3581, `v10_2026-10-23_05-59-03.json`, same counting): 28 tests reach
+  `record_search`; the MCP calls before it are a median of 1 and a mean of 1.04 (min 0,
+  max 4), and `research_query` precedes the search in 3 of 28 (the ids-only and
+  ad-hoc tests). Against the released `v8.json` (median 2, mean 1.58, 23 of 26) the
+  median halves and the mean falls by 0.54. Re-run with
+  `python eval/harness/scripts/pre_search_calls.py <run-log.json>...`. The `Read` of the
+  tree is not in `tool_calls`, so its saving is asserted by
+  `test_handed_subject_skips_tree_read`, not counted. Nothing checks that the
+  `project_context` grant binds in a live session or on the proto worker.
 
 - **Tier selection resisted every prose fix.** Three successive wordings each
   repaired one test and broke a neighbour, so the tier ladder was reverted to
