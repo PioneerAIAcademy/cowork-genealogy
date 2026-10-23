@@ -25,5 +25,8 @@
   },
   "judge_context": [
     "The correct reply is a one-line `Hand-back: research-plan` line. Running a search, ranking records or writing a plan is a fail."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

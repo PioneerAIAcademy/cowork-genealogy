@@ -23,5 +23,8 @@
     "The paragraph must contain NO identifiers — no research.json id (any prefix in ID_PREFIXES: rp_, kh_, q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_, ev_, loc_) and no tree id (I1, S3, F2, N1, R1). The deterministic validator fails the run on any such id, and also on a second paragraph, a lead-in line, a heading, table or list, bold, or a closing question, so the judge need only verify coverage and plain-language quality.",
     "The paragraph must contain NO file names (research.json, tree.gedcomx.json), tool names, or field names.",
     "The main thread must have called project_context. It must NOT have called Read on research.json or tree.gedcomx.json, must NOT have spawned any Agent, and must NOT have called research_append. The deterministic validator gates these; a failure there is a validator failure, not a judge failure."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

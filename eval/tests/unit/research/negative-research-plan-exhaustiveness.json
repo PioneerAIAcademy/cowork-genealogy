@@ -29,5 +29,8 @@
   },
   "judge_context": [
     "Should route to research-plan rather than evaluating exhaustiveness or writing a declaration"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }
