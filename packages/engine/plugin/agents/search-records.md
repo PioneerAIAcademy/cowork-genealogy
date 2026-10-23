@@ -46,6 +46,9 @@ tools:
   - mcp__genealogy__research_query
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__wiki_search
@@ -70,8 +73,11 @@ You are invoked with a delegation message:
 | `projectPath` | yes | The absolute project-folder path. |
 | `questionId` | no | The `q_` question the search serves. |
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
+| `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId` and `planId` arrived with it, and then it replaces the `research_query` read. |
+| `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
+| `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), as the tree holds them. Data, never a finding. |
 
-Resolve everything else yourself, starting cold: read the plan item with `research_query` (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, read it with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId`; if that `Read` is denied, take the subject's id from `project_context`. Never `Read` `research.json`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -130,10 +136,9 @@ step, and stop. The caller decides what runs next.
 ### 1. Identify the plan item
 
 Find the plan item the delegation names (`planItemId`), or when it names none the next plan item with `status: "planned"` in the active plan for the
-current question. You start cold: you hold nothing from the caller's run, and the
-delegation carries ids, not the plan item's text or status. Read it yourself.
+current question. When the delegation carries `plan_item` and `planId`, and its `id` equals `planItemId`, that is the plan item and its status: issue no `research_query` this invocation (the status update uses the delegated `planId`), and skip the rest of this section's query rules. A `plan_item` that arrives without `planId`, or whose `id` differs from `planItemId`, is not the item you were asked to run: ignore it, call `research_query` for `planItemId` as your first tool call, and make no `record_search` until it returns.
 
-**If you need project state you do not already have, fetch it with
+**With no matching `plan_item`, fetch the project state you lack with
 `research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
 grows all run, so a whole-file read costs more context every time.
 
@@ -753,7 +758,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 - **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
 - **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry instead (see Step 5).
-- **Don't skip plan items silently.** Set status to `skipped` with an explanation.
+- **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
 - **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries and plan-item status, not assertions.
@@ -1207,6 +1212,7 @@ collection does not exempt a lever from this requirement.
 | Lever | How | When to try |
 |---|---|---|
 | Search by neighbor | Search the adjacent census household | Subject missed by indexer or indexed badly |
+| Search by address | Not available: record search takes no street, house-number or dwelling term | — |
 | Search collateral relatives | Use uncommon brother/cousin/in-law surname | Subject's surname too common |
 | Maiden vs married name | Run two parallel searches | Female ancestor across her lifetime |
 

@@ -479,6 +479,32 @@ def spawn_stub_denial(
     return stub_denial(name, stub_agents[name])
 
 
+def default_spawn_denial(
+    tool_name: str,
+    input_data: dict[str, Any],
+    live_agents: set[str] | None,
+    stub_skills: dict[str, str | None],
+) -> dict[str, Any] | None:
+    """The stub denial for a main-thread spawn of any agent not in `live_agents`.
+
+    Deny-by-default (#3568): the orchestrator passes the suite's own agent plus
+    the test's `execution.run_agents`, and every other spawn — a built-in type
+    such as `general-purpose` included — is denied, so an agent no test opts in
+    never runs and its body cannot change the result. A spawn with no
+    `subagent_type` is a general-purpose spawn and is named so. A name the test
+    also lists in `stub_skills` (a skill-and-agent name) keeps its canned text.
+    `live_agents=None` (callers outside the unit orchestrator) denies nothing.
+    The hook reaches this only after the routing short-circuit, `stop_at_stub`
+    and explicit `spawn_stub_denial` branches have passed on the spawn.
+    """
+    if live_agents is None or tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
+        return None
+    name = (input_data.get("tool_input") or {}).get("subagent_type") or "general-purpose"
+    if name in live_agents:
+        return None
+    return stub_denial(name, stub_skills.get(name))
+
+
 def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
     """Whether a streamed ToolUseBlock hands off to a name in `stub_skills`.
 
@@ -866,6 +892,7 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
     tool_search: bool = True,
@@ -940,6 +967,10 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
+    # Deny-by-default (#3568): the agents a main-thread spawn may reach for real.
+    # Any other spawn is denied after the branches above (`default_spawn_denial`).
+    # None = deny nothing (callers outside the unit orchestrator).
+    _live_agents = set(live_agents) if live_agents is not None else None
     # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
     # stubbed name, by `Skill` call or agent spawn, ends the run through the
     # stop path of the negative-test short-circuit above, once the turn that
@@ -970,6 +1001,8 @@ async def run_skill(
         routing_resolved["tool_use_id"] = tool_use_id
         if name in _stub_skills:
             denial = stub_denial(name, _stub_skills[name])
+            # Its hand-back tells the caller its turn goes on; this one ends.
+            denial["hookSpecificOutput"].pop("additionalContext", None)
         else:
             callee = repr(name) if name else "a callee whose name cannot be read"
             denial = {
@@ -1099,6 +1132,10 @@ async def run_skill(
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
             return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
+            return denial
+        elif (denial := default_spawn_denial(tool_name, input_data, _live_agents, _stub_skills)):
+            # Last on purpose: the short-circuit, the stop and an explicit stub's
+            # canned text all win over the default (#3568).
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`

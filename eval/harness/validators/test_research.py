@@ -15,6 +15,8 @@ what is / is not covered.
 from __future__ import annotations
 
 import re
+import json
+
 import pytest
 
 from validators_lib import bare_tool_name
@@ -749,11 +751,16 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
 
     Deliberately narrow. A blanket "questions[] must not change" would
     false-fail the legitimate routes — `question-selection` may append a
-    follow-on question, which is one of this test's `correct_skill` answers.
+    follow-on question, which the explanation names as a legitimate answer.
     So this names the specific deltas that are never legitimate here: the
     target question's `status` and `search_stop`, and
     `project.status`. Same shape as
     `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
+
+    Only a writer the test lets run can trip it: every agent spawn a test does
+    not name in `execution.run_agents` is denied. ut_research_rpn runs
+    `research-plan` and `question-selection`, so a reopen by `proof-conclusion`
+    is not observable there.
     """
     if "no-plan-writes-when-resolved" not in test.get("tags", []):
         pytest.skip("not a no-plan-writes-when-resolved scenario")
@@ -826,7 +833,9 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     research/SKILL.md's Second-opinion section requires both on the gps-mentor
     delegation. Both sit verbatim in the recorded spawn args, so they are read
     from the hook records rather than left to the judge, which cannot see them
-    and has scored a spawn 3/3 on prose alone.
+    and has scored a spawn 3/3 on prose alone. Matched case-insensitively: the
+    agent reads "Focus: on-demand. Target_id: project." as both named, and a
+    case-sensitive match failed exactly that spawn.
     """
     if _DELEGATION_FOCUS_TAG not in (test.get("tags") or []):
         pytest.skip("not a delegation-focus test")
@@ -844,10 +853,94 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     missing = [
         field
         for field in ("focus:", "target_id:")
-        if not any(field in p for p in prompts)
+        if not any(field in p.lower() for p in prompts)
     ]
     assert not missing, (
         f"The '{expected}' delegation omits {missing}. research/SKILL.md "
         f"requires the delegation message to name the focus and the target_id. "
         f"Prompts seen: {[p[:160] for p in prompts]}"
     )
+
+
+_HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
+
+
+def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-records`` carries a ``plan_item:`` block
+    that parses to exactly the plan item research.json holds for the item named.
+
+    research/SKILL.md has the router hand over the plan item it already queried,
+    verbatim and unread, so the agent can skip its own research_query (issue
+    #3581). Equality of the parsed block against the scenario's own item is what
+    separates "verbatim" from "summarised" or "judged"; the judge sees neither.
+    """
+    if _HANDS_PLAN_ITEM_TAG not in (test.get("tags") or []):
+        pytest.skip("not a delegation-plan-item test")
+    expected = _expected_skill(test)
+    assert expected == "search-records", (
+        f"{_HANDS_PLAN_ITEM_TAG} needs routes-to:search-records; got {expected!r}"
+    )
+    prompts = _spawn_prompts(builtin_tool_calls, expected)
+    assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
+    research = before_state.get("research_json") or {}
+    items = []
+    plan_of = {}
+    for plan in research.get("plans", []):
+        if plan.get("status") != "active":
+            continue
+        for item in plan.get("items", []):
+            if item.get("status") in ("planned", "in_progress"):
+                items.append(item)
+                plan_of[item["id"]] = plan["id"]
+    assert items, "Scenario drift: no active plan item to hand over."
+    decoder = json.JSONDecoder()
+    problems = []
+    for prompt in prompts:
+        named = [i for i in items if i["id"] in prompt]
+        if not named:
+            problems.append(f"names no plan item id: {prompt[:120]!r}")
+            continue
+        item = named[0]
+        if plan_of[item["id"]] not in prompt:
+            problems.append(
+                f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
+            )
+        marker = prompt.find("plan_item")
+        brace = prompt.find("{", marker) if marker != -1 else -1
+        if brace == -1:
+            problems.append(f"no plan_item JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            handed, _ = decoder.raw_decode(prompt[brace:])
+        except ValueError:
+            problems.append(f"plan_item block for {item['id']} is not valid JSON")
+            continue
+        if handed != item:
+            missing = object()  # a dropped key whose value was null must still be named
+            diff = sorted(
+                k for k in set(item) | set(handed)
+                if item.get(k, missing) != handed.get(k, missing)
+            )
+            problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
+        tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+            (research.get("project") or {}).get("subject_person_ids") or []
+        )
+        match = re.search(r"subject:\s*", prompt)
+        sbrace = prompt.find("{", match.end()) if match else -1
+        if sbrace == -1:
+            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            subject, _ = decoder.raw_decode(prompt[sbrace:])
+        except ValueError:
+            problems.append("subject block is not valid JSON")
+            continue
+        if subject.get("subjectId") not in subject_ids:
+            problems.append(
+                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
+                f"tree {subject_ids}"
+            )
+        if not subject.get("names"):
+            problems.append("subject block carries no names")
+    assert not problems, "; ".join(problems)
