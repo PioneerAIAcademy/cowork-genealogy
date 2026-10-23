@@ -19,11 +19,13 @@ export function birthThresholdMiles(minYear: number, maxYear: number): number {
 }
 
 /** Answer every distinct name once through `resolver`, four at a time. A name
- *  whose lookup throws, or is still open when `budgetMs` runs out, answers null. */
+ *  whose lookup throws, or is still open when `budgetMs` runs out, answers null.
+ *  `onExpired` is called once when the budget ran out with a lookup still open. */
 export async function lookupWithin<T>(
   names: string[],
   resolver: (name: string) => Promise<T | null>,
   budgetMs: number,
+  onExpired?: () => void,
 ): Promise<Map<string, T | null>> {
   const answers = new Map<string, T | null>();
   const distinct = [...new Set(names)];
@@ -44,6 +46,7 @@ export async function lookupWithin<T>(
     timer = setTimeout(() => {
       expired = true;
       resolve();
+      onExpired?.();
     }, budgetMs);
   });
   try {
