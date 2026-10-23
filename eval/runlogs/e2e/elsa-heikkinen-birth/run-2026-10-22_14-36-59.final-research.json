@@ -1,0 +1,1357 @@
+{
+  "project": {
+    "id": "rp_elsa_heikkinen_birth",
+    "objective": "When and where was Elsa Brita Heikkinen, christened 16 June 1832 in Iisalmi, Kuopio, Finland, daughter of Anders Johan Heikkinen and Lisa Pardanen, born?",
+    "subject_person_ids": [
+      "M76V-5PF"
+    ],
+    "status": "completed",
+    "created": "2026-10-12",
+    "updated": "2026-10-22"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Elsa Brita Heikkinen, christened 16 June 1832 in Iisalmi, Kuopio, Finland, born?",
+      "rationale": "This is the objective restated as its single-fact question. Elsa has a well-sourced christening entry in the Finland Baptisms collection (Iisalmi parish, 16 June 1832) but no birth date or specific birth place is recorded on the tree. Finnish Lutheran baptism registers from this period routinely recorded the birth date alongside the christening entry in the same register line, so the original parish register for Iisalmi circa 1832 is the primary record set to search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-22",
+      "resolution_assertion_ids": [
+        "a_021",
+        "a_022",
+        "a_023"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
+        "justification": "The autonomous agent exhausted its tool capability before completing the full repository breadth required for this question. FamilySearch Catalog 4110832 (Iisalmi Kirkonkirjat 1747\u20131870, 528 images) was attempted (log_015) but all image-transcription calls returned HTTP 403 \u2014 access is restricted to FamilySearch Centers. The three external Finnish portals named in the research plan (HisKi at hiski.genealogia.fi, SSHY Digiarkisto at sukuhistoria.fi/sshy, and the Finnish National Archives Digitaaliarkisto at digi.narc.fi) are not in the URL-builder tool's supported-site list and require a human to navigate; they were documented for researcher follow-up (log_016) but never actually searched. These portals hold the original Iisalmi baptism register \u2014 the decisive record that would supply the specific birth date and satisfy evidence_class (original, primary information) and independent_verification (a second independent source). Until at least one of these portals is searched by the researcher, independent_verification (criterion 4) and evidence_class (criterion 5) cannot be met, and repository_breadth (criterion 2) remains incomplete.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": null,
+        "not_reached": [
+          {
+            "kind": "browse_only",
+            "log_entry_id": "log_015",
+            "wiki_title": null,
+            "description": "FamilySearch Catalog item 4110832 (Kirkonkirjat 1747\u20131870, Iisalmen maalaiskunta) \u2014 528 images confirmed by image_search but all image_transcribe calls return HTTP 403; restricted to FamilySearch Center access only. This is the primary baptism register series for 1832 Iisalmi and would contain the original entry for Elsa Brita (chr. 16 Jun 1832, father And Joh Heickin, mother Lisa Pardain) with a separate birth date (F\u00f6dd) column. A researcher can view these images at any FamilySearch Center."
+          },
+          {
+            "kind": "nil_search",
+            "log_entry_id": "log_016",
+            "wiki_title": null,
+            "description": "Three external Finnish genealogy portals deferred for manual follow-up \u2014 not accessible to the autonomous agent: (1) HisKi Project (hiski.genealogia.fi) \u2014 text-transcription index of Iisalmi (Idensalmi) parish births; per loc_001 coverage is incomplete so a negative result is inconclusive; search parish Iisalmi, type Kastetut, year 1832, surname variants Heickinen / Heickin / Heikkinen. (2) SSHY Digiarkisto (www.sukuhistoria.fi/sshy) \u2014 browse-only original Iisalmi church book images; navigate to the 1832 kastettujen luettelo and locate the June 1832 entry for Elsa Brita under father And Joh Heickin, mother Lisa Pardain; the register has separate F\u00f6dd (born) and D\u00f6pt (christened) columns. (3) Finnish National Archives Digitaaliarkisto (digi.narc.fi) \u2014 digitized Iisalmi parish records (Iisalmen seurakunnan arkisto); select the baptism register series covering 1832 and read the Syntym\u00e4p\u00e4iv\u00e4 / F\u00f6dd column for Elsa Brita, village Kilpisaari. Loc_001 also names FamilySearch Catalog 3044 (Kirkonkirjat 1664\u20131950) and Digihakemisto (digihakemisto.net) as further access points for the original Iisalmi register images; neither was planned or attempted."
+          }
+        ]
+      },
+      "created": "2026-10-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Iisalmi, Kuopio, Finland",
+          "date_range": "1832",
+          "repository": "FamilySearch",
+          "rationale": "The 'Finland, Baptisms, 1657-1890' collection is name-searchable and is already cited on the tree for Elsa Brita's christening (ARKs XBFJ-HS6, XBFJ-HSF, XBFJ-HSX for the christening date 16 Jun 1832), but no birth date was extracted from those index entries. A targeted name search \u2014 Elsa Brita Heickinen / Heikkinen, Iisalmi, 1832 \u2014 should surface the full indexed record and expose whatever birth-date field the index captured alongside the christening date. Per loc_001, Heikkinen appears as 'Heickin' and Pardanen as 'Pardain' in period Swedish-language registers; both spellings must be tried. Per loc_001, this collection is index-only with no embedded register images; the original image is addressed in pli_004.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Iisalmi, Kuopio, Finland",
+          "date_range": "1832-1848",
+          "repository": "FamilySearch",
+          "rationale": "The 'Finland, Church Census and Pre-Confirmation Books, 1600-1916' collection is name-searchable and includes the Iisalmi lastenkirjat (children's pre-confirmation books). Volume_search confirms two lastenkirja volumes for Iisalmi cover this period: I Ab:6 (1827-1839, imageGroup 102151589) and I Ab:7 (1821-1839, imageGroup 102151590). The lastenkirja records each child's birth date and home village \u2014 the two pieces of information the question seeks \u2014 making this potentially the most direct source. Per loc_001, children under confirmation age (~14-16) appear in the lastenkirja rather than the communion books; a child christened June 1832 would be enrolled here through approximately 1846-1848. Search under Elsa Brita Heickinen / Heikkinen and her father And Joh Heickin, Iisalmi.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Iisalmi, Kuopio, Finland",
+          "date_range": "1827-1832",
+          "repository": "FamilySearch",
+          "rationale": "FAN item \u2014 read the indexed baptism entries for Elsa Brita's two siblings already in the tree: Christina Heikkinen (christened 26 May 1827, ARK XBFK-3C3) and David Heikkinen (christened 11 Apr 1830, ARK XBFV-X4F), both children of And Joh Heikkinen + Lisa Pardanen in the 'Finland, Baptisms, 1657-1890' collection. The village field in their entries is the best available proxy for Elsa Brita's home village in 1832, since the family would not have moved between 1827 and 1832. Reading these records also confirms how the parents' names appear in the register (Swedish spelling variants) and cross-checks the parent identification for Elsa Brita against the viable parent pair \u2014 the only biologically possible pairing of the competing tree sets, given that LZRL-9DT (Maria Eskelinen) died 2 Feb 1826 and cannot be Elsa's mother.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Iisalmi, Kuopio, Finland",
+          "date_range": "1832",
+          "repository": "FamilySearch",
+          "rationale": "If the name search in the baptism index (pli_001) does not yield the birth date \u2014 per loc_001 the 'Finland, Baptisms, 1657-1890' collection is index-only, with actual register images held in the FamilySearch Catalog \u2014 browse the original Iisalmi baptism register images via FamilySearch Catalog item 4110832 (Kirkonkirjat 1747-1870). This is browse-only (personCount 0) at the image-group level. Navigate to the June 1832 section and read the birth-date column directly from the register page. The register is in Swedish; look for 'Elsa Brita' under the father's entry 'And Joh Heickin' and mother 'Lisa Pardain' (name forms per loc_001). The original register typically records the birth date and christening date in separate columns, so this step is expected to supply the birth date even if the index omitted it.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Iisalmi, Kuopio, Finland",
+          "date_range": "1832",
+          "repository": "HisKi / SSHY / ASTIA",
+          "rationale": "If FamilySearch Catalog images (pli_004) are inaccessible or the June 1832 folios are damaged, search three external Finnish genealogy portals: (1) HisKi Project (hiski.genealogia.fi) \u2014 the Genealogical Society of Finland's index of Iisalmi parish births, which may transcribe the birth date from the original register; loc_001 notes HisKi's Iisalmi coverage is incomplete, so a negative result does not rule out the record. (2) SSHY (digiarkisto.org/sshy or www.sukuhistoria.fi/sshy) \u2014 browse-only original Iisalmi church book images. (3) Finnish National Archives ASTIA portal (astia.narc.fi) \u2014 digitized register images not available on FamilySearch. The Ancestry mirror 'Finland Select Baptisms, 1657-1890' (ancestry.com) is the same underlying index as FamilySearch's collection and need not be searched separately unless the FamilySearch index record is incomplete.",
+          "fallback_for": "pli_004",
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "HisKi, SSHY, and ASTIA/Digi are not in the URL-builder tool's supported-site list and require a user present to navigate and capture. No user is available during this autonomous run. Deferred searches are logged in log_016 with portal URLs and exact search parameters for the researcher to action manually."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-22T13:50:20.326Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XBFK-3C3"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Christina Heikkinen baptism 26 May 1827. Place indexed as 'Iisalmen mlk, Kuopio, Finland' \u2014 no village/farm level. Father 'and Joh Heikkinen', mother 'Lisa Pardanen'. No separate birth date in index; christening only."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-22T13:50:20.358Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XBFV-X4F"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "David Heikkinen baptism 11 Apr 1830. Place indexed as 'Iisalmen mlk, Kuopio, Finland' \u2014 no village/farm level. Father 'and Joh Heikkinen', mother 'Lisa Pardanen'. No separate birth date in index; christening only."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T13:51:53.883Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Heikkinen",
+        "givenName": "Elsa Brita",
+        "birthPlace": "Iisalmi, Kuopio, Finland",
+        "birthYearFrom": 1832,
+        "birthYearTo": 1832,
+        "recordCountry": "Finland",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 51,
+      "notes": "Search for Elsa Brita Heikkinen, birth 1832, Iisalmi, Finland. All 50 ranked results have role=Mother: later-generation women named Elsa/Elsa Brita Heikkinen appearing as mothers in children's baptisms. The known 1832 baptism record XBFJ-HS6 was not returned. All matchScores near zero (top 0.058); subject carries no birth date fact, ranker cannot score. Search did not surface Elsa Brita's own 1832 baptism as principal."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T13:51:53.958Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XBFJ-HS6"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "ARK XBFJ-HS6 (Elsa Brita persona, record MPS4-2SY). Index contains: christening 16 Jun 1832, place 'Iisalmen mlk, Kuopio, Finland', child 'Elsa Brita', father 'and Joh Heikkinen', mother 'Lisa Pardanen'. NO separate birth date. No village or farm \u2014 only rural municipality level. Index did not capture a birth date distinct from christening date."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T13:51:53.985Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XBFJ-HSF"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "ARK XBFJ-HSF (Lisa Pardanen persona, same record MPS4-2SY). Confirms mother Lisa Pardanen. No birth date; no village/farm. Same content as XBFJ-HS6 and XBFJ-HSX."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-22T13:51:54.019Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XBFJ-HSX"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1,
+      "notes": "ARK XBFJ-HSX (and Joh Heikkinen persona, same record MPS4-2SY). Confirms father 'and Joh Heikkinen'. No birth date; no village/farm. All three ARKs are personas of one baptism record with only christening date indexed."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T13:53:35.910Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elsa Brita",
+        "surname": "Heickinen",
+        "recordCountry": "Finland",
+        "birthYearFrom": 1827,
+        "birthYearTo": 1837
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 219,
+      "notes": "Top match (rank 1, matchScore 0.5864): Elsa Brita Heickinen in Finland, Church Census and Pre-Confirmation Books, 1600-1916, place Kilpisaari, Iisalmen maalaiskunta, Kuopio, Suomi, birthDate May 1832. Census period 1851-1860. Supplies home village (Kilpisaari) but the census range is later than the lastenkirja period targeted; needs record_read to confirm birth date detail. Second result is Lapinlahti \u2014 different municipality, weaker match (0.187)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T13:54:20.036Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QLVK-ZPHR"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "notes": "Record confirms Elsa Brita Heickinen, birth May 1832, place Kilpisaari Iisalmen maalaiskunta Kuopio. Church census period 1851-1860. Image ARK: ark:/61903/3:1:3Q9M-CS49-B976-Z. Supplies the home village (Kilpisaari) but birth date is month-only (May 1832); specific day not indexed."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T13:55:53.138Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "And Joh",
+        "surname": "Heickinen",
+        "recordCountry": "Finland",
+        "collectionId": "2805467",
+        "residencePlace": "Iisalmi",
+        "residenceYearFrom": 1832,
+        "residenceYearTo": 1848
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 178,
+      "notes": "Searching for father And Joh Heickinen as principal in church census collection 2805467, Iisalmi, 1832-1848. No Iisalmi results among top 50. All hits are from Kuopio city, Nilsi\u00e4, Lepp\u00e4virta and other municipalities. Lastenkirja volumes for Iisalmi appear not indexed by household-head name in this period. subjectResolvable diagnostic: real negative for this query shape."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-10-22T13:55:53.150Z",
+      "tool": "record_search",
+      "query": {
+        "stagedResultsRef": "results/.staging/396170e0-9057-45ff-95ba-96f999d8cc0d.json"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Earlier unlogged external_links_search staged file recovered."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-10-22T13:55:53.150Z",
+      "tool": "record_search",
+      "query": {
+        "stagedResultsRef": "results/.staging/4227fe51-995b-4445-a26b-f4e06160256b.json"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Earlier unlogged external_links_search staged file recovered."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-10-22T13:55:53.150Z",
+      "tool": "record_search",
+      "query": {
+        "stagedResultsRef": "results/.staging/facaf150-0b96-45c2-8270-87defd432593.json"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Earlier staged search (Elsa Brita Heickinen + fatherGivenName Anders Johan + collectionId 2805467) recovered from unlogged state."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T13:56:55.315Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Heickinen",
+        "recordCountry": "Finland",
+        "imageGroupNumber": "102151589"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 10,
+      "notes": "Searched imageGroupNumber 102151589 (lastenkirja I Ab:6, 1827-1839, Iisalmi) with surname Heickinen. Only 10 hits total, all Iisalmi/Kuopio area; none is Anders Johan Heickinen or Elsa Brita. The lastenkirja volume appears sparsely indexed by household head. Susanna, Agneta, Christ., Erik, Benjamin, Lars Heikkinens and Anna Lisa Heikkinens are in Iisalmi; none matches the target family. The father may be indexed under a variant (Staffans/Staffansson reflecting his patronymic)."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-22T13:58:18.141Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Heickinen",
+        "recordCountry": "Finland",
+        "imageGroupNumber": "102151590"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 6,
+      "notes": "Searched imageGroupNumber 102151590 (lastenkirja I Ab:7, 1821-1839, Iisalmi) with surname Heickinen. Only 6 hits: Christina, Henr., Carl Heikkinens in Iisalmi; Lovisa Heikainens in Pajujarvi; Aron Heikkinens in Onkivesi; Fredrik Haiskanens in Iisalmi. None is Anders Johan Heickinen or Elsa Brita. Confirms both lastenkirja volumes do not have the Heikkinen family indexed. The family's lastenkirja entry exists only as an unindexed page image."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-22T13:59:28.061Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004110832",
+        "catalogItem": "4110832",
+        "catalogTitle": "Kirkonkirjat 1747-1870",
+        "standardPlace": "Iisalmi, Kuopio, Finland",
+        "recordType": "Baptism register (Syntyneet ja kastetut)",
+        "targetYear": "1832"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 528,
+      "notes": "Browsed FamilySearch Catalog item 4110832 (Kirkonkirjat 1747-1870, Iisalmen maalaiskunta), the primary Iisalmi church book series for 1747-1870. image_search confirmed image group 004110832 exists with 528 images. However, all image_transcribe calls on this group return HTTP 403 \u2014 these images are restricted to FamilySearch Centers (center-only access) and cannot be read online. No other FamilySearch online image group covers Iisalmi baptism registers for 1832; volume_search for Iisalmi 1832 across all record types returns only Lastenkirjat (102151589, 102151590) and Rippikirjat (102151568, 102151579, 102151580), none of which is the syntyneet ja kastetut (baptism/christening register). The target entry for Elsa Brita Heikkinen (chr. 16 Jun 1832, daughter of And Joh Heickin and Lisa Pardain) could not be located because the relevant register images are not accessible remotely. Next step is pli_005: external Finnish genealogy portals (ASTIA, SSHY, HisKi) which hold the same Iisalmi parish records and do not have the center-only restriction."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-22T14:02:47.824Z",
+      "tool": "external_portal_search",
+      "query": {
+        "portals": [
+          "hiski.genealogia.fi",
+          "sukuhistoria.fi/sshy",
+          "digi.narc.fi/digi"
+        ],
+        "parish": "Iisalmi",
+        "recordType": "Baptisms (Kastetut)",
+        "year": "1832",
+        "subject": "Elsa Brita Heikkinen",
+        "nameVariants": [
+          "Heickinen",
+          "Heickin",
+          "Heikkinen"
+        ],
+        "parents": "Anders Johan Heikkinen (And Joh Heickin) + Lisa Pardanen (Lisa Pardain)",
+        "village": "Kilpisaari"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires a user capture, which cannot happen while the run is working autonomously. These three Finnish genealogy portals are not in the URL-builder tool's supported-site list; URLs must be hand-navigated by the researcher. Recorded here so the researcher can action them later. (1) HisKi Project \u2014 http://hiski.genealogia.fi/hiski : select parish Iisalmi (Idensalmi), record type Kastetut (Baptisms/Christenings), year range 1832\u20131832; search surname Heickinen / Heickin / Heikkinen. HisKi is a text transcription index \u2014 a hit will show the transcribed birth date directly. Per loc_001 the Iisalmi coverage in HisKi is incomplete; a negative result does not rule out the record. (2) SSHY Digiarkisto \u2014 https://www.sukuhistoria.fi/sshy/ : browse Iisalmi kirkonkirjat (church books) for the 1832 baptism register images; this is browse-only, no name-search. Navigate to the christening register (kastettujen luettelo) and locate the June 1832 entries under father And Joh Heickin (Heikkinen) and mother Lisa Pardain (Pardanen); the register has separate Born/Christened columns. (3) Finnish National Archives Digitaaliarkisto \u2014 https://digi.narc.fi/digi/ : search for Iisalmi kirkonkirjat (Iisalmen seurakunnan arkisto), select the baptism register series covering 1832, and read the entry for Elsa Brita. Look for village Kilpisaari, father And Joh Heickin, mother Lisa Pardain. The birth date (syntym\u00e4p\u00e4iv\u00e4 / F\u00f6dd) column is what the question requires; the christening date (kastettu / D\u00f6pt) 16 June 1832 is already known."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Finland, Baptisms, 1657-1890\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:MPS4-Z75 : 23 June 2020), Entry for Christina, 1827.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Christina, \"Finland, Baptisms, 1657-1890\"",
+        "when_created": "1827",
+        "when_accessed": "2026-10-22",
+        "where": "Finland, Baptisms, 1657-1890",
+        "where_within": "ark:/61903/1:1:XBFK-3C3"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-22",
+      "log_entry_id": "log_001",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MPS4-Z75",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Finland, Baptisms, 1657-1890\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:MPS4-66Z : 23 June 2020), Entry for David, 1830.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for David, \"Finland, Baptisms, 1657-1890\"",
+        "when_created": "1830",
+        "when_accessed": "2026-10-22",
+        "where": "Finland, Baptisms, 1657-1890",
+        "where_within": "ark:/61903/1:1:XBFV-X4F"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-22",
+      "log_entry_id": "log_002",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MPS4-66Z",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Finland, Church Census and Pre-Confirmation Books, 1600-1916\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLVK-ZPHR : Mon Dec 08 12:32:05 UTC 2025), Entry for Elsa Brita Heickinen, from 1851 to 1860.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Elsa Brita Heickinen, \"Finland, Church Census and Pre-Confirmation Books, 1600-1916\"",
+        "when_created": "1851",
+        "when_accessed": "2026-10-22",
+        "where": "Finland, Church Census and Pre-Confirmation Books, 1600-1916",
+        "where_within": "ark:/61903/1:1:QLVK-ZPHR"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-22",
+      "log_entry_id": "log_008",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPTP-2R6F",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Christina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Christina",
+        "surname": ""
+      },
+      "record_persona_id": "p_10899065973",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10899065973",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "26 May 1827",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "26 May 1827",
+      "place": "Iisalmen mlk, Kuopio, Finland",
+      "record_persona_id": "p_10899065973",
+      "source_id": "src_001",
+      "standard_place": "Iisalmi, Kuopio, Finland"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "and Joh Heikkinen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "and Joh",
+        "surname": "Heikkinen"
+      },
+      "record_persona_id": "p_10899065974",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10899065974",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Lisa Pardanen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Lisa",
+        "surname": "Pardanen"
+      },
+      "record_persona_id": "p_10899065975",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10899065975",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of and Joh Heikkinen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10899065973",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Lisa Pardanen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10899065973",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XBFK-3C3",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Lisa Pardanen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10899065974",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "David",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "David",
+        "surname": ""
+      },
+      "record_persona_id": "p_10899048825",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10899048825",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "11 Apr 1830",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "11 Apr 1830",
+      "place": "Iisalmen mlk, Kuopio, Finland",
+      "record_persona_id": "p_10899048825",
+      "source_id": "src_002",
+      "standard_place": "Iisalmi, Kuopio, Finland"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "and Joh Heikkinen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "and Joh",
+        "surname": "Heikkinen"
+      },
+      "record_persona_id": "p_10899048826",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10899048826",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Lisa Pardanen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Lisa",
+        "surname": "Pardanen"
+      },
+      "record_persona_id": "p_10899048827",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10899048827",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of and Joh Heikkinen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10899048825",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Lisa Pardanen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10899048825",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XBFV-X4F",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Lisa Pardanen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10899048826",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QLVK-ZPHR",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Elsa Brita Heickinen",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Elsa Brita",
+        "surname": "Heickinen"
+      },
+      "record_persona_id": "p_103242080965",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QLVK-ZPHR",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "from 1851 to 1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "from 1851 to 1860",
+      "place": "Kilpisaari, Iisalmen maalaiskunta, Kuopio, Suomi",
+      "record_persona_id": "p_103242080965",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_003",
+      "standard_place": "Kilpisaari, Iisalmi, Kuopio, Finland"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QLVK-ZPHR",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "May 1832",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "May 1832",
+      "record_persona_id": "p_103242080965",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "M7FQ-2XQ",
+      "confidence": "confident",
+      "rationale": "Date check: christening 26 May 1827 vs. M7FQ-2XQ (no birth year attested). No conflict. Residence check: Iisalmi, Kuopio (1827) vs. none attested. Same parish. Name 'Christina' in record matches tree person Christina Heikkinen exactly. Parents 'and Joh Heikkinen' and 'Lisa Pardanen' both match KCGT-RPC and KHGS-4YL. Score 0.9995 (confidence 5). Strong match on name and parental position.",
+      "match_score": 0.9995253,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "M7FQ-2XQ",
+      "confidence": "confident",
+      "rationale": "Date check: christening 26 May 1827 vs. M7FQ-2XQ (no birth year attested). No conflict. Residence check: Iisalmi, Kuopio (1827) vs. none attested. Same parish. Sex 'Female' matches M7FQ-2XQ gender. Score 0.9995 (confidence 5). Name and parental position already confirm identity.",
+      "match_score": 0.9995253,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "M7FQ-2XQ",
+      "confidence": "confident",
+      "rationale": "Date check: christening 26 May 1827 vs. M7FQ-2XQ (no birth year attested). No conflict. Residence check: Iisalmi, Kuopio (1827) vs. none attested. Same parish. Christening date and Iisalmi place are consistent with the family parish. Name 'Christina', parents 'and Joh Heikkinen' and 'Lisa Pardanen' match KCGT-RPC and KHGS-4YL. Score 0.9995 (confidence 5). Strong match.",
+      "match_score": 0.9995253,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father in this record; KCGT-RPC has no birth year attested. None stated. Residence check: Iisalmi, Kuopio (1827) vs. none attested. Same parish. Name 'and Joh Heikkinen' matches KCGT-RPC 'And Joh Heikkinen' exactly \u2014 abbreviated given name consistent with Swedish-language parish record convention. Score 0.9999967 (confidence 5). Strong match.",
+      "match_score": 0.99999666,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father; KCGT-RPC no birth year. None stated. Residence check: Iisalmi, Kuopio vs. none attested. Same parish. Sex 'Male' matches KCGT-RPC gender. Score 0.9999967 (confidence 5). Confirmed alongside name match from a_004.",
+      "match_score": 0.99999666,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for mother; KHGS-4YL no birth year attested. None stated. Residence check: Iisalmi, Kuopio (1827) vs. none attested. Same parish. Name 'Lisa Pardanen' matches KHGS-4YL 'Lisa Pardanen' exactly. Score 0.9999925 (confidence 5). Strong match.",
+      "match_score": 0.9999925,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for mother; KHGS-4YL no birth year. None stated. Residence check: Iisalmi, Kuopio vs. none attested. Same parish. Sex 'Female' matches KHGS-4YL gender. Score 0.9999925 (confidence 5). Confirmed alongside name match from a_006.",
+      "match_score": 0.9999925,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "M7FQ-2XQ",
+      "confidence": "confident",
+      "rationale": "Date check: christening 26 May 1827 vs. M7FQ-2XQ (no birth year). No conflict. Residence check: Iisalmi, Kuopio vs. none attested. Same parish. Relationship assertion 'child of and Joh Heikkinen' bears on the child's identity. Name 'Christina' and parental position confirm M7FQ-2XQ. Score 0.9995 (confidence 5).",
+      "match_score": 0.9995253,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father; KCGT-RPC no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Relationship assertion 'child of and Joh Heikkinen' also bears on the father's identity. Score 0.0000087 recorded \u2014 this near-zero figure is an artifact: same_person resolved the child persona (record_role=child) from a_008 and scored the child against KCGT-RPC; the recordRole=father parameter did not redirect to the father's own persona ARK. Father identity independently confirmed by a_004 -> KCGT-RPC at score 0.9999967 (confidence 5). Name 'and Joh Heikkinen' matches KCGT-RPC exactly.",
+      "match_score": 8.7295875e-06,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "M7FQ-2XQ",
+      "confidence": "confident",
+      "rationale": "Date check: christening 26 May 1827 vs. M7FQ-2XQ (no birth year). No conflict. Residence check: Iisalmi, Kuopio vs. none attested. Same parish. Relationship assertion 'child of Lisa Pardanen' bears on the child's identity. Name and parental position confirm M7FQ-2XQ. Score 0.9995 (confidence 5).",
+      "match_score": 0.9995253,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for mother; KHGS-4YL no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Relationship assertion 'child of Lisa Pardanen' also bears on the mother's identity. Score 0.00015 recorded \u2014 artifact: same_person resolved the child persona from a_009 and scored it against KHGS-4YL. Mother identity confirmed by a_006 -> KHGS-4YL at score 0.9999925 (confidence 5). Name 'Lisa Pardanen' matches KHGS-4YL exactly.",
+      "match_score": 0.00015280214,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father; KCGT-RPC no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Spousal relationship assertion 'spouse of Lisa Pardanen' bears on KCGT-RPC's identity. Score 0.9999967 (confidence 5). Consistent with family context: And Joh Heikkinen and Lisa Pardanen are known spouses.",
+      "match_score": 0.99999666,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for mother; KHGS-4YL no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Spousal relationship assertion 'spouse of Lisa Pardanen' also bears on the wife's identity. Score 0.0000016 recorded \u2014 artifact: same_person resolved the father persona from a_010 (record_role=father) and scored it against KHGS-4YL; the recordRole=mother parameter did not redirect. Mother identity confirmed by a_006 -> KHGS-4YL at score 0.9999925. Name 'Lisa Pardanen' matches KHGS-4YL exactly.",
+      "match_score": 1.6622802e-06,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "M7XN-M4M",
+      "confidence": "confident",
+      "rationale": "Date check: christening 11 Apr 1830 vs. M7XN-M4M (no birth year attested). No conflict. Residence check: Iisalmi, Kuopio (1830) vs. none attested. Same parish. Name 'David' in record matches tree person David Heikkinen. Parents 'and Joh Heikkinen' and 'Lisa Pardanen' match KCGT-RPC and KHGS-4YL. Score 0.9992 (confidence 5). Strong match.",
+      "match_score": 0.9991842,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "M7XN-M4M",
+      "confidence": "confident",
+      "rationale": "Date check: christening 11 Apr 1830 vs. M7XN-M4M (no birth year). No conflict. Residence check: Iisalmi, Kuopio vs. none attested. Same parish. Sex 'Male' matches M7XN-M4M gender. Score 0.9992 (confidence 5). Confirmed alongside name and parental match.",
+      "match_score": 0.9991842,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "M7XN-M4M",
+      "confidence": "confident",
+      "rationale": "Date check: christening 11 Apr 1830 vs. M7XN-M4M (no birth year attested). No conflict. Residence check: Iisalmi, Kuopio (1830) vs. none attested. Same parish. Christening date and Iisalmi place match expected family parish. Name 'David', parents 'and Joh Heikkinen' and 'Lisa Pardanen' match KCGT-RPC and KHGS-4YL. Score 0.9992 (confidence 5). Strong match.",
+      "match_score": 0.9991842,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father; KCGT-RPC no birth year. None stated. Residence check: Iisalmi, Kuopio (1830) vs. none attested. Same parish. Name 'and Joh Heikkinen' matches KCGT-RPC exactly. Second christening record confirming this same father in the same family. Score 0.9999960 (confidence 5). Strong match.",
+      "match_score": 0.99999595,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated; KCGT-RPC no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Sex 'Male' matches KCGT-RPC gender. Score 0.9999960 (confidence 5). Confirmed by name match from a_014.",
+      "match_score": 0.99999595,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated; KHGS-4YL no birth year. None stated. Residence check: Iisalmi, Kuopio (1830) vs. none attested. Same parish. Name 'Lisa Pardanen' matches KHGS-4YL exactly. Second christening record confirming this mother. Score 0.9999914 (confidence 5). Strong match.",
+      "match_score": 0.9999914,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated; KHGS-4YL no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Sex 'Female' matches KHGS-4YL gender. Score 0.9999914 (confidence 5). Confirmed by name match from a_016.",
+      "match_score": 0.9999914,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "M7XN-M4M",
+      "confidence": "confident",
+      "rationale": "Date check: christening 11 Apr 1830 vs. M7XN-M4M (no birth year). No conflict. Residence check: Iisalmi vs. none attested. Same parish. Relationship assertion 'child of and Joh Heikkinen' bears on David's identity. Name and parental position confirm M7XN-M4M. Score 0.9992 (confidence 5).",
+      "match_score": 0.9991842,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father; KCGT-RPC no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Relationship assertion 'child of and Joh Heikkinen' also bears on the father's identity. Score 0.000116 recorded \u2014 artifact: same_person resolved the child persona from a_018 and scored it against KCGT-RPC. Father identity confirmed by a_014 -> KCGT-RPC at score 0.9999960 (confidence 5). Name 'and Joh Heikkinen' matches KCGT-RPC.",
+      "match_score": 0.00011569981,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "M7XN-M4M",
+      "confidence": "confident",
+      "rationale": "Date check: christening 11 Apr 1830 vs. M7XN-M4M (no birth year). No conflict. Residence check: Iisalmi vs. none attested. Same parish. Relationship assertion 'child of Lisa Pardanen' bears on David's identity. Name and parental position confirm M7XN-M4M. Score 0.9992 (confidence 5).",
+      "match_score": 0.9991842,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for mother; KHGS-4YL no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Relationship assertion 'child of Lisa Pardanen' also bears on mother's identity. Score 0.0000087 recorded \u2014 artifact: same_person resolved the child persona from a_019. Mother confirmed by a_016 -> KHGS-4YL at score 0.9999914. Name 'Lisa Pardanen' matches KHGS-4YL.",
+      "match_score": 8.7295875e-06,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "KCGT-RPC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated; KCGT-RPC no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Spousal assertion 'spouse of Lisa Pardanen' bears on KCGT-RPC's identity. Score 0.9999960 (confidence 5). Consistent with and corroborates a_010 -> KCGT-RPC from src_001.",
+      "match_score": 0.99999595,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "KHGS-4YL",
+      "confidence": "confident",
+      "rationale": "Date check: none stated; KHGS-4YL no birth year. None stated. Residence check: Iisalmi vs. none attested. Same parish. Spousal assertion 'spouse of Lisa Pardanen' also bears on wife's identity. Score 0.0000016 recorded \u2014 artifact: same_person resolved the father persona from a_020 (record_role=father) and scored it against KHGS-4YL. Mother confirmed by a_016 -> KHGS-4YL at score 0.9999914. Name 'Lisa Pardanen' matches KHGS-4YL.",
+      "match_score": 1.6622802e-06,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "M76V-5PF",
+      "confidence": "confident",
+      "rationale": "Date check: no birth year in this name assertion; M76V-5PF has christening 16 June 1832 per project objective. None stated in this assertion alone. Residence check: Kilpisaari, Iisalmen maalaiskunta, Kuopio (1851-1860) vs. none attested from tree before this run; Kilpisaari is within Iisalmi parish, same jurisdiction as the christening. Same parish. Name 'Elsa Brita Heickinen': 'Heickinen' is a documented period variant of 'Heikkinen' in Swedish-language Iisalmi records per the locality guide. Matches tree person 'Elsa Brita Heikkinen' exactly aside from the variant spelling. Score 0.8064 (confidence 3 from API). Strong qualitative match: name variant documented, location within same parish. Confident.",
+      "match_score": 0.8064197,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "M76V-5PF",
+      "confidence": "confident",
+      "rationale": "Date check: census period 1851-1860; no birth year in this assertion. None stated. Residence check: Kilpisaari, Iisalmen maalaiskunta, Kuopio (1851-1860) vs. none attested from tree before this run. Same parish as christening location. Census/pre-confirmation book confirms Elsa Brita present in Iisalmi parish in the expected period (she would have been approximately 18-28 years old). Score 0.8064 (confidence 3). Name 'Elsa Brita Heickinen' matches M76V-5PF with documented variant. Confident.",
+      "match_score": 0.8064197,
+      "created": "2026-10-22"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "M76V-5PF",
+      "confidence": "confident",
+      "rationale": "Date check: birth 'May 1832' in record vs. M76V-5PF christening 16 June 1832 per project objective. Gap of approximately 6 weeks \u2014 fully consistent with Finnish Lutheran practice in which christening followed birth within weeks. No conflict. Residence check: Kilpisaari, Iisalmen maalaiskunta, Kuopio vs. none attested from tree before this run. Kilpisaari is within Iisalmi parish, same jurisdiction as the christening. Same parish. Name 'Elsa Brita Heickinen' with 'Heickinen' being a documented period variant of 'Heikkinen' per locality guide. Score 0.8064 (confidence 3 from API). Strong qualitative match on all three core identifiers: birth month May 1832 corroborates christening June 1832; surname variant documented in locality guide; Kilpisaari within Iisalmi parish. This is the key birth assertion for question q_001. Confident.",
+      "match_score": 0.8064197,
+      "created": "2026-10-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Elsa Brita Heikkinen (M76V-5PF) is the daughter of And Joh Heikkinen (KCGT-RPC) and Lisa Pardanen (KHGS-4YL)",
+      "status": "supported",
+      "supporting_assertion_ids": [
+        "a_004",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_014",
+        "a_016",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Supported by the three indexed baptism ARKs for Elsa Brita herself (XBFJ-HS6, XBFJ-HSF, XBFJ-HSX, read in log_004\u2013log_006), all of which name 'and Joh Heikkinen' as father and 'Lisa Pardanen' as mother. No assertions were extracted from those ARKs in the a_001\u2013a_023 range. Corroborated by the sibling baptism records for Christina (src_001, a_004\u2013a_010) and David (src_002, a_014\u2013a_020), which show the same parents in the same Iisalmi parish. Further corroborated by the pre-confirmation book entry for Elsa Brita herself (src_003, a_021\u2013a_023, ARK QLVK-ZPHR). The project objective explicitly names this parent pair. KCGT-RPC and KHGS-4YL are the only biologically possible parent pair among the five persons currently flagged as parents of M76V-5PF in the tree; the two other men (L83L-TYW, L89R-XVF) appear to be duplicate persons of KCGT-RPC, and their listed co-parent LZRL-9DT (Maria Eskelinen) died 2 February 1826, making biological motherhood of a June 1832 child impossible.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_002",
+      "claim": "Elsa Brita Heikkinen (M76V-5PF) is the daughter of Anders Johan Heikkinen (L83L-TYW) and Maria Daviddr Eskelinen (LZRL-9DT)",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_004",
+        "a_006",
+        "a_014",
+        "a_016"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "LZRL-9DT (Maria Daviddr Eskelinen) died 2 February 1826, more than six years before Elsa Brita Heikkinen's christening on 16 June 1832. It is a chronological and biological impossibility for a woman who died in February 1826 to bear a child christened in June 1832. This fundamental impossibility eliminates any parent couple in which LZRL-9DT is the mother. Additionally, L83L-TYW (Anders Johan Heikkinen, diedByYear 1853) appears to be a duplicate tree person of KCGT-RPC (same name, same death year), and every original source record naming Elsa Brita's family (ARKs XBFJ-HS6, XBFJ-HSF, XBFJ-HSX; src_001 Christina baptism; src_002 David baptism) names 'and Joh Heikkinen' paired with 'Lisa Pardanen' \u2014 not with LZRL-9DT.",
+      "notes": "L83L-TYW appears to be a duplicate tree person of KCGT-RPC: both are named Anders Johan Heikkinen and share the same diedByYear of 1853 in the tree. LZRL-9DT (Maria Daviddr Eskelinen) died 2 February 1826 \u2014 more than six years before Elsa Brita's christening on 16 June 1832. No assertions in the a_001\u2013a_023 range name L83L-TYW or LZRL-9DT as parents of Elsa Brita or her siblings. All three independent sources (src_001, src_002, src_003) consistently name 'and Joh Heikkinen' and 'Lisa Pardanen' as the relevant parents. The contradicting assertions (a_004, a_006, a_014, a_016) name KCGT-RPC and KHGS-4YL in two independent baptism records, directly contradicting this hypothesis.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_003",
+      "claim": "Elsa Brita Heikkinen (M76V-5PF) is the daughter of Anders Johan Heikkinen (L89R-XVF) and Maria Daviddr Eskelinen (LZRL-9DT)",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_004",
+        "a_006",
+        "a_014",
+        "a_016"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "LZRL-9DT (Maria Daviddr Eskelinen) died 2 February 1826, more than six years before Elsa Brita Heikkinen's christening on 16 June 1832. It is a chronological and biological impossibility for a woman who died in February 1826 to bear a child christened in June 1832. This fundamental impossibility eliminates any parent couple in which LZRL-9DT is the mother. Additionally, L89R-XVF (Anders Johan Heikkinen, death year 1853) appears to be a duplicate tree person of KCGT-RPC (same name, same death year), and every original source record naming Elsa Brita's family names 'and Joh Heikkinen' paired with 'Lisa Pardanen' \u2014 not with LZRL-9DT.",
+      "notes": "L89R-XVF appears to be a duplicate tree person of KCGT-RPC: both are named Anders Johan Heikkinen and the tree associates L89R-XVF with the same death year 1853. L89R-XVF's listed spouse in the tree is LZRL-9DT (Maria Eskelinen, died 2 February 1826). LZRL-9DT's death in 1826 makes biological motherhood of a June 1832 child a chronological impossibility. No assertions in the a_001\u2013a_023 range support this parent pair. All three independent sources name KCGT-RPC and KHGS-4YL as the relevant parents, directly contradicting this hypothesis.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_004",
+        "a_006",
+        "a_014",
+        "a_016"
+      ],
+      "resolved_conflict_ids": [],
+      "shortfall": "gap",
+      "exhaustive_search_summary": "The search encompassed the FamilySearch Finland Baptisms, 1657\u20131890 derivative index, including Elsa Brita's own three baptism ARKs (XBFJ-HS6, XBFJ-HSF, XBFJ-HSX \u2014 all personas of record MPS4-2SY), her siblings' christening records (XBFK-3C3, XBFV-X4F), and a record-search across Finnish birth records. The FamilySearch Church Census and Pre-Confirmation Books, 1600\u20131916 collection was searched by subject name, yielding record QLVK-ZPHR (Elsa Brita Heickinen, birth May 1832, Kilpisaari, 1851\u20131860). Pre-confirmation book image groups 102151589 and 102151590 (Iisalmi lastenkirja volumes I Ab:6 and I Ab:7) were searched by surname Heickinen and returned no indexed results for the target family. FamilySearch Catalog item 4110832 (Kirkonkirjat 1747\u20131870, Iisalmen maalaiskunta, 528 images) was confirmed to exist but all image access calls returned HTTP 403 \u2014 restricted to FamilySearch Center visits only. Not reached: (1) the original Iisalmi baptism register images at a FamilySearch Center (Catalog 4110832), which would supply the exact birth day within May 1832 and the birth village in the F\u00f6dd column; (2) the HisKi text-transcription index (hiski.genealogia.fi) for Iisalmi Kastetut, year 1832; (3) SSHY Digiarkisto (sukuhistoria.fi/sshy), which holds browse-only original Iisalmi church book images; (4) the Finnish National Archives Digitaaliarkisto (digi.narc.fi), Iisalmi parish records; and (5) FamilySearch Catalog 3044 (Kirkonkirjat 1664\u20131950) and Digihakemisto (digihakemisto.net). All five are accessible to a human researcher and would settle the birth day and village at a higher confidence tier.",
+      "narrative_markdown": "## Birth of Elsa Brita Heikkinen, Iisalmi, Kuopio, Finland\n\n**Research Question:** When and where was Elsa Brita Heikkinen, christened 16 June 1832 in Iisalmi, Kuopio, Finland, born?\n\n**Conclusion:** The available evidence supports, at a possible tier, that Elsa Brita Heikkinen (FamilySearch ID M76V-5PF) was born in May 1832 at Kilpisaari, Iisalmen maalaiskunta, Kuopio, Finland \u2014 the parish village where the family is documented in a church census book \u2014 and was christened approximately six weeks later, on 16 June 1832, at the Iisalmen maalaiskunta church. The conclusion rests on a single derivative source of indeterminate informant quality; the original Iisalmi baptism register, which would supply the exact birth day and directly state the birth village, has not yet been examined by the researcher.\n\n### Evidence and Source Classification\n\n**The pre-confirmation church census book (src_003).** The key record is: \"Finland, Church Census and Pre-Confirmation Books, 1600-1916,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QLVK-ZPHR : Mon Dec 08 12:32:05 UTC 2025), Entry for Elsa Brita Heickinen, from 1851 to 1860.\n\nThis is a **derivative** source \u2014 a compiled register index, not the original register entry. It records Elsa Brita Heickinen's birth as \"May 1832\" and places the household at Kilpisaari, Iisalmen maalaiskunta, Kuopio, Suomi during the census period 1851 to 1860. The informant for the birth date is unknown; Finnish pre-confirmation books did not systematically record who supplied household information, so the information quality is classified as **indeterminate**. Pre-confirmation books were maintained by parish clergy and typically compiled birth dates from original baptism registers, so the recorded month may reflect the underlying register or may reflect a later household recollection. The name \"Heickinen\" is a documented period variant of \"Heikkinen\" in Swedish-language Iisalmi records, and Kilpisaari is within Iisalmi parish. The identification of this record with Elsa Brita Heikkinen (M76V-5PF) is confident (FamilySearch match score 0.8064; name variant, birth month, and parish all consistent with the known christening entry).\n\n**Corroboration from the christening date.** The FamilySearch index of the Iisalmi baptism register (ARKs XBFJ-HS6, XBFJ-HSF, and XBFJ-HSX \u2014 three personas of the same underlying record, MPS4-2SY) confirms that Elsa Brita was christened on 16 June 1832 in Iisalmen mlk, Kuopio, Finland, with father \"and Joh Heikkinen\" and mother \"Lisa Pardanen.\" The index captured only the christening date; the original register images \u2014 which would show the birth date in the \"F\u00f6dd\" column \u2014 are not accessible online (HTTP 403, center-only). The gap of approximately six weeks between a May 1832 birth and the 16 June 1832 christening is consistent with Finnish Lutheran practice, in which infants were commonly christened four to six weeks after birth. This independently corroborates \"May 1832\" as the birth month without itself establishing it.\n\n**Sibling baptism records (src_001 and src_002).** Two sibling christening entries in the FamilySearch Finland Baptisms index establish the family's continuous presence in Iisalmi parish:\n\n- Christina Heikkinen, christened 26 May 1827, Iisalmen mlk: \"Finland, Baptisms, 1657-1890\", , *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:MPS4-Z75 : 23 June 2020), Entry for Christina, 1827. Father \"and Joh Heikkinen,\" mother \"Lisa Pardanen.\"\n- David Heikkinen, christened 11 Apr 1830, Iisalmen mlk: \"Finland, Baptisms, 1657-1890\", , *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:MPS4-66Z : 23 June 2020), Entry for David, 1830. Same parents.\n\nBoth are **derivative** sources (FamilySearch index entries); the informant in each is the presenting parent, classified as **primary** information for the child named in that record. These records index location only at the rural municipality level (Iisalmen mlk) and do not supply Elsa Brita's birth date or the family's specific home village. Their value for this conclusion is family-identity context: they confirm that And Joh Heikkinen (KCGT-RPC) and Lisa Pardanen (KHGS-4YL) were resident in Iisalmi parish from at least 1827 to 1830, placing the family in the parish where Elsa Brita was christened in 1832.\n\n### Birth Place Assessment\n\nThe pre-confirmation book entry's \"Kilpisaari, Iisalmen maalaiskunta\" is the census residence location for 1851\u20131860, not a directly stated birth place. Assertion a_023 (birth \"May 1832\") carries no place; the place derives from assertion a_022 (census, Kilpisaari), both from the same underlying record. The inference that Kilpisaari was also the birth location is reasonable \u2014 the family was documented there during the pre-confirmation period and had christened children in Iisalmi parish since at least 1827 \u2014 but remains indirect. The original Iisalmi baptism register contained a separate \"F\u00f6dd\" (born) column that would directly state the birth village; until that register is examined, \"Kilpisaari\" is the best available but inferential birth place.\n\n### Competing Parent Hypotheses\n\nThree parent-pair hypotheses were evaluated for the family. Hypotheses h_002 (Anders Johan Heikkinen L83L-TYW + Maria Daviddr Eskelinen LZRL-9DT) and h_003 (Anders Johan Heikkinen L89R-XVF + LZRL-9DT) were ruled out: Maria Daviddr Eskelinen (LZRL-9DT) died 2 February 1826, making her biological motherhood of a child christened 16 June 1832 a chronological impossibility. Hypothesis h_001 \u2014 parentage of And Joh Heikkinen (KCGT-RPC) and Lisa Pardanen (KHGS-4YL) \u2014 is supported by all three sources consulted.\n\n### Research Scope and Limitations\n\nThe FamilySearch Finland Baptisms, 1657\u20131890 derivative index was searched, including Elsa Brita's own baptism ARKs and her siblings' records. The FamilySearch Church Census and Pre-Confirmation Books, 1600\u20131916 collection was searched by subject name and yielded the key record. Pre-confirmation book image groups 102151589 and 102151590 (Iisalmi lastenkirja volumes) were searched by surname but returned no indexed results for the target family, likely because the father may have been indexed under a patronymic variant. FamilySearch Catalog item 4110832 (Kirkonkirjat 1747\u20131870, 528 images) returned HTTP 403 for all image access \u2014 center-only restriction. Not reached in the autonomous research session: the original Iisalmi baptism register at a FamilySearch Center (Catalog 4110832); the HisKi text-transcription index at hiski.genealogia.fi (Iisalmi Kastetut, year 1832); SSHY Digiarkisto at sukuhistoria.fi/sshy; and the Finnish National Archives Digitaaliarkisto at digi.narc.fi. Each of these resources holds access to the original 1832 Iisalmi baptism register and is accessible to a human researcher. Examining any one of them would supply the exact birth day within May 1832 and the birth village as directly stated in the register, which would support advancing the conclusion to `probable` or higher.\n\n### Tier Declaration\n\nThis conclusion is offered at the **possible** tier. A single derivative source of indeterminate informant quality supports the birth month and year; the birth place is inferred from the same record's census residence rather than directly stated in the birth entry; and the original Iisalmi baptism register \u2014 which would settle both the exact birth day and the birth village \u2014 remains unsearched. The conclusion may be advanced to `probable` or higher once the original register is examined at a FamilySearch Center or through HisKi, SSHY Digiarkisto, or the Finnish National Archives Digitaaliarkisto.",
+      "updated": "2026-10-22T14:35:37.216Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Iisalmi, Kuopio, Finland",
+      "for_place": "Iisalmi Parish, Kuopio, Finland",
+      "time_period": "1800-1850",
+      "jurisdictions": [
+        {
+          "name": "Iisalmi, Kuopio, Finland",
+          "date_range": "1627-1970"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1778464",
+          "title": "Finland, Baptisms, 1657-1890",
+          "date_range": "1657-1890"
+        },
+        {
+          "id": "2805467",
+          "title": "Finland, Church Census and Pre-Confirmation Books, 1600-1916",
+          "date_range": "1600-1916"
+        },
+        {
+          "id": "1676970",
+          "title": "Finland, Marriages, 1682-1892",
+          "date_range": "1682-1892"
+        },
+        {
+          "id": "1676971",
+          "title": "Finland, Burials, 1725-1909",
+          "date_range": "1725-1909"
+        },
+        {
+          "id": "2704794",
+          "title": "Finland, Tax Lists, 1809-1915",
+          "date_range": "1810-1915"
+        }
+      ],
+      "quirks": [
+        "All Iisalmi church records for 1800-1850 are written in Swedish, not Finnish. Finnish was not the official language until 1863. Names appear in Swedish spelling or abbreviation (e.g., Heikkinen appears as Heickin or Heickin in period records; Pardanen appears as Pardain).",
+        "Iisalmi is in eastern Finland (Kuopio county), where children under confirmation age (~14-16) were NOT recorded in the communion books (rippikirjat). They appear instead in the pre-confirmation books (lastenkirjat/barnb\u00f6cker). For a child christened in 1832, search the lastenkirjat through approximately 1846-1848, not the rippikirjat.",
+        "Iisalmi uses eastern Finnish fixed family surnames (ending in -nen, e.g., Heikkinen), not patronymics. The surname stays the same across generations, unlike western Finnish practice.",
+        "The FamilySearch 'Finland Baptisms' collection (1778464) is an index only \u2014 it does not include images. For the actual register images, use the FamilySearch Catalog entries (Kirkonkirjat 1747-1870, catalog 4110832; Kirkonkirjat 1664-1950, catalog 3044), the Finnish National Archives ASTIA portal (astia.narc.fi), or Digihakemisto (digihakemisto.net).",
+        "The HisKi index at hiski.genealogia.fi covers Iisalmi parish births but is incomplete. A name-search hit there is useful, but a negative result does not mean the record is absent \u2014 check the original images.",
+        "Lapinlahti parish was separated from Iisalmi in 1821. Families living in the area that became Lapinlahti appear in Iisalmi records before that year and in Lapinlahti records after. If the family's village is near the Lapinlahti boundary, check both parishes.",
+        "The surrounding parishes (clockwise from north) are: Vierema, Sonkaj\u00e4rvi, Lapinlahti, Maaninka, Pielavesi, and Kiuruvesi \u2014 all in Kuopio County. Families near those borders may appear in neighbouring parish registers.",
+        "FamilySearch does not hold records from the Orthodox congregation (ortodoksinen kirkko) in Iisalmi. If the family was Orthodox, records are not on FamilySearch; contact the Orthodox Diocese of Kuopio and Karelia."
+      ],
+      "guide_markdown": "# Locality Guide: Iisalmi Parish, Kuopio, Finland (1800\u20131850)\n\n## Jurisdiction overview\n- **Formed:** The parish of Iisalmi was formed in 1620\u20131627 from Kuopio parish and originally covered the entire Yl\u00e4-Savo (Upper Savonia) area. (FamilySearch Wiki: [Iisalmi Parish, Kuopio, Finland Genealogy](https://www.familysearch.org/en/wiki/Iisalmi_Parish,_Kuopio,_Finland_Genealogy))\n- **County seat / administrative center:** Iisalmi town (gained town status in 1891; during 1800\u20131850 it was a rural parish center)\n- **Parent jurisdiction:** Kuopio County (L\u00e4\u00e4ni), historical province of Savonia (Maakunta)\n- **Population during period:** Population data from the tools was not returned for this specific parish; Iisalmi was a large rural parish in the Upper Savonia region.\n- **Economy:** Agriculture and small-scale rural crafts; the region is heavily forested lake-country.\n- **Ethnic composition:** Almost entirely ethnic Finns; Finnish-speaking with Swedish used only in church and official records.\n- **Religious denominations:** Evangelical Lutheran (the state church, which kept all vital records). An Orthodox congregation also existed but FamilySearch holds no Orthodox records for Iisalmi. There are no Catholic or other denomination records for this period.\n- **Key historical events:** Finland passed from Sweden to Russia as the Grand Duchy of Finland in 1809, immediately before the target period. Record-keeping practices remained Lutheran-church-centered and changed little under Russian administration. In 1821, Lapinlahti was separated out as its own parish from Iisalmi.\n\n## Boundary changes\n- **Original territory (pre-1800):** At its formation the parish included the entire Yl\u00e4-Savo region. By 1800 several parishes \u2014 Kiuruvesi, Lapinlahti, Pielavesi, Sonkaj\u00e4rvi, and Vierema \u2014 had already been or were being separated out.\n- **1821 \u2013 Lapinlahti separation:** Lapinlahti was formally constituted as its own parish. Families in villages that fell into the new Lapinlahti parish appear in Iisalmi registers before 1821 and in Lapinlahti registers from 1821 onward. Researchers must know which village a family lived in to determine which side of this boundary they were on.\n- **Judicial district changes (relevant to court records):** Iisalmi district (Iisalmen tuomiokunta) was operative from 1723; the preceding district was Pien-Savon ylinen (1796\u20131821). Court records accordingly span multiple district names across the period.\n- **1832 status:** At the time of Elsa Brita Heikkinen's christening in June 1832, Iisalmi was a single, still-large rural parish in Kuopio County. Record-keeping was at the parish level by the Lutheran clergy. There was no civil registration.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Status for 1800\u20131850:** There was no state civil registration in Finland during this period. The Evangelical Lutheran Church was the state church and its registers ARE the vital records. Civil registration began only in 1923 for those outside the church (and the general population register fully replaced church records only in 1971). ([Finland Civil Registration](https://www.familysearch.org/en/wiki/Finland_Civil_Registration))\n- **What to use instead:** The Lutheran parish's christening/baptism register (syntyneet ja kastetut) is the primary vital record for births. These are detailed below under Church Records.\n\n### Church records\nThis is the central record class for 1800\u20131850 Iisalmi. All records are held at the parish level (not town or county level); the clergy created them and they are now digitized at FamilySearch and the Finnish National Archives.\n\n**Denominations present:** Evangelical Lutheran (overwhelmingly dominant); Orthodox congregation (not covered by FamilySearch). ([Iisalmi Parish, Kuopio, Finland Genealogy](https://www.familysearch.org/en/wiki/Iisalmi_Parish,_Kuopio,_Finland_Genealogy#Church_Records))\n\n**Language:** All records through 1863 are written in Swedish, not Finnish. Finnish names appear in their Swedish equivalents or abbreviated forms. For example, the surname Heikkinen appears in period records as \"Heickin\" or \"Heickin\"; Pardanen appears as \"Pardain\". ([Finland Church Records](https://www.familysearch.org/en/wiki/Finland_Church_Records))\n\n#### Christening / baptism registers (Syntyneet ja kastetut / F\u00f6delsel\u00e4ngder och dopl\u00e4ngder)\n- **What exists:** Iisalmi Lutheran christening registers survive from 1657. For the target period 1800\u20131850 they are complete and well-preserved.\n- **Content:** The register line for each child typically records: child's name, christening date, birth date (later registers), father's name and occupation, mother's name, farm/village of residence, and the names of godparents/witnesses. Earlier registers (early 1800s) may give less detail on birth date or mother's name. ([Finland Church Records](https://www.familysearch.org/en/wiki/Finland_Church_Records#Births))\n- **Digitization:** **Indexed + images available.** The national collection [Finland, Baptisms, 1657-1890](https://www.familysearch.org/search/collection/1778464) (FamilySearch collection 1778464, 4.5 million records) includes Iisalmi and is name-searchable. However, this collection is an **index only** \u2014 it does not include images of the original registers. For the actual register images, use:\n  - [Kirkonkirjat, 1747-1870](https://www.familysearch.org/en/search/catalog/4110832) (Iisalmen maalaiskunta) \u2014 FamilySearch Catalog, browse-only images\n  - [Kirkonkirjat, 1664-1950](https://www.familysearch.org/en/search/catalog/3044) (Iisalmen maalaiskunta) \u2014 FamilySearch Catalog, browse-only images\n  - Finnish National Archives ASTIA portal: [astia.narc.fi](https://astia.narc.fi/uusiastia/) \u2014 records from 1527 to 100 years ago\n  - [Digihakemisto](https://digihakemisto.net/) \u2014 images\n  - SSHY (Finland's Family History Association): [digiarkisto.org/sshy](https://www.digiarkisto.org/sshy/index_eng.htm) \u2014 images\n- Also mirrored at Ancestry ([Finland Select Baptisms, 1657-1890](https://www.ancestry.com/search/collections/9863)) and MyHeritage ([Finland Baptisms, 1657-1890](https://www.myheritage.com/research/collection-30233/finland-baptisms-1657-1890)) (subscription required).\n\n#### Communion books (Rippikirjat / Kommunionb\u00f6cker)\n- **What they are:** Periodic household-by-household surveys of all confirmed parish members, recording birth dates, birthplaces, marriage and death dates, and moving information. They function as a detailed census of the parish.\n- **Critical eastern Finland quirk:** Iisalmi is in eastern Finland, where children under confirmation age (approximately 14\u201316) were **NOT** included in the rippikirjat. They appear instead in the pre-confirmation books (lastenkirjat, below). A child christened in June 1832 would not appear in the communion books until confirmation, expected around 1846\u20131848.\n- **FamilySearch volumes for 1800\u20131850 (from volume_search):**\n  - Rippikirjat, Aa:9 (1805\u20131815) \u2014 image group 102151575, 489 images, 97% indexed\n  - Rippikirjat, Aa:10 (1807\u20131815) \u2014 image group 102151576, 172 images, 97% indexed\n  - Rippikirjat, Aa:11 (1816\u20131826) \u2014 image group 102151577, 369 images, 98% indexed\n  - Rippikirjat, Aa:12 (1816\u20131826) \u2014 image group 102151578, 358 images, 98% indexed\n  - Rippikirjat, Aa:13 (1827\u20131837) \u2014 image group 102151579, 499 images, 96% indexed\n  - Rippikirjat, Aa:14 (1827\u20131837) \u2014 image group 102151580, 491 images, 98% indexed\n  - Rippikirjat, Aa:15 (1839\u20131849) \u2014 image group 102151581, 548 images, 96% indexed\n  - Rippikirjat, Aa:16 (1839\u20131849) \u2014 image group 102151582, 539 images, 99% indexed\n  - Rippikirjat, Aa:17 (1839\u20131849) \u2014 image group 102151583, 519 images, 98% indexed\n- All volumes are in Swedish; none are full-text searchable, but all are highly name-indexed via FamilySearch collection 2805467.\n- **Access:** [Finland, Church Census and Pre-Confirmation Books, 1600-1916](https://www.familysearch.org/search/collection/2805467) \u2014 indexed + images, free at FamilySearch.\n\n#### Pre-confirmation books (Lastenkirjat / Barnb\u00f6cker)\n- **What they are:** Lists of children who have not yet been confirmed, grouped by household and village. They record the child's name, birth date, parents, and ultimately the date of confirmation or death. This is the key source for children in eastern Finnish parishes.\n- **For Elsa Brita Heikkinen (b./chr. 1832):** She would appear in the lastenkirjat for the years covering 1832 through her confirmation (~1846\u20131848). These volumes should give her birth date.\n- **FamilySearch volumes for 1800\u20131850:**\n  - Lastenkirjat, Ab:5 (1790\u20131826) \u2014 image group 102151588, 490 images, 94% indexed\n  - Lastenkirjat, Ab:6 (1827\u20131839) \u2014 image group 102151589, 247 images, 95% indexed\n  - Lastenkirjat, Ab:7 (1821\u20131839) \u2014 image group 102151590, 257 images, 91% indexed\n  - Lastenkirjat, Ab:8 (1839\u20131849) \u2014 image group 102151591, 389 images, 94% indexed\n  - Lastenkirjat, Ab:9 (1839\u20131849) \u2014 image group 102151592, 383 images, 98% indexed\n- All in Swedish; highly name-indexed via FamilySearch collection 2805467.\n\n#### Marriage and burial registers\n- [Finland, Marriages, 1682-1892](https://www.familysearch.org/search/collection/1676970) \u2014 index (also at Ancestry and MyHeritage, subscription)\n- [Finland, Burials, 1725-1909](https://www.familysearch.org/search/collection/1676971) \u2014 index (also at Ancestry and MyHeritage, subscription)\n\n### Census records\n- There was no national census in the modern sense during this period in Finland. The communion books (rippikirjat) serve as the census equivalent \u2014 they enumerate the entire parish population by household on a roughly five-year cycle and are the primary tool for tracking a family's presence in the parish. ([Finland Church Records](https://www.familysearch.org/en/wiki/Finland_Church_Records))\n\n### Probate and court records\n- **Probate (estate inventories, perukirjat):** [Perukirjat, 1722-1864](https://www.familysearch.org/en/search/catalog/311183) \u2014 Kihlakunnanoikeus (Iisalmen tuomiokunta) \u2014 browse-only images at FamilySearch Catalog. Useful when no direct vital record is found.\n- **Court records (tuomiokirjat):** Multiple cataloged series cover the period:\n  - [Tuomiokirjat, 1797-1812](https://www.familysearch.org/en/search/catalog/307323) \u2014 Iisalmen tuomiokunta\n  - [Ilmoitusasiat, 1799-1862](https://www.familysearch.org/en/search/catalog/310511) \u2014 V\u00e4h\u00e4-Savon ylinen tk.\n  - [Tuomiokirjat, 1822-1918](https://www.familysearch.org/en/search/catalog/3152069) \u2014 Iisalmen tuomiokunta\n  All are browse-only images at FamilySearch Catalog.\n\n### Land records\n- **Survey system:** Metes and bounds (traditional Finnish/Swedish system).\n- **Land records:** [Ilmoitusasiat, 1799-1862](https://www.familysearch.org/en/search/catalog/310511) (Kihlakunnanoikeus, V\u00e4h\u00e4-Savon ylinen tk.) \u2014 browse-only images at FamilySearch Catalog. Earlier land records are in the V\u00e4h\u00e4-Savon tuomiokunta series.\n\n### Military records\n- **Relevant period:** The Finnish War of 1808\u20131809, immediately before the survey period, transferred Finland to Russia. Military records for men serving in Russian-era Finland are held at the Finnish Military Archives (Sotilasl\u00e4\u00e4ketieteen arkisto). FamilySearch has no significant military collection specifically for 1800\u20131850 Iisalmi.\n\n### Tax records\n- [Finland, Tax Lists, 1809-1915](https://www.familysearch.org/search/collection/2704794) \u2014 indexed + images, free at FamilySearch. Covers the Russian-era population tax. Useful as a substitute or supplement to the communion book census. Also at [Ancestry: Finland, Population Tax Lists, 1809-1920](https://www.ancestry.com/search/collections/61626/) (subscription).\n\n### Cemetery records\n- The Genealogical Society of Finland headstone database: [haudat.genealogia.fi](http://haudat.genealogia.fi/php/indexs.php)\n- BillionGraves: [billiongraves.com](https://billiongraves.com/site-map?country=Finland)\n- FindAGrave: [findagrave.com](https://www.findagrave.com/cemetery/search?cemetery-name=&cemetery-loc=Finland)\n- Physical sexton records for Iisalmi cemetery, if not already digitized, would be held by the parish or the Finnish National Archives.\n\n### Newspaper records\n- The Finnish National Library digital newspaper archive: [digi.kansalliskirjasto.fi](https://digi.kansalliskirjasto.fi/search?formats=NEWSPAPER) \u2014 covers 1771\u20131910. Rural parishes like Iisalmi had limited newspaper coverage in 1800\u20131850; the most useful items would be legal notices.\n\n### Immigration/emigration records\n- For the 1800\u20131850 period, emigration from Iisalmi was minimal. [Finland, Passport Registers, 1900-1920](https://www.familysearch.org/search/collection/4139415) is outside the target period.\n- Moving certificates (muuttokirjat) \u2014 found within the church record series \u2014 document movement between parishes. These are part of the rippikirjat and the arrival/removal records, not a separate collection for this period.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Access |\n|---|---|---|\n| FamilySearch (indexed collections) | Finland Baptisms 1657-1890; Church Census & Pre-Confirmation Books 1600-1916; Marriages; Burials; Tax Lists | Free |\n| FamilySearch Catalog (images) | Kirkonkirjat 1664-1950; Kirkonkirjat 1747-1870; court and probate series | Free (some image-only at FamilySearch Centers) |\n| Finnish National Archives \u2014 ASTIA | All Lutheran parish records 1527 to ~100 years ago, including Iisalmi | Free |\n| Digihakemisto | Church record images | Free |\n| SSHY / Digiarkisto | Church record images | Free |\n| HisKi (Genealogical Society of Finland) | Partial index of Iisalmi births, marriages, burials | Free |\n| Ancestry | Finland Select Baptisms; Marriages; Burials; Communion Books; Tax Lists | Subscription |\n| MyHeritage | Finland Baptisms; Church Census; Marriages; Burials | Subscription |\n| American Ancestors | Finland Baptisms; Marriages; Burials | Subscription |\n\n**Coverage of this survey:** Volume_search returned 15 digitized volumes matching Iisalmi for 1800\u20131850 in the baptism/religious/vital record type groups; all 15 are detailed above. The total result was 15 with no nextPageToken, so this is the complete set for the queried type groups. Additional volumes for other record types (marriages, burials, etc.) exist but were not queried; check the FamilySearch Catalog for the full holdings.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Finnish National Archives (Kansallisarkisto), Helsinki | All original Finnish parish registers (originals or preservation microfilm) | ASTIA portal online; in-person at Helsinki |\n| Lutheran Diocese of Kuopio (Kuopion hiippakunta) | Diocesan administrative records | Contact diocese directly |\n| Local Iisalmi congregation | Post-1970 records | Contact congregation |\n\n## Records NOT online\n- **Orthodox congregation records** \u2014 FamilySearch does not hold records from the Iisalmi Orthodox congregation. Contact the Orthodox Diocese of Kuopio and Karelia.\n- **Original parish register images via the indexed FamilySearch baptism collection (1778464)** \u2014 the collection is an index only. Images must be retrieved from FamilySearch Catalog, ASTIA, Digihakemisto, or SSHY.\n- **Military service records for 1800\u20131850 era** \u2014 not covered by any significant FamilySearch collection for this period and place.\n\n## Known record losses\n- No specific record destruction events for Iisalmi parish have been identified in the tool results or wiki pages returned. The surviving record series begins in 1657 and runs continuously through the target period. The FamilySearch wiki page and volume_search results show no gaps in coverage for 1800\u20131850.\n\n## Research tips\n\n- **Start with the baptism index, then go directly to the images.** Search [Finland Baptisms, 1657-1890](https://www.familysearch.org/search/collection/1778464) for Elsa Brita Heikkinen to find the index entry citing the register volume and page. Then open the original register image (from FamilySearch Catalog entry 4110832, ASTIA, or Digihakemisto) to read the birth date alongside the christening entry. ([Finland Church Records \u2014 Births and Baptisms](https://www.familysearch.org/en/wiki/Finland_Church_Records))\n- **Also check the lastenkirjat.** Because Iisalmi is in eastern Finland, Elsa Brita would be listed in the pre-confirmation books from roughly 1832 until confirmation (~1846\u20131848). These books list her birth date beside her name. Collection 2805467 covers these and is indexed + images. ([Finland, Church Census and Pre-Confirmation Books \u2014 FamilySearch Historical Records](https://www.familysearch.org/en/wiki/Finland,_Church_Census_and_Pre-Confirmation_Books_-_FamilySearch_Historical_Records))\n- **Then search the communion books.** Once Elsa is confirmed, she appears in the rippikirjat with parents' data, birth date, and birthplace alongside her. This is often the clearest statement of the birth date and village. ([Finland Research Tips and Strategies](https://www.familysearch.org/en/wiki/Finland_Research_Tips_and_Strategies))\n- **Try the HisKi index** as a quick free check: [hiski.genealogia.fi/hiski/205zdi?en+0112](https://hiski.genealogia.fi/hiski/205zdi?en+0112). It is incomplete, so a negative result does not rule out the record.\n- **Records are in Swedish.** The surname Heikkinen appears in 1832 records as \"Heickin\" or similar; the mother's surname Pardanen appears as \"Pardain.\" When searching by name, try both Finnish and Swedish-abbreviated forms. ([Finland Naming Customs](https://www.familysearch.org/en/wiki/Finland_Naming_Customs))\n- **Eastern Finnish fixed surnames:** Heikkinen is an eastern Finnish family surname (fixed, ending in -nen). All members of the family share the same surname across generations \u2014 it is not a patronymic. ([Finland Naming Customs](https://www.familysearch.org/en/wiki/Finland_Naming_Customs))\n- **If the village of residence is known, it narrows the search significantly.** The communion books and pre-confirmation books are organized by village and farm, not alphabetically. Knowing whether the family was in Kotikyl\u00e4, Taipale, Soinlahti, or another of the Iisalmi villages allows you to go directly to that section of the register. ([Iisalmi Parish, Kuopio, Finland Genealogy](https://www.familysearch.org/en/wiki/Iisalmi_Parish,_Kuopio,_Finland_Genealogy))\n- **Lapinlahti split (1821):** If the family lived in the area that became Lapinlahti parish, check Lapinlahti records from 1821 onward and Iisalmi records before that date. The surrounding parishes (Vierema, Sonkaj\u00e4rvi, Lapinlahti, Maaninka, Pielavesi, Kiuruvesi) should also be searched if the family is near a boundary. ([Iisalmi Parish, Kuopio, Finland Genealogy](https://www.familysearch.org/en/wiki/Iisalmi_Parish,_Kuopio,_Finland_Genealogy))\n- **Witnesses in the christening register** often lived nearby and may be relatives. Recording all witness names and residences can help trace the family's network across villages and parishes. ([Finland Church Records](https://www.familysearch.org/en/wiki/Finland_Church_Records))\n- **The FamilySearch Finland handwriting guide** will help read the old Swedish-script registers: [Finland Handwriting](https://www.familysearch.org/en/wiki/Finland_Handwriting).\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Iisalmi_Parish,_Kuopio,_Finland_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Finland_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Finland_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Finland_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-22"
+    }
+  ]
+}

@@ -194,8 +194,14 @@ def env_for_sdk(auth: AuthConfig, *, tool_search: bool = True) -> dict[str, str]
     scratch log. It also silences the #941 mid-run backstop
     (`e2e.mcp_health.tool_search_miss_streak`), which counts no-match
     ToolSearch replies and so never fires when there is no ToolSearch.
+
+    `CLAUDE_CODE_FORK_SUBAGENT=0` matches the hosted agent (`real_agent._sdk_env`):
+    no `subagent_type: "fork"`, which the SDK offers by default from CLI 2.1.302.
     """
-    env = {"ENABLE_TOOL_SEARCH": "true" if tool_search else "false"}
+    env = {
+        "ENABLE_TOOL_SEARCH": "true" if tool_search else "false",
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
+    }
     if auth.skill_runner_mode == "api_key" and auth.api_key:
         env["ANTHROPIC_API_KEY"] = auth.api_key
     else:

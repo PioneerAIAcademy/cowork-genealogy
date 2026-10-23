@@ -14,11 +14,12 @@ from e2e.routing_agreement_report import (
 )
 
 
-def _pc(*steps, agent_id=None, summary=None):
+def _pc(*steps, agent_id=None, agent_type=None, summary=None):
     """A project_context call whose summary carries one question per step."""
     if summary is None:
         summary = json.dumps({"questionStatuses": [{"id": f"q_{i}", "nextStep": s} for i, s in enumerate(steps)]})
-    return {"tool": "mcp__genealogy__project_context", "agent_id": agent_id, "args": {}, "response_summary": summary}
+    return {"tool": "mcp__genealogy__project_context", "agent_id": agent_id, "agent_type": agent_type,
+            "args": {}, "response_summary": summary}
 
 
 def _spawn(subagent_type=None, agent_id=None):
@@ -135,3 +136,24 @@ def test_report_prints_both_populations_and_the_sha_breakdown(tmp_path):
     assert "abc1234" in out and "#3494=no" in out and "#3583=?" in out
     assert "Unpaired" in out and "router 1" in out
     assert any(line.strip().startswith("untyped ") for line in out.splitlines())
+
+
+def test_a_subagent_reading_its_own_step_is_counted_self_named(tmp_path):
+    p = _write(tmp_path, [
+        _pc("research-plan", agent_id="sub1", agent_type="genealogy-research:research-plan"),
+        _skill("search-records"),
+        _pc("person-evidence", agent_id="sub2", agent_type="research-exhaustiveness"),
+        _skill("search-records"),
+    ])
+    s = scan([p])
+    own, other = s.decisions
+    assert own.self_named and not own.matched  # prefix stripped from agent_type too
+    assert not other.self_named
+    out = format_report(s, {"abc1234": 1}, {"abc1234": {"#3494": True, "#3583": True}})
+    assert "names the reading agent itself: 1 of 2 (1 of the 2 misses)" in out
+
+
+def test_router_decisions_are_never_self_named(tmp_path):
+    p = _write(tmp_path, [_pc("research-plan", agent_type="research-plan"), _skill("research-plan")])
+    (d,) = scan([p]).decisions
+    assert d.population == "router" and not d.self_named

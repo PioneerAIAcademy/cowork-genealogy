@@ -1,17 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // The resolver builds on the low-level FamilySearch places fetchers in
-// utils/place-api.ts. Mock just those three so no network is touched.
+// utils/place-api.ts. Mock just those four so no network is touched.
 vi.mock("../../src/utils/place-api.js", () => ({
   searchPlace: vi.fn(),
   getPlaceById: vi.fn(),
   getPlaceRepIds: vi.fn(),
+  getPlaceCandidateNames: vi.fn(),
 }));
 
 import {
   searchPlace,
   getPlaceById,
   getPlaceRepIds,
+  getPlaceCandidateNames,
 } from "../../src/utils/place-api.js";
 import {
   resolveStandardPlace,
@@ -29,11 +31,13 @@ import {
   __clearPlaceResolverCachesForTests,
   __usePlaceTableForTests,
   isNonPlacePhrase,
+  checkFirstPlace,
 } from "../../src/utils/place-resolver.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
 const mockGetPlaceById = vi.mocked(getPlaceById);
 const mockGetPlaceRepIds = vi.mocked(getPlaceRepIds);
+const mockGetPlaceCandidateNames = vi.mocked(getPlaceCandidateNames);
 
 type Entry = Awaited<ReturnType<typeof searchPlace>>[number];
 
@@ -49,6 +53,7 @@ beforeEach(() => {
   mockSearchPlace.mockReset();
   mockGetPlaceById.mockReset();
   mockGetPlaceRepIds.mockReset();
+  mockGetPlaceCandidateNames.mockReset();
   __clearPlaceResolverCachesForTests();
 });
 
@@ -965,5 +970,327 @@ describe("__usePlaceTableForTests (the eval harness's offline resolver)", () => 
     mockSearchPlace.mockResolvedValue([]);
     await resolveStandardPlace("Boston, Massachusetts");
     expect(mockSearchPlace).toHaveBeenCalled();
+  });
+});
+
+describe("checkFirstPlace (#3696)", () => {
+  /** Names in English, plus the extra ones only an all-language read returns. */
+  function names(english: string[], otherLanguages: string[] = []) {
+    mockGetPlaceCandidateNames.mockImplementation(async (_id, _opts, flags = {}) =>
+      flags.anyLanguage ? [...english, ...otherLanguages] : english,
+    );
+  }
+
+  it("refuses the village it drops: Helvesieck resolves to its parent, Schneverdingen", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+    ]);
+    names([], ["Schneverdingen", "Schnewerdingen"]);
+    expect(await checkFirstPlace("Helvesieck, Schneverdingen, Soltau, Hanover")).toEqual({
+      status: "mismatch",
+      standardPlace: "Schneverdingen, Soltau, Hanover, Prussia, Germany",
+    });
+  });
+
+  it("refuses a first place the search answers with the country alone", async () => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 })]);
+    names(["Germany"], ["Deutschland"]);
+    expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("mismatch");
+  });
+
+  it("matches a name FamilySearch tags as non-English (Forfarshire is Angus)", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Angus, Scotland, United Kingdom", score: 90 }),
+    ]);
+    names(["Angus"], ["Forfarshire"]);
+    expect((await checkFirstPlace("Forfarshire, Scotland")).status).toBe("match");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledWith("p1", {}, { anyLanguage: true });
+  });
+
+  it("matches through the resolved first segment when the English name list is empty", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Ringebu, Oppland, Norway", score: 90 }),
+    ]);
+    names([]);
+    expect(await checkFirstPlace("Ringebu, Oppland, Norway")).toEqual({
+      status: "match",
+      standardPlace: "Ringebu, Oppland, Norway",
+    });
+    expect(mockGetPlaceCandidateNames).not.toHaveBeenCalled();
+  });
+
+  it("matches a county named with its suffix by ignoring the type word", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Schuylkill, Pennsylvania, United States", score: 90 }),
+    ]);
+    expect((await checkFirstPlace("Schuylkill County, Pennsylvania")).status).toBe("match");
+    expect(mockGetPlaceCandidateNames).not.toHaveBeenCalled();
+  });
+
+  it("matches an English alias only the name list holds", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Livorno, Toscana, Italy", score: 90 }),
+    ]);
+    names(["Livorno", "Leghorn"]);
+    expect((await checkFirstPlace("Leghorn, Toscana, Italy")).status).toBe("match");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledWith("p1", {}, { anyLanguage: true });
+  });
+
+  it("folds case, spacing and diacritics on both sides", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Parácuaro, Michoacán, Mexico", score: 90 }),
+    ]);
+    expect((await checkFirstPlace("  paracuaro , Michoacan, Mexico")).status).toBe("match");
+  });
+
+  it.each([
+    ["St Louis, Missouri", "St. Louis, Missouri, United States"],
+    ["Sondre Land, Oppland, Norway", "Søndre Land, Oppland, Norway"],
+    ["Saint Jean, Quebec", "Saint-Jean, Bécancour, Quebec, Canada"],
+    ["O'Brien, Ireland", "OBrien, Ireland"],
+  ])("matches %s to %s through punctuation and undecomposed letters", async (text, fullName) => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName, score: 90 })]);
+    expect((await checkFirstPlace(text)).status).toBe("match");
+    expect(mockGetPlaceCandidateNames).not.toHaveBeenCalled();
+  });
+
+  /** Search answers keyed by the text searched, so a re-search can be told apart. */
+  function searchByText(table: Record<string, Entry[]>) {
+    mockSearchPlace.mockImplementation(async (name: string) => table[name] ?? []);
+  }
+
+  it("keeps segment 2 as a parent check: a real village under the wrong parish is refused", async () => {
+    // Helvesiek is real but sits in Rotenburg; context "Schneverdingen" keeps only that parish.
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 95 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+    ]);
+    names(["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesiek, Schneverdingen, Hanover")).status).toBe("mismatch");
+  });
+
+  it("checks every entry tied for the top score, not only the first", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "pMM", fullName: "Mount Pleasant MM, Henry, Iowa, United States", score: 98 }),
+      entry({ placeRepId: "r2", placeId: "pTown", fullName: "Mount Pleasant, Henry, Iowa, United States", score: 98 }),
+    ]);
+    expect((await checkFirstPlace("Mt. Pleasant, Iowa")).status).toBe("match");
+  });
+
+  it("does not match a lower-scored entry that is not tied", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Sierkopas, Lithuania", score: 40 }),
+    ]);
+    names(["Germany"]);
+    expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("mismatch");
+  });
+
+  it.each([
+    ["Stagstrup Sogn, Thisted Amt, Denmark", "Stagstrup, Thisted, Nordjylland, Denmark"],
+    ["Co. Cork, Ireland", "Cork, Ireland"],
+    ["Cork County, Ireland", "Cork, Ireland"],
+    ["Landkreis Soltau, Hannover", "Soltau, Hanover, Prussia, Germany"],
+    ["Parish of Ringsaker, Hedmark, Norway", "Ringsaker, Hedmark, Norway"],
+  ])("ignores type words: %s matches %s", async (text, fullName) => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName, score: 90 })]);
+    expect((await checkFirstPlace(text)).status).toBe("match");
+  });
+
+  it("searches again without the type word when the first search misses", async () => {
+    searchByText({
+      "Ringebu Parish, Oppland, Norway": [entry({ placeRepId: "r1", placeId: "p1", fullName: "Oppland, Norway", score: 90 })],
+      "Ringebu, Oppland, Norway": [entry({ placeRepId: "r2", placeId: "p2", fullName: "Ringebu, Oppland, Norway", score: 95 })],
+    });
+    names(["Oppland"]);
+    expect(await checkFirstPlace("Ringebu Parish, Oppland, Norway")).toEqual({
+      status: "match",
+      standardPlace: "Ringebu, Oppland, Norway",
+    });
+  });
+
+  it("keeps the first verdict when the re-search also misses", async () => {
+    searchByText({
+      "Helvesieck Parish, Schneverdingen, Soltau": [
+        entry({ placeRepId: "r1", placeId: "p1", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+      ],
+      "Helvesieck, Schneverdingen, Soltau": [
+        entry({ placeRepId: "r1", placeId: "p1", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+      ],
+    });
+    names([], ["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesieck Parish, Schneverdingen, Soltau")).status).toBe("mismatch");
+  });
+
+  it("never strips a name down to nothing", async () => {
+    // Stripped to nothing, "County" and the place name "Kreis" would both be "".
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 })]);
+    names(["Germany", "Kreis"]);
+    expect((await checkFirstPlace("County, Germany")).status).toBe("mismatch");
+  });
+
+  it("ignores a type word on FamilySearch's side too", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Stagstrup Sogn, Thisted, Denmark", score: 90 }),
+    ]);
+    names([]);
+    expect((await checkFirstPlace("Stagstrup, Thisted, Denmark")).status).toBe("match");
+  });
+
+  it("spells out Mt, St and Ft on both sides", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Mount Vernon, Westchester, New York, United States", score: 90 }),
+    ]);
+    expect((await checkFirstPlace("Mt. Vernon, Westchester, New York")).status).toBe("match");
+  });
+
+  it("is lookup_failed, not a refusal, when the re-search without the type word fails", async () => {
+    mockSearchPlace.mockImplementation(async (name: string) => {
+      if (name === "Helvesieck, Schneverdingen, Soltau") throw new Error("FamilySearch API error: 503");
+      return [entry({ placeRepId: "r1", placeId: "p1", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 })];
+    });
+    names([], ["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesieck Parish, Schneverdingen, Soltau")).status).toBe("lookup_failed");
+  });
+
+  it("searches once per pass and fetches each place's names once", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 }),
+    ]);
+    names(["Germany"]);
+    await checkFirstPlace("Sierkopas, Germany");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(1);
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetches at most five name lists, and writes with a warning when that leaves entries unchecked", async () => {
+    mockSearchPlace.mockResolvedValue(
+      Array.from({ length: 40 }, (_, n) =>
+        entry({ placeRepId: `r${n}`, placeId: `p${n}`, fullName: `Place${n}, Springfield, Somewhere`, score: 90 }),
+      ),
+    );
+    names(["Elsewhere"]);
+    expect((await checkFirstPlace("Nowhereville, Springfield")).status).toBe("lookup_failed");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(5);
+  });
+
+  it("fetches a place's names once when two of its representations tie", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 }),
+      entry({ placeRepId: "r2", placeId: "p1", fullName: "Germany, Deutsches Reich", score: 80 }),
+    ]);
+    names(["Germany"]);
+    expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("mismatch");
+    expect(mockGetPlaceCandidateNames).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["Helvesiek, Schneverdingen Parish, Hanover"],
+    ["Helvesiek, Kirchspiel Schneverdingen, Hanover"],
+  ])("still checks the parent when segment 2 carries a type word: %s", async (text) => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 95 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+    ]);
+    names(["Schneverdingen"]);
+    expect((await checkFirstPlace(text)).status).toBe("mismatch");
+  });
+
+  it("searches the parents without their type words", async () => {
+    // Live, "Schneverdingen Parish" in the query returns only the Rotenburg Helvesiek.
+    searchByText({
+      "Helvesiek, Schneverdingen Parish, Hanover": [
+        entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 86 }),
+      ],
+      "Helvesiek, Schneverdingen, Hanover": [
+        entry({ placeRepId: "r1", placeId: "p1", fullName: "Helvesiek, Rotenburg, Hanover, Prussia, Germany", score: 88 }),
+        entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 86 }),
+      ],
+    });
+    names(["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesiek, Schneverdingen Parish, Hanover")).status).toBe("mismatch");
+  });
+
+  it("keeps an \"X of\" parent whole: District of Columbia is not Columbia", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Washington, District of Columbia, United States", score: 90 }),
+    ]);
+    expect((await checkFirstPlace("Washington, District of Columbia, United States")).status).toBe("match");
+    expect(mockSearchPlace).toHaveBeenCalledWith("Washington, District of Columbia, United States", expect.anything());
+  });
+
+  it("is lookup_failed when the best entry has no place id and its first segment misses", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", fullName: "Schneverdingen, Soltau, Hanover, Germany", score: 90 }),
+      entry({ placeRepId: "r2", placeId: "p2", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+    ]);
+    names([], ["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesieck, Schneverdingen, Soltau, Hanover")).status).toBe("lookup_failed");
+  });
+
+  it("skips a tied entry with no place id rather than writing unchecked", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Schneverdingen, Soltau, Hanover, Prussia, Germany", score: 90 }),
+      entry({ placeRepId: "r2", fullName: "Schneverdingen, Soltau, Hanover, Germany", score: 90 }),
+    ]);
+    names([], ["Schneverdingen"]);
+    expect((await checkFirstPlace("Helvesieck, Schneverdingen, Soltau, Hanover")).status).toBe("mismatch");
+  });
+
+  it("matches dotted initials against the undotted name: Washington D.C. is Washington DC", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "Washington, District of Columbia, United States", score: 90 }),
+    ]);
+    names(["Washington", "Washington DC"]);
+    expect((await checkFirstPlace("Washington D.C., United States")).status).toBe("match");
+  });
+
+  it.each([
+    ["Co.Cork, Ireland", "Cork, Ireland"],
+    ["Stagstrup-Sogn, Thisted, Denmark", "Stagstrup, Thisted, Nordjylland, Denmark"],
+  ])("finds a type word joined by a period or hyphen: %s", async (text, fullName) => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName, score: 90 })]);
+    names([]);
+    expect((await checkFirstPlace(text)).status).toBe("match");
+  });
+
+  it("reads a period with no space after it as a word break", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "r1", placeId: "p1", fullName: "St. Louis, Missouri, United States", score: 90 }),
+    ]);
+    expect((await checkFirstPlace("St.Louis, Missouri")).status).toBe("match");
+  });
+
+  it("is not_found when the search returns nothing", async () => {
+    mockSearchPlace.mockResolvedValue([]);
+    expect(await checkFirstPlace("Nowhereville, Atlantis")).toEqual({ status: "not_found" });
+  });
+
+  it("is lookup_failed, never a miss, when the search throws", async () => {
+    mockSearchPlace.mockRejectedValue(new Error("FamilySearch API error: 503"));
+    expect(await checkFirstPlace("Helvesieck, Schneverdingen, Soltau, Hanover")).toEqual({ status: "lookup_failed" });
+  });
+
+  it("is lookup_failed when the name fetch throws", async () => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 })]);
+    mockGetPlaceCandidateNames.mockRejectedValue(new Error("FamilySearch API error: 500"));
+    expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("lookup_failed");
+  });
+
+  it("is lookup_failed when the picked entry has no place id and the first segment misses", async () => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", fullName: "Germany", score: 80 })]);
+    expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("lookup_failed");
+    expect(mockGetPlaceCandidateNames).not.toHaveBeenCalled();
+  });
+
+  it("ignores the test place table, which holds no ids, names or failures", async () => {
+    __usePlaceTableForTests({ "Sierkopas, Germany": "Sierkopas, Germany" });
+    try {
+      mockSearchPlace.mockResolvedValue([entry({ placeRepId: "r1", placeId: "p1", fullName: "Germany", score: 80 })]);
+      names(["Germany"]);
+      expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("mismatch");
+    } finally {
+      __usePlaceTableForTests(null);
+    }
   });
 });

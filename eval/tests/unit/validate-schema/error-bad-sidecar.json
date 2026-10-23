@@ -15,7 +15,7 @@
     "Should report that validation FAILED — must not claim the files are valid",
     "Should surface the specific error: the results/log_001.json sidecar's returned_count (5) does not equal the actual number of results in its payload (2), indicating the payload may be truncated",
     "Should explain what a results sidecar is (the saved tool-response file a log entry points to via results_ref) and why the count must match the stored results, and suggest a fix (re-save the sidecar so returned_count matches the actual results, or correct the count)",
-    "Should NOT silently edit research.json or the sidecar",
+    "Should NOT silently edit research.json or the sidecar to fix an error; its one write is a validate_schema log entry",
     "Should NOT route to check-warnings or proof-conclusion — sidecar integrity is a structural check this skill owns"
   ]
 }

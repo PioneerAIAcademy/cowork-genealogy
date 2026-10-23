@@ -7,12 +7,10 @@ import styles from './EvaluationsSection.module.css'
 /**
  * The gps-mentor's verdicts (issue #1223).
  *
- * The mentor gate is mandatory to invoke and record — `/research` will not let
- * a question be considered done until every `ps_id` it references carries a
- * `focus: "proof-critique"` entry here. Until this section existed the system
- * required the critique and then showed the researcher none of it: an
- * `address_first` verdict, the mentor saying a proof needs work before it
- * stands, was recorded and invisible.
+ * The mentor runs only when the researcher asks for a second opinion, and its
+ * verdict is recorded here. Until this section existed the researcher was
+ * shown none of it: an `address_first` verdict, the mentor saying a proof
+ * needs work before it stands, was recorded and invisible.
  *
  * **Verdict, not critique text.** `evaluation_entry` has no notes field. The
  * mentor's prose lives at `file_path`, a host-side artifact the viewer cannot
