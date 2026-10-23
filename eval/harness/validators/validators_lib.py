@@ -20,6 +20,7 @@ small and lets each validator file decide how to handle missing state.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 import pytest
@@ -238,6 +239,89 @@ def assert_log_append_only(
         assert after_log[i] == entry, (
             f"log entry {entry.get('id')} was modified — log is append-only"
         )
+
+
+def assert_only_logs_report(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    tool: str,
+    agent: str,
+) -> None:
+    """A report-only agent's one research.json write is its reply, logged as a
+    single entry whose `tool` is `tool` (issue #3524). Fails on any change
+    outside `log`, an edit to an existing log entry, a new entry with another
+    `tool`, or more than one new entry. With no project before the run,
+    research.json must not exist after it either.
+
+    Takes the wrapped per-run state dicts, like `new_log_entries`.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None:
+        assert after is None, (
+            f"{agent} created research.json with no project; outside a project "
+            f"it writes nothing."
+        )
+        return
+    assert after is not None, f"{agent} deleted research.json"
+    assert_only_writes_to_sections(before, after, {"log"}, skill_name=agent)
+    assert_log_append_only(before, after)
+    new = new_log_entries(before_state, after_state)
+    stray = [e.get("tool") for e in new if e.get("tool") != tool]
+    assert not stray, f"{agent} logged {stray}; its only log entry is `{tool}`."
+    assert len(new) <= 1, (
+        f"{agent} logged {len(new)} `{tool}` entries; one reply is one entry."
+    )
+
+
+def assert_report_logged(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    tool: str,
+) -> None:
+    """Exactly one new `tool` log entry, with `plan_item_id` null and the reply
+    in `notes`. Skips when the scenario holds no project."""
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    reports = [e for e in new_log_entries(before_state, after_state) if e.get("tool") == tool]
+    assert len(reports) == 1, (
+        f"expected exactly one new {tool} log entry; got {len(reports)}"
+    )
+    entry = reports[0]
+    assert entry.get("plan_item_id") is None, (
+        f"the {tool} entry's plan_item_id is {entry.get('plan_item_id')!r}, not null"
+    )
+    notes = entry.get("notes")
+    assert isinstance(notes, str) and notes.strip(), (
+        f"the {tool} entry's notes must carry the reply; got none"
+    )
+
+
+#: Share of the logged report's words the reply must carry. Replayed over the
+#: committed logs: the nine replies that returned only a note that the report
+#: was logged scored 0.20–0.43, every reply that returned it scored 0.67+.
+_REPLY_CARRY_FLOOR = 0.6
+
+
+def assert_reply_carries_report(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    tool: str,
+    reply: str,
+) -> None:
+    """The logged report is also the reply (issue #3524): the agent returns the
+    report it logged, not a note that it was logged. Skips when no `tool`
+    entry was logged."""
+    entries = [e for e in new_log_entries(before_state, after_state) if e.get("tool") == tool]
+    if not entries:
+        pytest.skip(f"no {tool} entry logged")
+    words = lambda s: set(re.findall(r"[a-z0-9]{4,}", (s or "").lower()))  # noqa: E731
+    logged = words(entries[0].get("notes"))
+    carried = len(logged & words(reply)) / max(1, len(logged))
+    assert carried >= _REPLY_CARRY_FLOOR, (
+        f"the reply carries {carried:.0%} of the logged {tool} report; "
+        f"return the report you logged, not a note that it was logged"
+    )
 
 
 _DEFAULT_ALL_SECTIONS: set[str] = {
