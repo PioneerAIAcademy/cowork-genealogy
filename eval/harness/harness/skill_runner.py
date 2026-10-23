@@ -22,6 +22,7 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import re
 import sys
 import time
@@ -54,6 +55,24 @@ from harness.delegation import foreground_rewrite
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
+
+
+_STEP_BOUNDARY = (
+    Path(__file__).resolve().parents[3]
+    / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
+)
+
+
+def load_step_boundary():
+    """The plugin's step boundary, loaded as a library -- the same file the worker and
+    the e2e orchestrator load, so the three planes cannot drift apart. Mirrors how
+    `context_policy.py` loads `guard_project_files.py`."""
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", _STEP_BOUNDARY)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {_STEP_BOUNDARY}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 # v1 permissive allowlist + disallow-tool backstop (per the user's tightening).
@@ -869,6 +888,7 @@ async def run_skill(
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
     tool_search: bool = True,
+    step_mode: str | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -935,6 +955,21 @@ async def run_skill(
     # is its first stubbed hand-off: there the stub denies and stops (#3119).
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
+    # The step boundary (decision 25), OPT-IN per test via `execution.step_mode`.
+    #
+    # None means no gate, which is every test in the corpus today: PR 1 ships the
+    # mechanism, and a test opts in by declaring the mode its turn runs under. Enforcing
+    # by default would change what every existing test measures, and the only place that
+    # would show is a paid run -- so the default is the one that cannot surprise anyone.
+    #
+    # `ctx` is None here: the unit workspace has a research.json, but the one gated
+    # follower (research-plan after research-exhaustiveness) is denied without it, which
+    # is the safe side. A test that needs that arm declares mode `job`.
+    _step_gate = None
+    if step_mode:
+        _boundary = load_step_boundary()
+        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode, ctx=None)
+
     _stub_skills = stub_skills or {}
     # The same stub for a callee converted to an agent: a main-thread spawn of
     # one of these names is denied and continued the same way (issue #2825).
@@ -1008,6 +1043,33 @@ async def run_skill(
         # Telemetry only — never gates, denies, or counts toward any limit.
         if (builtin_record := builtin_call_record(tool_name, input_data)):
             builtin_tool_calls.append(builtin_record)
+        # The step boundary, BEFORE the stubs: a stub's canned reply must never
+        # replace a step denial, or the test would record the hand-off as taken.
+        # Only when the test declared a mode; otherwise `_step_gate` is None and this
+        # is inert, which is every test in the corpus today.
+        if _step_gate is not None:
+            try:
+                _verdict = _step_gate.check(
+                    tool_name, input_data.get("tool_input") or {},
+                    subagent=bool(input_data.get("agent_id")),
+                )
+            except Exception:  # noqa: BLE001 - a hook that raises fails a call the test was entitled to make
+                _verdict = None
+            if _verdict is not None:
+                _step_decision, _step_reason = _verdict
+                out = {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": _step_reason,
+                    }
+                }
+                # The halt is the backstop: a second crossing ends the run, as the
+                # worker's does, so a test cannot measure a turn that ran past it.
+                if _step_decision == "halt":
+                    out["continue_"] = False
+                    out["stopReason"] = _step_reason
+                return out
         # Track skill invocations so we can populate skills_invoked.
         if tool_name == "Skill":
             tool_input = input_data.get("tool_input", {}) or {}

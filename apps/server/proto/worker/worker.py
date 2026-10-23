@@ -205,7 +205,6 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from proto.worker.options import (  # noqa: E402
-    StepGate,
     load_step_boundary,
     DELEGATION_TOOLS,
     PRICE_PER_MTOK,
@@ -2435,7 +2434,7 @@ async def _run_turn(
         try:
             boundary = load_step_boundary()
             seeded_step, seeded_mode = read_turn_step(conn, turn_id)
-            step_gate = StepGate(
+            step_gate = boundary.StepGate(
                 boundary=boundary,
                 # A redelivery keeps the mode the first attempt ran under; the
                 # researcher's message is the source only on the first.

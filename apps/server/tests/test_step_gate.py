@@ -28,7 +28,9 @@ def boundary():
 
 
 def gate(boundary, **kw):
-    return o.StepGate(boundary=boundary, **kw)
+    """The gate lives IN step_boundary.py, so all three planes share one copy --
+    the worker, the unit harness and the e2e orchestrator each load the same file."""
+    return boundary.StepGate(boundary=boundary, **kw)
 
 
 def spawn(name, tool="Task"):
@@ -38,26 +40,26 @@ def spawn(name, tool="Task"):
 # ── what counts as a step ───────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("tool", sorted(o.STEP_TOOLS))
-def test_every_spawn_tool_is_a_step(tool):
-    assert o.step_candidate(tool, {"subagent_type": "research-plan"}) == "research-plan"
+@pytest.mark.parametrize("tool", ["Agent", "Task", "Skill"])
+def test_every_spawn_tool_is_a_step(tool, boundary):
+    assert boundary.step_candidate(tool, {"subagent_type": "research-plan"}) == "research-plan"
 
 
-def test_an_ordinary_tool_is_not_a_step():
-    assert o.step_candidate("Read", {"file_path": "/x"}) is None
-    assert o.step_candidate("mcp__genealogy__research_append", {}) is None
+def test_an_ordinary_tool_is_not_a_step(boundary):
+    assert boundary.step_candidate("Read", {"file_path": "/x"}) is None
+    assert boundary.step_candidate("mcp__genealogy__research_append", {}) is None
 
 
-def test_a_skill_call_names_the_skill():
-    assert o.step_candidate("Skill", {"skill": "genealogy-research:research"}) == \
+def test_a_skill_call_names_the_skill(boundary):
+    assert boundary.step_candidate("Skill", {"skill": "genealogy-research:research"}) == \
         "genealogy-research:research"
 
 
-def test_a_spawn_with_no_name_is_not_treated_as_a_step():
+def test_a_spawn_with_no_name_is_not_treated_as_a_step(boundary):
     """Better to let an unreadable call through than to deny every call in the turn."""
-    assert o.step_candidate("Task", {}) is None
-    assert o.step_candidate("Task", {"subagent_type": "   "}) is None
-    assert o.step_candidate("Task", None) is None
+    assert boundary.step_candidate("Task", {}) is None
+    assert boundary.step_candidate("Task", {"subagent_type": "   "}) is None
+    assert boundary.step_candidate("Task", None) is None
 
 
 # ── the boundary ────────────────────────────────────────────────────────────────
