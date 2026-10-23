@@ -34,7 +34,7 @@ judgement is an independent genealogist's (**Isaac Boateng**, second opinion —
 the case was borderline, so a second opinion was obtained per the issue).
 
 **Verdict and basis (index-based).** The 1895 Sacaca baptism of **Juana Gonsalo**
-(`ark:/61903/1:1:6CB7-Y7JB`) — born 19 July 1895, baptised 21 July 1895, event
+(`ark:/61903/1:1:6CB7-Y7JY`; the hinted persona is her father's, `ark:/61903/1:1:6CB7-Y7JB`) — born 19 July 1895, baptised 21 July 1895, event
 place as **indexed** *Sacaca, Alonzo de Ibáñez, Potosí, Bolivia*, parents
 **Inocencio Gonsalo** and **Antonia Araque** — is accepted as a daughter of the
 subject **Inocencio Gonzales** (`GY75-S9D`) and his wife **Antonia**. The
