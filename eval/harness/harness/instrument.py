@@ -142,6 +142,7 @@ LIVE_MODULES: dict[str, str] = {
     "research_log_append": "tools/research-log-append.js",
     "research_append": "tools/research-append.js",
     "extraction_append": "tools/extraction-append.js",
+    "evaluation_append": "tools/evaluation-append.js",
     "tree_edit": "tools/tree-edit.js",
     "tree_correct": "tools/tree-correct.js",
     "materialize_facts": "tools/materialize-facts.js",

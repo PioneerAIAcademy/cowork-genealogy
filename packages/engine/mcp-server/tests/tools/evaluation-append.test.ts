@@ -121,6 +121,7 @@ describe("evaluation_append (lane gate)", () => {
       entry: { narrative_markdown: "## Conclusion", question_id: "q_001" },
     } as any);
     expect(r.ok).toBe(false);
+    if (r.ok) throw new Error("expected evaluation_append to refuse the proof_summaries op");
     const text = (r.errors ?? []).join(" ");
     expect(text).toContain("section 'proof_summaries' is not writable by evaluation_append");
     expect(text).toContain("it writes only: evaluations");
@@ -151,6 +152,7 @@ describe("evaluation_append (lane gate)", () => {
       ],
     } as any);
     expect(r.ok).toBe(false);
+    if (r.ok) throw new Error("expected evaluation_append to refuse the batch with a conflicts op");
     const text = (r.errors ?? []).join(" ");
     expect(text).toContain("is not writable by evaluation_append");
     // All-or-nothing: the valid evaluations op in the same batch is not written.
