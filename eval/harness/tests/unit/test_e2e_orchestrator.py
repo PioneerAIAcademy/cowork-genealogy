@@ -1650,3 +1650,79 @@ def test_assistant_narration_entries_carry_a_thread_key():
             "relay fidelity cannot tell the main thread from a subagent's own "
             "messages without it (#3188)"
         )
+
+
+# --- #2490: a staged image_transcribe page is captured from the workspace ------
+
+
+def _staged_page(workspace: Path, rel: str, text: str, *, element_id: str = "007936749_00008", **env) -> None:
+    path = workspace / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({
+            "tool": "image_transcribe",
+            **env,
+            "payload": {"query": {}, "results": [{"id": element_id, "transcription": text}]},
+        }),
+        encoding="utf-8",
+    )
+
+
+def _staged_response(ref: str, text: str, *, element_id: str = "007936749_00008") -> list[dict]:
+    return [{"type": "text", "text": json.dumps({
+        "staged": {"resultsRef": ref, "returnedCount": 1},
+        "digest": {"id": element_id, "chars": len(text), "excerpt": text[:300]},
+    })}]
+
+
+def test_staged_transcription_is_read_from_the_staged_file(tmp_path):
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY, capture_staged_transcription
+
+    page = "Will Book G, page 112. " * 400
+    ref = "results/.staging/abc.json"
+    _staged_page(tmp_path, ref, page)
+    entry = {"tool": "mcp__genealogy__image_transcribe", "args": {}}
+    capture_staged_transcription(entry, _staged_response(ref, page), tmp_path)
+    assert entry[STAGED_TRANSCRIPTION_KEY] == page
+
+
+def test_staged_transcription_falls_back_to_the_finalized_sidecar(tmp_path):
+    """Once research_log_append finalizes the staged file it is gone; the
+    finalized sidecar whose element matches the digest is the same page."""
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY, capture_staged_transcription
+
+    page = "Tenth Census of the United States, 1880."
+    _staged_page(tmp_path, "results/log_001.json", "x" * len(page), element_id="OTHER", log_id="log_001")
+    _staged_page(tmp_path, "results/log_002.json", page, log_id="log_002")
+    entry = {"tool": "image_transcribe", "args": {}}
+    capture_staged_transcription(entry, _staged_response("results/.staging/gone.json", page), tmp_path)
+    assert entry[STAGED_TRANSCRIPTION_KEY] == page
+
+
+def test_no_staged_transcription_when_the_text_came_back_inline(tmp_path):
+    """A staging failure keeps the text inline; `response_summary` already
+    carries it (the exempt key), so nothing is duplicated."""
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY, capture_staged_transcription
+
+    entry = {"tool": "image_transcribe", "args": {}}
+    content = [{"type": "text", "text": json.dumps(
+        {"transcription": "the page", "staged": None, "stagingError": "disk full"}
+    )}]
+    capture_staged_transcription(entry, content, tmp_path)
+    assert STAGED_TRANSCRIPTION_KEY not in entry
+
+
+def test_staged_transcription_capture_never_raises_on_a_missing_file(tmp_path):
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY, capture_staged_transcription
+
+    entry = {"tool": "image_transcribe", "args": {}}
+    capture_staged_transcription(entry, _staged_response("results/.staging/x.json", "p"), tmp_path)
+    capture_staged_transcription(entry, "not json at all", tmp_path)
+    assert STAGED_TRANSCRIPTION_KEY not in entry
+
+
+def test_staged_transcription_key_matches_the_join_reports_copy():
+    from e2e import transcription_join_report
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY
+
+    assert transcription_join_report.STAGED_TRANSCRIPTION_KEY == STAGED_TRANSCRIPTION_KEY

@@ -49,7 +49,7 @@ import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import type { Principal } from "../auth/principal.js";
 import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
-import { researchLogAppend } from "./research-log-append.js";
+import { researchLogAppend, type ResearchLogAppendOp } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { sourceIdsForRecordIds, activePlanItems } from "./research-append.js";
 import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
@@ -314,7 +314,9 @@ async function tieRecordToQuestions(
   }
   if (ops.length === 0) return { tied: [], warnings: [] };
   const opts = { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" };
-  const whole = await researchAppend({ projectPath, ops } as ResearchAppendInput, opts);
+  // Only `ok` is read from this attempt, and a refusal is retried op by op below, so it is not
+  // asked to judge the rest of the batch: that is a second pass over a copy of the document.
+  const whole = await researchAppend({ projectPath, ops } as ResearchAppendInput, { ...opts, firstFailureOnly: true });
   if (whole.ok) return { tied: ops.map((o) => o.entryId!), warnings: [] };
   const tied: string[] = [];
   const warnings: string[] = [];
@@ -599,7 +601,11 @@ async function personIdMode(
     }
     if (ops.length === 0) continue;
     const linkOpts = { allowedSections: ATTACHMENT_LINK_SECTIONS, toolName: "extraction_append", attachmentLink: true };
-    const whole = await researchAppend({ projectPath: input.projectPath, ops } as ResearchAppendInput, linkOpts);
+    // Only `ok` is read; a refusal is retried op by op below (see `tieRecordToQuestions`).
+    const whole = await researchAppend(
+      { projectPath: input.projectPath, ops } as ResearchAppendInput,
+      { ...linkOpts, firstFailureOnly: true },
+    );
     if (whole.ok) {
       linked += ops.length;
       continue;
@@ -1212,28 +1218,39 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
   for (const o of outcomes) {
     const ref = o.d.transcriptionRef;
     if (o.status !== "extracted" || !ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
-    const entry = log.find((e) => e?.results_ref === ref && typeof e?.id === "string");
+    // Only a page logged as image_transcribe: a search sidecar cited here would
+    // be written as a source with no text, and its search would read as extracted.
+    const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
     if (entry) {
       cited.set(o, { logId: entry.id, resultsRef: ref });
     } else {
       o.status = "refused";
-      o.summary = `${o.recordId}: its transcriptionRef ${ref} is a finalized result no log entry names, so it cannot be cited.`;
+      o.errors = [`transcriptionRef '${ref}' is neither a staged ${STAGING_SUBDIR}/ ref nor the results_ref of an image_transcribe log entry`];
+      o.summary = `${o.recordId}: its transcriptionRef ${ref} is a finalized result no log entry names as an image_transcribe read, so it cannot be cited.`;
     }
   }
 
   const todo = outcomes.filter((o) => o.status === "extracted");
   if (todo.length > 0) {
     const toLog = todo.filter((o) => !cited.has(o));
-    const logged = toLog.length === 0
+    // One page often holds two entries, so two documents can share a staged
+    // ref; it is logged once and both cite that entry.
+    const logOps: ResearchLogAppendOp[] = [];
+    const opOf = new Map<string, number>();
+    const opIndex = toLog.map((o) => {
+      const ref = o.d.transcriptionRef;
+      if (ref && opOf.has(ref)) return opOf.get(ref)!;
+      if (ref) opOf.set(ref, logOps.length);
+      logOps.push(
+        ref
+          ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: ref }
+          : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
+      );
+      return logOps.length - 1;
+    });
+    const logged = logOps.length === 0
       ? { ok: true as const, results: [] as { logId: string; resultsRef?: string | null }[] }
-      : await researchLogAppend({
-          projectPath: input.projectPath,
-          ops: toLog.map((o) =>
-            o.d.transcriptionRef
-              ? { tool: "image_transcribe", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1, stagedResultsRef: o.d.transcriptionRef }
-              : { tool: "user_provided", query: { recordId: o.recordId }, outcome: "positive", resultsExamined: 1 },
-          ),
-        });
+      : await researchLogAppend({ projectPath: input.projectPath, ops: logOps });
     const logRefused = !logged.ok || !("results" in logged);
     if (logRefused) {
       const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
@@ -1248,7 +1265,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       for (const o of todo) {
         if (o.status !== "extracted") continue;
         const c = cited.get(o);
-        const lr = c ? { logId: c.logId, resultsRef: c.resultsRef } : loggedResults[toLog.indexOf(o)];
+        const lr = c ? { logId: c.logId, resultsRef: c.resultsRef } : loggedResults[opIndex[toLog.indexOf(o)]];
         o.logId = lr.logId;
         let transcription: string | undefined;
         let stagedImageRef: string | undefined;

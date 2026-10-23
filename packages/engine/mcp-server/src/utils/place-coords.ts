@@ -1,6 +1,6 @@
 // Coordinates and the era-banded birthplace distance, shared by person_warnings
-// (birth far from the parents' residence) and research_append (the
-// contradicted-birthplace cap).
+// (birth far from the parents' residence), research_append (the
+// contradicted-birthplace cap) and timeline_build.
 import { mapWithConcurrency, type PlaceCoords } from "./place-resolver.js";
 
 const PLACE_LOOKUP_CONCURRENCY = 4;
@@ -18,26 +18,27 @@ export function birthThresholdMiles(minYear: number, maxYear: number): number {
   return miles;
 }
 
-/** Look up every distinct place once; a name not resolved within the budget stays null. */
-export async function lookupPlaceCoords(
+/** Answer every distinct name once through `resolver`, four at a time. A name
+ *  whose lookup throws, or is still open when `budgetMs` runs out, answers null. */
+export async function lookupWithin<T>(
   names: string[],
-  resolver: PlaceCoordsResolver,
+  resolver: (name: string) => Promise<T | null>,
   budgetMs: number,
-): Promise<Map<string, PlaceCoords | null>> {
-  const coords = new Map<string, PlaceCoords | null>();
+): Promise<Map<string, T | null>> {
+  const answers = new Map<string, T | null>();
   const distinct = [...new Set(names)];
-  for (const name of distinct) coords.set(name, null);
+  for (const name of distinct) answers.set(name, null);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let expired = false;
   const lookups = mapWithConcurrency(distinct, PLACE_LOOKUP_CONCURRENCY, async (name) => {
     if (expired) return;
-    let found: PlaceCoords | null = null;
+    let found: T | null = null;
     try {
       found = await resolver(name);
     } catch {
       found = null;
     }
-    if (!expired) coords.set(name, found);
+    if (!expired) answers.set(name, found);
   });
   const cap = new Promise<void>((resolve) => {
     timer = setTimeout(() => {
@@ -50,5 +51,5 @@ export async function lookupPlaceCoords(
   } finally {
     clearTimeout(timer);
   }
-  return coords;
+  return answers;
 }

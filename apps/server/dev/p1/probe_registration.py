@@ -15,7 +15,7 @@ seeded from `eval/fixtures/scenarios/empty-project-just-created`, a fresh
 Before the query (zero tokens): `dev.p1.options.handshake` must show every
 plugin agent under its bare name and one `genealogy-research:` command per
 shipped skill (28 today), else exit 1 without querying. Then ONE query that
-delegates to `image-reader` with "reply PONG; call no tool".
+delegates to `convert-dates` with "reply PONG; call no tool".
 
 Recorded: the `Agent`/`Task` tool_use's `subagent_type`; whether any message
 carried a non-null `parent_tool_use_id` (a real subagent ran); the delegation
@@ -63,9 +63,9 @@ from dev.p1.plugin_agents import EXPECTED_AGENT_COUNT  # noqa: E402
 
 SESSION_TIMEOUT_S = 300
 
-TARGET_AGENT = "image-reader"
+TARGET_AGENT = "convert-dates"
 QUERY = (
-    "Use the Agent tool to delegate to the agent named exactly `image-reader` with "
+    "Use the Agent tool to delegate to the agent named exactly `convert-dates` with "
     "this instruction: 'Reply with exactly the word PONG and stop; do not call any "
     "tool.' Then reply with whatever it returned."
 )
@@ -303,7 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="python -m dev.p1.probe_registration",
         description="D1–2 probe: do the plugin agents register under bare names via "
-                    "agents=, and does the CLI spawn `image-reader` by that name? One "
+                    "agents=, and does the CLI spawn `convert-dates` by that name? One "
                     "billed session; exit 0 only on `bare name spawns`.",
     )
     p.add_argument("--model", default=DEFAULT_MODEL)

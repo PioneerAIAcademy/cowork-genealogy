@@ -41,7 +41,7 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
-import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/coerce-json-arg.js";
 import {
   readMatchScores,
   findRecordedScore,
@@ -62,7 +62,7 @@ import {
   checkFirstPlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { birthThresholdMiles, lookupPlaceCoords } from "../utils/place-coords.js";
+import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
@@ -5093,6 +5093,10 @@ function proofSummaryInvariants(
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
 ): string[] {
   const tier = entry?.tier;
+  // Every finding is reported, not the first: the other proof-summary invariant
+  // calls in `applyOne` all accumulate, and a summary that breaks two rules and
+  // is told about one is sent round again for the other.
+  const errors: string[] = [];
 
   // `shortfall` answers "why is this conclusion not higher?", so a conclusive
   // tier owes `none` and nothing else may claim it. Both fields sit on THIS
@@ -5105,36 +5109,73 @@ function proofSummaryInvariants(
   const shortfall = entry?.shortfall;
   if (typeof shortfall === "string") {
     if (CONCLUSIVE_TIERS.has(tier) && shortfall !== "none") {
-      return [
+      errors.push(
         `tier '${tier}' is a conclusive answer — it reached a verdict, so nothing ` +
           `is holding it back and shortfall must be 'none'; got '${shortfall}'. ` +
           `Use 'ceiling', 'gap' or 'conflict' only on a tier that did NOT reach ` +
           `one (probable, possible, not_proved).`,
-      ];
+      );
     }
     if (!CONCLUSIVE_TIERS.has(tier) && shortfall === "none") {
-      return [
+      errors.push(
         `shortfall 'none' says nothing is holding this conclusion back, but tier ` +
           `'${tier}' reached no conclusive answer — so something is. Name it: ` +
           `'ceiling' (the reachable record is exhausted), 'gap' (a reachable ` +
           `source is still unsearched), or 'conflict' (an unresolved conflict ` +
           `names this question in its blocks_question_ids).`,
-      ];
+      );
     }
   }
 
-  if (!CONCLUSIVE_TIERS.has(tier)) return [];
+  if (!CONCLUSIVE_TIERS.has(tier)) return errors;
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
-    return [
+    errors.push(
       `tier '${tier}' requires question '${entry?.question_id}' to already have its stop gate ` +
         `satisfied (search_stop.stopped_because is 'question_answered', 'record_exhausted', or ` +
         `'nothing_further_reachable') from BEFORE this call (a batch may not declare exhaustiveness ` +
         `and consume it for a tier in the same call) — invoke research-exhaustiveness first, in its ` +
         `own call.`,
-    ];
+    );
   }
-  return [];
+  return errors;
+}
+
+/** The most words a narrative should run, by proof vehicle: the budgets in
+ *  "Select the proof conclusion form" in packages/engine/plugin/agents/proof-conclusion.md
+ *  (statement up to ~150, summary ~300-500, argument up to ~800). Only the upper
+ *  bounds are budgets. The one definition in the engine. A Map, not an object, so
+ *  a model-supplied `vehicle: "constructor"` cannot index the prototype (the
+ *  reason `PROOF_TIER_RANK` is one too). */
+export const NARRATIVE_WORD_BUDGET: ReadonlyMap<string, number> = new Map([
+  ["statement", 150],
+  ["summary", 500],
+  ["argument", 800],
+]);
+
+/** Whitespace-separated words of `text`, markdown syntax included. */
+function narrativeWordCount(text: string): number {
+  const trimmed = text.trim();
+  return trimmed === "" ? 0 : trimmed.split(/\s+/).length;
+}
+
+/** A WARNING, never a refusal, when a narrative runs over its vehicle's budget.
+ *  Refusing is not on the table: the budgets in the agent body are approximate,
+ *  and a narrative over one is not wrong enough to lose the write. Names the
+ *  vehicle and its budget. Silent for a vehicle that is
+ *  not one of the three or a narrative that is not text, which the document
+ *  validator reports in its own words. */
+export function narrativeLengthWarnings(entry: any): string[] {
+  const budget = NARRATIVE_WORD_BUDGET.get(entry?.vehicle);
+  const text = entry?.narrative_markdown;
+  if (budget === undefined || typeof text !== "string") return [];
+  const words = narrativeWordCount(text);
+  if (words <= budget) return [];
+  return [
+    `proof_summaries ${entry.id}: narrative_markdown is ${words} words, over the ${budget}-word budget ` +
+      `for the '${entry.vehicle}' vehicle. Written as is; keep to the budget by citing evidence already ` +
+      `quoted elsewhere instead of restating it.`,
+  ];
 }
 
 export type ResearchAppendSection = keyof typeof SECTIONS | string;
@@ -5325,18 +5366,35 @@ function treeEncodingCompletionWarnings(
   return warnings;
 }
 
-/** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section. */
-function nextResearchId(entries: any[], prefix: string): string {
+/** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section.
+ *  `reserved` holds ids the entries do not show but that still count as taken:
+ *  the ones an op that failed would have had (see `everyOpFailure`). */
+function nextResearchId(entries: any[], prefix: string, reserved?: ReadonlySet<string>): string {
   let max = 0;
   const re = new RegExp(`^${prefix}(\\d+)$`);
-  for (const e of entries) {
-    const m = e && typeof e.id === "string" ? e.id.match(re) : null;
+  const see = (id: unknown) => {
+    const m = typeof id === "string" ? id.match(re) : null;
     if (m) {
       const n = Number(m[1]);
       if (n > max) max = n;
     }
-  }
+  };
+  for (const e of entries) see(e?.id);
+  if (reserved) for (const id of reserved) see(id);
   return `${prefix}${String(max + 1).padStart(3, "0")}`;
+}
+
+/** The entries whose ids an append to `section` has to clear: its own list, or
+ *  for a nested section every parent's list, since those ids are unique across
+ *  all parents. */
+function idPoolOf(research: any, section: string, config: SectionConfig): any[] {
+  if (config.nested) {
+    const parents = research?.[config.nested.parent];
+    const field = config.nested.field;
+    return (Array.isArray(parents) ? parents : []).flatMap((p: any) => (Array.isArray(p?.[field]) ? p[field] : []));
+  }
+  const list = research?.[section];
+  return Array.isArray(list) ? list : [];
 }
 
 function today(): string {
@@ -5347,7 +5405,8 @@ function now(): string {
   return new Date().toISOString();
 }
 
-interface AppliedOp {
+/** What `applyOne` reports about one op it applied. */
+interface AppliedByApplyOne {
   section: string;
   op: "append" | "update";
   entryId: string;
@@ -5359,6 +5418,13 @@ interface AppliedOp {
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
   warnings?: string[];
+}
+
+/** An op that applied, with its place in the batch: every check that sees only
+ *  the ops that applied (the failure path leaves the failed ones out) names an
+ *  op by `ops[opIndex]`, so none has to keep an index map of its own. */
+interface AppliedOp extends AppliedByApplyOne {
+  opIndex: number;
 }
 
 // ─── #2472: carry an assertion correction onto the fact it minted ────────────
@@ -5664,10 +5730,13 @@ function emptyCreatedPlanErrors(
   ops: ResearchAppendOp[],
   research: any,
   applied: AppliedOp[],
+  // Plans that a refused `plan_items` op named. Such a plan is empty because that op
+  // was refused, which says nothing about where this call's other items went, and the
+  // message would send the caller to put them in the wrong plan.
+  namedByRefusedItems?: ReadonlySet<string>,
 ): Array<{ index: number; message: string }> {
-  const createdIds = applied
-    .filter((a) => a.section === "plans" && a.op === "append" && typeof a.entryId === "string")
-    .map((a) => a.entryId);
+  const created = applied.filter((a) => a.section === "plans" && a.op === "append" && typeof a.entryId === "string");
+  const createdIds = created.map((a) => a.entryId);
   if (createdIds.length === 0) return [];
   // APPENDS only. A `plan_items` update targets an item that already exists in
   // the plan it names, so it is not a misdirected item and the prescription
@@ -5677,11 +5746,6 @@ function emptyCreatedPlanErrors(
     .map((o) => o.planId as string);
   if (itemPlanIds.length === 0) return [];
 
-  // The k-th `plans` append op produced the k-th created plan id, in op order.
-  const planOpIndexes = ops
-    .map((o, i) => ({ o, i }))
-    .filter(({ o }) => o.section === "plans" && o.op === "append")
-    .map(({ i }) => i);
   const plans = Array.isArray(research.plans) ? research.plans : [];
   const byId = new Map<string, any>(
     plans.filter((pl: any) => pl && typeof pl.id === "string").map((pl: any) => [pl.id, pl]),
@@ -5700,7 +5764,7 @@ function emptyCreatedPlanErrors(
   // other. That case gets a per-plan prescription instead.
   const emptyCreated = createdIds.filter((id) => {
     const pl = byId.get(id);
-    return pl && !(Array.isArray(pl.items) && pl.items.length > 0) &&
+    return pl && !namedByRefusedItems?.has(id) && !(Array.isArray(pl.items) && pl.items.length > 0) &&
       !("items" in pl && pl.items !== null && !Array.isArray(pl.items));
   });
 
@@ -5709,6 +5773,7 @@ function emptyCreatedPlanErrors(
     const newId = createdIds[k];
     const pl = byId.get(newId);
     if (!pl) continue;
+    if (namedByRefusedItems?.has(newId)) continue;
     if (Array.isArray(pl.items) && pl.items.length > 0) continue; // the items landed here
     // A present-but-non-array `items` gets its own type error from the document
     // validator; calling that "ends this call with no items" would describe the
@@ -5758,7 +5823,7 @@ function emptyCreatedPlanErrors(
     }
 
     out.push({
-      index: planOpIndexes[k] ?? 0,
+      index: created[k].opIndex,
       message:
         `plan '${newId}' was created${forQuestion} and ends this call with no items, which cannot be ` +
         `persisted. ${cause} Do not add "items": [] to the plan shell instead; that is what makes the ` +
@@ -6215,7 +6280,10 @@ function applyOne(
   // `ResearchAppendOptions.attachmentLink`: only extraction_append's personId
   // mode sets it, as a function argument no tool input reaches.
   attachmentLink = false,
-): AppliedOp {
+  // Ids that count as taken beyond the entries the document shows: the ones ops
+  // that failed would have had. Only the failure path sets it.
+  reservedIds?: ReadonlySet<string>,
+): AppliedByApplyOne {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
   // the prototype chain — `constructor` yields the `Object` function, which is
@@ -6391,9 +6459,7 @@ function applyOne(
     }
     if (!Array.isArray(parent[config.nested.field])) parent[config.nested.field] = [];
     array = parent[config.nested.field];
-    idPool = (Array.isArray(parents) ? parents : []).flatMap((p: any) =>
-      Array.isArray(p?.[config.nested!.field]) ? p[config.nested!.field] : [],
-    );
+    idPool = idPoolOf(research, section, config);
   } else {
     // Initialize an absent optional section (e.g. known_holdings) on first write.
     if (research[section] === undefined) research[section] = [];
@@ -6422,7 +6488,7 @@ function applyOne(
     if (entry.id !== undefined && entry.id !== null) {
       throw new ResearchAppendError("append `entry` must not carry an id — the tool assigns it");
     }
-    entryId = nextResearchId(idPool, config.prefix);
+    entryId = nextResearchId(idPool, config.prefix, reservedIds);
     // Strip any id key before assigning so the spread can never clobber it.
     const rest: Record<string, unknown> = { ...entry };
     delete rest.id;
@@ -6444,6 +6510,13 @@ function applyOne(
   } else if (op.op === "update") {
     if (!op.entryId) {
       throw new ResearchAppendError("update requires an `entryId`");
+    }
+    // Refused here, where it is first read as text: `.startsWith` below throws a
+    // TypeError on a number or an object, which is a crash and not a refusal.
+    if (typeof op.entryId !== "string") {
+      throw new ResearchAppendError(
+        `update \`entryId\` must be a string such as '${config.prefix}001', got ${Array.isArray(op.entryId) ? "array" : typeof op.entryId} ${JSON.stringify(op.entryId)?.slice(0, 60)}`,
+      );
     }
     // §3.3: a later op may reference an id created earlier in the batch, but
     // may NOT update it — `append` assigns the id internally, so naming it for
@@ -7093,6 +7166,16 @@ function applyOne(
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
+    // Judged only when THIS op sets what the budget reads: an append always does,
+    // an update when it names the narrative or the vehicle. An unrelated edit to
+    // a summary already over budget is not told again.
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle")
+    ) {
+      opWarnings.push(...narrativeLengthWarnings(resultEntry));
+    }
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -7355,7 +7438,16 @@ function reextractionCollisions(
  */
 function batchAssertionsById(research: any, ops: ResearchAppendOp[]): Map<string, any> {
   const existing: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
-  // Replay id assignment over the batch's assertion appends, in order.
+  const byId = new Map<string, any>();
+  for (const a of existing) if (a && typeof a.id === "string") byId.set(a.id, a);
+  for (const [id, e] of predictedAssertions(research, ops)) byId.set(id, e);
+  return byId;
+}
+
+/** The assertions this batch's appends will create, by id: the ids are predicted
+ *  by replaying the assignment over the document as it stood, in op order. */
+function predictedAssertions(research: any, ops: ResearchAppendOp[]): Map<string, any> {
+  const existing: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
   const predicted = new Map<string, any>();
   const running = [...existing];
   for (const op of ops) {
@@ -7366,10 +7458,7 @@ function batchAssertionsById(research: any, ops: ResearchAppendOp[]): Map<string
     predicted.set(id, entry);
     running.push({ ...entry, id });
   }
-  const byId = new Map<string, any>();
-  for (const a of existing) if (a && typeof a.id === "string") byId.set(a.id, a);
-  for (const [id, e] of predicted) byId.set(id, e);
-  return byId;
+  return predicted;
 }
 
 /** The assertion ids this call CREATES, by the same replay. Distinct from "not
@@ -7439,7 +7528,7 @@ async function prefetchBirthPlaceCoords(
     }
   }
   if (names.length === 0) return new Map();
-  return lookupPlaceCoords(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
+  return lookupWithin(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
 }
 
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {
@@ -8249,6 +8338,16 @@ export interface ResearchAppendOptions {
   attachmentLink?: boolean;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
+  /** Report only the first failing op, and do not judge the rest of the batch.
+   *  For a caller that reads nothing but `ok` and then retries op by op
+   *  (`extraction_append`'s whole-batch attempts): the rest of the judging is a
+   *  second pass over a copy of the document, and its answer is thrown away. Never
+   *  set by a tool caller. */
+  firstFailureOnly?: boolean;
+  /** Run on research.json as read under the lock, before any op: a returned
+   *  message refuses the call, so a caller that chose its op from an earlier
+   *  read writes nothing when that read went stale. */
+  precondition?: (research: any) => string | null;
 }
 
 /**
@@ -8274,6 +8373,13 @@ export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<
   return out;
 }
 
+/** A tool argument as `researchAppend` reads it: one `JSON.parse` of a string that parses,
+ *  nothing else. The only place that decides it, so `researchAppendFromCaller`'s guard and
+ *  the apply path cannot judge different ops. */
+function decodeArg(value: unknown): unknown {
+  return coerceJsonArg(value);
+}
+
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
@@ -8286,12 +8392,17 @@ const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 export async function researchAppendFromCaller(
   input: ResearchAppendInput,
 ): Promise<ResearchAppendResult> {
-  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
-  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
-  const isBatch = input.ops !== undefined;
+  // Judged on the decode `researchAppend` will make, and made in the one place it is
+  // made (`decodeArg`). The decoded value is NOT written back: `researchAppend` decodes
+  // `input.ops` itself, so writing it back made a batch stringified twice arrive there
+  // still a string, which it decoded a second time, after this guard had read the
+  // string as an empty list. It is a string after one decode and so is refused.
+  const decodedOps = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
+  const decodedFields = decodeArg(input.fields) as Record<string, unknown> | undefined;
+  const isBatch = decodedOps !== undefined;
   const ops = isBatch
-    ? (Array.isArray(input.ops) ? input.ops : [])
-    : [{ section: input.section, op: input.op, fields: input.fields } as ResearchAppendOp];
+    ? (Array.isArray(decodedOps) ? decodedOps : [])
+    : [{ section: input.section, op: input.op, fields: decodedFields } as ResearchAppendOp];
   const errors: string[] = [];
   ops.forEach((op, i) => {
     if (!op || (op as { section?: unknown }).section !== "assertions") return;
@@ -8322,12 +8433,13 @@ export async function researchAppend(
   // Recover object/array args the model serialized as JSON strings (see
   // coerceJsonArg) before any shape checks, so a correct-but-stringified batch
   // isn't rejected as "`ops` must be a non-empty array" and driven into a slow
-  // one-op-per-call fallback.
-  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
-  input.entry = coerceJsonArg(input.entry) as Record<string, unknown> | undefined;
-  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
-  input.sourceDescription = coerceJsonArg(input.sourceDescription) as SourceDescriptionInput | undefined;
-  input.verdict = coerceJsonArg(input.verdict) as Record<string, unknown> | undefined;
+  // one-op-per-call fallback. Once: a value still a string after one decode is
+  // not recovered, and is refused.
+  input.ops = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
+  input.entry = decodeArg(input.entry) as Record<string, unknown> | undefined;
+  input.fields = decodeArg(input.fields) as Record<string, unknown> | undefined;
+  input.sourceDescription = decodeArg(input.sourceDescription) as SourceDescriptionInput | undefined;
+  input.verdict = decodeArg(input.verdict) as Record<string, unknown> | undefined;
 
   const isBatch = input.ops !== undefined;
   const opsReceived = isBatch && Array.isArray(input.ops) ? input.ops.length : undefined;
@@ -8347,6 +8459,8 @@ export async function researchAppend(
   return withProjectLock(projectPath, async () => {
   try {
     const research = await readJson(projectPath, "research.json");
+    const stale = options.precondition?.(research);
+    if (stale) return fail([stale]);
     // Snapshot BEFORE any op in this call/batch applies — see
     // proofSummaryInvariants. Must be taken here, not read off `research`
     // later, since applyOne mutates `research` in place per op.
@@ -8382,7 +8496,7 @@ export async function researchAppend(
     let ops: ResearchAppendOp[];
     if (isBatch) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
-        return fail(["`ops` must be a non-empty array"]);
+        return fail([opsNotAnArrayMessage(input.ops)]);
       }
       ops = input.ops;
     } else {
@@ -8415,18 +8529,22 @@ export async function researchAppend(
       const allowed = options.allowedSections;
       const toolName = options.toolName ?? "this tool";
       const writes = [...allowed].join(", ");
+      // Every op outside the lane, not the first: a batch with three of them was
+      // otherwise sent round three times. Each line names only its own op's section.
+      const outsideLane: string[] = [];
       for (let i = 0; i < ops.length; i++) {
         const section = ops[i]?.section;
         if (typeof section !== "string" || !allowed.has(section)) {
-          return fail([
+          outsideLane.push(
             fmt(
               i,
               `section '${section}' is not writable by ${toolName} (it writes only: ${writes}). ` +
                 "Another skill owns that section — surface the finding in your summary instead.",
             ),
-          ]);
+          );
         }
       }
+      if (outsideLane.length > 0) return fail(boundErrors(outsideLane));
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
@@ -8435,60 +8553,70 @@ export async function researchAppend(
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
     const appendedThisBatch = new Set<string>();
+    const applyOp: ApplyOp = (doc, op, opIndex, ctx) => ({
+      ...applyOne(
+        doc,
+        op,
+        ctx.appended,
+        preCallExhaustiveDeclared,
+        preCallBlockingConflicts,
+        beforeResearch,
+        tree,
+        prep.matchScores,
+        ctx.batchAssertions,
+        prep.startingPersonIds,
+        prep.createdAssertions,
+        prep.personLinks,
+        prep.birthPlaceCoords,
+        options.attachmentLink === true,
+        ctx.reserved,
+      ),
+      opIndex,
+    });
+    // The ops as the pre-pass left them. This loop mutates them (applyOne rewrites
+    // `op.fields` in places, and the document shares their nested objects), and the
+    // failure path below applies them again. A single op has nothing to look past.
+    const opsBeforeApply = ops.length > 1 ? structuredClone(ops) : ops;
+    let firstFailure: OpFailure | undefined;
     for (let i = 0; i < ops.length; i++) {
       try {
-        applied.push(
-          applyOne(
-            research,
-            ops[i],
-            appendedThisBatch,
-            preCallExhaustiveDeclared,
-            preCallBlockingConflicts,
-            beforeResearch,
-            tree,
-            prep.matchScores,
-            prep.batchAssertions,
-            prep.startingPersonIds,
-            prep.createdAssertions,
-            prep.personLinks,
-            prep.birthPlaceCoords,
-            options.attachmentLink === true,
-          ),
-        );
+        applied.push(applyOp(research, ops[i], i, { appended: appendedThisBatch, batchAssertions: prep.batchAssertions }));
       } catch (e) {
         if (e instanceof ResearchAppendError) {
-          // Identify the failing op; nothing has been written.
-          return fail(
-            e.errors.map((m) => fmt(i, m)),
-            [{
-              section: String(ops[i].section),
-              op: ops[i].op === "update" ? "update" : "append",
-              // The field names the failing op actually set. The worked example
-              // is keyed on these so a caller refused on one field is not handed
-              // a payload for another — see exampleFor.
-              fields: Object.keys(ops[i].fields ?? ops[i].entry ?? {}),
-            }],
-          );
+          // Nothing has been written, and nothing will be. The first failure is
+          // not the only one, so the rest of the batch is judged below.
+          firstFailure = { index: i, errors: e.errors };
+          break;
         }
         throw e;
       }
     }
+    if (firstFailure !== undefined) {
+      const { index, errors } = firstFailure;
+      /** What this call said before it looked past the first failure. */
+      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index])]);
+      if (ops.length === 1 || options.firstFailureOnly === true) return firstOnly();
+      try {
+        const every = await everyOpFailure({
+          ops: opsBeforeApply,
+          first: firstFailure,
+          before: { research: beforeResearch, tree: beforeTree },
+          tree,
+          projectPath,
+          startingPersonIds: prep.startingPersonIds,
+          applyOp,
+          fmt,
+        });
+        return fail(every.errors, every.hints);
+      } catch {
+        // Best effort. The first failure always gets through: a later op that cannot
+        // even be checked (a wrongly typed `entryId` throws a TypeError, not a
+        // refusal) must not turn a clean refusal into a crash. Nothing has been
+        // written on either path.
+        return firstOnly();
+      }
+    }
 
-    // A plan this call created that ends with no items, while the call's
-    // plan_items ops wrote elsewhere. Checked on POST-APPLY state (that is what
-    // "ends the call with no items" means) and before any write, so nothing is
-    // persisted. The `plans` hint teaches the batched shape that satisfies it.
-    // Computed here, on post-apply state, but NOT returned on: an early return
-    // suppressed every other document-level error in the same batch, so a
-    // caller with a misroute AND a bad enum elsewhere was told about one of
-    // them and had to make a second call to discover the other. Reordering is
-    // not needed to fix that: a created plan ending with no items always
-    // produces a validation error (`items` absent fails the required check,
-    // `[]` fails the non-empty check, and the non-array case is excluded from
-    // the misroute set), so the misroute set is a strict SUBSET of the
-    // validation-failing set. Carrying the messages down to the validation
-    // failure and merging them there loses nothing and reports everything.
-    const misrouted = emptyCreatedPlanErrors(ops, research, applied);
 
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
@@ -8497,8 +8625,7 @@ export async function researchAppend(
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
-    const namesakeMsgs = namesakeCallCheck({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds)
-      .map((f) => (f.index === null ? f.message : fmt(f.index, f.message)));
+    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -8570,33 +8697,8 @@ export async function researchAppend(
           ];
         }
       }
-      if (!validation.valid) {
-        // Shape errors surface here (the document validator, not applyOne), so
-        // this is the site the evaluations/known_holdings rejections land on.
-        const mapped = mapValidationErrors(formatIssues(validation.errors), applied, isBatch);
-        // The cause-naming messages lead, because they name what to change;
-        // the document errors follow so nothing in the batch is hidden.
-        const misrouteMsgs = misrouted.map((m) => fmt(m.index, m.message));
-        // Only hint the sections the errors actually name — in a wide batch,
-        // examples for ops that validated fine would be noise pointing away
-        // from the real problem.
-        const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
-        return fail(
-          [...namesakeMsgs, ...misrouteMsgs, ...mapped],
-          [
-            ...(namesakeMsgs.length > 0 ? [{ section: "person_evidence", op: "append" as const }] : []),
-            ...(misrouteMsgs.length > 0
-              ? [{ section: "plans", op: "append" as const }]
-              : (blamed.length > 0 ? blamed : ops).map((o) => ({
-                  section: String(o.section),
-                  op: o.op === "update" ? ("update" as const) : ("append" as const),
-                }))),
-          ],
-        );
-      }
-      if (namesakeMsgs.length > 0) {
-        return fail(namesakeMsgs, [{ section: "person_evidence", op: "append" }]);
-      }
+      const refused = documentFailure({ validation, namesake: namesakeMsgs, doc: research, ops, applied, isBatch, fmt });
+      if (refused) return fail(refused.errors, refused.hints);
       validationWarnings = formatIssues(validation.warnings);
       // Verdict sidecar first: research.json's file_path pointer must never
       // name a file that does not exist. Written before the document commit so
@@ -8697,15 +8799,28 @@ export async function researchAppend(
   });
 }
 
+/** The refusal for an `ops` that is not a non-empty array. When it is a string
+ *  that would not parse, `coerceJsonArg` had swallowed the reason, so say it:
+ *  the engine's own message, plus the offset when the message holds none. */
+function opsNotAnArrayMessage(ops: unknown): string {
+  const failure = jsonParseFailure(ops);
+  if (!failure) return "`ops` must be a non-empty array";
+  const offset =
+    failure.offset === null || V8_POSITION_SUFFIX.test(failure.message) ? "" : ` (offset ${failure.offset})`;
+  return (
+    "`ops` must be a non-empty array, but it arrived as a string that does not parse as JSON: " +
+    `${failure.message}${offset}. Fix that and send \`ops\` as a JSON array.`
+  );
+}
+
 /** Best-effort mapping of whole-document validation errors back to the batch op
  *  that touched the offending entry, so failure responses name the failing ops.
  *  Errors on entries no op touched keep their `research.json/…` path. */
 function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: boolean): string[] {
   if (!isBatch) return errors;
   const byLocation = new Map<string, number>();
-  for (let k = 0; k < applied.length; k++) {
-    const a = applied[k];
-    if (a.arrayIndex !== undefined) byLocation.set(`${a.section}[${a.arrayIndex}]`, k);
+  for (const a of applied) {
+    if (a.arrayIndex !== undefined) byLocation.set(`${a.section}[${a.arrayIndex}]`, a.opIndex);
   }
   return errors.map((msg) => {
     const m = msg.match(/^research\.json\/([a-z_]+)\[(\d+)\]/);
@@ -8715,6 +8830,322 @@ function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: bo
     }
     return msg;
   });
+}
+
+/** What one failing op said; `index` is its place in the batch. */
+interface OpFailure {
+  index: number;
+  errors: string[];
+}
+
+type ExampleHint = { section: string; op: "append" | "update"; fields?: readonly string[] };
+
+/** The worked-example hint for an op that failed. */
+function failedOpHint(op: ResearchAppendOp): ExampleHint {
+  return {
+    section: String(op.section),
+    op: op.op === "update" ? "update" : "append",
+    // The field names the failing op actually set. The worked example
+    // is keyed on these so a caller refused on one field is not handed
+    // a payload for another — see exampleFor.
+    fields: Object.keys(op.fields ?? op.entry ?? {}),
+  };
+}
+
+/** What `applyOne` reads beside the document it is given. */
+interface ApplyContext {
+  /** Ids this call has created so far: an update may not name one. */
+  appended: Set<string>;
+  /** Ids that count as taken though no entry shows them (see `everyOpFailure`). */
+  reserved?: ReadonlySet<string>;
+  /** Every assertion the batch can resolve: the document's, and the ones its appends will create. */
+  batchAssertions: Map<string, any>;
+}
+
+/** `applyOne` with this call's context bound, so both passes apply an op the same way. */
+type ApplyOp = (doc: any, op: ResearchAppendOp, opIndex: number, ctx: ApplyContext) => AppliedOp;
+
+/** The line a refusal leads with when it looked past its first failure. It leads, and
+ *  says what to do, because the errors after the first were found WITHOUT the failed
+ *  ops: one may only follow from an earlier one, and the model that fixes every line
+ *  at once edits ops that were never wrong. */
+function checkedWithoutLine(firstIndex: number): string {
+  return (
+    `Fix the earliest failure first (ops[${firstIndex}]) and send the batch again. The rest of the batch ` +
+    "was checked, and the document validated, without the failed ops applied, so an error listed after " +
+    "it may only follow from an earlier one and go away once that is fixed, and an op that passed here " +
+    "may still fail then."
+  );
+}
+
+/** The most characters of error text a refused batch returns, the worked examples and
+ *  the one leading line apart. A batch built by code can break one rule in every op:
+ *  an extraction of sixty assertions was 129 KB of errors, and `extraction_append`
+ *  returns the list twice (as `errors` and joined into `summary`). Claude Code saves a
+ *  tool result over 50,000 characters to a file the agent may not be able to read, so
+ *  this keeps a refused answer far under that line. */
+const MAX_ERROR_CHARS = 8_000;
+
+/** `ops[3]: message`: the op an error line names, and the message. */
+const OP_LINE = /^ops\[(\d+)\]: ([\s\S]*)$/;
+
+/** Lines that say the same thing about different ops, and differ only in the
+ *  `ops[i]:` prefix, become one line naming those ops. Order is by first appearance. */
+function collapseErrors(lines: readonly string[]): string[] {
+  const groups = new Map<string, { message: string; ops: number[] | null }>();
+  for (const line of lines) {
+    const m = OP_LINE.exec(line);
+    const key = `${m ? "op" : "plain"}:${m ? m[2] : line}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = { message: m ? m[2] : line, ops: m ? [] : null };
+      groups.set(key, group);
+    }
+    if (m && !group.ops!.includes(Number(m[1]))) group.ops!.push(Number(m[1]));
+  }
+  return [...groups.values()].map((g) =>
+    g.ops === null
+      ? g.message
+      : `${g.ops.sort((a, b) => a - b).map((i) => `ops[${i}]`).join(", ")}: ${g.message}`,
+  );
+}
+
+/** The error lines of a refused batch, collapsed and capped at `MAX_ERROR_CHARS`. Every
+ *  distinct message is kept in order until the cap, and the first always is. What is left
+ *  out is counted in one last line, which says they are listed in full once the earlier
+ *  ones are fixed. */
+function boundErrors(lines: readonly string[]): string[] {
+  const grouped = collapseErrors(lines);
+  const kept: string[] = [];
+  let used = 0;
+  for (const line of grouped) {
+    if (kept.length > 0 && used + line.length > MAX_ERROR_CHARS) break;
+    kept.push(line);
+    used += line.length;
+  }
+  const dropped = grouped.slice(kept.length);
+  if (dropped.length === 0) return kept;
+  const namedAbove = new Set(kept.flatMap((l) => [...l.matchAll(/ops\[(\d+)\]/g)].map((m) => m[1])));
+  const opsLeft = new Set(
+    dropped.flatMap((l) => [...l.matchAll(/ops\[(\d+)\]/g)].map((m) => m[1])).filter((i) => !namedAbove.has(i)),
+  );
+  return [
+    ...kept,
+    `${dropped.length} more error message${dropped.length === 1 ? "" : "s"}` +
+      (opsLeft.size > 0 ? `, on ${opsLeft.size} more failing op${opsLeft.size === 1 ? "" : "s"},` : "") +
+      " not listed here, to keep this answer short. They are listed in full once the earlier ones are fixed.",
+  ];
+}
+
+/** The namesake cap's findings on a call, each labelled with the batch index of the op
+ *  it is keyed to. `applied` is in step with the findings' own indexes. */
+function namesakeMessages(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: readonly AppliedOp[],
+  startingPersonIds: ReadonlySet<string>,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  return namesakeCallCheck(before, after, applied, startingPersonIds).map((f) =>
+    f.index === null ? f.message : fmt(applied[f.index].opIndex, f.message),
+  );
+}
+
+/**
+ * What the whole-document checks say about a call whose ops applied: the namesake
+ * cap's findings and the document validator's, in the order the caller reads them,
+ * and the worked examples that teach the shape. Undefined when nothing is wrong.
+ * The success path and the failure path (`everyOpFailure`) both end here, so a check
+ * added to one is in the other.
+ *
+ * The cause-naming misroute message leads the validator's errors, because it names
+ * what to change, and is said only when the document is refused anyway: a created
+ * plan that ends with no items always fails validation (`items` absent fails the
+ * required check, `[]` the non-empty check, and a non-array is excluded from the
+ * misroute set), so the misroute set is a subset of the validation-failing set and
+ * carrying its message down to the validation failure loses nothing. It is computed
+ * here, on the post-apply document, and never returned on its own: an early return
+ * suppressed every other document-level error in the same batch.
+ *
+ * Only the sections the errors name get a worked example: in a wide batch, examples
+ * for ops that validated fine would point away from the real problem.
+ */
+function documentFailure(c: {
+  validation: Awaited<ReturnType<typeof validateIntroduced>>;
+  namesake: string[];
+  doc: any;
+  /** The ops that applied, in step with `applied`. */
+  ops: ResearchAppendOp[];
+  applied: AppliedOp[];
+  isBatch: boolean;
+  fmt: (i: number, msg: string) => string;
+  /** Plans a refused `plan_items` op named (failure path only). */
+  namedByRefusedItems?: ReadonlySet<string>;
+}): { errors: string[]; hints: ExampleHint[] } | undefined {
+  const personEvidence: ExampleHint = { section: "person_evidence", op: "append" };
+  if (c.validation.valid) {
+    return c.namesake.length > 0 ? { errors: c.namesake, hints: [personEvidence] } : undefined;
+  }
+  // Shape errors surface here (the document validator, not applyOne), so this is the
+  // site the evaluations/known_holdings rejections land on.
+  const mapped = mapValidationErrors(formatIssues(c.validation.errors), c.applied, c.isBatch);
+  const misroute = emptyCreatedPlanErrors(c.ops, c.doc, c.applied, c.namedByRefusedItems).map((m) =>
+    c.fmt(m.index, m.message),
+  );
+  const blamed = c.ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
+  return {
+    errors: [...c.namesake, ...misroute, ...mapped],
+    hints: [
+      ...(c.namesake.length > 0 ? [personEvidence] : []),
+      ...(misroute.length > 0
+        ? [{ section: "plans", op: "append" as const }]
+        : (blamed.length > 0 ? blamed : c.ops).map((o) => ({
+            section: String(o.section),
+            op: o.op === "update" ? ("update" as const) : ("append" as const),
+          }))),
+    ],
+  };
+}
+
+/** The assertions `applyOne` reads for one op in the failure path: those of the document
+ *  it is applying to, which that op may change, and the ones this batch's appends will
+ *  create. Built from THAT document, not from the one the first pass changed: the first
+ *  pass merged a refused op's fields into the live assertion objects, and a map that
+ *  still held them blamed correct ops for a write that was refused. */
+function assertionsOf(doc: any, predicted: ReadonlyMap<string, any>): Map<string, any> {
+  const byId = new Map<string, any>();
+  for (const a of Array.isArray(doc?.assertions) ? doc.assertions : []) {
+    if (a && typeof a.id === "string") byId.set(a.id, a);
+  }
+  for (const [id, e] of predicted) byId.set(id, e);
+  return byId;
+}
+
+/** `doc` with the one top-level section `op` writes copied, so `applyOne` can change that
+ *  section without touching `doc`. `applyOne` changes nothing else: an op writes its own
+ *  section (or a plan's items, for a nested one), and every other section it only reads. */
+function sectionCopy(doc: any, op: ResearchAppendOp): any {
+  const config = typeof op?.section === "string" && Object.hasOwn(SECTIONS, op.section) ? SECTIONS[op.section] : undefined;
+  const key = config?.nested ? config.nested.parent : op?.section;
+  const copy = { ...doc };
+  if (typeof key === "string" && Object.hasOwn(copy, key)) copy[key] = structuredClone(copy[key]);
+  return copy;
+}
+
+/** The id an `append` would take on `doc`; undefined for anything else (an update takes
+ *  none, and a singleton or unknown section has no ids). */
+function wouldBeId(doc: any, op: ResearchAppendOp, reserved: ReadonlySet<string>): string | undefined {
+  if (op?.op !== "append" || typeof op.section !== "string" || !Object.hasOwn(SECTIONS, op.section)) return undefined;
+  const config = SECTIONS[op.section];
+  if (config.singleton) return undefined;
+  return nextResearchId(idPoolOf(doc, op.section, config), config.prefix, reserved);
+}
+
+/**
+ * A batch has a failing op: judge the rest of it too, so one call reports every
+ * op's errors and the whole-document check, not one failure per round trip.
+ *
+ * `applyOne` mutates the document in place, and most of its refusals come after
+ * the entry is already in it (an append is pushed, an update merged, and only
+ * then do the section invariants run). So skipping a failed op is not enough: it
+ * would stay in the document for every op after it and for the document check.
+ * Each op is therefore applied to a copy of the section it writes, and the copy is
+ * kept only when the op holds. A later op is then judged against the document
+ * without the failed ops before it, which is what the leading line returned below
+ * says. No dependency tracking: a later op can fail only because an earlier one
+ * did, and the line says so.
+ *
+ * A failed append still takes its id, as far as the ops after it can tell: ids are
+ * the highest in the section plus one, so skipping the op would hand its id to the
+ * next append, and every message that names an id (and the maps `prepareOps`
+ * predicted from the whole batch) would name the wrong one. Its would-be id is
+ * reserved instead. A reference to that id is still refused as missing, since no
+ * entry has it.
+ *
+ * Starts from the pre-call document and re-applies every op but the first
+ * failure, whose errors are taken as the first pass found them. The ops must be
+ * the pre-pass copies, since the first pass mutated the live ones. Nothing here
+ * writes anything. An op that THROWS, rather than being refused, is reported as one
+ * that could not be checked and does not hide the ops after it.
+ *
+ * When at least one op applied, the whole-document family the success path runs
+ * runs on the ops that did: the misroute message, the namesake cap and the
+ * introduced-errors validation. Not the fact rewrite, which only matters to a write.
+ */
+async function everyOpFailure(c: {
+  ops: ResearchAppendOp[];
+  first: OpFailure;
+  before: { research: any; tree: any };
+  tree: any;
+  projectPath: string;
+  startingPersonIds: ReadonlySet<string>;
+  applyOp: ApplyOp;
+  fmt: (i: number, msg: string) => string;
+}): Promise<{ errors: string[]; hints: ExampleHint[] }> {
+  const { ops, first, before, fmt } = c;
+  const failures: OpFailure[] = [];
+  const applied: AppliedOp[] = [];
+  const predicted = predictedAssertions(before.research, ops);
+  const reserved = new Set<string>();
+  // Shared with `before.research` until an op writes a section: each op copies the one
+  // it writes, so nothing here ever changes what the other sections point at.
+  let doc: any = { ...before.research };
+  let appended = new Set<string>();
+
+  const refuse = (i: number, errors: string[]) => {
+    failures.push({ index: i, errors });
+    const id = wouldBeId(doc, ops[i], reserved);
+    if (id !== undefined) reserved.add(id);
+  };
+  for (let i = 0; i < ops.length; i++) {
+    if (i === first.index) {
+      refuse(i, first.errors);
+      continue;
+    }
+    const trial = sectionCopy(doc, ops[i]);
+    const trialAppended = new Set(appended);
+    try {
+      applied.push(c.applyOp(trial, ops[i], i, { appended: trialAppended, reserved, batchAssertions: assertionsOf(trial, predicted) }));
+      doc = trial;
+      appended = trialAppended;
+    } catch (e) {
+      refuse(i, e instanceof ResearchAppendError ? e.errors : [`could not be checked: ${e instanceof Error ? e.message : String(e)}`]);
+    }
+  }
+
+  const lines = failures.flatMap((f) => f.errors.map((m) => fmt(f.index, m)));
+  const hints = failures.map((f) => failedOpHint(ops[f.index]));
+  let documentLines: string[] = [];
+  if (applied.some((a) => !a.noop)) {
+    const validation = await validateIntroduced(
+      { research: before.research, tree: before.tree },
+      { research: doc, tree: c.tree },
+      { projectPath: c.projectPath },
+    );
+    const found = documentFailure({
+      validation,
+      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt),
+      doc,
+      ops: applied.map((a) => ops[a.opIndex]),
+      applied,
+      isBatch: true,
+      fmt,
+      namedByRefusedItems: new Set(
+        failures
+          .map((f) => ops[f.index])
+          .filter((o) => o.section === "plan_items" && o.op === "append" && typeof o.planId === "string")
+          .map((o) => o.planId as string),
+      ),
+    });
+    if (found) {
+      documentLines = found.errors;
+      hints.push(...found.hints);
+    }
+  }
+  // The line leads whenever the answer holds an error that may follow from a failed op:
+  // one on an op after the first failure, or a document error, which was found without them.
+  const lead = first.index < ops.length - 1 || documentLines.length > 0 ? [checkedWithoutLine(first.index)] : [];
+  return { errors: [...lead, ...boundErrors([...lines, ...documentLines])], hints };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

@@ -39,7 +39,8 @@ Identical to `place_search`.
 `placeSearchAllTool({ placeName, contextName? })`:
 
 1. **Base search** — run the internal `placeSearch(placeName, contextName)` (same
-   search → context filter → describe → enrich → cache flow as `place_search`).
+   search → context filter → describe → enrich → cache flow as `place_search`,
+   **including the fuzzy fallback** — see the sibling spec's step 1).
 2. **Collect Primary IDs** — gather the distinct `placeId` (Primary) values from
    the base results.
 3. **Expand** — for each Primary ID, `GET /platform/places/{pid}` (Place_resource)
@@ -52,7 +53,9 @@ Identical to `place_search`.
    [Wikipedia link source](./place-search-tool-spec.md#wikipedia-link-source)),
    then project to `SimplifiedPlaceResult`. Rep IDs whose description lookup
    404s are dropped.
-6. Return `{ results: SimplifiedPlaceResult[] }`.
+6. Return `{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`, carrying
+   the base search's `matchType` unchanged — unflagged fuzzy results from this
+   tool are exactly the failure the flag exists to prevent.
 
 The result set is broader than `place_search`: it includes the temporal/parent
 variants of each matched place, not just the place itself.
@@ -61,9 +64,11 @@ variants of each matched place, not just the place itself.
 
 ## Output
 
-`{ results: SimplifiedPlaceResult[] }`, same shape as `place_search` (see the
-sibling spec) — including `wikipediaUrl`. The internal FamilySearch identifiers,
-relevance score, and short `name` are not exposed.
+`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`, same shape as
+`place_search` (see the sibling spec) — including `wikipediaUrl` and the
+top-level `matchType`, present only when the base search's results came from
+the fuzzy fallback (absent on an exact hit). The internal FamilySearch
+identifiers, relevance score, and short `name` are not exposed.
 
 ```json
 {
@@ -104,8 +109,12 @@ relevance score, and short `name` are not exposed.
     "place(s), place_search_all additionally expands each match to all of its " +
     "historical representations — useful when boundaries or parent " +
     "jurisdictions changed across the time period you're researching. Each " +
-    "result includes the full jurisdictional name, place type, date range, " +
-    "coordinates, a FamilySearch link, and (when available) a Wikipedia link.",
+    "result includes the standardized place name (standardPlace), place type, " +
+    "date range, coordinates, a FamilySearch link, and (when available) a " +
+    "Wikipedia link. " +
+    'If the response carries matchType: "fuzzy", the name you sent matched ' +
+    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    "before using it.",
   inputSchema: {
     type: "object",
     properties: {
@@ -152,7 +161,7 @@ representation's `id` (the rep IDs). Implemented as `getPlaceRepIds(pid)` in
 
 | Condition | Behavior |
 |-----------|----------|
-| Base search returns no matches | Return `{ results: [] }` |
+| Base search returns no matches (exact and, when eligible, fuzzy — see the sibling spec) | Return `{ results: [] }` |
 | `GET /places/{pid}` 404s | Treat as no rep IDs for that pid (skip it) |
 | `GET /places/{pid}` other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
 | A rep-ID description lookup 404s | Drop that rep ID from the results |

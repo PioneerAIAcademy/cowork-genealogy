@@ -10,7 +10,9 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-10-12 (constraint 5's reason restated: a thin tree
+- **Last updated:** 2026-10-19 (the acquisition-seam section records that
+  `image-reader` was retired on the first row's finding; issue #2490).
+  Previously 2026-10-12 (constraint 5's reason restated: a thin tree
   person, not a missing ARK, is what scores near zero; issue #1529). Previously
   2026-09-11 (added the acquisition-seam section — three
   claims refuted while deciding where image reading belongs). Previously
@@ -144,6 +146,17 @@ there, not missing.
 | **Delegating an image read to `image-reader` keeps base64 out of the caller's context** — stated in both `record-extraction` and `search-images` as the reason the delegation is mandatory | `image_transcribe` fetches the scan host-side, OCRs it through a hosted VLM and returns **text**. No bytes cross the MCP transport whoever calls it, so the subagent isolates nothing the tool does not already isolate. The rationale describes `image_read`, which returns inline base64 — and that tool has been declared by no agent and no skill since `image-reader-opus` was retired (issue #2013), while two skill bodies still spend prose forbidding it by name and the orchestrator's routing table still names it as how images get read. Its membership in the harness's `SUBAGENT_ONLY_TOOLS` is correct and unrelated: that deny exists for the tool, not for a caller that no longer exists |
 | **A `MUST delegate` sentence in a skill body decides who calls a tool** | In the 30 attributed runs `image_transcribe` was called **128 times by `image-reader` and 75 times from the main thread** — 37% bypass, against a body that says "Do not call `image_read` yourself", mandates the delegation in bold, and calls reporting a miss without an attempt "a completeness failure." What binds is the grant: `allowed-tools` is additive, both production paths hold every advertised tool, and nothing denies the main thread this one. Corpus-wide it runs 459 times across 53 of the 169 runs, median 2 per run, max 81 |
 | **The image-acquisition paths are three paths needing one owner** | They are one call with three input spellings. An image ARK and an Image Group Number already resolve through a single function inside `image_transcribe`, and an uploaded image file is the same call with a third input form (issue #2048). The split that matters is **host-fetchable vs model-read**: the only medium genuinely outside the artifact channel was the PDF, because nothing in the engine reads one — which is why issue #2489 adds a PDF reader instead of a fourth acquisition path |
+
+The first row's finding retired `image-reader` (lead ruling 2026-10-16, issue
+#2490) outright rather than renaming it to `document-capture`: it
+protected nothing the tool does not, and it still cost a retype of every page
+(about 1,040 output tokens a read), with 79 of its 107 reads from 2026-09-15 to
+2026-10-16 staging nothing. `image_transcribe` now requires `projectPath`,
+stages the page and returns `staged.resultsRef`, `digest` and `found`, never the
+text. Callers call it directly, read a page with `sidecar_read`, and hand the
+ref to `record-structurer` (`image-transcribe-tool-spec.md` §5.5). The run logs
+recorded before the change keep the agent's name; the harness keeps it in
+`DEDICATED_AGENT_NAMES` so they replay unchanged.
 
 ## The `same_person` write-boundary gate: six constraints any design must satisfy
 
