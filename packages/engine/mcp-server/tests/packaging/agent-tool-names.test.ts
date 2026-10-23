@@ -295,7 +295,8 @@ describe("plugin agent tool names", () => {
         if (key === "disallowedTools" && entries.length === 0) continue;
 
         // An agent whose AGENT_PERMISSIONS row contains no manifest MCP tool
-        // holds none by design (currently: translation, which holds only Read).
+        // holds none by design (currently none; translation was the last, until
+        // #3524 gave it `research_log_append`).
         // AGENT_PERMISSIONS stores BARE names ("research_append"), so testing
         // for mcp__ prefix — as the previous version did — was always false and
         // always waived the assertion. Test manifest membership instead.
@@ -605,12 +606,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // convert-dates (issue #2790) holds the one tool the skill it replaced
   // declared, `convert_calendar`, plus `Read` for the Narration line's read of
-  // research.json. It persists nothing, so it holds no writer tool and no hook
-  // routes anything to it.
+  // research.json. `research_log_append` (#3524): inside a project it logs its
+  // result as one `convert_dates` entry; that tool carries no `section`, so no
+  // hook routes anything to it.
   "convert-dates.md": {
     tools: [
       "Read",
       "convert_calendar",
+      "research_log_append",
     ],
     denies: [],
   },
@@ -755,6 +758,29 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // Cost-motivated conversion (issue #2243), not a hook route: the grant is the
+  // deleted skill's twelve `allowed-tools`. `Read` is for tree.gedcomx.json only (the subject's facts and subjectId, which no tool returns);
+  // the body forbids reading research.json and queries the plan through research_query. `research_append` writes
+  // plan-item status only (a lane in guard_project_files.py, a repo requirement).
+  "search-records.md": {
+    tools: [
+      "Read",
+      "catalog_search",
+      "extraction_append",
+      "project_context",
+      "rank_search_matches",
+      "record_read",
+      "record_search",
+      "research_append",
+      "research_log_append",
+      "research_query",
+      "same_person",
+      "source_attachments",
+      "wiki_read",
+      "wiki_search",
+    ],
+    denies: [],
+  },
   "search-images.md": {
     tools: [
       "Read",
@@ -852,17 +878,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `Read` after issue #3260: `census_children_gap` reads the mother's children
   // from the tree itself (tree mode), and an empty folder is detected from
   // `person_warnings`' own `no_project` answer, so neither needs a file read.
-  // Writes nothing.
+  // `research_log_append` (#3524): inside a project it logs its report as one
+  // `check_warnings` entry, and writes nothing else.
   "check-warnings.md": {
-    tools: ["person_warnings", "census_children_gap"],
+    tools: ["person_warnings", "census_children_gap", "research_log_append"],
     denies: [],
   },
 
   // The folded validate-schema skill (issue #2798) holds the one tool that skill
   // declared. No `Read`: the tool reads both project files itself, and nothing
-  // in the body reads a file directly. Writes nothing, so no hook route.
+  // in the body reads a file directly. `research_log_append` (#3524): inside a
+  // project it logs its report as one `validate_schema` entry; that tool carries
+  // no `section`, so no hook route.
   "validate-schema.md": {
-    tools: ["validate_research_schema"],
+    tools: ["validate_research_schema", "research_log_append"],
     denies: [],
   },
 
@@ -896,8 +925,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // skill declared, plus `Read` for the Narration line's read of research.json
   // and the name match against tree.gedcomx.json. `person_warnings` (issue
   // #2942) runs the impossible-date check over the project tree when it holds
-  // the audited person; it reads the tree and writes nothing. Writes nothing,
-  // so no hook route. A request belonging to conflict-resolution,
+  // the audited person; it reads the tree and writes nothing.
+  // `research_log_append` (#3524): inside a project it logs its report as one
+  // `source_evaluation` entry and writes nothing else; that tool carries no
+  // `section`, so still no hook route. A request belonging to conflict-resolution,
   // check-warnings or extraction is handed back by name, so no spawn tool.
   "source-evaluation.md": {
     tools: [
@@ -907,12 +938,16 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "source_attachments",
       "person_quality",
       "person_warnings",
+      "research_log_append",
     ],
     denies: [],
   },
 
+  // translation holds `Read` for an image file and the Narration line, and
+  // `research_log_append` (#3524): inside a project it logs its translation as
+  // one `translation` entry. No other MCP tool.
   "translation.md": {
-    tools: ["Read"],
+    tools: ["Read", "research_log_append"],
     denies: [],
   },
 
@@ -927,7 +962,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: [
       "Read",
       "person_read",
-      "person_search",
       "project_create",
       "research_append",
     ],

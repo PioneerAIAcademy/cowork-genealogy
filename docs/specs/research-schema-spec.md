@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, and `timelines.person_ids` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `known_holdings.relates_to_person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, and `namesakes.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -42,17 +42,20 @@ A project often starts with a question about a person who does not yet exist in 
   "timelines": [ ],
   "proof_summaries": [ ],
   "evaluations": [ ],
-  "localities": [ ]
+  "localities": [ ],
+  "warning_justifications": [ ],
+  "namesakes": [ ],
+  "rejected_links": [ ]
 }
 ```
 
 All arrays start empty. The file is created at project initialization.
 
-**Twelve of these fifteen keys must be present**, even when their array is
+**Twelve of these eighteen keys must be present**, even when their array is
 empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`. Omitting one is a validation failure, not
-a shorthand for "empty". The other three are optional and may be absent
+a shorthand for "empty". The other six are optional and may be absent
 entirely:
 
 - `researcher_profile` — written by `init-project` as a fixed profile at
@@ -63,6 +66,12 @@ entirely:
   knowledge) before any new research begins (Section 5.1.2).
 - `localities` — written by `locality-guide`; absent on projects that predate
   it (Section 5.13).
+- `warning_justifications` — appended by the tree-writer tools as a side
+  effect of a justified write (Section 4).
+- `namesakes` — written by `search-records`, in a later change; no committed
+  document carries it yet (Section 5.15).
+- `rejected_links` — written by the `person-evidence` agent; absent on projects
+  that predate it (Section 5.14).
 
 **No other top-level key is permitted.** Every object in this file is
 closed: the JSON Schema sets `additionalProperties: false` on the document
@@ -216,6 +225,8 @@ value is rejected at write time.
 | `ps_` | proof_summaries | `ps_001` |
 | `ev_` | evaluations | `ev_001` |
 | `loc_` | localities | `loc_001` |
+| `ns_` | namesakes | `ns_001` |
+| `rj_` | rejected_links | `rj_001` |
 
 The digits after the prefix are a convention, not a constraint — `q_flynn-1850`
 is as valid as `q_002` — with one exception: an `ev_` id must be the prefix
@@ -229,13 +240,14 @@ Two distinct formats appear in this file, and the distinction is enforced.
 
 | Format | Fields | Shape |
 |--------|--------|-------|
-| **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
-| **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
+| **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
+| **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp`, `proof_summaries[].updated` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
 
 Write the colon form with a `Z` or a numeric offset and both validators accept
 it. Two footnotes for anyone reading a file rather than writing one:
 
-- For `log[].performed` and `timelines[].generated` the time part may also use
+- For `log[].performed`, `timelines[].generated` and `proof_summaries[].updated`
+  the time part may also use
   dashes instead of colons (`2026-05-01T10-15-00Z`), with optional fractional
   seconds after either a dot or a dash. That tolerance exists so a timestamp can
   double as a filename on filesystems that disallow colons. Nothing in the
@@ -278,18 +290,20 @@ described under "Who actually writes a row" below.
 | `researcher_profile` | init-project (at creation, fixed values); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
 | `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `search_stop`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `search_stop.stopped_because` to be a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) — checked from either side, on the post-merge entry — and a gate-value `stopped_because` is refused while an item on the question's **active** plan is `in_progress` **or `planned`** (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared) |
-| `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
-| `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
+| `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images (`items[].status`); `extraction_append` (`items[].status`, `in_progress` → `completed` only, by tool identity) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
+| `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
 | `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
-| `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
+| `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
-| `warning_justifications` | (none — writer-tool only) | gps-mentor (audit trail) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
+| `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
+| `namesakes` | search-records (in a later change; nothing writes it yet) | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` (Section 5.15). Optional section — absent until a namesake is recorded |
+| `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -307,7 +321,7 @@ mechanism at all** — so do not reach for one generically. There are exactly th
 |---|---|---|
 | A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
 | A `superseded_by` pointer | `person_evidence`, `evaluations` | Point the old entry's `superseded_by` at the new entry's id |
-| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
 
 Writing a status value the section's enum does not define is rejected by
 `validate_research_schema`, so an instruction to "supersede with status" on a section in
@@ -477,7 +491,9 @@ already carrying that assertion's `assertion_id`
 (`tree-materialization-spec.md` §4.4), and nothing else. Nothing reaches
 it today: `research_append` refuses every assertions write except an
 update setting only `informant_bias_notes` (genealogist ruling
-2026-10-05, option B), and `extraction_append` takes no updates. There is
+2026-10-05, option B), and `extraction_append` makes one update only, which
+appends a question id to `extracted_for_question_ids` and touches no fact
+attribute. There is
 currently no path to correct an assertion's value; a disputed reading
 goes in a conflict.
 `forget-and-rederive` is the fifth writer of `persons` and `relationships` and
@@ -583,7 +599,7 @@ Array of question objects.
 | `justification` | string or null | no | Prose explaining why the search stopped |
 | `log_entry_ids` | string[] | yes | Log entry IDs supporting the stop claim (required non-empty when `stopped_because` is a gate value) |
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
-| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, and optional `wiki_title`. See below |
+| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
 **`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
 
@@ -597,7 +613,7 @@ Array of question objects.
 | `conflict_resolution` | string | yes | Have all discrepancies been resolved through reasoning? |
 | `overturn_risk` | string | yes | What is the likelihood that new evidence would overturn this conclusion? |
 
-**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from claims about what might exist offline.
+**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from an uncited claim about what might exist offline. A `wiki_named_untouched` entry repeats a claim made by a wiki page the project read, and names that page in `wiki_title`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -605,6 +621,13 @@ Array of question objects.
 | `description` | string | yes | Brief description of what could not be reached |
 | `log_entry_id` | string or null | yes | Log entry that corroborates the barrier; null when no direct search produced it |
 | `wiki_title` | string or null | yes | FamilySearch Research Wiki page title; non-null when `kind` is `wiki_named_untouched`; null otherwise |
+
+**Where `handed_to_user` entries come from (lead, 2026-10-16).** research-exhaustiveness builds them from the research log, not from `project_context.awaitingUser`. A hand-off is an `external_site` log entry on the question's plan items with `outcome: "partial"` and `capture_received: false`. It stays an entry unless a *later* entry in `log[]` on the same question's plan items with the same `url_generated` has `capture_received: true`. Those are the entries `research_query` returns for the question, and where a capture for the hand-off is logged. A later entry without a capture, such as a `negative` the agent wrote because it had no subscription, does not close it, and `log_entry_id` names the original hand-off, not the closer. Why: `closesHandOff` (`project-context.ts`) closes a row on any later non-`partial` entry, including one the agent wrote itself, so in an October 2026 alpha session `awaitingUser` dropped an agent-closed Ancestry civil-register hand-off, and the user was told the record was unreachable without being given the link again. Considered and not chosen:
+- Widening `awaitingUser`: a "no access" reply would stop closing a row, so the user would be shown links they cannot open as still waiting on them.
+- A new `project_context` field: a tool-contract change for data the log already holds.
+- A `research_append` precondition refusing a `search_stop` that omits an uncaptured hand-off: engine work for 1 agent-closed hand-off in 209 committed e2e runs. This is the escalation if an e2e run shows the agent missing entries.
+
+`paywalled` is for a paywalled hit that was never handed to the user. `wiki_named_untouched` entries come from the `guide_markdown` of a locality the project already holds. `wiki_title` is the page title from `pages_read[].url` (the segment after `/wiki/`), never the `pages_read[].section` enum, which the validator would also accept.
 
 ### 5.3 `plans`
 
@@ -630,7 +653,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `repository` | `repository` | yes | Where to search (see open enums in Section 2) |
 | `rationale` | string | yes | Why this record set for this question |
 | `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for — an item of the same plan — or null. `validate_research_schema` rejects any other value, so every writer does. |
-| `status` | `plan_item_status` | yes | Current status |
+| `status` | `plan_item_status` | yes | Current status. An `in_progress` item on an active plan is set to `completed` by `extraction_append` once **any** of its plan-tied positive or partial `record_search` entries lists, in its sidecar, a record that now has an assertion (lead, 2026-10-19). The rule is ANY, not every: "every entry" left 124 of 617 previously-completed FamilySearch items stuck on the 2026-10-19 corpus probe, and one extraction already puts the item's evidence in hand (lead, 2026-08-23). Once `completed`, a later `in_progress` write leaves it `completed`. An item whose searches all found nothing is disposed of by research-plan |
 | `skip_category` | `skip_category` | no | Why a `skipped` item was skipped, as something the exhaustiveness gate can read; `status` alone cannot tell these apart. Two of the seven — `inaccessible` and `no_coverage` — say the source could not be evaluated at all; the other five are decisions taken with the source reachable. That split is the line the gate's pursued-and-unavailable exception turns on. See the discussion below |
 | `skip_reason` | string | no | One line on why this item was skipped. Distinct from `rationale`, which is why the item was *planned* — without this field that prose lands in `rationale` and corrupts a required one |
 
@@ -638,7 +661,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 
 Array of log entry objects. **Append-only — entries are never modified or deleted.** This is the core GPS audit trail. Every tool call that searches for records must produce a log entry, including searches that return no results.
 
-Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes` (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing, or a `wikipedia_search` that answered not-found, is `negative` with `results_examined: 0` and `notes` null — skipping the entry would leave no trace that the topic was tried, so the next session repeats the lookup; any other `wikipedia_search` error is a failed lookup, not an answer, and is not logged). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
+Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read`, `historical_context`, or one of the report-only agents' tools `source_evaluation`, `check_warnings`, `translation`, `convert_dates`, `validate_schema`) record a looked-up article, wiki guidance, overview or report rather than a record search: the reference text itself is carried in `notes` (a report entry carries the agent's full reply) (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing, or a `wikipedia_search` that answered not-found, is `negative` with `results_examined: 0` and `notes` null — skipping the entry would leave no trace that the topic was tried, so the next session repeats the lookup; any other `wikipedia_search` error is a failed lookup, not an answer, and is not logged). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -756,7 +779,7 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. On assertion appends `research_append` resolves an omitted value itself — sidecar copy first, else geocoding, with a country-contradiction guard (research-append spec §3.6); null if unresolvable or `place` is null; supply `null` explicitly to opt out. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
-| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified. **Enforced for negative evidence:** `record_basis: "absent"` requires exactly `researcher` here (see "Negative evidence" above). **Also enforced: `unknown` requires `information_quality: "indeterminate"`** — if the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the classification stops there. Forward only: `indeterminate` at a KNOWN proximity is the ordinary census shape and stays legal. Refused by `research_append` on append and update, and reported by the document validator |
+| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified. **Enforced for negative evidence:** `record_basis: "absent"` requires exactly `researcher` here (see "Negative evidence" above). **Also enforced: `unknown` requires `information_quality: "indeterminate"`** — if the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the classification stops there. Forward only: `indeterminate` at a KNOWN proximity is the ordinary census shape and stays legal. Refused by `research_append` on append, and on an update that sets `informant_proximity` or `information_quality` (the merged entry is checked, so a flip to `unknown` over a stale `secondary` is caught, while a question tie on a legacy pair is not re-checked), and reported by the document validator |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
 | `record_basis` | `record_basis` | yes | `stated`, `inferred`, or `absent` — what the record mechanically did with this value, NOT the GPS direct/indirect/negative evidence judgment (see "What `record_basis` is not" below). **`absent` constrains two sibling fields:** it requires `record_role: "absent"` (a different field with the same value — the PERSON was not in the record) and `informant_proximity: "researcher"`. See "Negative evidence" below |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
@@ -964,6 +987,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 | `exhaustive_search_summary` | string | yes | Brief summary of search scope, referencing log entries |
 | `shortfall` | `proof_shortfall` | yes | Why this conclusion is not at a higher tier — **remediability, orthogonal to the confidence `tier` carries**, and it never changes the tier. `none` only on a **conclusive** tier — `proved` or `disproved`, both final answers with nothing holding them back (`not_proved` is a non-answer, not a negative answer, so it always carries one of the other three); `conflict` when an unresolved `conflicts[]` entry names this summary's `question_id` in its `blocks_question_ids`; `ceiling` when the reachable record is exhausted so no further search would raise the tier (reachable = retrievable by an MCP tool or constructible as a subscription-site handoff — never the offline world); `gap` when a reachable source remains unsearched. `ceiling` and `gap` are not interchangeable: `ceiling` asserts the search is finished, so anything `exhaustive_search_summary` still names as outstanding makes it `gap`. **Not a writer-tool precondition:** tying `shortfall: "conflict"` to a matching open conflict is a cross-object join, which the write boundary cannot do — it is a rubric dimension |
 | `narrative_markdown` | string | yes | Self-contained GPS conclusion narrative |
+| `updated` | `iso_datetime` | no | Tool-owned: `research_append` stamps it on every append of the entry and on every update that sets `narrative_markdown` or `exhaustive_search_summary`, overwriting any value the caller passed. An update setting neither keeps the existing stamp. `research_append` compares it against `log[].performed` to decide whether a summary is stale: when the question's log has an entry performed after it, an update must rewrite `narrative_markdown` and `exhaustive_search_summary` together. Absent on summaries written before the field existed, and such a summary is never treated as stale |
 | `claims` | `proof_claim[]` | no | Optional per-claim tier breakdown — see below |
 
 **Timing:** Proof summaries may be written for questions at any status. A summary for an `in_progress` question represents a preliminary conclusion; its tier should reflect the incomplete state of research (typically `probable` or `possible`, not `proved`). Writing preliminary conclusions is encouraged — it forces the skill to articulate the current state of evidence and identify what's missing.
@@ -1068,6 +1092,96 @@ written as free text in the plan item that uses it. The section shipped with
 a viewer Localities tab; `search-records` deliberately stays general (see the
 consumer table above).
 
+### 5.14 `rejected_links`
+
+Array of person-links the researcher ruled out. Written exclusively by the
+`person-evidence` skill.
+
+**Nothing reads it in order to obey it.** Whether a pair was rejected is decidable
+from `research.json` alone, so per ADR-0011 the rule lives in `research_append`,
+which refuses to re-link the exact pair — a precondition binds everywhere, where a
+line in a skill body is a rule the model may not follow. The refusal names the
+researcher's own reason when they gave one, since a refusal they cannot trace back
+to their decision reads as a broken tool. It refuses that pair and no more:
+rejecting "this record is not Mary" says nothing about her sister, nor about a
+different record for Mary.
+
+The section is exposed through `research_query` so an agent can **explain** a
+refusal, not so it can enforce one. The person-evidence agent body names it only to
+write a rejection; no body reads it to decide whether to link.
+
+**Its own section rather than a fourth `person_evidence.confidence` value.** That
+field says how sure we are a link **is** a match; a rejection is the opposite
+claim, not a weaker version of it. Folding the two would make "we checked and it
+is not him" indistinguishable from "we have not checked."
+
+**Kept, never deleted.** A rejection that disappears buys nothing: the next pass
+re-opens the same pair and spends the search again. Deleting is also how a
+disagreement gets erased rather than answered.
+
+**Optional section** (not in `required`): absent on projects that predate it.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `rj_` prefix, `^rj_[0-9]+$` |
+| `assertion_id` | string | yes | `^a_[0-9]+$` — the assertion proposing the link |
+| `person_id` | string | yes | The tree person the assertion was proposed against |
+| `reason` | string or null | no | Why it was rejected. Optional on purpose: **a rejection is never a demand for the right answer.** Requiring a reason would push a researcher who simply knows it is wrong into inventing a justification, and a fabricated reason is worse than none |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+
+### 5.15 `namesakes`
+
+Array of namesake rows. A row records a different person who shares a tree
+person's name, place and time, keyed by the `person_id` of the tree person the
+namesake is **not**, so that a `probable` or `confident` `person_evidence` link
+to that person needs something in its record that ties the record to them.
+**Optional section** (not in `required`): absent until a namesake is recorded.
+`search-records` records a row when a search turns up such a person; that write
+lands in a later change, so no committed document carries the section yet (0 of
+548 tracked research documents, measured at ed4f73911 by
+`packages/engine/mcp-server/dev/measure-namesake-cap.ts`) and no write is
+refused on its account.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `ns_` prefix |
+| `person_id` | string | yes | GedcomX person ID of the tree person the namesake is **not**, whose links the row caps. An update cannot change it (see below) |
+| `name` | string | yes | The namesake's name. Non-empty |
+| `place` | string | yes | Where the namesake is recorded. Non-empty |
+| `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
+| `record_ids` | string[] | yes | The record ids of the namesake's own records, in the form assertions carry in `record_id` |
+| `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
+| `notes` | string or null | no | Free text |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+
+**A row is never retired, and no update re-points it.** It has no status and no
+`superseded_by`, and `research_append` lets an update set only `name`, `place`,
+`time_period`, `record_ids`, `log_entry_ids` and `notes` (the section's
+`updatableFields`); an update setting any other field, `person_id` included, is
+refused. A row the agent could switch off would rebuild the self-declared flag
+the ruling below rejected.
+
+**Why a section keyed on the tree person** (lead, 2026-10-13). The cap looks a
+row up by the link's `person_id`. A list on the question was rejected: questions
+carry no subject person id, so a namesake found under one question would not
+protect the same person's links under another. Stub persons were rejected: they
+pollute the user's tree, and telling a namesake from a same-named father or son
+would need a marker field on the tree. A self-declared flag on the link was
+rejected: the agent's own failure is believing it has ruled namesakes out, so it
+would not set it.
+
+**`person_id` is walked like every other tree reference.** `iteratePersonIdRefs`
+yields it, so the validator reports a row keyed on a person not in the tree,
+`merge_tree_persons` re-keys a row onto the merge survivor (counted in
+`researchRefsUpdated.namesakes`), and `tree_forget` is refused when it would
+orphan a row (`tree-forget-tool-spec.md` §4).
+
+What a row does to a link, the ties that allow one and the refusal, is specified
+in `research-append-tool-spec.md` §5, the namesake cap row. A row written over
+links the cap refuses is recorded with a warning listing them (§5.6 there), and
+`materialize_facts` copies nothing onto the row holder through such a link
+(`tree-materialization-spec.md` §4.3).
+
 ---
 
 ## 6. Cross-Reference Map
@@ -1126,6 +1240,13 @@ evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
   ├─ target_id (when target_type == "proof_summary") ► proof_summaries[].id
   └─ superseded_by ──────────────────────────────► evaluations[].id
+
+namesakes
+  ├─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
+  └─ log_entry_ids ──────────────────────────────► log[].id
+rejected_links
+  ├─ assertion_id ───────────────────────────────► assertions[].id
+  └─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
 ```
 
 ---
@@ -1995,11 +2116,13 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
   `gps-mentor` critiqued proof summary ps_001 and returned
   `consider_addressing`. The mentor's actual reasoning lives in the file named
   by `file_path`, not in `research.json`. See Section 5.12.
-- **`researcher_profile`, `known_holdings`, and `localities` are absent.** All
-  three are optional (Section 1); a project that skipped the holdings survey
-  and has done no locality research legitimately has none of them. The other
-  twelve keys are all present. On a younger project several of them would be
-  present but empty, which is required; omitting them is not.
+- **`researcher_profile`, `known_holdings`, `localities`,
+  `warning_justifications` and `namesakes` are absent.** All five are optional
+  (Section 1); a project that skipped the holdings survey, has done no locality
+  research, has justified no warning and has recorded no namesake legitimately
+  has none of them. The other twelve keys are all present. On a younger
+  project several of them would be present but empty, which is required;
+  omitting them is not.
 - **The tree above and this file are consistent by design.** `subject_person_ids`
   names `I1`; `sources[].gedcomx_source_description_id` values (`S1`–`S3`) name
   source descriptions in the tree; `person_evidence[].person_id` values name

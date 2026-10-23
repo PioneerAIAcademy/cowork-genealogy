@@ -15,6 +15,8 @@ what is / is not covered.
 from __future__ import annotations
 
 import re
+import json
+
 import pytest
 
 from validators_lib import bare_tool_name
@@ -87,12 +89,12 @@ def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
 
 def test_creates_no_project_when_none_exists(before_state, after_state, test):
     """Tag-gated (``research-vs-init-project``) no-harm invariant for the
-    no-research-json-yet negative (ut_research_008).
+    no-research-json-yet case (ut_research_008, a positive routing test).
 
     The user asks to "set up a project and begin", but with no research.json
     the correct move is to route to init-project, not to scaffold a project
-    inline. This is why _008 is graded on the invariant (``grade_on_invariant``)
-    rather than on routing: with an empty folder the state-safe outcomes are
+    inline. The invariant is what this validator pins, whatever the test's own
+    grading says: with an empty folder the state-safe outcomes are
     several — auto-route to init-project, or load research and decline via
     AskUserQuestion — and the routing check fails the (correct) decline. The
     routing-independent gate is that NO project is created: research.json must
@@ -493,8 +495,8 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
 # the two in step). Plus the tree ids `project_context` hands over (`I1`, `S3`...),
 # the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
-    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "c_", "h_",
-    "t_", "ps_", "ev_", "loc_",
+    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
+    "h_", "t_", "ps_", "ev_", "loc_", "ns_",
 )
 _PROJECT_ID_RE = re.compile(
     r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
@@ -851,3 +853,87 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
         f"requires the delegation message to name the focus and the target_id. "
         f"Prompts seen: {[p[:160] for p in prompts]}"
     )
+
+
+_HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
+
+
+def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-records`` carries a ``plan_item:`` block
+    that parses to exactly the plan item research.json holds for the item named.
+
+    research/SKILL.md has the router hand over the plan item it already queried,
+    verbatim and unread, so the agent can skip its own research_query (issue
+    #3581). Equality of the parsed block against the scenario's own item is what
+    separates "verbatim" from "summarised" or "judged"; the judge sees neither.
+    """
+    if _HANDS_PLAN_ITEM_TAG not in (test.get("tags") or []):
+        pytest.skip("not a delegation-plan-item test")
+    expected = _expected_skill(test)
+    assert expected == "search-records", (
+        f"{_HANDS_PLAN_ITEM_TAG} needs routes-to:search-records; got {expected!r}"
+    )
+    prompts = _spawn_prompts(builtin_tool_calls, expected)
+    assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
+    research = before_state.get("research_json") or {}
+    items = []
+    plan_of = {}
+    for plan in research.get("plans", []):
+        if plan.get("status") != "active":
+            continue
+        for item in plan.get("items", []):
+            if item.get("status") in ("planned", "in_progress"):
+                items.append(item)
+                plan_of[item["id"]] = plan["id"]
+    assert items, "Scenario drift: no active plan item to hand over."
+    decoder = json.JSONDecoder()
+    problems = []
+    for prompt in prompts:
+        named = [i for i in items if i["id"] in prompt]
+        if not named:
+            problems.append(f"names no plan item id: {prompt[:120]!r}")
+            continue
+        item = named[0]
+        if plan_of[item["id"]] not in prompt:
+            problems.append(
+                f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
+            )
+        marker = prompt.find("plan_item")
+        brace = prompt.find("{", marker) if marker != -1 else -1
+        if brace == -1:
+            problems.append(f"no plan_item JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            handed, _ = decoder.raw_decode(prompt[brace:])
+        except ValueError:
+            problems.append(f"plan_item block for {item['id']} is not valid JSON")
+            continue
+        if handed != item:
+            missing = object()  # a dropped key whose value was null must still be named
+            diff = sorted(
+                k for k in set(item) | set(handed)
+                if item.get(k, missing) != handed.get(k, missing)
+            )
+            problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
+        tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+            (research.get("project") or {}).get("subject_person_ids") or []
+        )
+        match = re.search(r"subject:\s*", prompt)
+        sbrace = prompt.find("{", match.end()) if match else -1
+        if sbrace == -1:
+            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            subject, _ = decoder.raw_decode(prompt[sbrace:])
+        except ValueError:
+            problems.append("subject block is not valid JSON")
+            continue
+        if subject.get("subjectId") not in subject_ids:
+            problems.append(
+                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
+                f"tree {subject_ids}"
+            )
+        if not subject.get("names"):
+            problems.append("subject block carries no names")
+    assert not problems, "; ".join(problems)

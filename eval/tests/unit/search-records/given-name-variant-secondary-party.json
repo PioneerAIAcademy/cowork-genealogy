@@ -12,11 +12,12 @@
       "given-name",
       "norway",
       "secondary-party",
-      "regression"
+      "regression",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — search FamilySearch collection 1468080 ('Norway, Marriages, 1660-1926') for the marriage of Unna Halsteinsdatter (KZHH-VTX, b. May 1745, Hestdal, Meland, Hordaland), using her as the search principal.",
+    "delegation": "Execute plan item pli_001 — search FamilySearch collection 1468080 ('Norway, Marriages, 1660-1926') for the marriage of Unna Halsteinsdatter (KZHH-VTX, b. May 1745, Hestdal, Meland, Hordaland), using her as the search principal.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"vital_record\",\n  \"jurisdiction\": \"Hamre prestegjeld, Hordaland, Norway\",\n  \"date_range\": \"1770-1800\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"FamilySearch collection 1468080 'Norway, Marriages, 1660-1926' is an indexed database of Norwegian church-book marriage entries. Search for Unna Halsteinsdatter (KZHH-VTX) as the principal — her distinctive patronymic narrows results faster than searching under the far more common 'Anders Monsen'.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"KZHH-VTX\",\n  \"names\": [\n    {\n      \"given\": \"Unna\",\n      \"surname\": \"Halsteinsdatter\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"May 1745\",\n    \"place\": \"Hestdal, Meland, Hordaland, Norway\"\n  },\n  \"death\": {}\n}",
     "scenario": "anders-unna-marriage-search",
     "scenario_notes": null
   },

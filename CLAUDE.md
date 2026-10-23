@@ -214,9 +214,11 @@ owner-checked against the bearer the worker stamped on that open turn — U6/U4)
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
-Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
-agent uses `person_search` to find a person in the FamilySearch tree
-when the user doesn't have a FamilySearch ID to provide.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project always
+starts from a FamilySearch person ID: `init-project` never searches by name, and with
+no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
+front door — its routing table sends a first message with no project to `init-project`
+or `tree-survey`, so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -250,7 +252,10 @@ and the model silently falls back to a general-purpose stand-in that binds none
 of the `tools:`/`disallowedTools:` below (ADR-0004; skills are unaffected —
 the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
-what the runtime actually resolved, and no CI job covers this path.
+what the runtime actually resolved. Its agent-registration arm now also runs in
+CI (`server-tests.yml`, keyless, under `AGENT_SMOKE=1`); its dead-stub arm and
+whether a granted tool actually *binds* (`make probe-agent-binding`) still have
+no CI job.
 
 **Dual-spelled tool names.** (Heading kept as a stable anchor — the
 architecture guide and ADR-0004 both cite it by name — though the rule now
@@ -291,7 +296,8 @@ because unrecognized entries are ignored so long as at least one resolves.
 **No agent declares `disallowedTools:` any more — omit the tool instead.**
 Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
-2026-08-30, Claude Code 2.1.220 / SDK 0.2.128). Every deny we shipped named a
+2026-08-30, Claude Code 2.1.220 / SDK 0.2.128; re-run 2026-10-20 on 2.1.294 / SDK
+0.2.165 and 2026-10-22 on 2.1.308 / SDK 0.2.172, same result). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
 restatements. What keeps `record-structurer` off the broad `research_append` is
 `research_append` not being in its `tools:`.
@@ -319,6 +325,12 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 `"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
+
+**Fork subagents are off on every path, two ways.** Claude Code offers
+`subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
+plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
+the prototype worker set `CLAUDE_CODE_FORK_SUBAGENT=0`; Cowork's environment is not
+ours, so the hook denies the call there. Change one, change both.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
@@ -422,7 +434,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-nine other agents also carry no line — `search-wikipedia` is the one whose
+ten other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 

@@ -24,14 +24,18 @@ name: Server tests
 # check on a Dependabot lockfile PR — it tests the lock in the diff rather than
 # whatever a fresh resolve happens to pick up that morning.
 #
-# What this job deliberately does NOT cover: tests/test_plugin_agents.py::
-# test_bare_agent_names_are_registered — the only check that reads what the
-# RUNTIME resolved the hosted agent options to — skips here, because holding an
-# Anthropic key would break the "no secrets" property above. The offline tests in
-# that file do run, but they only prove the staging happened, not what the runtime
-# made of it. Run `make agent-smoke` by hand after touching
-# real_agent.build_options (root CLAUDE.md § Cowork plugin agents). Wiring
-# agent-smoke into CI is issue #1142.
+# This job runs tests/test_plugin_agents.py::test_bare_agent_names_are_registered
+# — the only check that reads what the RUNTIME resolved the hosted agent options
+# to. It is keyless (the handshake registers agents with no credential, so the
+# "no secrets" property above holds), using the CLI bundled in the
+# `claude-agent-sdk` wheel that `apps/server/uv.lock` pins (0.2.172, CLI 2.1.308,
+# the binary the hosted control plane spawns), and run under AGENT_SMOKE=1 so a
+# missing prerequisite fails loudly
+# rather than skipping green (issue #1142). Still NOT covered here: `make
+# agent-smoke`'s arm 2 (the dead-stub e2e abort), which bills a session start and
+# stays hand-run; and whether a granted tool actually BINDS (`make
+# probe-agent-binding`). Run those by hand after touching real_agent.build_options
+# (root CLAUDE.md § Cowork plugin agents).
 #
 # packages/engine/plugin/agents/ is in the path filter below because the offline
 # half of that file reads those .md files directly — the staging test, the
@@ -189,4 +193,9 @@ jobs:
         working-directory: apps/server
         env:
           PROTO_TEST_PG_DSN: postgresql://postgres:proto@localhost:5432/postgres
+          # Make a missing prerequisite (the claude CLI, engine, or node) FAIL
+          # the agent-registration check loudly instead of skipping — a skip
+          # would read as green having never run it (issue #1142). No billing:
+          # AGENT_SMOKE only toggles fail-vs-skip in test_plugin_agents.py.
+          AGENT_SMOKE: "1"
         run: uv run --frozen pytest -q

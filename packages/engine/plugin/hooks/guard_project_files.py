@@ -72,6 +72,15 @@ FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 # refuse them; the false deny is the worse failure. See the guardrail spec.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
+# The delegation tools, denied only for `subagent_type: "fork"`. From Claude Code
+# 2.1.302 the SDK and the desktop app offer a fork by default: a copy of the main
+# thread with its context and tools, which runs a step without the plugin agent's
+# instructions or `tools:` list. The hosted path, both harnesses and the prototype
+# worker set CLAUDE_CODE_FORK_SUBAGENT=0, so no test ever sees one; Cowork's
+# environment is not ours to set, and this hook is the one thing that reaches it.
+DELEGATION_TOOLS = ("Agent", "Task")
+FORK_SUBAGENT_TYPE = "fork"
+
 # A path never contains a newline, and is never longer than the platform allows.
 # Both bounds exist to keep the scan below off file CONTENT travelling in the
 # same payload — but only the newline bound does real work there, since content
@@ -101,11 +110,16 @@ _MAX_PATH_LEN = 4096
 # manifest's `hookCallers` field plus this comment, not a loader.
 OWNED_SECTIONS = {
     "proof_summaries": "proof-conclusion",
-    # person_evidence, 2026-09-01. One owner, and `extraction_append` does not
-    # accept the section, so a whole-section route fits -- no field is required
+    # person_evidence, 2026-09-01. One owner for identity decisions, so a
+    # whole-section route fits. `extraction_append` writes this section only in
+    # `personId` mode, unchecked attachment links composed whole in code, and
+    # this hook never sees it (it gates research_append) -- no field is required
     # on every question the way `exhaustive_declaration` is, so this needs none
     # of OWNED_DECLARATIONS' field-scoped treatment.
     "person_evidence": "person-evidence",
+    # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
+    # cannot be written by something that could not have made the link.
+    "rejected_links": "person-evidence",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -209,7 +223,7 @@ AGENT_WRITABLE_SECTIONS = {
     # a blocker it meets -- an unclassified assertion, a genuinely competing
     # candidate -- is cleared by extraction or conflict-resolution, not
     # by this agent editing those sections itself.
-    "person-evidence": frozenset({"person_evidence"}),
+    "person-evidence": frozenset({"person_evidence", "rejected_links"}),
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
     # research.json; its description says so and every corpus write is there.
     "gps-mentor": frozenset({"evaluations"}),
@@ -220,6 +234,10 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6).
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
+    "search-records": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -243,8 +261,9 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
-    # timeline regenerates one `timelines` entry wholesale and writes nothing
-    # else in research.json. Its coherence verdict and any geographic
+    # timeline's research_append writes stay in `timelines`; its writes through
+    # any other writer tool are authorized by that tool's identity
+    # (ownership.json `toolAuthorized`). Its coherence verdict and any geographic
     # infeasibility have no persisted field at all -- they live in its reply.
     "timeline": frozenset({"timelines"}),
     # conflict-resolution opens, analyses and settles conflicts, and writes
@@ -322,6 +341,13 @@ REASON = (
     "research_append, research_log_append, tree_edit or tree_correct. These "
     "validate before persisting. Direct file writes never validate. "
     "external-collections.json is written only by external_links_search given a projectPath."
+)
+
+FORK_REASON = (
+    '{tool} with subagent_type "fork" is disabled in this plugin: a fork runs the step '
+    "without the plugin agent's instructions and tool limits. Delegate to the named "
+    "plugin agent the step calls for (its name is the subagent_type), or do the step "
+    "yourself."
 )
 
 
@@ -476,16 +502,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     Of the six declared writers of any research.json section
     (`research_append`, `project_create`, `research_log_append`,
     `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
-    only `merge_tree_persons` also writes a section this function routes, and it
-    reaches `person_evidence` and
-    `proof_summaries` without ever passing through here.
+    two also write a section this function routes without ever passing through
+    here. `merge_tree_persons` reaches `person_evidence` and `proof_summaries`.
+    `extraction_append`, in `personId` mode only, appends `person_evidence`
+    links.
 
     That is safe for a structural reason, not a lucky one: it writes those
     sections through `iteratePersonIdRefs`, whose setters assign one field on an
     entry that already exists — `pe.person_id = newId`. It cannot create an
     entry, and it cannot touch `match_score`, which is the failure the
     `person_evidence` row exists to prevent. A merge permutes ids; it never
-    authors a claim.
+    authors a claim. `extraction_append`'s links are composed whole in code:
+    always `speculative`, no `match_score`, the fixed attachment rationale, and
+    only ever superseded afterwards (research_append refuses any other edit to
+    one). No caller field reaches them, so they author no identity decision.
 
     What keeps that true is the source-vs-manifest guard in
     `tests/packaging/ownership-manifest.test.ts`, which reds when the manifest's
@@ -572,6 +602,15 @@ def decision(payload: dict) -> dict:
     tool_input = payload.get("tool_input")
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     tool_name = str(payload.get("tool_name") or "")
+
+    if tool_name in DELEGATION_TOOLS and tool_input.get("subagent_type") == FORK_SUBAGENT_TYPE:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": FORK_REASON.format(tool=tool_name),
+            },
+        }
 
     denied = owner_denied(tool_name, tool_input, payload)
     if denied is not None:

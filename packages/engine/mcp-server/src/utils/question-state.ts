@@ -33,6 +33,7 @@
  */
 
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
+import { countsForLinkedRung } from "./tree-person.js";
 
 export type QuestionState =
   | "framed"
@@ -421,6 +422,19 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     .map((c) => c?.id)
     .filter((id): id is string => typeof id === "string");
 
+  // Zero links, not some: a household record routinely leaves its children and
+  // wife unlinked once the subject is linked (53 of 230 concluded e2e questions),
+  // and that is not a skipped identity step. No link at all is.
+  // An unchecked FamilySearch attachment link does not count as linked here:
+  // the question still routes to person-evidence. A speculative link the
+  // researcher confirmed does count (`countsForLinkedRung`).
+  const linkedAssertionIds = new Set(
+    arr(research?.person_evidence)
+      .filter(countsForLinkedRung)
+      .map((pe) => pe?.assertion_id),
+  );
+  const noneLinked = assertions.length > 0 && !assertions.some((a) => linkedAssertionIds.has(a?.id));
+
   const disagreements = unregisteredDisagreements(research, assertionIds);
   const parentSets = competingParentSets(research, tree, qid, assertionIds);
 
@@ -441,6 +455,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
+  } else if (noneLinked && summaries.length === 0) {
+    // Ahead of the disagreement rung because that rung reads links: with none,
+    // it is blind, so routing past here would also hide an unregistered conflict.
+    nextStep =
+      `person-evidence — none of this question's ${assertions.length} assertions ` +
+      "is linked to a person";
   } else if (disagreements.length > 0) {
     // Registering a conflict is conflict-resolution's output, so an empty
     // `conflicts[]` cannot be what routes there — the evidence has to.
@@ -452,11 +472,14 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (summaries.length > 0 && !resolved) {
-    // A conclusion is not the end of the work: the `resolved` write is still
-    // outstanding, and it is the transition no skill body claims. Reporting null
-    // here would tell the router nothing is left to do on the one step this
-    // design most needs routed.
-    nextStep = "question-selection — concluded; mark the question resolved";
+    // A summary on a question still open was written while the preconditions
+    // gate blocked the conclusion: proof-conclusion resolves the question it
+    // concludes (its step 7) and leaves it open only when blocked. The conflict
+    // arms above found nothing open, so the blocker has settled and the next
+    // step is to conclude again. Reporting null here would tell the router
+    // nothing is left to do.
+    const latest = summaries[summaries.length - 1]?.id ?? "the latest summary";
+    nextStep = `proof-conclusion — concluded while blocked: re-conclude ${latest}`;
   } else if (resolved && summaries.length === 0) {
     // Only reachable in a document seeded this way — the resolve gate refuses
     // the transition now. The completion gate still lets it pass.

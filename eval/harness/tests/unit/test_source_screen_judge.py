@@ -252,6 +252,22 @@ def test_parses_the_closing_json_block_and_records_a_malformed_one_as_a_parse_fa
     assert rec["parse_error"] and rec["findings"] == []
 
 
+def test_text_after_the_closing_block_is_a_parse_failure_and_trailing_whitespace_is_not(tmp_path):
+    retracted = FINDINGS + "\n\nWait — I need to correct that JSON. The last two entries are sources that are in good order."
+    found, err, rejected = judge.parse_findings(retracted)
+    assert found == [] and err and "retracted" in err
+    found, err, _ = judge.parse_findings(FINDINGS + "\n  \n")
+    assert err is None and len(found) == 1
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
+    rec = _judge(snap, "KWCB-QZ3", FakeRunner([], retracted))
+    assert rec["parse_error"] and rec["findings"] == []
+
+
+def test_the_instruction_asks_for_problems_only_and_one_closing_block():
+    assert "Do not list a source that belongs on the profile and has no problem" in judge.FINDINGS_INSTRUCTION
+    assert "last thing in your reply" in judge.FINDINGS_INSTRUCTION
+
+
 def test_an_empty_agent_return_is_a_parse_failure_not_the_dispatcher_text(tmp_path):
     snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
     runner = FakeRunner([], "")

@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Marriage fact (30 May 1845, Kilninian and Kilmore, Argyll) written into the tree, sourced to the same ark (XTK4-QYM) as the fixture's documented answer, verified by the run's own tree-encoding gate. proof_summaries (tier: probable) is a thorough, well-corroborated proof: the marriage index plus independent corroboration from the 1851 census and two christening records, explicit nil searches against competing record sets (Kirk Session, Relief/UP church, Free Church records), and an honest note that the original OPR image was inaccessible (403, paywalled) rather than glossed over. Separately, compliance: FAIL -- two new persons (I1, I2) got person_evidence links without a prior same_person call (shadow-mode guardrail violation, not blocking)."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "69ebb36507372c4479cec535046f4bab4385dc3227f85039cd63b2aaa3b2aa27",
+  "blind_bundle_digest": "91d13cc73cfce16957bd84ab3db6ca950ae28dd0c25b1fab6f7e3906e48bf731"
+}

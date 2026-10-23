@@ -284,85 +284,31 @@ def test_no_search_or_writes_on_planning_request(
 
 
 def test_escalates_to_external_sites_after_fs_exhaustion(
-    skills_invoked, builtin_tool_calls, test
+    agent_returns, text_response, test
 ):
-    """After FamilySearch is exhausted across name variants, the skill must
-    hand off to `search-external-sites` — not merely offer to.
+    """After FamilySearch is exhausted across name variants, the agent must
+    hand back to `search-external-sites` — name it, with the person attributes,
+    in its caller-facing lines — not merely offer to.
 
-    Graded here rather than by the LLM judge because the hook records are
-    ground truth: the PreToolUse hook fires on the real `Skill` call or agent
-    spawn (`handoffs`, issue #2825), so a response that only *narrates* the
-    escalation ("Shall I generate Ancestry URLs?") cannot satisfy it, and a
-    response that genuinely delegates cannot be marked down for it. The judge
-    has gotten this wrong in both directions — scoring Correctness=1 for
-    "failed to call search-external-sites" on a run where the hook recorded
-    the call.
+    An agent cannot spawn another agent (lead ruling 2026-09-23: hand back,
+    never spawn), so the escalation is the named hand-back in the return, read
+    from the agent's own return text (`agent_return_text`), the same shape
+    `test_hypothesis_tracking.py` asserts. A closing question ("shall I
+    generate Ancestry URLs?") is the failure this exists to catch: it names the
+    site but not the agent, so it does not match.
 
     Tag-gated: only the nil-exhaustion escalation test asserts this. Ordinary
-    search tests must NOT escalate, and negative routing tests are graded on
-    routing instead.
+    search tests must NOT escalate.
     """
-    from harness.skill_runner import handoffs
+    from harness.skill_runner import agent_return_text
 
     if "familysearch-exhausted" not in test.get("tags", []):
         pytest.skip("only the FamilySearch-exhaustion escalation test")
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    assert "search-external-sites" in handed, (
-        "FamilySearch was exhausted across name variants, so the skill had to "
-        "hand off to search-external-sites. Offering it in prose is not "
-        f"escalating. handoffs={handed}"
-    )
-
-
-def test_live_callee_used_its_own_tools(
-    tool_calls, skills_invoked, builtin_tool_calls, test
-):
-    """Tag-gated (live-callee): a test that lets `search-external-sites`
-    execute must show it was actually delegated to, and that it then called
-    its own tools.
-
-    This is the entire point of `execution.run_skills` (issue #1012). Before
-    the sub-skill union the callee held neither `place_search` nor
-    `external_links_search`, and the failure was silent — it invented an
-    Ancestry URL from prose rather than erroring. A regression would look
-    identical: plausible links, no tool call behind them.
-
-    Deterministic rather than judged, for the same reason
-    test_escalates_to_external_sites_after_fs_exhaustion is. Asked to verify
-    URL provenance against a tool response, the judge has been wrong in both
-    directions on this exact question: it scored Correctness=1 on 2026-07-31
-    for "placeholder URLs" that were relayed verbatim, and again on
-    2026-08-03 claiming Ancestry collection 1276 "does not appear in the
-    returned results" when it is the fifth entry in the fixture it was
-    reading. `tool_calls` is the harness's own record and cannot be misread.
-    """
-    from harness.skill_runner import handoffs
-
-    if "live-callee" not in test.get("tags", []):
-        pytest.skip("only the live-callee seam test")
-    # Delegation first: without it the tool assert below is satisfiable the
-    # wrong way. The unit harness grants every MCP tool to the main thread and
-    # the test stocks `external_links_search`'s fixture, so `search-records`
-    # can call it itself, never spawn the agent, and still show the tool in
-    # `tool_calls` — the seam this test exists for would be untested and green.
-    #
-    # Nothing else covers it: this test's own `judge_context` forbids the judge
-    # from grading delegation, and the validator it defers to
-    # (test_escalates_to_external_sites_after_fs_exhaustion) gates on the
-    # `familysearch-exhausted` tag, which ut_search_records_026 does not carry
-    # — it skips, and a skipped validator is recorded `passed: true`.
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    assert "search-external-sites" in handed, (
-        "this test's whole subject is the caller/callee seam — but the "
-        "search-external-sites agent was never spawned. Calling its tools directly from the main "
-        f"thread is the failure this asserts against, not a pass. handoffs={handed}"
-    )
-    called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
-    assert "external_links_search" in called, (
-        "the search-external-sites agent ran live, so it had to reach its own "
-        "tools — external_links_search is what turns a place into real "
-        "third-party collection links. Absent, the agent can only have "
-        f"invented any URLs it presented. tools called: {sorted(called)}"
+    reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
+    assert re.search(r"hand[- ]?back[^\n]{0,80}`?search-external-sites", reply, re.I), (
+        "FamilySearch was exhausted across name variants, so the agent had to "
+        "hand back to search-external-sites in its return. Offering Ancestry in "
+        f"prose is not escalating. return text: {reply[:600]!r}"
     )
 
 
@@ -669,9 +615,11 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
     an any()-style match would hide a claim one of them never sent. An entry
     past the last call for its surname is left alone.
 
-    **Reporting-only.** The skill carries no "only record a filter actually
-    sent" rule yet; it is promoted to a gate together with that prose rule, in
-    the PR that pays this skill's run. Run logs recorded before the eval mock
+    **Reporting-only, by design.** The rule it would have been promoted with
+    now lives in the tool (`preflightQueryFilterClaims` refuses a staged
+    entry's never-sent claim), and the gating half that is left is
+    `test_unstaged_log_query_filters_were_sent`, which needs no pairing. This
+    check keeps the per-call detail and the value class. Run logs recorded before the eval mock
     echoed a search's arguments into its staged `query` fire on entries the tool
     FILLED from a fixture's recorded query — a harness artifact, not the
     model's claim (`scripts/replay_log_query_validators.py`).
@@ -752,6 +700,40 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
     assert not errors, "record_search log queries that do not trace to their call:\n  - " + "\n  - ".join(errors)
 
 
+def test_unstaged_log_query_filters_were_sent(before_state, after_state, tool_calls):
+    """A `record_search` log entry with no staged handle claims no filter that
+    no `record_search` call this turn sent.
+
+    `research_log_append` refuses a never-sent claim on a STAGED entry, so this
+    covers the rest: an entry whose op carried no `stagedResultsRef` (a nil
+    search stages nothing), where the `query` is the model's own claim, never a
+    fill from a staged payload. A key no call sent at all was not sent by the
+    call this entry documents, whichever call that was, so no pairing is needed
+    and none can mislead it. Values are not compared: a different value is
+    mostly place normalisation and stays with the report check above.
+    """
+    entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "record_search" and _as_mapping(e.get("query"))
+    ]
+    staged = _staged_ref_by_log_id(tool_calls)
+    unstaged = [e for e in entries if e.get("id") not in staged]
+    if not unstaged:
+        pytest.skip("no new unstaged record_search log entries with a query")
+    calls = [c for c in tool_calls if _bare_tool_name(c.get("tool")) == "record_search"]
+    vocabulary = _tool_input_keys("record_search")
+    if vocabulary is None:
+        pytest.skip("the compiled tool schema is unavailable, so the filter vocabulary is unknown")
+    sent_anywhere: dict = {}
+    for c in calls:
+        sent_anywhere.update(_record_search_sent(c.get("args")))
+    errors = []
+    for e in unstaged:
+        never_sent, _ = _filter_claim_findings(e.get("query"), sent_anywhere, vocabulary)
+        errors.extend(f"log entry {e.get('id')} claims {claim}, which no record_search call sent" for claim in never_sent)
+    assert not errors, "unstaged record_search log queries claim filters never sent:\n  - " + "\n  - ".join(errors)
+
+
 # --- The census wiki fetch actually fires (issue #2123) ----------------
 
 # Maps a tagged test id to the topical fixture stem its `mcp_fixtures` names.
@@ -782,8 +764,11 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_search_records_016": "wiki-read-united-states-census",
     "ut_search_records_017": "wiki-read-united-states-census",
     "ut_search_records_018": "wiki-read-united-states-census",
-    "ut_search_records_026": "wiki-read-united-states-census",
     "ut_search_records_027": "wiki-read-united-states-census",
+    "ut_search_records_hpi": "wiki-read-united-states-census",
+    "ut_search_records_hpm": "wiki-read-united-states-census",
+    "ut_search_records_d01": "wiki-read-united-states-census",
+    "ut_search_records_d02": "wiki-read-united-states-census",
     "ut_search_records_h4k": "wiki-read-united-states-census",
     "ut_search_records_t9p": "wiki-read-united-states-census",
     "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",
@@ -853,4 +838,108 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
         "before the query is constructed — a schedule read afterwards cannot have "
         "shaped the search, and reading it late is how a run states from memory "
         "and then confirms itself."
+    )
+
+
+# --- Handed plan item (issue #3581) -----------------------------------
+
+def _research_query_calls(tool_calls):
+    return [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "research_query"
+    ]
+
+
+def test_handed_plan_item_skips_research_query(tool_calls, test):
+    """Tag-gated (handed-plan-item): the delegation carries the plan item whose
+    ``id`` equals ``planItemId``, so the agent has the item and its status and
+    issues no ``research_query`` for it.
+
+    The saving is the point of the hand-off (the orientation baseline in
+    docs/skill-to-agent-pair-conversion.md counts that call), and nothing else
+    reads it: the judge sees the final answer, not whether a call was made.
+    """
+    if "handed-plan-item" not in test.get("tags", []):
+        pytest.skip("not a handed-plan-item scenario")
+    queries = _research_query_calls(tool_calls)
+    assert not queries, (
+        f"The delegation handed over plan item pli_001 verbatim, but the agent "
+        f"still called research_query {len(queries)} time(s): "
+        f"{[c.get('input') or c.get('args') for c in queries][:2]}"
+    )
+
+
+def test_handed_plan_item_status_update_uses_delegated_plan_id(tool_calls, test):
+    """Tag-gated (handed-plan-item): the status update names the delegated
+    ``planId``. A handed item carries no parent plan id, so an agent that skipped
+    ``research_query`` has nothing else to take it from.
+    """
+    if "handed-plan-item" not in test.get("tags", []):
+        pytest.skip("not a handed-plan-item scenario")
+    updates = [
+        c.get("input") or c.get("args") or {}
+        for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "research_append"
+    ]
+    updates = [
+        u for u in updates
+        if u.get("section") == "plan_items" and u.get("op") == "update"
+    ]
+    assert updates, "the agent never updated the plan item's status"
+    wrong = [u.get("planId") for u in updates if u.get("planId") != "pl_001"]
+    assert not wrong, f"the status update used planId {wrong}, not the delegated pl_001"
+
+
+def test_handed_subject_skips_tree_read(builtin_tool_calls, tool_calls, test):
+    """Tag-gated (handed-subject): the delegation carries the subject, so the agent
+    takes ``subjectId`` and the names and dates from it and does not ``Read``
+    ``tree.gedcomx.json`` — and still passes that ``subjectId`` to ``record_search``.
+    """
+    if "handed-subject" not in test.get("tags", []):
+        pytest.skip("not a handed-subject scenario")
+    reads = [
+        (c.get("args") or {}).get("file_path", "")
+        for c in builtin_tool_calls or []
+        if c.get("tool") == "Read"
+    ]
+    tree_reads = [r for r in reads if r.replace("\\", "/").endswith("tree.gedcomx.json")]
+    assert not tree_reads, (
+        f"The delegation handed over the subject, but the agent still read the tree: {tree_reads[:2]}"
+    )
+    searches = [
+        c.get("input") or c.get("args") or {}
+        for c in tool_calls or []
+        if _bare_tool_name(c.get("tool")) == "record_search"
+    ]
+    assert searches and all(s.get("subjectId") == "I1" for s in searches), (
+        f"record_search was not called with the handed subjectId I1: {searches[:2]}"
+    )
+
+
+def test_mismatched_handed_plan_item_is_queried(tool_calls, test):
+    """Tag-gated (handed-plan-item-mismatch): a ``plan_item`` whose ``id`` differs
+    from ``planItemId`` is not the item the caller named, so it is not trusted and
+    the agent reads ``planItemId`` itself before searching.
+
+    Guards the other direction of the hand-off rule: a check that only proves the
+    call can be skipped would pass an agent that skips it unconditionally.
+    """
+    if "handed-plan-item-mismatch" not in test.get("tags", []):
+        pytest.skip("not a handed-plan-item-mismatch scenario")
+    calls = tool_calls or []
+    first_query = next(
+        (i for i, c in enumerate(calls) if _bare_tool_name(c.get("tool")) == "research_query"),
+        None,
+    )
+    first_search = next(
+        (i for i, c in enumerate(calls) if _bare_tool_name(c.get("tool")) == "record_search"),
+        None,
+    )
+    assert first_query is not None, (
+        "The handed plan_item carried a different id than planItemId, so it had to "
+        "be ignored and pli_001 read with research_query; no research_query was made."
+    )
+    assert first_search is None or first_query < first_search, (
+        "research_query came after the first record_search: the agent searched "
+        "on the mismatched handed item before reading the item it was asked to run."
     )

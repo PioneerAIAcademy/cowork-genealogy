@@ -9,11 +9,12 @@
       "search",
       "marriage",
       "jurisdiction-hints",
-      "jurisdiction-hints-followed"
+      "jurisdiction-hints-followed",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 -- search FamilySearch for Jesse Neal's marriage record.",
+    "delegation": "Execute plan item pli_001 -- search FamilySearch for Jesse Neal's marriage record.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"marriage\",\n  \"jurisdiction\": \"Union County, South Carolina\",\n  \"date_range\": \"1875-1885\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Jesse Neal's tree shows a South Carolina residence by 1885 with no marriage record yet located; searching that jurisdiction first is the obvious starting point.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Jesse\",\n      \"surname\": \"Neal\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1857\",\n    \"place\": \"Yell County, Arkansas\"\n  },\n  \"death\": null\n}",
     "scenario": "jesse-neal-marriage-jurisdiction-hint"
   },
   "mcp_fixtures": [

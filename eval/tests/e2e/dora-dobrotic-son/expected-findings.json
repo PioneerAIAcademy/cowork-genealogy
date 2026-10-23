@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Dora (Dorothea) Dobrotić and Franjo (Franciscus) Korotaj had a son Jacobus (Jakob) Korotaj, baptised 3 April 1871 in the parish of Križovljan Radovečki, Varaždin, Croatia; the index spells the surname Korota.",
+      "details": {
+        "subject_person": "Dora Dobrotic (K48B-4CP)",
+        "relation": "child",
+        "target_person": {
+          "name": "Jacobus Korotaj",
+          "baptism": "3 April 1871, Križovljan Radovečki, Varaždin, Croatia"
+        },
+        "father": "Franciscus Korota (Franjo Korotaj)"
+      },
+      "supporting_sources": [
+        "Croatia, Church Books, 1516-1994 — index entry for Jacobus Korota, baptised 3 Apr 1871 at Križovljan Radovečki, Roman Catholic, parents Franciscus Korota and Dorothea Dobrotić (ark:/61903/1:1:QKMG-HJFG; mother persona ark:/61903/1:1:QKMG-HJF5)",
+        "Križovljan Radovečki baptism register, 1871, entry 28 (page image ark:/61903/3:1:3QS7-L99C-YW38), read directly: Jacobus, filius legitimus, Franciscus Korotaj et Dorothea Dobrotić conj. pleb., Lovrečan No. 4, born 3 April 1871"
+      ],
+      "required": true
+    }
+  ]
+}

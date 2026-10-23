@@ -1,8 +1,10 @@
 """Validators for the source-evaluation agent (a skill until issue #2796).
 
-source-evaluation is a read-only audit agent: it enumerates the sources
-already attached to a person, reads each one, classifies what disagrees
-with the profile, and reports. It writes nothing.
+source-evaluation is an audit agent: it enumerates the sources already
+attached to a person, reads each one, classifies what disagrees with the
+profile, and reports. Inside a project it logs that report as one
+`source_evaluation` research-log entry (issue #3524) and writes nothing
+else; with no project it writes nothing.
 
 The rubric (rubric.md) keeps the prose-judgment dimensions — whether a
 classification's cue is convincing, whether the report reads as triaged.
@@ -36,6 +38,12 @@ from __future__ import annotations
 import re
 
 import pytest
+
+from validators_lib import (
+    assert_log_append_only,
+    assert_only_writes_to_sections,
+    new_log_entries,
+)
 
 # Phrases that recommend severing the source from the person. Matched
 # case-insensitively as whole words so "detached" and "detaching" count
@@ -169,15 +177,30 @@ def _recommends_detach(block: str) -> bool:
 # phrasings: go back to the document the index was made from, go back to the
 # underlying document under any verb, or use the index's own correction route.
 # A reply that recommends only detaching still matches nothing here.
+# A mention of the original is not a direction to it. The branch counts only
+# where a REMEDY VERB governs it — issue #2481's own checklist, and a reviewer's
+# ruling of 2026-10-20 after a copula-exclusion attempt was shown to let any
+# two-word noun past ("the original DEATH record is not this man").
+#
+# A verb list is wide enough here because the thing being named is a remedy,
+# and the remedies are few. The window is bounded and forbids sentence-enders,
+# so the verb and the noun must govern each other rather than merely co-occur.
+_REMEDY_VERB = (
+    r"(?:locate|obtain|consult|check|read|view|examine|order|request|pull"
+    r"|find|see|compare\s+(?:it\s+)?(?:against|with)|look\s+at|go\s+back\s+to)"
+)
+
 _GO_TO_SOURCE_PATTERN = re.compile(
     # Re-reading, in any spelling.
     r"re-?read"
     # Any verb applied to "the original ..." — the earlier pattern fixed the
     # verb (read/check) and the noun (image/record/page), so "locate the
     # original certificate" and "obtain the original register" both missed.
-    r"|the original\s+\w+"
-    # The document the index derives from, named as such.
-    r"|underlying\s+\w+"
+    # ...governed by a remedy verb. One alternative covers both nouns: the
+    # earlier pair of bare `the original \w+` / `underlying \w+` branches
+    # counted any MENTION, so a reply saying the original is WRONG satisfied a
+    # guard asking whether it recommended going back to it (issue #2382).
+    r"|\b" + _REMEDY_VERB + r"\b[^.;:\n]{0,40}?\b(?:the\s+)?(?:original|underlying)\s+\w+"
     r"|source of truth"
     r"|go(ing)? back to"
     r"|derive[sd]? from"
@@ -432,12 +455,123 @@ def test_index_discrepancy_recommends_reread(text_response, test, agent_returns=
     from harness.skill_runner import subject_reply_text
 
     text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
-    assert _GO_TO_SOURCE_PATTERN.search(text_response), (
+    assert _goes_to_source(text_response), (
         "source-evaluation reported on an index discrepancy without "
         "recommending a re-read of the original record. Doctrine point 1 "
         "of issue #1606: for a fact conflict that looks like a "
         "transcription or indexing error, the first-line remedy is to "
         "re-read the original image and correct the index."
+    )
+
+
+def _goes_to_source(text: str) -> bool:
+    """Does the text direct the reader to the underlying document?
+
+    Read with emphasis stripped. Emphasis can close BETWEEN the noun and the
+    word after it, so `**Locate the original** death certificate` leaves the
+    pattern's `(?:original|underlying)\\s+\\w+` tail looking at `original**`
+    and failing — a correct remedy sentence silently not counting. The same
+    class PR #3461 closed in the three detach matchers, in the one matcher its
+    test did not cover. 251 bold spans across the 53 committed graded replies.
+
+    Both consumers go through here, so neither can keep the gap while the
+    other loses it.
+    """
+    return bool(_GO_TO_SOURCE_PATTERN.search(_unemphasised(text)))
+
+
+# --- the conditional detach (issue #2481) ---------------------------------
+#
+# Decided on issue #2481 (review-ready, 2026-10-05): a reply-wide,
+# source-independent rule. A detach recommendation conditioned on evidence not
+# yet obtained fails on any `index-discrepancy`-tagged test. A decided
+# misattribution is detached unconditionally; an undecided one is not detached
+# at all, so "if X turns out Y, detach it" is never the right answer.
+#
+# REJECTED ALTERNATIVE, recorded per the card: declare the ambiguous source in
+# the test JSON, as `index_error_source` does. `_COSMETIC_TEST_FIELDS` is
+# ("name", "description"), so every other test field AND `tags` are in the
+# run-log snapshot — adding one would buy a paid `source-evaluation` run.
+# This rule needs no declared source, which is the whole point of it.
+
+# Conditions on evidence not yet in hand.
+_UNMET_CONDITION_RE = re.compile(
+    r"\b(if|unless|were\s+it|should\s+it|turns?\s+out)\b", re.IGNORECASE
+)
+
+# ...but asking PERMISSION is not deferring to a record. "if you agree, detach
+# the 1885 census" is a must-not-fire.
+#
+# Keyed on the consent VERB, never on "if you" alone: the agent addresses the
+# reader while naming real evidence often — "if you suspect the township is
+# miskeyed", "if you can obtain the death certificate", "if you find the
+# household does not fit". A bare "if you" carve swallows every one of those,
+# which is the shape this guard exists to catch (review, 2026-10-20).
+_CONSENT_CONDITION_RE = re.compile(
+    r"\b(?:if|unless)\s+(?:you|the\s+user|the\s+researcher)\s+"
+    r"(?:would\s+)?(?:agree|prefer|wish|like|want|consent|approve|are\s+happy|"
+    r"would\s+rather)\b",
+    re.IGNORECASE,
+)
+
+# `_recommends_detach` already subtracts negation, and correctly: it returns
+# True for "if the household does not fit, detach it", where the "not" belongs
+# to the condition rather than to the verb. Do NOT add a second proximity
+# window here — the first draft of this rule did, and its 40-character window
+# swallowed exactly that clause, waving through the shape this guard exists to
+# catch. It only looked right because the corpus phrasing is long enough to
+# fall outside the window, which is the shape-dependence issue #2481 is about.
+#
+# One gap is left to subtract: bare "no" as a determiner is absent from
+# `_NEGATORS` (`:54`), so `_recommends_detach("No detach is warranted")` is
+# True. Narrow, and attached to the verb rather than merely near it.
+_NO_DETACH_RE = re.compile(r"\bno\s+detach", re.IGNORECASE)
+
+# Clause boundaries WITHIN a passage. Deliberately not a sixth top-level
+# splitter: `_passages` alone leaves a recap whole when `_SUMMARY_LEAD_RE` does
+# not recognise its lead ("To summarise what needs doing:" does not match), and
+# a whole recap carries an unrelated condition and an unrelated detach together.
+# Measured: `_passages` alone fires 7 times across 4 tests; clause-split inside
+# it fires 3 times across the 2 the card names.
+_CLAUSE_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+|\n")
+
+
+def _conditional_detach(text: str) -> str | None:
+    """The first clause recommending a detach contingent on unobtained evidence."""
+    for block in _passages(_unemphasised(text)):
+        for clause in _CLAUSE_SPLIT_RE.split(block):
+            clause = clause.strip()
+            if not clause:
+                continue
+            if (
+                _recommends_detach(clause)
+                and _UNMET_CONDITION_RE.search(clause)
+                and not _NO_DETACH_RE.search(clause)
+                and not _CONSENT_CONDITION_RE.search(clause)
+            ):
+                return clause
+    return None
+
+
+def test_index_discrepancy_detach_is_not_conditional(
+    text_response, test, agent_returns=None
+):
+    """A detach recommended on evidence the reply has not obtained.
+
+    `ut_source_evaluation_j4s` returns "If the household does not fit, the
+    source may belong to a different man and should be detached" and nothing
+    fails it. The remedy is unrecoverable and the condition is never resolved,
+    so the researcher is left holding a decision the report declined to make.
+    """
+    _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    offending = _conditional_detach(reply)
+    assert not offending, (
+        "source-evaluation recommended a detach conditioned on evidence it did "
+        "not obtain. A decided misattribution is detached unconditionally; an "
+        f"undecided one is not detached at all. Offending clause: {offending!r}"
     )
 
 
@@ -490,8 +624,15 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test, age
     )
 
 
-def test_research_json_unmodified(before_state, after_state, test):
-    """source-evaluation is read-only — it reports, it does not write.
+_REPORT_TOOL = "source_evaluation"
+
+
+def test_research_json_only_logs_report(before_state, after_state, test):
+    """source-evaluation's one write is its report, logged as a single
+    `source_evaluation` entry (issue #3524). Fails on any change outside
+    `log`, an edit to an existing log entry, a new entry with another `tool`,
+    or more than one new entry. With no project, research.json must not
+    appear.
 
     Skipped on negative tests: the run is expected to route away to
     another skill, which may legitimately write as part of its own
@@ -501,13 +642,51 @@ def test_research_json_unmodified(before_state, after_state, test):
         pytest.skip("negative tests don't run the skill body")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("Missing research.json for diff")
-    assert before == after, (
-        "source-evaluation modified research.json — this skill is read-only. "
-        "Findings are reported as narrative; recording a conflict is the "
-        "researcher's next step through conflict-resolution, not this "
-        "skill's write."
+    if before is None:
+        assert after is None, (
+            "source-evaluation created research.json with no project; "
+            "outside a project it writes nothing."
+        )
+        return
+    assert after is not None, "source-evaluation deleted research.json"
+    assert_only_writes_to_sections(
+        before, after, {"log"}, skill_name="source-evaluation"
+    )
+    assert_log_append_only(before, after)
+    new = new_log_entries(before_state, after_state)
+    stray = [e.get("tool") for e in new if e.get("tool") != _REPORT_TOOL]
+    assert not stray, (
+        f"source-evaluation logged {stray}; its only log entry is "
+        f"`{_REPORT_TOOL}`. Recording a conflict is the researcher's next "
+        f"step through conflict-resolution, not this agent's write."
+    )
+    assert len(new) <= 1, (
+        f"source-evaluation logged {len(new)} `{_REPORT_TOOL}` entries; "
+        f"one audit is one entry."
+    )
+
+
+def test_report_logged(before_state, after_state, test):
+    """Tag `logs-report`: exactly one new `source_evaluation` entry, with
+    `plan_item_id` null and the report in `notes`."""
+    if "logs-report" not in test.get("tags", []):
+        pytest.skip("not a logs-report test")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    reports = [
+        e for e in new_log_entries(before_state, after_state)
+        if e.get("tool") == _REPORT_TOOL
+    ]
+    assert len(reports) == 1, (
+        f"expected exactly one new {_REPORT_TOOL} log entry; got {len(reports)}"
+    )
+    entry = reports[0]
+    assert entry.get("plan_item_id") is None, (
+        f"the report entry's plan_item_id is {entry.get('plan_item_id')!r}, not null"
+    )
+    notes = entry.get("notes")
+    assert isinstance(notes, str) and notes.strip(), (
+        "the report entry's notes must carry the report; got none"
     )
 
 
@@ -618,9 +797,9 @@ def test_scope_handback_calls_no_tool(tool_calls, text_response, test, agent_ret
     hand-back test that replaced the two description-routing negatives
     deleted in issue #2796. The gate answers an out-of-scope delegation with
     one line, "Hand-back: <name> — <clause>", and calls no tool. The
-    destination comes from a `handback-to-<name>` tag. That both project
-    files are unchanged is already asserted on every test by the two
-    unmodified-state validators above.
+    destination comes from a `handback-to-<name>` tag. A hand-back writes
+    nothing, but the state validators above skip negative tests, so that is
+    not asserted here.
 
     Fails iff the run made any MCP tool call, or the subject's own reply
     (`subject_reply_text`: on a direct test, the agent's return and never the
@@ -723,7 +902,7 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
     )
     acting = [
         p for p in pointers
-        if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
+        if _recommends_detach(p) or _goes_to_source(p) or _POINTER_ACTION_RE.search(p)
     ]
     assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
 

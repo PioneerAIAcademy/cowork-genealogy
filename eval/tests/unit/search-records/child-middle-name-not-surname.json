@@ -13,11 +13,12 @@
       "middle-name",
       "family-surname-as-given",
       "plan-execution",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.",
+    "delegation": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Dodge County, Wisconsin\",\n  \"date_range\": \"1880\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1880 census should show Sarah (age ~5) in a household, with the head of household confirming whether her surname is Price (father's family) or Mullen (mother's maiden family). The 1880 census also records relationship to head.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Sarah Ann Mullen\",\n      \"surname\": \"Price\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1875-08-20\",\n    \"place\": \"Dodge County, Wisconsin\"\n  },\n  \"death\": null\n}",
     "scenario": "mullen-price-child-middle-name"
   },
   "mcp_fixtures": [

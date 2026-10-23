@@ -1,0 +1,545 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Jonathan",
+          "surname": "Barker"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1819",
+          "place": "London, England, United Kingdom",
+          "standard_place": "London, England, United Kingdom",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper county, Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Beat 1 Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Elizabeth Mariah",
+          "surname": "Turnbow"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "1823-12-18",
+          "place": "Alabama, United States",
+          "standard_place": "Alabama, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper county, Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Beat 1 Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Death",
+          "date": "1890",
+          "place": "Mississippi, United States",
+          "standard_place": "Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Sarah Martha",
+          "surname": "Barker"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Birth",
+          "date": "1845-12-07",
+          "place": "Mississippi, United States",
+          "standard_place": "Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper county, Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "Death",
+          "date": "1920-03-17",
+          "place": "Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Burial",
+          "date": "1920",
+          "place": "Raleigh Cemetery, Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh Cemetery, Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "Amanda R",
+          "surname": "Barker"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Birth",
+          "date": "1848-11-07",
+          "place": "Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper county, Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Death",
+          "date": "1932-11-16",
+          "place": "Taylorsville, Smith, Mississippi, United States",
+          "standard_place": "Taylorsville, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Burial",
+          "place": "Mount Zion Baptist Church Cemetery, Center Ridge, Smith, Mississippi, United States",
+          "standard_place": "Mount Zion Baptist Church Cemetery, Taylorsville, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "preferred": true,
+          "given": "Nicy",
+          "surname": "Barker"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F22",
+          "type": "Birth",
+          "date": "1850-01-16",
+          "place": "Mississippi, United States",
+          "standard_place": "Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Death",
+          "date": "1920-03-28",
+          "place": "Soso, Jones, Mississippi, United States",
+          "standard_place": "Soso, Jones, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F25",
+          "type": "Burial",
+          "date": "1920-03",
+          "place": "Union Line Cemetery, Soso, Jones, Mississippi, United States",
+          "standard_place": "Union Line Cemetery, Soso, Jones, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree",
+      "author": "FamilySearch community contributors",
+      "citation": "\"FamilySearch Tree,\" database, FamilySearch (https://www.familysearch.org), entry for Jonathan Barker (PID MHGK-WT7) and immediate family; contributed by various users; accessed 20 October 2026.",
+      "url": "https://familysearch.org/ark:/61903/4:1:MHGK-WT7"
+    },
+    {
+      "id": "S2",
+      "title": "Household of Jonathan Barker, \"United States, Census, 1850\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MWV4-3FX"
+    },
+    {
+      "id": "S3",
+      "title": "Household of Jonathan Barker, \"United States, Census, 1860\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MHFZ-3NQ"
+    },
+    {
+      "id": "S4",
+      "title": "Household of Jonathan Barker, \"United States, Census, 1870\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MHB5-6MW"
+    },
+    {
+      "id": "S5",
+      "title": "Household of John Barker, \"United States, Census, 1880\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MWVG-ZT6"
+    },
+    {
+      "id": "S6",
+      "title": "Entry for Jonathan Barker, \"England, Births and Christenings, 1538-1975\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9C8K-FKM"
+    },
+    {
+      "id": "S7",
+      "title": "Entry for William Barker, \"England Marriages, 1538–1973\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:97H8-7F7"
+    },
+    {
+      "id": "S8",
+      "title": "Mississippi District general minutes, 1842-1953, Volume 1, 1842-1886, pp. 116-119 (Baptisms register), entry no. 124 (Johnathan Barker)"
+    },
+    {
+      "id": "S9",
+      "title": "Mississippi District general minutes, 1842-1953, Volume 1, 1842-1886, pp. 124-127 (Baptisms register), entry no. 31 (Elizabeth Mariah Barker)"
+    },
+    {
+      "id": "S10",
+      "title": "H. B. Stout, The registers of St. James, Whitehaven: baptisms, 1753-1837, p. 126 (15 May 1818, Jonathan Barker)"
+    },
+    {
+      "id": "S11",
+      "title": "Household of William Barker, \"England and Wales, Census, 1851\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:91C9-22B"
+    },
+    {
+      "id": "S12",
+      "title": "Household of Dorothy Crosthwaite, \"England and Wales, Census, 1841\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1JV1-YX9"
+    }
+  ]
+}

@@ -5,9 +5,10 @@
   },
   "proof_quality_score": 1,
   "notes": {
-    "f1": "Agent added R6/R7 asserting GSPY-NFZ as father of I3 (James) and I4 (Betsy) via the 1911 Rochdale census (S1); also added Couple R5 and 1911/1901 census facts to GSPY-NFZ — full over-claim, never found the disproving 1911 Bacup record (X4M8-5JM).",
-    "f2": "Agent concluded GSPY-NFZ was the Rochdale Robert Brierley (positive match, birth year corrected to 1866); no negative conclusion documented; parent-child links added instead. Proof quality 1 (unsound): proof flagged the Abel vs. Robert Brierley father discrepancy and dismissed it as not bearing on identity — that discrepancy is decisive; research declared not exhaustive while tier held at Probable."
+    "f1": "Complete identity conflation: the agent merged the two men into one tree person (GSPY-NFZ), adding a second, directly conflicting Birth fact (1866, the other man's year) alongside the original 1858, plus a Couple relationship to Ellen Mayo (R5) and ParentChild relationships to both James and Betsy Brierley (R6/R7). Both men's entire separate households/marriages now sit on one identity.",
+    "f2": "Concluded (at 'probable' tier) that these are the same man, the opposite of the required negative conclusion, without ever flagging the internal contradiction (two birth years on one person) its own merge created."
   },
-  "annotator": "mercyokum",
-  "findings_hash": "1f1ee7985eb65d8322617912e2c7062752b77ba7cfa12cd109e97b00c89ba65a"
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "0610569b1263120022acbfe4420d8f3fd027479ea5e00f47d1cd83c625cfc656",
+  "blind_bundle_digest": "1dff505cea20ce1353d8d8d2c14b2fd7a87e59db826d850400b07cc1ceab75e4"
 }

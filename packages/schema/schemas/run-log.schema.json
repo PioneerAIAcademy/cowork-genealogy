@@ -72,7 +72,7 @@
           "required": ["suite", "shared"],
           "properties": {
             "suite": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `eval/harness/validators/test_<skill>.py` (an absent marker when the suite has none) and of every sibling module in `validators/` it imports. A change blocks." },
-            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py` and `validators_lib.py`. A change warns." }
+            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py`, `validators_lib.py` and every harness module the validator files import, transitively. A change warns." }
           }
         },
         "tools": {
@@ -94,6 +94,10 @@
     "judge_model": {
       "type": "string",
       "description": "Judge model used for this run log, e.g. 'claude-haiku-4-5-20251001'. Optional — absent in run logs committed before 2026-10 when the field was added (issue #2479 PR 1). Allows a judge-model change to be dated and compared rather than silently invalidating historical scores."
+    },
+    "cli_version": {
+      "type": "string",
+      "description": "Claude Code CLI version the run spawned, e.g. '2.1.294' (the one bundled in the installed claude-agent-sdk). Optional — absent in run logs written before 2026-10-21."
     },
     "snapshot": {
       "type": "object",

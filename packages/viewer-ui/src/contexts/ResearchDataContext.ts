@@ -36,6 +36,9 @@ export interface ResearchDataState {
   devMode: boolean
   setDevMode: (v: boolean) => void
   getById: (id: string) => IndexEntry | null
+  /** Whether the project holds `id`. Silent on a miss, unlike `getById`, so it can
+   *  run on every render. */
+  hasId: (id: string) => boolean
   selectFolder: () => Promise<void>
   /** Whether the transport can actually open a folder picker (Electron). False
    *  on the web client, where `folderPath` is a session title, not a filesystem
@@ -138,4 +141,21 @@ export function useResearchData(): ResearchDataState {
   const ctx = useContext(ResearchDataContext)
   if (!ctx) throw new Error('useResearchData must be used within ResearchDataProvider')
   return ctx
+}
+
+/**
+ * The same state, or null when there is no provider above — for a consumer that is
+ * NOT guaranteed to be inside one.
+ *
+ * The chat pane is exactly that case: it renders on the socket being up, while the
+ * viewer renders on a transport existing, and the two are independent
+ * (`SessionView.tsx`). A chat that called the throwing accessor would take the pane
+ * down whenever the viewer is absent. With this, an unresolvable identifier simply
+ * stays plain text — the degradation the feature is specified to have.
+ *
+ * Use `useResearchData` anywhere the provider IS guaranteed; it keeps throwing, so
+ * this is not a licence to drop that check where it is meaningful.
+ */
+export function useResearchDataOptional(): ResearchDataState | null {
+  return useContext(ResearchDataContext) ?? null
 }

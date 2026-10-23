@@ -41,10 +41,11 @@ Lead's ordering, 2026-09-25/27. Everything in this plan hangs off it.
 5. **Record extraction** — not this plan's work. **Issue #2937, John.** Named here
    only so the waves below are read as the rest of the programme, not all of it.
 
-**Also outside the levers: issue #2951 takes `gps-mentor` off the default path**
-(lead, 2026-09-29). That removes the mentor spawn and the `proof-conclusion`
-re-invocation it forces, about 6–8% of wall clock per run. `proof-conclusion` and
-`research-exhaustiveness` stay. Wave 4 measures after issue #2951 lands.
+**Also outside the levers: `gps-mentor` is off the default path** (issue #2951,
+PR #3040, 2026-10-12). It now runs only when the user asks for a second opinion.
+That removed the mentor spawn and the `proof-conclusion` re-invocation it forced,
+about 6–8% of wall clock per run. `proof-conclusion` and `research-exhaustiveness`
+stay.
 
 **The framing that makes the order make sense:** input is **72%** of the bill
 (cache reads 42%, cache writes 30%; output is 27%), and **every token that enters
@@ -206,8 +207,9 @@ corpus basis, and about +$1.11 to +$1.15 on the production basis**. **2.2× does
 full run.** The raw totals of this one pair went the other way (on $9.78 / 67.8 min, off
 $8.27 / 53.6 min) because the off run happened to launch fewer helpers (18 → 15); catharina's
 on-vs-on runs already range from 7 to 16 launches, so one pair's totals measure that spread, not
-the switch. n = 1 pair; the figure is the projection, not the totals. The hosted path runs CLI
-2.1.220, whose deferral code may differ.
+the switch. n = 1 pair; the figure is the projection, not the totals. The hosted path ran CLI
+2.1.220 until the 2026-10 upgrade to 2.1.294, where a hosted session's first request offers
+`ToolSearch` and only the six `ALWAYS_LOAD` schemas (`apps/server/dev/probe_session_start_cache.py`).
 
 Two pieces of work, in order:
 
@@ -274,9 +276,7 @@ refusal, which moved to it from issue #2256 on 2026-09-27.
 > **BLOCKED until Waves 1, 2 and 3 are all complete.** Lead ruling: tool-output
 > reduction *and* skill→agent conversion both finish before the floor search begins.
 > Measuring a model floor against unreduced payloads or a partly-converted skill set
-> gives a number that expires the moment the other work lands. The same holds for issue
-> #2951: a floor taken while the mentor still spawns prices an agent that is leaving the
-> default path.
+> gives a number that expires the moment the other work lands.
 
 **Set everything to Haiku with no reasoning effort, see what fails loudly, and raise
 carefully.** *Everything* includes **the research orchestrator itself**, not just the
@@ -316,11 +316,16 @@ the first time it is pulled.
 
 **Gating Wave 4 only:**
 
-- **Production cannot set effort.** `real_agent.build_options` sets `model=` and
-  `permission_mode=` and never `effort`; `SandboxSpec` has no field for it; and
-  `_agent_env` sets `MODEL` and not effort. All three sites need the change, and
-  `make agent-smoke` will **not** prove it — it never boots a sandbox. Verify on a
-  **freshly created** E2B session; these sandboxes are persistent and resume.
+- **~~Production cannot set effort.~~ Done in code (T4.1, 2026-10-20), off by default.**
+  `ORCHESTRATOR_EFFORT`, `SUBAGENT_EFFORT` and `SUBAGENT_EFFORT_BY_AGENT` on the control
+  plane (`config.Settings`) reach a sandbox at create through `sandbox.base.optional_agent_env`
+  (both `E2BProvider._agent_env` and `LocalProvider.ensure_server`, which also strips a host
+  value; `SandboxSpec` was not needed). `build_options` passes the orchestrator level as
+  `effort=`, and `_pretool_hook` writes the helper level onto each Agent call (CLI 2.1.294's
+  per-spawn `effort`). Measured locally on 2.1.294 (`dev/probe_effort_capture.py`): main
+  `medium` with the helper held at `high`; a per-agent `low` reaching `person-evidence`
+  under both its bare and namespaced names. Still owed: the fresh-E2B-sandbox check (a
+  resumed sandbox keeps its create-time env), and the lead's call on turning the alpha down.
 - **`EFFORT_LEVEL` is not wired into `eval/RunE2E.bat`** — it threads `DENY_SHELL`
   and `DENY_PROJECT_READS` only, so the Windows genealogists cannot run an arm.
   **Wire it with a paired CI guard** (`check_added_runlogs_effort_high`, modelled on
@@ -335,6 +340,11 @@ the first time it is pulled.
   halves edit the same instrumentation, and under merge doctrine they are one PR.
 - ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
   and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
+- **Not a gate: issue #3568 (option D, adopted 2026-10-20) sets what each rung costs in eval runs.**
+  Until it is built, a `model:` or `effort:` line on an agent stales every suite whose
+  SKILL.md names it (A3 item 10), so a rung on a research callee also buys a research run.
+  Once built, a callee no test runs live is fingerprinted by name, description and tools
+  only, and a rung stales just its own suite and the suites that run it live.
 
 **The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
 only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed
@@ -367,6 +377,16 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
   one exists. One anchor drifted 46 lines in 55 commits. Grep the symbol.
 - **The compaction stall is not where you would look.** The `compact_boundary` row has
   a ~0.1s gap; the 120.8s summarization sits in the **preceding `system:status` gap**.
+- **Two planned changes shift the baseline a little, and are not cost levers.**
+  - Issue #3516's setup baseline (`docs/plan/attached-records-baseline.md`) adds two
+    main-thread tool calls per subject to a job's first pass, plus `timeline_build`'s catalog
+    fetch (33–36 s cold, unless its 1-hour cache is warm). On a subject with attached records
+    it also adds record reads (4.5–7.2 s for 14–16 records) and the extraction summary in
+    context.
+  - Issue #3153's hints item adds a search-hints spawn on identity and parentage questions.
+    In e2e that spawn cannot read hints, because `person_record_matches` is blocked.
+
+  Compare runs from either side of them like with like.
 
 ## 9. Not in your lane
 
@@ -480,7 +500,7 @@ variance is process waste with no quality attached.
     the two to be kept in sync. Treat it as an unreviewed gap.
 17. **"The 167,000 ceiling is a Claude Code constant."** It is a constant of
     **2.1.139**, the CLI bundled with the harness's SDK 0.1.81. The hosted plane
-    bundles 2.1.193/2.1.220, where that identifier does not exist.
+    bundled 2.1.193/2.1.220 at the time, where that identifier does not exist.
 18. **"The corpus is 192 runs, not 188."** **188 is correct at the pin**; HEAD is
     larger. And `usage.cli_version` is null on every run, so an SDK regression inside
     the Jul→Sep window cannot be excluded.

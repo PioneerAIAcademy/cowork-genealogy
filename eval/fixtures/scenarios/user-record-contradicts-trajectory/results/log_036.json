@@ -1,0 +1,235 @@
+{
+  "log_id": "log_036",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T20:25:18.844Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Eastham",
+      "givenName": "Christiana",
+      "birthYearFrom": 1772,
+      "birthYearTo": 1782,
+      "collectionId": "1401638",
+      "residencePlace": "Greenup, Kentucky, United States",
+      "projectPath": "/project"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M657-8F8",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Greenup, Greenup, Kentucky, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Christiana Eastham",
+        "score": 5.4435997,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1777",
+        "birthPlace": "Virginia, United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of James Eastham, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:MHFL-ZFR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_335485361",
+              "ark": "ark:/61903/1:1:M657-8F8",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christiana",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1777",
+                  "standard_date": "1777",
+                  "place": "Virginia, United States",
+                  "standard_place": "Virginia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Greenup, Greenup, Kentucky, United States",
+                  "standard_place": "Greenup, Greenup, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_335485360",
+              "ark": "ark:/61903/1:1:M657-8FZ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1818",
+                  "standard_date": "1818",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Greenup, Greenup, Kentucky, United States",
+                  "standard_place": "Greenup, Greenup, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_335485362",
+              "ark": "ark:/61903/1:1:M657-8FD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Eastham"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Greenup, Greenup, Kentucky, United States",
+                  "standard_place": "Greenup, Greenup, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1808",
+                  "standard_date": "1808",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207126475",
+              "resource_type": "Record",
+              "title": "Household of James Eastham, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M657-8FZ : Sat Jan 18 09:38:06 UTC 2025), Entry for James Eastham and Christiana Eastham, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFL-ZFR",
+              "coverage": {
+                "place_rep_id": "4132957",
+                "date_range": "1850",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1401638",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1850/1850",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6QLW-W6",
+              "coverage": {
+                "place_rep_id": "394147",
+                "date_range": "1850",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1400 to 2021",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1400-01-01T00:00:00Z/+2021-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_335485361",
+              "resource_type": "Person",
+              "url": "#p_335485361"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "360",
+              "name": "Virginia, United States",
+              "latitude": 37.5,
+              "longitude": -78.5
+            },
+            {
+              "id": "4132957",
+              "name": "Greenup, Greenup, Kentucky, United States",
+              "latitude": 38.5731,
+              "longitude": -82.8303
+            }
+          ]
+        },
+        "primaryId": "p_335485361",
+        "batchNumber": "N01098-7",
+        "role": "Principal"
+      }
+    ]
+  }
+}

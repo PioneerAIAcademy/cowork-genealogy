@@ -1791,6 +1791,130 @@ def test_tool_calls_empty_returns_none_marker():
     assert judge._render_tool_calls_with_size_guard([]) == "(none)"
 
 
+def _early_evidence_call():
+    return {
+        "tool": "mcp__genealogy__collections_search",
+        "args": {"query": "Ohio marriages"},
+        "expected_args": {"query": "~Ohio"},
+        "matched": {"kind": "predicate", "index": 0},
+        "response": {
+            "results": [
+                {"id": "1803967", "title": "Ohio, County Marriages, 1789-2016"}
+            ]
+        },
+    }
+
+
+def _live_write_call(args):
+    return {
+        "tool": "mcp__genealogy__research_append",
+        "args": args,
+        "expected_args": None,
+        "matched": {"kind": "live", "index": None},
+        "response": {"ok": True, "ids": ["loc_001"]},
+    }
+
+
+def test_tool_calls_size_guard_live_write_args_do_not_push_out_evidence():
+    """#3442: the agent's own write is output, not evidence. A locality guide
+    persisted through a live research_append carries the whole guide in
+    `args.entry.guide_markdown`; counting it against the budget dropped the
+    earliest survey calls, and the judge then called a correctly cited
+    collection id fabricated. The early call must survive, and the write
+    must still be rendered with its real args."""
+    guide = "G" * 60_000
+    calls = [
+        _early_evidence_call(),
+        _live_write_call(
+            {
+                "projectPath": "/p",
+                "section": "localities",
+                "op": "append",
+                "entry": {"place": "Ohio", "guide_markdown": guide},
+            }
+        ),
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "_dropped_for_size" not in rendered
+    assert "1803967" in rendered
+    assert guide in rendered
+
+
+def test_tool_calls_size_guard_caps_a_huge_live_arg_string_not_evidence():
+    """Not counting a live call's args must not let the render grow without
+    limit. Past _TOOL_CALLS_HARD_MAX_CHARS a live call's long strings are cut
+    to the per-string cap with the stated harness marker; no evidence call is
+    dropped to make room."""
+    calls = [
+        _early_evidence_call(),
+        _live_write_call(
+            {
+                "projectPath": "/p",
+                "section": "localities",
+                "op": "append",
+                "entry": {"place": "Ohio", "guide_markdown": "G" * 500_000},
+            }
+        ),
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert len(rendered) <= judge._TOOL_CALLS_HARD_MAX_CHARS
+    assert "_dropped_for_size" not in rendered
+    assert "1803967" in rendered
+    assert (
+        "[truncated by harness for prompt size; full length 500000 chars]"
+        in rendered
+    )
+    assert '"section": "localities"' in rendered
+
+
+def test_tool_calls_size_guard_omits_live_args_the_string_cap_cannot_bound():
+    """Many strings each under the per-string cap defeat the string cut, so
+    the live args are replaced whole by a stated marker. Small live args (a
+    person_quality personId) are shorter than that marker and are kept."""
+    ops = [
+        {"section": "assertions", "op": "append", "entry": {"value": "v" * 1_900}}
+        for _ in range(100)
+    ]
+    calls = [
+        _early_evidence_call(),
+        {
+            "tool": "mcp__genealogy__person_quality",
+            "args": {"projectPath": "/p", "personId": "LZNY-BRF"},
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response": {"score": 42},
+        },
+        _live_write_call({"projectPath": "/p", "ops": ops}),
+    ]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert len(rendered) <= judge._TOOL_CALLS_MAX_CHARS
+    assert "_dropped_for_size" not in rendered
+    assert "1803967" in rendered
+    assert "[args omitted by harness for prompt size; full length " in rendered
+    assert "LZNY-BRF" in rendered
+    assert "v" * 1_900 not in rendered
+
+
+def test_tool_calls_size_guard_still_drops_oldest_evidence_beside_a_live_write():
+    """Evidence alone over the cap is still dropped oldest-first; the live
+    write, being newest, survives with its real args."""
+    calls = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {"data": "x" * 1500},
+        }
+        for i in range(100)
+    ] + [_live_write_call({"projectPath": "/p", "entry": {"note": "N" * 30_000}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert '"tool": "mcp__genealogy__tool_0"' not in rendered
+    assert '"tool": "mcp__genealogy__tool_99"' in rendered
+    assert "N" * 30_000 in rendered
+    assert len(rendered) <= judge._TOOL_CALLS_MAX_CHARS + 30_000 + 500
+
+
 def _prompt_parts_kwargs(sample_rubric):
     return dict(
         rubric=sample_rubric,
@@ -2007,11 +2131,25 @@ def _grade_with(monkeypatch, rubric, responses):
     return client, out
 
 
+def _assert_pinned(call):
+    """SDK 2.x has no `temperature` kwarg and its default API version 400s on one."""
+    assert "temperature" not in call
+    assert call["extra_body"] == {"temperature": 0.0}
+    assert call["extra_headers"] == {"anthropic-version": "2023-06-01"}
+
+
+def _assert_unpinned(call):
+    """Default sampling goes out on the SDK's own API version, with nothing added."""
+    assert "temperature" not in call
+    assert "extra_body" not in call
+    assert "extra_headers" not in call
+
+
 def test_judge_first_sample_is_temperature_pinned(sample_rubric, monkeypatch):
     """One transcript should grade the same way run to run."""
     client, _ = _grade_with(monkeypatch, sample_rubric, [_parseable_response()])
     assert len(client.calls) == 1
-    assert client.calls[0]["temperature"] == 0.0
+    _assert_pinned(client.calls[0])
     assert judge.JUDGE_TEMPERATURE == 0.0
 
 
@@ -2038,8 +2176,8 @@ def test_judge_resample_drops_back_to_default_sampling(sample_rubric, monkeypatc
         monkeypatch, sample_rubric, [_malformed_response(), _parseable_response()]
     )
     assert len(client.calls) == 2
-    assert client.calls[0]["temperature"] == 0.0
-    assert "temperature" not in client.calls[1]
+    _assert_pinned(client.calls[0])
+    _assert_unpinned(client.calls[1])
     assert [d["name"] for d in out.dimensions] == [
         "Correctness",
         "Completeness",
@@ -2097,7 +2235,105 @@ def test_create_message_omits_temperature_when_none():
         client=client, model="m", prefix="p", suffix="s",
         grading_tool=judge.GRADING_TOOL, temperature=None,
     )
-    assert "temperature" not in client.calls[0]
+    _assert_unpinned(client.calls[0])
+
+
+def _wire_requests(temperature):
+    """Send one judge call through the real SDK and return what reached the wire."""
+    import json
+
+    import anthropic
+    import httpx2
+
+    seen = []
+
+    def handler(request):
+        seen.append((request.headers.get("anthropic-version"), json.loads(request.content)))
+        return httpx2.Response(200, json={
+            "id": "msg_1", "type": "message", "role": "assistant", "model": "m",
+            "content": [{"type": "tool_use", "id": "t1", "name": "submit_grading",
+                         "input": {"dimensions": []}}],
+            "stop_reason": "tool_use", "stop_sequence": None,
+            "usage": {"input_tokens": 1, "output_tokens": 1},
+        })
+
+    client = anthropic.Anthropic(
+        api_key="k", http_client=httpx2.Client(transport=httpx2.MockTransport(handler))
+    )
+    judge._create_message_with_retry(
+        client=client, model="m", prefix="p", suffix="s",
+        grading_tool=judge.GRADING_TOOL, temperature=temperature,
+    )
+    return seen
+
+
+def test_pinned_call_reaches_the_wire_on_the_legacy_api_version():
+    """The fake-client tests above cannot see an SDK signature change; this runs the
+    installed SDK, whose 2.x drops `temperature` from create() and defaults to an API
+    version that 400s on it."""
+    [(version, body)] = _wire_requests(0.0)
+    assert version == "2023-06-01"
+    assert body["temperature"] == 0.0
+
+
+def test_unpinned_call_keeps_the_sdk_default_api_version():
+    [(version, body)] = _wire_requests(None)
+    assert version != "2023-06-01"
+    assert "temperature" not in body
+
+
+def _connection_error():
+    import anthropic
+    import httpx
+
+    return anthropic.APIConnectionError(
+        request=httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    )
+
+
+class _FlakyClient:
+    """Raises a connection error `fails` times, then answers."""
+
+    def __init__(self, fails):
+        self.fails = fails
+        self.calls = 0
+        outer = self
+
+        class _Messages:
+            def create(self, **kwargs):
+                outer.calls += 1
+                if outer.calls <= outer.fails:
+                    raise _connection_error()
+                return _parseable_response()
+
+        self.messages = _Messages()
+
+
+def test_create_message_rides_out_a_connection_drop_of_about_a_minute(monkeypatch):
+    """Five connection errors in a row, the waits a dropped network needs, still
+    grade the test instead of failing it ungraded."""
+    import time
+
+    slept = []
+    monkeypatch.setattr(time, "sleep", slept.append)
+    client = _FlakyClient(fails=5)
+    judge._create_message_with_retry(
+        client=client, model="m", prefix="p", suffix="s", grading_tool=judge.GRADING_TOOL,
+    )
+    assert client.calls == 6
+    assert slept == [2.0, 4.0, 8.0, 16.0, 30.0]
+
+
+def test_create_message_gives_up_after_six_connection_errors(monkeypatch):
+    import time
+
+    monkeypatch.setattr(time, "sleep", lambda s: None)
+    client = _FlakyClient(fails=6)
+    with pytest.raises(judge.JudgeError, match="failed after 6 attempts"):
+        judge._create_message_with_retry(
+            client=client, model="m", prefix="p", suffix="s", grading_tool=judge.GRADING_TOOL,
+        )
+    assert client.calls == 6
 
 
 def test_compute_cost_counts_cached_tokens_alongside_input_not_inside_it():

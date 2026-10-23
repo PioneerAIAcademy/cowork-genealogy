@@ -233,7 +233,49 @@ Sequence inside each tool:
    touches disk. If the merge introduces an error, **write nothing** and return
    the errors (§8); a pre-existing error the merge did not introduce rides as a
    warning.
-5. Persist. `merge_record_into_tree` writes **only `tree.gedcomx.json`**
+5. **`merge_tree_persons` only: the pair and namesake checks**, on the project as
+   it stood before the merge, with the starting tree's person ids. All four run
+   and their findings come back together (§8 gives each one's lines and
+   routing): `joinedPairRefusals` (a Couple or ParentChild relationship joins the
+   pair) and `survivorOrderRefusals` (a FamilySearch or starting-tree person would
+   fold into one that is neither) in every project, and `mergeNamesakeRefusals`
+   and `mergeCarryRefusals` (`research-append.ts`) when a pair member holds a
+   `namesakes` row. Those two use `research_append`'s namesake cap
+   (`namesakeVerdicts`: a probable or confident link to a person with a recorded
+   namesake stands only when something in its record ties it to them), keyed on
+   the row holder whichever side of the pair it is on: each live probable or
+   confident link of the other member is judged as the row holder's, and nothing
+   comes across from a record linked to either member while none of its live
+   probable or confident links to them passes. A spouse, parent or child of the
+   row holder whom the same call merges with someone is judged as the person the
+   merge makes: the survivor's id, every copy's names, facts and person-level
+   sources, and every copy's links pointed at it. The row holder's own links are
+   judged on that same projection. Any finding writes nothing and
+   returns `{ ok: false, errors }` with no `reason`; no `warningJustifications`
+   entry passes it, and running before the warning gate means a caller is never
+   asked to justify warnings for a merge that is then refused.
+
+   Measured at ed4f73911 over the 6 committed `merge_tree_persons` calls (7
+   pairs), by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` (which runs
+   `eval/harness/scripts/dump_namesake_call_states.py`): no pair is joined by a
+   relationship, and none folds a FamilySearch or starting-tree person into one
+   that is neither (0 of 7 each). No committed research document records a
+   namesake (0 of 548), so the namesake checks refuse nothing yet. With rows
+   planted on the survivors, on the folded persons, or on both,
+   `mergeNamesakeRefusals` refuses 7, 12 and 19 links, every one in a correct
+   merge of two copies of one person whose row holder lacked what tied the other
+   copy's records, and `mergeCarryRefusals` finds a trigger source in 2 of 7, 3 of
+   7 and 5 of 14 directions. A merge does not run `research_append`'s move rule,
+   score gate or contradiction cap on the links it moves: the 7 probable or
+   confident links those merges move are all probable and carry no match score, so
+   the move rule would refuse none (the contradiction cap is not measured
+   offline).
+6. **`merge_tree_persons` only: the warning gate** (`checkWarningGate`). A
+   merge that introduces an unjustified genealogical warning writes nothing
+   and returns `reason: "unjustified_warnings"` (§8); a warning that stood on a
+   collapsed person before the merge is matched against its survivor, not read
+   as introduced.
+7. Persist. `merge_record_into_tree` writes **only `tree.gedcomx.json`**
    (`research.json` is unchanged — see §10). `merge_tree_persons` writes **both**
    files **both-or-neither** (write both temps → rename both back-to-back). Note:
    two renames are **not** truly atomic on POSIX, so a crash *between* the renames
@@ -278,8 +320,8 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
   newRelatives: string[],              // Mode 1 — ids of carried-in new relatives
   researchRefsUpdated: {               // Mode 2 only; absent/zero for Mode 1
     subject_person_ids: number, person_evidence: number,
-    timelines: number, known_holdings: number,
-    proof_summaries: number,
+    rejected_links: number, timelines: number, known_holdings: number,
+    proof_summaries: number, namesakes: number,
   },
   validation: { valid: true, warnings: string[] },
 }
@@ -507,6 +549,10 @@ Tool-level (the rows above are the pure core's throws):
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |
+| `merge_tree_persons`: a Couple or ParentChild relationship joins a pair's two members, in either order, in any project (`joinedPairRefusals`) | write nothing; return `{ ok: false, errors }` with no `reason` (§5b.2 step 5). One line per relationship, `relationship 'R1' (ParentChild) joins 'I50' and 'I51', a pair in this merge: merging them would turn it into a self-relationship and drop it, with its facts and sources.`, then `Two people a relationship joins are not one person. If they are, remove that relationship with tree_correct (operation 'remove', relationshipId) and merge again; otherwise do not merge.` |
+| `merge_tree_persons`: a pair would fold a FamilySearch-id or starting-tree person into one that is neither (`survivorOrderRefusals`) | as above. One line per pair, `pair ['I60', 'KWCB-333'] would fold 'KWCB-333', a FamilySearch or starting-tree person, into 'I60', which is neither.`, then `Write each listed pair the other way round, so the FamilySearch or starting-tree person survives.` |
+| `merge_tree_persons`: a pair member holds a `namesakes` row, and the namesake cap refuses a live probable or confident link of the other member judged as the row holder's (`mergeNamesakeRefusals`) | as above. One line per link, `person_evidence 'pe_001' on 'I7' would stand under the namesake row 'ns_001' of 'KWCB-111' after this merge: nothing in source 'src_001' ties assertion 'a_001' to 'KWCB-111'.` and the cap's reason clauses, plus `Do not lower it: 'I7' was created from this record.` when the other member was made from that source alone, or, when the cap would allow the link on the other member itself, `Do not lower it: on 'I20' it is tied by 'I20''s own relatives or earlier links, which 'I21' does not share in the tree.` Then one routing paragraph (`MERGE_LINK_ROUTING`): tie each listed record to the row holder, by adding the duplicate relative pair to the same merge or by recording the relationship first (`tree_edit` `add_relationship`); a link not marked "do not lower it" may instead be lowered to `speculative` by person-evidence, naming the namesake, and the facts and relationships listed from that record must then come off the other person too; if the record is the namesake's, do not merge |
+| `merge_tree_persons`: a pair member holds a `namesakes` row, and the merge would carry onto it a name, fact, person-level source or relationship of the other member citing a record that has a link to either member and no live probable or confident link to them that passes the cap (`mergeCarryRefusals`, `carryTriggerSources`) | as above. One line per item and research source, `fact 'F2' (Residence) on 'I7' cites 'S5' (research source 'src_005'), and no probable or confident link from that record to 'I7' or 'KWCB-111' passes the namesake cap ('pe_005' refused above). The merge would carry it onto 'KWCB-111', who has a recorded namesake.`; an item that folds into one of the row holder's reads `name 'John Smith' on 'I9' would fold into 'KWCB-111''s and add the citation 'S1' (research source 'src_001'), ...` and is judged only on the refs it adds. Each link reads `'pe_…' speculative`, `withdrawn`, `refused above` or `untied on '<row holder>'`. Then one routing paragraph per row holder: remove each listed fact or relationship from the other member with `tree_correct` `remove` (the row holder's own matching one stays); remove nothing from a record whose link says "do not lower it"; no tool removes a name or a person-level source, so for those tie the record to the row holder with person-evidence or do not merge |
 | Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message, warnings: [...], conflicts_surfaced? }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. A merge that joins two biological parents of one sex onto a child is refused with `conflicts_surfaced`, and no `warningJustifications` entry passes it (`tree-edit-tool-spec.md` §6). |
 
 ---
@@ -542,10 +588,10 @@ Tool-level (wrappers over the pure core):
   `research.json` is byte-unchanged; the summary lists new relatives with their
   assigned ids.
 - **Within-tree persistence** — both files written; `research.json` person-id refs
-  (`subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`,
-  `known_holdings.relates_to_person_ids`,
-  `proof_summaries[].claims[].relationship.parent`/`.child`) repointed
-  collapsed → survivor;
+  (`subject_person_ids`, `person_evidence.person_id`, `rejected_links.person_id`,
+  `timelines.person_ids`, `known_holdings.relates_to_person_ids`,
+  `proof_summaries[].claims[].relationship.parent`/`.child`,
+  `namesakes[].person_id`) repointed collapsed → survivor;
   `researchRefsUpdated` counts match.
 - **Validate-before-persist** — a merge that would produce an invalid project
   writes **nothing** and returns `{ ok: false, errors }`.
@@ -561,6 +607,95 @@ Tool-level (wrappers over the pure core):
   error and writes nothing.
 - **Return summary** — names/facts merged-vs-kept counts and `primarySet` match the
   merged tree.
+
+Pair and namesake checks (`tests/tools/merge-tree-persons.test.ts`; every refusal
+also asserts both files are byte-unchanged):
+
+- **MF3**, **MF3c** — a ParentChild relationship (the pair written child first),
+  or a Couple, joins the pair: refused, naming the relationship.
+- **MS11** — both members have relationships, none joining them: merged.
+- **MF14**, **MF14b** — a FamilySearch, or a starting-tree, person folded into one
+  made during the run: refused, routing to the reverse order.
+- **MS14** — a run-made or a FamilySearch person folded into a FamilySearch
+  person: merged.
+- **MF1**, **MF1p** — an untied confident, or probable, link moved onto the row
+  holder: refused, naming the link, the row and the source.
+- **MF2** — the row is on the folded person: keyed on the row, not the survivor.
+- **MF13** — two pairs: the second is judged too.
+- **MF19** — the link's record is the one the folded person was made from:
+  marked "do not lower it".
+- **MF4** — of two census links at one street address, the one whose co-party is
+  the row holder's wife passes and the other is refused (a link moved in the same
+  merge cannot vouch); `mergeCarryRefusals` lists only the fact citing the
+  refused record.
+- **MF5**, **MF5m** — both members hold rows: the folded person's link is judged on
+  the survivor, and the survivor's on the folded person.
+- **MF6**, **MF6r** — the co-party is linked to the other member's father, not the
+  row holder's, in the tree before the merge: refused, whether the row holder
+  survives or is folded.
+- **MF9** — the row is on the folded person, and the survivor's link is tied by the
+  survivor's own wife: refused, marked "do not lower it", without
+  `research_append`'s routing.
+- **MF12** — the merge would also introduce a warning: the namesake refusal comes
+  back with no `reason`, before the warning gate.
+- **MF16** — both hold rows, and the survivor's link is tied by its own wife:
+  refused on the folded row holder, marked "do not lower it".
+- **MF17**, **MS15** — a widow's link tied by the other copy's husband: refused,
+  marked "do not lower it" and routed to recording that relationship first;
+  merged once the relationship is in the tree, though the starting tree lacks it.
+- **MF23** — a wife with no refs, merged in the same call with a duplicate made
+  from the census: the wife the merge makes reaches only the census, so the census
+  link is refused, in either survivor order.
+- **MS22** — the same shape, with the wife made from that census and her duplicate
+  holding another record: the merged wife reaches both, so it merges, in either
+  survivor order.
+- **MF24** — two copies of the row holder's wife, both attached to him and merged
+  in the same call, reach only the census: refused in every pair and survivor
+  order (each copy's links point at the merged wife, never at the other copy).
+- **MS23** — the census wife is linked to his FamilySearch wife, whose run-made
+  copy is merged in the same call: merged in either pair order.
+- **MS24** — a placeholder father ('Unknown') merged in the same call with the
+  giver's named father, who has another record: the merged father ties the
+  baptism, in either survivor order; without the fathers' pair it is refused.
+- **MS25** — the row holder's own census link is tied through a wife merged in the
+  same call, so part 3 carries the giver's fact citing that census; without the
+  wives' pair the fact is refused.
+- **MF25** — a person-level source the row holder lacks, from a record linked to
+  the giver only at speculative: refused, listing the source ref.
+- **MS1** — a row on someone outside the pair: merged.
+- **MS2** — the row holder's starting-tree father ties the moved link: merged.
+- **MS3** — the row holder's own untied link is not judged, and the other member
+  carries nothing from its record: merged.
+- **MS4** — a speculative and a withdrawn link are not judged, and nothing is
+  carried from their record: merged.
+- **MS5**, **MS5r** — the row holder's own earlier link at the same street address
+  vouches for the moved link, whether the row holder survives or is folded:
+  merged.
+- **MS6** — the row is re-keyed onto the survivor; `researchRefsUpdated.namesakes`
+  is 1.
+- **MS7** — a row holder outside the pair is not judged, though a relative merged
+  in this call now reaches his record: merged.
+- **MS8** — a co-party the source keeps on a record id of its own ties the link:
+  merged.
+- **MS9** — a wife merged in the same call, made from the census, maps onto the
+  row holder's wife, who has a record of her own: merged in either survivor order.
+- **MS10** — the folded row holder's own wife ties the link: merged.
+- **MS13** — both hold rows, and one shared wife ties each member's link: merged.
+- **MF18**, **MF18s** — the folded person's name, facts and parent edges cite a
+  record linked to the pair only at `speculative`, or only by withdrawn links:
+  refused, listing each item and link.
+- **MF20**, **MF20a** — the row holder's own link to the record is untied: the
+  folded person's facts, and the citation its matching name would add, are
+  refused; an absent-basis link from that record is ignored.
+- **MF21** — a folded fact is judged on the citation it adds: refused.
+- **MS16** — a second copy whose name and birth fold in adding no citation:
+  merged.
+- **MS17** — a relative's record (the father's baptism, cited on the parent edge)
+  is let through: merged.
+- **MS20** — a fact cited from a negative search whose only link is absent basis:
+  merged.
+- **MS21** — a person-level source the row holder already holds is not judged:
+  merged.
 
 ---
 
@@ -581,9 +716,10 @@ Tool-level (wrappers over the pure core):
 - **`merge_tree_persons` (Mode 2) remaps `research.json`.** The collapsed id `B`
   is an existing tree person `research.json` may reference. Repoint every person-id
   reference `B → A`: `project.subject_person_ids`, `person_evidence[].person_id`,
-  `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`, and
-  `proof_summaries[].claims[].relationship.parent`/`.child`. This set
-  is exactly `validateCrossFile`'s person-id checks in
+  `rejected_links[].person_id`, `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`,
+  `proof_summaries[].claims[].relationship.parent`/`.child`, and
+  `namesakes[].person_id` (so a recorded namesake keeps capping the survivor's
+  links). This set is exactly `validateCrossFile`'s person-id checks in
   `src/validation/validator.ts` and **must stay in sync with it** — extract the
   field list as one shared constant (e.g. `PERSON_ID_REF_FIELDS`) consumed by
   **both** the validator and this remap, rather than hand-maintaining it twice. The

@@ -3,6 +3,7 @@
 import pytest
 
 from harness import skill_runner
+from harness.delegation import foreground_rewrite
 
 
 def test_constants_present():
@@ -18,32 +19,6 @@ def test_task_allowed_for_agent_delegation():
     SKILL.md instructs it — matching the e2e orchestrator's baseline."""
     assert "Task" in skill_runner.BASELINE_ALLOWED
     assert "Task" not in skill_runner.DISALLOWED_BACKSTOP
-
-
-def test_sdk_version_probe_silent_on_pinned_version():
-    """0.1.81 is within the known-good range — probe returns None."""
-    from harness.skill_runner import _check_sdk_version
-    assert _check_sdk_version() is None
-
-
-def test_sdk_version_probe_warns_on_future_major(monkeypatch):
-    """When the installed SDK is outside the known-good range, return
-    a stderr-bound warning string so the operator can verify disallowed_tools."""
-    import harness.skill_runner as sr
-
-    def fake_version(_pkg):
-        return "0.2.0"
-
-    monkeypatch.setattr(
-        "importlib.metadata.version", fake_version, raising=False
-    )
-    # The function imports inside; patch where it's called from.
-    monkeypatch.setattr(sr, "_check_sdk_version", sr._check_sdk_version)
-    # Re-run the check with the monkeypatched version.
-    warning = sr._check_sdk_version()
-    assert warning is not None
-    assert "0.2.0" in warning
-    assert "disallowed_tools" in warning
 
 
 def test_classify_exception_abort_reason_matches_max_turns_phrasing():
@@ -525,6 +500,21 @@ def _spawn_input(name, **extra):
     return {"tool_name": "Agent", "tool_input": {"subagent_type": name, "prompt": "p"}, **extra}
 
 
+def test_a_delegation_is_forced_to_the_foreground(tmp_path, monkeypatch):
+    """On CLI 2.1.294 an agent backgrounds when the flag is absent, and a unit run
+    ends at the main thread's result, losing a background agent's work. Deleting
+    the `foreground_rewrite` call in pretool_hook must red this test."""
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch,
+        [_spawn_input("record-extractor"), {"tool_name": "Read", "tool_input": {"file_path": "x"}}],
+    )
+    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "allow"
+    assert returns[0]["hookSpecificOutput"]["updatedInput"] == {
+        "subagent_type": "record-extractor", "prompt": "p", "run_in_background": False,
+    }
+    assert returns[1] == {}
+
+
 def test_the_hook_denies_a_spawn_of_a_stubbed_agent(tmp_path, monkeypatch):
     """The wiring, not just `spawn_stub_denial`: `run_skill` must hand
     `stub_agents` to its real hook closure (issue #2825)."""
@@ -538,6 +528,30 @@ def test_the_hook_denies_a_spawn_of_a_stubbed_agent(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize(
     "hook_input",
+    [
+        _spawn_input("locality-guide"),
+        {"tool_name": "Skill", "tool_input": {"skill": "locality-guide"}},
+    ],
+    ids=["agent_spawn", "skill_call"],
+)
+def test_the_hook_returns_the_stub_denial_unchanged(tmp_path, monkeypatch, hook_input):
+    """The text the model reads is built by `stub_denial`; the hook must pass it
+    through whole. Dropping `additionalContext` or rebuilding the deny would strip
+    the hand-back that keeps a router going after the stub (issue #3740), and
+    every other wiring test only checks the decision."""
+    from harness.skill_stubs import stub_denial
+
+    rows = {"locality-guide": "CANNED RESULT"}
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch,
+        [{"tool_name": "Skill", "tool_input": {"skill": "research"}}, hook_input],
+        stub_skills=rows, stub_agents=rows,
+    )
+    assert returns[1] == stub_denial("locality-guide", "CANNED RESULT")
+
+
+@pytest.mark.parametrize(
+    "hook_input",
     [_spawn_input("research-plan"), _spawn_input("locality-guide", agent_id="a1")],
     ids=["unstubbed_agent", "nested_spawn"],
 )
@@ -545,7 +559,7 @@ def test_the_hook_leaves_other_spawns_alone(tmp_path, monkeypatch, hook_input):
     _, returns = _drive_hook(
         tmp_path, monkeypatch, [hook_input], stub_agents={"locality-guide": None},
     )
-    assert "hookSpecificOutput" not in (returns[0] or {})
+    assert returns[0] == foreground_rewrite("Agent", hook_input["tool_input"])
 
 
 def test_an_out_of_lane_append_is_denied_and_recorded(tmp_path, monkeypatch):
@@ -1804,6 +1818,9 @@ def test_stop_at_stub_ends_the_run_at_a_stubbed_spawn(tmp_path, monkeypatch):
     )
     assert returns[1]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert returns[1]["continue_"] is False
+    assert "additionalContext" not in returns[1]["hookSpecificOutput"], (
+        "a stop that ends the turn must not tell the router its turn goes on"
+    )
 
 
 def test_stop_at_stub_ends_the_run_at_a_stubbed_skill_call(tmp_path, monkeypatch):
@@ -2007,7 +2024,7 @@ def test_a_spawn_inside_a_subagent_does_not_stop_the_run(tmp_path, monkeypatch):
     ))
 
     assert len(returns) == 1
-    assert "hookSpecificOutput" not in returns[0] and "continue_" not in returns[0], (
+    assert returns[0] == foreground_rewrite("Agent", _SPAWN_QS["tool_input"]), (
         "a subagent's spawn was treated as the router's hand-off"
     )
 

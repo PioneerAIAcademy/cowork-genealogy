@@ -12,11 +12,12 @@
       "browse-only",
       "low-index",
       "full-text-pivot",
-      "delegation"
+      "delegation",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute pli_001 — search FamilySearch probate records for Elijah Wilkins in Muhlenberg County, Kentucky.",
+    "delegation": "Execute pli_001 — search FamilySearch probate records for Elijah Wilkins in Muhlenberg County, Kentucky.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"probate\",\n  \"jurisdiction\": \"Muhlenberg County, Kentucky\",\n  \"date_range\": \"1870-1890\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"With no death certificate expected pre-1911, the county estate administration (administrator's bond, settlement) brackets the death and is the primary evidence. Kentucky Probate Records, 1727-1990 covers Muhlenberg.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Elijah\",\n      \"surname\": \"Wilkins\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1814\",\n    \"place\": \"Kentucky, United States\"\n  },\n  \"death\": null\n}",
     "scenario": "wilkins-probate-nil"
   },
   "mcp_fixtures": [

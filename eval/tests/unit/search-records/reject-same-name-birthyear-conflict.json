@@ -13,11 +13,12 @@
       "needs-review",
       "birth-year-conflict",
       "rank-search-matches",
-      "name-crowding"
+      "name-crowding",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — search FamilySearch's Wiltshire church records for the baptism of Job Purnell (born about 1826 in Trowbridge, Wiltshire) to identify his parents.",
+    "delegation": "Execute plan item pli_001 — search FamilySearch's Wiltshire church records for the baptism of Job Purnell (born about 1826 in Trowbridge, Wiltshire) to identify his parents.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"church\",\n  \"jurisdiction\": \"Trowbridge, Wiltshire, England\",\n  \"date_range\": \"1824-1828\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"A parish baptism/christening around 1826 in Trowbridge would name Job's father and mother.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Job\",\n      \"surname\": \"Purnell\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"about 1826\",\n    \"place\": \"Trowbridge, Wiltshire, England\"\n  },\n  \"death\": null\n}",
     "scenario": "job-purnell-parents-identity"
   },
   "execution": {

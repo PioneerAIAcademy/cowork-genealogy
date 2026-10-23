@@ -247,3 +247,56 @@ def test_the_real_vocabulary_is_record_search_inputs():
     keys = tool_input_keys("record_search")
     assert keys is not None and {"recordType", "collectionId", "marriagePlace", "surname"} <= keys
     assert "recordPlace" not in keys  # a fulltext_search spelling, not a record_search parameter
+
+
+# --- test_unstaged_log_query_filters_were_sent -----------------------------
+
+gate = mod.test_unstaged_log_query_filters_were_sent
+
+
+def _nil_op(query):
+    return {"tool": "record_search", "query": query, "outcome": "negative"}
+
+
+def test_gate_fails_an_unstaged_claim_no_call_sent():
+    after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Ohio"}))
+    calls = [search({"surname": "Flynn"})] + log_call([(_nil_op({"surname": "Flynn", "residencePlace": "Ohio"}), "log_001")])
+    with pytest.raises(AssertionError, match="residencePlace='Ohio', which no record_search call sent"):
+        gate(BEFORE, after, calls)
+
+
+def test_gate_fails_an_unstaged_entry_with_no_record_search_call():
+    """An entry no call stands behind claims every filter it names."""
+    after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Ohio"}))
+    calls = log_call([(_nil_op({"surname": "Flynn", "residencePlace": "Ohio"}), "log_001")])
+    with pytest.raises(AssertionError) as info:
+        try:
+            gate(BEFORE, after, calls)
+        except pytest.skip.Exception as skipped:
+            pytest.fail(f"the gate skipped instead of judging the entry: {skipped}")
+    assert "surname='Flynn'" in str(info.value)
+    assert "residencePlace='Ohio', which no record_search call sent" in str(info.value)
+
+
+def test_gate_passes_a_filter_another_call_sent():
+    """No pairing: a key any call sent was sent, whichever call the entry documents."""
+    after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Ohio"}))
+    calls = [search({"surname": "Flynn"}), search({"surname": "Flynn", "residencePlace": "Ohio"})]
+    calls += log_call([(_nil_op({"surname": "Flynn", "residencePlace": "Ohio"}), "log_001")])
+    gate(BEFORE, after, calls)
+
+
+def test_gate_ignores_a_value_that_differs():
+    after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Pennsylvania, United States"}))
+    calls = [search({"surname": "Flynn", "residencePlace": "Pennsylvania"})]
+    calls += log_call([(_nil_op({"surname": "Flynn", "residencePlace": "Pennsylvania, United States"}), "log_001")])
+    gate(BEFORE, after, calls)
+
+
+def test_gate_leaves_a_staged_entry_to_the_tool():
+    """research_log_append refuses a staged entry's never-sent claim itself."""
+    after = state(entry("log_001", {"surname": "Flynn", "residencePlace": "Ohio"}))
+    staged_op = {"tool": "record_search", "query": {"surname": "Flynn", "residencePlace": "Ohio"}, "stagedResultsRef": "results/.staging/a.json"}
+    calls = [search({"surname": "Flynn"}, ref="results/.staging/a.json")] + log_call([(staged_op, "log_001")])
+    with pytest.raises(pytest.skip.Exception):
+        gate(BEFORE, after, calls)

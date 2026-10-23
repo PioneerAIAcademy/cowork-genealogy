@@ -20,6 +20,15 @@
         "file": "packages/engine/mcp-server/src/tools/research-append.ts",
         "function": "competingParentSetsInvariants"
       }
+    },
+    {
+      "name": "namesake-tie",
+      "status": "enforcing",
+      "case_file": "namesake-tie.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "namesakeTieInvariants"
+      }
     }
   ],
   "owes_case_file": [

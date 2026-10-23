@@ -159,7 +159,7 @@ describe("plugin prose names only skills and agents that ship", () => {
     expect(tokens("the `citation` skill")).toEqual([]);
   });
 
-  // The arm the union hid. `search-records` is a real SKILL with no agent
+  // The arm the union hid. `forget-and-rederive` is a real SKILL with no agent
   // file, so it resolves bare and must NOT resolve behind `@plugin:`. Without
   // this, the widening is satisfied by the skill half of every paired name and
   // catches nothing it was added to catch — deleting `agents/proof-conclusion.md`
@@ -167,8 +167,8 @@ describe("plugin prose names only skills and agents that ship", () => {
   it("resolves an @plugin: token against agents only, never the skill of the same name", () => {
     const { agents, all } = shippedNames();
 
-    expect(all.has("search-records"), "fixture assumption: it ships as a skill").toBe(true);
-    expect(agents.has("search-records"), "fixture assumption: no agent of that name").toBe(false);
+    expect(all.has("forget-and-rederive"), "fixture assumption: it ships as a skill").toBe(true);
+    expect(agents.has("forget-and-rederive"), "fixture assumption: no agent of that name").toBe(false);
 
     const resolve = (text: string): string[] => {
       const bad: string[] = [];
@@ -183,8 +183,8 @@ describe("plugin prose names only skills and agents that ship", () => {
       return bad;
     };
 
-    expect(resolve("route to `search-records`")).toEqual([]);
-    expect(resolve("spawn `@plugin:search-records`")).toEqual(["@plugin:search-records"]);
+    expect(resolve("route to `forget-and-rederive`")).toEqual([]);
+    expect(resolve("spawn `@plugin:forget-and-rederive`")).toEqual(["@plugin:forget-and-rederive"]);
     // And a real agent still resolves behind the prefix.
     expect(resolve("spawn `@plugin:proof-conclusion`")).toEqual([]);
 
@@ -292,6 +292,31 @@ describe("plugin prose names only skills and agents that ship", () => {
 const ROUTING_HEADER = /^\s*\|\s*If research\.json has\.\.\.\s*\|\s*Invoke\s*\|\s*$/;
 const BACKTICKED_NAME = /`(@plugin:)?([a-z][a-z0-9-]*)`/g;
 
+const BOUNDED_HEADING = /^## Bounded request or job\s*$/m;
+
+/** `## Bounded request or job` up to the next `## ` heading, or "" when absent. */
+function boundedSection(text: string): string {
+  const m = BOUNDED_HEADING.exec(text);
+  if (!m) return "";
+  const rest = text.slice(m.index + m[0].length);
+  const next = rest.search(/^## /m);
+  return next < 0 ? rest : rest.slice(0, next);
+}
+
+function shippedSkillsAndAgents(): { skills: Set<string>; agents: Set<string> } {
+  const skills = new Set(
+    readdirSync(join(pluginRoot, "skills")).filter((n) =>
+      statSync(join(pluginRoot, "skills", n)).isDirectory(),
+    ),
+  );
+  const agents = new Set(
+    readdirSync(join(pluginRoot, "agents"))
+      .filter((n) => n.endsWith(".md"))
+      .map((n) => n.slice(0, -3)),
+  );
+  return { skills, agents };
+}
+
 function routingInvokeCells(text: string): string[] {
   const lines = text.split(/\r?\n/);
   const start = lines.findIndex((l) => ROUTING_HEADER.test(l));
@@ -320,16 +345,7 @@ describe("research's routing table spawns every agent it names", () => {
   });
 
   it("spells every agent-only name in an Invoke cell as @plugin:<name>", () => {
-    const skills = new Set(
-      readdirSync(join(pluginRoot, "skills")).filter((n) =>
-        statSync(join(pluginRoot, "skills", n)).isDirectory(),
-      ),
-    );
-    const agents = new Set(
-      readdirSync(join(pluginRoot, "agents"))
-        .filter((n) => n.endsWith(".md"))
-        .map((n) => n.slice(0, -3)),
-    );
+    const { skills, agents } = shippedSkillsAndAgents();
     const agentOnly = (name: string) => agents.has(name) && !skills.has(name);
     const offenders: string[] = [];
     for (const cell of cells) {
@@ -348,6 +364,29 @@ describe("research's routing table spawns every agent it names", () => {
       offenders,
       "a bare Invoke-cell name is a Skill call by the table's own rule; these " +
         "ship only as agents, so spell them `@plugin:<name>`",
+    ).toEqual([]);
+  });
+
+  // The bounded section hands a request straight to its owner, so a bare name
+  // there is a Skill call too and goes stale the same way an Invoke cell does.
+  const bounded = boundedSection(text);
+
+  it("finds the bounded-request section", () => {
+    // A renamed heading would leave the check below green over zero text.
+    expect(bounded.length, "## Bounded request or job not found").toBeGreaterThan(500);
+    expect(bounded).toContain("`@plugin:source-evaluation`");
+  });
+
+  it("spells every agent-only name in the bounded-request section as @plugin:<name>", () => {
+    const { skills, agents } = shippedSkillsAndAgents();
+    const agentOnly = (name: string) => agents.has(name) && !skills.has(name);
+    const offenders = [...bounded.matchAll(BACKTICKED_NAME)]
+      .filter(([, plugin, name]) => !plugin && agentOnly(name))
+      .map(([, , name]) => name);
+    expect(
+      offenders,
+      "a bare name in the bounded section is a Skill call; these ship only as " +
+        "agents, so spell them `@plugin:<name>`",
     ).toEqual([]);
   });
 });

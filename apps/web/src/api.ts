@@ -1,8 +1,18 @@
 // REST client for the control plane. Same-origin (Vite proxies to FastAPI in
 // dev; the server serves the built app in prod), cookies included.
 
+/** running | queued | needs you | done | stopped | new — what a returning reader sees. */
+export type JobState = 'running' | 'queued' | 'needs you' | 'done' | 'stopped' | 'new'
+
 export interface SessionSummary {
+  /** The four job states the session list shows, plus `new` for a session that has
+   *  never run. Optional so an older server that omits it degrades to no badge. */
+  job_state?: JobState
   id: string
+  /** The project this session runs on. Needed to open a NEW session on the SAME
+   *  project when one stops at the spend bound — the client cannot send an id it
+   *  never receives. Optional so an older server that omits it degrades. */
+  project_id?: string
   title: string
   model: string
   status: string
@@ -61,7 +71,7 @@ export const api = {
   logout: () => req<{ ok: true }>('/auth/logout', { method: 'POST' }),
 
   listSessions: () => req<SessionSummary[]>('/api/sessions'),
-  createSession: (body: { title?: string; model?: string; sample?: boolean }) =>
+  createSession: (body: { title?: string; model?: string; sample?: boolean; project_id?: string }) =>
     req<SessionSummary>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
   // The prototype backend only: a new session on a retired session's project.
   continueSession: (id: string) =>
@@ -77,12 +87,16 @@ export const api = {
   // `familysearch` reports the user's FamilySearch grant AFTER a refresh+reinject
   // attempt: 'ok' (a live token was injected), 'expired' (the grant died — FS caps
   // it at 24h — and the user must Reconnect), or 'none' (this user never had one:
-  // dev-login / mock mode, nothing to reconnect).
+  // dev-login / mock mode, nothing to reconnect). A session more than 72 h old
+  // comes back `readOnly` with the notice in `message` (#3406).
   connectSession: (sessionId: string) =>
-    req<{ wssUrl: string; token: string; familysearch?: 'ok' | 'expired' | 'none' }>(
-      `/api/sessions/${sessionId}/connect`,
-      { method: 'POST' }
-    ),
+    req<{
+      wssUrl: string
+      token: string
+      familysearch?: 'ok' | 'expired' | 'none'
+      readOnly?: boolean
+      message?: string
+    }>(`/api/sessions/${sessionId}/connect?readOnly=true`, { method: 'POST' }),
 
   // Upload a document/image into <project>/uploads/ so the agent can read it.
   // Not routed through req(): multipart needs the browser to set Content-Type

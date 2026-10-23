@@ -4,7 +4,8 @@
 The ``grade-e2e-run`` skill invokes this instead of listing files, so the
 grader does not see ``run-<ts>.json`` (which holds the judge's
 verdict) because this command only prints the four grading-input paths. The digest (``blind_bundle_digest``) is a sha256 over the
-normalized content of all four files; PR C stamps it into the e2e
+normalized content of all four files (``fixture.json`` minus its top-level
+``hint``; see ``_DIGEST_IGNORED_FIXTURE_KEYS``); PR C stamps it into the e2e
 ``.ann.json`` so ``calibrate_judge`` can later verify what the grader saw.
 
 Usage::
@@ -23,13 +24,23 @@ import re
 import sys
 from pathlib import Path
 
-from harness.snapshot import hash_content, hash_file
+from harness.snapshot import hash_content, hash_file, normalize
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_RUNLOGS_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 
 _RUN_STEM_RE = re.compile(r"^run-(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$")
+
+# Top-level keys of the fixture's `fixture.json` left out of the digest. `hint`
+# (issue #3553) is adjudication metadata — the genealogist's call on whether the
+# hinted record persona is the tree person, scored by `make matcher-accuracy` —
+# not grading input, and a grade made before the field existed cannot have been
+# influenced by it, so backfilling it must not orphan that grade's stamp.
+# Hand-kept in sync with `_DIGEST_IGNORED_FIXTURE_KEYS` in
+# scripts/check_e2e_fixtures.py (`test_blind_bundle.py` asserts they agree).
+_FIXTURE_NAME = "fixture.json"
+_DIGEST_IGNORED_FIXTURE_KEYS = ("hint",)
 
 
 def _newest_stem(slug_dir: Path) -> str:
@@ -69,12 +80,35 @@ def bundle_digest(paths: list[Path]) -> str:
 
     Hash each file individually via ``hash_file``, then combine the sorted
     ``{path: hash}`` map — the same pattern as ``provenance.skills_hash``.
+    ``fixture.json`` is hashed without its ``_DIGEST_IGNORED_FIXTURE_KEYS``.
     """
     file_map: dict[str, str] = {}
     for p in paths:
         key = p.name
-        file_map[key] = hash_file(key, p)
+        if key == _FIXTURE_NAME:
+            file_map[key] = _fixture_hash(p)
+        else:
+            file_map[key] = hash_file(key, p)
     return hash_content(json.dumps(file_map, sort_keys=True, ensure_ascii=False))
+
+
+def _fixture_hash(p: Path) -> str:
+    """``hash_file`` of *p* with ``_DIGEST_IGNORED_FIXTURE_KEYS`` dropped.
+
+    A file carrying none of those keys is hashed from its own bytes, exactly as
+    ``hash_file`` would, so no existing digest moves.
+    """
+    if not p.exists():
+        return ""
+    raw = p.read_bytes()
+    try:
+        obj = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        obj = None
+    if isinstance(obj, dict) and any(k in obj for k in _DIGEST_IGNORED_FIXTURE_KEYS):
+        kept = {k: v for k, v in obj.items() if k not in _DIGEST_IGNORED_FIXTURE_KEYS}
+        raw = json.dumps(kept, ensure_ascii=False).encode("utf-8")
+    return hash_content(normalize(_FIXTURE_NAME, raw))
 
 
 def main(argv: list[str] | None = None) -> int:

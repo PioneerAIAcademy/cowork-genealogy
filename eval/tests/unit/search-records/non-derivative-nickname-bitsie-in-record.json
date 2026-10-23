@@ -13,11 +13,12 @@
       "informant-driven",
       "clorinda-review",
       "nickname-fallback",
-      "topical-fixture-required"
+      "topical-fixture-required",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search the 1900 Lancaster County, Pennsylvania census for Mary Jackson, per plan item pli_002. Log the result and write the sidecar.",
+    "delegation": "Search the 1900 Lancaster County, Pennsylvania census for Mary Jackson, per plan item pli_002. Log the result and write the sidecar.\n\nplanItemId: pli_002\nplanId: pl_002\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_002\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Lancaster County, Pennsylvania\",\n  \"date_range\": \"1900\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Continuity check on 1880 placement. Try the formal given name 'Mary' first per standard practice; if the search under-matches, retry using the documented Nickname 'Bitsie' on tree person I1 — the 1900 enumerator may have recorded the community nickname if a non-family informant gave the names.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Mary\",\n      \"surname\": \"Jackson\",\n      \"type\": \"BirthName\"\n    },\n    {\n      \"given\": \"Bitsie\",\n      \"surname\": \"Jackson\",\n      \"type\": \"Nickname\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"~1850\",\n    \"place\": \"Lancaster County, Pennsylvania\"\n  },\n  \"death\": null\n}",
     "scenario": "mid-research-jackson-nickname"
   },
   "mcp_fixtures": [

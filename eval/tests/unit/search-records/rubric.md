@@ -175,12 +175,9 @@ it is part of **pass**.
 Does every search produce a log entry whose *authored* content is faithful and
 useful? Scope this dimension narrowly: `research_log_append` assigns `id`,
 `performed`, `results_ref` and writes the sidecar, and deterministic validators
-already own entry existence (`test_positive_appends_log_entry`), `outcome`
+already own entry existence (`test_positive_appends_log_entry`) and `outcome`
 honesty (`test_log_outcome_positive_record_search`,
-`test_log_outcome_honest_no_match`), and — on a pre-1880 US census household —
-whether `notes` marks the family structure inferred rather than stated
-(`test_pre1880_census_structure_marked_inferred`, the Step 4
-no-relationship-column rule). **Do not re-grade any of those here.**
+`test_log_outcome_honest_no_match`). **Do not re-grade any of those here.**
 
 What is left is the part only a reader can judge: whether `query` faithfully
 reproduces the search that was actually run, whether `results_examined` matches
@@ -196,7 +193,7 @@ the diff is never evidence.
 
 ## Nil escalation
 
-When a search returns no results, did the skill treat the nil as a finding to investigate — not an endpoint? The SKILL.md requires iterating through strategy levers (name variants, date widening, jurisdiction broadening) and logging each retry separately before declaring the search exhausted.
+When a search returns no results, did the skill treat the nil as a finding to investigate — not an endpoint? The agent body requires iterating through strategy levers (name variants, date widening, jurisdiction broadening) and logging each retry separately before declaring the search exhausted.
 
 - **pass:** After a nil result, the skill tries at least 2–3 meaningful variations (e.g., phonetic surname variant, wider date range, higher jurisdiction level, wildcard on a suspect letter). Each retry is logged as its own entry. After exhausting reasonable levers, the skill assesses whether absence is meaningful — noting whether the record type existed in the jurisdiction, whether the collection is reasonably complete, and whether the subject should have appeared.
 - **partial:** Skill tries one variant but stops short of exhausting the obvious levers for the record type and name origin, or tries multiple variants but logs them all under one entry instead of separately, or concludes the search negative without assessing whether the nil is meaningful evidence.
