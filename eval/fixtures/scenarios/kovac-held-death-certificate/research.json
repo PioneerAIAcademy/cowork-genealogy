@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_001",
-    "objective": "My grandmother Anna Kovač's death certificate (Chicago, Cook County, Illinois, 1952) gives her parents as Josef Kovač and Marie Horák. Who were her parents?",
+    "objective": "Who were the parents of my grandmother Anna Kovač (d. 1952, Chicago)? Her death certificate, which I have, names Josef Kovač and Marie Horák.",
     "subject_person_ids": [
       "I1"
     ],

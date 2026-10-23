@@ -24,13 +24,19 @@ looked for all of them.
 ## Why the locality is built the way it is
 
 The collection list is what a locality guide would surface: the 1850, 1860 and
-1870 censuses and Ohio county marriages. The two quirks restate what the
-FamilySearch wiki says: Ohio county probate courts kept births and deaths from
-1867 to 1908, with Greene County's birth records starting in 1869; Greene
-County marriage and probate records survive from 1803. Nothing in the locality
-names the five event types or says a plan must cover them. The Rowe fixture
-(`rowe-window-is-not-a-ceiling`) showed a quirk that states the rule lets the
-old prose pass and spoils the measurement.
+1870 censuses and Ohio county marriages. The one quirk restates what the
+FamilySearch wiki says: Greene County marriage and probate records survive from
+1803. Nothing in the locality names the five event types or says a plan must
+cover them. The Rowe fixture (`rowe-window-is-not-a-ceiling`) showed a quirk that
+states the rule lets the old prose pass and spoils the measurement.
+
+**Tightened 2026-10-23.** A second quirk, on Ohio county birth and death
+registers (kept by probate courts from 1867, Greene County births from 1869), was
+removed after 9 pre-edit runs failed only 1 time: it was the locality's only
+mention of births or deaths, and the one failing run was missing exactly a birth
+item. Same step Richard set for item 3 (#1830, 2026-10-20): tighten once, then
+measure 9 pre-edit runs again. The fact is still true; the scenario no longer
+volunteers it.
 
 All four collection ids were checked: 1850, 1860 and 1870 against recorded
 collection titles in this repo, Ohio County Marriages live with
