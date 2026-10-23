@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 2, hint-samples.csv row 91, flag adds_daughter, confidence 3). Draft transcribed from an 1895 Sacaca (Potosí) Catholic baptism of Juana Gonsalo naming Inocencio Gonsalo and Antonia Araque as parents; unverified."
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:6CB7-Y7JB",
+    "identity": "same"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 2, hint-samples.csv row 91, flag adds_daughter, confidence 3). Resolved 2026-10-23 as a TRUE MATCH (independent second opinion: Isaac Boateng). The 1895 Sacaca baptism of Juana Gonsalo (ark:/61903/1:1:6CB7-Y7JB), daughter of Inocencio Gonsalo and Antonia Araque, is accepted as a daughter of the subject Inocencio Gonzales (GY75-S9D) and his wife Antonia (indexed Uraque/Elsaque/Araque). Resolved on the FamilySearch INDEX; image_basis false — the register image (ark:/61903/3:1:33S7-9Y94-9J21) was NOT read under a licensed calibration, so Isaac's register-only details (legitimate; two days old; 'Antonia Oraque') are not relied upon; the indexed mother name 'Antonia Araque' and indexed place 'Sacaca, Alonzo de Ibáñez, Potosí, Bolivia' are used. See README 'Notes for reviewers'."
 }
