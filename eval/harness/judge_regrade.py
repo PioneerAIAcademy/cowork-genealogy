@@ -49,6 +49,7 @@ from typing import Any
 
 from harness import judge, loader, rubric, snapshot, validator_runner
 from harness.auth import resolve_auth
+from harness.instrument import judge_render_hash
 from harness.judge import (
     DEFAULT_JUDGE_MODEL,
     JUDGE_PROMPT_PATH,
@@ -156,14 +157,21 @@ def collect_regradeable_logs(
     the snapshot without moving the prompt hash; it never certifies anything.
 
     A log is **regradeable** iff:
-      1. its `judge_prompt_hash` != the current judge prompt's hash, AND
+      1. its `judge_prompt_hash` != the current judge prompt's hash, OR its
+         `judge_render_hash` differs from the current render hash or is absent
+         entirely (a log written before the field), AND
       2. its snapshot is active against the working tree (no skill-side drift).
 
-    A log that fails (1) is skipped (prompt is already current).
+    The render half is why a log with no `judge_render_hash` is eligible: the
+    first regrade after that field shipped is what stamps it, and rule 2b only
+    warns until a log carries one.
+
+    A log that fails (1) is skipped (both fingerprints are already current).
     A log that fails (2) is RETURNED with `reason_refused` set — the caller
     reports it rather than silently regrading against stale inputs.
     """
     current_hash = judge.judge_prompt_hash()
+    current_render = judge_render_hash()
     out: list[RegradeTarget] = []
     for skill_dir in sorted(root.iterdir()):
         if not skill_dir.is_dir():
@@ -182,8 +190,9 @@ def collect_regradeable_logs(
             out.append(RegradeTarget(skill=skill, path=path, log=log))
             continue
         stored_hash = log.get("judge_prompt_hash") or ""
-        if stored_hash == current_hash:
-            # Not stale on prompt — nothing to regrade.
+        stored_render = log.get("judge_render_hash") or ""
+        if stored_hash == current_hash and stored_render == current_render:
+            # Neither the prompt nor the render code moved — nothing to regrade.
             continue
         if _skill_side_stale(log):
             out.append(
@@ -729,8 +738,10 @@ def regrade_run_log(
                 )
                 test_entry["outcome"] = aggregated
 
-    # Stamp envelope.
+    # Stamp envelope. Both fingerprints: a regrade is what clears rule 2b, and
+    # rule 2b has a prompt half and a render half.
     log["judge_prompt_hash"] = judge.judge_prompt_hash()
+    log["judge_render_hash"] = judge_render_hash()
     log["judge_model"] = DEFAULT_JUDGE_MODEL
     # Validate before writing — a schema violation introduced by the regrade
     # (e.g. a judge dimension shape the model emitted that the writer doesn't

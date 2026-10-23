@@ -575,6 +575,140 @@ def validators_fingerprint(skill: str, validators_dir: Path) -> dict[str, str]:
     }
 
 
+# --- judge render graph -------------------------------------------------------
+
+# Roots of the code that RENDERS the judge's input. `judge_prompt_hash` covers
+# `judge/prompt.md`; a slot is filled as a value rather than edited in the
+# template, so changing the code that computes one moved no fingerprint and left
+# every committed log ACTIVE (issue #3576; lead ruling 2026-10-18).
+_JUDGE_RENDER_ROOTS = (
+    ("harness.judge", "render_prompt_parts"),
+    ("harness.judge", "_grading_tool_for_rubric"),
+    ("harness.orchestrator", "build_judge_grade_kwargs"),
+)
+
+# Reached by no call in the graph: `load_scenario_brief` runs in
+# `_run_one_test_async` and its result arrives as the `scenario_readme`
+# PARAMETER, so only naming the module puts the judge's scenario brief in scope.
+_JUDGE_RENDER_WHOLE_MODULES = ("harness.scenario_brief",)
+
+# Not covered, by construction: `_extract_dimensions` and `_compute_outcome`,
+# which interpret the judge's ANSWER rather than render its input; a call
+# through an attribute (`obj.method()`) or a variable, which no static walk can
+# resolve; and anything outside `eval/harness/`.
+
+
+class _RenderModule:
+    """One parsed harness module: its top-level defs, its module-level bindings,
+    and the dotted module each imported bare name came from."""
+
+    __slots__ = ("funcs", "assigns", "imports")
+
+    def __init__(self, path: Path) -> None:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        self.funcs: dict[str, ast.stmt] = {}
+        self.assigns: dict[str, ast.stmt] = {}
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                self.funcs[node.name] = node
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        self.assigns[target.id] = node
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                self.assigns[node.target.id] = node
+        self.imports: dict[str, str] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module and not node.level:
+                for alias in node.names:
+                    self.imports[alias.asname or alias.name] = node.module
+
+
+def _render_graph_nodes(validators_dir: Path) -> list[tuple[str, str, ast.stmt]]:
+    """Every (module, name, node) the judge's render code reaches.
+
+    A breadth-first walk from `_JUDGE_RENDER_ROOTS` that follows a call into
+    ANOTHER harness module, because `build_judge_grade_kwargs` calls four
+    functions defined elsewhere — `empty_rubric` (harness.rubric) and
+    `spawned_agents` / `agent_return_text` / `judge_skills_slot`
+    (harness.skill_runner). `agent_return_text` selects the text the judge
+    grades and `judge_skills_slot` IS the skills-invoked block, so a
+    same-module walk would drop the very code this fingerprint exists to cover.
+
+    Only a module-level name a reached function READS is collected with it: a
+    constant like `_TOOL_CALLS_MAX_CHARS` decides the rendering as much as a
+    statement does. A name bound inside the function is not module-level and is
+    skipped, so a local rename cannot move the hash.
+    """
+    cache: dict[str, _RenderModule | None] = {}
+
+    def index(module: str) -> _RenderModule | None:
+        if module not in cache:
+            path = _resolve_harness_module(module, validators_dir)
+            cache[module] = _RenderModule(path) if path else None
+        return cache[module]
+
+    collected: dict[tuple[str, str], ast.stmt] = {}
+    pending = list(_JUDGE_RENDER_ROOTS)
+    seen: set[tuple[str, str]] = set()
+
+    for module in _JUDGE_RENDER_WHOLE_MODULES:
+        mod = index(module)
+        if mod is None:
+            continue
+        for name, node in {**mod.assigns, **mod.funcs}.items():
+            collected[(module, name)] = node
+
+    while pending:
+        module, name = pending.pop()
+        if (module, name) in seen:
+            continue
+        seen.add((module, name))
+        mod = index(module)
+        if mod is None or name not in mod.funcs:
+            continue
+        node = mod.funcs[name]
+        collected[(module, name)] = node
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
+                called = sub.func.id
+                if called in mod.funcs:
+                    pending.append((module, called))
+                elif called in mod.imports:
+                    pending.append((mod.imports[called], called))
+            elif isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load):
+                if sub.id in mod.assigns:
+                    collected[(module, sub.id)] = mod.assigns[sub.id]
+                elif sub.id in mod.imports:
+                    other = index(mod.imports[sub.id])
+                    if other is not None and sub.id in other.assigns:
+                        collected[(mod.imports[sub.id], sub.id)] = other.assigns[sub.id]
+    return [(m, n, collected[(m, n)]) for m, n in sorted(collected)]
+
+
+def judge_render_hash(validators_dir: Path | None = None) -> str:
+    """Fingerprint of the code that renders the judge's input.
+
+    Derived by an AST walk at hash time, never a hand-written list — the
+    "Not covered" list above went stale exactly that way.
+
+    Stdlib-only and text-only on purpose: `check_runlogs.py` recomputes this on
+    a bare interpreter, and `judge.py` imports `anthropic`, so the gate must
+    PARSE `judge.py` rather than import it.
+    """
+    if validators_dir is None:
+        validators_dir = _REPO_ROOT / "eval" / "harness" / "validators"
+    nodes = _render_graph_nodes(validators_dir)
+    if not nodes:
+        return _sha("absent:judge-render-graph")
+    module = ast.Module(body=[node for _, _, node in nodes], type_ignores=[])
+    module = _DropMessages().visit(module)
+    _normalise_locals(module)
+    keys = [f"{mod}:{name}" for mod, name, _ in nodes]
+    dumped = ast.dump(module, annotate_fields=True, include_attributes=False)
+    return _sha("\n".join(keys) + "\n" + dumped)
+
+
 # --- tools ------------------------------------------------------------------
 
 

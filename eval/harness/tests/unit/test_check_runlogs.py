@@ -2590,6 +2590,100 @@ def _stub_current_prompt_hash(monkeypatch, hex_digest: str) -> None:
     )
 
 
+# --- rule 2b, render half (issue #3576) ------------------------------------
+# `judge_prompt_hash` covers the prompt TEMPLATE. These cover the code that
+# fills its slots: a change there moved no fingerprint and left every committed
+# log ACTIVE while the judge saw different text.
+
+_ACTIVE_RENDER_LOG = {"snapshot": {}, "judge_render_hash": "a" * 64}
+_STALE_RENDER_LOG = {
+    "snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"},
+    "judge_render_hash": "a" * 64,
+}
+_NO_RENDER_HASH_LOG = {"snapshot": {}, "judge_prompt_hash": "a" * 64}
+
+
+def _stub_current_render_hash(monkeypatch, hex_digest: str) -> None:
+    monkeypatch.setattr(check_runlogs, "judge_render_hash", lambda: hex_digest)
+
+
+def test_rule2b_render_blocks_when_render_code_moved(monkeypatch, capsys):
+    """Hash differs + active log + a render-graph file touched → BLOCK."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "`make judge-regrade`" in out
+    assert "older judge render code" in out
+
+
+def test_rule2b_render_passes_when_touched_but_hash_unchanged(monkeypatch, capsys):
+    """The load-bearing property: the rule RECOMPUTES rather than blocking on
+    "file touched". An edit to a trigger file outside the render graph leaves
+    the hash alone, so it must pass — otherwise every PR touching
+    orchestrator.py for any reason goes red."""
+    _stub_current_render_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule2b_render_warns_when_log_is_already_skill_side_stale(monkeypatch, capsys):
+    """Rule 2 blocks for its own reason; a regrade cannot satisfy a log that
+    owes a paid `make eval-skill` run."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _STALE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "cannot satisfy" in out
+
+
+def test_rule2b_render_warns_when_mismatch_without_render_edit(monkeypatch, capsys):
+    """A mixed-era corpus is not this PR's doing — warn, never block."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+
+
+def test_rule2b_render_warns_when_log_has_no_render_hash(monkeypatch, capsys):
+    """A log written before the field cannot be checked. Warn so the reviewer
+    knows the PR's render change went ungraded against it — never block, which
+    would owe a regrade for every log in the corpus on day one."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "carries no" in out
+
+
+def test_rule2b_render_silent_when_no_hash_and_nothing_touched(monkeypatch, capsys):
+    """No field and no render edit — nothing to say."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
 def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):
     """Hash mismatch + skill-side-active log + judge_prompt_edited → BLOCK."""
     _stub_current_prompt_hash(monkeypatch, "b" * 64)

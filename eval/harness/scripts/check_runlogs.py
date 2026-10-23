@@ -95,6 +95,7 @@ from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
     harness_import_closure,
     instrument_for,
+    judge_render_hash,
     load_tool_catalog,
     suite_validator_file,
     validator_harness_imports,
@@ -762,6 +763,80 @@ def rule2_fixture_touched(
         f"Warn-only for now — see eval/CLAUDE.md § \"GitHub Action rules\".\n"
         + diff_lines,
     )
+
+
+# The files whose edits can move `judge_render_hash`. This is only the TRIGGER
+# for looking: the decision below is made by RECOMPUTING the hash, so an edit to
+# a function in one of these outside the render graph passes. Blocking on
+# "file touched" would red every PR that edits orchestrator.py for any reason.
+JUDGE_RENDER_TRIGGER_PATHS = (
+    "eval/harness/harness/judge.py",
+    "eval/harness/harness/orchestrator.py",
+    "eval/harness/harness/scenario_brief.py",
+    "eval/harness/harness/rubric.py",
+    "eval/harness/harness/skill_runner.py",
+)
+
+
+def rule2b_judge_render(
+    skill: str,
+    log: dict,
+    filename: str,
+    *,
+    graded: str = GRADED_DEFAULT,
+    judge_render_touched: bool = False,
+) -> int:
+    """Rule 2b, render half: `judge_render_hash` matches the current render code.
+
+    `judge_prompt_hash` covers the prompt TEMPLATE. A slot is filled as a value
+    rather than edited in the template, so changing the code that computes one
+    moved no fingerprint and left every committed log ACTIVE while the judge saw
+    different text (lead ruling 2026-10-18).
+
+    Blocks on a PR that touches a file in `JUDGE_RENDER_TRIGGER_PATHS` **and**
+    whose recomputed hash differs; `make judge-regrade` satisfies it, as for the
+    prompt. A log with no `judge_render_hash` at all predates the field and
+    warns rather than blocks, as rule 2c does for an absent instrument.
+
+    Returns 1 on block, 0 otherwise.
+    """
+    expected = log.get("judge_render_hash") or ""
+    actual = judge_render_hash()
+    if not expected:
+        if judge_render_touched:
+            gh_warning(
+                f"skill `{skill}`: `{filename}`, {graded}, carries no "
+                f"`judge_render_hash`, so this PR's change to the judge's render "
+                f"code cannot be checked against it. `make judge-regrade` stamps "
+                f"one.",
+            )
+        return 0
+    if expected == actual:
+        return 0
+    snap = log.get("snapshot") or {}
+    header = (
+        f"skill `{skill}`: `{filename}`, {graded}, was scored by older judge "
+        f"render code (hash {expected[:12]}…). Current render hash is "
+        f"{actual[:12]}…."
+    )
+    if len(diff_snapshot_vs_disk(snap, REPO_ROOT)) > 0:
+        gh_warning(
+            f"{header} Rule 2 already reports this log as skill-side stale, so "
+            f"this warns rather than blocks — a `make judge-regrade` cannot "
+            f"satisfy a log that owes a paid `make eval-skill` run.",
+        )
+        return 0
+    if not judge_render_touched:
+        gh_warning(
+            f"{header} This PR did not touch the render code, so the mismatch "
+            f"is a mixed-era corpus rather than this PR's doing.",
+        )
+        return 0
+    gh_error(
+        f"{header} Satisfy by running `make judge-regrade` and committing the "
+        f"refreshed run log in this PR.",
+    )
+    return 1
 
 
 def rule2b_judge_prompt(
@@ -1962,6 +2037,18 @@ def main() -> int:
             }
         judge_prompt_touched_skills -= exempt_suiteless
 
+    # The render half of rule 2b, built the same way: a change to the code that
+    # renders the judge's input reaches every suite, so every suite's latest log
+    # faces the render arm. The arm recomputes, so a suite whose render hash did
+    # not actually move passes.
+    judge_render_touched_skills: set[str] = set()
+    if any(path in touched_paths for path in JUDGE_RENDER_TRIGGER_PATHS):
+        if RUNLOGS_DIR.is_dir():
+            judge_render_touched_skills = {
+                p.name for p in RUNLOGS_DIR.iterdir() if p.is_dir()
+            }
+        judge_render_touched_skills -= exempt_suiteless
+
     # Instrument arm (issue #2479 PR 3): suites whose fingerprint this PR's paths
     # could move. Kept apart from `touched_skills`, like the judge-prompt set, so
     # it feeds only rule 2c; the rule recomputes, so a suite whose own fingerprint
@@ -2035,6 +2122,7 @@ def main() -> int:
     # On every other PR a hash mismatch stays warn-only. Flag resolved once so
     # the main loop and the secondary suite loop below see the same value.
     judge_prompt_edited = "eval/harness/judge/prompt.md" in touched_paths
+    judge_render_touched = any(p in touched_paths for p in JUDGE_RENDER_TRIGGER_PATHS)
 
     for skill in sorted(touched_skills):
         fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
@@ -2091,6 +2179,13 @@ def main() -> int:
                 filename,
                 graded=graded,
                 judge_prompt_edited=judge_prompt_edited,
+            )
+            fails += rule2b_judge_render(
+                skill,
+                log,
+                filename,
+                graded=graded,
+                judge_render_touched=judge_render_touched,
             )
             fails += rule2c_instrument(
                 skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result)
@@ -2154,7 +2249,7 @@ def main() -> int:
     # Skills already in `touched_skills` ran rule 2b in the main loop above with
     # the same `judge_prompt_edited=True` flag; skip them here to avoid a
     # duplicate annotation (the main loop's `graded` value is the honest one).
-    for skill in sorted(judge_prompt_touched_skills - touched_skills):
+    for skill in sorted((judge_prompt_touched_skills | judge_render_touched_skills) - touched_skills):
         skill_dir = RUNLOGS_DIR / skill
         status, latest = resolve_latest_runlog(skill_dir)
         if status in ("no_dir", "no_runlog"):
@@ -2163,9 +2258,14 @@ def main() -> int:
             # touches it directly; otherwise silence is correct here.
             continue
         filename, log = latest
-        fails += rule2b_judge_prompt(
-            skill, log, filename, judge_prompt_edited=True
-        )
+        if skill in judge_prompt_touched_skills:
+            fails += rule2b_judge_prompt(
+                skill, log, filename, judge_prompt_edited=True
+            )
+        if skill in judge_render_touched_skills:
+            fails += rule2b_judge_render(
+                skill, log, filename, judge_render_touched=True
+            )
 
     # Instrument arm: rule 2c on every suite the PR's paths could move that the
     # main loop did not already grade. A suite with no committed full-skill log has

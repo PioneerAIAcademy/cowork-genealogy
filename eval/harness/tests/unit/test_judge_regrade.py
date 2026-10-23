@@ -32,6 +32,7 @@ from types import SimpleNamespace
 import pytest
 
 from harness import judge
+from harness.instrument import judge_render_hash
 from harness import orchestrator as _orchestrator
 from harness import validator_runner
 from harness.scenario_brief import load_scenario_brief
@@ -316,15 +317,47 @@ def test_collect_refuses_skill_side_stale(disk_tree):
     assert "skill-side" in t.reason_refused
 
 
-def test_collect_skips_logs_already_on_current_prompt(disk_tree):
+def _render_hash_log(**envelope) -> dict:
+    """A minimal run log with the given envelope fields set."""
     log = _minimal_run_log(scenario="demo-scenario")
-    log["judge_prompt_hash"] = judge.judge_prompt_hash()  # current
-    log_path = disk_tree["runlogs"] / "v1_2026-10-09_00-00-00.json"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.write_text(json.dumps(log), encoding="utf-8")
+    log.update(envelope)
+    return log
 
+
+def test_collect_skips_logs_already_on_current_prompt(disk_tree):
+    """Current on BOTH fingerprints — rule 2b has nothing to clear."""
+    _write_log(
+        disk_tree,
+        _render_hash_log(
+            judge_prompt_hash=judge.judge_prompt_hash(),
+            judge_render_hash=judge_render_hash(),
+        ),
+    )
+    assert judge_regrade.collect_regradeable_logs(disk_tree["runlogs"].parent) == []
+
+
+def test_collect_takes_a_log_with_no_render_hash(disk_tree):
+    """A log written before the field is eligible: this regrade is what stamps
+    it, and rule 2b only warns until one is present."""
+    _write_log(disk_tree, _render_hash_log(judge_prompt_hash=judge.judge_prompt_hash()))
     targets = judge_regrade.collect_regradeable_logs(disk_tree["runlogs"].parent)
-    assert targets == []
+    assert len(targets) == 1
+    assert targets[0].reason_refused is None
+
+
+def test_collect_takes_a_log_whose_render_hash_is_stale(disk_tree):
+    """The prompt is current and only the render code moved — still eligible,
+    which is the whole point of the render half."""
+    _write_log(
+        disk_tree,
+        _render_hash_log(
+            judge_prompt_hash=judge.judge_prompt_hash(),
+            judge_render_hash="0" * 64,
+        ),
+    )
+    targets = judge_regrade.collect_regradeable_logs(disk_tree["runlogs"].parent)
+    assert len(targets) == 1
+    assert targets[0].reason_refused is None
 
 
 # --- Warning dedupe (S3) ---------------------------------------------------
