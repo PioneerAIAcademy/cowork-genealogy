@@ -17,7 +17,7 @@
     "Should report that validation FAILED — must not claim the files are valid",
     "Should surface the specific error: person_evidence[0]'s id 'x_001' should start with 'pe_'",
     "Should explain the ID-prefix convention (person_evidence ids must begin with 'pe_') and suggest a fix (rename the id to a 'pe_' value)",
-    "Should NOT silently edit research.json",
+    "Should NOT silently edit research.json to fix an error; its one write is a validate_schema log entry",
     "Should NOT route to check-warnings or proof-conclusion — an ID-format violation is a structural schema error this skill owns"
   ]
 }
