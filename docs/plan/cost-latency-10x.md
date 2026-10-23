@@ -41,10 +41,11 @@ Lead's ordering, 2026-09-25/27. Everything in this plan hangs off it.
 5. **Record extraction** — not this plan's work. **Issue #2937, John.** Named here
    only so the waves below are read as the rest of the programme, not all of it.
 
-**Also outside the levers: issue #2951 takes `gps-mentor` off the default path**
-(lead, 2026-09-29). That removes the mentor spawn and the `proof-conclusion`
-re-invocation it forces, about 6–8% of wall clock per run. `proof-conclusion` and
-`research-exhaustiveness` stay. Wave 4 measures after issue #2951 lands.
+**Also outside the levers: `gps-mentor` is off the default path** (issue #2951,
+PR #3040, 2026-10-12). It now runs only when the user asks for a second opinion.
+That removed the mentor spawn and the `proof-conclusion` re-invocation it forced,
+about 6–8% of wall clock per run. `proof-conclusion` and `research-exhaustiveness`
+stay.
 
 **The framing that makes the order make sense:** input is **72%** of the bill
 (cache reads 42%, cache writes 30%; output is 27%), and **every token that enters
@@ -275,9 +276,7 @@ refusal, which moved to it from issue #2256 on 2026-09-27.
 > **BLOCKED until Waves 1, 2 and 3 are all complete.** Lead ruling: tool-output
 > reduction *and* skill→agent conversion both finish before the floor search begins.
 > Measuring a model floor against unreduced payloads or a partly-converted skill set
-> gives a number that expires the moment the other work lands. The same holds for issue
-> #2951: a floor taken while the mentor still spawns prices an agent that is leaving the
-> default path.
+> gives a number that expires the moment the other work lands.
 
 **Set everything to Haiku with no reasoning effort, see what fails loudly, and raise
 carefully.** *Everything* includes **the research orchestrator itself**, not just the

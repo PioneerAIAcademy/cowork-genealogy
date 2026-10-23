@@ -191,7 +191,7 @@ narration or the thinking — which is the whole argument. (It *does* fire on de
 calls: the shipped hook routes by caller identity off `agent_id`/`agent_type` in the
 payload. An earlier draft said otherwise, which contradicted both D15 and acceptance
 criterion 3.) Two `PreToolUse` hooks sit on P1's session. The shipped plugin hook's
-matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`, so it
+matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`, so it
 never fires on `extraction_append` — the call P1 kills on. The hosted `_pretool_hook`
 the driver inherits from `build_options` has no matcher, fires on every tool including
 that one, and allows it. P1's delegation evidence comes from the SDK stream's
