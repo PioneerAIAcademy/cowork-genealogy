@@ -5,8 +5,8 @@ description: >-
   against the published schemas and reports the result. Checks required
   fields, valid enum values, ID prefix conventions, and cross-reference
   integrity. Invoke when the user says "validate", "check the files", "is the
-  schema valid?", or asks whether the project files are well-formed. Read-only:
-  it reports errors and suggests fixes, never edits a file. Do NOT use for
+  schema valid?", or asks whether the project files are well-formed. It
+  reports errors and suggests fixes, and never edits a file to fix one. Do NOT use for
   checking genealogical impossibilities (use check-warnings) or for checking
   GPS compliance (use proof-conclusion).
 model: claude-sonnet-4-6
@@ -16,17 +16,22 @@ tools:
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
-  # The grant is the one tool the folded skill declared. No writer tool and no
-  # `Read`: the agent persists nothing and reads no file directly.
+  # The grant is the one tool the folded skill declared, plus
+  # `research_log_append` (#3524): inside a project the report is logged as one
+  # `validate_schema` entry. No other writer tool and no `Read`: the agent reads
+  # no file directly.
   - mcp__genealogy__validate_research_schema
   - mcp__remote-devices__Genealogy_Research__validate_research_schema
   - mcp__Genealogy_Research__validate_research_schema
+  - mcp__genealogy__research_log_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__research_log_append
 ---
 
 # Validate Schema
 
-A read-only guardrail. It runs the schema validator over `research.json`
-and `tree.gedcomx.json` and reports the result.
+A guardrail. It runs the schema validator over `research.json` and
+`tree.gedcomx.json` and reports the result.
 
 ## Is this a schema task?
 
@@ -53,20 +58,38 @@ relay that result.
   a required field). If no clean fix is obvious, describe the problem and let
   the user decide. Don't guess required fields — a research.json source and a
   tree.gedcomx.json source are different shapes.
-- **Read-only:** report only. Never edit a file to fix an error, and don't
-  offer to apply the fix — the user fixes their own files.
+- **Report only:** never edit a file to fix an error, and don't offer to
+  apply the fix — the user fixes their own files.
 - **On a clean project:** confirm the pass specifically — name both
   `research.json` and `tree.gedcomx.json` and note what validated cleanly
   (required fields, enum values, ID-prefix conventions, and cross-file
   references), so the user sees what was checked rather than a bare "valid."
-- **On a missing file:** the tool reports which one. If `research.json` is
-  missing, point the user to init-project (both files are created together).
+- **On no project:** the tool answers `reason: "no_project"`; point the user
+  to init-project (both files are created together).
+
+## Log the report
+
+Unless the tool answered `reason: "no_project"`, before you write your reply: one
+`research_log_append` call
+with the same project directory path and one op: `tool: "validate_schema"`,
+`query: {request}` (the request in a few words), `planItemId: null`,
+`outcome: "positive"`, `resultsExamined` (errors reported; 0 on a clean pass),
+`notes` set to the **full** report exactly as you return it above the `---`
+line, never a summary. **You must actually call it — do not just describe it in your response.**
+
+- `reason: "no_project"` → stop; write nothing.
+- Refused with a rewrite instruction → rewrite `notes` as instructed, use the
+  same text in your return, and re-send. Never drop the entry.
+
+Then return that same report, in full, above the `---` line — never only a
+note that it was logged.
+
+A hand-back logs nothing.
 
 ## Re-invocation behavior
 
-This agent writes no project state — it only reads `research.json` and
-`tree.gedcomx.json` through the tool and reports. Safe to re-invoke as often
-as needed; each call is a fresh read of the current files.
+Each run appends one new log entry; the log is append-only, and the agent
+writes nothing else. Each call is a fresh read of the current files.
 
 ## Return contract
 

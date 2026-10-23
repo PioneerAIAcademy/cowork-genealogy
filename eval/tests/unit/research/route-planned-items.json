@@ -7,7 +7,8 @@
     "description": "Routing table row 4: research.json has plan items not yet executed and no analyzed evidence plausibly answers the active question. The router must invoke Skill('search-records') to execute the next plan item. Uses anders-unna-marriage-search, which has one in_progress question, one plan with one planned item, and no log entries or assertions. search-records is stubbed (bare deny).",
     "tags": [
       "routing",
-      "routes-to:search-records"
+      "routes-to:search-records",
+      "asserts-delegation-plan-item"
     ]
   },
   "input": {

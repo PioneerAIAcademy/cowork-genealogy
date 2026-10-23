@@ -11,7 +11,8 @@
       "fundamental",
       "event-after-death",
       "critical",
-      "direct-arm"
+      "direct-arm",
+      "logs-report"
     ]
   },
   "input": {

@@ -2,7 +2,9 @@
 
 Grading dimensions for validate-schema unit tests. Evaluated by the LLM judge alongside the base rubric (Correctness, Completeness, Tool Arguments).
 
-validate-schema is a read-only guardrail skill: it calls the `validate_research_schema` MCP tool, then **reports** the result. On errors it must surface each one, explain what it means, and suggest a fix — without ever editing a file. On a clean project it confirms validity and stops. These dimensions grade how well it does that; they do not re-grade whether the validator itself is correct (that is the tool's own test suite).
+Inside a project the agent ends with one `research_log_append` call logging its report; that entry appears in the file changes summary, and its shape is checked by validators, not by you. With **no project** the call, if made, answers `ok: false`, `reason: "no_project"`: that is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+
+validate-schema is a guardrail skill: it calls the `validate_research_schema` MCP tool, then **reports** the result. On errors it must surface each one, explain what it means, and suggest a fix — without ever editing a file. On a clean project it confirms validity and stops. These dimensions grade how well it does that; they do not re-grade whether the validator itself is correct (that is the tool's own test suite).
 
 ## Tool-response interpretation & error explanation
 
@@ -22,10 +24,10 @@ For each reported error, did the skill suggest a concrete, correct fix the resea
 - **partial:** A fix is offered but generic ("correct the value") without naming the valid options or the right target, or it is correct for some errors but missing for others.
 - **fail:** No fix suggested, or a suggested fix that would not actually resolve the error (or would introduce a new one).
 
-## Read-only discipline & scope adherence
+## No-edit discipline & scope adherence
 
 Did the skill stay within its lane — report only, never silently edit a file, and not substitute a schema pass for a different check the user actually asked for?
 
-- **pass:** The skill makes no edit to research.json, tree.gedcomx.json, or any sidecar; it reports and leaves the fix to the user. On a boundary prompt it declines to validate and points to the correct skill (check-warnings for logical impossibilities, proof-conclusion for GPS/proof-quality questions) instead of answering "the files are valid."
-- **partial:** Stays read-only but blurs scope — e.g. runs schema validation *and* volunteers an off-scope opinion on logical/GPS questions, or hedges on routing instead of clearly handing off.
+- **pass:** The skill edits nothing in research.json, tree.gedcomx.json, or any sidecar to fix an error (its one log entry is not an edit); it reports and leaves the fix to the user. On a boundary prompt it declines to validate and points to the correct skill (check-warnings for logical impossibilities, proof-conclusion for GPS/proof-quality questions) instead of answering "the files are valid."
+- **partial:** Edits nothing but blurs scope — e.g. runs schema validation *and* volunteers an off-scope opinion on logical/GPS questions, or hedges on routing instead of clearly handing off.
 - **fail:** Edits a file to "fix" an error, or answers a logical-impossibility / GPS-quality prompt with a schema-validation result in place of routing to the right skill.
