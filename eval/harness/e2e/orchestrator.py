@@ -924,7 +924,8 @@ class FixtureCaps:
     # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
     # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
     wall_clock_seconds: int = 7200  # 120 min — the formal GPS apparatus
-    # (research-exhaustiveness + gps-mentor gates + proof-conclusion) pushes a
+    # (research-exhaustiveness + proof-conclusion, and the gps-mentor gates
+    # until issue #2951 took them off the default path) pushes a
     # real full-GPS run well past 60 min; kenneth/elizabeth/teitje all hit the
     # old 3600 cap mid-proof-conclusion (morris already overrode to 4800).
     inactivity_seconds: int = 600   # 10 min with NO SDK message at all (silence)

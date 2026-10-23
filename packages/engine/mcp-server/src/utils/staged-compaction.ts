@@ -116,7 +116,7 @@ export function compactStagedRecordSearch(
  * result has neither of). It is NOT unreachable, though: staging serializes the
  * response before this strip runs, so the transcript is on disk at
  * `staged.resultsRef`, and `Read` is not gated by the plugin hook (its matcher
- * is Write|Edit|NotebookEdit|.*device_commit_files|.*research_append). Reading
+ * is Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task). Reading
  * it pulls the whole page back into context, which is the reason to triage from
  * the stubs — not an inability to reach it. Say the cost, not "impossible", or
  * the next reader plans around a wall that is not there. The

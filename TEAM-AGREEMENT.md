@@ -1,6 +1,6 @@
 # Team Agreement: confidentiality, credentials, and personal data
 
-**Version 1.0 — 2026-10-19**
+**Version 1.0 — 2026-10-22**
 
 This agreement is between you and **GeneFun, Inc.**, doing business as
 **Pioneer AI Academy** ("GeneFun", "we", "us").
@@ -38,10 +38,17 @@ summary and the terms disagree, the terms win.
 - **Tell us fast if something leaks.** Reporting a mistake is not the
   problem. Hiding it is. Nobody gets in trouble for a fast report.
 - **This lasts after you leave.**
+- **It moves with the project.** If GeneFun transfers the project to
+  another organization, these obligations transfer with it.
+- **It covers what you already have.** Credentials and data you were
+  given before signing are covered too.
 
 ---
 
 ## Terms
+
+These terms cover credentials, data, and information you received before
+signing this agreement, as well as anything you receive after.
 
 ### 1. Credentials and secrets
 
@@ -229,7 +236,16 @@ agreement governs anything this one conflicts with.
 This agreement is governed by the laws of the State of Utah, without
 regard to its conflict of law provisions.
 
-### 11. Changes
+### 11. Assignment
+
+GeneFun may assign this agreement, in whole or in part, to any party that
+takes over the project or responsibility for the credentials, data, or
+information this agreement covers, without notice to you and without
+your further consent. After an assignment, references to GeneFun in this
+agreement include the assignee, your obligations run to it as well as to
+GeneFun, and it may enforce them as GeneFun could.
+
+### 12. Changes
 
 GeneFun may publish a new version of this agreement and ask you to sign
 it as a condition of continued access. The version recorded in your
