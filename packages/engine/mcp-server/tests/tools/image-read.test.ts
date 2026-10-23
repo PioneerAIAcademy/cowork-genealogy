@@ -505,8 +505,13 @@ describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)"
   it("says the cap is per film, per project and that nothing resets it, when the count came from a project", async () => {
     await readTwenty();
     const err = await imageReadTool({ imageId: img(21), projectPath: project }, LOCAL).catch((e) => e);
-    expect((err as Error).message).toContain("The cap is per film, per project");
-    expect((err as Error).message).toContain("nothing resets it, not a new agent and not a new session");
+    expect((err as Error).message).toMatch(
+      new RegExp(
+        `have already been read in this project, so ${img(21)}(?: \\(\\S+\\))? was not fetched\\. ` +
+          "The cap is per film, per project: every sub-volume of film 004884748 shares it, " +
+          "and nothing resets it, not a new agent and not a new session\\. Re-reading",
+      ),
+    );
     expect((err as Error).message).not.toContain("server session, because");
   });
 
@@ -518,8 +523,12 @@ describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)"
     }
     const err = await imageReadTool({ imageId: img(21) }, LOCAL).catch((e) => e);
     expect((err as Error).message).toMatch(/Image cap reached: 20 distinct images from image group 004884748/);
-    expect((err as Error).message).toContain("in this server session, because this read named no project");
-    expect((err as Error).message).toContain("A new agent does not reset it.");
+    expect((err as Error).message).toMatch(
+      new RegExp(
+        `have already been read in this server session, because this read named no project, so ${img(21)}` +
+          "(?: \\(\\S+\\))? was not fetched\\. A new agent does not reset it\\. Re-reading",
+      ),
+    );
     expect((err as Error).message).not.toContain("per film, per project");
   });
 
