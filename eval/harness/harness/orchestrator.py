@@ -136,6 +136,25 @@ class OrchestratorPaths:
     runlogs_root: Path = DEFAULT_RUNLOGS
 
 
+def _other_suite_names(skill: str, skills_dir: Path, agents_dir: Path) -> set[str]:
+    """Every skill and plugin agent other than `skill` -- used by rule 3 to
+    detect "routing to another skill" patterns in short responses without
+    false-flagging legitimate concise outputs.
+
+    Agents count because a skill converted to an agent (2026-09-22 ruling)
+    leaves the skills dir: with skills alone, a decline naming `search-records`
+    read as substantive once #3567 moved it, and an out-of-scope negative that
+    routed correctly failed as activated."""
+    names = {
+        d.name for d in Path(skills_dir).iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    }
+    if Path(agents_dir).is_dir():
+        names |= {p.stem for p in Path(agents_dir).glob("*.md")}
+    names.discard(skill)
+    return names
+
+
 # Validators that assert the persisted project files are valid (schema-
 # conformant, references resolve). A test that declares its scenario broken
 # on purpose (`intentionally_invalid: true`) expects these to fail — the
@@ -647,13 +666,7 @@ async def _execute_single_run(
         file_changes["tree.gedcomx.json"] = tree_diff
     file_changes = file_changes or None
 
-    # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
-    # used by rule 3 to detect "routing to another skill" patterns in
-    # short responses without false-flagging legitimate concise outputs.
-    other_skill_names = {
-        d.name for d in paths.skills_dir.iterdir()
-        if d.is_dir() and not d.name.startswith(".") and d.name != spec.skill
-    }
+    other_skill_names = _other_suite_names(spec.skill, paths.skills_dir, DEFAULT_PLUGIN_AGENTS)
 
     agents_spawned = spawned_agents(result.builtin_tool_calls)
     activated = derive_activated(

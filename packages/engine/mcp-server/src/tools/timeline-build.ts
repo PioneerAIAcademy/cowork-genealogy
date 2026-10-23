@@ -404,19 +404,21 @@ export async function planTimeline(
   const rawToResolve = [
     ...new Set([...events.values()].filter((e) => !e.standardPlace && e.place).map((e) => e.place as string)),
   ];
+  let resolveExpired = false;
+  let coordsExpired = false;
   const [knownCoords, resolved] = await Promise.all([
-    lookupWithin(known, placeCoords, remaining()),
-    lookupWithin(rawToResolve, resolvePlace, remaining()),
+    lookupWithin(known, placeCoords, remaining(), () => (coordsExpired = true)),
+    lookupWithin(rawToResolve, resolvePlace, remaining(), () => (resolveExpired = true)),
   ]);
   for (const e of events.values()) {
     if (!e.standardPlace && e.place) e.standardPlace = resolved.get(e.place) ?? null;
   }
   const newlyStandard = [...new Set([...resolved.values()].filter((p): p is string => !!p && !knownCoords.has(p)))];
-  const moreCoords = await lookupWithin(newlyStandard, placeCoords, remaining());
+  const moreCoords = await lookupWithin(newlyStandard, placeCoords, remaining(), () => (coordsExpired = true));
   const coords = new Map<string, PlaceCoords | null>([...knownCoords, ...moreCoords]);
   const skipped: string[] = [];
-  if (rawToResolve.some((r) => !resolved.get(r)) && remaining() === 0) skipped.push("standardizing some places");
-  if ([...coords.values()].some((c) => c === null) && remaining() === 0) skipped.push("some distances");
+  if (resolveExpired) skipped.push("standardizing some places");
+  if (coordsExpired) skipped.push("some distances");
 
   const sorted = [...events.values()].sort(
     (x, y) => sortKey(x.date.date).localeCompare(sortKey(y.date.date)) || typeRank(x.type) - typeRank(y.type),
