@@ -9,9 +9,16 @@
     "matched": true,
     "confidence": 9,
     "score": 0.97,
-    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:FLYN-MARR",
-    "candidateArk": null,
-    "apiTitle": "Matches for ark:/61903/1:1:FLYN-MARR",
-    "updated": "2026-08-01T00:00:00Z"
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "G1",
+      "name": "John Flynn",
+      "role": "groom"
+    },
+    "treePerson": {
+      "id": "I3",
+      "name": "John Flynn"
+    }
   }
 }
