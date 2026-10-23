@@ -780,7 +780,11 @@ function appendCoupleEvents(
     e.date !== undefined
       ? JSON.stringify([e.type, e.date])
       : JSON.stringify([e.type, null, e.place ?? null, e.value ?? null]);
-  const seen = new Map(events.map((e) => [keyOf(e), e]));
+  // Every copy per key: FamilySearch repeats identical person events, and
+  // filling only one would stop compaction's exact-duplicate removal
+  // collapsing them.
+  const seen = new Map<string, RecordSearchEvent[]>();
+  for (const e of events) seen.set(keyOf(e), [...(seen.get(keyOf(e)) ?? []), e]);
   const isSelf = (ref: { resource?: string } | undefined) =>
     ref?.resource?.replace(/^#/, "") === personId;
   for (const rel of gedcomx?.relationships ?? []) {
@@ -792,11 +796,13 @@ function appendCoupleEvents(
       const key = keyOf(event);
       const kept = seen.get(key);
       if (kept) {
-        if (kept.place === undefined && event.place !== undefined) kept.place = event.place;
-        if (kept.value === undefined && event.value !== undefined) kept.value = event.value;
+        for (const k of kept) {
+          if (k.place === undefined && event.place !== undefined) k.place = event.place;
+          if (k.value === undefined && event.value !== undefined) k.value = event.value;
+        }
         continue;
       }
-      seen.set(key, event);
+      seen.set(key, [event]);
       events.push(event);
     }
   }

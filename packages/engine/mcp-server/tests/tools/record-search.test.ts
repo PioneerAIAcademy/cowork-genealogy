@@ -27,7 +27,12 @@ import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
-import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
+import type {
+  FSSearchEntry,
+  FSSearchResponse,
+  RecordSearchToolResponse,
+} from "../../src/types/record-search.js";
+import { compactStagedRecordSearch } from "../../src/utils/staged-compaction.js";
 import type { KinPrefix, KinTerm } from "../../src/types/relative-terms.js";
 import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { join } from "path";
@@ -2353,8 +2358,8 @@ describe("#3695 Couple-relationship facts in events", () => {
   });
 
   it("77. a projectPath search keeps the Couple-derived event, inline and in the sidecar", async () => {
-    // Staging deletes `gedcomx` from the rows, so the Couple's Marriage
-    // survives only if it was lifted into `events` before that.
+    // Compaction deletes `gedcomx` from the inline rows, so there the
+    // Couple's Marriage survives only if it was lifted into `events`.
     const dir = await mkdtemp(join(tmpdir(), "record-search-couple-"));
     try {
       mockFetch.mockResolvedValueOnce(
@@ -2410,5 +2415,47 @@ describe("#3695 Couple-relationship facts in events", () => {
       coupleFacts: [undatedMarriage("Arsdorf")],
     });
     expect(marriagesIn(entry)).toEqual([{ type: "Marriage", place: "Arsdorf" }]);
+  });
+
+  it("81. a repeated persona fact gets the Couple's place on every copy, so compaction collapses it", () => {
+    const entry = householdEntry({
+      personaFacts: [marriage("1867"), marriage("1867")],
+      coupleFacts: [marriage("1867", "Arsdorf")],
+    });
+    const out = compactStagedRecordSearch({
+      results: [mapEntry(entry)!],
+    } as RecordSearchToolResponse);
+    expect(out.results[0].events).toEqual([
+      { type: "Marriage", date: "1867", place: "Arsdorf" },
+    ]);
+  });
+
+  it("82. the persona on person1 of its Couple is matched too", () => {
+    const entry = householdEntry({ coupleFacts: [marriage("15. Februar 1867", "Arsdorf")] });
+    for (const rel of entry.content!.gedcomx!.relationships!) {
+      if (!rel.type!.endsWith("/Couple")) continue;
+      [rel.person1, rel.person2] = [rel.person2, rel.person1];
+    }
+    expect(marriagesIn(entry)).toEqual([
+      { type: "Marriage", date: "15. Februar 1867", place: "Arsdorf" },
+    ]);
+  });
+
+  it("83. a duplicate Couple fact fills the kept copy's missing value", () => {
+    const entry = householdEntry({
+      personaFacts: [marriage("1867")],
+      coupleFacts: [{ ...marriage("1867"), value: "civil" }],
+    });
+    expect(marriagesIn(entry)).toEqual([
+      { type: "Marriage", date: "1867", value: "civil" },
+    ]);
+  });
+
+  it("84. a fact on the persona's ParentChild row is not an event", () => {
+    const entry = householdEntry({ spouses: 0 });
+    for (const rel of entry.content!.gedcomx!.relationships!) {
+      if (rel.type!.endsWith("/ParentChild")) rel.facts = [marriage("1840", "Arsdorf")];
+    }
+    expect(mapEntry(entry)!.events).toEqual([]);
   });
 });

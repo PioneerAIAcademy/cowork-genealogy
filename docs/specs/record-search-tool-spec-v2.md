@@ -1759,7 +1759,8 @@ For each `entry` in `response.entries`:
    ParentChild facts are not. A Couple-derived event whose `type` and
    `date` match an event already in `events` is the person-level copy of
    the same fact: it is not appended, but supplies the `place` or `value`
-   the kept copy lacks. Matching on `type` alone would hide a second,
+   each matching copy lacks (FamilySearch repeats identical events, and
+   filling one copy would stop them collapsing as exact duplicates). Matching on `type` alone would hide a second,
    different marriage. An undated event matches only an undated event
    with the same `type`, `place` and `value`, so two undated marriages at
    different places are both kept. The event carries no marker of where
@@ -2021,15 +2022,19 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 74 | A Couple the persona is not an endpoint of (the parents') contributes nothing | Endpoint filter; the persona has no Couple of its own, so dedup cannot mask a missing filter |
 | 75 | A Marriage on both the persona and the Couple appears once, with the Couple's place | type + date dedup; the kept copy gains the place it lacked |
 | 76 | A Couple Marriage with a different date is kept beside the persona's | Rejects a type-only dedup |
-| 77 | A `projectPath` search keeps the Couple-derived event, inline and in the sidecar | Staging deletes `gedcomx`, so the event must already be in `events` |
+| 77 | A `projectPath` search keeps the Couple-derived event, inline and in the sidecar | Compaction deletes `gedcomx` from the inline rows, so the event must already be in `events` |
 | 78 | A persona with no `id` gets no Couple events, even from a Couple with no `resource` | A missing ref must not equal a missing id |
 | 79 | Undated Marriages on two Couples at different places are both kept | An absent date must not make two marriages equal |
 | 80 | An undated Marriage on both the persona and the Couple appears once | Undated dedup on the whole event |
+| 81 | A repeated persona fact gets the Couple's place on every copy, so compaction collapses it | Filling one copy would leave two non-identical events |
+| 82 | The persona on `person1` of its Couple is matched | Every other case puts it on `person2` |
+| 83 | A duplicate Couple fact fills the kept copy's missing `value` | The `value` half of the fill |
+| 84 | A fact on the persona's ParentChild row is not an event | The `/Couple` type filter |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
 cover `batchNumber`; 65–72 cover `surnameVariantHints`, whose rule is also
-unit-tested in `tests/utils/surname-variant-hints.test.ts`; 73–80 cover the
+unit-tested in `tests/utils/surname-variant-hints.test.ts`; 73–84 cover the
 Couple-relationship events.
 
 ### Smoke-test script
