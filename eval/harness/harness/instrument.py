@@ -129,10 +129,15 @@ LIVE_TOOLS: set[str] = {
     # or network dependency. Nothing calls it until issue #1828; kept live so
     # that PR's eval doesn't quietly get the answer from a canned fixture.
     "get_name_variants",
+    # A person timeline computed from the workspace's own links: a canned
+    # fixture would supply the events and gaps the timeline suite grades. Its
+    # Places lookups are answered from the test's place_search fixtures
+    # (`_make_timeline_build_handler`), so it stays offline.
+    "timeline_build",
 }
 
 # The compiled entry module each live handler loads, relative to the build dir.
-# Kept apart from mock_mcp's `_COMPILED_TOOLS` because four live tools are served
+# Kept apart from mock_mcp's `_COMPILED_TOOLS` because five live tools are served
 # by dedicated handlers that never consult that table.
 LIVE_MODULES: dict[str, str] = {
     "validate_research_schema": "tools/validate-research-schema.js",
@@ -154,6 +159,7 @@ LIVE_MODULES: dict[str, str] = {
     "census_children_gap": "tools/census-children-gap.js",
     "build_external_search_url": "tools/build-external-search-url.js",
     "get_name_variants": "tools/name-variants.js",
+    "timeline_build": "tools/timeline-build.js",
 }
 
 SHARED_VALIDATOR_FILES: tuple[str, ...] = ("test_universal.py", "validators_lib.py")
