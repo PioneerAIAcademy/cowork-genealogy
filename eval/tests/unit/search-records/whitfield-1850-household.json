@@ -21,7 +21,7 @@
     ]
   },
   "input": {
-    "delegation": "Execute the next item on the research plan — the 1850 census search for Amos Whitfield in Pike County, Kentucky (pli_001).\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Execute the next item on the research plan — the 1850 census search for Amos Whitfield in Pike County, Kentucky (pli_001).\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Pike County, Kentucky\",\n  \"date_range\": \"1820-1853\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"An 1850 census household search for the Whitfield surname in Pike County may show Amos with dependents not yet documented elsewhere.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Amos\",\n      \"surname\": \"Whitfield\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"~1817\",\n    \"place\": \"Georgia, United States\"\n  },\n  \"death\": null\n}",
     "scenario": "whitfield-1850-household"
   },
   "mcp_fixtures": [
