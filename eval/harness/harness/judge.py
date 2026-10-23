@@ -39,6 +39,8 @@ DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
 # not — `temperature` is removed on the Opus 4.7/4.8 family and returns a 400,
 # so that judge cannot be pinned at all (see e2e/judge.py).
 JUDGE_TEMPERATURE = 0.0
+# The last API version that accepts sampling parameters; 2026-10-21 rejects them.
+LEGACY_SAMPLING_API_VERSION = "2023-06-01"
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
@@ -630,12 +632,18 @@ def _create_message_with_retry(
     `temperature=None` omits the parameter entirely rather than sending the
     API's default value — the caller asks for default sampling without this
     module having to hardcode what that default currently is.
+
+    A set `temperature` goes out in the body on API version 2023-06-01. SDK 2.x
+    sends 2026-10-21, which answers any sampling parameter with a 400, and drops
+    `temperature` from `create()`'s signature; the migration guide's remedy for a
+    request that relies on a non-default value is to keep it on 2023-06-01.
     """
     import time as _time
 
     sampling_kwargs: dict[str, Any] = {}
     if temperature is not None:
-        sampling_kwargs["temperature"] = temperature
+        sampling_kwargs["extra_body"] = {"temperature": temperature}
+        sampling_kwargs["extra_headers"] = {"anthropic-version": LEGACY_SAMPLING_API_VERSION}
 
     delay = 2.0
     last_error: Exception | None = None
