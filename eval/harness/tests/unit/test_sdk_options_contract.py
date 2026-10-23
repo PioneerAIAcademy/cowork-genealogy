@@ -62,7 +62,19 @@ def _resolved_options(path: Path):
     tree = ast.parse(path.read_text(encoding="utf-8"))
 
     simple_assigns = {}
+    subscript_keys = {}
     for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Subscript)
+            and isinstance(node.targets[0].value, ast.Name)
+            and isinstance(node.targets[0].slice, ast.Constant)
+            and isinstance(node.targets[0].slice.value, str)
+        ):
+            subscript_keys.setdefault(node.targets[0].value.id, {})[
+                node.targets[0].slice.value
+            ] = node.value
         if (
             isinstance(node, ast.Assign)
             and len(node.targets) == 1
@@ -87,8 +99,9 @@ def _resolved_options(path: Path):
                 continue
             # `**spread` — resolve a local name to its dict(...) / {...} source.
             src = kw.value
-            if isinstance(src, ast.Name) and src.id in simple_assigns:
-                src = simple_assigns[src.id]
+            if isinstance(src, ast.Name):
+                options.update(subscript_keys.get(src.id, {}))
+                src = simple_assigns.get(src.id, src)
             if (
                 isinstance(src, ast.Call)
                 and isinstance(src.func, ast.Name)
