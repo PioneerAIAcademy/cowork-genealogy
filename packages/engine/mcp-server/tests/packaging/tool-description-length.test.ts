@@ -182,7 +182,7 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // params), not copied from the failure message.
   // 17082 -> 17192: `recordType` now accepts six plan-item record types (land,
   // court, tax -> 'other'; vital_record, church, cemetery -> no filter), and its
-  // description says so, 82 -> 191 chars. Measured independently (2695
+  // description says so, 81 -> 191 chars. Measured independently (2695
   // tool-level + 14497 params), not copied from the failure message.
   ["record_search", 17192],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the

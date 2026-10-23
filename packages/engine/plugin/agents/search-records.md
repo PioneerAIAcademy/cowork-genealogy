@@ -651,7 +651,7 @@ Never write a bare sentence there — a prose `query` carrying an ARK is rejecte
 
 **A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
-**A zero-result search** (no staged handle): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
+**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry, do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
