@@ -450,14 +450,18 @@ def assemble_test_entry(
     # failure or pass means.
     outcome = aggregated
 
-    aggregated_dims = aggregate_dimensions(runs)
+    # Runs matching the outcome first, so each row's rationale comes from the run
+    # the results page shows, not a failed run before its fail-retries. The
+    # sort is stable and only reorders, so no score moves.
+    by_outcome = sorted(runs, key=lambda r: r.outcome != outcome)
+    aggregated_dims = aggregate_dimensions(by_outcome)
     # The rows a human annotates: the aggregate whenever it has any, else — when
     # every judged run failed a validator — the modal over those runs, so the
     # test reaches review instead of looking ungraded. Every annotation plane
     # reads this through `review_sample.review_dimensions`. Empty only when
     # nothing was judged (aborted, or the judge raised).
     review_dims = aggregated_dims or aggregate_dimensions(
-        runs, include_validator_failed=True
+        by_outcome, include_validator_failed=True
     )
 
     totals = {

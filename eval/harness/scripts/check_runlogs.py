@@ -89,9 +89,11 @@ from harness.versioning import (  # noqa: E402
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
 from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
+    harness_import_closure,
     instrument_for,
     load_tool_catalog,
     suite_validator_file,
+    validator_harness_imports,
 )
 
 
@@ -287,6 +289,35 @@ def git_diff_touched_paths() -> list[str]:
             continue
         paths.extend(p for p in parts[1:] if p)
     return paths
+
+
+class BaseUnreadable(RuntimeError):
+    """A file's content at the merge base could not be read."""
+
+
+def git_show_at_merge_base(path: str) -> str | None:
+    """`path` (repo-relative) as it stood at the merge base of BASE_SHA and
+    HEAD_SHA -- the base `git_diff_touched_paths`' three-dot diff compares
+    against -- or None when it did not exist there. Raises `BaseUnreadable`
+    when the env is unset or git fails, so a caller never mistakes an unread
+    base for an absent file."""
+    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
+    if not base or not head:
+        raise BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+    try:
+        merge_base = subprocess.check_output(
+            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=REPO_ROOT
+        ).strip()
+        exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{merge_base}:{path}"], capture_output=True, cwd=REPO_ROOT
+        )
+        if exists.returncode != 0:
+            return None
+        return subprocess.check_output(
+            ["git", "show", f"{merge_base}:{path}"], text=True, encoding="utf-8", cwd=REPO_ROOT
+        )
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
+        raise BaseUnreadable(str(e)) from e
 
 
 def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
@@ -655,14 +686,21 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
 # Paths whose change can move ANY suite's instrument fingerprint: the shared
 # validators and every non-`test_` module beside them (a suite file can import
 # one -- extraction_validators.py), the fingerprint's own definition and the mock
-# that advertises tools, and the engine's tool source and build inputs.
+# that advertises tools, and the engine's tool source and build inputs. The
+# harness modules the validators import join these through
+# `harness_import_closure`, computed on the checked-out tree in
+# `instrument_touched_suites`.
 INSTRUMENT_EVERY_SUITE_RE = re.compile(
     r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
     r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
     r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json))$"
 )
-# A per-skill validator file moves only its own suite's fingerprint.
+# A per-skill validator file moves its own suite's fingerprint, and every
+# suite's when its harness imports change.
 INSTRUMENT_SUITE_VALIDATOR_RE = re.compile(r"^eval/harness/validators/test_([a-z0-9_]+)\.py$")
+# A module that could have been in the base's closure: deleted, it is absent from
+# the closure computed on the checked-out tree.
+INSTRUMENT_DELETED_MODULE_RE = re.compile(r"^eval/harness/(?!tests/|validators/)[^\s]+\.py$")
 
 _tool_catalog_cache: dict | None = None
 
@@ -679,14 +717,43 @@ def _tool_catalog() -> dict:
     return _tool_catalog_cache
 
 
+def _harness_imports_moved(path: str, validators_dir: Path) -> bool:
+    """Whether a touched suite validator's direct harness imports differ between
+    the merge base and head. Every validator file seeds `harness_import_closure`,
+    so a changed import can move `validators.shared` for every suite. An
+    unreadable base counts as moved: the gate must not pass on a read it skipped."""
+    name = Path(path).name
+    head_file = REPO_ROOT / path
+    head = head_file.read_text(encoding="utf-8") if head_file.is_file() else ""
+    try:
+        base = git_show_at_merge_base(path) or ""
+    except BaseUnreadable as e:
+        gh_warning(f"rule 2c: could not read `{path}` at the merge base ({e}); opening every suite.")
+        return True
+    return validator_harness_imports(name, base, validators_dir) != validator_harness_imports(
+        name, head, validators_dir
+    )
+
+
 def instrument_touched_suites(touched_paths: set[str], all_suites: set[str]) -> set[str]:
-    """Suites whose instrument fingerprint a PR's paths could move."""
+    """Suites whose instrument fingerprint a PR's paths could move.
+
+    `validators.shared` covers every harness module the validators import,
+    transitively, so a touched module in that closure marks every suite; so does
+    a deleted harness module (it may have been in the base's closure), and a
+    suite validator whose own harness imports changed."""
+    validators_dir = REPO_ROOT / "eval" / "harness" / "validators"
+    closure = {f"eval/harness/{rel}" for rel in harness_import_closure(validators_dir)}
     out: set[str] = set()
     for path in touched_paths:
-        if INSTRUMENT_EVERY_SUITE_RE.match(path):
+        if INSTRUMENT_EVERY_SUITE_RE.match(path) or path in closure:
+            return set(all_suites)
+        if INSTRUMENT_DELETED_MODULE_RE.match(path) and not (REPO_ROOT / path).exists():
             return set(all_suites)
         m = INSTRUMENT_SUITE_VALIDATOR_RE.match(path)
         if m:
+            if _harness_imports_moved(path, validators_dir):
+                return set(all_suites)
             suite = m.group(1).replace("_", "-")
             if suite in all_suites and path.endswith(suite_validator_file(suite)):
                 out.add(suite)
@@ -747,7 +814,10 @@ def rule2c_instrument(
         blocking.append("tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)")
     warning = []
     if moved("validators", "shared"):
-        warning.append("validators.shared (`test_universal.py` / `validators_lib.py`)")
+        warning.append(
+            "validators.shared (`test_universal.py` / `validators_lib.py`, or a harness "
+            "module the validators import)"
+        )
     if moved("tools", "live"):
         warning.append("tools.live (a LIVE_TOOLS description/inputSchema)")
     stored_live = stored.get("live_modules") or {}

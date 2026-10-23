@@ -745,11 +745,15 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     a sandbox created before the proxy deploy still routes through the proxy
     after reconnect. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
     keeps tool search on regardless of the base URL (measured: probe P3b,
-    2026-09-11, ``make probe-gateway-path``).
+    2026-09-11, ``make probe-gateway-path``). ``CLAUDE_CODE_FORK_SUBAGENT=0`` keeps
+    the Agent tool from offering ``subagent_type: "fork"`` (on by default in the
+    SDK from CLI 2.1.302): a fork inherits the main thread's context and tools, not
+    a plugin agent's ``tools:`` list.
     """
     env: dict[str, str] = {
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
     }
     base_url = _current_base_url()
     if base_url:
