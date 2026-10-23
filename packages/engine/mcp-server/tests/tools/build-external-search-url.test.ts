@@ -273,8 +273,11 @@ describe("build_external_search_url", () => {
     });
 
     // Every openarch expectation below is the probe-confirmed shape (measured
-    // 2026-10-22): this exact marriage URL returned the 24-6-1827 Rijnsburg
-    // marriage the issue's feedback bundle asked for (issue #3185 / #3473).
+    // 2026-10-22): the name-only marriage URL returned the 24-6-1827 Rijnsburg
+    // marriage the issue's feedback bundle asked for, while the site's
+    // eventtype/eventplace URL filters hid existing records (an 1800 baptism,
+    // every spelling of a comma-qualified place) — so `name` is the only
+    // parameter sent, and the URLs here must stay filter-free.
     it("openarch: a name-only search joins the parts into the free-text name field, on the English UI", () => {
       const r = buildExternalSearchUrl({
         site: "openarch",
@@ -285,56 +288,87 @@ describe("build_external_search_url", () => {
       expect(r.url).toBe("https://www.openarchieven.nl/search.php?lang=en&name=Patrick+Flynn");
     });
 
-    it("openarch: marriage attributes become eventtype=Huwelijk, eventplace, and a YYYY-YYYY period inside name", () => {
+    it("openarch: a marriage year rides inside name as a YYYY-YYYY period — never as eventtype/eventplace filters", () => {
       const r = buildExternalSearchUrl({
         site: "openarch",
         attributes: { givenName: "Maijert", surname: "Zwaan", marriageYear: 1827, marriagePlace: "Rijnsburg" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toBe(
-        "https://www.openarchieven.nl/search.php?lang=en&name=Maijert+Zwaan+1827-1827" +
-          "&eventtype=Huwelijk&eventplace=Rijnsburg",
+      expect(r.url).toBe("https://www.openarchieven.nl/search.php?lang=en&name=Maijert+Zwaan+1827-1827");
+      expect(r.url).not.toContain("eventtype");
+      expect(r.url).not.toContain("eventplace");
+      // The supplied place reaches the user as results-page guidance instead.
+      expect(r.notes.some((n) => /narrow by event type and the place \(Rijnsburg\) on the results page/.test(n))).toBe(
+        true,
       );
     });
 
-    it("openarch: birth attributes become eventtype=Geboorte", () => {
+    it("openarch: a birth year scopes the period the same way", () => {
       const r = buildExternalSearchUrl({
         site: "openarch",
         attributes: { surname: "Zwaan", birthYear: 1802, birthPlace: "Rijnsburg" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toBe(
-        "https://www.openarchieven.nl/search.php?lang=en&name=Zwaan+1802-1802" +
-          "&eventtype=Geboorte&eventplace=Rijnsburg",
-      );
+      expect(r.url).toBe("https://www.openarchieven.nl/search.php?lang=en&name=Zwaan+1802-1802");
     });
 
-    it("openarch: death attributes become eventtype=Overlijden", () => {
+    it("openarch: a death year scopes the period the same way", () => {
       const r = buildExternalSearchUrl({
         site: "openarch",
         attributes: { givenName: "Maijert", surname: "Zwaan", deathYear: 1871, deathPlace: "Rijnsburg" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toBe(
-        "https://www.openarchieven.nl/search.php?lang=en&name=Maijert+Zwaan+1871-1871" +
-          "&eventtype=Overlijden&eventplace=Rijnsburg",
-      );
+      expect(r.url).toBe("https://www.openarchieven.nl/search.php?lang=en&name=Maijert+Zwaan+1871-1871");
     });
 
-    it("openarch: a place-only event sets eventtype and eventplace with no period in name", () => {
+    it("openarch: a place-only event adds no period and no filters — the place goes to the guidance note", () => {
       const r = buildExternalSearchUrl({
         site: "openarch",
         attributes: { givenName: "Maijert", surname: "Zwaan", marriagePlace: "Rijnsburg" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toBe(
-        "https://www.openarchieven.nl/search.php?lang=en&name=Maijert+Zwaan" +
-          "&eventtype=Huwelijk&eventplace=Rijnsburg",
+      expect(r.url).toBe("https://www.openarchieven.nl/search.php?lang=en&name=Maijert+Zwaan");
+      expect(r.notes.some((n) => /the place \(Rijnsburg\) on the results page/.test(n))).toBe(true);
+    });
+
+    it("openarch: birth beats death for the period when both are supplied (precedence after marriage)", () => {
+      const r = buildExternalSearchUrl({
+        site: "openarch",
+        attributes: { surname: "Zwaan", birthYear: 1802, deathYear: 1871 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.openarchieven.nl/search.php?lang=en&name=Zwaan+1802-1802");
+      expect(r.notes.some((n) => /'deathYear' is not used by openarch when birth attributes are supplied/.test(n))).toBe(
+        true,
       );
+    });
+
+    it("openarch: hyphens in name parts become spaces (the site's exclude operator), the period's hyphen stays", () => {
+      const r = buildExternalSearchUrl({
+        site: "openarch",
+        attributes: { givenName: "Johanna-Willemina", surname: "van der Zwaan", birthYear: 1795 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://www.openarchieven.nl/search.php?lang=en&name=Johanna+Willemina+van+der+Zwaan+1795-1795",
+      );
+    });
+
+    it("openarch: a year/place with no name part refuses as no_attributes, saying why", () => {
+      const r = buildExternalSearchUrl({
+        site: "openarch",
+        attributes: { marriageYear: 1827, marriagePlace: "Rijnsburg" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+      expect(r.errors.some((e) => /takes only the name field/.test(e))).toBe(true);
     });
 
     it("library_archives_canada: FirstName/LastName/YearOfBirth, fixed DataSource+ST", () => {
@@ -1328,7 +1362,7 @@ describe("build_external_search_url", () => {
       expect(r.notes.some((n) => /'deathPlace' is not used by antenati when birthPlace is supplied/.test(n))).toBe(true);
     });
 
-    it("notes every attribute of openarch's losing events — one event per search, nothing mixed in", () => {
+    it("notes every attribute of openarch's losing events — and never the winning event's own", () => {
       const r = buildExternalSearchUrl({
         site: "openarch",
         attributes: {
@@ -1343,14 +1377,16 @@ describe("build_external_search_url", () => {
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       // Marriage wins whole: the birth year must NOT period-filter the
-      // marriage search, and the death place must not scope it.
+      // marriage search, and nothing but the name+period reaches the URL.
       expect(r.url).toContain("name=Maijert+Zwaan+1827-1827");
-      expect(r.url).toContain("eventtype=Huwelijk");
-      expect(r.url).toContain("eventplace=Rijnsburg");
       expect(r.url).not.toContain("1802");
       expect(r.url).not.toContain("Katwijk");
       expect(r.notes.some((n) => /'birthYear' is not used by openarch when marriage attributes are supplied/.test(n))).toBe(true);
       expect(r.notes.some((n) => /'deathPlace' is not used by openarch when marriage attributes are supplied/.test(n))).toBe(true);
+      // The winning event's own attributes are USED (period + guidance note),
+      // so a "not used" note naming them would be false.
+      expect(r.notes.some((n) => /'marriageYear' is not used/.test(n))).toBe(false);
+      expect(r.notes.some((n) => /'marriagePlace' is not used/.test(n))).toBe(false);
     });
 
     it("notes when this call's value replaces one already in the curated baseUrl", () => {

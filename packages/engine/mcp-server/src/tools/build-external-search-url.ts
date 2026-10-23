@@ -313,34 +313,51 @@ function chroniclingAmericaWindow(a: BuildExternalSearchUrlAttributes): YearWind
 
 // ─── OpenArch's one-event slot ───────────────────────────────────────────────
 
-// OpenArch (openarchieven.nl) filters by a single `eventtype` per search, and
-// the year is not its own parameter: a trailing "YYYY-YYYY" inside `name` is
-// parsed as a period filter — the results page echoes it back as "from the
-// period 1827-1827" (measured 2026-10-22; a single year passes as both ends,
-// the same collapse digitalarkivet's range fields use). The chosen event
-// supplies eventtype, eventplace and the period TOGETHER — independent
-// fallbacks would let a birth year period-filter a marriage search, whose
-// zero hits then read as evidence of absence. Marriage first: Dutch civil
-// marriage acts carry the most identifying detail, and a marriage hunt is the
-// search that motivated the site (issue #3185). The losing events' attributes
-// are reported by `siteNotes`, not silently dropped.
+// OpenArch (openarchieven.nl): `name` is the ONLY parameter this tool sends.
+// The year is not its own parameter — a trailing "YYYY-YYYY" inside `name` is
+// parsed as a period filter, echoed back as "from the period 1827-1827"
+// (measured 2026-10-22; a single year passes as both ends, the same collapse
+// digitalarkivet's range fields use). The site's `eventtype` and `eventplace`
+// URL filters are deliberately NOT sent — both hide records that exist, and a
+// zero from them reads as evidence of absence (all measured 2026-10-22):
+//   - `eventtype` matches record-level type values, which church-book (DTB)
+//     records carry differently per archive ("Doop" vs "DTB Dopen"): a 1800
+//     Rijnsburg baptism returns 2 rows without `eventtype=Geboorte` and none
+//     with it, and post-1811 baptisms often have no civil-birth row at all.
+//   - `eventplace` matches the place as each record spells it: the full
+//     comma-qualified FamilySearch form returns nothing, and no transform is
+//     safe (The Hague vs 's-Gravenhage, Katwijk aan Zee vs Katwijk).
+// The user applies both as facets on the results page instead — `siteNotes`
+// says so on every call that supplied an event. One event is still chosen,
+// because its year scopes the period. Marriage first: Dutch civil marriage
+// acts carry the most identifying detail, and a marriage hunt is the search
+// that motivated the site. The losing events' attributes are reported by
+// `siteNotes`, not silently dropped.
 interface OpenarchEvent {
   key: "marriage" | "birth" | "death";
-  type: string;
   year?: string;
   place?: string;
 }
 
 function openarchChosenEvent(a: BuildExternalSearchUrlAttributes): OpenarchEvent | undefined {
-  // Dutch facet values, sent even by the site's English UI — the live form's
-  // option values are Dutch under English labels (value="Huwelijk", label
-  // "Marriage"; measured 2026-10-22).
   const candidates: OpenarchEvent[] = [
-    { key: "marriage", type: "Huwelijk", year: numYear(a.marriageYear), place: str(a.marriagePlace) },
-    { key: "birth", type: "Geboorte", year: numYear(a.birthYear), place: str(a.birthPlace) },
-    { key: "death", type: "Overlijden", year: numYear(a.deathYear), place: str(a.deathPlace) },
+    { key: "marriage", year: numYear(a.marriageYear), place: str(a.marriagePlace) },
+    { key: "birth", year: numYear(a.birthYear), place: str(a.birthPlace) },
+    { key: "death", year: numYear(a.deathYear), place: str(a.deathPlace) },
   ];
   return candidates.find((c) => c.year !== undefined || c.place !== undefined);
+}
+
+// A hyphen inside a name part is the site's EXCLUDE operator:
+// "Johanna-Willemina" excludes Willemina (measured 2026-10-22 — 542 unrelated
+// rows, against the 1 right baptism when sent with a space). Hyphens become
+// spaces here; the period's own hyphen is composed in the case arm and never
+// passes through.
+function openarchNamePart(v: unknown): string | undefined {
+  const s = str(v);
+  if (s === undefined) return undefined;
+  const cleaned = s.replace(/-/g, " ").replace(/\s+/g, " ").trim();
+  return cleaned.length > 0 ? cleaned : undefined;
 }
 
 // ─── Per-site parameter tables (spec §4) ─────────────────────────────────────
@@ -564,12 +581,20 @@ function siteWideParams(
         keywords: joinPresent(" ", a.givenName, a.surname, a.keywords),
       };
     case "openarch": {
-      // `name` is one free-text field: given name, surname, and the chosen
-      // event's "YYYY-YYYY" period, space-joined. The event slot and the
-      // Dutch `eventtype` values: `openarchChosenEvent` above.
-      const givenName = str(a.givenName);
-      const surname = str(a.surname);
+      // Given name, surname and the chosen event's "YYYY-YYYY" period,
+      // space-joined into the one `name` field (hyphens in the name parts
+      // become spaces — the site's exclude operator; `openarchNamePart`).
+      // `eventtype`/`eventplace` are deliberately absent: `openarchChosenEvent`.
+      // Every read, including `openarchChosenEvent`, stays ABOVE the no-name
+      // return — RECOGNIZED_KEYS records these reads, and a read only behind
+      // the return would report the event year "supplied but ignored". With
+      // no name part nothing is emitted at all: a bare "1827-1827" is not a
+      // person search, and returning {} lets the `no_attributes` gate refuse
+      // with the note `siteNotes` adds.
+      const givenName = openarchNamePart(a.givenName);
+      const surname = openarchNamePart(a.surname);
       const event = openarchChosenEvent(a);
+      if (givenName === undefined && surname === undefined) return {};
       return {
         name: joinPresent(
           " ",
@@ -577,8 +602,6 @@ function siteWideParams(
           surname,
           event?.year === undefined ? undefined : `${event.year}-${event.year}`,
         ),
-        eventtype: event?.type,
-        eventplace: event?.place,
       };
     }
     case "archion":
@@ -739,8 +762,7 @@ const SITE_FIXED_PARAMS: Partial<Record<ExternalSearchSite, Record<string, strin
   // The exact fields on the one confirmed-working search URL.
   italian_genealogy: { terms: "all", sf: "all", sr: "posts" },
   // The English UI's own hidden field (measured 2026-10-22); without it the
-  // hand-off lands on the Dutch UI. Filter values (`eventtype`) stay Dutch
-  // either way.
+  // hand-off lands on the Dutch UI.
   openarch: { lang: "en" },
 };
 
@@ -792,6 +814,12 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   matricula:
     "browse, not search: open the parish page, pick the register type (Taufen, Trauungen, " +
     "Sterbefälle) and the volume covering the year, then page to the image — free to view",
+  // Measured 2026-10-22: HTTP 200 with no challenge from four regions, but two
+  // other vantages (a residential ISP and a cloud fetcher) had the TCP
+  // connection dropped outright. Without the note, a timeout reads as a nil.
+  openarch:
+    "some networks are refused by this site outright (connection drop, no challenge page) — a page " +
+    "that never loads is the network being blocked, not evidence the record is missing",
   digital_newspaper_archive:
     "this archive's URL carries no date filter — tell the user which date range to set in the site's own UI. " +
     "The access classification is this class's default, NOT checked against this archive: if it turns out to " +
@@ -1174,14 +1202,37 @@ function siteNotes(
       );
       break;
     case "openarch": {
-      // One event per search (`openarchChosenEvent`): a valid attribute
-      // belonging to a losing event is dropped whole — not shadowed into a
-      // shared field like antenati's — and silence would read as a search
-      // scoped by it. `shadowedNotes` can't say this: it reports only when two
-      // candidates compete for one field, and a lone `birthYear` beside a
-      // `marriagePlace` has no competitor, it is just unused.
+      const given = openarchNamePart(a.givenName);
+      const surname = openarchNamePart(a.surname);
       const chosen = openarchChosenEvent(a);
+      if (given === undefined && surname === undefined) {
+        // The case arm emitted no parameter, so this rides into the
+        // `no_attributes` errors — the caller learns WHY a year/place-only
+        // call refused rather than seeing a bare "no attributes".
+        if (chosen !== undefined) {
+          notes.push(
+            `${site} takes only the name field — a year or place with no givenName/surname builds no search`,
+          );
+        }
+        break;
+      }
       if (chosen === undefined) break;
+      // The URL deliberately carries no eventtype/eventplace filters
+      // (`openarchChosenEvent` has the measurements) — the user narrows on
+      // the results page, and the note must say so or the caller believes
+      // the supplied place scoped the search.
+      notes.push(
+        `event type and place are not sent as URL filters on ${site} — they match record-level values ` +
+          `(church-book register types, places as each record spells them) and hide records that exist — ` +
+          `narrow by event type${chosen.place === undefined ? " and place" : ` and the place (${chosen.place})`} ` +
+          `on the results page instead`,
+      );
+      // One event per search: a valid attribute belonging to a losing event is
+      // dropped whole — not shadowed into a shared field like antenati's — and
+      // silence would read as a search scoped by it. `shadowedNotes` can't say
+      // this: it reports only when two candidates compete for one field, and a
+      // lone `birthYear` beside a `marriagePlace` has no competitor, it is
+      // just unused.
       const eventAttrs: Array<
         [keyof BuildExternalSearchUrlAttributes, unknown, (v: unknown) => string | undefined]
       > = [
@@ -1195,7 +1246,7 @@ function siteNotes(
       for (const [key, value, validate] of eventAttrs) {
         if (!key.startsWith(chosen.key) && validate(value) !== undefined) {
           notes.push(
-            `'${key}' is not used by ${site} when ${chosen.key} attributes are supplied — the site searches one event per URL`,
+            `'${key}' is not used by ${site} when ${chosen.key} attributes are supplied — one event's year scopes the name-field period`,
           );
         }
       }

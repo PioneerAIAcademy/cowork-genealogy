@@ -202,7 +202,10 @@ so the line is built here rather than in the agent.
   `chronicling_america` (page coverage runs 1798–1963, title-by-title and
   complete for no state, so a nil never means no newspaper covered the
   event), `digital_newspaper_archive` (the URL carries no date filter —
-  the user sets the range in the site's own UI), and the two browse sites
+  the user sets the range in the site's own UI), `openarch` (some networks
+  are refused by the site outright — a page that never loads is the network
+  being blocked, not evidence the record is missing; measured 2026-10-22),
+  and the two browse sites
   `archion` and `matricula` (the path through the site — parish → register
   type → volume → image — and, for Archion, that viewing needs a pass; §3.11).
 - **A browse site called without `baseUrl`** returns the site root with a note
@@ -298,7 +301,7 @@ no `standardPlace` input. The full behaviour is in §3.11.
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
-Unlike the other sixteen sites, `digital_newspaper_archive` has no fixed
+Unlike the other seventeen sites, `digital_newspaper_archive` has no fixed
 site-wide URL — it is an open bucket for whichever state/regional free
 archive applies to the place being researched (Utah Digital Newspapers,
 California Digital Newspaper Collection, …), and "which one is identified by
@@ -317,7 +320,7 @@ notes, `no_attributes`.
 
 ### 3.4 Fixed parameters
 
-Five sites carry a parameter with no attribute behind it at all, applied on
+Six sites carry a parameter with no attribute behind it at all, applied on
 every call regardless of `baseUrl` (§3.2):
 
 | Site | Fixed parameter | Why |
@@ -327,6 +330,7 @@ every call regardless of `baseUrl` (§3.2):
 | `archives_gov` | `dataSource=authority`, `availableOnline=false` | Scopes the catalog to person/org name-authority records, matching `personOrOrg` — without it the same field is read by the archival-description search instead |
 | `library_archives_canada` | `DataSource=Genealogy\|Census`, `ST=SCTB` | Required by the search-form's own client JS to select the census/genealogy dataset before redirecting to the results endpoint |
 | `italian_genealogy` | `terms=all`, `sf=all`, `sr=posts` | The exact fields present on the one confirmed-working search URL; omitting them was not tested and is not assumed safe |
+| `openarch` | `lang=en` | The English UI's own hidden form field (measured 2026-10-22) — without it the hand-off lands on the Dutch UI |
 
 ### 3.5 Free-text `keywords`
 
@@ -341,9 +345,10 @@ It is appended after the name, space-joined like the name itself. A caller
 wanting an exact-phrase match includes its own quote marks in `keywords`
 (e.g. `'"Patrick Flynn"'`); the tool does not add or strip quoting, only
 templates and encodes whatever string it is given. `keywords` is not a
-recognized attribute for the eight structured-field sites (`ancestry`,
+recognized attribute for the nine structured-field sites (`ancestry`,
 `myheritage`, `findmypast`, `findagrave`, `billiongraves`, `digitalarkivet`,
-`antenati`, `library_archives_canada`) — supplying it there produces the
+`antenati`, `library_archives_canada`, `openarch` — whose `name` field is a
+name search, not a keyword search) — supplying it there produces the
 "not used by `<site>`" note (§3.1) rather than being silently absorbed
 somewhere unexpected.
 
@@ -502,7 +507,7 @@ here — this section documents the same mapping the implementation embeds.
 | `library_archives_canada` | `https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result` | `DataSource=Genealogy\|Census`, `ST=SCTB` (required by the search form's own client JS to select the census/genealogy dataset before the results redirect) | `FirstName`, `LastName`, `YearOfBirth` (`birthYear`). Deliberately omits `ProvinceCode`/`GenderCode`/`MaritalStatusCode` — coded `<select>` values with no verified string mapping, and no death data exists in a census (it records the living population at census time) |
 | `american_ancestors` | `https://app.americanancestors.org/SearchResults/AdvancedSearch` | — | `Keywords` (`givenName`+`surname`+`keywords`, space-joined — **not** `Name.First`/`Name.Last`, confirmed non-binding via round-trip GET reflection testing), `Location` (`birthPlace`, falling back to `deathPlace`), `FromYear`/`ToYear` (both set to `birthYear`) |
 | `italian_genealogy` | `https://www.italiangenealogy.com/forum/search` | `terms=all`, `sf=all`, `sr=posts` (the exact fields present on the one confirmed-working search URL — omitting them was not tested) | `keywords` (`givenName`+`surname`+`keywords`, space-joined). A phpBB forum, not a records database — no structured name/date/place fields exist anywhere on the site |
-| `openarch` | `https://www.openarchieven.nl/search.php` | `lang=en` (the English UI's own hidden field; filter values stay Dutch) | `name` (`givenName`+`surname`, space-joined, plus the chosen event's year as a trailing `YYYY-YYYY` period — the site's own in-field syntax, echoed back as "from the period …"; a single year is passed as both ends), `eventtype` (the **Dutch** facet value even on the English UI: `Huwelijk`/`Geboorte`/`Overlijden` — the form's option values are Dutch under English labels), `eventplace` (the chosen event's place). **One event per search**, marriage > birth > death, with type, place and period taken from the chosen event *together* — an independent fallback would let a birth year period-filter a marriage search into a false nil; the losing events' attributes are reported in `notes`. Measured 2026-10-22: the marriage URL for Maijert Zwaan × Rijnsburg returns the 24-6-1827 civil marriage |
+| `openarch` | `https://www.openarchieven.nl/search.php` | `lang=en` (§3.4) | `name` only: `givenName`+`surname` (hyphens inside a name part become spaces — a hyphen is the site's *exclude* operator, measured 2026-10-22 turning "Johanna-Willemina" into 542 unrelated rows against the 1 right baptism) plus the chosen event's year as a trailing `YYYY-YYYY` period — the site's own in-field syntax, echoed back as "from the period …"; a single year is passed as both ends. **The site's `eventtype`/`eventplace` URL filters are deliberately never sent** (measured 2026-10-22): `eventtype` matches record-level type values that church-book (DTB) records carry differently per archive, so a 1800 baptism found without it vanishes under `eventtype=Geboorte`; `eventplace` matches the place as each record spells it, so every form of a comma-qualified FamilySearch place returns nothing ('s-Gravenhage vs The Hague). A `notes` entry tells the user to narrow by event type and place on the results page, naming the supplied place. **One event per search**, marriage > birth > death — its year scopes the period, and the losing events' attributes are reported in `notes`. A call with a year/place but no name part refuses as `no_attributes` (a bare period is not a person search). Measured 2026-10-22: the name+period URL for Maijert Zwaan 1827 returns 3 rows including both 24-6-1827 Rijnsburg civil-marriage entries |
 | `archion` | `https://www.archion.de/de/` (the site root, returned only without `baseUrl`) | — | none — **browse, not search** (§3.11): the caller's parish `baseUrl` is returned unchanged |
 | `matricula` | `https://data.matricula-online.eu/de/` (likewise) | — | none — **browse, not search** (§3.11) |
 
@@ -652,10 +657,12 @@ nil.
 
 - **One passing case per site** — the eighteen rows in §4, each producing the
   documented parameter names with the correct join/encoding.
-- **openarch's one-event slot** — marriage/birth/death each map to their Dutch
-  `eventtype` with the year as a `YYYY-YYYY` period inside `name`; when several
-  events' attributes are supplied, the marriage set wins whole and every losing
-  attribute gets a note.
+- **openarch's one-event slot** — the chosen event's year rides as a
+  `YYYY-YYYY` period inside `name`, and no `eventtype`/`eventplace` parameter
+  is ever emitted; marriage wins over birth wins over death (each precedence
+  hop pinned), losing attributes get notes and the winning event's own never
+  do, hyphens in name parts become spaces, and a year/place-only call refuses
+  as `no_attributes` with a note saying why.
 - **Chronicling America's corrections** — `dates=YYYY/YYYY` (never
   `start_date`/`end_date`), and `q` (never `qs`).
 - **`keywords`** — appended on the seven free-text sites; produces a "not
