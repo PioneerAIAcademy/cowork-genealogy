@@ -2131,11 +2131,25 @@ def _grade_with(monkeypatch, rubric, responses):
     return client, out
 
 
+def _assert_pinned(call):
+    """SDK 2.x has no `temperature` kwarg and its default API version 400s on one."""
+    assert "temperature" not in call
+    assert call["extra_body"] == {"temperature": 0.0}
+    assert call["extra_headers"] == {"anthropic-version": "2023-06-01"}
+
+
+def _assert_unpinned(call):
+    """Default sampling goes out on the SDK's own API version, with nothing added."""
+    assert "temperature" not in call
+    assert "extra_body" not in call
+    assert "extra_headers" not in call
+
+
 def test_judge_first_sample_is_temperature_pinned(sample_rubric, monkeypatch):
     """One transcript should grade the same way run to run."""
     client, _ = _grade_with(monkeypatch, sample_rubric, [_parseable_response()])
     assert len(client.calls) == 1
-    assert client.calls[0]["temperature"] == 0.0
+    _assert_pinned(client.calls[0])
     assert judge.JUDGE_TEMPERATURE == 0.0
 
 
@@ -2162,8 +2176,8 @@ def test_judge_resample_drops_back_to_default_sampling(sample_rubric, monkeypatc
         monkeypatch, sample_rubric, [_malformed_response(), _parseable_response()]
     )
     assert len(client.calls) == 2
-    assert client.calls[0]["temperature"] == 0.0
-    assert "temperature" not in client.calls[1]
+    _assert_pinned(client.calls[0])
+    _assert_unpinned(client.calls[1])
     assert [d["name"] for d in out.dimensions] == [
         "Correctness",
         "Completeness",
@@ -2221,7 +2235,51 @@ def test_create_message_omits_temperature_when_none():
         client=client, model="m", prefix="p", suffix="s",
         grading_tool=judge.GRADING_TOOL, temperature=None,
     )
-    assert "temperature" not in client.calls[0]
+    _assert_unpinned(client.calls[0])
+
+
+def _wire_requests(temperature):
+    """Send one judge call through the real SDK and return what reached the wire."""
+    import json
+
+    import anthropic
+    import httpx2
+
+    seen = []
+
+    def handler(request):
+        seen.append((request.headers.get("anthropic-version"), json.loads(request.content)))
+        return httpx2.Response(200, json={
+            "id": "msg_1", "type": "message", "role": "assistant", "model": "m",
+            "content": [{"type": "tool_use", "id": "t1", "name": "submit_grading",
+                         "input": {"dimensions": []}}],
+            "stop_reason": "tool_use", "stop_sequence": None,
+            "usage": {"input_tokens": 1, "output_tokens": 1},
+        })
+
+    client = anthropic.Anthropic(
+        api_key="k", http_client=httpx2.Client(transport=httpx2.MockTransport(handler))
+    )
+    judge._create_message_with_retry(
+        client=client, model="m", prefix="p", suffix="s",
+        grading_tool=judge.GRADING_TOOL, temperature=temperature,
+    )
+    return seen
+
+
+def test_pinned_call_reaches_the_wire_on_the_legacy_api_version():
+    """The fake-client tests above cannot see an SDK signature change; this runs the
+    installed SDK, whose 2.x drops `temperature` from create() and defaults to an API
+    version that 400s on it."""
+    [(version, body)] = _wire_requests(0.0)
+    assert version == "2023-06-01"
+    assert body["temperature"] == 0.0
+
+
+def test_unpinned_call_keeps_the_sdk_default_api_version():
+    [(version, body)] = _wire_requests(None)
+    assert version != "2023-06-01"
+    assert "temperature" not in body
 
 
 def _connection_error():

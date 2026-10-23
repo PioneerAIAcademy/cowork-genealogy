@@ -497,3 +497,116 @@ def test_a_skip_keyword_that_changes_behaviour_stays_in_the_hash():
     module_level = "def test_a(x):\n    pytest.skip('why', allow_module_level=True)\n"
     assert canonical_module(plain) != canonical_module(module_level)
     assert canonical_module(plain) == canonical_module("def test_a(x):\n    pytest.skip(reason='other words')\n")
+
+
+# --- harness_import_closure (issue #3691 item 3) -----------------------------------
+
+
+def _harness_tree(root: Path, files: dict[str, str]) -> Path:
+    """A synthetic `eval/harness/` under `root`; returns its `validators/` dir."""
+    for rel, text in files.items():
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    (root / "validators").mkdir(exist_ok=True)
+    return root / "validators"
+
+
+_CLOSURE_TREE = {
+    "harness/__init__.py": "",
+    "validators/validators_lib.py": "def helper():\n    from harness.lazy import x\n    return x\n",
+    "validators/test_universal.py": "import harness.plain\n",
+    "validators/test_demo.py": "from harness import bare\nfrom provenance_report import f\nimport json, jsonschema\n",
+    "validators/sibling.py": "from harness.via_sibling import y\n",
+    "harness/lazy.py": "x = 1\n",
+    "harness/plain.py": "from .relative import z\n",
+    "harness/relative.py": "from . import dotted\nz = 2\n",
+    "harness/dotted.py": "d = 4\n",
+    "harness/bare.py": "from harness.transitive import t\n",
+    "harness/transitive.py": "t = 3\n",
+    "harness/via_sibling.py": "y = 5\n",
+    "harness/unreached.py": "u = 6\n",
+    "provenance_report.py": "def f():\n    return 7\n",
+    "tests/helpers.py": "h = 8\n",
+    "validators/test_imports_tests.py": "import tests.helpers\n",
+    "validators/test_imports_sibling.py": "import validators.sibling\nfrom harness.sub import deep\n",
+    "harness/sub/__init__.py": "",
+    "harness/sub/deep.py": "from ..two_up import w\nfrom .... import beyond_top\n",
+    "harness/two_up.py": "w = 9\n",
+    # what `from .... import beyond_top` would wrongly reach without the past-top guard
+    "harness/beyond_top.py": "b = 10\n",
+}
+
+
+def test_the_closure_follows_every_import_form_and_stops_at_dead_ends(tmp_path):
+    """In-function, `import harness.x`, `from harness import x`, relative imports
+    (`from .x import`, `from . import x`, `from ..x import`, and one past the top,
+    which is dropped), a top-level module and transitive imports are followed,
+    with the package's `__init__.py`; the stdlib, third-party, `validators/`
+    siblings (even as `import validators.x`) and `tests/` are not, and an
+    unimported module stays out."""
+    validators = _harness_tree(tmp_path, _CLOSURE_TREE)
+    assert instrument.harness_import_closure(validators) == [
+        "harness/__init__.py",
+        "harness/bare.py",
+        "harness/dotted.py",
+        "harness/lazy.py",
+        "harness/plain.py",
+        "harness/relative.py",
+        "harness/sub/__init__.py",
+        "harness/sub/deep.py",
+        "harness/transitive.py",
+        "harness/two_up.py",
+        "harness/via_sibling.py",
+        "provenance_report.py",
+    ]
+
+
+def test_a_body_change_in_a_closure_module_moves_shared_and_a_docstring_does_not(tmp_path):
+    """Both directions on one tree: the transitive module's body moves `shared`
+    (not `suite`), then a docstring added to it moves nothing."""
+    validators = _harness_tree(tmp_path, _CLOSURE_TREE)
+    base = validators_fingerprint("demo", validators)
+    target = tmp_path / "harness" / "transitive.py"
+    target.write_text("t = 4\n", encoding="utf-8")
+    moved = validators_fingerprint("demo", validators)
+    assert moved["shared"] != base["shared"] and moved["suite"] == base["suite"]
+    target.write_text('"""Now with a docstring."""\nt = 4\n', encoding="utf-8")
+    assert validators_fingerprint("demo", validators) == moved
+
+
+def test_a_module_outside_the_closure_moves_nothing(tmp_path):
+    validators = _harness_tree(tmp_path, _CLOSURE_TREE)
+    base = validators_fingerprint("demo", validators)
+    (tmp_path / "harness" / "unreached.py").write_text("u = 9\n", encoding="utf-8")
+    assert validators_fingerprint("demo", validators) == base
+
+
+def test_the_real_closure_reaches_what_the_validators_import():
+    """On the real tree. `fixtures.py` and `context_policy.py` are reached only
+    through other harness modules; `judge.py` is not reached at all."""
+    closure = instrument.harness_import_closure(VALIDATORS)
+    for rel in (
+        "harness/dates.py",
+        "harness/mock_mcp.py",
+        "harness/fixtures.py",
+        "harness/context_policy.py",
+        "harness/instrument.py",
+        "harness/snapshot.py",
+        "harness/__init__.py",
+        "provenance_report.py",
+    ):
+        assert rel in closure, rel
+    assert "harness/judge.py" not in closure
+    assert not any(rel.startswith(("validators/", "tests/")) for rel in closure)
+
+
+def test_validator_harness_imports_reads_one_file_without_following_it(tmp_path):
+    validators = _harness_tree(tmp_path, _CLOSURE_TREE)
+    source = (validators / "test_demo.py").read_text(encoding="utf-8")
+    assert instrument.validator_harness_imports("test_demo.py", source, validators) == [
+        "harness/__init__.py",
+        "harness/bare.py",
+        "provenance_report.py",
+    ]
+    assert instrument.validator_harness_imports("test_demo.py", "", validators) == []
