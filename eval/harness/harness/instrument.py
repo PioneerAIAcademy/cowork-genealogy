@@ -8,7 +8,9 @@ a run log that its instrument moved since it was written (issue #2479, PR 3):
   for the suite, as a normalised whole-module AST. ``suite`` is
   ``test_<skill>.py`` plus every sibling module in ``validators/`` it imports,
   transitively (``extraction_validators.py`` for extraction-append and
-  record-structurer); ``shared`` is ``test_universal.py`` + ``validators_lib.py``.
+  record-structurer); ``shared`` is ``test_universal.py`` + ``validators_lib.py``
+  plus every harness module a validator file imports, transitively
+  (`harness_import_closure`).
 - ``tools`` -- the ``description`` and ``inputSchema`` the mock advertises, from
   ``build/tool-schemas.js``. ``fixture`` is every tool the suite's own fixtures
   serve; ``live`` is the remaining ``LIVE_TOOLS``, which every suite advertises.
@@ -19,15 +21,11 @@ The suite-specific halves (``validators.suite``, ``tools.fixture``) block;
 blocking corpus-wide input would owe a paid re-run of every suite (decided
 2026-10-14 on issue #2479; see eval/CLAUDE.md, rule 2c).
 
-Not covered, by construction: a live tool's imports beyond its entry module; and
-every module a validator file imports other than `validators_lib` -- today
-`harness.allowed_tools`, `harness.dates` (via `validators_lib`), `harness.mock_mcp`
-(the catalog read through `validators_lib.tool_input_keys`), `harness.ownership`,
-`harness.record_basis`, `harness.schema_validator`, `harness.skill_invocation`,
-`harness.skill_runner`, `harness.ts_validator`, `harness.workspace` and the
-top-level `provenance_report` (re-derive with an AST walk of the imports in
-`eval/harness/validators/*.py`). A change there can move a verdict without moving
-this fingerprint. ``ast.dump`` output is specific to the Python
+Not covered, by construction: a live tool's imports beyond its entry module;
+third-party packages; the data files closure modules read
+(`docs/specs/schemas/*.json`, through `ownership` and `schema_validator`); and the
+compiled engine validator `ts_validator` loads. A change there can move a verdict
+without moving this fingerprint. ``ast.dump`` output is specific to the Python
 minor version, so a bump from 3.12 re-hashes every suite.
 
 Stdlib-only: `check_runlogs.py` imports this on a bare interpreter.
@@ -409,12 +407,20 @@ def canonical_module(source: str) -> str:
     return ast.dump(tree, annotate_fields=True, include_attributes=False)
 
 
+# Keyed on the source text: rule 2c fingerprints every suite in one process, and
+# the shared files are the same for each.
+_hash_cache: dict[str, str] = {}
+
+
 def hash_validator_file(path: Path) -> str:
     """Hash of `canonical_module`, or of an "absent" marker for a missing file,
     so the file appearing later counts as a change."""
     if not path.is_file():
         return _sha(f"absent:{path.name}")
-    return _sha(canonical_module(path.read_text(encoding="utf-8")))
+    source = path.read_text(encoding="utf-8")
+    if source not in _hash_cache:
+        _hash_cache[source] = _sha(canonical_module(source))
+    return _hash_cache[source]
 
 
 def sibling_validator_imports(path: Path, validators_dir: Path) -> list[str]:
@@ -450,8 +456,109 @@ def sibling_validator_imports(path: Path, validators_dir: Path) -> list[str]:
     return sorted(found)
 
 
+# Keyed like `_hash_cache`, plus the package a relative import resolves against.
+_import_cache: dict[tuple[str, tuple[str, ...]], frozenset[str]] = {}
+
+
+def _imported_names(source: str, package: tuple[str, ...]) -> frozenset[str]:
+    """Dotted names `source` imports anywhere, inside functions too. `from a
+    import b` yields `a` and `a.b`, since `b` may be a module; a relative import
+    is resolved against `package`, the file's directory under `eval/harness/`."""
+    if (source, package) not in _import_cache:
+        _import_cache[(source, package)] = frozenset(_parse_imported_names(source, list(package)))
+    return _import_cache[(source, package)]
+
+
+def _parse_imported_names(source: str, package: list[str]) -> set[str]:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return set()
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(a.name for a in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                if node.level - 1 > len(package):
+                    continue
+                base = package[: len(package) - (node.level - 1)]
+                module = ".".join([*base, *([node.module] if node.module else [])])
+            else:
+                module = node.module or ""
+            if module:
+                names.add(module)
+            names.update(f"{module}.{a.name}" if module else a.name for a in node.names)
+    return names
+
+
+def _resolve_harness_module(name: str, validators_dir: Path) -> Path | None:
+    """The file under `eval/harness/` a dotted name imports, or None for the
+    stdlib, third-party packages, and anything in `validators/` or `tests/`."""
+    harness_root = validators_dir.parent
+    parts = name.split(".")
+    for candidate in (
+        harness_root.joinpath(*parts).with_suffix(".py"),
+        harness_root.joinpath(*parts, "__init__.py"),
+    ):
+        if candidate.is_file():
+            real = candidate.resolve()
+            if real.is_relative_to(validators_dir.resolve()) or real.is_relative_to(
+                (harness_root / "tests").resolve()
+            ):
+                return None
+            return candidate
+    return None
+
+
+def _harness_imports(path: Path, source: str, validators_dir: Path) -> set[Path]:
+    """The harness files importing `source` runs, including each package's
+    `__init__.py`, which Python runs before any module in it."""
+    package = tuple(path.relative_to(validators_dir.parent).parent.parts)
+    found = set()
+    for name in _imported_names(source, package):
+        parts = name.split(".")
+        for depth in range(1, len(parts) + 1):
+            target = _resolve_harness_module(".".join(parts[:depth]), validators_dir)
+            if target is not None:
+                found.add(target)
+    return found
+
+
+def validator_harness_imports(name: str, source: str, validators_dir: Path) -> list[str]:
+    """The harness modules one validator file's `source` imports directly, as
+    paths relative to `eval/harness/`. `check_runlogs.py` compares this at the
+    merge base and at head: a change can move `harness_import_closure`."""
+    found = _harness_imports(validators_dir / name, source, validators_dir)
+    return sorted(p.relative_to(validators_dir.parent).as_posix() for p in found)
+
+
+def harness_import_closure(validators_dir: Path) -> list[str]:
+    """Every module under `validators_dir.parent` (`eval/harness/`) that some file
+    in `validators_dir` imports, transitively, as a path relative to it
+    (`harness/dates.py`, `provenance_report.py`). One closure for the corpus, so
+    `shared` stays one value for every suite. A name that resolves to no file
+    there, or to one in `validators/` or `tests/`, is a dead end: the stdlib,
+    third-party packages, and the validators' own siblings."""
+    found: set[Path] = set()
+    pending = sorted(validators_dir.glob("*.py"))
+    while pending:
+        current = pending.pop()
+        try:
+            source = current.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for target in _harness_imports(current, source, validators_dir):
+            if target not in found:
+                found.add(target)
+                pending.append(target)
+    return sorted(p.relative_to(validators_dir.parent).as_posix() for p in found)
+
+
 def validators_fingerprint(skill: str, validators_dir: Path) -> dict[str, str]:
     shared = {name: hash_validator_file(validators_dir / name) for name in SHARED_VALIDATOR_FILES}
+    for rel in harness_import_closure(validators_dir):
+        shared[rel] = hash_validator_file(validators_dir.parent / rel)
     suite_path = validators_dir / suite_validator_file(skill)
     suite = {suite_path.name: hash_validator_file(suite_path)}
     for name in sibling_validator_imports(suite_path, validators_dir):
