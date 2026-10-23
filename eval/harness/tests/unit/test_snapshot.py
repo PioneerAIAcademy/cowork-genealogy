@@ -13,14 +13,21 @@ from pathlib import Path
 import pytest
 
 from harness.snapshot import (
+    AGENT_FRONTMATTER_SUFFIX,
+    agent_embed_forms,
     agent_refs_in_text,
     build_snapshot,
     diff_snapshot_vs_disk,
+    frontmatter_fingerprint_text,
     hash_content,
     hash_file,
     hash_snapshot,
     normalize,
+    router_suites,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+VECTORS_PATH = REPO_ROOT / "docs" / "specs" / "schemas" / "agent-frontmatter-vectors.json"
 
 
 # ---- normalize contract --------------------------------------------------
@@ -169,10 +176,10 @@ def test_hash_file_matches_normalize(tmp_path: Path):
 
 def test_agent_refs_dedupes_and_sorts():
     text = (
-        "Delegate to `@plugin:image-reader`, the same way /research invokes\n"
+        "Delegate to `@plugin:search-images`, the same way /research invokes\n"
         "`@plugin:gps-mentor`. Then call @plugin:gps-mentor again.\n"
     )
-    assert agent_refs_in_text(text) == ["gps-mentor", "image-reader"]
+    assert agent_refs_in_text(text) == ["gps-mentor", "search-images"]
 
 
 def test_agent_refs_empty_when_no_references():
@@ -284,33 +291,181 @@ def test_diff_snapshot_still_reads_legacy_content_snapshot(tmp_path: Path):
     assert diff_snapshot_vs_disk(legacy, repo) == {rel: "content-differs"}
 
 
-def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
-    """A `@plugin:<name>` reference in SKILL.md embeds the agent's .md —
-    editing the agent prompt must flip the run log inactive, exactly like
-    editing a file inside the skill dir."""
-    repo = tmp_path
+AGENTS_REL = "packages/engine/plugin/agents"
+_AGENT_A = (
+    "---\nname: record-extractor\ndescription: >-\n  Extracts one record.\n"
+    "model: sonnet\ntools:\n  - Read\n---\nagent body\n"
+)
+_AGENT_B = "---\nname: unrelated\ndescription: Not referenced.\ntools:\n  - Read\n---\nother body\n"
+
+
+def _router_repo(repo: Path, *, run_agents=None, with_tests_dir: bool = True) -> Path:
+    """A router suite `router` (SKILL.md naming @plugin:record-extractor) plus
+    two staged agents. With `run_agents`, one test opts those agents in."""
     skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "router"
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text(
         "---\nname: router\n---\nPer record, delegate to `@plugin:record-extractor`.\n",
         encoding="utf-8",
     )
-    agents_dir = repo / "packages" / "engine" / "plugin" / "agents"
+    agents_dir = repo / AGENTS_REL
     agents_dir.mkdir(parents=True)
-    (agents_dir / "record-extractor.md").write_text(
-        "---\nname: record-extractor\n---\nagent body\n", encoding="utf-8"
-    )
-    (agents_dir / "unrelated.md").write_text(
-        "---\nname: unrelated\n---\nnot referenced\n", encoding="utf-8"
-    )
+    (agents_dir / "record-extractor.md").write_text(_AGENT_A, encoding="utf-8")
+    (agents_dir / "unrelated.md").write_text(_AGENT_B, encoding="utf-8")
+    if with_tests_dir:
+        tests_dir = repo / "eval" / "tests" / "unit" / "router"
+        tests_dir.mkdir(parents=True)
+        test = {"test": {"id": "ut_router_001", "skill": "router", "type": "negative"}}
+        if run_agents is not None:
+            test["execution"] = {"run_agents": run_agents}
+        (tests_dir / "t1.json").write_text(json.dumps(test), encoding="utf-8")
+    return repo
+
+
+def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
+    """A router suite fingerprints EVERY staged agent by its frontmatter only
+    (#3568): the referenced agent and the unreferenced one alike, each under the
+    `#frontmatter` key and never under the bare full-body key. Its body is
+    denied at the spawn, so only what the router reads can change the run."""
+    repo = _router_repo(tmp_path)
 
     snap = build_snapshot(skill="router", repo_root=repo)
-    assert "packages/engine/plugin/agents/record-extractor.md" in snap
-    assert snap["packages/engine/plugin/agents/record-extractor.md"] == hash_content(
-        "---\nname: record-extractor\n---\nagent body\n"
+
+    for name, text in (("record-extractor", _AGENT_A), ("unrelated", _AGENT_B)):
+        reduced_key = f"{AGENTS_REL}/{name}.md{AGENT_FRONTMATTER_SUFFIX}"
+        assert snap[reduced_key] == hash_content(frontmatter_fingerprint_text(text))
+        assert f"{AGENTS_REL}/{name}.md" not in snap
+
+
+def test_run_agents_opt_in_embeds_the_full_body(tmp_path: Path):
+    """An agent an included test runs live gets its full body under the bare
+    key; the others in the router suite stay reduced."""
+    repo = _router_repo(tmp_path, run_agents=["record-extractor"])
+
+    snap = build_snapshot(skill="router", repo_root=repo)
+
+    assert snap[f"{AGENTS_REL}/record-extractor.md"] == hash_content(_AGENT_A)
+    assert f"{AGENTS_REL}/record-extractor.md{AGENT_FRONTMATTER_SUFFIX}" not in snap
+    assert f"{AGENTS_REL}/unrelated.md{AGENT_FRONTMATTER_SUFFIX}" in snap
+
+
+def test_a_skill_with_agent_refs_but_no_suite_is_not_a_router(tmp_path: Path):
+    """forget-and-rederive's shape: @plugin: refs, no unit-test directory. It
+    has no runs to fingerprint, so it is not a router and embeds no agent."""
+    repo = _router_repo(tmp_path, with_tests_dir=False)
+
+    snap = build_snapshot(skill="router", repo_root=repo)
+
+    assert not [k for k in snap if k.startswith(AGENTS_REL)]
+    assert router_suites([repo / "packages" / "engine" / "plugin" / "skills"],
+                         repo / "eval" / "tests" / "unit") == set()
+
+
+@pytest.mark.parametrize(
+    ("edit", "expected"),
+    [
+        (lambda t: t.replace("agent body", "a rewritten body"), {}),
+        (lambda t: t.replace("model: sonnet", "model: opus"), {}),
+        (lambda t: t.replace("Extracts one record.", "Extracts two records."), "content-differs"),
+        (lambda t: t.replace("  - Read\n", "  - Read\n  - Write\n"), "content-differs"),
+    ],
+    ids=["body", "model", "description", "tools"],
+)
+def test_a_reduced_agent_goes_stale_only_on_a_frontmatter_edit(tmp_path: Path, edit, expected):
+    """The point of #3568: a body-only (or `model:`) edit to an agent the
+    router never runs leaves the run log active; a `description` or `tools:`
+    edit, which the router reads, does not."""
+    repo = _router_repo(tmp_path)
+    snap = build_snapshot(skill="router", repo_root=repo)
+    path = repo / AGENTS_REL / "record-extractor.md"
+    path.write_text(edit(_AGENT_A), encoding="utf-8")
+
+    diff = diff_snapshot_vs_disk(snap, repo)
+
+    key = f"{AGENTS_REL}/record-extractor.md{AGENT_FRONTMATTER_SUFFIX}"
+    assert diff == ({} if expected == {} else {key: expected})
+
+
+def test_a_body_edit_to_an_opted_in_agent_goes_stale(tmp_path: Path):
+    repo = _router_repo(tmp_path, run_agents=["record-extractor"])
+    snap = build_snapshot(skill="router", repo_root=repo)
+    (repo / AGENTS_REL / "record-extractor.md").write_text(
+        _AGENT_A.replace("agent body", "a rewritten body"), encoding="utf-8"
     )
-    # Unreferenced agents are NOT embedded.
-    assert "packages/engine/plugin/agents/unrelated.md" not in snap
+
+    assert diff_snapshot_vs_disk(snap, repo) == {
+        f"{AGENTS_REL}/record-extractor.md": "content-differs"
+    }
+
+
+def test_a_deleted_reduced_agent_is_missing_on_disk(tmp_path: Path):
+    repo = _router_repo(tmp_path)
+    snap = build_snapshot(skill="router", repo_root=repo)
+    (repo / AGENTS_REL / "unrelated.md").unlink()
+
+    assert diff_snapshot_vs_disk(snap, repo) == {
+        f"{AGENTS_REL}/unrelated.md{AGENT_FRONTMATTER_SUFFIX}": "missing-on-disk"
+    }
+
+
+def test_agent_embed_forms_full_for_own_and_opted_in_reduced_for_the_rest(tmp_path: Path):
+    repo = _router_repo(tmp_path, run_agents=["record-extractor"])
+    assert agent_embed_forms("router", repo) == {
+        "record-extractor": "full",
+        "unrelated": "reduced",
+    }
+
+
+def test_agent_embed_forms_for_an_agent_suite_is_its_own_agent_only(tmp_path: Path):
+    """An agent suite is run direct-arm: its dispatcher spawns only its own
+    agent, so it embeds no other agent, opted in or not."""
+    repo = tmp_path
+    agents_dir = repo / AGENTS_REL
+    agents_dir.mkdir(parents=True)
+    (agents_dir / "solo.md").write_text(_AGENT_B.replace("unrelated", "solo"), encoding="utf-8")
+    (agents_dir / "other.md").write_text(_AGENT_B, encoding="utf-8")
+    (repo / "eval" / "tests" / "unit" / "solo").mkdir(parents=True)
+
+    assert agent_embed_forms("solo", repo) == {"solo": "full"}
+
+
+# ---- frontmatter fingerprint: shared vectors with snapshot.test.ts --------
+
+
+def _vectors():
+    return json.loads(VECTORS_PATH.read_text(encoding="utf-8"))["vectors"]
+
+
+@pytest.mark.parametrize("vector", _vectors(), ids=lambda v: v["name"])
+def test_frontmatter_fingerprint_vectors(vector):
+    """The same vectors drive the TypeScript twin in
+    eval/app/tests/unit/snapshot.test.ts; both must produce `expected_text`."""
+    text = frontmatter_fingerprint_text(normalize("x.md", vector["input"].encode("utf-8")))
+    assert text == vector["expected_text"]
+    assert hash_content(text) == vector["expected_digest"]
+
+
+def test_the_vectors_cover_what_the_spec_names():
+    """Anti-vacuity: the cases that once split the two implementations stay in
+    the file — a trimmed vector list would pass both sides vacuously."""
+    names = {v["name"] for v in _vectors()}
+    for required in ("crlf", "lone_cr", "bom_falls_back_to_whole_text",
+                     "line_separator_u2028", "next_line_u0085", "form_feed_u000c",
+                     "duplicate_key_all_occurrences", "body_edit_keeps_digest",
+                     "description_edit_changes_digest", "missing_closing_delimiter"):
+        assert required in names
+
+
+def test_every_real_agent_has_well_formed_frontmatter():
+    """No staged agent falls back to whole-file fingerprinting, which would
+    quietly make a body edit stale research again."""
+    agents = sorted((REPO_ROOT / AGENTS_REL).glob("*.md"))
+    assert agents
+    for path in agents:
+        text = normalize(f"{AGENTS_REL}/{path.name}", path.read_bytes())
+        reduced = frontmatter_fingerprint_text(text)
+        assert reduced != text, f"{path.name}: no well-formed frontmatter"
+        assert reduced.startswith("name: "), path.name
 
 
 def test_build_snapshot_ignores_missing_referenced_agent(tmp_path: Path):

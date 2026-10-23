@@ -74,9 +74,15 @@ Current live tools:
   without it, a skill that follows that instruction hits an uncovered tool
   call and grades badly for doing the right thing.
 - sidecar_read: a paged read of one sidecar text file under the workspace's
-  own `evaluations/` or `uploads/` — deterministic in workspace state like
-  research_query, so a fixture could only drift from what was actually
-  written. gps-mentor reads a prior verdict body through it.
+  own `evaluations/`, `uploads/` or `results/` — deterministic in workspace
+  state like research_query, so a fixture could only drift from what was
+  actually written. gps-mentor reads a prior verdict body through it, and an
+  `image_transcribe` caller the page staged under `results/.staging/`.
+- timeline_build: runs the compiled tool against the workspace, so the person
+  timeline it writes is computed from the links the run actually made. Its
+  Places lookups are answered from the test's own `place_search` fixtures
+  (`_make_timeline_build_handler`); a place no fixture matches resolves to null,
+  and the handler never makes a request.
 """
 
 from __future__ import annotations
@@ -133,6 +139,7 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     # the read not happening — a failure the agent must see as one.
     "sidecar_read",
     "project_create",
+    "timeline_build",
     # Its `ok: false` means the requested correction could not be applied (an
     # impossible date, a doubleYear inconsistent with the year, a quakerMonth
     # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
@@ -420,6 +427,13 @@ UNLOGGED_SEARCHES_NOTE = (
     "is filled in host-side and needs no reconstruction from memory. Log each as you "
     "go rather than batching them at the end. A search with no log entry is a search "
     "that did not happen, and the staged response is deleted 24h after it was made."
+)
+
+#: Verbatim copy of IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE in
+#: packages/engine/mcp-server/src/tools/image-transcribe.ts (#2490).
+IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE = (
+    "projectPath is required: image_transcribe stages the page under the project's "
+    "results/ and returns its ref, not the text."
 )
 
 #: Mirrors UNLOGGED_REFS_SHOWN / formatUnloggedRefs in results-staging.ts. A join is
@@ -885,6 +899,108 @@ def _stage_record_read(
     return {**inline, "staged": staged}
 
 
+#: The compiled function that drops `image_transcribe`'s inline text once the
+#: page is staged. Not in `_STAGED_COMPACTORS`: it takes the whole response,
+#: where those take the `{results}` payload `_stage_and_compact_search_results`
+#: hands them.
+_IMAGE_TRANSCRIBE_COMPACTOR = "compactStagedImageTranscribe"
+
+#: The `image_transcribe` arguments production stages as the element's `source`.
+_IMAGE_TRANSCRIBE_SOURCE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
+
+
+def _stage_image_transcribe(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned `image_transcribe` page the way `image-transcribe.ts` does
+    (#2490), and return the response production sends: `staged` and `digest`
+    beside it and the inline `transcription` dropped.
+
+    The payload is production's one-element `{ query, results }` under tool
+    `image_transcribe`; the element's `id` is the `capture:<basename>` of a
+    `file`, else the image the caller named. Staging, the digest excerpt and the
+    strip all run in ONE node process, through the compiled `stageSearchResults`
+    and `compactStagedImageTranscribe`, so the strip has one definition. A
+    staging throw keeps the text inline with `staged: null` and `stagingError`,
+    as production does; a node failure returns the same shape, with a warning.
+    """
+    stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    # Production folds record_read's `imageArk` into `ark` (foldImageArkInput):
+    # a blank `ark` counts as absent, and a blank alias is ignored.
+    alias, ark = args.get("imageArk"), args.get("ark")
+    if not (isinstance(ark, str) and ark.strip()) and isinstance(alias, str) and alias.strip():
+        args = {**{k: v for k, v in args.items() if k != "imageArk"}, "ark": alias}
+    source = {k: args[k] for k in _IMAGE_TRANSCRIBE_SOURCE_KEYS if args.get(k) is not None}
+    if isinstance(args.get("file"), str):
+        element_id = "capture:" + re.sub(r"\.[A-Za-z0-9]+$", "", args["file"].split("/")[-1])
+    else:
+        element_id = next((str(v) for v in source.values()), "")
+    metadata = response.get("metadata") if isinstance(response.get("metadata"), dict) else {}
+    transcription = str(response.get("transcription") or "")
+    element: dict[str, Any] = {
+        "id": element_id,
+        "source": source,
+        "content_type": metadata.get("contentType", "image/jpeg"),
+        "size_bytes": metadata.get("sizeBytes", 0),
+        "model": metadata.get("model", ""),
+        "transcription": transcription,
+    }
+    if response.get("truncated"):
+        element["truncated"] = True
+    if response.get("found"):
+        element["found"] = response["found"]
+    # Production stages the retained scan's imageRef beside the text, and
+    # extraction_append cites it as the source's image_filename.
+    if isinstance(response.get("imageRef"), str) and response["imageRef"]:
+        element["image_ref"] = response["imageRef"]
+    query = {**source, **({"lookingFor": args["lookingFor"]} if args.get("lookingFor") else {})}
+
+    def _unstaged(why: str) -> dict[str, Any]:
+        warnings.warn(f"mock image_transcribe could not be staged ({why})", stacklevel=3)
+        return {**response, "staged": None, "stagingError": f"mock: staging the canned page failed ({why})"}
+
+    if not (stager_js.exists() and compactor_js.exists()):
+        return _unstaged(f"no engine build at {_MCP_BUILD}")
+
+    script = (
+        f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
+        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const el = input.element;"
+        " let staged; let stagingError;"
+        " try { staged = await stageSearchResults({ projectPath: input.projectPath,"
+        " tool: 'image_transcribe', response: { query: input.query, results: [el] } }); }"
+        " catch (e) { staged = null; stagingError = String(e?.message ?? e); }"
+        " const digest = { id: el.id, chars: el.transcription.length,"
+        " excerpt: el.transcription.slice(0, 300),"
+        " ...(el.found ? { found: el.found } : {}), ...(el.truncated ? { truncated: true } : {}) };"
+        " const { metadata, ...rest } = input.response;"
+        " const out = { ...rest, staged, ...(stagingError !== undefined ? { stagingError } : {}),"
+        " digest, ...(metadata !== undefined ? { metadata } : {}) };"
+        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "element": element,
+        "query": query,
+        "response": response,
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return _unstaged(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or "staged" not in parsed:
+            return _unstaged("the node script returned no `staged` key")
+        return parsed
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        return _unstaged(f"{type(exc).__name__}: {exc}")
+
+
 def _unlogged_staged_handles(
     workspace: Path,
     *,
@@ -1308,6 +1424,27 @@ def create_mock_server(
             ):
                 response = _stage_record_read(_workspace, args, response)
 
+            # Production's image_transcribe stages the page and returns its ref,
+            # not the text (#2490): `staged` + `digest`, `transcription` dropped.
+            # The fixture keeps the full page; this is what production sends.
+            # A call with no projectPath is refused before any OCR in production,
+            # so it must not come back with the fixture's page.
+            _refused_no_project = (
+                _name == "image_transcribe"
+                and "error" not in response
+                and not args.get("projectPath")
+            )
+            if _refused_no_project:
+                response = {"error": IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
+            elif (
+                _name == "image_transcribe"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and isinstance(response.get("transcription"), str)
+            ):
+                response = _stage_image_transcribe(_workspace, args, response)
+
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
             # rank_search_matches fixtures so each test keeps the ranking it was
@@ -1419,6 +1556,8 @@ def create_mock_server(
             # A fixture marked `is_error` stands for a THROWN tool error, which
             # production's catch arms return with `isError: true` beside `{error}`.
             if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            if _refused_no_project:
                 envelope["is_error"] = True
             return envelope
 
@@ -1550,6 +1689,8 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "timeline_build":
+        return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
@@ -1592,6 +1733,103 @@ def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str 
         first = results[0] if results and isinstance(results[0], dict) else {}
         table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
     return table
+
+
+def _timeline_place_tables(
+    workspace: Path, place_predicated: list
+) -> tuple[dict[str, str | None], dict[str, dict[str, float] | None]]:
+    """`timeline_build`'s Places answers, from the test's own `place_search`
+    fixtures: each assertion `place` matched as a `placeName` (the first
+    result's `standardPlace`), and coordinates for every standard place a
+    fixture result names. `_place_table` cannot serve this — it reads places
+    from the call's `tree` argument, and this tool takes only a person id."""
+    research_path = workspace / "research.json"
+    try:
+        research = json.loads(research_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        research = {}
+    places: set[str] = set()
+    for a in research.get("assertions") or []:
+        if isinstance(a, dict) and isinstance(a.get("place"), str) and a["place"].strip():
+            places.add(a["place"])
+    coords: dict[str, dict[str, float] | None] = {}
+    for (_pred, resp, _src) in place_predicated:
+        for result in (resp or {}).get("results") or []:
+            if not isinstance(result, dict) or not isinstance(result.get("standardPlace"), str):
+                continue
+            lat, lon = result.get("latitude"), result.get("longitude")
+            if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+                coords.setdefault(result["standardPlace"], {"latitude": lat, "longitude": lon})
+    table: dict[str, str | None] = {}
+    for place in places:
+        hit = next(
+            (resp for (pred, resp, _src) in place_predicated if matches(pred, {"placeName": place})),
+            None,
+        )
+        results = (hit or {}).get("results") or []
+        first = results[0] if results and isinstance(results[0], dict) else {}
+        table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
+    return table, coords
+
+
+def _make_timeline_build_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    place_predicated: list,
+):
+    """Build the live handler for timeline_build.
+
+    Calls the compiled `timelineBuild` against the workspace with its Places
+    lookups injected from the test's `place_search` fixtures
+    (`_timeline_place_tables`), so the run stays offline. Census years come from
+    the compiled census table, as in production. Everything else — events,
+    conflicts, gaps, the write — is production's compiled code.
+    """
+    tool_js = _MCP_BUILD / "tools" / "timeline-build.js"
+
+    async def handler(args, _ws=workspace, _tjs=tool_js):
+        if _ws is None or not _tjs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"timeline_build: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            places, coords = _timeline_place_tables(_ws, place_predicated)
+            script = (
+                f"import {{ timelineBuild }} from '{_node_module_url(_tjs)}';"
+                " import { readFileSync } from 'node:fs';"
+                " const payload = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const deps = {"
+                " resolvePlace: async (t) => payload.places[t] ?? null,"
+                " placeCoords: async (s) => payload.coords[s] ?? null };"
+                " const r = await timelineBuild(payload.input, deps);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            stdin_obj = {"input": input_obj, "places": places, "coords": coords}
+            try:
+                proc = _run_node_eval(script, json.dumps(stdin_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"timeline_build: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"timeline_build: {e}"]}
+
+        call_log.append({
+            "tool": "mcp__genealogy__timeline_build",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:timeline_build",
+            "response": response,
+        })
+        return _tool_envelope("timeline_build", response)
+
+    return handler
 
 
 def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
