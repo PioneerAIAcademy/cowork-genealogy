@@ -15,14 +15,22 @@ This tool is list mode only. There is no single-collection detail tool:
 `collection_read` was retired 2026-09-27 with no caller; the FamilySearch
 Wiki tools cover a collection's research guidance.
 
-### Place ID mismatch (design note)
+### Place ids: where a collection is filed (design note)
 
-The FamilySearch Places API (`/platform/places/`) and the Collections
-API (`/service/search/hr/v2/collections`) use **different place ID
-systems**. Alabama is 351 in the Places API but 33 in the Collections
-API. These IDs are not interchangeable.
+The Collections API's `searchMetadata.placeIds` are the Places API's
+**primary place ids** — the id `standardPlaceToPlaceId` returns — not its
+place-representation ids, which are what a place search mostly hands back.
+Measured 2026-10-22 with `dev/probe-census-placeids.ts`: Alabama 33, Ohio 43,
+New York 22, England 1986340, United States 1, Ireland 1927084, Denmark
+1927025, each with collections filed under it. A representation id (Alabama's
+351, say) matches nothing.
 
-The `standardPlace` input works around this — Claude passes the place
+The place a collection is filed under is **not** the area it covers: about ten
+French département censuses are filed under France's id, and Canada's national
+1871, 1881, 1891, 1901 and 1911 censuses are each filed under a single province.
+Nothing should read a collection's coverage off its `placeIds`.
+
+The `standardPlace` input does not use place ids at all — Claude passes the place
 **name** (the `standardPlace` from `place_search`, e.g. `"Schuylkill,
 Pennsylvania, United States"`), and the tool derives a title-match term
 and filters by collection title. `place_search` IDs are never passed to
@@ -229,8 +237,10 @@ Each collection object contains:
 - The lower-level API (`/service/search/hr/v2/collections`) was chosen
   over the platform API (`/platform/records/collections`) because the
   platform API does not include counts — it would require N+1 calls.
-- Place IDs in `searchMetadata.placeIds` are internal to the collections
-  system and do NOT match the Places API IDs.
+- Place IDs in `searchMetadata.placeIds` are the Places API's primary place
+  ids (`standardPlaceToPlaceId`), not its representation ids, and name where
+  a collection is filed, not what it covers (see "Place ids: where a collection
+  is filed" above).
 - Some collections have access restrictions (church membership,
   FamilySearch Center access). The API respects these based on the
   user's session.

@@ -39,8 +39,8 @@ what routes the work there. FamilySearch records never come here: they go to
 | `sources[].recordId` | yes | `capture:<descriptive>`, `ancestry:<collection>:<id>`, or an ARK. |
 | `sources[].resultsRef` | one of these two | A `results/` ref holding the `StagedTranscription` that `image_transcribe` saved. The spawner holds only this ref and never the page text. |
 | `sources[].text` | one of these two | Pasted prose, PDF text or external-site text with no sidecar, wrapped in `<record-data>` tags. |
-| `sources[].imageFilename` | no | `image-reader`'s `Saved image:` path, passed through unchanged. It was on `record-extractor`'s contract, and it moves here rather than being dropped. A fallback only: when the source has a `resultsRef`, `extraction_append` takes the scan from that staged transcription's `image_ref`. |
-| `sources[].documentForm` | no | Set by the spawner when it knows: `page_image` for anything that came through `image-reader`. Otherwise the agent reports what it was handed. |
+| `sources[].imageFilename` | no | `image_transcribe`'s `imageRef`, passed through unchanged. It was on `record-extractor`'s contract, and it moves here rather than being dropped. A fallback only: when the source has a `resultsRef`, `extraction_append` takes the scan from that staged transcription's `image_ref`. |
+| `sources[].documentForm` | no | Set by the spawner when it knows: `page_image` for a `resultsRef` from `image_transcribe`. Otherwise the agent reports what it was handed. |
 | `sources[].flags` | no | "the <element> is a suspect transcription", "the date is Old Style — <reading>". |
 | `questionIds` | no | Passed through to `extraction_append`. |
 | `absentPersons` | no | The spawner's expected-but-absent persons, keyed by `recordId`. |
