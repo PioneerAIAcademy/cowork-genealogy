@@ -210,7 +210,9 @@ camelCase convenience fields the same way `research_log_append` does.
   first write when absent**: the schema makes it optional, and an agent must
   never fabricate a profile, so the object appears when init-project writes the
   fixed profile (or a caller corrects a field) rather than being seeded by any
-  other writer.
+  other writer. It is created right after `project`, so an agent paging a long
+  `research.json` finds it near the top. An existing document is not reordered,
+  and the Postgres store keeps no key order.
 
   Making another field settable later = extend that section's `allowedFields`.
 

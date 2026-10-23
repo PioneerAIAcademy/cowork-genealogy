@@ -697,7 +697,7 @@ cap, neither a new agent nor a new session, in one of two variants. When the cou
 was read from the project's log (`persistPath` resolved), the refusal says the images
 "have already been read in this project" and that "the cap is per film, per project:
 every sub-volume of film <group> shares it". When the read carried no project, it says
-"in this server session, because this read carried no projectPath" and that a new
+"in this server session, because this read named no project" and that a new
 agent does not reset it. The `image_read` and `image_transcribe` refusal adds that
 reads in other films are not affected and that, to find one year's page in another
 browse-only volume, the agent should "run `volume_bisect` first if you hold it, then

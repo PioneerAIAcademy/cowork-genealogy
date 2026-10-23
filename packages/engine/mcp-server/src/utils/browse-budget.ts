@@ -127,7 +127,7 @@ function refusal(
     ? `been read in this project, so ${imageId}${where} was not fetched. The cap is per film, per ` +
       `project: every sub-volume of film ${group} shares it, and nothing resets it, not a new agent ` +
       `and not a new session.`
-    : `been read in this server session, because this read carried no projectPath, so ` +
+    : `been read in this server session, because this read named no project, so` +
       `${imageId}${where} was not fetched. A new agent does not reset it.`;
   return new Error(
     `Image cap reached: ${IMAGE_BROWSE_CAP} distinct images from image group ${group} have already ` +

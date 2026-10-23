@@ -518,7 +518,7 @@ describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)"
     }
     const err = await imageReadTool({ imageId: img(21) }, LOCAL).catch((e) => e);
     expect((err as Error).message).toMatch(/Image cap reached: 20 distinct images from image group 004884748/);
-    expect((err as Error).message).toContain("in this server session, because this read carried no projectPath");
+    expect((err as Error).message).toContain("in this server session, because this read named no project");
     expect((err as Error).message).toContain("A new agent does not reset it.");
     expect((err as Error).message).not.toContain("per film, per project");
   });
