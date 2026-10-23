@@ -844,8 +844,13 @@ def choose_sdk_session_id(conn: psycopg.Connection, session_id: str, candidate: 
 def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
     with conn.cursor() as cur:
         cur.execute(
+            # `wrote` is appended LAST and must stay last: `_tool_call_decisions` in
+            # test_proto_worker.py reads the decision param positionally as p[6], so
+            # inserting a column before it silently corrupts that helper rather than
+            # failing.
             "INSERT INTO tool_calls (turn_id, session_id, agent_id, agent_type, tool_name, "
-            "input_path, decision, tool_use_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            "input_path, decision, tool_use_id, wrote) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 row["turn_id"],
                 row["session_id"],
@@ -855,6 +860,11 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
                 row.get("input_path"),
                 row["decision"],
                 row.get("tool_use_id"),
+                # The SHAPE of what this call wrote, for change review. None for a read,
+                # for a denied call and for a halted one -- the column is sparse by
+                # design, and the migration's index is `WHERE wrote IS NOT NULL`, so a
+                # row here IS a claim that a write was attempted.
+                Jsonb(row["wrote"]) if row.get("wrote") else None,
             ),
         )
     conn.commit()
