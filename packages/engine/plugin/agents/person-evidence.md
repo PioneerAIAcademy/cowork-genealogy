@@ -670,8 +670,8 @@ Only a census or other co-enumerated listing is a household record; a
 baptism, marriage register, will or death record never is, however many
 parents it names.
 
-**Materialize each linked persona onto its person.** Once every source's `pe_`
-links have landed, write the persona's assertions onto the tree person as sourced facts and
+**Materialize each linked persona onto its person.** Once the `pe_` links
+land, write the persona's assertions onto the tree person as sourced facts and
 names via `materialize_facts({ personId, recordId, recordRole })` — for a
 persona matched to an **existing** person as well as a newly minted one, and on
 a **single-person record** (a death certificate, a baptism) as well as a

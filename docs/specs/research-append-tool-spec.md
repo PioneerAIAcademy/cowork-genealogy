@@ -328,7 +328,8 @@ no more expensive (decision from the e2e research-runtime speedup review, §6 Q1
 - **One source per `person_evidence` call.** A call whose `person_evidence`
   **append** ops link assertions from more than one source is refused before
   `prepareOps`, and writes nothing. The source is the assertion's `source_id`, else
-  its `record_id` compared bare (`capSource`), so a document that keeps each party
+  its `record_id` compared bare (`capSource`; the schema requires `source_id`, so the
+  fallback serves only a document that fails it), so a document that keeps each party
   on its own record id (groom and bride) is one source. The message lists each
   source with its op indices. Not counted: `person_evidence` `update` ops, an
   assertion not in `research.json` before the call (including one the same call
@@ -1461,8 +1462,8 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   parties sit on separate record ids, one record under two ARK spellings, `update`
   ops across sources, attachment links, a mixed-section call. An unscored link to a
   stub minted from its record passes, and is refused once another record has been
-  materialized onto the stub (why person-evidence materializes after every
-  source's links).
+  materialized onto the stub. Writing one source's links in the pass that mints
+  its stub keeps that order out of reach.
 - **namesake cap (§5)** — `research-append-namesake.test.ts`, end to end through
   `researchAppend`. **U1**: a row appends as `ns_001` with `created` stamped; an
   update setting `person_id`, alone or beside allowed fields, is refused and
