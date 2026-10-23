@@ -479,6 +479,14 @@ export function filmNotesHint(listed: number, total: number, hydrateFor?: number
   );
 }
 
+/** The one line an answer carries when hits were left off its end. */
+function hitsOmittedHint(omitted: number): string {
+  return (
+    `${omitted} more ${omitted === 1 ? "hit was" : "hits were"} left off the end, to keep this answer ` +
+    "under the size limit. Ask with a smaller count, or a narrower query."
+  );
+}
+
 /**
  * Fit the film notes into the answer budget. They are what make an answer big
  * (a hydrated item can carry thousands), so they are the only thing cut here, and
@@ -600,21 +608,46 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
 }
 
 /**
+ * Leave hits off the END of the list until the answer fits `budget`, or one hit
+ * is left. It runs after the film notes are fitted, so what is left over the
+ * budget is the hits themselves: at a large `count` even a hit with no detail
+ * takes a few hundred characters. An answer that fits loses no hit. The two
+ * fields it adds say how many went and what to ask instead, and `returned`
+ * follows `hits`. Counted from the answer as it stands, so an answer shaped again
+ * into a smaller budget adds to the count it already carries.
+ */
+function leaveHitsOff(result: CatalogSearchResult, budget: number): void {
+  const already = result.hitsOmitted ?? 0;
+  let left = 0;
+  while (result.hits.length > 1 && chars(result) > budget) {
+    result.hits.pop();
+    left++;
+    result.returned = result.hits.length;
+    result.hitsOmitted = already + left;
+    result.hitsOmittedHint = hitsOmittedHint(already + left);
+  }
+}
+
+/**
  * Everything that shapes an answer once its hits are hydrated: one entry per
- * reel, then the film notes fitted into the budget. The tool ends in it, and a
- * recorded answer can be run through it (the eval fixtures were reshaped that
- * way), so there is one code path and not a copy of it.
+ * reel, the film notes fitted into the budget, then, if the hits alone are still
+ * over it, hits left off the end. The tool ends in it, and a recorded answer can
+ * be run through it (the eval fixtures were reshaped that way), so there is one
+ * code path and not a copy of it. An `{ error }` envelope has no hits and comes
+ * back as it came.
  */
 export function shapeAnswer(
   result: CatalogSearchResult,
   budget: number = ANSWER_CHAR_BUDGET,
 ): CatalogSearchResult {
+  if (!Array.isArray(result.hits)) return result;
   for (const h of result.hits) {
     // A hit already cut is final: its entries are a selection, and merging them
     // again could join two of a reel's runs that were kept apart on purpose.
     if (h.filmNotes && h.filmNotesTotal === undefined) h.filmNotes = mergeFilmNotes(h.filmNotes);
   }
   fitFilmNotes(result, budget);
+  leaveHitsOff(result, budget);
   return result;
 }
 

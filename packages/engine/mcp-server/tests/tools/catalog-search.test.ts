@@ -1881,6 +1881,18 @@ function answerWith(count: number, film: object[][]): void {
   );
 }
 
+/** The saved Ireland answer padded with hits of its own shape that carry no detail, up to `count`. */
+function paddedIreland(count: number): CatalogSearchResult {
+  const padded = structuredClone(IRELAND);
+  const bare = IRELAND.hits.filter((h) => !h.hydrated);
+  for (let k = 0; padded.hits.length < count; k++) {
+    const id = `koha:pad${k}`;
+    padded.hits.push({ ...structuredClone(bare[k % bare.length]), id, url: `${ITEM}${id}` });
+  }
+  padded.returned = padded.hits.length;
+  return padded;
+}
+
 /** A hydrated hit as the fit sees it, holding these entries already merged. */
 function hitOf(id: string, entries: CatalogFilmNote[], extra: Partial<CatalogHit> = {}): CatalogHit {
   return { id, title: id, repositoryCalls: [], url: `https://example.test/${id}`, hydrated: true, filmNotes: entries, ...extra };
@@ -2501,6 +2513,11 @@ describe("catalog_search — the answer stays under the spill line", () => {
     // seeded generator, so a failure names the seed that replays it.
     const CASES = 300;
 
+    /** The line an answer carries when `n` hits were left off its end. */
+    const omittedHint = (n: number): string =>
+      `${n} more ${n === 1 ? "hit was" : "hits were"} left off the end, to keep this answer under the size limit. ` +
+      "Ask with a smaller count, or a narrower query.";
+
     /** mulberry32: a small seeded generator. */
     function seeded(seed: number): () => number {
       let a = seed >>> 0;
@@ -2590,7 +2607,7 @@ describe("catalog_search — the answer stays under the spill line", () => {
         }),
       });
 
-    it("ends within the budget whenever an allocation within it exists, and otherwise at the least it can be", () => {
+    it("ends within the budget whenever an allocation within it exists, and otherwise leaves hits off the end until it fits", () => {
       for (let seed = 1; seed <= CASES; seed++) {
         const rand = seeded(seed);
         const a = randomAnswer(rand, { hits: 1 + Math.floor(rand() * 6), entries: 7, raw: false });
@@ -2599,14 +2616,31 @@ describe("catalog_search — the answer stays under the spill line", () => {
           baseOf(a) +
           a.hits.filter(carriesList).reduce((sum, h) => sum + cheapestList(costsOf(h.filmNotes ?? []), reachedBy(a, h)), 0);
         const whole = size(a);
+        const n = a.hits.length;
         for (const budget of [least - 1, least, least + 1, Math.floor((least + whole) / 2), whole - 1, whole]) {
           const shaped = shapeAnswer(structuredClone(a), budget);
           const message = `seed ${seed}, budget ${budget} (least ${least}, whole ${whole})`;
-          if (least <= budget) expect(size(shaped), message).toBeLessThanOrEqual(budget);
-          else expect(size(shaped), message).toBe(least);
-          // An answer that fits is left exactly as it came.
-          if (whole <= budget) expect(shaped, message).toEqual(a);
-          expect(shaped.hits, message).toHaveLength(a.hits.length);
+          if (least <= budget) {
+            // An allocation within the budget exists: it is found, and no hit is left off.
+            expect(size(shaped), message).toBeLessThanOrEqual(budget);
+            expect(shaped.hits, message).toHaveLength(n);
+            expect(shaped, message).not.toHaveProperty("hitsOmitted");
+            // An answer that fits is left exactly as it came.
+            if (whole <= budget) expect(shaped, message).toEqual(a);
+            continue;
+          }
+          // None exists. Every hit is at its floor, the least it can be...
+          const fitted = structuredClone(a);
+          fitFilmNotes(fitted, budget);
+          expect(size(fitted), message).toBe(least);
+          // ...and hits are left off the end, one at a time, until it fits or one is left.
+          const leftOff = (k: number): CatalogSearchResult =>
+            k === n
+              ? fitted
+              : { ...fitted, hits: fitted.hits.slice(0, k), returned: k, hitsOmitted: n - k, hitsOmittedHint: omittedHint(n - k) };
+          let keep = n;
+          while (keep > 1 && size(leftOff(keep)) > budget) keep--;
+          expect(shaped, message).toEqual(leftOff(keep));
         }
       }
     });
@@ -2630,6 +2664,20 @@ describe("catalog_search — the answer stays under the spill line", () => {
         expect(shapeAnswer(structuredClone(shaped), budget), message).toEqual(shaped);
         // And an answer that fits, merged, is left exactly so.
         if (whole <= budget) expect(shaped, message).toEqual(merged);
+
+        // Hits are left off the END only: what is listed is a prefix, and the answer says how many went.
+        const left = a.hits.length - shaped.hits.length;
+        expect(shaped.hits.map((h) => h.id), message).toEqual(a.hits.slice(0, shaped.hits.length).map((h) => h.id));
+        if (left === 0) {
+          expect(shaped, message).not.toHaveProperty("hitsOmitted");
+          expect(shaped, message).not.toHaveProperty("hitsOmittedHint");
+        } else {
+          expect(shaped.hitsOmitted, message).toBe(left);
+          expect(shaped.hitsOmittedHint, message).toBe(omittedHint(left));
+          expect(shaped.returned, message).toBe(shaped.hits.length);
+        }
+        // Within the budget, unless one hit is left and it is over by itself.
+        if (shaped.hits.length > 1) expect(size(shaped), message).toBeLessThanOrEqual(budget);
 
         let added = 0;
         for (const [i, h] of shaped.hits.entries()) {
@@ -2694,12 +2742,151 @@ describe("catalog_search — the answer stays under the spill line", () => {
     });
   });
 
-  it("never drops a hit: 200 hits come back as 200, whatever the film notes", async () => {
-    answerWith(200, [reels(1804)]);
-    const r = await catalogSearchTool({ standardPlace: "Norway", keywords: "kirkebøker", count: 200, hydrate: 1 }, LOCAL);
-    expect(r.hits).toHaveLength(200);
-    expect(r.returned).toBe(200);
-    expect(r.hits[0].filmNotesTotal).toBe(1804);
+  describe("the hit list is bounded too", () => {
+    /** The line an answer carries when `n` hits were left off its end. */
+    const omittedHint = (n: number): string =>
+      `${n} more ${n === 1 ? "hit was" : "hits were"} left off the end, to keep this answer under the size limit. ` +
+      "Ask with a smaller count, or a narrower query.";
+
+    it.each([100, 120, 200])("count %i at the defaults comes back within the budget, with the hits left off its end counted", async (count) => {
+      // The film notes were fitted, yet the hits alone passed the budget and then the
+      // spill line (count 120 was 50,950 characters), and a hit cut for it blamed `hydrate`.
+      const padded = paddedIreland(count);
+      const { search, items } = upstreamFor(padded);
+      respond(search, ...items.slice(0, 10));
+      const r = await catalogSearchTool(
+        { standardPlace: "Ireland", keywords: "Catholic parish registers baptism marriage", count },
+        LOCAL,
+      );
+      expect(new URL(searchUrl()).searchParams.get("count")).toBe(String(count));
+      expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
+      expect(size(r)).toBeLessThan(CLI_SPILL_CHARS);
+      // The hits that are listed are the first ones, in order: what went is the end.
+      expect(r.hits.length).toBeGreaterThan(25);
+      expect(r.hits.length).toBeLessThan(count);
+      expect(r.hits.map((h) => h.id)).toEqual(padded.hits.slice(0, r.hits.length).map((h) => h.id));
+      // And the answer says so: `returned` is what is listed, `hitsOmitted` what went.
+      expect(r.returned).toBe(r.hits.length);
+      expect(r.hitsOmitted).toBe(count - r.hits.length);
+      expect(r.hitsOmittedHint).toBe(omittedHint(count - r.hits.length));
+      // Nothing is blamed on hydrate: no film-note hint offers it for a hit it cannot help.
+      for (const h of r.hits) if (h.filmNotesHint) expect(h.filmNotesHint).not.toContain("hydrate fewer");
+    });
+
+    it("count 200 with no hydration at all is bounded by the hits alone", async () => {
+      const padded = paddedIreland(200);
+      const { search } = upstreamFor(padded);
+      respond(search);
+      const r = await catalogSearchTool({ standardPlace: "Ireland", keywords: "Catholic parish registers baptism marriage", count: 200, hydrate: 0 }, LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(size(r)).toBeLessThanOrEqual(ANSWER_CHAR_BUDGET);
+      expect(r.hits.length + (r.hitsOmitted ?? 0)).toBe(200);
+      expect(r.hitsOmitted).toBeGreaterThan(0);
+    });
+
+    it("count 25 is unchanged: every hit is listed and neither field appears", async () => {
+      const { search, items } = upstreamFor(IRELAND);
+      respond(search, ...items);
+      const r = await catalogSearchTool({ standardPlace: "Ireland", keywords: "Catholic parish registers baptism marriage" }, LOCAL);
+      expect(r.hits).toHaveLength(25);
+      expect(r.returned).toBe(25);
+      expect(r).not.toHaveProperty("hitsOmitted");
+      expect(r).not.toHaveProperty("hitsOmittedHint");
+    });
+
+    const bare = (i: number): CatalogHit => ({
+      id: `b${i}`,
+      title: `Bare hit number ${i}`.padEnd(120, "."),
+      repositoryCalls: ["Online"],
+      url: `https://example.test/b${i}`,
+      hydrated: false,
+    });
+    const bareAnswer = (n: number): CatalogSearchResult => answerOf(Array.from({ length: n }, (_, i) => bare(i)));
+
+    it("leaves hits off the end until the answer fits, and says how many went", () => {
+      const a = bareAnswer(60);
+      const r = shapeAnswer(structuredClone(a), 3_000);
+      expect(size(r)).toBeLessThanOrEqual(3_000);
+      expect(r.hits.map((h) => h.id)).toEqual(a.hits.slice(0, r.hits.length).map((h) => h.id));
+      expect(r.hits.length).toBeLessThan(60);
+      expect(r.hitsOmitted).toBe(60 - r.hits.length);
+      expect(r.returned).toBe(r.hits.length);
+      expect(r.hitsOmittedHint).toBe(omittedHint(60 - r.hits.length));
+    });
+
+    it("leaves off exactly as many as it must: the budget of the kept answer keeps them, one character less drops one more", () => {
+      const a = bareAnswer(20);
+      const seven: CatalogSearchResult = {
+        ...structuredClone(a),
+        hits: a.hits.slice(0, 7),
+        returned: 7,
+        hitsOmitted: 13,
+        hitsOmittedHint: omittedHint(13),
+      };
+      const exact = size(seven);
+      expect(shapeAnswer(structuredClone(a), exact)).toEqual(seven);
+      expect(shapeAnswer(structuredClone(a), exact - 1).hits).toHaveLength(6);
+    });
+
+    it("says `1 more hit was` for one hit", () => {
+      const a = bareAnswer(6);
+      const five = size({ ...structuredClone(a), hits: a.hits.slice(0, 5), returned: 5, hitsOmitted: 1, hitsOmittedHint: omittedHint(1) });
+      const r = shapeAnswer(structuredClone(a), five);
+      expect(r.hitsOmitted).toBe(1);
+      expect(r.hitsOmittedHint).toMatch(/^1 more hit was left off the end/);
+    });
+
+    it("never drops a hit when the answer fits, and carries neither field", () => {
+      const a = bareAnswer(20);
+      const r = shapeAnswer(structuredClone(a), size(a));
+      expect(r).toEqual(a);
+      expect(r).not.toHaveProperty("hitsOmitted");
+      expect(r).not.toHaveProperty("hitsOmittedHint");
+    });
+
+    it("an answer shaped again into a smaller budget adds to the count it carries", () => {
+      const once = shapeAnswer(bareAnswer(60), 8_000);
+      const twice = shapeAnswer(structuredClone(once), 4_000);
+      expect(once.hitsOmitted).toBe(60 - once.hits.length);
+      expect(twice.hits.length).toBeLessThan(once.hits.length);
+      expect(twice.hitsOmitted).toBe(60 - twice.hits.length);
+      expect(twice.returned).toBe(twice.hits.length);
+      expect(twice.hitsOmittedHint).toBe(omittedHint(60 - twice.hits.length));
+    });
+
+    it("keeps one hit however small the budget", () => {
+      const r = shapeAnswer(bareAnswer(5), 10);
+      expect(r.hits.map((h) => h.id)).toEqual(["b0"]);
+      expect(r.hitsOmitted).toBe(4);
+      expect(shapeAnswer(bareAnswer(1), 10).hits).toHaveLength(1);
+    });
+
+    it("the part of the answer that is not film notes can be over the budget by itself: the first hit is listed whole, the rest left off", () => {
+      // The first documented exception: one hit whose own fields pass the budget.
+      const huge: CatalogHit = { ...bare(0), hydrated: true, notes: ["n".repeat(60_000)] };
+      const r = shapeAnswer(answerOf([huge, bare(1), bare(2)]));
+      expect(r.hits.map((h) => h.id)).toEqual(["b0"]);
+      expect(r.hits[0].notes).toEqual(huge.notes);
+      expect(r.hitsOmitted).toBe(2);
+      expect(size(r)).toBeGreaterThan(ANSWER_CHAR_BUDGET);
+    });
+
+    it("a single irreducible entry can be over the budget by itself: it is listed whole, and the hits after it are left off", () => {
+      // The second documented exception: one entry that cannot be cut by listing fewer of them.
+      const entry: CatalogFilmNote = { filmNumber: "1", imageGroupNumber: "2", text: "t".repeat(60_000) };
+      const r = shapeAnswer(answerOf([hitOf("a", [entry]), bare(1)]));
+      expect(r.hits.map((h) => h.id)).toEqual(["a"]);
+      expect(r.hits[0].filmNotes).toEqual([entry]);
+      expect(r.hits[0]).not.toHaveProperty("filmNotesTotal");
+      expect(r.hitsOmitted).toBe(1);
+      expect(size(r)).toBeGreaterThan(ANSWER_CHAR_BUDGET);
+    });
+
+    it("an {error} envelope has no hits and comes back as it came", () => {
+      const envelope = { error: "FamilySearch session not accepted; call the login tool." } as unknown as CatalogSearchResult;
+      expect(shapeAnswer(envelope)).toBe(envelope);
+      expect(envelope).toEqual({ error: "FamilySearch session not accepted; call the login tool." });
+    });
   });
 });
 
@@ -2712,6 +2899,31 @@ describe("catalog_search — the answer stays under the spill line", () => {
 // reshape them fails here, instead of leaving the evals graded on an answer the
 // tool no longer gives. `mcp-fixture-shape.test.ts` checks keys one level down
 // from the response and does not see film notes.
+
+/** What is wrong with the cut fields of a recorded answer, if anything. A cut list carries its total and its
+ *  hint together, and the total is more than the entries it lists; an answer that left hits off carries its
+ *  count and its hint together, and `returned` is what it lists. An `{ error }` envelope has no hits to check. */
+function cutFieldProblems(response: unknown): string[] {
+  const r = response as Partial<CatalogSearchResult> | undefined;
+  if (!r || !Array.isArray(r.hits)) return [];
+  const problems: string[] = [];
+  for (const [i, h] of r.hits.entries()) {
+    const total = "filmNotesTotal" in h;
+    if (total !== "filmNotesHint" in h) {
+      problems.push(`hit ${i}: ${total ? "a filmNotesTotal without its hint" : "a filmNotesHint without its total"}`);
+    }
+    if (total && !(typeof h.filmNotesTotal === "number" && h.filmNotesTotal > (h.filmNotes?.length ?? 0))) {
+      problems.push(`hit ${i}: filmNotesTotal is not more than the entries listed`);
+    }
+  }
+  const omitted = "hitsOmitted" in r;
+  if (omitted !== "hitsOmittedHint" in r) {
+    problems.push(`${omitted ? "hitsOmitted without its hint" : "hitsOmittedHint without its count"}`);
+  }
+  if (omitted && !(typeof r.hitsOmitted === "number" && r.hitsOmitted > 0)) problems.push("hitsOmitted is not a count of hits");
+  if (omitted && r.returned !== r.hits.length) problems.push("returned is not the number of hits listed");
+  return problems;
+}
 
 describe("catalog_search — the recorded eval fixtures", () => {
   const dir = fileURLToPath(new URL("../../../../../eval/fixtures/mcp/", import.meta.url));
@@ -2728,9 +2940,57 @@ describe("catalog_search — the recorded eval fixtures", () => {
   it.each(files)("%s is already in the shape the tool returns", (file) => {
     const fixture = JSON.parse(readFileSync(`${dir}${file}`, "utf-8")) as { response: CatalogSearchResult };
     // Shaping it changes nothing: one entry per reel, within the budget, and no
-    // cut list without its total and its hint.
+    // cut list without its total and its hint (an `{ error }` envelope is left as it is).
     expect(shapeAnswer(structuredClone(fixture.response))).toEqual(fixture.response);
+    expect(cutFieldProblems(fixture.response)).toEqual([]);
     // The two fields the answer no longer carries, anywhere in the file.
     expect(JSON.stringify(fixture)).not.toMatch(/"(shelf|imageStartNumber)"/);
+  });
+
+  describe("the guard on the cut fields", () => {
+    const cut = (): CatalogSearchResult => shapeAnswer(structuredClone(IRELAND));
+    const withCutHit = (r: CatalogSearchResult): CatalogHit => r.hits.find((h) => h.filmNotesTotal !== undefined) as CatalogHit;
+
+    it("passes a cut answer, an uncut one and an error envelope", () => {
+      expect(cutFieldProblems(cut())).toEqual([]);
+      expect(cutFieldProblems(IRELAND)).toEqual([]);
+      expect(cutFieldProblems({ error: "no such place" })).toEqual([]);
+      const left = shapeAnswer(paddedIreland(120), 5_000);
+      expect(left.hitsOmitted).toBeGreaterThan(0);
+      expect(cutFieldProblems(left)).toEqual([]);
+    });
+
+    it("fails a total without its hint, a hint without its total, and a total that is not more than the entries listed", () => {
+      const noHint = cut();
+      delete withCutHit(noHint).filmNotesHint;
+      expect(cutFieldProblems(noHint)).toEqual([expect.stringContaining("filmNotesTotal without its hint")]);
+      const noTotal = cut();
+      delete withCutHit(noTotal).filmNotesTotal;
+      expect(cutFieldProblems(noTotal)).toEqual([expect.stringContaining("filmNotesHint without its total")]);
+      const small = cut();
+      withCutHit(small).filmNotesTotal = withCutHit(small).filmNotes?.length;
+      expect(cutFieldProblems(small)).toEqual([expect.stringContaining("not more than the entries listed")]);
+      // The review's plant: a total on a hit of a recorded answer that lists everything, with no hint.
+      const planted = JSON.parse(readFileSync(`${dir}catalog-search-skofja-loka.json`, "utf-8")) as { response: CatalogSearchResult };
+      const hitWithNotes = planted.response.hits.find((h) => (h.filmNotes?.length ?? 0) > 0) as CatalogHit;
+      hitWithNotes.filmNotesTotal = 9;
+      expect(cutFieldProblems(planted.response).length).toBeGreaterThan(0);
+    });
+
+    it("fails an omitted count without its hint, a hint without its count, a count that is not a count, and a `returned` that is not the hits listed", () => {
+      const left = (): CatalogSearchResult => shapeAnswer(paddedIreland(120), 5_000);
+      const noHint = left();
+      delete noHint.hitsOmittedHint;
+      expect(cutFieldProblems(noHint)).toEqual([expect.stringContaining("hitsOmitted without its hint")]);
+      const noCount = left();
+      delete noCount.hitsOmitted;
+      expect(cutFieldProblems(noCount)).toEqual([expect.stringContaining("hitsOmittedHint without its count")]);
+      const zero = left();
+      zero.hitsOmitted = 0;
+      expect(cutFieldProblems(zero)).toEqual([expect.stringContaining("not a count of hits")]);
+      const off = left();
+      off.returned = 120;
+      expect(cutFieldProblems(off)).toEqual([expect.stringContaining("returned is not the number of hits listed")]);
+    });
   });
 });

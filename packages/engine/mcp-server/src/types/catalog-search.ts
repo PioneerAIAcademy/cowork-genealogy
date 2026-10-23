@@ -85,6 +85,8 @@ export interface CatalogHit {
 
 export interface CatalogSearchResult {
   totalHits: number;
+  /** How many hits `hits` lists: fewer than the `count` asked for only when the
+   *  Catalog had fewer, or when some were left off the end (`hitsOmitted`). */
   returned: number;
   /** False when `standardPlace` could not be resolved to a rep id and the
    *  query fell back to matching the place by name. */
@@ -102,4 +104,11 @@ export interface CatalogSearchResult {
    *  and needs no retry of the whole search. */
   hydrateRequested: number;
   hits: CatalogHit[];
+  /** How many hits were left off the END of `hits` because the answer was still
+   *  over its size budget with every film-note list at its smallest. Present
+   *  ONLY when some were; absent when every hit the Catalog sent is listed. */
+  hitsOmitted?: number;
+  /** One line, present exactly when `hitsOmitted` is: how many were left off and
+   *  how to see them. */
+  hitsOmittedHint?: string;
 }
