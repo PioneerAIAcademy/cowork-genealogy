@@ -205,6 +205,42 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
     },
   },
   {
+    // The issue #3185 probe case (measured 2026-10-22): the name+period URL
+    // returned 3 rows including both 24-6-1827 Rijnsburg civil-marriage
+    // entries, through r.jina.ai and check-host.net (the site TCP-drops some
+    // source networks, so a direct fetch may time out where a browser on
+    // another network succeeds). The site parses the trailing "YYYY-YYYY" in
+    // `name` as a period filter and echoes it back as "from the period
+    // 1827-1827". No eventtype/eventplace is emitted — both were measured
+    // hiding records that exist (church-book types, record-spelled places) —
+    // so expect the place only in the guidance note, never in the URL.
+    label: "openarch, the measured Maijert Zwaan 1827 Rijnsburg marriage (issue #3185)",
+    input: {
+      site: "openarch",
+      attributes: { givenName: "Maijert", surname: "Zwaan", marriageYear: 1827, marriagePlace: "Rijnsburg" },
+    },
+  },
+  {
+    label: "openarch, one event per search: marriage's year scopes the period, losing attributes noted",
+    input: {
+      site: "openarch",
+      attributes: {
+        givenName: "Maijert",
+        surname: "Zwaan",
+        marriagePlace: "Rijnsburg",
+        birthYear: 1802,
+        deathPlace: "Katwijk",
+      },
+    },
+  },
+  {
+    label: "openarch, hyphens in name parts become spaces (the site's exclude operator)",
+    input: {
+      site: "openarch",
+      attributes: { givenName: "Johanna-Willemina", surname: "van der Zwaan", birthYear: 1795 },
+    },
+  },
+  {
     label: "unsupported site (expect unsupported_site + supportedSites)",
     input: {
       site: "wiewaswie",

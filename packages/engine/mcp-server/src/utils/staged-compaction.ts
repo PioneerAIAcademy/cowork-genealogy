@@ -139,6 +139,26 @@ export function compactStagedFulltextSearch(
 }
 
 /**
+ * Drop `image_transcribe`'s inline `transcription` once the page is staged
+ * (issue #2490, lead ruling 2026-10-16): the caller triages on `digest` and
+ * `found`, reads the page with `sidecar_read` only when it needs it, and hands
+ * `staged.resultsRef` to record-structurer. A null `staged` keeps the text,
+ * because then it is the only copy (`stagingError` says why).
+ *
+ * Applied at the MCP boundary only (`imageTranscribeMcpTool`), never inside
+ * `imageTranscribeTool`: person_read's memories leg calls that function
+ * in-process and needs the text.
+ *
+ * Mutates and returns `out`.
+ */
+export function compactStagedImageTranscribe<T extends { transcription?: string; staged?: unknown }>(
+  out: T,
+): T {
+  if (out.staged) delete out.transcription;
+  return out;
+}
+
+/**
  * Annotate the search rows with the ranking, in place, and return them best
  * first.
  *
