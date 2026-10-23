@@ -59,10 +59,21 @@ means the router should finish without handing off at all.
 
 A `stub_skills` entry may name an agent with no skill directory. That is how a
 routing test keeps working when its callee is converted from a skill to an
-agent: the hook denies the spawn exactly as it denies a `Skill` call. A name
-that is still a skill is stubbed at its `Skill` call only, except on a test that
-sets `execution.stop_at_stub`, such as `ut_research_015` below: there a spawn of
-any stubbed name is denied too and ends the run.
+agent: the hook denies the spawn exactly as it denies a `Skill` call, with the
+entry's canned text. On a test that sets `execution.stop_at_stub`, such as
+`ut_research_015` below, a spawn of any stubbed name is denied too and ends the
+run.
+
+Every agent spawn in this suite is denied, listed or not, unless the test names
+the agent in `execution.run_agents`. That is how the negative tests whose
+"nothing was written" invariant needs a writer that can really write keep their
+teeth: `ut_research_rpn` runs `research-plan` and `question-selection`,
+`ut_research_018` and `_024` run `research-exhaustiveness`, and `_016` and `_017`
+run `search-images`. Each stocks catch-all fixtures for its agents' tools. A
+positive test here must list at least one `stub_skills` entry, so the ownership
+validators skip the router's denied hand-offs. Because nothing else runs, this
+suite's snapshot carries only the frontmatter of the agents it does not run
+(`<agent>.md#frontmatter`), and a body-only edit to one leaves its run log active.
 
 ## Agent dispatch tests (issue #1851)
 

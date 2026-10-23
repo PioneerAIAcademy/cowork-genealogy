@@ -453,8 +453,8 @@ def test_id_references_resolve(after_state):
 #    correct writes, which is what a replay of the old literals over the
 #    committed corpus measured.
 #
-# A skill named by no row is read-only (convert-dates, translation);
-# it fails these checks if it touches a project file at all.
+# A skill named by no row is read-only; it fails these checks if it touches a
+# project file at all.
 
 
 def _healer_normalized(tree: dict) -> dict:

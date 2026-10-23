@@ -5,19 +5,90 @@
  * so Python and TypeScript produce byte-identical canonical output.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { promises as fs } from 'node:fs';
+import { promises as fs, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import {
+  AGENT_FRONTMATTER_SUFFIX,
   isHashedSnapshot,
   agentRefsInText,
   diffSnapshotVsDisk,
+  frontmatterFingerprintText,
   hashContent,
   hashFile,
   hashSnapshot,
   normalize,
 } from '../../lib/snapshot';
+
+// ---- frontmatterFingerprintText (shared vectors with test_snapshot.py) ----
+// The same file drives test_frontmatter_fingerprint_vectors in
+// eval/harness/tests/unit/test_snapshot.py; both sides must produce each
+// vector's hand-written `expected_text` (#3568). It lives under
+// docs/specs/schemas/ so both this job and the harness job run on any edit to it.
+
+interface FrontmatterVector {
+  name: string;
+  input: string;
+  expected_text: string;
+  expected_digest: string;
+}
+
+const VECTORS_PATH = path.resolve(
+  __dirname,
+  '../../../../docs/specs/schemas/agent-frontmatter-vectors.json',
+);
+const FRONTMATTER_VECTORS = (
+  JSON.parse(readFileSync(VECTORS_PATH, 'utf-8')) as { vectors: FrontmatterVector[] }
+).vectors;
+
+describe('frontmatterFingerprintText (shared vectors)', () => {
+  it('has vectors to check', () => {
+    expect(FRONTMATTER_VECTORS.length).toBeGreaterThanOrEqual(20);
+  });
+
+  for (const vector of FRONTMATTER_VECTORS) {
+    it(vector.name, () => {
+      const text = frontmatterFingerprintText(normalize('x.md', Buffer.from(vector.input, 'utf-8')));
+      expect(text).toBe(vector.expected_text);
+      expect(hashContent(text)).toBe(vector.expected_digest);
+    });
+  }
+});
+
+describe('diffSnapshotVsDisk on a #frontmatter key', () => {
+  const agent = '---\nname: a\ndescription: Does x.\ntools:\n  - Read\n---\nbody\n';
+  const rel = 'packages/engine/plugin/agents/a.md';
+  const key = rel + AGENT_FRONTMATTER_SUFFIX;
+  let dir: string;
+  let snapshot: Record<string, string>;
+
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), 'snap-fm-'));
+    await fs.mkdir(path.join(dir, 'packages/engine/plugin/agents'), { recursive: true });
+    await fs.writeFile(path.join(dir, rel), agent);
+    snapshot = { [key]: hashContent(frontmatterFingerprintText(agent)) };
+  });
+
+  afterEach(async () => {
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it('reports nothing for a body-only edit', async () => {
+    await fs.writeFile(path.join(dir, rel), agent.replace('body', 'a rewritten body'));
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({});
+  });
+
+  it('reports content-differs for a description edit', async () => {
+    await fs.writeFile(path.join(dir, rel), agent.replace('Does x.', 'Does y.'));
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({ [key]: 'content-differs' });
+  });
+
+  it('reports missing-on-disk for a deleted agent', async () => {
+    await fs.rm(path.join(dir, rel));
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({ [key]: 'missing-on-disk' });
+  });
+});
 
 // ---- agentRefsInText (shared vectors with test_snapshot.py) ---------------
 

@@ -1,5 +1,5 @@
 {
-  "run_log": "v29_2026-10-20_23-21-13.json",
+  "run_log": "v33_2026-10-23_05-59-03.json",
   "annotator": "johnpeterbrown@ymail.com",
   "corrections": [
     {
@@ -174,17 +174,17 @@
       "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "should have routed to the appropriate agent"
     },
     {
       "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "should route to the right agent"
     },
     {
       "test_id": "ut_research_rpn",
@@ -206,9 +206,9 @@
       "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Correct investigation done"
+      "comment": null
     },
     {
       "test_id": "ut_research_004",
@@ -310,8 +310,8 @@
       "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -406,14 +406,14 @@
       "test_id": "ut_research_r2",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_research_001",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -429,9 +429,129 @@
     {
       "test_id": "ut_research_001",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "correct done as expected"
+    },
+    {
+      "test_id": "ut_research_c5r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c5r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_c5r",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -574,8 +694,8 @@
       "test_id": "ut_research_zfp",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -723,14 +843,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_pe7",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_research_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -781,7 +893,7 @@
     {
       "test_id": "ut_research_pe7",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -789,7 +901,15 @@
     {
       "test_id": "ut_research_pe7",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -838,8 +958,8 @@
       "test_id": "ut_research_so2",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -856,7 +976,7 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "correct and can complete "
+      "comment": "done as expected"
     },
     {
       "test_id": "ut_research_gm4",
@@ -864,7 +984,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "Correct research as  expecte"
+      "comment": "done as expected"
     }
   ]
 }

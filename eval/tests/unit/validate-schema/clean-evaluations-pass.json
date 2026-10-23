@@ -14,6 +14,6 @@
   "judge_context": [
     "Should report that both project files are valid with no errors",
     "Should NOT flag the evaluations[] entry: ev_001 uses the correct 'ev_' prefix, valid closed-enum values (focus 'on-demand', target_type 'question', verdict 'looks_solid'), a target_id (q_001) that resolves to an existing question, a valid ISO 8601 timestamp, and superseded_by null — all legitimate",
-    "Reporting 'both project files are valid' is the correct and complete response for this read-only skill"
+    "Reporting 'both project files are valid' is the correct and complete response for this skill, which edits no file to fix an error"
   ]
 }
