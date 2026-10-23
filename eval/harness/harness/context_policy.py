@@ -3,10 +3,10 @@
 Some tools are safe in an isolated subagent and unsafe on the main thread.
 `image_read` is the motivating case: it returns a page scan as inline base64,
 and if that lands in the router's context the bytes accumulate and overflow the
-transport's ~1 MiB per-turn buffer, crashing the whole run. Every image read is
-therefore delegated to the `image-reader` subagent, which absorbs the base64 in
-a throwaway context and returns text only (`agents/image-reader.md`); the text
-then goes to `record-structurer` for extraction.
+transport's ~1 MiB per-turn buffer, crashing the whole run. Every page is
+therefore read with `image_transcribe`, which OCRs it host-side and stages the
+text (#2490); the caller reads it with `sidecar_read` and hands the staged ref
+to `record-structurer` for extraction.
 
 Until now that rule was prose, and prose did not hold — the router was observed
 calling `image_read` directly (runlog v1_2026-07-16_20-23-34). It cannot be
@@ -37,8 +37,8 @@ One scope limit (plan §4.1):
   call it from the main thread as their ordinary route, and `extraction_append` accordingly left
   `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires). The
   one remaining member, `image_read`, is still declared by no skill and no agent
-  — `search-images` moved to delegating via `@plugin:image-reader` (2026-07-17),
-  and `image-reader-opus` was retired (issue #2013) — so for that member
+  — pages are read with `image_transcribe`, and the image-reader agents are
+  retired (issue #2013, #2490) — so for that member
   `agent_id` presence alone still decides. Pinned by
   `tests/unit/test_context_policy.py`.
 
@@ -72,9 +72,9 @@ from typing import Any
 #   (issue #2013). It STAYS in this set deliberately: the deny exists because the
 #   tool returns a page scan as inline base64 that accumulates in the router's
 #   context and overflows the transport buffer, and retiring the agent changed
-#   nothing about that. The recovery target was already `@plugin:image-reader`
-#   (which returns text), never the retired agent, so the denial reason below
-#   still names the right fix. Dropping the entry would silently reopen the
+#   nothing about that. The recovery target is `image_transcribe` (#2490, which
+#   also retired the `image-reader` agent that wrapped it), so the denial reason
+#   below names that. Dropping the entry would silently reopen the
 #   main thread to inline scans — the opposite of issue #1874's direction.
 #
 # `extraction_append` was the second member and LEFT this set in issue #2937.
@@ -146,9 +146,8 @@ def subagent_only_violation(
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
        that claimed the tool for itself may call it directly; a skill that
        holds it only through the agent-union may not. No skill declares either
-       guarded tool today — `search-images` moved to delegating via
-       `@plugin:image-reader` on 2026-07-17 — so this exemption is currently
-       unreachable, and `agent_id` presence alone decides (see
+       guarded tool today — pages are read with `image_transcribe` — so this
+       exemption is currently unreachable, and `agent_id` presence alone decides (see
        `e2e/orchestrator.py` and e2e-test-spec §6.1.1).
 
     `declared_tools=None` means "unknown", and is treated as **declaring
@@ -173,7 +172,7 @@ def subagent_only_violation(
 # Per-tool denial reasons. The reason text is the model's ONLY feedback on a
 # deny, so each guarded tool must name its own fix — a generic "not allowed here"
 # just relocates the substitution. `image_read` has somewhere legitimate to go:
-# delegate the read to an agent that returns text. (The `extraction_append`
+# `image_transcribe`, which reads the page host-side and stages it (#2490). (The `extraction_append`
 # reason lived here until issue #2937 removed that tool from the set; it told the
 # router to re-delegate a failed `record-extractor` spawn, since retired, rather
 # than extract the record itself, issue #942.)
@@ -181,8 +180,9 @@ _DENIAL_REASONS = {
     "image_read": (
         "image_read may not be called from the main session — it returns "
         "inline base64 that overflows the transport buffer and crashes the "
-        "run. Delegate to the image-reader subagent (@plugin:image-reader), "
-        "which returns a text transcription."
+        "run. Call image_transcribe with projectPath instead: triage on its "
+        "`found` and `digest`, and read the page with "
+        "sidecar_read({ projectPath, ref: staged.resultsRef }) when you need it."
     ),
 }
 

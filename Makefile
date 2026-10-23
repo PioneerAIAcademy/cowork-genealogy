@@ -437,7 +437,7 @@ probe-bash-deny: $(ENGINE_BUILD) ## D1–2 probe: is disallowed_tools=["Bash",�
 	  uv run python -m dev.p1.probe_bash_deny
 
 .PHONY: probe-registration
-probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn image-reader by that name? (1 billed session + 1 subagent turn)
+probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn convert-dates by that name? (1 billed session + 1 subagent turn)
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python -m dev.p1.probe_registration
@@ -1056,7 +1056,7 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
-.PHONY: source-screen-snapshot source-screen-attachments source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+.PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-judge source-screen-score
 source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1] [TREE=<researcher tree id>]
 	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED)) $(if $(TREE),--tree $(TREE))
@@ -1064,6 +1064,10 @@ source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source s
 source-screen-attachments: $(ENGINE_DEPS) ## Re-read a snapshot's attachments from a researcher tree: make source-screen-attachments SNAPSHOT=<dir> TREE=<tree id>
 	@test -n "$(SNAPSHOT)" -a -n "$(TREE)" || { echo "ERROR: set SNAPSHOT and TREE" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts attachments --snapshot "$(abspath $(SNAPSHOT))" --tree $(TREE)
+
+source-screen-tree-sources: $(ENGINE_DEPS) ## Reclassify a snapshot and fetch its 4:1: tree-person and 2:2:/2:3: compiled-tree sources: make source-screen-tree-sources SNAPSHOT=<dir>
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts tree-sources --snapshot "$(abspath $(SNAPSHOT))"
 
 source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }

@@ -35,12 +35,13 @@ def test_clean_run_passes():
     assert check([]) is None
 
 
-def test_image_read_message_names_the_image_reader_and_the_reason():
+def test_image_read_message_names_image_transcribe_and_the_reason():
     with pytest.raises(AssertionError) as e:
         check([_call("image_read")])
     msg = str(e.value)
     assert "image_read" in msg
-    assert "@plugin:image-reader" in msg
+    assert "image_transcribe" in msg
+    assert "image-reader" not in msg
     assert "base64" in msg
 
 
@@ -65,7 +66,7 @@ def test_repeat_offences_are_counted():
     with pytest.raises(AssertionError) as e:
         check([_call("image_read"), _call("image_read")])
     msg = str(e.value)
-    assert "@plugin:image-reader" in msg
+    assert "image_transcribe" in msg
     assert "2 call(s)" in msg
 
 
@@ -82,7 +83,7 @@ def test_every_guarded_tool_has_a_bespoke_fix_line():
     for tool in SUBAGENT_ONLY_TOOLS:
         with pytest.raises(AssertionError) as e:
             check([_call(tool)])
-        assert "@plugin:" in str(e.value), (
-            f"{tool} falls back to the generic fix line — add its owning "
-            f"subagent to the `owners` map in test_universal.py"
+        assert f"{tool} → delegate to its owning subagent" not in str(e.value), (
+            f"{tool} falls back to the generic fix line — add its fix to the "
+            f"`owners` map in test_universal.py"
         )
