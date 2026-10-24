@@ -10,6 +10,7 @@ deploy (`docs/plan/familysearch-handoff.md`, step 9).
 | `Procfile` | `web: node build/http.js --host 127.0.0.1 --port 8080`. Mandatory: without one the platform runs `npm start`, which is the stdio server. Loopback, so only nginx reaches the port. |
 | `.ebextensions/01-tools.config` | `PORT=8080` (equal to the Procfile's `--port`), `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the bundle's `certs/rds-global-bundle.pem`, `HealthCheckPath: /healthz`, one instance (`asg` 1/1), CloudWatch log streaming kept after terminate |
 | `.ebextensions/02-tools-alb.config` | ALB `IdleTimeout` 1800, alone in its file (below) |
+| `.ebextensions/03-tools-classic-elb.config` | Classic `ConnectionSettingIdleTimeout` 1800, alone in its file (below) |
 | `.platform/nginx/conf.d/01-tools-timeouts.conf` | `proxy_read_timeout` and `proxy_send_timeout` 1800 s, nginx's 60 s default being shorter than a tool call |
 
 `apps/server/tests/test_proto_bundles.py` pins them: the Procfile's shape and `--port`
@@ -29,6 +30,12 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
   (and `EnvironmentType` `LoadBalanced`). The API default is `classic`, whose 60 s idle
   timeout `02-tools-alb.config` cannot raise, and AWS documents that the type can be set
   neither from `.ebextensions` nor after creation.
+- **Classic too, for Blueprint.** FamilySearch's Blueprint provisioner creates
+  load-balanced environments with a Classic load balancer at 60 s (handoff F12, F14;
+  2026-10-24), so `03-tools-classic-elb.config` raises that one to 1,800 s. Each file is
+  ignored on the other type: Beanstalk validated both options against a Classic
+  environment without a message. Whether Blueprint's `stack_options` can choose an ALB at
+  creation is untested.
 - **Not in the bundle:** `GENEALOGY_PG_DSN`, `GENEALOGY_S3_BUCKET` (both required, or
   `build/http.js` exits 2 before listening), the other `GENEALOGY_S3_*` variables, and the
   config overrides in `../tools/README.md`. Each is an API-level setting.

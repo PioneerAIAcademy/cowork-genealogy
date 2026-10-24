@@ -292,6 +292,15 @@ def test_tools_alb_idle_timeout_is_alone_in_its_file():
     assert list(data["option_settings"]) == ["aws:elbv2:loadbalancer"]
 
 
+def test_tools_classic_elb_idle_timeout_is_alone_in_its_file():
+    # Blueprint creates a Classic load balancer, where the ALB option above is ignored (F12).
+    entries = _options("tools")[("aws:elb:policies", "ConnectionSettingIdleTimeout")]
+    assert [f for _, f in entries] == ["03-tools-classic-elb.config"]
+    assert int(entries[0][0]) >= TOOLS_MIN_TIMEOUT_S
+    data = _load_config(_template("tools") / ".ebextensions" / "03-tools-classic-elb.config")
+    assert list(data["option_settings"]) == ["aws:elb:policies"]
+
+
 @pytest.mark.parametrize("tier", ["worker", "tools"])
 def test_one_instance_until_u18(tier):
     """Handoff step 13: U6's claim fencing is built, so the gate on a second instance
