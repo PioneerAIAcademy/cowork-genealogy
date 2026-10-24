@@ -1,6 +1,6 @@
 # Attached records baseline: extract, link and timeline a person in code, and close the plan item
 
-**Status:** PR C is split. C1 (PR #3670, Emruthwill) is everything in § PR C except `timeline_build`, and is in review. C2 (`timeline_build`) and PR D are not started; Gennecis owns them. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
+**Status:** PR C is split. C1 (PR #3670), everything in § PR C except `timeline_build`, has merged. C2 (`timeline_build` and the census table) is in review; its deviations are recorded under § The census table and § `timeline_build`. PR D is not started. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
 
 **Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/plan/research-step-mode.md`, prerequisites).
 
@@ -34,7 +34,7 @@ Added (lead, 2026-10-20):
 11. **Relationship-level attachments are never linked**, because 32 of 42 in the e2e trees name the other party. They are not extracted for now either. The step reads person-, name- and fact-level refs, and so does the leak check.
 12. **The acceptance run is joao-sousa-death.** It is adjudicated, and its three attached records that findings cite are starting evidence (PR A). carel-kolbe-death is still a draft pending adjudication (PR #3517).
 13. **maria-bracero-marriage's f2 becomes non-required.** Her attached 1973 death record answers it without the hint. The required marriage finding still needs the hint.
-14. **Census years come from a census table in code, never from the catalog (lead, 2026-10-21).** A census gap means FamilySearch likely holds a record that could be attached and is not. A false `high` gap is worse than a missed one. The catalog cannot tell a fragment from a full census, and the place a collection is filed under is not the area it covers, so `timeline_build` reads the table (§ The census table) and never fetches the catalog. A named list of fragments stays out of the table. A country the table does not list produces no census gap. ADR-0012 is amended to match.
+14. **Census years come from a census table in code, never from the catalog (lead, 2026-10-21).** A census gap means FamilySearch likely holds a record that could be attached and is not. A false `high` gap is worse than a missed one. The catalog cannot tell a fragment from a full census, and the place a collection is filed under is not the area it covers, so `timeline_build` reads the table (§ The census table) and never fetches the catalog. A named list of fragments stays out of the table. A place no row covers produces no census gap. ADR-0012 is amended to match.
 15. **ferber-marriage's f2 stays required.** Its notes keep the attached 1900 census as an anchor the research starts from, so extracting it at setup is the intended path, not a leak.
 16. **With nothing linked, the timeline agent extracts once.** When `timeline_build` returns `no_linked_evidence`, the agent calls `extraction_append({ projectPath, personId })` once, then `timeline_build` again. If still nothing is linked, it says that no record yet places the person. It never hands back.
 17. **Attached records are checked only on request.** A /research job runs person-evidence on attachment-linked assertions only where the unlinked-proof gate needs it: when a question's assertions have no other live link (project_context's rung, through the router's widened person-evidence row), or when the gate refuses a proof that cites them because none of its supporting assertions has a live link that is not speculative (person-evidence Step 1's refused-proof route). Otherwise they stay speculative, and a proof may cite them beside an assertion whose link is not speculative. The other personas in an attached record are linked only once a question's search re-finds that record (decision 7). Checking them otherwise is a separate request (decision 3).
@@ -134,6 +134,13 @@ Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. 
 
 The developer has Claude fill the table, from the live catalog (`dev/probe-census-placeids.ts` lists every single-year census collection with its record count) and what it knows of each country's censuses. It covers every country in North America, South America, Europe and Australia with an indexed FamilySearch census, which may be more than 25. It is a good guess, fixed row by row as rows prove wrong (lead, 2026-10-21).
 
+**As built in C2 (2026-10-22), measured against the live catalog:**
+- The year comes from the collection **title**. `dev/probe-census-placeids.ts` keeps only single-year metadata, and 91 census collections with records span several years there, Mexico 1930 (1929–1931) among them. A title naming a range ("France, Charente, Census, 1837-1936") gives no row, since which years it indexes is unknown.
+- **Population censuses only**: no school, church, mortality, veterans, Native American, electoral or poll-tax collections. City censuses have no rows yet.
+- **`covers` is a list**, every standard-place form the area takes, because Places names change with the era ("Kent, England" before 1801, "Kent, England, United Kingdom" after). The bullet below gives it as one string.
+- **A row counts for an interval only when it covers both bounding places**, not the earlier one alone: NY 1850 to Ohio 1870 expects the federal 1860, not New York's 1855 or 1865. So there is no separate same-country test.
+- **Rows list only areas enumerated and surviving in the index.** US federal 1790–1880 rows list their states per year. A collection indexing under 75% of its census's population (households, for a heads-only schedule) has no row. 152 rows; `dev/check-census-table.ts` passed on all of them on 2026-10-22.
+
 - [ ] **`src/data/census-table.ts`**, a typed constant, so it needs no file read. One row per census a FamilySearch index covers:
   - `year`;
   - `label`, the jurisdiction named in the gap ("United States", "New York", "Canada");
@@ -151,6 +158,14 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 
 ### `timeline_build({ projectPath, personId })`
 
+**As built in C2 (2026-10-22):**
+- Dates parse through a new `parseStdDate` (strips a trailing `(?)`, then single, range or "or"), not a bare export of `parseSingle`, which reads `1845?` as undated. `getDayRange` now uses it.
+- The census and 20-year rules judge an interval on the years each event's date allows (`earliestYear`/`latestYear`), never on the written point: an `Aft 1840` birth does not expect 1850.
+- The marriage gap reads the child persona's own `birth` assertion in the person's linked record, which is not itself linked to the person; a child is a `relationship` assertion naming the person's role with a child type, never a text match.
+- No census, marriage or 20-year gap starts at or after a linked death; the death/burial gap is bounded by the event present.
+- The unit-harness handler passes both Places tables through the tool's injected `deps`, not `__usePlaceTableForTests`.
+- Spec: `docs/specs/timeline-build-tool-spec.md`.
+
 - [ ] **Add the tool** in `src/tools/timeline-build.ts`. It does the timeline agent's Mode A Steps 2–4 and 7 in code. Also add:
   - its schema in `allToolSchemas` (`src/tool-schemas.ts`), its dispatch arm in `src/server.ts`, and its name in `manifest.json` `tools`;
   - its name in `OK_FALSE_IS_FAILURE` (`src/tool-result.ts`), with the `server.ts` arm returning `writerToolResult(…)`. `no_linked_evidence` returns `ok: true`;
@@ -165,7 +180,7 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
   - Event types, the date-certainty subset, the before/after conversion and the sort key follow timeline.md Step 3.
   - **Dates are written year-first:** `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. Pass the assertion's `date` through `stdDate` (`src/utils/date-standardize.ts`) and parse the result with `parseSingle` (`src/utils/date-helpers.ts`, exported for this), which gives its modifier, day, month and year; `getDayRange` widens `Abt 1845` to 1844–1846 and gives no parts. Prefix `~` when the date reads `Abt` or the assertion's `date_certainty` is `approximate`. A `Bet X and Y` date is written `YYYY-YYYY` from its two years, timeline.md Step 3's range form, and takes `date_certainty` `estimated`. A date `stdDate` returns `""` for counts as undated. Events sort by that string with a leading `~` ignored, which is how `test_events_chronologically_ordered` compares them. The record's own wording ("12 March 1908") sorts before "1850" as text, so it stays in `description`. Say so in `timeline-build-tool-spec.md`, and in `research-schema-spec.md`'s note that event dates are as encountered in records.
   - Copy `standard_place` from the event's assertions. When none carries one, resolve an assertion's `place` text once per distinct place.
-  - Set `distance_from_previous_km` with `haversineDistance` (`src/tools/distance.ts`). Look up coordinates with `lookupPlaceCoords` (`src/utils/place-coords.ts`), passing the time left to the deadline as its budget. It looks each distinct place up once and takes an injectable `PlaceCoordsResolver` the mock handler can serve. Compute each unordered pair once. A place that does not resolve leaves the distance null.
+  - Set `distance_from_previous_km` with `haversineDistance` (`src/tools/distance.ts`). Look up coordinates with `lookupWithin` (`src/utils/place-coords.ts`), passing the time left to the deadline as its budget. It looks each distinct place up once and takes an injectable `PlaceCoordsResolver` the mock handler can serve. Compute each unordered pair once. A place that does not resolve leaves the distance null.
   - If every link behind an event is `speculative`, start its `description` with "Unverified attachment:" when every rationale is `ATTACHMENT_LINK_RATIONALE`, and with "Unverified:" otherwise.
   - **A resolved conflict with a winner** (`resolution_kind: "competitor"`, or no kind and a non-null `preferred_assertion_id`, the shape of a conflict resolved before the kind existed): keep the preferred assertion, drop the conflict's other competing assertions from the events, and set `conflict_ids`, as timeline.md Step 7 says.
   - **Any other resolved conflict** (a deferral with no preferred assertion, or `tree` or `synthesis`): drop nothing, and treat its events as for an unresolved conflict, with a `conflict_note` quoting `resolved_value` when set, else `resolution_rationale`. 12 of the 69 resolved conflicts in the committed e2e final states name no preferred assertion. **A `moot` conflict** marks nothing.
@@ -173,7 +188,7 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 - [ ] **Gaps.** Copy `start` and `end` from the bounding events, and never pad them. The tool writes four kinds:
   - **Census, `high`.** A census year in which any event falls is in hand, whatever the event's type. Each other year the rules below expect is one `expected_events` entry. It names the year and the table row's jurisdiction label just before "census" ("1870 United States census", "1855 New York census", "1890 Denmark census"), so that `timelineCensus1890Invariants` keeps a non-US 1890 census. When a national row and a state or provincial row both cover a year, use the national label.
     - **Which years:** judge them per interval, strictly between consecutive events that carry a `standard_place`. A year inside an interval counts only when both events are in the same country (the last comma segment) and a table row for that year covers the earlier event's place. A row covers a place when its `covers` value is one of that place's comma suffixes, compared as standard-place text. A year between events in two countries expects no census; the 20-year rule covers a long gap there. The span ends at the last record-backed event, or at a linked death.
-    - **Heads-only years.** A row marked `heads_only` is expected only when the tree person is male and a linked birth event puts him at 21 or older that year. With no linked birth, the year is not expected.
+    - **Heads-only years.** A row marked `heads_only` is expected only when the tree person is male, a linked birth event puts him at 21 or older that year, and a linked marriage ends before it. With no linked birth or marriage, the year is not expected (lead, 2026-10-23: a heads-only schedule names only household heads, and a missed gap is better than a false one).
     - **The 1890 check.** Before the write, test each census `expected_events` entry with `timelineCensus1890Invariants` (`research-append.ts`). Drop any entry it refuses, note the drop in that gap's `notes`, and drop a gap left with no entry. Otherwise one refused entry refuses the whole timeline write.
   - **Marriage, `high`.** A linked assertion names a child of the person, and no marriage event comes before the first child's birth.
   - **Twenty or more years between consecutive events, `high`.**
@@ -193,7 +208,7 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
   - Add `timeline_build` to `PROJECT_WRITER_TOOLS` in `test_universal.py`, with a free case beside `test_hand_edit_detector_passes_when_writer_tool_called` (`eval/harness/tests/unit/test_validator_runner.py`). After PR D, a Mode A timeline run's only writer is `timeline_build`.
   - Add it to `UNMODELLED_WRITERS` in `eval/harness/harness/replay.py`. Also report as unmodelled every `extraction_append` call the replay cannot apply whole: a `personId` call, any call whose `args` carry `questionIds`, which can tie a re-found record, and any call whose response carries `planItems`. Neither main's generic path, which reads a call with no `ops` as one log entry, nor PR #3564's log-id read-back applies PR B's completions and question ids. Make `replay_remnant` (`eval/harness/scripts/prune_runlogs.py`) keep a `planItems` marker, as it keeps `no_project`, with a case in `eval/harness/tests/unit/test_strip_e2e_captures.py`; otherwise the 14-day strip drops it.
 - [ ] **Nothing linked:** write nothing, and return `status: "no_linked_evidence"`, `ok: true` and the `summary` "No record yet places this person; no timeline was written." The bounded ask and the timeline agent both relay it.
-- [ ] **Return** `{ ok, status, timelineId, events, unverifiedEvents, gaps: { high, medium, low }, summary }`. `summary` is one code-written sentence the main thread relays. It gives how many events there are, how many come from unchecked attachments and how many `high` gaps, and says that checking the attachments is a separate request. It also says the census years expected are those FamilySearch has indexed, and names any country in the timeline the census table does not list as one where no census was checked (decision 14).
+- [ ] **Return** `{ ok, status, timelineId, events, unverifiedEvents, gaps: { high, medium, low }, summary }`. `summary` is one code-written sentence the main thread relays. It gives how many events there are, how many come from unchecked attachments and how many `high` gaps, and says that checking the attachments is a separate request. It also says the census years expected are those FamilySearch has indexed, and names any place in the timeline no row covers as one where no census was checked (decision 14).
 - [ ] **Unit harness.** `timeline_build` is a live tool, served like `extraction_append`.
   - Add it to `LIVE_TOOLS` and to `LIVE_MODULES` in `eval/harness/harness/instrument.py`; `test_instrument.py` asserts the two match. Also add it to `OK_FALSE_IS_FAILURE_LIVE` in `mock_mcp.py`, and to its docstring's live-tool list.
   - Add a `_make_timeline_build_handler` in `mock_mcp.py`, dispatched from `_make_live_handler`. It runs the compiled tool against the workspace with injected deps:
@@ -220,11 +235,11 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
   - placed US events in 1845, 1870 and 1905 give two `high` gaps, 1845–1870 naming the 1850 and 1860 censuses and 1870–1905 naming the 1880 and 1900 censuses, each then "residence", and no 1845–1905 gap;
   - assertions dated "abt 1845", "1850" and "12 March 1908" give event dates "~1845", "1850" and "1908-03-12", in order once a leading `~` is ignored;
   - "between 1836 and 1848" gives an event dated "1836-1848" with certainty `estimated`, and an assertion dated "17 May" joins its record and party's event of the same `fact_type` or makes none;
-  - two events in a country the table does not list give no census gap, and a summary naming that country as unchecked;
+  - two events in a place no row covers give no census gap, and a summary naming that place as unchecked;
   - a Places lookup that never answers leaves its census years and distances out, and the call still returns before the deadline;
   - against the table:
     - Ohio gets the federal years, and a state census year counts for a place in that state, never for a place in another state;
-    - a US man born 1800 expects 1830 and 1840; a US woman, and a man with no linked birth, expect neither;
+    - a US man born 1800 and married in 1824 expects 1830 and 1840; one married in 1838 expects 1840 only; an unmarried man, a US woman, and a man with no linked birth expect neither;
     - Ireland expects 1901 and 1911, and never 1821–1851;
     - an Ontario place expects the 1891 Canada census;
   - a US subject alive across 1890: the timeline is written, and no entry names an 1890 census;
@@ -368,7 +383,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
 
 - Most of the step in e2e: 46 of 186 starting trees cite an indexed source on the subject, and none of the four panel fixtures does.
 - PR C changes graded behaviour while check_runlogs only warns.
-- A census FamilySearch indexes after the table was written produces no gap until someone adds its row, and a country the table does not list produces none at all (decision 14).
+- A census FamilySearch indexes after the table was written produces no gap until someone adds its row, and a place no row covers produces none at all (decision 14).
 - The table's collection ids are checked only by `dev/check-census-table.ts`, which no CI job runs.
 
 ## Collisions

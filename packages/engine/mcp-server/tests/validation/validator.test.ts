@@ -2954,6 +2954,13 @@ describe("Research closed shapes", () => {
     expect(JSON.stringify(result.errors)).toMatch(/'archion_de' is not a valid site/);
   });
 
+  it("accepts the openarch search site on external_site.site (#3185)", async () => {
+    const research = maximalResearch();
+    research.log[1].external_site.site = "openarch";
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
+  });
+
   // #1270 — pages_read[].section is the `locality_page_section` closed enum.
   // validateLocalities never descended into pages_read before, so a misspelled
   // section reached disk with valid: true. The maximal document above carries

@@ -166,10 +166,11 @@ entry carries `blocked_by: "context"`, but **two different guards land here and
   `out_of_lane` fires for a **named subagent** reaching outside its own lanes.
   `tool` is `research_append` for all four, so it cannot tell them apart — read
   `narration[]` for the rule and `tool_calls[]` for the caller.
-- **`extraction_append`** or **`image_read`** — a subagent-only tool called on the
-  main thread, which *does* suggest the owning subagent failed to spawn
-  (record-extractor for the write, the image reader for the read). Neither has
-  been observed in the committed corpus.
+- **`image_read`** — the one subagent-only tool, called on the main thread. No
+  agent owns it, so this is the router reaching for a scan inline instead of
+  calling `image_transcribe`, not a spawn failure. Not observed in the committed
+  corpus. Older runs may also show `extraction_append` here, from before it left
+  the subagent-only set.
 
 Same shape as above (`{tool, args, blocked_by}`), and the denied attempt also
 shows up in `narration[]` with `kind: "blocked"`.
@@ -178,13 +179,11 @@ shows up in `narration[]` with `kind: "blocked"`.
 - **Non-empty** — a call was denied and that work was not done. Flag it, and say
   which arm: an owned-section `research_append` is an ownership slip, not a spawn
   failure, so name the caller from `tool_calls[]` rather than assuming the main
-  thread. Only the subagent-only tools point at a spawn failure for their owning
-  subagent (`record-extractor` for `extraction_append`), not a records gap. No
-  agent owns `image_read` since `image-reader-opus` was retired, so a blocked
-  `image_read` is the router reaching for a scan instead of delegating to
-  `image-reader`. Read the matching `narration[]` turn: for a subagent-only tool
-  it shows where the spawn failed, and for an owned-section write it names which
-  rule fired.
+  thread. A blocked `image_read` is the router reaching for a scan instead of
+  calling `image_transcribe`; no agent owns it, so it is not a spawn failure. In
+  an older run a blocked `extraction_append` did point at a `record-extractor`
+  spawn failure. Read the matching `narration[]` turn: it shows what the router
+  was trying to do, and for an owned-section write it names which rule fired.
 
 ### Step 2d — Note any GPS guardrail bypasses
 

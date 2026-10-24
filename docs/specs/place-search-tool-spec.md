@@ -59,11 +59,13 @@ it lives only on this `ws-ui` attributes endpoint.
 
 ---
 
-## Internal function — `placeSearch(placeName, contextName?) -> PlaceResult[]`
+## Internal function — `placeSearch(placeName, contextName?) -> PlaceSearchOutcome`
 
 The single entry point any tool should call when it needs FamilySearch place
-data or IDs for a named place. Returns the full internal `PlaceResult[]` (which
-still carries IDs for in-server use).
+data or IDs for a named place. Returns a `PlaceSearchOutcome` —
+`{ results: PlaceResult[], matchType?: "fuzzy" }` — where `results` still
+carries IDs for in-server use and `matchType` is present only when the results
+came from the fuzzy fallback (step 1 below).
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -79,6 +81,19 @@ Steps:
    and the measured evidence for each character are in
    [FamilySearch API Reference](#places_search_resource) below; a `placeName`
    that sanitizes to the empty string returns `[]` without a call.
+   **Fuzzy fallback:** when the exact query returns zero entries — an empty
+   *success*; a thrown error still propagates — **and** the leaf (the first
+   comma segment of the *sanitized* name) is a single token, re-query once as
+   `q=name:{leaf}~`, **unquoted**, the `~` appended after sanitization. The
+   query is built from that leaf, never from the whole comma string. Entries
+   from the fallback mark the outcome `matchType: "fuzzy"`; a fallback that
+   also returns nothing yields `[]` with no flag. The trigger's two limits are
+   measured scope, not caution (evidence in the
+   [fuzzy query section](#fuzzy-query-the-fallback) below): a multi-word leaf
+   gets no fallback because unquoted multi-token fuzzy is an OR of tokens, and
+   comma-qualified input effectively never triggers because its exact query
+   matches the qualifier and is not empty. A broader trigger needs a ranking
+   rule nobody has specified — the same reason the `&` dual query is not built.
 2. **Filter by context** — determine an effective context: the explicit
    `contextName` if given, otherwise one **derived** from a comma-qualified
    `placeName` — the leaf's immediate parent locality (segment index 1), e.g.
@@ -93,7 +108,16 @@ Steps:
    different candidate contains it (e.g. `"Georgetown, Washington, District of
    Columbia"` → context `"Washington"` keeps Washington State and drops the DC
    place), it can exclude the intended result. Filtering happens on the search
-   entries, before any description call.
+   entries, before any description call, and applies to fuzzy-fallback entries
+   unchanged — same filter, same keep-unfiltered-if-nothing-matches fallback.
+   A **fuzzy** outcome is then capped to the top `MAX_FUZZY_ENTRIES` (10)
+   ranked entries — after the context filter, so an in-context match is never
+   cut, and before the per-entry fetches of steps 3–4. A fuzzy set is
+   unbounded and each entry costs two fetches: live, a bare `"Brixtol"`
+   returns 319 entries and the uncapped expansion drove `place_search_all`
+   past the 60s bridge abort at ~1,500 requests; capped, the correction still
+   surfaces because entries arrive ranked (Bristol is rank 2 for `"Brixtol"`,
+   Sierokopaß rank 3 for `"Sierkopas"`). Exact results are never capped.
 3. **Describe** — for each surviving rep ID, `GET /platform/places/description/{repId}`
    (Place_Description_resource). If a description 404s, fall back to the
    search-entry data so the place is not dropped.
@@ -101,7 +125,9 @@ Steps:
    and take the `WIKIPEDIA_LINK` attribute's `url` as `wikipediaUrl` (see
    [Wikipedia link source](#wikipedia-link-source)). Graceful: a non-OK status,
    network error, or absent attribute yields no `wikipediaUrl`, not an error.
-5. **Cache** — memoize the `PlaceResult[]` in a module-level `Map` keyed by the
+5. **Cache** — memoize the whole `PlaceSearchOutcome` (results **and** match
+   type, so a cache hit returns `matchType: "fuzzy"` again rather than dropping
+   it) in a module-level `Map` keyed by the
    normalized `(placeName, contextName)` pair (trimmed + lowercased). The
    resolver's own memo in `place-resolver.ts` additionally keys on the year, so
    a dated and an undated search of one place do not share an entry. No TTL;
@@ -122,7 +148,7 @@ Steps:
 
 `placeSearchTool({ placeName, contextName? })` runs `placeSearch`, projects each
 `PlaceResult` to `SimplifiedPlaceResult` via `simplifyPlaceResult`, and returns
-`{ results: SimplifiedPlaceResult[] }`.
+`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`.
 
 ### Input
 
@@ -137,7 +163,13 @@ Steps:
 
 ### Output
 
-`{ results: SimplifiedPlaceResult[] }`. Each `SimplifiedPlaceResult`:
+`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`. The **top-level**
+`matchType` is present only when the results came from the fuzzy fallback; on
+an exact hit the field is absent and the response is byte-identical to the
+pre-fallback shape. It is top-level rather than per-result because every result
+in one response comes from one query. It must stay **optional** — the packaging
+fixture-shape test fails a new required field across the recorded
+`eval/fixtures/mcp/` responses. Each `SimplifiedPlaceResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -179,8 +211,12 @@ object is present — those exist only on the internal `PlaceResult`.
     "higher-level place as context to disambiguate among places that share a " +
     "name — e.g. placeName 'Paris' with contextName 'Idaho' returns Paris in " +
     "Idaho, while contextName 'France' returns Paris in France. Each result " +
-    "includes the full jurisdictional name, place type, date range, " +
-    "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
+    "includes the standardized place name (standardPlace), place type, date " +
+    "range, coordinates, a FamilySearch link, and (when available) a " +
+    "Wikipedia link. " +
+    'If the response carries matchType: "fuzzy", the name you sent matched ' +
+    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    "before using it. " +
     "Use place_search_all instead when you need every historical jurisdiction " +
     "a place has belonged to over time.",
   inputSchema: {
@@ -232,7 +268,7 @@ are not wildcards but still move the answer.
 | `&` | → the word `and` | `"…7 & 9 Ogden city Ward 2, Weber, Utah"` → *Denver, **Colorado*** |
 | `?` `*` | dropped | `"Marshall Sal*, Missouri"` → *Saline County Poor Farm **Cemetery*** |
 | `#` | dropped | `"Alverson Cemetery #1, …, Indiana"` → *Alverson Cemetery, **North Carolina*** |
-| `~` | dropped | would silently enable fuzzy matching on recorded text |
+| `~` | dropped from caller text; used deliberately by the [fuzzy fallback](#fuzzy-query-the-fallback) | would silently enable fuzzy matching on recorded text |
 
 **`&` maps rather than drops**, measured on the four conjunction strings that
 are the whole corpus population — not on `&` in general. For a conjunction it is
@@ -281,6 +317,35 @@ under every locale). Pinned to `en` so the persisted `standard_place` spelling
 cannot drift with a server default, and to agree with the read tools, which
 already send it.
 
+#### Fuzzy query (the fallback)
+
+```
+GET https://api.familysearch.org/platform/places/search?q=name:{token}~
+```
+
+The value is **unquoted** — phrase-quoting turns the `~` into Lucene
+phrase-proximity, not fuzzy — and a **single token**, because an unquoted
+multi-token value is parsed as an OR of fuzzied tokens. Sent only by the
+fallback in step 1 of `placeSearch`, never for caller text (a recorded `~` is
+still sanitized away first). The trigger's limits are measured, live (the
+misspelling is from a German beginner case study; the correct place is
+Sierokopaß, Kreis Neidenburg, East Prussia):
+
+| query | live result |
+|---|---|
+| `name:"Sierkopas"` (exact, what a misspelling gets) | HTTP 204, empty |
+| `name:Sierkopas~` (the fallback) | 5 hits; Sierokopaß, Neidenburg, East Prussia 3rd — and Scherokopaß, Culm, West Prussia also matches under a Germany context, so the fallback flags rather than picks |
+| `name:"Sierkopas, Germany"~` (quoted) | phrase-proximity, not fuzzy: "Germany" at 90, no Sierokopaß |
+| `name:Klein~ Kozlau~` (multi-token) | OR of tokens: 349 hits led by "Klin, Croatia" |
+| `name:"Sierkopas, Germany"` (comma-qualified exact) | 15 "Germany…" hits — not empty, so the fallback never fires for it |
+
+The `fuzzy` option lives on `searchPlace` (`src/utils/place-api.ts`), opt-in
+and applied **after** `sanitizeForNameQuery`, the same way `date` is. The
+resolver (`src/utils/place-resolver.ts`) never passes it: other tools'
+`standardPlace` resolution persists silently, so it must not start accepting
+sounds-alike matches — only `place_search` / `place_search_all`, whose output
+flags them, use the fallback.
+
 Response: `entries[]`, each with `id` (rep ID), `score`, and
 `content.gedcomx.places[0]` carrying `display.{name,fullName,type}`,
 `latitude`/`longitude`, `temporalDescription.formal`, and
@@ -323,7 +388,7 @@ ignore it for `wikipediaUrl`.)
 
 | Condition | Behavior |
 |-----------|----------|
-| Search returns no results (empty body or empty entries) | Return `{ results: [] }` |
+| Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [] }` with no flag |
 | A description lookup 404s | Fall back to the search-entry data; do not drop the place |
 | FamilySearch search/description returns other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
 | Wikipedia API fails (any status or network error) | Omit Wikipedia fields (graceful degradation) |
@@ -334,7 +399,7 @@ ignore it for `wikipediaUrl`.)
 
 | File | Contents |
 |------|----------|
-| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[] }`, and the FS/Wikipedia response types. |
+| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`, and the FS/Wikipedia response types. |
 | `packages/engine/mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
 | `packages/engine/mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
 | `packages/engine/mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |
@@ -348,9 +413,12 @@ ignore it for `wikipediaUrl`.)
 cd packages/engine/mcp-server && npm run build && npm test
 
 # Live smoke (no auth):
-npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho
+npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho — no matchType key
 npx tsx dev/try-place-search.ts Paris France    # Paris in France
 npx tsx dev/try-place-search.ts Paris           # all Paris matches, unfiltered
+npx tsx dev/try-place-search.ts Sierkopas Germany  # fuzzy fallback: Sierokopaß, Neidenburg present, matchType "fuzzy"
+npx tsx dev/try-place-search.ts Helvesieck Germany # fuzzy fallback: Helvesiek, Rotenburg, Lower Saxony, matchType "fuzzy" (one-edit misspelling)
+npx tsx dev/try-place-search.ts Brixtol            # fuzzy + no context: capped at 10 results, returns in seconds
 ```
 
 Confirm no result object contains `placeId`, `placeRepId`, `score`, `name`, or
