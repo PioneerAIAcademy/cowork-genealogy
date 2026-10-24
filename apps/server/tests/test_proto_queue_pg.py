@@ -488,3 +488,156 @@ async def test_a_rescued_message_whose_send_failed_is_held_again_unless_it_was_r
     sql(pg_dsn, "UPDATE turns SET receive_count = 1 WHERE turn_id = %s", (again["turn_id"],))
     assert await store.put_back_held(again["turn_id"]) is False
     assert running(pg_dsn, row.session_id) == ["B"]
+
+
+# ── A2: the host's "Keep going" reply races the patron's own message ───────────────
+
+AUTO_INSERT = "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome)"
+KEEP_GOING = {"reply": "Keep going.", "state": {"replies": 1, "planning_rounds": 0, "answered": []}}
+
+
+def close_with_reply(dsn: str, row, turn_id: str, *, reply=KEEP_GOING, marker=None, pause=None):
+    """``worker.complete`` closing a turn that owes the host's reply, on its own
+    connection -- the shape the turn path calls it in."""
+    turn_row = {"turn_id": turn_id, "session_id": row.session_id, "project_id": row.project_id}
+    with psycopg.connect(dsn) as raw:
+        conn = PausingConn(raw, marker, pause) if marker else raw
+        return worker.complete(conn, turn_row, 1, claim_epoch=None, auto_reply=reply, max_nudges=0)
+
+
+def auto_rows(dsn: str, sid: str) -> list[str]:
+    """The texts of the session's held rows the HOST wrote."""
+    rows = sql(dsn, "SELECT message->>'text' FROM turns WHERE session_id = %s AND completed_at IS NULL "
+                    "AND outcome = 'queued' AND (message->>'auto')::bool ORDER BY enqueued_at", (sid,))
+    return [r[0] for r in rows]
+
+
+def stored_state(dsn: str, sid: str):
+    return sql(dsn, "SELECT auto_reply FROM sessions WHERE session_id = %s", (sid,))[0][0]
+
+
+async def test_a_message_posted_while_the_host_queues_its_reply_waits_its_turn(pg_dsn):
+    """The turn is closing and about to queue "Keep going."; the patron posts C in the
+    window. Unserialized both land unheld and the release starts two turns on one
+    session -- the same D8 failure, arriving through the new writer. Serialized, C is
+    held behind the reply."""
+    row = session(pg_dsn, running=True)
+    open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    checked, go = threading.Event(), threading.Event()
+
+    def pause():
+        checked.set()
+        assert go.wait(WAIT_S), "never let go"
+
+    worker_side = asyncio.ensure_future(
+        asyncio.to_thread(close_with_reply, pg_dsn, row, open_turn, marker=AUTO_INSERT, pause=pause))
+    try:
+        assert await asyncio.to_thread(checked.wait, WAIT_S), "the close never reached its insert"
+        web_side = asyncio.ensure_future(PgStore(pg_dsn).admit_message(row, "C"))
+        await settle(pg_dsn, web_side)
+    finally:
+        go.set()
+    await worker_side
+    admitted = await web_side
+    # One turn starts, and it is the older message -- the reply. The web tier then
+    # finds no turn running and RESCUES it (the stranded-held-row recovery), which is
+    # why it is no longer `queued`; C is held behind it.
+    started = web_sends(admitted)
+    assert started == ["Keep going."], f"one turn starts on the session, not {started}"
+    assert running(pg_dsn, row.session_id) == ["Keep going."]
+    assert held(pg_dsn, row.session_id) == ["C"], "C overtook the reply"
+
+
+async def test_a_reply_is_not_queued_behind_a_message_the_patron_just_posted(pg_dsn):
+    """The mirror, and the one that matters: the patron posts C while the turn closes.
+    C is the next turn, so the run is over -- the host must write no reply at all, or
+    the researcher's words queue behind a machine's and the run they interrupted
+    carries on."""
+    row = session(pg_dsn, running=True)
+    open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    checked, go = asyncio.Event(), asyncio.Event()
+
+    async def pause():
+        checked.set()
+        await asyncio.wait_for(go.wait(), WAIT_S)
+
+    # Behind a running turn the web tier never reaches its claim, so the window is its
+    # INSERT -- taken after the "is anything held?" check, which is the pair the lock
+    # exists to keep together. Both tiers write the same column list, so one marker.
+    web_side = asyncio.ensure_future(pausing_store(pg_dsn, AUTO_INSERT, pause).admit_message(row, "C"))
+    try:
+        await asyncio.wait_for(checked.wait(), WAIT_S)
+        worker_side = asyncio.ensure_future(
+            asyncio.to_thread(close_with_reply, pg_dsn, row, open_turn))
+        await settle(pg_dsn, worker_side)
+    finally:
+        go.set()
+    await web_side
+    assert await worker_side is not None, "the turn must still close"
+    assert auto_rows(pg_dsn, row.session_id) == [], "a reply was queued behind the patron's message"
+    assert held(pg_dsn, row.session_id) == ["C"]
+    assert stored_state(pg_dsn, row.session_id) is None, "the run should have ended"
+
+
+async def test_a_close_behind_a_stuck_queue_lock_still_closes_without_its_reply(pg_dsn):
+    """A turn that finished must close. Past the lock bound the reply is dropped and the
+    close is retried without it -- the run ends early, which is where a web tier holding
+    the lock was heading anyway."""
+    row = session(pg_dsn, running=True)
+    open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    holder = psycopg.connect(pg_dsn)
+    try:
+        with holder.cursor() as cur:  # hold the session's queue lock open
+            cur.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, row.session_id))
+        seq = await asyncio.to_thread(close_with_reply, pg_dsn, row, open_turn)
+    finally:
+        holder.rollback()
+        holder.close()
+    assert seq is not None, "the close must not fail because its reply could not be written"
+    assert sql(pg_dsn, "SELECT completed_at IS NOT NULL FROM turns WHERE turn_id = %s",
+               (open_turn,))[0][0], "the turn is still open"
+    assert auto_rows(pg_dsn, row.session_id) == []
+
+
+async def test_a_run_that_ends_clears_the_state_so_the_next_keep_going_starts_fresh(pg_dsn):
+    """`{"reply": None}` is a decision, not a missing answer: the stored budget goes with
+    it, or the researcher's next "Keep going." resumes a spent one and stops at once."""
+    row = session(pg_dsn, running=True)
+    open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    sql(pg_dsn, "UPDATE sessions SET auto_reply = %s WHERE session_id = %s",
+        (json.dumps({"replies": 7, "planning_rounds": 1, "answered": []}), row.session_id))
+    await asyncio.to_thread(close_with_reply, pg_dsn, row, open_turn,
+                            reply={"reply": None, "state": {}})
+    assert stored_state(pg_dsn, row.session_id) is None
+    assert auto_rows(pg_dsn, row.session_id) == []
+
+
+async def test_a_reply_is_refused_while_stop_is_set(pg_dsn):
+    """Stop ends the run. A reply here would restart what the researcher just stopped."""
+    row = session(pg_dsn, running=True)
+    open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    sql(pg_dsn, "UPDATE sessions SET stop_requested_at = now() WHERE session_id = %s", (row.session_id,))
+    await asyncio.to_thread(close_with_reply, pg_dsn, row, open_turn)
+    assert auto_rows(pg_dsn, row.session_id) == []
+    assert stored_state(pg_dsn, row.session_id) is None
+    assert sql(pg_dsn, "SELECT stop_requested_at IS NOT NULL FROM sessions WHERE session_id = %s",
+               (row.session_id,))[0][0], "the reply path must not clear Stop; claiming does"
+
+
+async def test_the_queued_reply_is_what_release_next_held_sends(pg_dsn, sent):
+    """End to end on the prototype: the reply is an ordinary held row, so the release
+    that already runs after every close is what enqueues it. No second sender."""
+    row = session(pg_dsn, running=True)
+    open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    await asyncio.to_thread(close_with_reply, pg_dsn, row, open_turn)
+    released = await asyncio.to_thread(release, pg_dsn, row.session_id)
+    assert released is not None
+    assert [b["text"] for b in sent] == ["Keep going."]
+    assert sent[0]["auto"] is True, "the worker's own reply must be marked as the host's"
+    assert held(pg_dsn, row.session_id) == [], "the reply is claimed, not left held"
