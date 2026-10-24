@@ -689,6 +689,14 @@ be improved like any other skill.
 make optimize-skill SKILL=<skill>      # Windows: eval\OptimizeSkill.bat
 ```
 
+**This reaches `research` and nothing else.** The builder exits `ERROR: no
+skill` unless `plugin/skills/<name>/` exists, so it cannot be pointed at an
+agent, and `research` is the only remaining skill directory with trigger
+queries. To fix an **agent's** triggering, add the missed utterance as a routing
+negative whose `negative.correct_skill` names that agent and that does **not**
+set `grade_on_invariant` — see
+[`docs/architecture.md`](./architecture.md) § "4. Orchestration".
+
 A skill has two parts that are tuned separately. The one-line **description**
 controls *when* the skill fires; the **body** (the loop above) teaches Claude
 *how* to do the task. A *triggering* problem — the skill fires when it

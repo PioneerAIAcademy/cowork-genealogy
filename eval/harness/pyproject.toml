@@ -8,7 +8,7 @@ dependencies = [
     # group, so unit and e2e runs execute the Claude Code CLI the hosted alpha
     # runs (the wheel bundles it). Move the two together;
     # tests/unit/test_sdk_pin_matches_hosted.py fails when they differ.
-    "claude-agent-sdk==0.2.165",
+    "claude-agent-sdk==0.2.172",
     # mcp: claude-agent-sdk declares `mcp>=1.19.0` with NO upper bound, so an
     # unpinned resolve can float onto a new mcp major and break it silently.
     # mcp 2.0.0 (released 2026-07-28) removed/renamed Server.list_tools,
@@ -17,7 +17,7 @@ dependencies = [
     # This is an upper-bound guard until claude-agent-sdk itself supports
     # mcp 2.x -- delete this line once it does.
     "mcp>=1.29,<2",
-    "anthropic>=0.120.2",
+    "anthropic>=2.1.0,<3",
     "jsonschema>=4.22.0",
     "python-dotenv>=1.0.1",
     "pyyaml>=6.0.2",

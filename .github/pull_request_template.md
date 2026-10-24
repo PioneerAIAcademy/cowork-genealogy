@@ -89,8 +89,9 @@
            model, which is what keeps it around 30s. Keep it that way. -->
 
 - [ ] For every skill whose **run-log snapshot** I changed (anything under its
-      skill dir, an agent it delegates to, its `eval/tests/unit/<skill>/`, or a
-      scenario/fixture it references), I ran `make eval-skill SKILL=<name>` —
+      skill dir, an agent its tests run — or, for `research`, the frontmatter of
+      ANY agent — its `eval/tests/unit/<skill>/`, or a scenario/fixture it
+      references), I ran `make eval-skill SKILL=<name>` —
       Windows: `RunTests.bat` — and committed the run log **and its
       `.ann.json`** under `eval/runlogs/unit/<skill>/`.
       <!-- Behaviour-neutral skill edit (typo, rewording, comment)? Ask a senior

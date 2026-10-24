@@ -72,7 +72,7 @@
           "required": ["suite", "shared"],
           "properties": {
             "suite": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `eval/harness/validators/test_<skill>.py` (an absent marker when the suite has none) and of every sibling module in `validators/` it imports. A change blocks." },
-            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py` and `validators_lib.py`. A change warns." }
+            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py`, `validators_lib.py` and every harness module the validator files import, transitively. A change warns." }
           }
         },
         "tools": {
@@ -102,7 +102,7 @@
     "snapshot": {
       "type": "object",
       "additionalProperties": { "type": "string" },
-      "description": "{repo-relative-path: sha256-of-normalized-content} of all skill-side files needed to reproduce this run. Values are digests, not content — git holds the bytes; the snapshot only answers whether the run still matches the working tree. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
+      "description": "{repo-relative-path: sha256-of-normalized-content} of all skill-side files needed to reproduce this run. Values are digests, not content — git holds the bytes; the snapshot only answers whether the run still matches the working tree. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, referenced scenarios + fixtures, and plugin agents: the full file for an agent the run executes, or a key ending in '#frontmatter' (a digest of only its name, description, tools and disallowedTools) for every other staged agent in a routing suite such as research (named in its SKILL.md or not)."
     },
     "review_sample": {
       "type": "object",

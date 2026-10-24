@@ -528,6 +528,30 @@ def test_the_hook_denies_a_spawn_of_a_stubbed_agent(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize(
     "hook_input",
+    [
+        _spawn_input("locality-guide"),
+        {"tool_name": "Skill", "tool_input": {"skill": "locality-guide"}},
+    ],
+    ids=["agent_spawn", "skill_call"],
+)
+def test_the_hook_returns_the_stub_denial_unchanged(tmp_path, monkeypatch, hook_input):
+    """The text the model reads is built by `stub_denial`; the hook must pass it
+    through whole. Dropping `additionalContext` or rebuilding the deny would strip
+    the hand-back that keeps a router going after the stub (issue #3740), and
+    every other wiring test only checks the decision."""
+    from harness.skill_stubs import stub_denial
+
+    rows = {"locality-guide": "CANNED RESULT"}
+    _, returns = _drive_hook(
+        tmp_path, monkeypatch,
+        [{"tool_name": "Skill", "tool_input": {"skill": "research"}}, hook_input],
+        stub_skills=rows, stub_agents=rows,
+    )
+    assert returns[1] == stub_denial("locality-guide", "CANNED RESULT")
+
+
+@pytest.mark.parametrize(
+    "hook_input",
     [_spawn_input("research-plan"), _spawn_input("locality-guide", agent_id="a1")],
     ids=["unstubbed_agent", "nested_spawn"],
 )
@@ -1794,6 +1818,9 @@ def test_stop_at_stub_ends_the_run_at_a_stubbed_spawn(tmp_path, monkeypatch):
     )
     assert returns[1]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert returns[1]["continue_"] is False
+    assert "additionalContext" not in returns[1]["hookSpecificOutput"], (
+        "a stop that ends the turn must not tell the router its turn goes on"
+    )
 
 
 def test_stop_at_stub_ends_the_run_at_a_stubbed_skill_call(tmp_path, monkeypatch):
@@ -2760,3 +2787,125 @@ def test_slash_entry_is_first_and_each_skill_call_recorded_once(monkeypatch, tmp
     assert r.skills_invoked == [
         "research", "question-selection", "research", "research-plan"
     ]
+
+
+# ---- deny-by-default spawns (#3568) --------------------------------------
+#
+# `live_agents` is the suite's own agent plus the test's `execution.run_agents`.
+# Every other main-thread spawn is denied — after, never before, the routing
+# short-circuit, `stop_at_stub` and an explicit stub's canned text.
+
+_LIVE = {"research"}
+
+
+def _spawn(agent=None, **extra):
+    tool_input = {"prompt": "go", "description": "d"}
+    if agent is not None:
+        tool_input["subagent_type"] = agent
+    return {"tool_name": "Agent", "tool_input": tool_input, **extra}
+
+
+def _hook_returns(monkeypatch, tmp_path, hook_inputs, **run_kwargs):
+    import asyncio
+
+    returns = []
+    asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, hook_inputs, [_turn("ok"), _done()],
+        returns=returns, **run_kwargs,
+    ))
+    return returns
+
+
+def _reason(out):
+    return out["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def _denied(out):
+    return bool(out) and out.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"
+
+
+def test_a_spawn_outside_live_agents_is_denied_and_the_run_continues(tmp_path, monkeypatch):
+    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn("init-project")], live_agents=_LIVE)
+
+    assert _denied(out)
+    assert "init-project" in _reason(out)
+    assert "continue_" not in out, "a default denial is a stub, not a stop"
+
+
+def test_a_spawn_inside_live_agents_runs(tmp_path, monkeypatch):
+    [out] = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("research-plan")],
+        live_agents=_LIVE | {"research-plan"},
+    )
+
+    assert not _denied(out)
+
+
+def test_a_general_purpose_spawn_with_no_subagent_type_is_denied_by_name(tmp_path, monkeypatch):
+    """A general-purpose spawn carries only {description, prompt}. It is denied
+    under the name the model would see, never as 'None'."""
+    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn()], live_agents=_LIVE)
+
+    assert _denied(out)
+    assert "general-purpose" in _reason(out)
+    assert "None" not in _reason(out)
+
+
+def test_an_explicit_stub_keeps_its_canned_text_under_the_default(tmp_path, monkeypatch):
+    [out] = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("locality-guide")],
+        live_agents=_LIVE,
+        stub_skills={"locality-guide": "CANNED-GUIDE"},
+        stub_agents={"locality-guide": "CANNED-GUIDE"},
+    )
+
+    assert "CANNED-GUIDE" in _reason(out)
+
+
+def test_a_skill_and_agent_name_keeps_its_canned_text(tmp_path, monkeypatch):
+    """A `stub_skills` name that still has a skill directory is not in
+    `stub_agents`, so only the default reaches its agent half — with the same
+    canned text the test gave it."""
+    [out] = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("twin")],
+        live_agents=_LIVE, stub_skills={"twin": "CANNED-TWIN"}, stub_agents={},
+    )
+
+    assert _denied(out)
+    assert "CANNED-TWIN" in _reason(out)
+
+
+def test_stop_at_stub_still_stops_at_a_stubbed_spawn(tmp_path, monkeypatch):
+    _, out = _hook_returns(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
+        live_agents=_LIVE, stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    )
+
+    assert out["stopReason"] == "stop_at_stub"
+
+
+def test_the_routing_short_circuit_wins_over_the_default(tmp_path, monkeypatch):
+    """The correct_skill agent is NOT in live_agents; only the branch order makes
+    it short-circuit rather than take a default stub."""
+    [out] = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("research-plan")],
+        live_agents=_LIVE, routing_short_circuit_skills={"research-plan"},
+    )
+
+    assert out["stopReason"] == "routing_resolved"
+
+
+def test_a_spawn_inside_a_subagent_is_never_denied_by_the_default(tmp_path, monkeypatch):
+    [out] = _hook_returns(
+        monkeypatch, tmp_path, [_spawn("init-project", agent_id="sub-1")],
+        live_agents=_LIVE,
+    )
+
+    assert not _denied(out)
+
+
+def test_no_live_agents_means_todays_behaviour(tmp_path, monkeypatch):
+    """Callers outside the unit orchestrator pass nothing and deny nothing."""
+    [out] = _hook_returns(monkeypatch, tmp_path, [_spawn("init-project")])
+
+    assert not _denied(out)

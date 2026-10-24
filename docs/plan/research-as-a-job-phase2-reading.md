@@ -1,6 +1,6 @@
 # Phase 2 — the reading experience (detailed pass)
 
-**Status:** BUILT 2026-09-30 on the `research-as-a-job-phase2` branch (unmerged).
+**Status:** BUILT 2026-09-30 on the `research-as-a-job-phase2` branch, closed 2026-10-23 (tag `phase2-final`).
 All four items landed, plus chip navigation and the sidecar bodies.
 Originally written 2026-09-30 against the first captured hosted feed
 (`docs/captures/2026-09-29-mcandrew-children/`, 133 minutes, outcome `completed`).

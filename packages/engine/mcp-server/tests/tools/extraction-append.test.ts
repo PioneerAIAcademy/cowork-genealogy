@@ -1149,6 +1149,21 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     expect(after.assertions.every((a: any) => a.extracted_for_question_ids.join(",") === "q_001,q_002")).toBe(true);
   });
 
+  it("the whole-batch tie asks for the first failure only: it reads nothing but ok and is retried op by op", async () => {
+    // A refusal's answer to this call is thrown away, so it is not asked to judge the rest of the
+    // batch: that is a second pass over a copy of the document.
+    const death = element("death");
+    await seed({ questions: [question("q_001"), question("q_002")] });
+    await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_001"] }, readerFor([death]) as any, LOCAL);
+    vi.mocked(researchAppend).mockClear();
+    await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_002"] }, readerFor([death]) as any, LOCAL);
+    const ties = vi.mocked(researchAppend).mock.calls.filter(([input]: any[]) =>
+      (input.ops ?? []).some((o: any) => o.section === "assertions" && o.op === "update"),
+    );
+    expect(ties.length).toBe(1);
+    expect(ties[0][1]).toMatchObject({ toolName: "extraction_append", firstFailureOnly: true });
+  });
+
   it("a re-send without questionIds writes nothing to assertions", async () => {
     const death = element("death");
     await seed({});
@@ -1333,6 +1348,18 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect([...linkedPersonas]).toEqual(["p_260900945"]);
     expect(r.summary).toMatch(/linked as unverified attachments/);
     expect(r.summary).toMatch(/separate request/);
+  });
+
+  it("the whole-batch link asks for the first failure only: it reads nothing but ok and is retried op by op", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    vi.mocked(researchAppend).mockClear();
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const links = vi.mocked(researchAppend).mock.calls.filter(([input]: any[]) =>
+      (input.ops ?? []).some((o: any) => o.section === "person_evidence"),
+    );
+    expect(links.length).toBeGreaterThan(0);
+    for (const [, options] of links) expect(options).toMatchObject({ attachmentLink: true, firstFailureOnly: true });
   });
 
   it("reuses the import's S and mints no second tree source", async () => {

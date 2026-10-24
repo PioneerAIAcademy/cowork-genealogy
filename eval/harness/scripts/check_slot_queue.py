@@ -22,13 +22,18 @@ Two instances prompted it (2026-09-15 triage, recorded in issue #2589):
 
 WHAT IT DECIDES
 
-    PR changed paths ---> path_to_skills() ---> {skill}  ---.
-                                                            >--- intersect ---> warn
-    open issue **Touches:** ---> path_to_skills() ---> {skill} -'
+    PR changed paths ---> pr_affected_skills() ---> {skill}  ---.
+                                                                >--- intersect ---> warn
+    open issue **Touches:** ---> path_to_skills() ---> {skill} -----'
 
-Both sides go through the SAME function. Keeping one implementation is the point:
-a check whose two halves disagree about which skill a path belongs to reports
-collisions that are not there and misses the ones that are.
+Both sides map a path through `path_to_skills`. Keeping one implementation is the
+point: a check whose two halves disagree about which skill a path belongs to
+reports collisions that are not there and misses the ones that are. The one
+deliberate difference is an agent body. The PR side has a diff, so
+`pr_affected_skills` narrows it the way rule 2 does: a body-only edit to an
+agent that a routing suite fingerprints by frontmatter buys that suite no run.
+The issue side has only `**Touches:**` paths and keeps the superset, since
+over-counting is the safe error for a warn-only check.
 
 WARN-ONLY, AND UNCONDITIONALLY SO -- this always exits 0.
 
@@ -128,9 +133,11 @@ def path_to_skills(path: str, agent_map: dict[str, set[str]]) -> set[str]:
 
     An AGENT body expands to every skill whose SKILL.md delegates to it via
     `@plugin:<name>` -- one agent edit gates several skills, and matching the skill
-    directory instead would miss all of them, and to the agent's own agent-keyed
-    suite. That expansion is `check_runlogs.skills_gated_by_agent`, the same one
-    rule 2 uses, not a second scan. Only the agent body expands: a converted
+    directory instead would miss all of them -- to the agent's own agent-keyed
+    suite, to every suite whose tests run it via `run_agents`, and to every routing
+    suite, which fingerprints its frontmatter. That superset is
+    `check_runlogs.skills_gated_by_agent`, not a second scan; the PR side narrows
+    it by diff in `pr_affected_skills`. Only the agent body expands: a converted
     skill's suite file names `agent:<x>` too, but no other skill embeds it.
 
     Shared fixtures under `eval/fixtures/{scenarios,mcp}/` are absent HERE because a
@@ -160,6 +167,24 @@ def affected_skills(paths, agent_map: dict[str, set[str]]) -> set[str]:
     out: set[str] = set()
     for path in paths:
         out |= path_to_skills(path, agent_map)
+    return out
+
+
+def pr_affected_skills(
+    paths, agent_map: dict[str, set[str]], added_by_skill: dict[str, list[str]]
+) -> set[str]:
+    """The PR side: `affected_skills`, except that an agent BODY goes through
+    `check_runlogs.suites_gated_by_touched_agents`, the rule rule 2 itself uses
+    (#3568). A PR has a diff, so it can be exact: a body-only edit to an agent a
+    routing suite fingerprints by frontmatter buys that suite no run. The issue
+    side has only `**Touches:**` paths, cannot tell a body edit from a frontmatter
+    edit, and stays on the `path_to_skills` superset — over-counting is the safe
+    error for a warn-only check.
+    """
+    bodies = {m.group(1) for p in paths if (m := check_runlogs.AGENT_PATH_RE.match(p))}
+    out = affected_skills([p for p in paths if not check_runlogs.AGENT_PATH_RE.match(p)], agent_map)
+    if bodies:
+        out |= check_runlogs.suites_gated_by_touched_agents(bodies, added_by_skill)
     return out
 
 
@@ -315,7 +340,15 @@ def _run() -> None:
         )
         return
 
-    skills = affected_skills(paths, agent_map)
+    # The run logs this PR adds decide an agent edit's reach, as in rule 2. If the
+    # add view cannot be read, each suite falls back to its committed log.
+    try:
+        added_by_skill = check_runlogs.added_runlogs_by_skill(
+            check_runlogs.git_diff_changes(), paths
+        )
+    except (KeyError, OSError, subprocess.SubprocessError):
+        added_by_skill = {}
+    skills = pr_affected_skills(paths, agent_map, added_by_skill)
     fixture_map = check_runlogs.skills_referencing_fixtures(check_runlogs.TESTS_UNIT_DIR)
     fixture_skills = fixture_affected_skills(paths, fixture_map) - skills
 
