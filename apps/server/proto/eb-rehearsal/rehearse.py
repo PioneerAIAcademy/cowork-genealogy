@@ -110,7 +110,7 @@ MIRRORS = {"MaxRetries": "SQSD_MAX_RETRIES", "VisibilityTimeout": "SQSD_VISIBILI
            "RetentionPeriod": "SQSD_RETENTION_PERIOD_S"}
 SQSD_CONFIG = PROTO / "eb-worker" / ".ebextensions" / "01-sqsd.config"
 # The predeploy hook whose TURN_USERS literal creates every slot user a worker may be told to run as.
-WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh"
+WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh"
 
 # test_proto_bundles.py's EB_VALUE and SECRET_NAME; the test pins these copies equal.
 EB_VALUE = re.compile(r"""^[A-Za-z0-9 _.:/=+\\\-@'"]*$""")

@@ -1629,8 +1629,8 @@ def test_slot_case_applies_both_options_and_restores_them(stack, case, n):
     (None, "4", r"names 2 user\(s\) for HttpConnections=4"),
     (SLOT_USERS[2], "4", r"names 2 user\(s\) for HttpConnections=4"),
     ("genealogy-turn-0 genealogy-turn-0", "2", "names a user twice"),
-    ("genealogy-turn-0 genealogy-turn-8", "2", r"\['genealogy-turn-8'\], which 01-worker-layout.sh"),
-    ("genealogy-turn-0 webapp", "2", r"\['webapp'\], which 01-worker-layout.sh's TURN_USERS does not create"),
+    ("genealogy-turn-0 genealogy-turn-8", "2", r"\['genealogy-turn-8'\], which 100_worker-layout.sh"),
+    ("genealogy-turn-0 webapp", "2", r"\['webapp'\], which 100_worker-layout.sh's TURN_USERS does not create"),
     (SLOT_USERS[2], "0", "not a positive integer"),
 ])
 def test_check_options_refuses_users_that_do_not_match_connections(users, conns, message):

@@ -171,7 +171,7 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 ## What the prototype deliberately did not test
 
 - **Deployment on FamilySearch infrastructure** (Beanstalk, Blueprint, P20, DTM).
-- **SSE through the edge** (CloudFront, Imperva, HAProxy, DTM under concurrency): a written exception, ranked among the plan's architecture-killing risks. `Last-Event-ID` resume with a 15 s ping passed locally against a seeded stand-in worker (`make proto-drive` 17/17, 2026-09-14).
+- **SSE through the edge** (CloudFront, Imperva, HAProxy, DTM under concurrency): a written exception, ranked among the plan's architecture-killing risks. `Last-Event-ID` resume with a 15 s ping passed locally against a seeded stand-in worker (`make proto-drive` 17/17, 2026-09-14). Since (2026-10-23, n=1 per path, handoff F11): another FamilySearch service's SSE stream passed unbuffered through `www` (CloudFront, Imperva, DTM), a service group and the origin, and held 65 minutes through `www` (the service-group stream was cut once at 1,690 s, cause unknown); concurrency and the idle threshold are still untested.
 - **Load, concurrency, multiple workers:** also ranked among those risks. Since: up to 8 concurrent turns on one worker (U18, 2026-10-10, n=1 per count); still no load run and no second worker.
 - **Content-level deduplication:** no working design; the best key matched 0 of 86 assertions (`1871c733b`). Not required before go-live (handoff U21).
 - **Opaque session tokens, store-backed skill output:** known patterns.
@@ -198,7 +198,7 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 
 ## Open questions for FamilySearch
 
-Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28, and none is recorded since. Rechecked against TAP's EKS gateway config on 2026-10-14: F2 is done and F4 answered (below), and F1, F3, F5 and F13 are reworded.
+Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28, and none is recorded since. Rechecked against TAP's EKS gateway config on 2026-10-14: F2 is done and F4 answered (below), and F1, F3, F5 and F13 are reworded. Rechecked against fs-eng's own repos on 2026-10-23: F10 and most of F12 answered, F11's edge arms measured, and F11, F12 and F18 narrowed.
 
 **Sent or drafted:**
 
@@ -208,24 +208,25 @@ Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sen
 - **F6, APT:** `guardContent` for tool results: yes or no, and when? Unblocks the ARB injection answer. Sent.
 - **F7, InfoSec:** Langfuse keeps prompts at 100%: acceptable, and what retention? P3l (2026-09-25, local collector, n=1): tool results and images don't leave; patron names and record details do (~700k characters per 11-call turn). The sent ask wrongly said images leave. Unblocks security review. Correction and retention not sent.
 - **F9, ACE and FS legal:** may OCR stay on OpenRouter; record-custodian terms. Unblocks U20. Provider sent; the `bedrock-exception-*` role in the same ask withdrawn 2026-09-29, ACE not yet told; terms not yet asked.
-- **F10, Help team:** how they handle DTM concurrency for SSE. Unblocks F11. Sent.
 
-**Answered without asking (2026-10-14):**
+**Answered without asking (2026-10-14, 2026-10-23):**
 
 - **F2:** agentgateway v1.6.0 runs on TAP's EKS gateway since our PR fs-eng/tap-gateway#46 merged 2026-10-12. Tool search through it is unmeasured: U14.
 - **F4:** no model allowlist exists, no `model:` is pinned and Sonnet 5 is aliased, so our ids pass. Sonnet 5 enabled is inferred; U14's first call shows it.
+- **F10 (sent 2026-09-18; no reply needed):** the Help team's stream is a plain `SseEmitter`, published through the `www` alias, so through DTM; it has no load test and says nothing about concurrency, which moves to F11.
+- **F12, most of it:** from the provisioner's source, Blueprint takes Python 3.12 and Node 24 on AL2023 (no custom AMI; no Docker), a `Beanstalk Worker v1_1` on Python (a warning, not an error), all of step 11's sqsd values as `worker_options`, and our `.ebextensions` and hooks (the worker hook renamed to the provisioner's `1XX_` convention).
 
 **Not yet asked:**
 
 - **F8, InfoSec:** live bearer on every internal hop, grant at rest, a sha256 of the live bearer on `turns`, tool-server isolation: acceptable? Unblocks U3.
-- **F11, FS platform:** the SSE edge probe, only if F10 says they bypass DTM.
-- **F12, FS platform and DTL:** which Beanstalk platform and AMI; does Blueprint keep our sqsd and nginx overrides? Unblocks any FamilySearch deploy (R9: "weeks").
+- **F11, FS platform:** how many concurrent long-lived connections DTM and HAProxy carry, and may we load-test SSE through `www`? The edge arms are measured (2026-10-23, n=1 per path): no layer buffers or rewrites an SSE stream.
+- **F12, FS platform and DTL:** does a Python `Beanstalk Worker v1_1` deploy and run with the provisioner's own configs, and do our nginx overrides survive? A deploy answers it; we can run that ourselves from an fs-eng repo. Unblocks any FamilySearch deploy.
 - **F13, FS network:** VPC, egress and gateway allowlists (the gateway admits the VPN /14 and named security groups in its own shared VPC, so our VPC decides the ask), internal names past Imperva, HAProxy idle timer. Unblocks U14.
 - **F14, Blueprint:** Postgres, S3, SQS and DLQ, secrets, IAM; every worker-to-tools idle timeout, including the tool-server LB, ≥ 1,800 s; static S3 keys? For the scaling metric (U18): two Simple Scaling policies on different SQS metrics, a custom or metric-math metric, worker-set scale-in protection, the T3 credit mode. Unblocks any deploy.
 - **F15, FS OAuth owners (team unknown):** an integ client with our https redirect (F18), later production. The lifetimes are documented and revoke-on-refresh was measured, so only the client is asked. Unblocks U2, U3.
 - **F16, fs-eng:** host `wiki-query-api` and Pop Stats. Unblocks four tools, which until then call a developer's personal host.
 - **F17, ARB, InfoSec, PRIA, AI Working Group, PM:** ARB scheduling, SLA exception, retention, DR, telemetry, service identity, CAS/TARS entitlement for the email allowlist, mobile. Unblocks go-live. Goes with U22.
-- **F18, FS platform:** web hostname, TLS, edge route. Unblocks integ sign-in.
+- **F18, FS platform and URI Naming Council:** an `Alias v1_0` path under `integration`, `beta` and `www.familysearch.org`, or a `CDN Service` host of our own? The binding supplies the host, TLS and edge route; an alias needs our path-prefix work (handoff U28). Unblocks integ sign-in.
 
 Retention (U19): a session's delete takes its SDK transcript under both ids (PR #3356), and its
 project's rows only with the project's last session (U2); the S3 orphan sweep deletes the objects

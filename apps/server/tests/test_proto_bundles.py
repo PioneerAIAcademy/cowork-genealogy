@@ -15,6 +15,8 @@ to each zip's root. Plan: docs/plan/familysearch-handoff.md, U12; the interface 
   and tools until U18 chooses the scaling metric (U6's fencing is built);
 - the worker's ``ENGINE_PLUGIN_DIR`` is where its predeploy hook puts the plugin, and the
   hook is executable in git and runs under ``set -euo pipefail``;
+- every ``.platform`` hook is named ``1XX_<name>``, outside the FamilySearch provisioner's
+  reserved ``000``-``099``;
 - the CA variable names ``/var/app/current/`` plus the bundle's CA path.
 
 Values are compared as strings, so re-quoting a YAML value is not an offence.
@@ -34,7 +36,7 @@ import yaml
 REPO = Path(__file__).resolve().parents[3]
 PROTO = REPO / "apps" / "server" / "proto"
 LAYOUT_PY = REPO / "scripts" / "eb_bundles" / "layout.py"
-WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh"
+WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh"
 TOOLS_NGINX = PROTO / "eb-tools" / ".platform" / "nginx" / "conf.d" / "01-tools-timeouts.conf"
 
 
@@ -346,6 +348,18 @@ def test_worker_hook_is_executable_in_git_and_strict():
     lines = WORKER_HOOK.read_text(encoding="utf-8").splitlines()
     assert lines[0] in ("#!/bin/bash", "#!/usr/bin/env bash"), lines[0]
     assert "set -euo pipefail" in [line.strip() for line in lines], "the hook must run under set -euo pipefail"
+
+
+# FamilySearch's Beanstalk provisioner reserves hook prefixes 000-099 for the hooks it adds
+# to the bundle, and documents 1XX_<name> for ours (F12).
+HOOK_NAME = re.compile(r"^1\d\d_[^/]+$")
+
+
+def test_every_platform_hook_uses_the_provisioners_1xx_prefix():
+    hooks = [p for p in PROTO.glob("eb-*/.platform/*hooks/*/*") if p.is_file()]
+    assert WORKER_HOOK in hooks, "the glob no longer reaches the worker hook"
+    bad = [p.relative_to(PROTO).as_posix() for p in hooks if not HOOK_NAME.match(p.name)]
+    assert not bad, f"rename to 1XX_<name> (the provisioner owns 000-099): {bad}"
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
