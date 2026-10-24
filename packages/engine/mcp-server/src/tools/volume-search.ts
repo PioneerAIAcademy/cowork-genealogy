@@ -1,5 +1,5 @@
 import type { Principal } from "../auth/principal.js";
-import { BROWSER_USER_AGENT } from "../constants.js";
+import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { describeFetchError } from "../utils/http.js";
 import {
@@ -46,6 +46,18 @@ const RMS_SEARCH_URL =
 const RECORD_TYPE_OPAQUE_RE = /^concept-id:/;
 const TITLE_PREFIX_RE = /^title:\s*/;
 
+// At 100 volumes a page, 10 of 33 hosted calls overflowed TOOL_RESULT_CHAR_BUDGET's
+// limit (issue #3611); Freeborn, Minnesota 1870–1900 reached 99,517. After merging
+// coverage rows, the worst 50-volume window measured on those bundles is 36,939,
+// so 50 fits with no truncation and fitToBudget is a backstop, not the normal path.
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+export const RESULT_CHAR_BUDGET = TOOL_RESULT_CHAR_BUDGET;
+// Coverage rows kept per volume, tried in order, only when a page is still over
+// budget after merging. Volumes are never dropped: the upstream cursor has
+// already moved past them, so a dropped volume is unreachable.
+const COVERAGE_CAPS = [20, 10, 5, 3, 1];
+
 function validate(input: VolumeSearchInput): void {
   if (!input.standardPlace) {
     throw new Error("volume_search requires a standardPlace.");
@@ -62,6 +74,14 @@ function validate(input: VolumeSearchInput): void {
     input.endYear < input.startYear
   ) {
     throw new Error("endYear must be greater than or equal to startYear.");
+  }
+  if (
+    input.pageSize != null &&
+    (!Number.isInteger(input.pageSize) ||
+      input.pageSize < 1 ||
+      input.pageSize > MAX_PAGE_SIZE)
+  ) {
+    throw new Error(`pageSize must be a whole number from 1 to ${MAX_PAGE_SIZE}.`);
   }
   // Near-miss spellings of *this* field only. `record_search` and
   // `fulltext_search` both take a singular `recordType`, so that is the name an
@@ -139,7 +159,7 @@ async function callGroupSearch(
         `FamilySearch volume search API error: 409.${detail} ` +
           "A pageToken is only valid alongside a byte-identical search and it expires; " +
           "re-issue this search from the first page with the same standardPlace, year " +
-          "range and recordTypeGroups, omitting pageToken."
+          "range, recordTypeGroups and pageSize, omitting pageToken."
       );
     }
     throw new Error(
@@ -148,11 +168,6 @@ async function callGroupSearch(
   }
 
   return (await response.json()) as MetadataRmsSearchResponse;
-}
-
-function derivePrefix(groupName: string): string {
-  const underscoreIdx = groupName.indexOf("_");
-  return underscoreIdx === -1 ? groupName : groupName.slice(0, underscoreIdx);
 }
 
 function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null {
@@ -186,12 +201,18 @@ function leadingYear(value: string | undefined): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
-function mapCoverage(entry: MetadataRmsCoverageEntry): SimplifiedCoverage {
-  const coverage: SimplifiedCoverage = { place: entry.place ?? "" };
+/** One upstream coverage row, mapped but not yet merged. */
+interface MappedCoverage {
+  place: string;
+  dateRange?: string;
+  recordType?: string;
+  recordTypeConceptId?: number;
+}
+
+function mapCoverage(entry: MetadataRmsCoverageEntry): MappedCoverage {
+  const coverage: MappedCoverage = { place: entry.place ?? "" };
   const startYear = leadingYear(entry.fromdateString);
   const endYear = leadingYear(entry.todateString);
-  if (startYear != null) coverage.startYear = startYear;
-  if (endYear != null) coverage.endYear = endYear;
 
   // Strip first, then decide: the fallback has to key off "nothing survived",
   // not "the field was absent". A `datesOrig` of `"title:"` strips to empty, and
@@ -205,7 +226,16 @@ function mapCoverage(entry: MetadataRmsCoverageEntry): SimplifiedCoverage {
   // `collections_search`'s own formatter, so the two tools cannot describe one
   // span differently; `""` from it means "no range", which leaves the optional
   // field off.
-  const dateRange = displayRange || formatYearRange(startYear, endYear);
+  // With the structured years gone from the output, `dateRange` is the only date
+  // on a row, so a one-sided span says which side is open: `formatYearRange`
+  // renders a lone start year as a bare "1870", which reads as that year alone.
+  const dateRange =
+    displayRange ||
+    (startYear != null && endYear == null
+      ? `from ${startYear}`
+      : endYear != null && startYear == null
+        ? `until ${endYear}`
+        : formatYearRange(startYear, endYear));
   if (dateRange) coverage.dateRange = dateRange;
   const rawType = entry.recordTypeOrig;
   if (rawType != null && !RECORD_TYPE_OPAQUE_RE.test(rawType)) {
@@ -218,12 +248,46 @@ function mapCoverage(entry: MetadataRmsCoverageEntry): SimplifiedCoverage {
   return coverage;
 }
 
+/**
+ * Collapse rows that differ only by place. Statewide series repeat one date range
+ * and record type across dozens of towns — Freeborn's muster rolls carry 31–48
+ * rows each — and that repetition is most of an oversized page.
+ *
+ * Keyed on the record type the reader sees: with a `recordType`, two rows that
+ * share it merge even when their concept ids differ, so no two output rows look
+ * identical. Only a row with no `recordType` keys on (and shows) its concept id.
+ */
+export function mergeCoverages(rows: MappedCoverage[]): SimplifiedCoverage[] {
+  const merged: SimplifiedCoverage[] = [];
+  const byKey = new Map<string, SimplifiedCoverage>();
+  for (const row of rows) {
+    // `datesOrig` writes a span with an en-dash where the fallback writes a hyphen,
+    // so one span would otherwise key two ways; the first-seen text is what shows.
+    const date = (row.dateRange ?? "").replace(/–/g, "-");
+    const key = row.recordType != null
+      ? `type\u0000${date}\u0000${row.recordType}`
+      : `concept\u0000${date}\u0000${row.recordTypeConceptId ?? ""}`;
+    let out = byKey.get(key);
+    if (!out) {
+      out = { places: [] };
+      if (row.dateRange) out.dateRange = row.dateRange;
+      if (row.recordType != null) out.recordType = row.recordType;
+      else if (row.recordTypeConceptId != null) {
+        out.recordTypeConceptId = row.recordTypeConceptId;
+      }
+      byKey.set(key, out);
+      merged.push(out);
+    }
+    if (row.place && !out.places.includes(row.place)) out.places.push(row.place);
+  }
+  return merged;
+}
+
 function mapGroup(
   group: MetadataRmsGroup,
   fulltextSet: Set<string> | null
 ): VolumeGroup {
   const imageGroupNumber = group.groupName;
-  const imageGroupPrefix = derivePrefix(imageGroupNumber);
   const imageCount = group.childCount ?? null;
   const recordSearchablePercent = computeRecordSearchablePercent(group);
   const fulltextSearchable =
@@ -231,18 +295,43 @@ function mapGroup(
 
   const result: VolumeGroup = {
     imageGroupNumber,
-    imageGroupPrefix,
     imageCount,
     recordSearchablePercent,
     fulltextSearchable,
     languages: group.languages ?? [],
-    coverages: (group.coverages ?? []).map(mapCoverage),
+    coverages: mergeCoverages((group.coverages ?? []).map(mapCoverage)),
   };
 
   if (group.title != null) result.title = group.title;
   if (group.volumes != null) result.volumes = group.volumes;
 
   return result;
+}
+
+/**
+ * Keep the serialized answer under `budget` characters by shortening each
+ * volume's coverage list to the first cap in COVERAGE_CAPS that fits, marking
+ * every shortened volume with `coverageCount`. Never drops a volume. If even the
+ * smallest cap does not fit, returns that most-shortened answer.
+ */
+export function fitToBudget(
+  result: VolumeSearchResult,
+  budget: number = RESULT_CHAR_BUDGET
+): VolumeSearchResult {
+  if (JSON.stringify(result).length <= budget) return result;
+  let capped = result;
+  for (const cap of COVERAGE_CAPS) {
+    capped = {
+      ...result,
+      results: result.results.map((g) =>
+        g.coverages.length > cap
+          ? { ...g, coverages: g.coverages.slice(0, cap), coverageCount: g.coverages.length }
+          : g
+      ),
+    };
+    if (JSON.stringify(capped).length <= budget) break;
+  }
+  return capped;
 }
 
 export async function volumeSearchTool(
@@ -292,6 +381,8 @@ export async function volumeSearchTool(
     ? conceptIdsForGroups(input.recordTypeGroups)
     : undefined;
 
+  const pageSize = input.pageSize ?? DEFAULT_PAGE_SIZE;
+
   const body: MetadataRmsSearchRequest = {
     coverage: {
       // RMS expects numeric rep IDs; the resolver returns them as strings.
@@ -304,7 +395,7 @@ export async function volumeSearchTool(
     types: ["NATURAL"],
     returnChildCounts: true,
     active: true,
-    pageSize: 100,
+    pageSize,
     ...(input.pageToken ? { nextPageToken: input.pageToken } : {}),
   };
 
@@ -319,7 +410,7 @@ export async function volumeSearchTool(
 
   const results = groups.map((g) => mapGroup(g, fulltextSet));
 
-  const query: VolumeSearchResult["query"] = { standardPlace: input.standardPlace };
+  const query: VolumeSearchResult["query"] = { standardPlace: input.standardPlace, pageSize };
   if (input.startYear != null) query.startYear = input.startYear;
   if (input.endYear != null) query.endYear = input.endYear;
   // Only when a filter was actually applied. An empty array means "no filter"
@@ -339,7 +430,7 @@ export async function volumeSearchTool(
     result.nextPageToken = response.nextPageToken;
   }
 
-  return result;
+  return fitToBudget(result);
 }
 
 export const volumeSearchSchema = {
@@ -353,8 +444,13 @@ export const volumeSearchSchema = {
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same standardPlace, " +
-    "years and record-type groups) as pageToken to get the next page. " +
+    "Each coverage row lists every place (`places`) that shares its date range and " +
+    "record type. " +
+    "Results are paginated, 50 volumes a page by default — pass back nextPageToken " +
+    "(with the same standardPlace, years, record-type groups and pageSize) as " +
+    "pageToken to get the next page. A volume carrying coverageCount had its " +
+    "coverages shortened to fit the answer; call again with a smaller pageSize, " +
+    "starting from the first page, to see them all. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -389,12 +485,20 @@ export const volumeSearchSchema = {
           "all of its coverage rows, so some will carry other record types and " +
           "years outside the requested range. Omit to search all record types.",
       },
+      pageSize: {
+        type: "integer",
+        minimum: 1,
+        maximum: 100,
+        description:
+          "Volumes per page, 1–100. Defaults to 50. Every page of one search " +
+          "must use the same pageSize.",
+      },
       pageToken: {
         type: "string",
         description:
           "Pagination cursor. Pass the nextPageToken from a previous " +
           "response, together with the same standardPlace/startYear/endYear/" +
-          "recordTypeGroups, to fetch the next page.",
+          "recordTypeGroups/pageSize, to fetch the next page.",
       },
     },
     required: ["standardPlace"],

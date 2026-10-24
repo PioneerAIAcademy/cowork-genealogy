@@ -721,6 +721,83 @@ describe("person_search fixtures carry no retired `pick` field", () => {
   });
 });
 
+describe("volume_search fixtures carry the tool's nested shape", () => {
+  /**
+   * The top-level check below cannot see inside `results[]`, and issue #3611
+   * changed exactly that: `coverages[].place` became `places`, and
+   * `imageGroupPrefix` and the per-coverage `startYear`/`endYear` went away.
+   * Every unit eval of locality-guide, research-plan, search-images and research
+   * is served these fixtures verbatim, so a stale one grades the agents against
+   * an answer the tool can no longer give, with CI green.
+   *
+   * The admissible keys are read from the interfaces in `src/types/volume-search.ts`,
+   * not listed here, so the next change to those types fails this block until the
+   * fixtures follow.
+   */
+  const volumeFixtures = fixtures.filter(
+    (f) => f.tool === "volume_search" && !isErrorEnvelope(f.response),
+  );
+
+  /** The member keys of a named interface under `src/`, or null if it is absent. */
+  function interfaceShape(name: string): Alternative | null {
+    const iface = interfaces.get(name);
+    if (!iface) return null;
+    const alt = emptyAlternative();
+    membersOf((iface.node as ts.InterfaceDeclaration).members, iface.file, alt);
+    return alt;
+  }
+
+  /** The keys of `VolumeSearchResult.query`, an inline type literal. */
+  function queryShape(): Alternative | null {
+    const iface = interfaces.get("VolumeSearchResult");
+    if (!iface) return null;
+    const member = (iface.node as ts.InterfaceDeclaration).members.find(
+      (m) => m.name?.getText(iface.file) === "query",
+    ) as ts.PropertySignature | undefined;
+    if (!member?.type || !ts.isTypeLiteralNode(member.type)) return null;
+    const alt = emptyAlternative();
+    membersOf(member.type.members, iface.file, alt);
+    return alt;
+  }
+
+  const volume = interfaceShape("VolumeGroup");
+  const coverage = interfaceShape("SimplifiedCoverage");
+  const query = queryShape();
+
+  it("has fixtures and resolved shapes to check — a zero-length scan proves nothing", () => {
+    expect(volumeFixtures.length).toBeGreaterThan(0);
+    expect(volume, "VolumeGroup not found under src/").not.toBeNull();
+    expect(coverage, "SimplifiedCoverage not found under src/").not.toBeNull();
+    expect(query, "VolumeSearchResult.query is not an inline type literal").not.toBeNull();
+    expect(volumeFixtures.some((f) => ((f.response as { results?: unknown[] }).results ?? []).length > 0)).toBe(true);
+  });
+
+  it("every query, volume and coverage row is a shape the tool returns", () => {
+    const failures: string[] = [];
+    for (const f of volumeFixtures) {
+      const response = f.response as {
+        query?: Record<string, unknown>;
+        results?: Array<Record<string, unknown> & { coverages?: Array<Record<string, unknown>> }>;
+      };
+      const q = mismatch(response.query ?? {}, query!);
+      if (q) failures.push(`${f.name} query: ${q}`);
+      (response.results ?? []).forEach((g, i) => {
+        const v = mismatch(g, volume!);
+        if (v) failures.push(`${f.name} results[${i}]: ${v}`);
+        (g.coverages ?? []).forEach((c, j) => {
+          const r = mismatch(c, coverage!);
+          if (r) failures.push(`${f.name} results[${i}].coverages[${j}]: ${r}`);
+        });
+      });
+    }
+    expect(
+      failures,
+      "these volume_search fixtures hold fields the tool no longer returns, or lack ones " +
+        "it always returns; regenerate them in the tool's current shape",
+    ).toEqual([]);
+  });
+});
+
 describe("eval/fixtures/mcp response shapes match the tools' return types", () => {
   it("every fixture declares the envelope the harness requires", () => {
     // `harness/fixtures.py` `build_manifest` raises on a missing `tool`, a
