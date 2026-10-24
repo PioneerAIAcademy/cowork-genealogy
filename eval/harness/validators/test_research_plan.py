@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from typing import NamedTuple
 
 import pytest
 
@@ -367,8 +367,7 @@ _TARGET_RECORD_TYPES = ("church", "vital_record")
 _INDIRECT_JURISDICTION = "trysil"
 
 
-@dataclass(frozen=True)
-class _ObjectiveTarget:
+class _ObjectiveTarget(NamedTuple):
     """What the objective's target record looks like in one scenario.
     `jurisdiction` and `rationale` are patterns matched case-insensitively
     with `re.search`. `rationale` narrows a target that shares its place and
