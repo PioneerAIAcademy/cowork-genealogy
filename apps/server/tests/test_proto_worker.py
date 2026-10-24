@@ -6349,3 +6349,31 @@ def test_a_store_that_has_gone_down_closes_ok_with_no_options(turn_env, monkeypa
     summary = _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
     assert summary["outcome"] == "ok"
     assert "options" not in _turn_done_payload(turn_env["conn"])
+
+
+def test_a_turn_the_host_answered_offers_the_researcher_nothing(turn_env):
+    """Under "Keep going" the choice is already made. Buttons would flicker between
+    this frame and the reply landing, and a researcher quick enough to click one
+    would send a SECOND message into a run already moving."""
+    turn_env["conn"].research = _RESEARCH
+    # The turn's OWN message is what `step_mode` reads, and only "keep going." puts
+    # the turn in `job` mode -- the mode in which a reply is due at all.
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = None
+    state = turn_env
+    state["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                 _info(AGENTS, worker.EXPECTED_SKILLS), state)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    payload = _turn_done_payload(turn_env["conn"])
+    assert "options" not in payload, payload
+    queued = [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
+    assert queued, "the host should have queued its reply instead"
+
+
+def test_a_step_turn_the_host_did_not_answer_still_offers_its_options(turn_env):
+    """The other side of the same branch: an ordinary `step` turn is the researcher's
+    to answer, so the buttons are the whole point."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
+    assert not [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]

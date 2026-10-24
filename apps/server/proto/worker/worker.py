@@ -2941,10 +2941,20 @@ async def _run_turn(
             # ResultMessage's own cost_usd on every turn, which is what calibrates the
             # price vector on the first real runs.
             detail = {k: terminal[k] for k in ("limit", "spent_usd") if k in terminal}
+            # Section A2: decided before the options, because a turn the host answers
+            # for the researcher offers them nothing.
+            auto_reply = plan_auto_reply(conn, boundary, turn, turn_mode=turn_mode,
+                                         outcome=outcome, offered=offered, log=log)
+            answered_by_host = bool((auto_reply or {}).get("reply"))
             # The replies this turn admits, as exact phrases: the browser shows a button
             # for each and nothing else. Left OUT when empty, as `reply_follows` is, so a
-            # turn making no offer renders no buttons rather than an empty row.
-            options = (boundary.reply_options(offered, research) if boundary and offered else [])
+            # turn making no offer renders no buttons rather than an empty row -- and a
+            # turn under "Keep going" is exactly that case, because the choice has
+            # already been made. Buttons there would flicker on screen for the moment
+            # between this frame and the host's reply landing, and a researcher quick
+            # enough to click one would send a SECOND message into a run already moving.
+            options = ([] if answered_by_host or not (boundary and offered)
+                       else boundary.reply_options(offered, research))
             if options:
                 detail["options"] = options
             try:
@@ -2957,10 +2967,7 @@ async def _run_turn(
                 # transaction as the close so a turn never ends promising one it did
                 # not write. `result.result` is the turn's last text, whose final line
                 # carries the offer.
-                auto_reply=plan_auto_reply(
-                    conn, boundary, turn, turn_mode=turn_mode, outcome=outcome,
-                    offered=offered, log=log,
-                ),
+                auto_reply=auto_reply,
                 max_nudges=max_nudges,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,
                 sdk_session_id=sdk_session_id,
