@@ -1305,11 +1305,11 @@
                 "rationale": "The skill correctly chose 'add-new' mode for the first plan for q_001. The research_query call confirmed no prior plans existed (count: 0). The plan was created with status 'active' and all items with status 'planned'. The research_append call successfully persisted the plan (pl_001) and all eight items (pli_001-pli_008) with entryIds returned. Exactly one plan is now active for q_001. No prior plan was modified or superseded (none existed). The audit trail is preserved: the plan is new, not an edit of an existing one. The lifecycle step is correct: a first plan for an open question, properly marked active with all items in planned status."
               }
             ],
-            "judge_cost_usd": 0.023438800000000003,
+            "judge_cost_usd": 0.02297,
             "duration_ms": 21755.956292006886,
             "error": null,
             "input_tokens": 14595,
-            "cached_input_tokens": 4688,
+            "cached_input_tokens": 0,
             "output_tokens": 1675
           },
           "started_at": 1792566310.433627,
@@ -3849,57 +3849,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The plan is factually accurate. All record types, jurisdictions, date ranges, and collection IDs are correct. The skill correctly identified that S3 (1908 death certificate) and S2 (1860 census) are already in the tree but unextracted for q_001, and prioritized them appropriately. The plan correctly cites loc_001 facts (Pennsylvania statewide registration from 1906, Diocese of Philadelphia, browse-only anthracite films, county formation in 1811) in the persisted rationales. All FamilySearch collection IDs match the tool responses. No fabricated material or unsupported claims."
+                "rationale": "The plan is factually accurate. All 11 items target appropriate records for the parentage question. The persisted plan items correctly cite loc_001 facts (statewide PA vital registration from 1906, county formation in 1811, Diocese of Philadelphia, browse-only anthracite films). The death certificate, census records, probate, church, and military records are all real collections with correct IDs (1473181 for 1860 census, 1417683 for 1880, 1438024 for 1870, 1325221 for 1900, 1910717 for Civil War, SYNTH-PA-CHURCH for church records, 1999196 for probate). The plan correctly identifies that S3 (death certificate) and S2 (1860 census) are already in the tree but unextracted for q_001. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements. It created the first plan for q_001 in add-new mode, correctly generating plan pl_002 after the first append attempt failed. All 11 plan items were persisted with complete rationales, sequence numbers, record types, jurisdictions, date ranges, and repositories. The skill recovered from a validation error (wrong planId reference) and reissued the append with the correct pl_002 identifier. No required elements were omitted."
+                "rationale": "The skill addressed everything required. It created the first plan for q_001 (add-new mode, correct). It read loc_001 and used its facts throughout the rationales. It discovered appropriate record types via collections_search and volume_search. It included 11 plan items covering vital records, census (1860, 1870, 1880, 1900), probate, church, military, and FAN analysis. At least one post-1850 census (1880 with relationship column) is included as required. Each item has a rationale explaining why the record type was chosen for the parentage question. The plan was persisted correctly to research.json after a single validation recovery (first append call failed because it tried to use pl_001 instead of pl_002; the skill corrected this on retry)."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. The project_context call used the correct projectPath. The research_query calls correctly specified section names (plans, assertions, log, proof_summaries) and questionId q_001. The collections_search and volume_search calls used the correct standardPlace predicate (~Schuylkill). The external_links_search and research_append calls were properly formed. The skill recovered cleanly from a validation rejection (missing planId on plan_items update) and reissued with correct arguments on the retry."
+                "rationale": "All MCP tool calls passed correct arguments. project_context_query and research_query calls used correct projectPath and section/questionId parameters. collections_search and volume_search used standardPlace ~Schuylkill with correct date ranges. external_links_search used matching parameters. research_append calls initially failed validation (wrong planId on first attempt) but the skill recovered cleanly by re-issuing with correct planId pl_002. The final append succeeded with all 11 items and correct structure. No fixture_not_found errors. The recovery from the validation error (not a tool-not-found error) demonstrates competent correction and scores full credit per the recovery policy."
               },
               {
                 "source": "rubric",
                 "name": "Record type selection",
                 "score": 3,
-                "rationale": "Every record type directly serves the parentage question. Vital records (death certificate, marriage) provide direct parent names. Census records (1860, 1870, 1880, 1900) track household composition and relationship fields. Probate records name heirs and spouses. Church records supply marriage and baptism evidence. Military records provide pension/next-of-kin evidence. Each rationale explains what specific information the type provides for parentage: death certificate's informant-supplied parents' names field, 1880 census's relationship-to-head and parents' birthplace fields, probate's heir naming, church marriage's maiden name supply. No generic rationales."
+                "rationale": "Every plan item's record_type matches the parentage question's information need. Vital records (death certificate, marriage) supply direct parent names. Census records (1860, 1870, 1880, 1900) track household composition and relationships. Probate records name heirs and spouses. Church records supply marriage and baptism evidence. Military records may name next of kin. Each rationale explains what specific information the type provides: death certificate has informant-supplied parents' names field; 1880 census uniquely records relationship to head and parents' birthplaces; probate names heirs and wife; church marriage supplies maiden name; military pension names next of kin. No generic rationales."
               },
               {
                 "source": "rubric",
                 "name": "Objective scope containment",
                 "score": 3,
-                "rationale": "Every item's rationale ties directly to evidence about Patrick Flynn's parentage. The death certificate extraction targets Patrick's parents' names. Census items track Patrick's household and relationship to Thomas. The 1880 census specifically notes it records relationship-to-head and parents' birthplaces for Patrick. Probate targets Thomas's will naming heirs (Patrick as son). Church marriage targets Thomas's marriage (corroborating Thomas as father via date relative to Patrick's birth). The FAN item (pli_014) explicitly states neighbors may identify the mother's maiden name. No item pursues a relative's own missing facts; all serve the question's subject."
+                "rationale": "Every item's rationale ties it to evidence about Patrick Flynn (the question's subject). Items targeting Thomas Flynn's records (probate, church marriage) explicitly state what they reveal about Patrick: probate would name Patrick as heir; church marriage corroborates Thomas as father via date relative to Patrick's birth and supplies the mother's maiden name. The 1860 census may show Thomas's wife (Patrick's mother). The 1880 census shows Patrick's parents' birthplaces. The FAN item (pli_014) reviews neighbors to identify the mother's maiden name. No item pursues a relative's own record for its own sake; all are justified by what they would show about Patrick's parentage."
               },
               {
                 "source": "rubric",
                 "name": "Sequencing logic",
                 "score": 3,
-                "rationale": "Sequence is defensible and well-ordered. Items 1\u20132 extract already-in-tree sources (death certificate, 1860 census) before new searches, following free/indexed-first logic. Items 3\u20135 progress through censuses (1880, 1870, 1900) tracking Patrick into adulthood, with 1880 positioned early for its unique relationship field. Item 6 (probate) follows census work. Items 7\u20138 (church) include explicit fallback chain (pli_010 indexed, pli_011 fallback for browse). Item 9 (Patrick's marriage) follows church work. Item 10 (military) is a FAN-adjacent lead. Item 11 (FAN review of 1850\u20131860 neighbors) reviews already-in-hand images. The date_ranges reach into Patrick's adulthood (1900 is last census before his 1908 death). No item depends on evidence only a later item can supply."
+                "rationale": "Sequence is defensible and well-ordered. Items 1\u20132 extract sources already in the tree (death certificate, 1860 census) before new searches, following free/indexed-first logic. Items 3\u20135 search censuses in reverse chronological order (1880, 1870, 1900) to track Patrick across adulthood, with 1880 (relationship column) positioned early for its direct parentage value. Item 6 (probate) targets Thomas's lifespan window (1855\u20131895, age 37\u201377 as creator). Items 7\u20138 (church) are sequenced with fallback explicitly marked (pli_011 fallback_for pli_010). Item 9 (Patrick's marriage) follows church records. Item 10 (military) is a secondary lead. Item 11 (FAN) reviews already-in-hand census images. No item waits on evidence only a later item can produce. The date_ranges reach the later part of Patrick's window (1900 census before his 1908 death). Fallback chain is explicit."
               },
               {
                 "source": "rubric",
                 "name": "Jurisdiction accuracy",
                 "score": 3,
-                "rationale": "All jurisdictions are historically accurate. Schuylkill County, Pennsylvania is correctly named for 1850\u20131910 (formed 1811 per loc_001). The probate date window (1855\u20131895) correctly reflects Thomas's plausible lifespan as record creator, not Patrick's research window. Church records correctly cite Diocese of Philadelphia (per loc_001, which notes it remained so until Diocese of Allentown in 1961). The plan correctly notes pre-1811 records would be filed under Berks and Northampton (parent counties per loc_001). No anachronistic jurisdictions or boundary errors."
+                "rationale": "All jurisdictions are correct for the time period. Schuylkill County, Pennsylvania is used for 1850\u20131900 records. The plan correctly cites loc_001's fact that Schuylkill County was formed in 1811 from Berks and Northampton (relevant for pre-1811 records, though not needed here). Probate records are correctly placed at the county Register of Wills from 1811 onward. Church records are correctly placed under the Diocese of Philadelphia (per loc_001, which notes the Diocese of Allentown was not erected until 1961). Pennsylvania statewide vital registration from 1906 is correctly cited for the 1908 death certificate. No anachronistic jurisdictions or boundary errors."
               },
               {
                 "source": "rubric",
                 "name": "Plan mode and lifecycle",
                 "score": 3,
-                "rationale": "The skill correctly chose add-new mode for the first plan on q_001. No prior active plan existed for q_001 (only pl_001 for q_002, which is completed). The skill created pl_002 as active, preserving the audit trail. When the first append call failed (wrong planId reference), the skill recovered by reissuing with the correct pl_002 identifier. The persisted state shows pl_002 as active with 11 planned items. No duplicate plans, no in-place edits of prior items, no multiple active plans for the same question. Lifecycle is correct."
+                "rationale": "The skill correctly chose add-new mode: q_001 had no prior plan, and the most recent plan (pl_001 for q_002) is completed, so a new plan is appropriate. The skill created pl_002 as active for q_001. The audit trail is preserved: pl_001 remains completed and untouched. Exactly one active plan now exists for q_001 (pl_002). The skill did not attempt to edit pl_001 or create a duplicate. The lifecycle is correct: first plan for the question, created with status active, all 11 items set to planned. No prior active plan needed to be superseded because none existed for q_001."
               }
             ],
-            "judge_cost_usd": 0.031018999999999998,
+            "judge_cost_usd": 0.032797799999999995,
             "duration_ms": 20153.9795420249,
             "error": null,
             "input_tokens": 23589,
-            "cached_input_tokens": 0,
-            "output_tokens": 1486
+            "cached_input_tokens": 4688,
+            "output_tokens": 1748
           },
           "started_at": 1792567705.995174,
           "ended_at": 1792567999.558503
@@ -13965,11 +13965,11 @@
                 "rationale": "The plan correctly uses 'create' mode for the first plan for q_001 (no prior plan existed; research_query returned count: 0). The plan is set to status 'active' in the persisted entry. All nine items are set to status 'planned' with no prior items to supersede or dispose. The audit trail is preserved: no existing plan was modified in place. Exactly one active plan now exists for q_001. The lifecycle is correct for a first-plan scenario with no prior research state to act on."
               }
             ],
-            "judge_cost_usd": 0.023623,
+            "judge_cost_usd": 0.0240918,
             "duration_ms": 20299.27150000003,
             "error": null,
             "input_tokens": 15848,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4688,
             "output_tokens": 1555
           },
           "started_at": 1792565277.669814,
@@ -15314,7 +15314,7 @@
         "wiki-read-not-found-any",
         "person-read-empty-any"
       ],
-      "outcome": "partial",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -15442,7 +15442,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_research_plan_005_2026-10-21_06-47-57_0",
-          "outcome": "partial",
+          "outcome": "pass",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 376917.84404200735,
@@ -17240,57 +17240,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The plan is factually accurate. All 12 items target appropriate record types for the parentage question. Jurisdictions (Schuylkill County, Pennsylvania) are correct for the time periods. The plan correctly identifies that Patrick was born in Ireland (~1845) so no Pennsylvania baptism exists, making the death certificate the first priority. Census years (1860, 1870, 1880, 1900) are correctly sequenced. The 1880 census rationale correctly notes it is the first to state relationship to head of household. Church records, probate, military, naturalization, and land records are all appropriately targeted. The plan correctly references S2, S3, S4 source descriptions already in the tree. Fallback relationships are correctly specified (pli_011 falls back from pli_010; pli_015 falls back from pli_009). No fabricated material or unsupported claims."
+                "rationale": "The plan is factually accurate. All 12 items target appropriate record types for the parentage question. Jurisdictions are correct for the time period (Schuylkill County, Pennsylvania, formed 1811). The plan correctly identifies that Patrick was born in Ireland (~1845) so no Pennsylvania baptism is available. Death certificate (1908) is correctly prioritized as the first item. Census years (1860, 1870, 1880, 1900) are correctly sequenced with accurate explanations of what each provides (1880 relationship column is direct evidence). Church marriage search is correctly identified as required per BCG Appendix B. Probate, military, naturalization, and land records are all appropriate for parentage research. The plan correctly cites the locality entry (loc_001) facts: probate from 1811, Diocese of Philadelphia, browse-only anthracite films. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to create a research plan for the parentage question (q_001). The plan includes 12 items covering vital records, census records across multiple decades, probate, church records with fallback, military records, naturalization, and land records. The plan was successfully persisted to research.json with plan ID pl_002 and all 12 items (pli_004 through pli_015) created with complete metadata. The skill recovered from two initial tool call errors and successfully completed the append operation. No required elements were omitted."
+                "rationale": "The skill fully addressed the user request to create a research plan for q_001 (Patrick Flynn parentage). The plan includes 12 items covering all major record types relevant to the question: vital (death certificate), census (four years spanning 1860-1900), probate (two items with fallback), church (two items with fallback), military, naturalization, and land records. The plan addresses the gap identified in the proof summary (ps_001) by planning searches beyond the 1850 census already completed. Fallback chains are explicit (pli_011 falls back from pli_010; pli_015 falls back from pli_009). The plan correctly identifies the missing mother and plans dedicated church marriage search. All required elements are present."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
-                "score": 2,
-                "rationale": "The skill made multiple tool calls with mostly correct arguments. The place_search call correctly searched for 'Schuylkill County, Pennsylvania' matching the expected ~Schuylkill pattern. However, the first research_append call attempted to append items to pl_001 (a completed plan for q_002) instead of creating a new plan pl_002, which the tool correctly rejected. The skill then recovered by querying existing plans, discovering pl_001 was completed, and successfully appending to the new pl_002 plan. A subsequent update call initially omitted the required planId parameter, which was rejected and then corrected. While the skill ultimately recovered and persisted correct arguments, the initial misunderstanding of plan lifecycle (attempting to add items to a completed plan) and the missing planId parameter represent non-critical argument defects that were cleanly corrected."
+                "score": 3,
+                "rationale": "All MCP tool calls passed arguments matching expected values. collections_search and volume_search were called with standardPlace ~Schuylkill and date ranges 1845-1910, matching expected predicates. place_search was called with placeName ~Schuylkill. external_links_search was called with standardPlace ~. project_context, research_query, and research_append calls all used correct projectPath and section arguments. The final research_append call successfully persisted the plan (pl_002) and all 12 items (pli_004-pli_015) with correct structure. Two intermediate append attempts failed validation (wrong planId reference, missing planId on update), but Claude corrected both and the final persisted state is correct. Single clean recovery on validation errors scores full credit per the recovery policy."
               },
               {
                 "source": "rubric",
                 "name": "Record type selection",
                 "score": 3,
-                "rationale": "Every plan item targets appropriate record types for the parentage question. Vital records (death certificate) provide direct parent names. Census records (1860, 1870, 1880, 1900) track co-residence and relationship statements. Probate records would name Patrick as a son in a will. Church records provide the marriage of Thomas and Patrick's mother, supplying the missing mother's maiden name. Military records may name parents/next of kin. Naturalization records corroborate Thomas's Irish origin. Land records may show direct parentage evidence (deed describing Patrick as 'son of Thomas'). Each rationale explicitly explains what information the record type provides for the parentage question, not generic 'more records would help' language."
+                "rationale": "Every plan item's record_type matches the parentage question's information needs. Vital record (death certificate) targets parents' names directly. Census items (1860, 1870, 1880, 1900) target co-residence and relationship evidence, with 1880 explicitly noting the relationship-to-head column. Probate targets wills naming heirs by relationship. Church targets marriage record proving the couple and supplying mother's maiden name. Military targets service/pension records naming parents. Naturalization targets corroboration of Irish origin. Land targets deeds describing Patrick as son or estate deeds naming heirs. Each rationale explains what specific information the record type provides for the parentage question, not generic 'more records would help' language."
               },
               {
                 "source": "rubric",
                 "name": "Objective scope containment",
                 "score": 3,
-                "rationale": "Every item's rationale ties directly to evidence about Patrick Flynn (the question's subject). Church records (pli_010, pli_011) target Thomas's marriage to supply the mother's maiden name\u2014critical because no mother appears in the tree and this is needed to complete Patrick's parentage proof. Military records (pli_012) may name Patrick's parents or next of kin. Naturalization records (pli_013) corroborate Thomas's Irish origins and provide community context for Patrick's parentage. Land records (pli_014) may show deeds describing Patrick as 'son of Thomas' or estate deeds naming heirs by relationship. Probate records (pli_009, pli_015) target Thomas's will naming Patrick as a son. No item pursues a relative's own record for its own sake; all items serve the purpose of establishing Patrick's parentage."
+                "rationale": "Every item's rationale ties it to evidence about Patrick Flynn (the question's subject). Census items explain how co-residence or relationship statements prove/support parentage. Death certificate targets Patrick's own record for parents' names. Probate targets Thomas's will naming Patrick as son. Church marriage targets Thomas and his wife's union, with explicit note that marriage proves the couple but a record placing Patrick with them is still needed. Military targets Patrick's service record naming parents. Naturalization targets Thomas's records corroborating Irish origin and community context. Land targets deeds describing Patrick as son or estate deeds naming him as heir. No item pursues a relative's own missing facts for their own sake; all serve the parentage question about Patrick."
               },
               {
                 "source": "rubric",
                 "name": "Sequencing logic",
                 "score": 3,
-                "rationale": "The sequence reflects defensible search order. Item 1 (death certificate, already in hand) is first because it may directly provide parents' names\u2014highest priority. Items 2-5 are census records in chronological order (1860, 1880, 1900, 1870), with 1880 placed third because it is the first to state relationship to head of household (direct evidence upgrade). Item 6 (probate) follows censuses because it requires Thomas's death date window, which censuses help establish. Item 7 (church marriage) is sequenced after censuses to supply the mother's maiden name. Item 8 (church fallback) is explicitly marked fallback_for pli_010. Items 9-11 (military, naturalization, land) provide supporting evidence and FAN context. Item 12 (Ancestry probate) is marked fallback_for pli_009. The date_range for probate (1860-1900) reaches the later part of Thomas's plausible lifespan window. Fallback chains are explicit via fallback_for fields. No item waits on evidence only a later item can supply."
+                "rationale": "Sequence reflects defensible search order. Item 1 (death certificate, already in hand) is prioritized as highest-priority because it may directly state parents' names. Items 2-5 (censuses 1860, 1880, 1870, 1900) follow free/indexed sources before paid, with 1880 placed third (not last) because it provides direct relationship evidence. Item 6 (probate, browse-only) comes before item 7 (church, indexed) respecting the already-in-hand principle. Fallback chains are explicit: pli_011 (browse church) falls back from pli_010 (indexed church); pli_015 (Ancestry probate) falls back from pli_009 (FamilySearch probate). Date ranges reach the later part of the question's window: 1900 census is Patrick's last full decennial before 1908 death. No item waits on evidence only a later item can supply. The 1880 census (first to state relationships) is sequenced before 1900 (which records parents' birthplaces), respecting evidence dependency."
               },
               {
                 "source": "rubric",
                 "name": "Jurisdiction accuracy",
                 "score": 3,
-                "rationale": "All jurisdictions are correct for the target periods. Schuylkill County, Pennsylvania is correctly identified as the jurisdiction for all searches. The plan correctly notes that Schuylkill County was formed in 1811 (per the locality entry loc_001 referenced in the rationales), making probate records available from 1811 onward. The plan correctly identifies that church records fall under the Diocese of Philadelphia (not Allentown, which was created later in 1961). Pennsylvania vital registration from 1906 onward is correctly cited for the death certificate. No anachronistic jurisdictions or boundary errors appear."
+                "rationale": "All jurisdictions are correct for the time period. Schuylkill County, Pennsylvania is correctly identified as the primary jurisdiction. The plan correctly cites from loc_001 that Schuylkill County was formed in 1811 from Berks and Northampton counties, and notes that probate records are held by the county Register of Wills and available from 1811. Church records are correctly placed under the Diocese of Philadelphia (which held Schuylkill County until the Diocese of Allentown was erected in 1961, per loc_001). Federal census records are correctly identified as United States-level collections. No anachronistic jurisdictions or pre-statehood errors appear."
               },
               {
                 "source": "rubric",
                 "name": "Plan mode and lifecycle",
                 "score": 3,
-                "rationale": "The skill correctly chose 'add-new' mode (create mode in the response text) for the first plan for question q_001. The prior plan pl_001 for q_002 was already completed, so creating a new plan pl_002 for q_001 was appropriate. The skill did not attempt to edit the completed pl_001 plan. The new plan pl_002 was created with status 'active' and all 12 items with status 'planned'. The audit trail is preserved: pl_001 remains completed and untouched. Exactly one active plan now exists for q_001 (pl_002). The skill recovered from initial tool errors and successfully persisted the correct plan structure."
+                "rationale": "The skill correctly chose 'add-new' mode: q_001 had no prior plan, and the most recent plan (pl_001) is for a different question (q_002) and is already completed. The skill created pl_002 as a new active plan for q_001. The audit trail is preserved: pl_001 remains in the project with status 'completed' and is not edited. Exactly one plan is now active for q_001 (pl_002). The skill did not attempt to supersede or dispose of any existing plan. The lifecycle is correct: a first plan for the question was created with status 'active', and the prior completed plan for a different question was left intact."
               }
             ],
-            "judge_cost_usd": 0.032882999999999996,
+            "judge_cost_usd": 0.0394048,
             "duration_ms": 23102.616582997143,
             "error": null,
-            "input_tokens": 24113,
-            "cached_input_tokens": 0,
-            "output_tokens": 1754
+            "input_tokens": 30066,
+            "cached_input_tokens": 4688,
+            "output_tokens": 1774
           },
           "started_at": 1792566707.493485,
           "ended_at": 1792567107.651053
@@ -27548,57 +27548,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The plan is factually accurate. All record types, jurisdictions, dates, and collection IDs match the tool responses. The death certificate (S3, cert. 4521) is correctly identified as already in the tree. The 1880 census is correctly noted as the first to record relationships explicitly. Probate, church, military, and land records are all appropriate for the question. The plan correctly identifies that S2 (1860 census) and S3 (death cert) have not yet been extracted for q_001. No fabricated material or unsupported claims."
+                "rationale": "The plan is factually accurate. All record types, jurisdictions, dates, and collection IDs are correct. The death certificate (S3, cert. 4521) is correctly identified as already in the tree. The 1880 census is correctly noted as the first to record relationships explicitly. Probate records are correctly dated to 1811-present for Schuylkill County. Church records under the Diocese of Philadelphia are correct for the period. The Civil War Soldiers Index ID (1910717) and personCount (6,282,360) match the tool response. No fabricated material or unsupported claims appear."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to create the first research plan for q_001 (Patrick Flynn's parentage). The plan includes 10 items covering vital records, census, probate, church, military, and land records. The per-test requirement for a parents' marriage item is met by pli_010 (sequence 7), which explicitly searches for Thomas Flynn's marriage to Patrick's mother. All standard parentage record types are included alongside the marriage item."
+                "rationale": "The skill addressed all required elements: created the first plan for q_001 (which had no prior plan), surveyed the locality (Schuylkill County, PA), identified appropriate record types, sequenced items logically, and persisted the plan to research.json. The plan includes 10 items covering vital, census, probate, church, military, and land records. The per-test requirement for a parents' marriage item is met by pli_010 (sequence 7), which explicitly targets Thomas Flynn's marriage and explains its parentage value."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching expected values. The collections_search calls used standardPlace ~Schuylkill and ~United States as expected. The volume_search call correctly specified Schuylkill, Pennsylvania with appropriate record type groups. The research_query calls correctly queried plans, assertions, and proof_summaries for q_001. The research_append calls initially failed validation (wrong planId reference) but Claude immediately corrected it on retry, appending to pl_002 with correct planId references. The final update call correctly fixed the fallback_for reference from pli_004 to pli_007. No fixture_not_found errors occurred."
+                "rationale": "All MCP tool calls passed correct arguments. The project_context call used the correct projectPath. The research_query calls correctly specified section and questionId. The collections_search calls used standardPlace matching Schuylkill and United States as expected. The volume_search call correctly specified Schuylkill with appropriate recordTypeGroups. The research_append calls initially failed validation (wrong planId reference), but Claude immediately corrected it in the retry, using planId 'pl_002' correctly. The final update call correctly fixed the fallback_for reference. This single clean recovery from a validation error scores full credit per the retry policy."
               },
               {
                 "source": "rubric",
                 "name": "Record type selection",
                 "score": 3,
-                "rationale": "Every plan item targets appropriate record types for the parentage question. Vital records (death cert) extract direct parentage fields. Census records (1880, 1870) track household co-residence and relationships. Probate records would show Patrick as heir/son. Church records (baptism, marriage) name both parents. Military records (Civil War pension) contain personal history including parentage. Land records show father-to-son transfers. Each rationale explains what specific information the record type provides: the death cert's parentage fields, the 1880 census's explicit relationship field, the marriage record's supply of the mother's maiden name, probate's naming of heirs, etc. Record types are selected based on what information is needed, not generic coverage."
+                "rationale": "Every plan item targets appropriate record types for the parentage question. Vital records (death certificate, pli_004) supply direct parentage fields. Census records (1880, 1870, pli_005-006) track household co-residence and relationships. Probate (pli_007-008) would name heirs. Church records (pli_009-010) supply baptism and marriage evidence. Military (pli_012) would yield pension files with parentage. Land (pli_013) could show father-to-son transfers. Each rationale explains what specific information the type provides: the 1880 census's explicit relationship field, probate's heir naming, church records' naming of parents, etc. The marriage item (pli_010) rationale explicitly states it supplies the mother's maiden name and corroborates paternity by date."
               },
               {
                 "source": "rubric",
                 "name": "Objective scope containment",
                 "score": 3,
-                "rationale": "Every plan item's rationale ties directly to evidence about Patrick Flynn's parentage. The FAN-adjacent items (pli_011 targeting Thomas's naturalization, pli_012 targeting Patrick's military service) explicitly state what they would reveal about Patrick's parents. The marriage item (pli_010) is framed as supplying the mother's maiden name and corroborating Thomas as father by date relative to Patrick's birth. No item pursues a relative's own record for its own sake; all items are justified by what they would reveal about Patrick's parentage question."
+                "rationale": "Every item's rationale ties it to evidence about Patrick Flynn's parentage. The death certificate (pli_004) reads Patrick's own parentage fields. Census items (pli_005-006) track Patrick in household with Thomas. Probate (pli_007-008) searches for Thomas's will naming Patrick as heir. Church baptism (pli_009) searches for any child of Thomas (which would name the mother). Church marriage (pli_010) explicitly states it 'confirms Thomas and his wife as a couple, supplies the mother's maiden name...and corroborates Thomas as the father.' Naturalization (pli_011) targets Thomas but rationale states 'the information it yields bears directly on identifying Patrick's parents.' Military (pli_012) searches Patrick's pension for parentage. Land (pli_013) searches for father-to-son deeds. No item pursues a relative's own record for its own sake; all serve the question's subject."
               },
               {
                 "source": "rubric",
                 "name": "Sequencing logic",
                 "score": 3,
-                "rationale": "The sequence follows defensible logic: (1) vital record (death cert, already in tree, most direct); (2-3) census records (1880 first because it records relationships explicitly, then 1870 to bridge the gap); (4-5) probate (FamilySearch first, Ancestry as fallback); (6-7) church records (baptism search first, then dedicated marriage search); (8) naturalization (FAN-directed, supplies Irish origin); (9) military (pension would contain parentage); (10) land (deeds show transfers). Free/indexed sources (census, church collections) precede browse-only items (probate, naturalization). The fallback chain is explicit: pli_008 (Ancestry probate) is fallback_for pli_007 (FamilySearch probate). Date ranges appropriately cover the relevant window: death cert 1908, censuses 1870-1880, probate 1855-1890 (Thomas's lifespan), church 1835-1870, naturalization 1849-1880, military 1861-1865, land 1845-1890. No item depends on evidence only a later item can supply."
+                "rationale": "Sequence reflects defensible search order. Item 1 (death certificate) is free/indexed and already in hand\u2014correct first priority. Items 2-3 (1880, 1870 censuses) are free/indexed and narrow (Schuylkill County), ordered chronologically backward to bridge gaps. Item 4-5 (probate FamilySearch then Ancestry fallback) follow free before paid, with fallback_for correctly set. Items 6-7 (church baptism then marriage) are indexed collections, logically grouped. Item 8 (naturalization) is browse-only but FAN-directed, supporting the probate/church searches. Item 9 (Civil War) is national scope, appropriate after local records. Item 10 (land) is 22% indexed, appropriately last. The date_range for death certificate (1908) reaches the later part of Patrick's window (b. ~1845, d. 1908). No item waits on evidence only a later item can supply. Fallback chain is explicit (pli_008 fallback_for pli_007)."
               },
               {
                 "source": "rubric",
                 "name": "Jurisdiction accuracy",
                 "score": 3,
-                "rationale": "All jurisdictions are historically accurate for the time periods specified. Schuylkill County, Pennsylvania is correctly used for 1845-1890 records (the county existed throughout this period). The plan correctly notes that Schuylkill County probate records are held by the county Register of Wills and available from 1811 (per the locality guide reference). Church records are correctly placed under the Diocese of Philadelphia for Schuylkill County. The United States jurisdiction for the Civil War Soldiers Index (1861-1865) is correct. No anachronistic jurisdictions or pre-statehood errors."
+                "rationale": "All jurisdictions are correct for the time period. Schuylkill County, Pennsylvania is correctly used for 1845-1908 (formed 1811, still exists). The locality guide confirms Schuylkill County probate records available from 1811. Church records under Diocese of Philadelphia are correct (Diocese of Allentown not erected until 1961). Pennsylvania death certificates from 1906 onward is correct. The 1880, 1870, 1860 censuses are correctly identified as U.S. Federal Census collections. Civil War Soldiers Index (1861-1865) is correctly scoped to United States. No pre-statehood or boundary-change issues apply to this 1845-1908 window in Pennsylvania."
               },
               {
                 "source": "rubric",
                 "name": "Plan mode and lifecycle",
                 "score": 3,
-                "rationale": "The skill correctly chose add-new mode: this is the first plan for q_001 (the prior plan pl_001 is for q_002 and is completed). The plan was created with status 'active' and question_id q_001. When the initial research_append call failed validation (wrong planId reference to pl_001), Claude immediately corrected it by reissuing with planId pl_002, which the tool created. The final update call corrected the fallback_for reference. The audit trail is preserved: pl_001 (for q_002) remains completed and untouched. Exactly one active plan now exists for q_001 (pl_002). The lifecycle is correct."
+                "rationale": "The skill correctly chose add-new mode: q_001 had no prior plan (research_query returned count 0), so a new plan was required. The skill created pl_002 (the next sequential plan ID after pl_001, which belongs to q_002). The plan was set to 'active' status, appropriate for a newly created plan. All 10 items were appended with status 'planned'. The fallback relationship was correctly established (pli_008 fallback_for pli_007). The prior plan (pl_001 for q_002) was left untouched\u2014no audit trail was altered. Exactly one active plan now exists for q_001. The lifecycle is correct: first plan for the question, no prior active plan to supersede or review."
               }
             ],
-            "judge_cost_usd": 0.0317658,
+            "judge_cost_usd": 0.0338738,
             "duration_ms": 20402.952208998613,
             "error": null,
-            "input_tokens": 23482,
+            "input_tokens": 24740,
             "cached_input_tokens": 4688,
-            "output_tokens": 1563
+            "output_tokens": 1733
           },
           "started_at": 1792567134.008874,
           "ended_at": 1792567383.069607
@@ -28768,11 +28768,11 @@
                 "rationale": "The skill correctly chose 'Create' mode for the first plan for q_001. The research_query calls confirmed no prior plans existed (count: 0 for both plans and log sections). The plan was written with status 'active' and all items with status 'planned', appropriate for a new plan. The research_append operation appended the plan and items without modifying any prior entries (none existed). Exactly one active plan now exists for q_001. The audit trail is preserved: no prior plans were edited or deleted. The mode and lifecycle handling are correct."
               }
             ],
-            "judge_cost_usd": 0.029241000000000003,
+            "judge_cost_usd": 0.0297098,
             "duration_ms": 20982.258250005543,
             "error": null,
             "input_tokens": 21291,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4688,
             "output_tokens": 1590
           },
           "started_at": 1792568486.794863,
@@ -32064,11 +32064,11 @@
                 "rationale": "Supersede mode was correctly chosen: new information (Thomas Flynn's death ca. 1865) invalidated the active plan pl_002's assumption (1875-1890 window). The skill set pl_002.status to 'superseded' without modifying its items, preserving the audit trail. A new active plan pl_003 was created with created timestamp '2026-10-21'. Exactly one plan remains active for q_001 (pl_003); the prior active plan is now superseded. The lifecycle steps were handled correctly: prior plan marked superseded, new plan written with active status, items appended with planned status."
               }
             ],
-            "judge_cost_usd": 0.02259,
+            "judge_cost_usd": 0.0230588,
             "duration_ms": 19669.423082988942,
             "error": null,
             "input_tokens": 15015,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4688,
             "output_tokens": 1515
           },
           "started_at": 1792565866.578627,
@@ -32139,5 +32139,6 @@
       "research_append": "9bc6ae897509df983a2537b6d172447a28a2e96db89ce285b9e8689d3c14ae23",
       "research_query": "7ee7572ae84b3f6494d74205d6ac06c766272f5c5a04d18f09ac920077a0ee3a"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }

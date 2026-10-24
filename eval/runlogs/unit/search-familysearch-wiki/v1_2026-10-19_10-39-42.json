@@ -51,7 +51,7 @@
       "mcp_fixtures": [
         "wiki-search-census-records"
       ],
-      "outcome": "pass",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -167,7 +167,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_search_wiki_008_2026-10-19_10-39-42_0",
-          "outcome": "pass",
+          "outcome": "fail",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 43530.54670000028,
@@ -515,52 +515,52 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "The skill correctly searched the FamilySearch wiki for census records guidance, retrieved two relevant results, and synthesized the information faithfully. All claims in the summary are traceable to the tool response chunks: census frequency (every ten years from 1790), availability on FamilySearch through 1950, how to search (FamilySearch.org > Search > Records), what changed over time (1790-1840 head of household only, 1850-1870 free persons named, 1880+ with relationships), and strategies (tracing through decades, tracking migration, identifying relatives, trying alternate spellings). No fabricated dates, repositories, or guidance were added."
+                "score": 1,
+                "rationale": "The skill was delegated to search for 'how to use census records to trace my family' but the project has an objective to 'Identify the parents of Patrick Flynn (b. ~1845, d. 1908)'. The delegation query does not match the project objective. The skill should have either declined this mismatched delegation or derived a research question from the actual project objective (Patrick Flynn's parents) rather than executing a generic census-methodology search. The skill performed work on the wrong question entirely."
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The skill fully addressed the user's request to search the FamilySearch wiki for guidance on using census records to trace family. It executed the wiki search, retrieved results, logged the guidance with sources, and informed the user of the outcome. The delegation asked for a search on census records, and the skill completed that task entirely."
+                "score": 1,
+                "rationale": "The skill did not address the project's actual objective. The project requires identifying Patrick Flynn's parents, but the skill searched for generic census-record methodology instead. No work was done toward the stated objective of the project. The skill should have either routed to a skill that derives research questions from objectives, or declined the mismatched delegation."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call passed a query 'How do I use census records to trace my family history?' which matches the expected_args predicate '~census' semantically and substantively. The research_log_append call used correct arguments including the projectPath, tool name 'wiki_search', query object, outcome 'positive', resultsExamined count of 2, and properly formatted notes. All critical identifiers and parameters were correct."
+                "rationale": "The wiki_search tool call passed a query 'How do I use census records to trace my family history?' which matches the expected_args predicate '~census' semantically. The query was well-formed and the tool matched successfully (matched.kind: 'predicate'). The research_log_append call was made to a live tool with appropriate arguments including projectPath, tool name, query, outcome, resultsExamined, and notes. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "The skill logged exactly one new wiki_search entry. The notes open with '# FamilySearch Wiki: Census Records to Trace Family' (the core noun phrase 'Census Records' from the question, not the whole question), followed by a comprehensive summary synthesizing both wiki chunks, and a Sources section with two properly formatted bullets. The file changes summary confirms one log entry was added to research.json."
+                "rationale": "The skill logged exactly one new wiki_search entry. The notes open with '# FamilySearch Wiki: Census Records to Trace Family' (the core noun phrase 'Census Records' from the search query, not the whole question). The entry includes a summary synthesizing both wiki chunks and a Sources section with properly formatted links. The log entry was successfully persisted to research.json as shown in the file changes summary."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains two bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '[United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both URLs match exactly the source_url values from the tool response. No fabricated or missing URLs."
+                "rationale": "The Sources section in the logged notes contains two bullets formatted as '- [page_title \u2014 section_heading](source_url)': '- [United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both URLs are drawn directly from the tool response and match the source_url fields exactly. The format adheres to the required pattern."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the logged summary is directly traceable to chunk_text from the tool response. The summary covers census frequency (every ten years from 1790), FamilySearch availability (1790-1950), subscription sites, how to search, what was recorded in different periods (1790-1840, 1850-1870, 1880+), and strategies (tracing through decades, migration tracking, identifying relatives, alternate spellings, age variance). No invented census years, states, coverage details, or guidance beyond what the wiki provided."
+                "rationale": "Every claim in the summary is traceable to the chunk_text returned by the wiki tool. The summary covers: census frequency (every ten years from 1790), FamilySearch's collection (1790\u20131950), subscription site availability, how to search on FamilySearch, what was recorded in different time periods (1790\u20131840 head of household only; 1850\u20131870 free persons by name; 1880+ with relationships), and strategies for tracing families across decades. No invented census years, states, or coverage details appear outside what the wiki provided."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki search returned 2 results with positive relevance scores, so the no-result handling dimension does not apply."
+                "rationale": "The FamilySearch Wiki returned 2 results with high relevance scores (0.94 and 0.88). The empty-results path was not exercised in this test, so this dimension is N/A."
               }
             ],
-            "judge_cost_usd": 0.010063800000000001,
+            "judge_cost_usd": 0.009685,
             "duration_ms": 11206.425400000171,
             "error": null,
             "input_tokens": 4795,
-            "cached_input_tokens": 4238,
-            "output_tokens": 969
+            "cached_input_tokens": 0,
+            "output_tokens": 978
           },
           "started_at": 1792406451.2123582,
           "ended_at": 1792406506.5071273
@@ -1047,51 +1047,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "All claims in the response are traceable to the wiki results. The summary accurately reflects the three chunks returned: overview of Irish church records (denominations, dates, 1922 fire, FamilySearch digitization), how to find them on FamilySearch (search steps, National Library, Representative Church Body Library), and what they contain (baptism, marriage, burial details). No fabricated information or unsupported claims."
+                "rationale": "The skill's output is factually correct. The wiki search returned three chunks about Irish church records, and Claude's summary faithfully represents the content: denominations (Roman Catholic and Church of Ireland), timeframes (Catholic registers from early 1800s, Church of Ireland from 1700s), the 1922 Public Record Office fire, FamilySearch's digitized collections, and how to search on FamilySearch. All claims are traceable to the chunk_text provided. No fabricated material or unsupported assertions are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to search for guidance on finding church records for Irish ancestors. The wiki search was executed with an appropriate query, results were examined and synthesized, and the guidance was logged with sources. The response explains where records are held (FamilySearch, National Library of Ireland, Representative Church Body Library) and how to access them (search steps on FamilySearch.org)."
+                "rationale": "The skill addressed the user's request completely. The delegation asked to search the FamilySearch wiki for how to find church records for Irish ancestors. Claude performed the wiki search with an appropriate query, received three relevant results, and logged the guidance with sources. The response covers what kinds of records exist, where they are held (FamilySearch, National Library of Ireland, Representative Church Body Library), and how to search them online\u2014all elements the per-test context required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call used query 'How do I find church records for Irish ancestors?' which matches the expected_args predicate '~church' and is semantically appropriate for the user's request. The research_log_append call correctly passed all required arguments including projectPath, tool='wiki_search', query object, outcome='positive', resultsExamined=3, and properly formatted notes with the template structure."
+                "rationale": "The wiki_search call used the query 'How do I find church records for Irish ancestors?' which matches the expected_args predicate of ~church. The query is natural-language, specific, and directly addresses the user's request. The research_log_append call included all required fields (projectPath, tool, query, outcome, resultsExamined, notes) with correct values. No critical identifiers were wrong, and no fixture_not_found errors occurred. Both calls passed validation."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "Exactly one new wiki_search log entry was created (log_001). The notes open with '# FamilySearch Wiki: Irish church records' (the core noun phrase from the question), followed by a comprehensive summary synthesizing all three chunks, and conclude with a properly formatted Sources section containing three bullets with page titles, section headings, and URLs."
+                "rationale": "Exactly one new wiki_search log entry was created (log_001). The notes section opens with '# FamilySearch Wiki: Irish church records' (the core noun phrase from the question), followed by a summary synthesizing the three chunks, and concludes with a properly formatted Sources section. The entry has outcome: 'positive' and resultsExamined: 3, correctly reflecting the three results returned. The template structure is complete and correct."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains three bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' with actual URLs from the tool response: Overview of Irish Church Records, Finding Church Records on FamilySearch, and What Church Records Contain. All URLs are present and match the source_url values from the wiki results."
+                "rationale": "The Sources section contains three bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: Overview of Irish Church Records, Finding Church Records on FamilySearch, and What Church Records Contain. All three results from the wiki search are cited with proper formatting and actual URLs from the response_summary. No fabricated URLs or missing citations."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is directly traceable to chunk_text from the tool response. The summary covers: denominations (Catholic and Church of Ireland), date ranges (Catholic early 1800s, Church of Ireland 1700s), the 1922 Public Record Office fire, FamilySearch digitization, search steps on FamilySearch.org, National Library and Representative Church Body Library holdings, and record contents (baptism, marriage, burial details with specific fields). No outside facts or fabricated guidance were added."
+                "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records, the two main denominations (Roman Catholic and Church of Ireland), register timeframes (early 1800s vs 1700s), the 1922 Public Record Office fire, FamilySearch's digitized collections, how to search on FamilySearch, the National Library of Ireland and Representative Church Body Library holdings, and what church records contain (baptism, marriage, burial details). No outside facts or fabricated guidance were added beyond what the wiki provided."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test exercised the positive path (three results returned). The empty-results scenario did not occur, so this dimension is N/A."
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned three results with high relevance scores (0.93, 0.89, 0.84), so the negative-path handling dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.009361999999999999,
+            "judge_cost_usd": 0.0103908,
             "duration_ms": 10906.267700000171,
             "error": null,
             "input_tokens": 5037,
-            "cached_input_tokens": 0,
-            "output_tokens": 865
+            "cached_input_tokens": 4238,
+            "output_tokens": 986
           },
           "started_at": 1792406382.9651496,
           "ended_at": 1792406446.8812096
@@ -2109,31 +2109,31 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed all required actions: performed the wiki search, informed the user that no results were found, and logged the nil search with correct parameters. The per-test context required exactly this behavior\u2014search, tell the user, log the negative outcome\u2014and all three steps were executed."
+                "rationale": "The skill completed all required actions: performed the wiki search, informed the user that no results were found, and logged the nil search with the correct parameters. The per-test context required the skill to call wiki_search, tell the user no guidance was found, and log exactly one entry with outcome negative\u2014all were accomplished."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call passed query 'blockchain birth certificate records genealogy', which matches the expected_args predicate '~blockchain'. The research_log_append call correctly used tool 'wiki_search', outcome 'negative', resultsExamined 0, and notes null, matching the expected behavior for nil searches. Both calls were well-formed and matched their expected arguments."
+                "rationale": "The wiki_search call passed query 'blockchain birth certificate records genealogy' which matches the expected_args predicate '~blockchain'. The research_log_append call correctly used tool 'wiki_search', outcome 'negative', resultsExamined 0, and notes null, matching the expected behavior for a nil search. All critical arguments were correct."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "Exactly one research-log entry was created with tool 'wiki_search', outcome 'negative', resultsExamined 0, and notes null. This is the correct format for logging a nil search per the rubric. The file changes summary confirms one log entry was added to research.json."
+                "rationale": "Exactly one new wiki_search log entry was created with outcome 'negative' and resultsExamined 0. Per the rubric, when results are empty (negative outcome), notes should be null, which is correct here. The file changes summary confirms one log entry was added to research.json."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "No sources section was required because the wiki search returned zero results. The rubric specifies that for nil searches, the entry should have no notes and no sources section. This is N/A in the sense that the situation (empty results) correctly produces no sources to cite, and the skill handled this appropriately."
+                "rationale": "No sources section is required when the wiki search returns empty results. The skill correctly logged a nil search with no notes, which is the appropriate handling for zero results. There are no sources to cite because no wiki pages were returned."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "No summary was generated because the wiki returned no results. The skill correctly refrained from synthesizing guidance or adding facts. The response simply stated that no wiki guidance was found, which is faithful to the empty results returned by the tool."
+                "rationale": "The skill made no claims about blockchain birth certificate records or any other content. It only stated that no wiki guidance was found, which is faithful to the empty results returned by the tool. No fabricated guidance or facts were added."
               },
               {
                 "source": "rubric",
@@ -2142,12 +2142,12 @@
                 "rationale": "The skill correctly handled the empty-results path: logged one wiki_search entry with outcome 'negative', resultsExamined 0, and notes null; told the user 'No wiki guidance was found on blockchain birth certificate records'; and wrote nothing else. This matches the pass criteria exactly."
               }
             ],
-            "judge_cost_usd": 0.0080778,
+            "judge_cost_usd": 0.0079978,
             "duration_ms": 9069.51570000001,
             "error": null,
             "input_tokens": 3849,
             "cached_input_tokens": 4238,
-            "output_tokens": 761
+            "output_tokens": 745
           },
           "started_at": 1792406451.4014273,
           "ended_at": 1792406495.7309442
@@ -2924,7 +2924,8 @@
                 "subagent_type": "search-familysearch-wiki",
                 "text": "# FamilySearch Wiki: German ancestors\n\nGerman genealogy research typically begins with civil registration records, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, church records (Kirchenb\u00fccher) are the primary source, with Lutheran and Catholic church registers often surviving from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org.\n\nA critical first step is identifying the specific village or town where your ancestor lived, because record-keeping varied by region and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Family documents, naturalization records, and passenger lists can help identify the German place of origin. The FamilySearch Germany wiki page lists records available by German state.\n\nGerman emigration records can also help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries, and these records are held in state archives with some having been digitized. Hamburg passenger lists are well preserved and cover departures from the port of Hamburg over many decades; FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy \u2014 Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy \u2014 Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration \u2014 German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)\n\n---\n\nA search of the FamilySearch wiki was done on your question about how to research German ancestors, and the guidance found \u2014 covering key record types, how to get started, and emigration records \u2014 is shown above along with the wiki pages it came from. No research log was saved because this folder does not yet have an active research project set up.\n\nFrom here, the next step would be to identify your ancestor's specific German village, which the wiki guidance describes as essential before searching any German archives."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -3112,51 +3113,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki_search tool. The response accurately covers civil registration records, church records (Kirchenb\u00fccher), the importance of identifying specific villages, emigration records, and Hamburg passenger lists \u2014 all directly supported by the tool response. No fabricated information or unsupported claims are present."
+                "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki_search tool. The response accurately covers civil registration records, church records (Kirchenb\u00fccher), the importance of identifying specific villages, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present. The facts align precisely with what the tool returned."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request to search for how to research German ancestors. The summary covers key record types (civil registration, church records), the critical step of identifying a specific village, and emigration records as a path to place identification. The response includes the filled template with summary and Sources section as required for a no-project scenario, and appropriately notes that no research log was saved due to the lack of an active project."
+                "rationale": "The skill addressed the user's request to search for how to research German ancestors. The summary covers key record types (civil registration, church records), the critical step of identifying a specific village, and emigration records. The response includes all three results from the wiki search and provides actionable guidance. The per-test context requirement to cover what records exist and how to find them on FamilySearch is fully met."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call used query 'How do I research German ancestors?' which matches the expected_args predicate '~German' semantically and is a natural-language query about researching German ancestors as required. The research_log_append call was appropriately attempted with correct arguments, and the agent correctly handled the 'no_project' rejection by returning the filled template instead of persisting a log entry."
+                "rationale": "The wiki_search call passed the query 'How do I research German ancestors?' which matches the expected_args predicate '~German' semantically. The query is a natural-language question about researching German ancestors as required by the per-test context. The matched.kind is 'predicate', indicating successful matching. No critical argument errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "The agent correctly handled the no-project scenario. The research_log_append call was rejected with 'no_project' reason, and the agent appropriately returned the filled template above the '---' line instead of logging it. The template includes the '# FamilySearch Wiki: German ancestors' heading, summary, and Sources section in the correct format. No loose file was created."
+                "rationale": "The test is marked as no-project (no research.json exists), so per the per-test context, the agent correctly returned the filled template above the '---' line instead of logging. The response shows the summary with the '# FamilySearch Wiki: German ancestors' heading, followed by the summary text and a Sources section. The research_log_append call was attempted but correctly rejected with 'no_project' reason, and the agent appropriately handled this by returning the template in the text response instead."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "All three results from the wiki_search response are cited in the Sources section with the required format: '[page_title \u2014 section_heading](source_url)'. The sources are: Germany Genealogy \u2014 Key Records for German Research, Germany Genealogy \u2014 Getting Started with German Research, and Germany Emigration and Immigration \u2014 German Emigration Records, each with the correct URLs from the tool response."
+                "rationale": "The Sources section includes three properly formatted bullets with the required format '[page_title \u2014 section_heading](source_url)': (1) Germany Genealogy \u2014 Key Records for German Research, (2) Germany Genealogy \u2014 Getting Started with German Research, (3) Germany Emigration and Immigration \u2014 German Emigration Records. All URLs match those from the tool response exactly. The formatting is consistent and complete."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three results. The summary covers civil registration records, church records from 1600s-1700s, the need to identify specific villages, use of family documents and passenger lists, emigration records, and Hamburg passenger lists \u2014 all present in the returned chunks. No outside facts or fabricated guidance were added beyond what the wiki provided."
+                "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three results. Civil registration records, church records (Kirchenb\u00fccher), Lutheran and Catholic registers from 1600s-1700s, the need to identify specific villages, use of family documents and naturalization records, German state records availability, emigration lists, and Hamburg passenger lists are all present in the returned chunks. No outside facts or fabricated guidance were added beyond what the wiki provided."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki_search returned three results with high relevance scores, so the no-result handling dimension does not apply to this fixture."
+                "rationale": "This test did not exercise the empty-results path. The wiki_search returned three results with high relevance scores (0.93, 0.89, 0.85), so the negative path condition never arose. N/A applies."
               }
             ],
-            "judge_cost_usd": 0.009084,
+            "judge_cost_usd": 0.0097278,
             "duration_ms": 9141.911400000026,
             "error": null,
             "input_tokens": 4814,
-            "cached_input_tokens": 0,
-            "output_tokens": 854
+            "cached_input_tokens": 4238,
+            "output_tokens": 898
           },
           "started_at": 1792406382.9370217,
           "ended_at": 1792406444.865311
@@ -3643,51 +3644,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill's output is factually correct. It searched the FamilySearch Wiki for German church records guidance, received three relevant results about Kirchenb\u00fccher, gazetteers, and record repositories, and accurately summarized the content. All claims in the summary (church records being important for German genealogy, the need to identify the correct parish, use of gazetteers, and availability on FamilySearch/Archion/Matricula) are directly supported by the tool response chunks. No fabricated material or unsupported claims are present."
+                "rationale": "The skill's output is factually correct. It searched the FamilySearch Wiki for German church records guidance, received three relevant results about Kirchenb\u00fccher, gazetteers, and where records are held, and accurately summarized the content. All claims in the response are supported by the tool response chunks. No fabricated material or unsupported assertions are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's question about finding German church records. It performed a wiki search, retrieved relevant guidance, logged the results with proper documentation, and provided a clear summary to the user. The response includes the core information needed: what the records are, how to identify the correct parish, and where to find them. No required elements were omitted."
+                "rationale": "The skill fully addressed the user's question about finding German church records. It performed a wiki search, logged the results with a complete summary and sources, and provided the user with actionable guidance. The response covers what the records contain, how to identify the correct parish, and where records are held today\u2014all key aspects of the how-to question asked."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call passed a query 'How do I find German church records for my ancestors?' which matches the expected_args pattern '~German' semantically and substantively. The query is appropriate for the user's question and the tool correctly returned relevant results. The research_log_append call used correct arguments including the proper projectPath, tool name, query object, outcome, resultsExamined count, and formatted notes. All critical identifiers and parameters are correct."
+                "rationale": "Both MCP tool calls used correct arguments. The wiki_search call passed query='How do I find German church records for my ancestors?' which matches the expected_args pattern '~German' semantically. The research_log_append call correctly logged the results with proper structure, outcome='positive', resultsExamined=3, and complete notes including the template heading and sources section. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "The skill logged exactly one new wiki_search entry (log_001) with notes properly formatted according to the template. The notes open with '# FamilySearch Wiki: German Church Records' (the core noun phrase from the question), followed by a summary synthesizing the three results, and conclude with a properly formatted Sources section. The entry was correctly persisted to research.json as shown in the file changes summary."
+                "rationale": "Exactly one new wiki_search log entry was created (log_001) with notes opening with '# FamilySearch Wiki: German Church Records' followed by a summary synthesizing the three results and a properly formatted Sources section. The entry structure matches the required template with heading, summary content, and sources bullets."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged entry contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: Germany Church Records\u2014Getting Started, Germany Gazetteers\u2014Meyers Gazetteer, and Germany Church Records\u2014Where to Find the Records. All URLs match the source_url values from the wiki_search response. No fabricated or missing URLs are present."
+                "rationale": "All three results from the wiki search are cited in the Sources section with the correct format: '- [page_title \u2014 section_heading](source_url)'. The three sources are: Germany Church Records\u2014Getting Started, Germany Gazetteers\u2014Meyers Gazetteer, and Germany Church Records\u2014Where to Find the Records, each with the actual URLs from the tool response."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is traceable to the chunk_text returned by the wiki search. The summary covers: church records (Kirchenb\u00fccher) being the most important source for German genealogy, the need to identify the correct parish, the use of gazetteers (specifically Meyers), and the availability of records on FamilySearch, Archion, and Matricula. The next-step guidance about identifying the specific village and using a gazetteer is also directly supported by the second result. No outside facts or fabricated guidance were added."
+                "rationale": "Every claim in the summary is traceable to the chunk_text from the tool response. The summary covers: Kirchenb\u00fccher as the most important source, Protestant and Catholic parishes recording baptisms/marriages/burials, registers beginning in the 1600s, the need to identify the correct parish, using a gazetteer (Meyers), and where records are held (FamilySearch Catalog, parish archives, Archion, Matricula). No outside facts or fabricated guidance were added beyond what the wiki provided."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki_search returned three relevant results (rank 1, 2, and 3 with relevance scores 0.89, 0.81, and 0.7), so the no-result handling dimension is not applicable to this fixture."
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned three results with positive relevance scores, so the no-result handling dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.010167800000000001,
+            "judge_cost_usd": 0.0095478,
             "duration_ms": 12272.959899999933,
             "error": null,
             "input_tokens": 4884,
             "cached_input_tokens": 4238,
-            "output_tokens": 972
+            "output_tokens": 848
           },
           "started_at": 1792406382.9713378,
           "ended_at": 1792406451.2880294
@@ -4705,51 +4706,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly searched the FamilySearch wiki for Irish immigration to Pennsylvania, received one relevant result about settlement patterns in Pennsylvania coal regions, and accurately summarized the content without fabrication. The summary faithfully reflects the chunk_text: Irish immigrants arriving in the 1840s via Philadelphia, settlement in Schuylkill/Luzerne/Carbon counties, mining work, and parish registers as genealogical sources. No unsupported claims or contradictions with the tool response."
+                "rationale": "The skill correctly searched the FamilySearch wiki for Irish immigration to Pennsylvania, received one result about settlement patterns in Pennsylvania coal regions, and accurately summarized the content without fabrication. The summary faithfully reflects the chunk_text: Irish immigrants arriving in the 1840s via Philadelphia, settlement in Schuylkill/Luzerne/Carbon counties, mining work, and parish registers as genealogical sources. No unsupported claims or contradictions with the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed the delegated task fully: it searched the wiki for the specified topic (Irish immigration to Pennsylvania), received results, logged the guidance with sources, and informed the user that the work was saved. The delegation requested a wiki search on this topic, and the skill executed that request end-to-end, including logging and citation."
+                "rationale": "The skill completed all required actions: executed the wiki search for the delegated query, received and processed the result, logged it to the research log with proper structure, and informed the user that guidance was saved. The delegation requested a search on Irish immigration to Pennsylvania, which was fully addressed. No required steps were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call passed query='Irish immigration to Pennsylvania', which matches the expected_args predicate '~Irish immigration' semantically and covers the full topic. The research_log_append call used correct arguments including the proper tool name ('wiki_search'), outcome ('positive'), resultsExamined (1), and well-formed notes with the required template structure. All critical identifiers and parameters are correct."
+                "rationale": "The wiki_search call passed query='Irish immigration to Pennsylvania', which matches the expected_args predicate '~Irish immigration' semantically and completely. The research_log_append call used correct arguments including the proper tool name ('wiki_search'), outcome ('positive'), resultsExamined (1), and notes with the required template structure. All critical identifiers and parameters are correct."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "Exactly one new wiki_search log entry was created (log_001) with notes opening with '# FamilySearch Wiki: Irish Immigration to Pennsylvania', followed by the summary text and a Sources section. The entry structure matches the required template. File changes show +1 log entry added to research.json, confirming the entry was persisted."
+                "rationale": "Exactly one new wiki_search log entry was created (log_001) with notes opening with '# FamilySearch Wiki: Irish Immigration to Pennsylvania', followed by the summary text and a Sources section. The entry structure matches the required template. The file changes summary confirms one log entry was added to research.json."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary."
+                "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The single result returned by the fixture is properly cited."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is traceable to the chunk_text: 'Irish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine' (arrival timing and cause), 'settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties' (settlement locations), 'found work in the mines' (employment), and 'Parish registers from Catholic churches in these communities are key genealogical sources' (record types). The summary preserves the source's strength of wording, particularly 'key genealogical sources' without upgrading to superlatives. No outside facts or fabricated guidance were added."
+                "rationale": "Every claim in the summary is traceable to the chunk_text: 'Irish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine' (arrival timing and cause), 'settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties' (settlement locations), 'found work in the mines' (employment), and 'Parish registers from Catholic churches in these communities are key genealogical sources' (record types). The strength of 'key' is preserved in the logged summary. No outside facts or fabricated guidance were added."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki search returned one result, so the negative-path handling logic was not invoked. N/A."
+                "rationale": "This test did not exercise the empty-results path. The fixture returned one result, so the negative-path handling dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.009345800000000001,
+            "judge_cost_usd": 0.009140800000000001,
             "duration_ms": 10855.704600000081,
             "error": null,
             "input_tokens": 4347,
             "cached_input_tokens": 4238,
-            "output_tokens": 915
+            "output_tokens": 874
           },
           "started_at": 1792406449.6587071,
           "ended_at": 1792406496.627118
@@ -5231,51 +5232,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill's output is factually correct. The wiki search returned two chunks about Pennsylvania land records, and the logged summary accurately reflects both: Pennsylvania State Archives holdings of warrant and patent books dating to the 1680s, county deed books, and FamilySearch Catalog access methods. All claims are directly traceable to the tool response chunks. No fabricated material or unsupported assertions are present."
+                "rationale": "The skill's output is factually correct. The wiki search returned two chunks about Pennsylvania land records, and the summary accurately reflects their content: Pennsylvania State Archives holdings of warrant and patent books from the 1680s, county deed books, and FamilySearch Catalog access methods. All claims are traceable to the tool response. No fabricated material or unsupported assertions are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to search the FamilySearch wiki for how to find land records in Pennsylvania. It performed the wiki search, received two relevant results, and logged comprehensive guidance covering both what land records exist (warrant books, patent books, deed books) and how to access them (Pennsylvania State Archives, FamilySearch Catalog). The task was completed end-to-end."
+                "rationale": "The skill fully addressed the user's request to search the FamilySearch wiki for how to find land records in Pennsylvania. It executed the wiki search, synthesized the results into a coherent summary covering what records exist and how to access them, and logged the guidance with proper sources. The response includes both the summary and next-step guidance for using the saved information."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call passed a query 'How do I find land records for ancestors in Pennsylvania?' which matches the expected_args predicate '~Pennsylvania' semantically and substantively. The query is well-formed and directly addresses the user's request. The research_log_append call used correct arguments with proper projectPath, tool name, query object, outcome, resultsExamined count, and notes. All arguments align with fixture expectations."
+                "rationale": "The wiki_search call passed a query 'How do I find land records for ancestors in Pennsylvania?' which matches the expected_args predicate '~Pennsylvania' semantically and substantively. The query is well-formed and directly addresses the user's request. The research_log_append call used correct arguments with proper projectPath, tool name, query object, outcome, resultsExamined count, and formatted notes. All critical identifiers and parameters are correct."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "Exactly one new wiki_search log entry was created. The notes open with '# FamilySearch Wiki: Pennsylvania Land Records' (the core noun phrase from the question), followed by a summary synthesizing both wiki chunks, and conclude with a properly formatted Sources section. The entry was correctly logged to research.json with outcome 'positive' and resultsExamined: 2."
+                "rationale": "The skill logged exactly one new wiki_search entry in research.json. The notes begin with '# FamilySearch Wiki: Pennsylvania Land Records' (the core noun phrase from the question), followed by a summary synthesizing both wiki chunks, and conclude with a properly formatted Sources section. The template structure is complete and correct."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains two bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)': '[Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '[Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match exactly those returned by the tool response."
+                "rationale": "The Sources section contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '[Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match exactly those from the tool response chunks. Format is consistent and complete."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is directly traceable to the tool response chunks. The summary covers Pennsylvania State Archives holdings, warrant and patent books dating to the 1680s, county deed books, FamilySearch digitization, FamilySearch Catalog search methods, browse-only images, and Warrant Tract Maps \u2014 all present in the two chunks. No outside facts, invented repositories, or fabricated guidance were added. The per-test context explicitly confirms these phrases are in the fixture chunks."
+                "rationale": "Every claim in the summary is directly traceable to the tool response chunks. The summary covers Pennsylvania State Archives holdings of warrant and patent books 'dating to the 1680s' (from chunk 1), county deed books, FamilySearch digitization, the FamilySearch Catalog search method, 'browse-only images' (from chunk 2), and Warrant Tract Maps. All phrases flagged in the per-test context as explicitly present in chunks are used correctly. No outside facts or fabricated guidance were added."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki search returned two results with high relevance scores, so the negative-path handling dimension does not apply."
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned 2 results with positive relevance scores, so the no-result handling dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.009647800000000002,
+            "judge_cost_usd": 0.0096228,
             "duration_ms": 11036.145399999896,
             "error": null,
             "input_tokens": 4669,
             "cached_input_tokens": 4238,
-            "output_tokens": 911
+            "output_tokens": 906
           },
           "started_at": 1792406446.9161897,
           "ended_at": 1792406493.246326
@@ -6288,51 +6289,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill's output is factually correct. The wiki search returned two relevant results about Civil War military records, and the summary accurately reflects the content: Union records held at National Archives (CMSRs via Fold3/FamilySearch), pension files, and Confederate records scattered across state archives. No fabricated details were added beyond what the wiki returned. The claim about Compiled Military Service Records, Fold3, FamilySearch indexing, and state archives all match the chunk_text from the tool response."
+                "rationale": "The skill correctly searched the FamilySearch Wiki for Civil War military service records using an appropriate query. The summary accurately reflects the two wiki results returned: information about Union CMSRs, pension files at the National Archives, and Confederate records scattered across state archives. No fabricated details about specific regiments, repositories, or dates were added beyond what the wiki provided. The claims about Fold3, FamilySearch indexing, and state archives are all directly traceable to the chunk_text returned by the tool."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request completely. The delegation asked to search the FamilySearch wiki for how to find military service records for a Civil War ancestor. The skill performed the wiki_search with an appropriate query, received two relevant results covering both Union and Confederate records, and logged the guidance with sources. The summary explains what military records exist (CMSRs, pension files, state archives) and where to find them (National Archives, Fold3, FamilySearch, state archives). All required work was completed."
+                "rationale": "The skill fully addressed the delegation's request to search the FamilySearch wiki for how to find military service records for a Civil War ancestor. It performed the wiki search, synthesized the results into a coherent summary covering both Union and Confederate records, logged the guidance with sources, and informed the user of the outcome. All required work was completed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wiki_search call used the query 'How do I find military service records for a Civil War ancestor?' which matches the expected_args pattern '~Civil War' semantically and substantively. The query directly addresses the user's request about Civil War military service records. The research_log_append call was made to a live tool (not a fixture), so expected_args is null and the call is evaluated on its own merits\u2014the arguments are well-formed with correct projectPath, tool name, query object, outcome, resultsExamined count, and properly formatted notes. No critical argument errors."
+                "rationale": "The wiki_search call used the query 'How do I find military service records for a Civil War ancestor?' which matches the expected_args predicate '~Civil War' and is semantically appropriate for the task. The research_log_append call correctly structured the log entry with tool='wiki_search', outcome='positive', resultsExamined=2, and properly formatted notes. All arguments align with what was expected."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "Exactly one new wiki_search log entry was created. The notes in the research_log_append call open with '# FamilySearch Wiki: Civil War military service records' (the core noun phrase from the question), followed by a summary synthesizing both wiki results, and conclude with a properly formatted Sources section. The entry has outcome 'positive' and resultsExamined: 2, correctly reflecting the two results returned. The template structure is complete and correct."
+                "rationale": "The skill logged exactly one new wiki_search entry in research.json. The notes begin with '# FamilySearch Wiki: Civil War military service records' (the core noun phrase from the question), followed by a summary synthesizing both wiki results, and conclude with a properly formatted Sources section. The template structure is correct and complete."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged notes contains two bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match exactly what the tool response provided. No fabricated URLs or missing citations."
+                "rationale": "The Sources section in the logged entry contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '- [United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '- [United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match exactly what the tool response provided, and the format adheres to the required pattern."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is traceable to the chunk_text returned by the wiki search. The summary states: National Archives holds Civil War records (from chunk 1), CMSRs available through Fold3 and FamilySearch (from chunk 1), pension files held at National Archives (from chunk 1), FamilySearch has indexed pension indexes (from chunk 1), Confederate records scattered/destroyed (from chunk 2), state archives hold collections (from chunk 2), FamilySearch digitized Confederate collections (from chunk 2), searching by state productive for Confederate ancestors (from chunk 2). No outside facts or fabricated guidance were added."
+                "rationale": "Every claim in the summary is directly traceable to the chunk_text from the two wiki results. The summary covers Union CMSRs available through Fold3 and FamilySearch, pension files at the National Archives, FamilySearch's indexed Civil War pension indexes, Confederate records scattered across state archives, state archives holding the most complete Confederate collections, and FamilySearch's digitized Confederate military collections. No outside facts, fabricated guidance, or details beyond what the wiki returned were added."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki search returned 2 results with high relevance scores (0.92 and 0.86), so the negative-path handling dimension does not apply. N/A."
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned 2 results with positive relevance scores, so the no-result handling dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.0104608,
+            "judge_cost_usd": 0.009700799999999999,
             "duration_ms": 13157.277199999953,
             "error": null,
             "input_tokens": 4632,
             "cached_input_tokens": 4238,
-            "output_tokens": 1081
+            "output_tokens": 929
           },
           "started_at": 1792406382.9591913,
           "ended_at": 1792406451.1420174
@@ -6820,45 +6821,45 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required by the delegation and per-test context. It called wiki_search with a query about finding probate or will records, received two relevant results, and logged them with a summary explaining what probate records contain and where they are held. The summary covers the key points: definition of probate records, their contents, county-level jurisdiction, FamilySearch's digitized collections, and the search method via the Catalog. No required elements were omitted."
+                "rationale": "The skill fully addressed the delegation's request to search the FamilySearch wiki for how to find probate or will records for a deceased ancestor. The wiki search was performed with an appropriate query, results were examined (2 results), and the guidance was logged with a summary and sources. The response covers what probate records are, what they contain, where they are held, and how to search for them on FamilySearch\u2014all core aspects of the requested guidance."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both tool calls used correct arguments. The wiki_search call passed query='How do I find probate or will records for a deceased ancestor?' which matches the expected_args predicate '~probate' (contains 'probate'). The research_log_append call was a live tool with no expected_args to validate against, and it succeeded with ok: true. No critical identifiers were wrong, no fixture_not_found errors occurred, and the arguments semantically match what was expected."
+                "rationale": "Both MCP tool calls used correct arguments. The wiki_search call passed query='How do I find probate or will records for a deceased ancestor?' which matches the expected_args predicate '~probate' semantically and substantively. The research_log_append call was a live tool with no expected_args fixture constraint, and it correctly logged the search with tool='wiki_search', outcome='positive', resultsExamined=2, and properly formatted notes. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Log entry saved correctly",
                 "score": 3,
-                "rationale": "Exactly one new wiki_search log entry was created and saved to research.json. The notes open with '# FamilySearch Wiki: Probate or Will Records' (the core noun phrase from the question), followed by a summary synthesizing both wiki results, and conclude with a properly formatted Sources section. The entry has outcome='positive' and resultsExamined=2, correctly reflecting the two results returned. The template structure is complete and correct."
+                "rationale": "Exactly one new wiki_search log entry was created and saved to research.json. The notes open with '# FamilySearch Wiki: Probate or Will Records' (the core noun phrase from the query), followed by a summary synthesizing both wiki results, and conclude with a properly formatted Sources section. The template structure is complete and correct."
               },
               {
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged entry contains two bullets, each properly formatted as '[page_title \u2014 section_heading](source_url)': '- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Both URLs match exactly those in the tool response. No fabricated or missing URLs."
+                "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format [page_title \u2014 section_heading](source_url) and uses the actual URLs from the tool response."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is directly traceable to chunk_text from the tool response. The summary states probate records are created when estates are settled, include wills/inventories/letters of administration/final settlements, identify family members and heirs, provide economic snapshots, confirm dates/places, are handled at county level, and are held by county probate courts or surrogate courts \u2014 all from the first result. It also covers searching the FamilySearch Catalog by state/county under 'Probate records' category and the value of reading wills and intestate records \u2014 all from the second result. No outside facts or invented genealogical details were added."
+                "rationale": "Every claim in the summary is directly traceable to the chunk_text returned by the wiki search. The summary states probate records are created when estates are settled, include wills/inventories/letters of administration/final settlements, identify family members and heirs, provide economic snapshots, confirm dates/places, are held at county level, and can be found on FamilySearch by searching the Catalog by state/county under 'Probate records'\u2014all directly from the two results. No outside facts or fabricated genealogical details were added."
               },
               {
                 "source": "rubric",
                 "name": "No-result handling (negative path)",
                 "score": null,
-                "rationale": "This test did not exercise the empty-results path. The wiki_search returned 2 results with high relevance scores (0.91 and 0.85), so the negative-path handling code was not triggered. N/A."
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned 2 results with positive relevance scores, so the no-result handling dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.0105768,
+            "judge_cost_usd": 0.0102518,
             "duration_ms": 12720.353400000022,
             "error": null,
             "input_tokens": 4673,
             "cached_input_tokens": 4238,
-            "output_tokens": 1096
+            "output_tokens": 1031
           },
           "started_at": 1792406382.9651496,
           "ended_at": 1792406449.5965047
@@ -6916,5 +6917,6 @@
     "live_modules": {
       "research_log_append": "1585d48736cc340502e166cacbb5e133414bcc32768127fa357254fe479fdb4f"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }

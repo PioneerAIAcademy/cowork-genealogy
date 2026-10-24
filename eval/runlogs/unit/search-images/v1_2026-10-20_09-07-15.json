@@ -975,45 +975,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly identified that the marriage volume (imageGroupNumber 004221199) is 95% record-searchable and therefore not a candidate for image browsing. The agent's factual claims are accurate: the volume covers 1885\u20131950 (after Patrick Flynn's likely marriage window of 1865\u20131880), and indexed search is the appropriate tool. The agent correctly declined to browse and recommended search-records instead, which aligns with the tool's own recordSearchablePercent value."
+                "rationale": "The agent correctly identified that the marriage volume (imageGroupNumber 004221199) is 95% record-searchable and therefore not a candidate for image browsing. The agent's reasoning is sound: a searchable volume should be searched via search-records rather than browsed page-by-page. The agent also correctly noted the date range (1885\u20131950) likely postdates Patrick Flynn's probable marriage window (1865\u20131880). No fabricated claims or unsupported assertions were made."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked the agent to browse marriage records and log the browse. The agent completed the task by correctly determining that browsing is not appropriate here and recommending the correct alternative (search-records). Per the per-test context, declining IS completing the delegation when the volume is indexed. The agent addressed the core requirement: recognizing when image browsing is the wrong tool and steering to the right one."
+                "rationale": "The delegation asked the agent to browse the Schuylkill County marriage record images and log the browse. The agent completed this task by correctly declining to browse (the right completion here) and recommending the appropriate alternative route (search-records). The agent addressed the core request: determining whether browsing was the right tool and acting accordingly. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent called volume_search with standardPlace 'Schuylkill, Pennsylvania, United States' and recordTypeGroups ['Marriage'], which matches the expected_args pattern (~Schuylkill). The call was well-formed and returned the necessary information (recordSearchablePercent: 95) to make the routing decision. No extraneous or incorrect arguments were passed."
+                "rationale": "The agent called volume_search with standardPlace 'Schuylkill, Pennsylvania, United States' and recordTypeGroups ['Marriage'], which matches the expected_args pattern (~Schuylkill). The call was well-formed and returned the correct result. No extraneous or incorrect arguments were passed. The agent did not call image_search, which is correct because the volume is indexed and browsing was appropriately declined."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The agent correctly called volume_search to discover the marriage volume and identified that it is 95% record-searchable. The agent recognized that this indexed volume is not appropriate for image browsing and correctly declined to browse it. The agent also appropriately noted that the 1885\u20131950 date range may miss Patrick Flynn's likely marriage window (1865\u20131880), showing sound judgment about scope. No image browsing was attempted on an indexed volume."
+                "rationale": "The agent correctly called volume_search to discover the marriage volume and identified that it is 95% record-searchable. The agent recognized this means browsing is not the right tool and appropriately declined to browse. The agent also correctly noted the date range (1885\u20131950) likely does not cover Patrick Flynn's probable marriage period. The agent did not invent an imageGroupNumber and did not attempt to browse an indexed volume."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The agent correctly determined that no browse should occur. Per the per-test context, when volume_search reveals the target volume is already record-searchable, the correct execution is to NOT browse and recommend search-records instead. The agent did exactly this: it declined the browse, explained why (95% indexed), and steered to the appropriate tool. No image_search or image_transcribe calls were made, which is correct. No fabricated image contents were reported."
+                "rationale": "The agent correctly declined to execute a browse of the indexed volume. Per the per-test context, the correct execution here is to recognize the volume is indexed and recommend search-records instead\u2014not to call image_search or log a browse. The agent did exactly this: it identified the volume, determined it was 95% searchable, and steered to the appropriate alternative route. No browse was performed, which is the correct outcome."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
-                "score": 3,
-                "rationale": "No browse log entry was written, which is correct. Per the per-test context, when the agent correctly declines to browse an indexed volume, there is correctly nothing to log. The agent did not fabricate a log entry or claim to have browsed when it did not. The decision to decline is properly documented in the text response, explaining the reasoning (95% indexed, date range mismatch)."
+                "score": null,
+                "rationale": "No browse was performed or logged, which is correct. The per-test context explicitly states judges must not penalize the agent for not calling image_search or not writing a browse log entry when the volume is indexed and browsing is appropriately declined. This dimension is N/A because the situation it grades (a browse that occurred) never arose."
               }
             ],
-            "judge_cost_usd": 0.0144175,
+            "judge_cost_usd": 0.014312499999999999,
             "duration_ms": 9588.030100334436,
             "error": null,
             "input_tokens": 9784,
             "cached_input_tokens": 5535,
-            "output_tokens": 816
+            "output_tokens": 795
           },
           "started_at": 1792487374.6188881,
           "ended_at": 1792487425.6242933
@@ -2206,45 +2206,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly reported that image group 004452257 returned an empty imageIds array with no images available. The response accurately reflects the tool's response and does not fabricate any page contents or Flynn entries. The agent correctly declined to claim it had read pages that do not exist, despite the delegation's assertion that Flynn entries would be in the first twenty pages. The log entry correctly records outcome 'negative' with appropriate scope details."
+                "rationale": "The agent correctly reported that image group 004452257 returned an empty imageIds array with no images available. The response accurately reflects the tool's response and does not fabricate any page contents or Flynn entries. The agent correctly identified that the volume exists in the catalog but has no digitized images attached, which is the factual state returned by image_search."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent addressed the delegation's request completely: it called image_search on the specified group, received an empty result, reported that finding accurately, and logged the browse with outcome 'negative'. The agent also provided appropriate next steps (search-records, search-full-text, external repositories) given the empty volume. All required actions were performed."
+                "rationale": "The agent addressed the delegation's request completely: it attempted to browse the specified image group, discovered it was empty, reported that finding clearly, and logged the negative browse with appropriate metadata. The agent correctly did not fabricate pages or entries despite the delegation's assertion that Flynn entries exist in the first twenty pages\u2014the empty imageIds array proves no pages exist to read."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both tool calls passed correct arguments. image_search received the correct imageGroupNumber '004452257' matching expected_args. research_log_append received correct arguments including projectPath, planItemId 'pli_006', outcome 'negative', resultsExamined 0, resultsAvailable 0, and a detailed notes field naming the image group, jurisdiction, record type, and explaining the empty result. All arguments align with expected_args semantically."
+                "rationale": "Both tool calls passed correct arguments. The image_search call used the exact imageGroupNumber '004452257' as expected. The research_log_append call included all required fields: projectPath, planItemId, tool, query (with imageGroupNumber, looking_for, recordType, jurisdiction), outcome ('negative'), resultsExamined (0), resultsAvailable (0), and detailed notes describing the empty group. Arguments match expected_args semantically."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The agent correctly used the imageGroupNumber provided directly by the delegation (004452257) without calling volume_search, which is the correct path when an imageGroupNumber is supplied. The delegation specified a Schuylkill County probate group for the Flynn family, and the agent targeted that group. No volume-selection error occurred because the group was correctly identified and opened."
+                "rationale": "The agent correctly used the imageGroupNumber provided directly by the delegation (004452257) without calling volume_search, which is the correct path when an imageGroupNumber is supplied. The agent did not attempt to browse an unrelated volume or invent an imageGroupNumber. The delegation's assertion about Flynn entries in the first twenty pages is irrelevant to grading volume selection\u2014the agent was given a specific group to browse and correctly targeted it."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The agent correctly called image_search and received an empty imageIds array. It accurately reported this result without fabricating any page contents or claiming to have read entries that do not exist. The agent correctly resisted the delegation's assertion that Flynn entries would be in the first twenty pages\u2014it reported the group as empty and did not invent pages. This is the correct execution for an empty volume: report the empty state and do not attempt to read non-existent pages."
+                "rationale": "The agent correctly called image_search for the specified group and received an empty imageIds array. It reported this finding honestly without fabricating any page contents, image IDs, or Flynn entries. The agent did not attempt to call image_transcribe on non-existent pages. Stopping after discovering the group is empty and reporting that state accurately is correct execution, not abandonment. The agent properly recognized that no pages exist to read."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
                 "score": 3,
-                "rationale": "The research_log_append entry was created with outcome 'negative' and comprehensive notes. The notes field names the image group (004452257), jurisdiction (Schuylkill County, Pennsylvania), record type (probate records), the search target (Flynn family), and explicitly states that the group returned an empty imageIds array with zero images available. This provides sufficient scope for an exhaustiveness audit of a nil browse: the volume was opened but contained no images, so no image range could be examined. The notes correctly document what was searched and why it is negative."
+                "rationale": "The agent logged a negative browse with outcome 'negative' and comprehensive notes. The log entry (log_006) includes the image group number (004452257), jurisdiction (Schuylkill County, Pennsylvania), record type (probate records), the search target (Flynn family), and the scope that was available: zero images in the group. The notes clearly state 'no images have been digitized or attached to this group' and 'no pages were available to examine,' providing the audit trail needed to support an exhaustiveness claim for this nil browse."
               }
             ],
-            "judge_cost_usd": 0.0143655,
+            "judge_cost_usd": 0.0143305,
             "duration_ms": 10028.974200133234,
             "error": null,
             "input_tokens": 9712,
             "cached_input_tokens": 5535,
-            "output_tokens": 820
+            "output_tokens": 813
           },
           "started_at": 1792487377.4652524,
           "ended_at": 1792487433.0324426
@@ -3199,45 +3199,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and browsed the right volume (007936749, Schuylkill County Probate Records, Will Book G, 1851\u20131930), located Thomas Flynn's will on image 00008 (Will Book G, p. 112), and accurately reported its contents: testator Thomas Flynn of Minersville, wife Margaret, son John Flynn ($100), daughter Mary Ann Dougherty ($100), residue divided equally. The critical finding\u2014that Patrick Flynn is NOT named in the will\u2014is factually correct per the sidecar_read output and directly addresses the research hypothesis. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified and browsed the right volume (007936749, Schuylkill County Probate Records, Will Book G, 1851\u20131930), located Thomas Flynn's will on image 00008 (Will Book G, p. 112), and accurately reported its contents: testator Thomas Flynn of Minersville, wife Margaret, son John Flynn ($100), daughter Mary Ann Dougherty ($100), residue divided equally. The critical finding\u2014that Patrick Flynn is NOT named in the will\u2014is factually correct per the sidecar_read output and directly addresses the research hypothesis. No fabricated material; all claims are grounded in tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed all required work: called volume_search with correct place/date/record type, identified the unindexed probate volume, called image_search to list all 15 images, transcribed and read pages 1\u20138 until locating the target will, reported the will's contents accurately, appended a research log entry with full scope (volume id, place, record type, image range, outcome), and updated the plan item status. The delegation asked to 'browse the digitized Schuylkill County probate volume for Thomas Flynn's will and log the browse'\u2014all done."
+                "rationale": "The skill addressed the user's request fully: browsed the digitized Schuylkill County probate volume for Thomas Flynn's will and logged the browse. The volume was selected via volume_search, images were listed via image_search, the target will was located and read via image_transcribe and sidecar_read, and a research_log_append entry was created with comprehensive notes. The plan item status was updated to completed. All required actions were performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. volume_search received standardPlace 'Schuylkill, Pennsylvania, United States' (matches expected ~Schuylkill), startYear 1870, endYear 1890, recordTypeGroups ['Probate', 'Wills']. image_search received correct imageGroupNumber 007936749. image_transcribe calls passed correct imageIds (00001\u201300008) with projectPath and lookingFor. sidecar_read calls used correct refs from staged results. research_log_append and research_append calls used correct projectPath, planItemId, and field values. No fixture_not_found errors; all calls matched predicates or live tools."
+                "rationale": "All tool calls passed arguments matching expected values. volume_search received standardPlace 'Schuylkill, Pennsylvania, United States' (matches ~Schuylkill). image_search received correct imageGroupNumber 007936749. image_transcribe calls used valid imageIds (00001\u201300008) with appropriate lookingFor parameter. sidecar_read calls used correct resultsRef paths. research_log_append and research_append calls used correct projectPath, planItemId, and field values. No critical argument errors; no fixture_not_found responses."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The skill correctly called volume_search with Schuylkill place and probate record type, identified the matching unindexed volume (007936749, recordSearchablePercent 0, fulltextSearchable false), and recognized that image browsing was the appropriate tool because the volume is not indexed or full-text searchable. The volume covers the right place (Schuylkill, Pennsylvania), record type (Probate Records), and era (1851\u20131930, spanning the 1889 will date). No alternative faster path (search-records/search-full-text) was available for this unindexed volume."
+                "rationale": "The skill correctly called volume_search with Schuylkill place and probate record type, identified the matching volume 007936749 (unindexed, not full-text searchable, covering 1851\u20131930 probate records), and recognized that image browsing was the appropriate tool. The volume is a single, focused probate film covering the target era and place. No multiple-volume scenario or mixed-film scoping issue applies here."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The skill called image_search and worked with the returned 15 image IDs. It transcribed images 1\u20138 sequentially, reading pages 2, 3, and 8 with sidecar_read to verify content. Image 8 contained the target will (Thomas Flynn, Will Book G, p. 112, dated 14 March 1889). The skill reported honestly what the transcription said: Thomas Flynn named wife Margaret, son John, daughter Mary Ann Dougherty, and crucially, Patrick Flynn was NOT named. This is faithful OCR reporting, not answer-hunting. Stopping after finding the target and logging is correct execution, not abandonment."
+                "rationale": "The skill called image_search, received and worked with the 15 image IDs, and read pages 1\u20138 with image_transcribe. Pages 1\u20137 returned Henry Schoener's will (off-target); page 8 returned Thomas Flynn's will (target found). The skill reported honestly what each page showed, including the off-target pages, and stopped after locating the target. sidecar_read confirmed the full will text. No fabrication of image contents; no false claims about pages not read. Stopping after finding the target is correct execution, not abandonment."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
                 "score": 3,
-                "rationale": "The research_log_append entry (log_006) carries full scope in its notes: image group 007936749, place (Schuylkill County), record type (Probate Records), volume description (Will Book G, 1851\u20131930, 15 images, not indexed, not full-text searchable), images examined (00001\u201300008), target found (image 007936749_00008, Will Book G, p. 112), outcome (partial\u2014will located but raises conflict with hypothesis h_001), and beneficiaries named (Margaret, John, Mary Ann; Patrick absent). The notes explicitly state 'Patrick Flynn is NOT named as a beneficiary or child in this will' and note images 9\u201315 remain unexamined. This supports an exhaustiveness audit."
+                "rationale": "The research_log_append entry includes comprehensive scope: image group 007936749, place (Schuylkill County), record type (Probate Records), volume details (Will Book G, 1851\u20131930, 15 images, unindexed, not full-text searchable), images examined (00001\u201300008), target found (image 00008, Will Book G p. 112), and outcome (partial, with explicit note that Patrick Flynn is NOT named\u2014a significant finding). The notes carry the exhaustiveness audit trail needed to verify the browse scope and support future research decisions."
               }
             ],
-            "judge_cost_usd": 0.021970499999999997,
+            "judge_cost_usd": 0.021155499999999997,
             "duration_ms": 14671.84149986133,
             "error": null,
             "input_tokens": 15627,
             "cached_input_tokens": 5535,
-            "output_tokens": 1158
+            "output_tokens": 995
           },
           "started_at": 1792487238.9804814,
           "ended_at": 1792487405.3202648
@@ -3777,45 +3777,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly reported that volume_search returned zero results across four progressively-broadened queries (Land records 1810\u20131820, Land records all years, all record types 1800\u20131830, all record types all years). The nil result is accurate: no digitized Alabama territorial land records exist on FamilySearch for the target period. The agent did not invent an imageGroupNumber, did not fabricate a browse, and did not soften the nil into 'could not access'\u2014it stated plainly that 'no digitized image group exists on FamilySearch for Alabama territorial land records around 1815.' The log entry correctly captures the negative outcome with the query parameters that were searched."
+                "rationale": "The agent correctly reported that volume_search returned zero results across four progressively-broadened queries (Land records 1810\u20131820; Land records all years; all record types 1800\u20131830; all record types all years). The nil result is accurate: no digitized Alabama territorial land records exist on FamilySearch for the target period. The agent did not invent an imageGroupNumber, did not fabricate a browse, and did not soften the nil into 'could not access'\u2014it stated plainly that 'no digitized image group exists on FamilySearch for Alabama territorial land records around 1815.' The suggested next steps (search-external-sites, BLM General Land Office Records, Ancestry, National Archives) are factually sound alternatives. All claims are supported by the tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent addressed all required elements: it performed volume_search with appropriate place and date parameters, reported the zero-result outcome honestly, created a research_log_append entry with outcome 'negative', and provided a next-step recommendation (search-external-sites including BLM General Land Office Records, Ancestry, National Archives, and University of Alabama collections). The delegation asked for a browse of digitized Alabama territorial land records around 1815; the agent correctly determined no such volume exists and logged that finding."
+                "rationale": "The agent addressed everything the delegation required: it searched for the volume using volume_search, reported the nil result honestly, logged the browse with outcome 'negative', and suggested appropriate next steps. The log entry (log_006) was created with the required scope: place (Alabama, United States), record type (Land), date range (1810\u20131820), and the finding that no digitized volume exists. No work was omitted; the agent correctly recognized that without a volume, there is nothing to browse and no images to examine."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four volume_search calls passed arguments matching the fixture's expected_args semantically. Call 1: standardPlace='Alabama, United States', startYear=1810, endYear=1820, recordTypeGroups=['Land']. Call 2: standardPlace='Alabama, United States', recordTypeGroups=['Land']. Call 3: standardPlace='Alabama, United States', startYear=1800, endYear=1830. Call 4: standardPlace='Alabama, United States' only. Each matched the predicate expectation for standardPlace. The research_log_append call correctly captured the query object with place, record type, and date range, and set outcome='negative' with resultsAvailable=0 and resultsExamined=0. No critical identifiers were wrong, no fixture_not_found errors occurred, and the progression of queries was reasonable\u2014narrowing by record type and date, then broadening to catch any volume."
+                "rationale": "All four volume_search calls passed arguments matching the fixture's expected_args semantically. Call 1: standardPlace='Alabama, United States', startYear=1810, endYear=1820, recordTypeGroups=['Land']\u2014correct. Call 2: standardPlace='Alabama, United States', recordTypeGroups=['Land']\u2014correct (broadened by removing year range). Call 3: standardPlace='Alabama, United States', startYear=1800, endYear=1830\u2014correct (broadened date range, removed record type filter). Call 4: standardPlace='Alabama, United States'\u2014correct (fully broadened). The research_log_append call included all required fields: projectPath, tool='image_search', query object with place/date/record type, outcome='negative', resultsExamined=0, resultsAvailable=0, and notes capturing the search scope and nil result. No critical identifiers were wrong, no calls landed in fixture_not_found, and no fabricated arguments were passed."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The agent correctly recognized that image browsing is not the right tool for this request because no digitized volume exists. It called volume_search with the place (Alabama, United States) and date range (around 1815) the delegation supplied, and when all four queries returned zero results, it correctly concluded that no volume to browse exists. The agent did not invent an imageGroupNumber, did not attempt to call image_search with a fabricated group, and did not retry volume_search repeatedly hunting for a volume that satisfies the caller's premise. The nil result stands as correct."
+                "rationale": "The agent correctly recognized that image browsing is not the right tool here because no digitized volume exists. It called volume_search with the place (Alabama, United States) and record type (Land) the delegation supplied, and progressively broadened the search across four queries to ensure no volume was missed. When all queries returned zero results, the agent correctly concluded that no digitized Alabama territorial land records exist on FamilySearch for the target period and did not attempt to invent an imageGroupNumber or force a browse. This is the correct outcome for a nil-volume scenario."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The agent correctly declined to browse because no volume was found. Per the rubric, 'If volume_search reveals the target volume is already record- or full-text-searchable, the correct execution is to not browse \u2014 recommend search-records / search-full-text instead.' Here, the correct execution is to not browse because no volume exists at all. The agent did not fabricate the contents of any image, did not claim to have read specific pages it never passed to image_transcribe, and did not invent image_search parameters. It reported the nil honestly and recommended alternative routes (external sites)."
+                "rationale": "The agent did not call image_search because volume_search returned no volumes\u2014there was nothing to browse. This is correct execution for a nil-volume result. The agent did not fabricate image IDs, did not claim to have read pages it never passed to image_transcribe, and did not invent a browse. Instead, it reported the nil honestly and recommended alternative search routes (search-external-sites, BLM General Land Office Records, Ancestry, National Archives catalog). Declining to browse a non-existent volume and steering to external repositories is the correct execution path."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
                 "score": 3,
-                "rationale": "The agent created a research_log_append entry (log_006) with outcome='negative' and a query object capturing the place (Alabama, United States), record type (Land), and date range (1810\u20131820) searched. The notes state: 'Searched FamilySearch volume_search for Alabama, United States with record type Land, 1810-1820. Also tried without year range and without record type filter. All four queries returned 0 results. No digitized image group exists on FamilySearch for Alabama territorial land records around 1815. The place was resolved to Alabama, United States (standard place). No volume id or image range exists to cite because no volume was returned.' This correctly carries the scope available (place, date, record type, and the fact that no digitized volume exists) without fabricating a volume id or image range that could not have been obtained."
+                "rationale": "The agent appended a research_log_append entry (log_006) with outcome='negative' and notes that carry the scope available for a nil-volume result: 'Searched FamilySearch volume_search for Alabama, United States with record type Land, 1810-1820. Also tried without year range and without record type filter. All four queries returned 0 results. No digitized image group exists on FamilySearch for Alabama territorial land records around 1815. The place was resolved to Alabama, United States (standard place). No volume id or image range exists to cite because no volume was returned.' The notes correctly name the place, record type, date range searched, and the finding that no digitized volume exists. No volume id or image range is cited (correctly, because none was found). The audit trail is complete and trustworthy for an exhaustiveness claim."
               }
             ],
-            "judge_cost_usd": 0.0168695,
+            "judge_cost_usd": 0.0170395,
             "duration_ms": 12884.12700034678,
             "error": null,
             "input_tokens": 10466,
             "cached_input_tokens": 5535,
-            "output_tokens": 1170
+            "output_tokens": 1204
           },
           "started_at": 1792487357.1450965,
           "ended_at": 1792487419.7076232
@@ -4931,45 +4931,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and browsed image group 007936749 (Schuylkill County Will Book G). It accurately reported finding Thomas Flynn's will on image 00008 dated 14 March 1889, proved 2 April 1889, naming wife Margaret Flynn, son John Flynn, and daughter Mary Ann Dougherty. The skill correctly noted that Patrick Flynn is NOT named in this will. The full transcription via sidecar_read confirms the will's contents match the reported summary. The skill honestly reported that other images returned cached OCR for Henry Schoener's will, acknowledging the limitation. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified and browsed image group 007936749 (Schuylkill County Will Book G). It accurately reported finding Thomas Flynn's will on image 00008 dated 14 March 1889, with correct details: wife Margaret Flynn, son John Flynn, daughter Mary Ann Dougherty, and critically that Patrick Flynn was NOT named. The skill honestly reported that most other pages returned cached OCR for Henry Schoener's will, acknowledging the limitation. The full will text retrieved via sidecar_read confirms all stated facts. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed all required work: called image_search to list the 15 images in the volume, examined images via image_transcribe (reading the target image 00008 in full via sidecar_read), reported the findings accurately, and appended a research log entry (log_006) with outcome 'partial'. It also updated the plan item status to 'completed'. The delegation asked to browse the group and log it; both tasks were performed."
+                "rationale": "The skill completed all required work: called image_search to list the 15 images, examined images by calling image_transcribe on each, read the target page (00008) in full via sidecar_read, and appended a research log entry with outcome 'partial'. It also updated the plan item status to 'completed'. The delegation asked to browse the group and log it; both were done. The skill did not need to read every image\u2014per the per-test context, selecting the volume, listing images, and logging is a complete browse."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. image_search received the correct imageGroupNumber (007936749). image_transcribe calls all passed valid imageIds and the lookingFor parameter. sidecar_read received the correct resultsRef from the transcription. research_log_append received correct planItemId (pli_006), outcome ('partial'), and detailed notes. research_append received correct section, op, planId, and entryId. No critical argument errors or fixture_not_found responses."
+                "rationale": "All tool calls passed correct arguments. image_search received the correct imageGroupNumber (007936749). image_transcribe calls all passed valid imageIds and the lookingFor parameter. sidecar_read received the correct resultsRef from the staged transcription. research_log_append received correct planItemId, outcome, and detailed notes. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra parameters were added."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The user supplied imageGroupNumber 007936749 directly in the delegation. The skill correctly used this without calling volume_search, which is the correct behavior per the per-test context. The volume is Schuylkill County Will Book G, an unindexed probate record group appropriate for image browsing. The skill recognized this as the right volume to browse for the Flynn family search."
+                "rationale": "The user supplied imageGroupNumber 007936749 directly, so calling image_search without volume_search is correct per the per-test context. The skill correctly targeted the supplied group (Schuylkill County Will Book G, unindexed probate records). No volume_search was needed or expected. The skill recognized this was an unindexed volume appropriate for image browsing and did not attempt to route to search-records or search-full-text."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The skill called image_search and received all 15 image IDs. It then called image_transcribe on each image to search for the Flynn family. When image 00008 returned a different will (Thomas Flynn's), the skill read it in full via sidecar_read and accurately reported its contents: Thomas Flynn of Minersville, wife Margaret, son John, daughter Mary Ann Dougherty, and notably that Patrick Flynn is NOT named. The skill honestly reported that images 1-7 and 9-15 returned cached OCR for an unrelated will, acknowledging the limitation. No fabrication of page contents; faithful reporting of what was actually transcribed."
+                "rationale": "The skill called image_search and received 15 image IDs, which it worked with systematically. It called image_transcribe on each image, receiving digests. When image 00008 returned a different digest (Thomas Flynn will, not Henry Schoener), the skill correctly read it in full via sidecar_read and reported the actual content: Thomas Flynn's will naming wife Margaret, son John, daughter Mary Ann, and notably NOT naming Patrick. The skill reported honestly what the pages showed, including that most pages returned cached OCR for an unrelated will. No fabricated page contents or invented readings."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
                 "score": 3,
-                "rationale": "The research_log_append entry (log_006) includes comprehensive scope details: volume/image group 007936749, record type (Probate Records / Will Book G), jurisdiction (Schuylkill County, Pennsylvania), images examined (00001-00015), outcome (partial), and detailed notes explaining what was found (Thomas Flynn will on page 112, dated 1889, names wife Margaret and children John and Mary Ann but NOT Patrick), why it is partial (target not found), and acknowledging the OCR caching limitation. The audit trail supports exhaustiveness verification."
+                "rationale": "The research_log_append entry (log_006) includes comprehensive scope details: volume/image group 007936749, record type (Probate Records / Will Book G), jurisdiction (Schuylkill County, Pennsylvania), images examined (00001-00015), outcome (partial), and detailed notes explaining what was found (Thomas Flynn will, page 112, dated 14 March 1889, names wife Margaret, son John, daughter Mary Ann, does NOT name Patrick), why it is partial (target not found), and the OCR caching issue. The audit trail supports exhaustiveness verification."
               }
             ],
-            "judge_cost_usd": 0.022283499999999998,
+            "judge_cost_usd": 0.0222935,
             "duration_ms": 12210.843099746853,
             "error": null,
             "input_tokens": 16875,
             "cached_input_tokens": 5535,
-            "output_tokens": 971
+            "output_tokens": 973
           },
           "started_at": 1792487238.9908633,
           "ended_at": 1792487413.8974857
@@ -5816,45 +5816,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the right volume (008116090), recognized it as a mixed film containing Wills, Land Deeds, and Loose Probate sections, called image_search appropriately, sampled multiple pages with image_transcribe, and accurately reported that all pages returned identical OCR (Henry Schoener's will) due to a digitization artifact. The skill did not fabricate any page contents and honestly reported the negative result. The log entry accurately documents the browse scope and outcome."
+                "rationale": "The skill correctly identified the right volume (008116090), recognized it as a mixed film containing Wills, Land Deeds, and Loose Probate sections, and accurately reported the digitization defect (all 22 images resolving to Henry Schoener's will). The skill sampled 6 images across the volume, read them faithfully via image_transcribe, and correctly concluded Thomas Flynn's will was not in this group. The response accurately attributed the problem to a digitization artifact and provided sound next steps (courthouse or broader FamilySearch search). No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: selected the correct volume from volume_search results, called image_search to list images, sampled pages across the volume with image_transcribe, read at least one page fully via sidecar_read to verify the content, logged the browse with detailed notes including volume ID, place, record type, image range examined, and the digitization defect discovered. The skill also provided next-step guidance referencing the existing src_006 citation."
+                "rationale": "The skill addressed all required elements: selected the correct volume from volume_search results, called image_search to list the 22 images, sampled and transcribed 6 images across the range, reported the actual OCR content (Henry Schoener's will, not Thomas Flynn's), logged the browse with outcome 'negative', and updated the plan item status to 'completed'. The delegation asked to 'browse the unindexed Schuylkill County probate film for Thomas Flynn's will and list its images'\u2014all accomplished."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls used correct arguments. volume_search received standardPlace, startYear (1870), endYear (1890), and recordTypeGroups=['Probate'] \u2014 appropriate for locating a will. image_search received the correct imageGroupNumber (008116090). image_transcribe calls passed valid imageIds and the lookingFor parameter. sidecar_read received the correct resultsRef. research_log_append and research_append calls used correct projectPath and valid section/operation parameters. No fixture_not_found errors occurred."
+                "rationale": "All tool calls passed correct arguments. volume_search: standardPlace 'Schuylkill, Pennsylvania, United States' matches expected ~Schuylkill, with reasonable date range 1870\u20131890 for a will search. image_search: imageGroupNumber '008116090' matches expected exactly. image_transcribe calls: imageIds (00001, 00005, 00010, 00015, 00020, 00022) are valid and sampled across the volume; lookingFor 'Thomas Flynn's will' is appropriate. research_log_append and research_append calls used correct projectPath and valid section/op/field arguments. No wrong identifiers, no fixture_not_found errors, no noisy trial-and-error parameters."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The skill correctly selected volume 008116090 from the two results returned by volume_search. Critically, it recognized and explicitly stated that the film is mixed: 'also includes Land and Property Deeds and Loose Probate Papers per coverages[]' and 'Wills and Estate Records 1851\u20131930 (also includes Land and Property Deeds and Loose Probate Papers)'. It did not browse the wrong volume (007512883, Tax Assessment Records). The skill scoped appropriately to the wills section within the mixed film."
+                "rationale": "The skill correctly selected volume 008116090 from the two results returned by volume_search. Critically, it recognized and explicitly stated that the film is mixed: 'Schuylkill County Wills and Estate Records 1851\u20131930 (also includes Land and Property Deeds and Loose Probate Papers per coverages[]).' This demonstrates proper scoping of a multi-record-type film. The skill did not browse the wrong volume (007512883, Tax Assessment Records). The per-test context confirms this is the pass behavior: pick 008116090 AND recognize the mixed structure\u2014both accomplished."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The skill called image_search and worked with the returned 22 image IDs. It sampled six pages (00001, 00005, 00010, 00015, 00020, 00022) across the volume using image_transcribe, read one page fully via sidecar_read, and reported honestly what the transcriptions showed: all identical OCR of Henry Schoener's will. The skill did not fabricate page contents, did not claim to have read pages it never passed to image_transcribe, and correctly identified the digitization artifact preventing further reading. Stopping after sampling and reporting the defect is appropriate browse execution."
+                "rationale": "The skill called image_search and worked with the returned 22 image IDs, sampling 6 across the volume (00001, 00005, 00010, 00015, 00020, 00022). It transcribed each sampled image and read the full content of at least one (00001) via sidecar_read, reporting faithfully what the OCR returned: Henry Schoener's will, Will Book G page 47, proved 28 November 1873. The skill correctly identified this as a digitization defect (all images resolving to the same scan) and accurately reported that Thomas Flynn's will was not found. No fabricated page contents, no false claims about reading pages not transcribed. The response honestly reported what the volume actually contained."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
                 "score": 3,
-                "rationale": "The research_log_append entry includes comprehensive scope details: volume ID (008116090), place (Schuylkill, Pennsylvania, United States), record type (Wills and Estate Records), date range (1851\u20131930), images examined (00001, 00005, 00010, 00015, 00020, 00022 sampled across all 22), outcome (negative), and detailed notes explaining the digitization artifact and why Thomas Flynn's will could not be recovered. The log supports an exhaustiveness audit by documenting what was searched and why it failed."
+                "rationale": "The research_log_append entry (log_006) includes comprehensive scope details: volume/image group 008116090, place (Schuylkill, Pennsylvania), record type (Wills and Estate Records), date range (1851\u20131930), images examined (00001, 00005, 00010, 00015, 00020, 00022 sampled across all 22), outcome ('negative'), and detailed notes explaining the digitization artifact and why the target was not found. The notes name the film, its structure (mixed coverages), the sample strategy, and the defect. This provides sufficient detail for an exhaustiveness audit to understand what was searched and why it failed."
               }
             ],
-            "judge_cost_usd": 0.0198015,
+            "judge_cost_usd": 0.0206265,
             "duration_ms": 11487.783300224692,
             "error": null,
             "input_tokens": 14363,
             "cached_input_tokens": 5535,
-            "output_tokens": 977
+            "output_tokens": 1142
           },
           "started_at": 1792487238.9884784,
           "ended_at": 1792487400.2610307
@@ -7317,45 +7317,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified both probate volumes (007936749 and 007936752) that jointly cover the target date range (1885\u20131895 straddles the 1890/1891 boundary). Both volumes were targeted with volume_search and image_search calls. The image lists were accurately reported. No fabricated content or unsupported claims. The skill correctly noted that no pages were read in this pass per the delegation's request to 'list the images.' Log entries accurately reflect the browse scope and outcome."
+                "rationale": "The skill correctly identified both Schuylkill County probate volumes (007936749 covering 1851\u20131890 and 007936752 covering 1891\u20131930) that jointly span the target death window (~1885\u20131895). Both volume_search and image_search calls returned accurate results with no fabrication. The log entries correctly record the browse scope, place, record type, and image counts. No factual errors or unsupported claims appear in the response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: (1) called volume_search with correct place/date parameters; (2) identified and targeted both covering films (007936749 and 007936752); (3) called image_search on both volumes; (4) listed all images from both films; (5) appended research log entries documenting both browses; (6) updated the plan item status. The delegation asked to list images, which was completed. No required work was omitted."
+                "rationale": "The skill addressed all requirements: called volume_search with correct place/date parameters, identified both covering films, called image_search on both 007936749 and 007936752, listed all images from each volume (15 and 18 respectively), and appended two research log entries documenting the browse. The delegation asked to list images in relevant films, and both films were correctly identified and their images listed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. volume_search received standardPlace 'Schuylkill, Pennsylvania, United States' (matches expected ~Schuylkill), startYear 1880, endYear 1900, and recordTypeGroups ['Probate', 'Wills']. Both image_search calls used correct imageGroupNumbers (007936749 and 007936752). research_log_append and research_append calls used correct projectPath and field values. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra parameters were added."
+                "rationale": "All MCP tool calls passed correct arguments. volume_search received standardPlace 'Schuylkill, Pennsylvania, United States' with startYear 1880 and endYear 1900, matching the expected place and death window. Both image_search calls used the correct imageGroupNumbers (007936749 and 007936752). research_log_append and research_append calls used correct projectPath and operation parameters. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra parameters were added."
               },
               {
                 "source": "rubric",
                 "name": "Volume selection",
                 "score": 3,
-                "rationale": "The skill correctly recognized that the target date range (1885\u20131895) straddles the film boundary between 007936749 (1851\u20131890) and 007936752 (1891\u20131930). Both volumes jointly cover the target and both were selected and browsed. The third result (005440021, Berks County) was correctly excluded as wrong place. The skill recognized the volumes are browse-only (0% indexed, not full-text searchable) and appropriately targeted them for image browsing."
+                "rationale": "The skill correctly recognized that the target death window (~1885\u20131895) straddles the 1890/1891 film boundary and selected both Schuylkill probate volumes that jointly cover this period. Volume 007936749 (1851\u20131890) and 007936752 (1891\u20131930) together span the entire target range. The skill correctly rejected the third result (005440021, Berks County) as wrong place. Both covering films were queued for browsing, meeting the pass criterion for split-run coverage."
               },
               {
                 "source": "rubric",
                 "name": "Browse execution",
                 "score": 3,
-                "rationale": "The skill called image_search on both selected volumes and received complete image ID lists (15 images for 007936749, 18 for 007936752). The lists were accurately reported without fabrication. The skill correctly noted that no pages were read in this pass because the delegation asked only to list images. The skill did not invent image_search parameters (offset/limit/imageId) and did not call image_read. Reporting what was actually retrieved (image lists) without claiming to have read pages is correct execution."
+                "rationale": "The skill called image_search on both selected volumes and received complete image ID lists (15 images for 007936749, 18 for 007936752). The response accurately reported these lists without fabrication. The skill correctly noted that no pages were read in this pass because the delegation asked only to list images, and stated that page-by-page reading with image_transcribe would be the next step. This is a complete browse execution: selecting the volumes, listing their images, and logging the browse is sufficient; judges must not penalize for not reading every image."
               },
               {
                 "source": "rubric",
                 "name": "Browse audit trail",
                 "score": 3,
-                "rationale": "Two research log entries were appended (log_006 and log_007), one for each volume. Each entry's notes include: the imageGroupNumber (007936749 and 007936752), the place (Schuylkill, Pennsylvania), the record type (Probate Records), the coverage dates (1851\u20131890 and 1891\u20131930), the image count (15 and 18), and the outcome ('partial' with explanation that no pages were read yet). The notes carry sufficient scope for an exhaustiveness audit and accurately reflect what was searched and why the browse is incomplete."
+                "rationale": "Two research log entries (log_006 and log_007) were appended with detailed notes. Each entry records the imageGroupNumber, standardPlace (Schuylkill, Pennsylvania, United States), recordType (Probate Records), coverage dates (1851\u20131890 and 1891\u20131930 respectively), resultsExamined/resultsAvailable counts (15/15 and 18/18), and explanatory notes describing the volume scope and next steps. The notes carry sufficient detail to support an exhaustiveness audit: volume IDs, place, record type, and image ranges are all documented."
               }
             ],
-            "judge_cost_usd": 0.0174305,
+            "judge_cost_usd": 0.0173455,
             "duration_ms": 11842.246700078249,
             "error": null,
             "input_tokens": 12042,
             "cached_input_tokens": 5535,
-            "output_tokens": 967
+            "output_tokens": 950
           },
           "started_at": 1792487238.9884784,
           "ended_at": 1792487377.3470147
@@ -7415,5 +7415,6 @@
       "research_log_append": "1585d48736cc340502e166cacbb5e133414bcc32768127fa357254fe479fdb4f",
       "sidecar_read": "a78db5f0efb59b15d812c4654b58377ab27f9b7dcd5115d9373894185096af01"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }

@@ -647,21 +647,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the user's bounded request: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' The response identified both death-related records already attached, provided their titles and collection names, and included FamilySearch links. No required information was omitted. The skill appropriately declined to perform a new search, recognizing that the records already exist on the profile."
+                "rationale": "The user asked a single, bounded question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude fully addressed this by confirming the existence of two death-related records already attached and providing their titles, collection names, and FamilySearch links. No further work was required by the input state. The response is complete for the scope requested."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made two tool calls with correct arguments. The first call to mcp__genealogy__person_read passed personId 'GJ72-9WD' exactly as expected. The second call to mcp__genealogy__research_delivered passed a summary string that accurately described the findings. Both calls matched their expected_args semantically and the person_read call successfully retrieved the profile with all attached sources."
+                "rationale": "Claude made two tool calls. The first call to mcp__genealogy__person_read passed personId 'GJ72-9WD', which exactly matches the expected_args. The second call to mcp__genealogy__research_delivered passed a summary string that accurately describes the findings. Both calls used correct arguments matching the fixture's expected_args semantically. No critical identifiers were wrong, and no calls resulted in fixture_not_found errors."
               }
             ],
-            "judge_cost_usd": 0.011856,
+            "judge_cost_usd": 0.011886999999999998,
             "duration_ms": 6588.008100166917,
             "error": null,
-            "input_tokens": 9696,
+            "input_tokens": 9692,
             "cached_input_tokens": 0,
-            "output_tokens": 432
+            "output_tokens": 439
           },
           "started_at": 1792757060.6475537,
           "ended_at": 1792757120.1313858
@@ -1559,27 +1559,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response accurately reflects the project state and tool responses. The evidence summary correctly identifies three sources (1850 census, 1860 census, 1908 death certificate) with accurate details: Patrick's age (5 in 1850, 15 in 1860), Thomas Flynn's presence in both households, and the death certificate naming Thomas as father with James Brown as informant. The conclusion that Thomas Flynn is the probable father is well-supported by the cited assertions (a_004, a_010, a_013) and the existing proof summary ps_001. No fabricated material or unsupported claims are present. The routing decisions to research-exhaustiveness and proof-conclusion are appropriate given the project state."
+                "rationale": "Claude's response accurately reflects the project state and tool responses. The evidence summary correctly identifies three sources (1850 census, 1860 census, 1908 death certificate) with accurate details: Patrick's age (5 in 1850, 15 in 1860), Thomas Flynn's presence in both households, and the death certificate naming Thomas as father with James Brown as informant. The conclusion that Thomas Flynn is the probable father is well-supported by the tool responses. The conflict resolution discussion (Ireland vs. Pennsylvania birthplace) is factually grounded in the before-state conflict c_001. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: queried project context to understand the active state, reviewed both open questions (q_001 and q_002), examined the existing proof summary ps_001, checked the active plan pl_002 and its status, reviewed the log entries for q_001 (log_004, log_005), and routed appropriately to research-exhaustiveness and proof-conclusion. The response provided a comprehensive summary of evidence supporting the parentage conclusion and explained the routing decisions. No major portions of the required work were omitted."
+                "rationale": "Claude addressed all required elements of the autonomous research request. The response: (1) queried project context to understand the state, (2) identified both open questions (q_001 and q_002), (3) routed to research-exhaustiveness for q_001 as appropriate, (4) routed to proof-conclusion for both questions, (5) provided a summary of the research findings with evidence supporting the parentage conclusion, and (6) explained the tier (probable) and its limitations. The response did not pause for clarification despite the --autonomous flag, proceeding directly with routing decisions as required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All five MCP tool calls used correct arguments matching the fixture's expected_args. project_context was called with the correct projectPath. research_query was called four times with correct section parameters: 'questions', 'proof_summaries', 'plans' with questionId 'q_001' and status 'active', and 'log' with questionId 'q_001'. All calls matched expected patterns and returned live fixtures (matched.kind == 'live'). No fixture_not_found errors occurred. Arguments were semantically appropriate and complete."
+                "rationale": "All five MCP tool calls used correct arguments matching expected patterns. project_context was called with the correct projectPath. research_query was called four times with appropriate section parameters: 'questions', 'proof_summaries', 'plans' with questionId and status filters, and 'log' with questionId filter. All calls matched the fixture's expected_args semantically. No calls returned fixture_not_found errors; all matched.kind values were 'live'. Arguments were well-formed and targeted the correct data sections."
               }
             ],
-            "judge_cost_usd": 0.019672,
+            "judge_cost_usd": 0.019642,
             "duration_ms": 7341.081199701875,
             "error": null,
             "input_tokens": 16977,
             "cached_input_tokens": 0,
-            "output_tokens": 539
+            "output_tokens": 533
           },
           "started_at": 1792756856.9146533,
           "ended_at": 1792757076.6791518
@@ -2048,27 +2048,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the project has an active objective but no registered questions, and appropriately routed to question-selection to register the research question. The factual claims about the project state (objective exists, no questions registered, Patrick Flynn is the subject) match the tool response exactly. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly identified that the project has an active objective but no registered questions, and appropriately routed to question-selection to register the research question before proceeding. The response accurately reflects the project state from the tool call (Patrick Flynn, born ca. 1845, died 1908 in Schuylkill County, PA) and correctly explains the GPS workflow requirement that questions must be formally registered before planning or searching. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request appropriately by recognizing that the question must be formally registered before research can proceed. The routing to question-selection was the correct and complete response given the project state. The per-test context confirms this is a routing test where one hand-off and a summary is the expected outcome."
+                "rationale": "Claude addressed the user's request appropriately for a routing scenario. The user asked a research question with --autonomous flag; Claude correctly recognized this as requiring question registration first, routed to question-selection, and framed the work as the first step of ongoing research rather than a single deliverable. The response treats the request as a job to be driven to completion, as required by the per-test context."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the expected behavior (expected_args was null, indicating no specific args were required to validate). The tool executed successfully with matched.kind == 'live', confirming correct tool usage."
+                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the live fixture (matched.kind == 'live'), returned successfully with ok: true, and provided the project context needed to make the routing decision. No fixture_not_found errors or argument mismatches."
               }
             ],
-            "judge_cost_usd": 0.00878,
+            "judge_cost_usd": 0.009056999999999999,
             "duration_ms": 7416.1621001549065,
             "error": null,
-            "input_tokens": 7040,
+            "input_tokens": 7037,
             "cached_input_tokens": 0,
-            "output_tokens": 348
+            "output_tokens": 404
           },
           "started_at": 1792757093.9080245,
           "ended_at": 1792757155.671049
@@ -2546,27 +2546,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The transcription is factually accurate. The tool returned a digest of the 1881 Census of Canada, Sherbrooke, Quebec page 14, showing three Driscoll household members with their details (Cornelius, Johanna, Mary). Claude presented this information correctly in both tabular and prose form, with accurate names, ages, birthplaces, and occupations. The FamilySearch link provided is correct. No fabricated material or unsupported claims."
+                "rationale": "The transcription is factually accurate. The tool returned a digest of the 1881 Census of Canada, Sherbrooke, Quebec page 14, showing the Driscoll household with three individuals (Cornelius, Johanna, Mary) and their details. Claude accurately presented this information in a well-formatted table and provided the correct FamilySearch viewer URL. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user requested a transcription of image 004022578_00190 and to 'leave it at that.' Claude fulfilled this bounded request completely: transcribed the image, presented the results clearly in both table and prose, provided the FamilySearch link, and stopped without attempting to extract data into the project or derive research questions. The request was fully addressed."
+                "rationale": "The user requested a transcription of image 004022578_00190 and to 'leave it at that.' Claude fulfilled this bounded request completely: transcribed the image, presented the data clearly, provided the viewer link, and stopped without attempting to extract details into the project or derive research questions. The skill correctly recognized this as a bounded deliverable and did not invoke question-selection or research-plan."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made three tool calls. The first call to mcp__genealogy__image_transcribe passed the correct imageId (004022578_00190) matching expected_args. The second call to mcp__genealogy__sidecar_read correctly used the staged resultsRef returned by the first call. The third call to mcp__genealogy__research_delivered provided an appropriate summary. All critical identifiers and arguments were correct; no fixture_not_found errors occurred."
+                "rationale": "The image_transcribe call passed the correct imageId ('004022578_00190') matching expected_args. The sidecar_read call correctly used the resultsRef returned by the transcribe tool to retrieve the staged transcription. The research_delivered call appropriately summarized the work. All tool calls had correct arguments and matched the expected behavior for a bounded transcription delivery."
               }
             ],
-            "judge_cost_usd": 0.010057,
+            "judge_cost_usd": 0.009933,
             "duration_ms": 6196.98189990595,
             "error": null,
-            "input_tokens": 7902,
+            "input_tokens": 7898,
             "cached_input_tokens": 0,
-            "output_tokens": 431
+            "output_tokens": 407
           },
           "started_at": 1792757210.9810936,
           "ended_at": 1792757249.8962471
@@ -3125,27 +3125,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly transcribed the image (1881 Canada Census, Sherbrooke, Quebec, Driscoll household) and accurately reported that no Wilkins appear on the page. The transcription matches the staged tool response exactly. The skill correctly identified that it handed off the research plan for q_001 to the research-plan agent. No fabricated material or unsupported claims are present. The response accurately reflects what the tools returned."
+                "rationale": "The skill correctly transcribed the image (1881 Canada Census, Sherbrooke, Quebec, Driscoll household) and accurately reported its contents. The transcription matches the staged result from image_transcribe. The skill correctly identified that no Wilkins appear on this page. The research plan hand-off for q_001 was properly delegated. No fabricated material or unsupported claims present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user requested two deliverables: (1) transcribe image 004022578_00190, and (2) write the research plan for the Elijah Wilkins death question. The skill completed both: it transcribed the image and presented the result with a FamilySearch link, and it handed off the research plan to the research-plan agent. Both bounded requests were addressed. No required work was omitted."
+                "rationale": "Both deliverables requested in the bounded message were addressed: (1) transcription of image 004022578_00190 was delivered with full content and FamilySearch link, and (2) research plan for the Elijah Wilkins death question (q_001) was handed off. The skill completed everything the user message required. No silent omissions."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed arguments matching the fixture's expected_args semantically. The image_transcribe call correctly used imageId '004022578_00190' (exact match to expected_args). The project_context call was appropriate for retrieving the question ID. The sidecar_read call correctly used the resultsRef returned by image_transcribe. The research_delivered call appropriately summarized both deliverables. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+                "rationale": "All MCP tool calls passed correct arguments. project_context call was appropriate (no args required). image_transcribe received correct imageId '004022578_00190' matching expected_args. sidecar_read received the correct staged ref from the transcription response. research_delivered received appropriate summary. No critical identifier errors, no fixture_not_found errors, no mismatches with expected_args."
               }
             ],
-            "judge_cost_usd": 0.011306,
+            "judge_cost_usd": 0.011103,
             "duration_ms": 6635.26300014928,
             "error": null,
-            "input_tokens": 9096,
+            "input_tokens": 9093,
             "cached_input_tokens": 0,
-            "output_tokens": 442
+            "output_tokens": 402
           },
           "started_at": 1792757177.605562,
           "ended_at": 1792757252.3042681
@@ -3883,21 +3883,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed everything required by the input state. The user message asked to 'drive the workflow forward,' and Claude correctly identified that the project has one resolved question (q_001), verified the tree-encoding gate (Alabama birthplace is in the tree), confirmed the proof tier (probable), and determined the correct next step (invoke proof-conclusion for completion write). The objective asks two things (where Elizabeth was born and why the discrepancy exists), and both are answered by q_001 and ps_001. Claude did not attempt to address parentage, which is correctly outside the objective scope."
+                "rationale": "Claude addressed everything required by the input state. The user message asked to 'drive the workflow forward,' and Claude correctly identified that the project has one resolved question (q_001), verified the tree-encoding gate (Alabama birthplace is in the tree), confirmed the proof tier (probable), and determined the correct next step (invoke proof-conclusion for completion write). The objective asks two things (where Elizabeth was born and why the discrepancy exists), and both are answered by q_001 and ps_001. Claude did not miss any required work."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls passed correct arguments. The first call to mcp__genealogy__project_context used the correct projectPath argument. The second call to mcp__genealogy__research_query used correct arguments: projectPath, section='proof_summaries', and questionId='q_001'. Both calls matched their expected_args semantically and returned live responses (matched.kind = 'live'). No fixture_not_found errors occurred."
+                "rationale": "Claude made two MCP tool calls. First call: mcp__genealogy__project_context with projectPath matching the test fixture path \u2014 correct. Second call: mcp__genealogy__research_query with projectPath matching the fixture path, section='proof_summaries', and questionId='q_001' \u2014 all correct. Both calls matched expected_args semantically (expected_args was null for both, indicating the harness did not specify strict expectations, and the calls were appropriate for the task). No fixture_not_found errors. No critical argument mismatches."
               }
             ],
-            "judge_cost_usd": 0.020237,
+            "judge_cost_usd": 0.020317,
             "duration_ms": 6501.318699680269,
             "error": null,
             "input_tokens": 17777,
             "cached_input_tokens": 0,
-            "output_tokens": 492
+            "output_tokens": 508
           },
           "started_at": 1792756988.7935789,
           "ended_at": 1792757056.6213784
@@ -4642,27 +4642,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the objective contains two independent facts: (1) Elizabeth's birthplace (resolved via q_001) and (2) her parentage (unresolved, no question exists). The proof summary explicitly states parentage 'needs its own research question.' Claude accurately read the project context, recognized the gap, and correctly determined that routing to question-selection was the appropriate next step. No factual errors or unsupported claims."
+                "rationale": "Claude correctly identified that the objective contains two independent facts: (1) Elizabeth's birthplace (resolved via q_001) and (2) her parentage (unresolved, no question exists). The proof summary explicitly states parentage 'needs its own research question.' Claude accurately recognized that resolving one question does not answer a multi-part objective and correctly determined the tree-encoding gate was satisfied for the birthplace conclusion (Alabama already in tree). The narration accurately reflects the project state: q_001 is critiqued with nextStep null, project.status is active, and openQuestions is empty. Claude's reasoning about the gap\u2014that parentage was never framed as a question despite being part of the objective\u2014is factually sound and supported by the tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required work: (1) verified q_001's status and its proof summary; (2) confirmed the tree-encoding gate was satisfied for the birthplace conclusion (Alabama already in I1's Birth fact); (3) identified the unresolved parentage component of the objective; (4) recognized that no question exists for parentage despite the proof stating it needs one; (5) correctly routed to question-selection. The skill completed its analysis before the hand-off, as expected by the test design."
+                "rationale": "Claude addressed all required elements: (1) verified q_001's status and its proof summary; (2) confirmed the tree-encoding gate for the birthplace conclusion; (3) identified the unresolved parentage part of the objective; (4) recognized that no question exists for parentage despite the proof saying it 'needs its own research question'; (5) correctly determined this gap requires routing to question-selection. The response covers the full decision path the router must take: checking question resolution, verifying tree encoding, identifying objective gaps, and routing appropriately. No required analysis was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP calls used correct arguments. First call to mcp__genealogy__project_context passed the correct projectPath with no extraneous parameters. Second call to mcp__genealogy__research_query correctly specified section='proof_summaries' and questionId='q_001'. Both calls matched expected_args semantically and returned live fixtures (matched.kind='live'). No validation errors or fixture_not_found issues."
+                "rationale": "Claude made two MCP tool calls, both with correct arguments. First call to mcp__genealogy__project_context passed the correct projectPath. Second call to mcp__genealogy__research_query passed correct section ('proof_summaries') and questionId ('q_001'). Both calls matched expected_args semantically and returned live responses (matched.kind == 'live'). No fixture_not_found errors occurred. The arguments were appropriate for the task of retrieving project context and proof summary details needed to assess objective coverage."
               }
             ],
-            "judge_cost_usd": 0.020461,
+            "judge_cost_usd": 0.021006,
             "duration_ms": 6267.693600151688,
             "error": null,
             "input_tokens": 18241,
             "cached_input_tokens": 0,
-            "output_tokens": 444
+            "output_tokens": 553
           },
           "started_at": 1792756928.6079218,
           "ended_at": 1792757013.9074018
@@ -5085,27 +5085,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response is factually accurate. It correctly identifies that q_001 is already resolved with status 'resolved', that pli_006 (probate search) was the last planned item and is already completed with log_006 recorded, and that ps_001 is rated 'Proved'. The response accurately cites the exhaustive_search_summary and search_stop.overturn_risk from the proof summary. All claims about the project state match the before-state documentation. The strategic explanation of what the negative probate result means is sound and well-supported by the conflict resolution rationale already on file."
+                "rationale": "Claude's response is factually accurate. It correctly identifies that q_001 is already resolved with status 'resolved', that pli_006 (probate search) was the last planned item and is already completed with log_006 recorded, and that ps_001 is rated 'Proved'. The response accurately cites the exhaustive_search_summary and search_stop.overturn_risk from the project state. The strategic explanation of what the nil probate result means is sound: it does not contradict the conclusion, and three independent original sources already converge. No fabricated claims or unsupported assertions are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the user's question about whether a new plan item is needed. The response explains why no new item is warranted (question resolved, probate search already completed and logged, proof rated Proved), provides context on what the negative result means, clarifies when a new item would be warranted (none of those conditions apply), and concludes decisively that planning is complete. The response does not attempt to create a new plan item, which is correct per the test requirement that it should decline to plan."
+                "rationale": "Claude fully addressed the user's question about whether a new plan item is needed. The response explains why no new item is warranted (question resolved, probate search already completed and logged, proof rated Proved), identifies what the negative probate result means strategically, and clarifies when a new plan item would be warranted (none of those conditions apply). The response also correctly declines to create a new plan item, which aligns with the test requirement that the skill should not modify plans[].items[] since search_stop is already set."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill correctly answered the user's status question from project context without invoking tools, which is appropriate for a question about the current state of an already-resolved research question."
+                "rationale": "No MCP tool calls were made in this response. The skill answered the user's status question directly from project context without invoking any tools. This is appropriate for a question about project state that is already fully documented in the before-state. N/A applies."
               }
             ],
-            "judge_cost_usd": 0.012548,
+            "judge_cost_usd": 0.012653000000000001,
             "duration_ms": 5875.987200066447,
             "error": null,
             "input_tokens": 10403,
             "cached_input_tokens": 0,
-            "output_tokens": 429
+            "output_tokens": 450
           },
           "started_at": 1792756931.934183,
           "ended_at": 1792756988.4819646
@@ -6311,21 +6311,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill's routing decision was complete and appropriate. The user's request for a census index search was correctly identified as outside the research skill's scope and properly delegated to search-records, the skill designed for record searches."
+                "rationale": "The skill made the correct routing decision. The user's request for a census index search was properly delegated to search-records rather than being handled by research. No work was required from research itself, so completeness is satisfied by the correct decline and routing."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by the research skill itself. The skill correctly routed to search-records rather than making its own tool calls, which is the expected behavior for this negative test scenario."
+                "rationale": "No MCP tool calls were made by the research skill itself. The routing to search-records means any tool calls that occurred were made by that skill, not by research. Therefore this dimension is N/A for the skill under test."
               }
             ],
-            "judge_cost_usd": 0.013626000000000001,
+            "judge_cost_usd": 0.013696,
             "duration_ms": 3845.174300018698,
             "error": null,
             "input_tokens": 12191,
             "cached_input_tokens": 0,
-            "output_tokens": 287
+            "output_tokens": 301
           },
           "started_at": 1792757277.045913,
           "ended_at": 1792757298.5584674
@@ -6754,27 +6754,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly declined to perform its own task and routed the user to question-selection. The user asked 'What should I research next?', which is a question-selection task, not a research task. The skill invoked question-selection (twice, per the diagnostic context), which is the correct routing decision. No substantive research output was produced when it should not have been."
+                "rationale": "The skill correctly declined to perform its own task and routed the user to question-selection, which is the appropriate skill for handling 'What should I research next?' This is the correct behavior for a negative test. The skill made no substantive claims or output of its own."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed the correct action for this negative test: it declined to perform research and routed to question-selection. The user's request was fully addressed by the routing decision. No research work was required or expected, so the absence of research output is not an omission."
+                "rationale": "The skill completed the correct action for this scenario: routing to question-selection rather than attempting to perform research evaluation itself. The decline/routing decision is complete and appropriate. No research task output was required or expected."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by the skill under test. The question-selection skill was invoked (per diagnostic context), but that is a separate skill's tool usage, not this skill's. N/A for this test."
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to question-selection without invoking tools itself. N/A per base rubric policy for zero tool calls."
               }
             ],
-            "judge_cost_usd": 0.013646,
+            "judge_cost_usd": 0.013431,
             "duration_ms": 4016.4242000319064,
             "error": null,
             "input_tokens": 11976,
             "cached_input_tokens": 0,
-            "output_tokens": 334
+            "output_tokens": 291
           },
           "started_at": 1792757257.907101,
           "ended_at": 1792757290.4888048
@@ -7175,27 +7175,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly recognized that no project exists (empty-folder-no-project scenario) and appropriately declined to create one without a FamilySearch ID. The response accurately identifies what is needed (a FamilySearch person ID) and provides helpful guidance on where to find it. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly recognized that no project exists (empty folder scenario) and appropriately declined to create one without a FamilySearch ID. The response accurately identifies what is needed (a FamilySearch person ID) and provides helpful guidance on where to find it. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the user's request by recognizing the precondition (no project yet) and correctly declining to proceed without essential information. The response explains what is needed and how to obtain it, completing the appropriate scope for this negative test scenario."
+                "rationale": "Claude fully addressed the user's request by recognizing the out-of-scope nature of the request (no ID provided) and appropriately asking for the required information before proceeding. The response includes clear instructions on how to obtain a FamilySearch ID and notes that additional context (name, birth year, location) would be helpful. All necessary elements for proper project initialization are covered."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. This is appropriate for a negative test where the skill should decline without invoking tools or creating project files. N/A applies."
+                "rationale": "No MCP tool calls were made. This is appropriate because the skill correctly declined to proceed without a FamilySearch ID. N/A per the base rubric policy for zero tool calls."
               }
             ],
-            "judge_cost_usd": 0.007935000000000001,
+            "judge_cost_usd": 0.008095,
             "duration_ms": 4789.720400236547,
             "error": null,
             "input_tokens": 6425,
             "cached_input_tokens": 0,
-            "output_tokens": 302
+            "output_tokens": 334
           },
           "started_at": 1792757258.015778,
           "ended_at": 1792757281.7522395
@@ -7625,27 +7625,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly declined to perform its own task and routed the user to research-plan, which is the appropriate skill for proposing new research plans. The negative test required exactly this behavior: not evaluating exhaustiveness or writing a declaration, but instead routing to the planning skill. The skill made no substantive claims of its own and produced no output, which is the correct outcome."
+                "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to research-plan, which is the correct behavior. The skill produced no substantive output of its own, which is the expected outcome when declining."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed the required action for this negative test: it declined and routed to research-plan. The user's request to 'Plan more searches for the parentage question' is precisely what research-plan is designed to handle. The skill did not attempt to evaluate the research state or propose items itself, which would have been incorrect. The routing decision is complete and appropriate."
+                "rationale": "This is a negative test. The skill correctly identified that it should not perform its own task here and routed to research-plan instead. The routing decision is complete and appropriate. Not performing research's task is the correct outcome, not an omission."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by the skill. The skill correctly routed to research-plan rather than invoking tools itself. This is the expected behavior for a negative test where the skill should decline its own task. N/A applies because no tool calls occurred."
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to research-plan without invoking tools itself, which is appropriate for a decline/routing scenario. N/A."
               }
             ],
-            "judge_cost_usd": 0.011826,
+            "judge_cost_usd": 0.011481,
             "duration_ms": 5288.765899837017,
             "error": null,
             "input_tokens": 10026,
             "cached_input_tokens": 0,
-            "output_tokens": 360
+            "output_tokens": 291
           },
           "started_at": 1792757078.8671768,
           "ended_at": 1792757121.4878714
@@ -8366,27 +8366,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response is factually accurate and well-grounded in the project context. The browse strategy correctly identifies the active plan item (pli_006: Schuylkill County probate 1870\u20131890), accurately characterizes the indexed vs. unindexed record landscape, and provides sound genealogical reasoning. The claim that the death certificate names Thomas Flynn as father is supported by src_004 and log_005. The identification of Patrick's mother as unknown is correct. The suggested record types (probate, parish registers, deeds, naturalization, newspapers) are appropriate for the research question and jurisdiction. No fabricated material or unsupported claims are present."
+                "rationale": "Claude's response is factually accurate and well-grounded in the project context. The browse strategy correctly identifies the active plan item (Schuylkill County probate, 1870\u20131890, status 'in_progress' per pli_006), accurately characterizes the indexed sources already gathered (1850/1860 censuses, 1908 death certificate), and appropriately notes that Thomas Flynn is named as father on the death certificate with the caveat that the informant was secondary (son-in-law). The five unindexed record sets recommended (probate, Catholic parish registers, deed books, naturalization records, newspapers) are all legitimate genealogical sources for the Flynn research objective. No fabricated claims or unsupported assertions appear in the response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 2,
-                "rationale": "Claude addressed the user's request for a browse strategy and prioritized plan, but the response is incomplete in a critical way: it did not route the planning question to the research-plan skill as required by the negative test specification. The per-test context explicitly states the correct behavior is to 'decline and route the user to: research-plan' via an actual spawn of the research-plan agent. Instead, Claude produced the browsing strategy and tier list inline. While the content itself is substantive and well-reasoned, the failure to route represents a missed core requirement of the skill's design for this type of request."
+                "rationale": "Claude addressed the user's core request for a browse strategy and prioritized the unindexed record sets. However, the response missed a concrete opportunity: the project already has five unindexed sources on file (src_005\u2013src_009: baptism, will, birth certificate, deed, obituary) with zero assertions extracted. Claude should have explicitly acknowledged these five sources as immediate candidates for extraction before recommending additional external browsing. The response treats the problem as 'what new records should I find' rather than 'what records do I already have that need extraction.' This is a material omission\u2014the user could have begun extracting from src_005 (St. Mary's baptism) or src_006 (Thomas Flynn will) immediately, both of which directly address the stated gaps (mother's identity, paternity corroboration)."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made three MCP tool calls: project_context (no args expected), research_query for plans (section='plans', questionId='q_001'), and research_query for log (section='log', questionId='q_001'). All calls matched expected arguments semantically. The tool calls were appropriate for gathering context about the active plan and recent work, and the arguments were correctly formed. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+                "rationale": "Claude made two MCP tool calls: mcp__genealogy__project_context (no args required, matched live) and two mcp__genealogy__research_query calls (section='plans' and section='log', both with questionId='q_001'). All calls matched live fixtures and passed their expected_args semantically. The project_context call correctly retrieved the full project state. The research_query calls correctly targeted the active question (q_001) to surface the active plan (pl_002) and its associated log entries. No fixture_not_found errors occurred. Arguments were appropriate and well-formed."
               }
             ],
-            "judge_cost_usd": 0.018643,
+            "judge_cost_usd": 0.019163,
             "duration_ms": 6974.817699752748,
             "error": null,
             "input_tokens": 16023,
             "cached_input_tokens": 0,
-            "output_tokens": 524
+            "output_tokens": 628
           },
           "started_at": 1792757168.8984544,
           "ended_at": 1792757252.5302644
@@ -8985,27 +8985,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response accurately summarizes the project state based on the project_context tool output. The response correctly identifies: (1) the objective (identifying Patrick Flynn's parents), (2) what has been established (Thomas Flynn as father, four worked sources, one resolved conflict on birthplace), (3) what is open (parentage question status out of sync with proof summary, second question lacks proof summary), and (4) the next step (re-run proof conclusion and write closing summary). All claims are grounded in the tool response and before-state. No fabricated material or unsupported assertions."
+                "rationale": "Claude's response accurately summarizes the project state based on the project_context tool output. The objective (identifying Patrick Flynn's parents), the current status (parentage question in_progress, second question resolved), the tree structure (Thomas as father of Patrick, Mary, and James), and the evidence gathered (four worked sources with assertions) are all correctly stated. The observation about the proof summary being out of sync with the question status is accurate per the tool response (q_001 state: 'concluded' vs storedStatus: 'in_progress'). The next steps identified (re-run proof conclusion, write closing summary) align with the tool's nextStep guidance. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The response addresses all four required elements per the test author's notes: (1) objective stated (identify parents of Patrick Flynn), (2) what has been established (Thomas Flynn as father, four sources worked, one conflict resolved), (3) what is open/waiting (status field out of sync, second question needs proof summary), and (4) next step clearly stated (re-run proof conclusion, write closing summary). The response covers the full scope of the project's current state without omissions."
+                "rationale": "Claude addressed all required elements per the test author's ideal response: (1) objective stated ('identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died in 1908'); (2) what has been established (tree shows Patrick as son of Thomas, four FamilySearch records and one Ancestry record worked, assertions extracted, proof summary written); (3) what is open (parentage question status out of sync, second question lacks formal proof summary); (4) next step clearly stated (re-run proof conclusion for parentage, write closing summary for second question). The response is a single paragraph with no identifiers, file names, tool names, or field names, meeting all structural requirements."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made a single tool call to project_context with the correct projectPath argument. The call matched the expected fixture (matched.kind == 'live'), returned successfully (ok: true), and provided all necessary context for the response. No tool call errors or fixture_not_found issues occurred. The tool invocation was appropriate and correctly executed."
+                "rationale": "Claude made one MCP tool call: project_context with projectPath argument. The expected_args field is null (no specific args were declared as expected), and the call matched.kind is 'live', indicating successful execution. The tool was invoked appropriately to gather project state information needed to summarize progress. No fixture_not_found errors or argument mismatches occurred."
               }
             ],
-            "judge_cost_usd": 0.016165,
+            "judge_cost_usd": 0.016560000000000002,
             "duration_ms": 5933.293899986893,
             "error": null,
             "input_tokens": 13915,
             "cached_input_tokens": 0,
-            "output_tokens": 450
+            "output_tokens": 529
           },
           "started_at": 1792757210.985631,
           "ended_at": 1792757235.6458247
@@ -9479,27 +9479,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the project is in an empty state with no research questions registered yet. The routing decision to invoke question-selection is appropriate per the GPS workflow. The factual claims about the objective (Patrick Flynn, b. ca. 1845, d. 1908, Schuylkill County, PA) match the project context returned by the tool. No fabricated material or unsupported claims are present."
+                "rationale": "Claude correctly identified that the project is in an empty state with no research questions registered yet. The objective and stub person (Patrick Flynn) exist, but no prior research work has been done. Claude accurately stated that routing to question-selection is necessary per the GPS workflow before a plan can be written or searches begun. The factual claims about the objective (Patrick Flynn, b. ca. 1845, d. 1908, Schuylkill County, PA) match the tool response. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to find the parents of Patrick Flynn by correctly routing to question-selection to register the parentage question as the first step in the GPS workflow. The response explains why routing is necessary (no questions registered yet) and outlines the subsequent workflow steps. The open-ended nature of the request ('Find the parents') does not require a bounded deliverable; routing to the appropriate skill is the complete response."
+                "rationale": "Claude addressed the user's request to find the parents of Patrick Flynn by correctly routing to question-selection to register the parentage question as the first step. The response identified the project state, explained why routing was necessary, and outlined the subsequent workflow steps (locality guide, research plan, records searches, extraction). All required elements for this routing scenario were covered."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the live fixture and returned successfully with ok: true. No fixture_not_found errors occurred. The tool call was appropriate for understanding the project state before routing."
+                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the expected behavior for retrieving project context at the start of a research task. The tool returned successfully (ok: true) with the expected project state showing an empty research.json, no open questions, and the stub person I1 (Patrick Flynn). No argument mismatches or fixture_not_found errors occurred."
               }
             ],
-            "judge_cost_usd": 0.008981,
+            "judge_cost_usd": 0.009188,
             "duration_ms": 5569.146599620581,
             "error": null,
-            "input_tokens": 7046,
+            "input_tokens": 7043,
             "cached_input_tokens": 0,
-            "output_tokens": 387
+            "output_tokens": 429
           },
           "started_at": 1792757210.3692036,
           "ended_at": 1792757246.2182305
@@ -9936,27 +9936,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly recognized that no project exists in the empty folder scenario and appropriately routed to init-project rather than attempting to perform research. The response accurately stated the situation ('No project yet \u2014 initializing now') and did not fabricate any project state or research results."
+                "rationale": "Claude correctly recognized that no project exists in the empty folder scenario and appropriately routed to init-project rather than attempting to perform research. The response accurately stated the situation ('No project yet \u2014 initializing now') and did not fabricate any project state or research findings."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude completed the required pre-hand-off work: state derivation (recognizing no project exists) and narration of the routing decision. Per the per-test context, init-project is stubbed and execution stops at the first hand-off by design; no project creation or closing summary is required. The delegation carries the FamilySearch ID LZNY-BRF as required."
+                "rationale": "Claude completed the required pre-hand-off work: state derivation (recognizing no project exists) and narration of the routing decision. Per the per-test context, init-project is stubbed and execution stops at the first hand-off by design; no project creation or closing summary is expected. The delegation to init-project with the stated objective (finding Patrick Flynn's parents) is the complete expected behavior."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude. The skill correctly routed to init-project without invoking any tools itself, so this dimension is N/A."
+                "rationale": "No MCP tool calls were made by Claude. The research skill correctly recognized the precondition (no project) and routed to init-project without invoking any tools. This is appropriate behavior for the scenario and makes Tool Arguments N/A."
               }
             ],
-            "judge_cost_usd": 0.007864,
+            "judge_cost_usd": 0.007964,
             "duration_ms": 4131.78740022704,
             "error": null,
             "input_tokens": 6254,
             "cached_input_tokens": 0,
-            "output_tokens": 322
+            "output_tokens": 342
           },
           "started_at": 1792757179.3210955,
           "ended_at": 1792757209.7018063
@@ -11386,28 +11386,28 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 2,
-                "rationale": "Claude's response is mostly factually correct but contains one significant unsupported claim. The response states 'In both the 1850 and 1860 censuses, the extracted household members are Thomas Flynn (head) and his children \u2014 no wife appears in the extracted assertions.' However, the tool responses show that no assertions about a wife were extracted from either census, but this does not mean no wife was present in the household \u2014 it means the wife was simply not extracted as an assertion. The response conflates 'not extracted' with 'not present in the record,' which is an unsupported inference. The response correctly cites the three lines of evidence for Thomas Flynn as father (1850 census, 1860 census, death certificate), correctly identifies the birthplace conflict and its resolution, and accurately characterizes the evidence quality (indirect for censuses, secondary for death certificate). The conclusion that the mother 'remains not proved' is reasonable given the extracted assertions, but the claim that 'no wife appears' overstates what the extraction data shows."
+                "score": 3,
+                "rationale": "Claude's response accurately synthesizes the project state and evidence. The three lines of evidence for Thomas Flynn as father are correctly cited (1850 census, 1860 census, death certificate). The birthplace conflict resolution is factually sound\u2014the before-state shows c_001 resolved with Ireland as preferred, and Claude correctly explains why census records outweigh the death certificate. The conclusion of 'Probable' rather than 'Proved' is justified by the indirect nature of census evidence and secondary informant status of the death certificate. No fabricated material; all claims are grounded in tool responses and the before-state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all major elements the user requested: identified the father (Thomas Flynn) from primary records with supporting evidence from three sources, explained the evidence quality and conflicts, and acknowledged that the mother remains unidentified. The response correctly noted that the probate search (pli_006) is in progress and identified productive next steps (probate search, 1870/1880 censuses, Irish records). The response appropriately delegated to sub-skills (person-evidence, research-exhaustiveness, proof-conclusion) as required by the per-test context, and provided a comprehensive summary of findings with proper citations to sources and assertions."
+                "rationale": "Claude addressed the user's request to identify both parents from primary records. For the father, three independent sources are presented with full citations and analysis. For the mother, Claude explicitly states 'Not Identified' and explains why\u2014no record names her, and the extracted household members from censuses do not include a wife. Claude identifies the gap and proposes concrete next steps (probate search, 1870/1880 censuses, Irish records). The response covers what was asked and what the project state required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls used correct arguments matching the fixture's expected_args semantically. Claude called project_context with the correct projectPath, research_query calls with correct section names ('log', 'assertions', 'person_evidence', 'proof_summaries', 'questions', 'plans') and appropriate questionId/personId/status parameters. No calls landed in fixture_not_found errors. The calls were well-sequenced to gather project state, log entries, assertions, person evidence, and proof summaries before routing to sub-skills. No extraneous or noisy arguments were added."
+                "rationale": "All MCP tool calls passed with correct arguments. project_context was called with the correct projectPath. research_query calls used correct section names ('log', 'assertions', 'person_evidence', 'proof_summaries', 'questions', 'plans') and appropriate filters (questionId, personId, status). No calls returned fixture_not_found errors. Arguments matched expected patterns semantically\u2014no wrong identifiers or critical mismatches. The calls were well-sequenced to gather project state, assertions, person evidence, and proof summaries before routing."
               }
             ],
-            "judge_cost_usd": 0.026626,
+            "judge_cost_usd": 0.025996,
             "duration_ms": 9342.363099567592,
             "error": null,
             "input_tokens": 23451,
             "cached_input_tokens": 0,
-            "output_tokens": 635
+            "output_tokens": 509
           },
           "started_at": 1792756856.9216342,
           "ended_at": 1792757123.965452
@@ -12003,27 +12003,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the three children currently in the tree (Patrick, Mary, James) and accurately stated that Thomas Flynn has no dates/places/sources attached. The response accurately describes the project state and correctly routed the question to search-records, which is the appropriate skill for finding missing children. No factual errors or unsupported claims."
+                "rationale": "Claude correctly identified the three children currently in the tree (Patrick, Mary, James) and accurately stated that Thomas Flynn has no dates/places/sources attached. The response accurately describes the project state and correctly routes the question to search-records, which is the appropriate skill for finding missing children. No factual errors or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request completely: identified the three recorded children and acknowledged that Thomas Flynn lacks biographical data. The response correctly recognized that determining whether children are missing requires search-records' specialized work (looking for candidates via census children-born/children-living counts and other records), not local tree inspection. The routing decision itself is deterministically validated; Claude's narration up to handoff is complete."
+                "rationale": "Claude addressed the user's question about whether Thomas Flynn's children list is complete by identifying the three recorded children and appropriately routing to search-records for a systematic search for missing children. The routing decision itself is the complete response required for this bounded request."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the expected fixture (matched.kind == 'live'). No tool calls landed in fixture_not_found. The single call was appropriate for gathering project context before routing to search-records."
+                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the expected fixture and returned successfully (matched.kind == 'live'). The tool was used appropriately to gather project context before routing."
               }
             ],
-            "judge_cost_usd": 0.015517,
+            "judge_cost_usd": 0.015304,
             "duration_ms": 5010.37469971925,
             "error": null,
-            "input_tokens": 13672,
+            "input_tokens": 13669,
             "cached_input_tokens": 0,
-            "output_tokens": 369
+            "output_tokens": 327
           },
           "started_at": 1792756856.9334028,
           "ended_at": 1792756930.0457168
@@ -12633,27 +12633,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the merge request as a bounded routing task and routed it to tree-edit without performing the merge itself. The response accurately stated the persons involved (I3 and I4) and confirmed the user's assertion that they are the same individual. No fabricated material or unsupported claims were made. The routing decision was appropriate given the confirmed identity and the tree-edit skill's ownership of merge operations."
+                "rationale": "Claude correctly identified the merge request as a bounded task owned by tree-edit and routed it appropriately. The response accurately stated the persons involved (I3 and I4) and confirmed the user's assertion that they are the same individual. No fabricated material or unsupported claims were made. The routing decision was correct per the test's deterministic validator."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request completely by recognizing it as a bounded merge request and routing it to the appropriate skill (tree-edit). The response identified both persons (I3 and I4), acknowledged the user's confirmation of identity, and performed the necessary hand-off. No required steps were omitted. The per-test context explicitly states that walking the job routing table before the hand-off would be a failure, and Claude correctly avoided that."
+                "rationale": "Claude addressed the user's request completely. The user asked for a merge of two confirmed-identical persons, and Claude correctly routed this to tree-edit without requiring additional steps like re-confirmation or research planning. The per-test context explicitly states that walking the job routing table before the hand-off is the failure this test catches, and Claude avoided that trap by routing directly."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the expected fixture and returned successfully (matched.kind == 'live'). The tool was used appropriately to gather project context before routing the merge request to tree-edit. No incorrect or missing arguments were present."
+                "rationale": "Claude made one MCP tool call (mcp__genealogy__project_context) with the correct projectPath argument. The call matched the expected fixture and returned successfully (matched.kind == 'live'). The tool was used appropriately to gather context before routing, and no incorrect arguments were passed."
               }
             ],
-            "judge_cost_usd": 0.015264,
+            "judge_cost_usd": 0.015086,
             "duration_ms": 5718.3590000495315,
             "error": null,
-            "input_tokens": 13259,
+            "input_tokens": 13256,
             "cached_input_tokens": 0,
-            "output_tokens": 401
+            "output_tokens": 366
           },
           "started_at": 1792757248.0533469,
           "ended_at": 1792757305.9639173
@@ -13060,27 +13060,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly routed the bounded request to locality-guide without performing its own work or invoking tool calls. No fabricated material, unsupported claims, or contradictions with the input state. The routing decision was deterministically validated as correct."
+                "rationale": "The skill correctly routed the bounded request to locality-guide as required. The user asked for a guide to records for County Tipperary, Ireland (1830-1850), which is locality-guide's responsibility. The skill did not attempt to answer from training knowledge or use the existing Pennsylvania localities entry. The routing decision was correct and the skill produced no substantive output of its own, which is the correct behavior for a routing test."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed the required action: routing the user's request for a County Tipperary records guide to the appropriate owner (locality-guide). No substantive work was required from the research skill itself on this bounded request. The hand-off was the complete deliverable."
+                "rationale": "The skill completed its routing task fully. It identified that the user's request for a record guide on a specific jurisdiction and time period belongs to locality-guide and handed off appropriately. No additional steps were required before the hand-off. The test explicitly states that walking the job routing table before the hand-off would be a failure, and the skill avoided that. The empty response is the expected state for this bounded-request routing test."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by the skill. The request was routed to locality-guide without the research skill invoking any tools. N/A per the base rule for zero tool calls."
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to locality-guide without invoking any tools itself. Per the instructions, Tool Arguments scores null when a test makes zero MCP tool calls, and this is the expected behavior for a routing test where the callee is stubbed."
               }
             ],
-            "judge_cost_usd": 0.013136,
+            "judge_cost_usd": 0.013618000000000002,
             "duration_ms": 4445.683099795133,
             "error": null,
-            "input_tokens": 11646,
+            "input_tokens": 11643,
             "cached_input_tokens": 0,
-            "output_tokens": 298
+            "output_tokens": 395
           },
           "started_at": 1792757236.0794067,
           "ended_at": 1792757263.9308887
@@ -13907,27 +13907,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the bounded identity question and routed it to person-evidence without performing the identity evaluation itself. The text response accurately describes the project state (sources src_005 and src_006 for 1870/1880 censuses, candidate person I3 already in tree) and the routing decision. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly identified the bounded identity question and routed it to person-evidence without performing the identity evaluation itself. The narration accurately described the project state (sources src_005 and src_006 for 1870/1880 censuses, candidate person I3 already in tree) and the routing decision. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude completed the required task: recognized the bounded identity question, gathered necessary project context via tool calls, and routed to the appropriate skill (person-evidence) without attempting to answer the identity question itself. The user's request for a verdict on whether two Patrick Flynns are the same person was properly delegated to the owner skill."
+                "rationale": "Claude completed the required task for a bounded-request routing test: recognized the identity question, gathered necessary project context via tool calls, and routed to the appropriate skill (person-evidence) without attempting to answer the question itself. All necessary steps for the router's role were performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three MCP tool calls used correct arguments. project_context call used correct projectPath. research_query calls for assertions and person_evidence used correct sourceId and assertionId arrays respectively. No fixture_not_found errors. Arguments matched expected patterns semantically."
+                "rationale": "All three MCP tool calls used correct arguments. project_context call had correct projectPath. research_query calls for assertions and person_evidence used correct sourceId and assertionId arrays respectively. All calls matched expected_args semantically and returned live responses with no fixture_not_found errors."
               }
             ],
-            "judge_cost_usd": 0.016268,
+            "judge_cost_usd": 0.016235,
             "duration_ms": 6061.535300221294,
             "error": null,
-            "input_tokens": 14513,
+            "input_tokens": 14510,
             "cached_input_tokens": 0,
-            "output_tokens": 351
+            "output_tokens": 345
           },
           "started_at": 1792757034.7464197,
           "ended_at": 1792757161.035489
@@ -14334,27 +14334,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the user's request for a source review belongs to the source-evaluation skill and routed the work appropriately. The brief handoff message ('Reviewing the sources attached to Patrick Flynn (LZNY-BRF) \u2014 handing off to the source-evaluation agent now.') is honest and accurate. No fabricated claims or unsupported assertions were made. The routing decision itself is deterministically verified by the harness."
+                "rationale": "Claude correctly identified that the user's request for a source review belongs to the source-evaluation skill and appropriately handed off to that agent. The response contains no factual errors or unsupported claims. The brief narration accurately describes the action taken (routing to source-evaluation agent) without fabricating any analysis or making claims beyond what was appropriate for the router."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user's request was for a source review on Patrick Flynn's attached sources. This is a bounded-request routing test where the correct behavior is to hand off to source-evaluation, not to perform the evaluation inline. Claude completed the required action: identifying the deliverable owner and routing to it. No additional work was required from the research skill itself."
+                "rationale": "The user asked for a review of sources attached to Patrick Flynn, which is a bounded request owned by source-evaluation. Claude completed the appropriate action: recognizing the request scope and routing it to the correct skill. Per the per-test context, walking the job routing table or performing the deliverable inline would be failures; the correct behavior is the hand-off Claude performed. No additional steps were required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude. The research skill correctly routed to source-evaluation without attempting to read sources or perform evaluation work itself. Per the per-test context, reading attachments with person_read or source_attachments as context for the hand-off would be allowed, but Claude did not do so, which is appropriate for a clean routing scenario. N/A applies."
+                "rationale": "No MCP tool calls were made. Claude routed the request to the source-evaluation agent via skill invocation rather than direct tool calls. Per the base rubric, Tool Arguments is N/A when zero MCP tool calls occur."
               }
             ],
-            "judge_cost_usd": 0.014166999999999999,
+            "judge_cost_usd": 0.013954000000000001,
             "duration_ms": 5026.06639964506,
             "error": null,
-            "input_tokens": 12182,
+            "input_tokens": 12179,
             "cached_input_tokens": 0,
-            "output_tokens": 397
+            "output_tokens": 355
           },
           "started_at": 1792757269.1278882,
           "ended_at": 1792757294.9132705
@@ -14974,27 +14974,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's narration is factually accurate. It correctly identified the open question (q_001), accurately described the three plan items (pli_001, pli_002, pli_003) with their statuses and outcomes, correctly noted that both previous searches were negative, and accurately explained that pli_003 targets digitized-but-unindexed images requiring page-by-page browsing. The claim that the collection is ~1% indexed (not absent) is supported by the log entries and plan rationale. Claude did not fabricate any material or contradict the input state. The delegation to search-images is the correct routing decision per the test context."
+                "rationale": "Claude's narration is factually accurate. It correctly identified the open question (q_001), accurately described the three plan items (pli_001, pli_002, pli_003) with their statuses and rationales, correctly noted both prior searches were negative, and appropriately explained that negative results on a ~1% indexed collection mean un-indexed, not absent. The delegation to search-images is the correct routing decision per the test scenario. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed everything the input state required. It queried the active plan for q_001, checked the research log for positive results, identified that both previous plan items were negative, and correctly identified pli_003 as the only open item. It then delegated to search-images with appropriate context. The user message asked to 'research the next open question' and 'drive the workflow forward'\u2014Claude did this by routing to the correct next step. No required work was omitted."
+                "rationale": "Claude addressed everything required: identified the active question, reviewed the plan structure, checked the research log for prior results, correctly determined no pending extractions exist, and delegated pli_003 (the browse-only order books) to search-images. The response covered the full workflow state and made the appropriate routing decision. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three MCP tool calls passed arguments matching the fixture's expected_args semantically. The project_context call used the correct projectPath. The first research_query call correctly specified section='plans', questionId='q_001', and status='active' to retrieve the active plan. The second research_query call correctly specified section='log' and questionId='q_001' to retrieve the log entries. All calls matched their expected arguments and returned live fixtures with ok=true. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+                "rationale": "All three MCP tool calls used correct arguments. project_context was called with the correct projectPath. research_query was called twice with correct section values ('plans' and 'log'), correct questionId ('q_001'), and correct status filter ('active'). All calls matched expected_args semantically and returned live matches with no fixture_not_found errors. Arguments were well-formed and appropriate."
               }
             ],
-            "judge_cost_usd": 0.01215,
+            "judge_cost_usd": 0.011654999999999999,
             "duration_ms": 6657.945599872619,
             "error": null,
             "input_tokens": 9585,
             "cached_input_tokens": 0,
-            "output_tokens": 513
+            "output_tokens": 414
           },
           "started_at": 1792757056.7670517,
           "ended_at": 1792757145.8784804
@@ -15678,27 +15678,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the competing parent sets (I2/I3 vs. I4/I5), accurately described the project state as evidence-gathered with no hypotheses registered, and appropriately routed to hypothesis-tracking. The response contains no fabricated material, contradictions, or unsupported claims. Claude's factual assertions about the tree structure, the two parent couples, and the need for hypothesis registration before comparison are all grounded in the project context returned by the tool call."
+                "rationale": "Claude correctly identified the competing parent sets (I2/I3 vs. I4/I5), accurately characterized the project state as evidence-gathered with no hypotheses registered, and appropriately recognized that hypothesis-tracking must be invoked before any comparison or elimination. The response contains no fabricated material, contradictions, or unsupported claims. The delegation to hypothesis-tracking is the correct routing decision per the test's assertion that two candidate parent sets with no hypotheses require delegation, not inline elimination."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's question about which parents are actually the subject's by correctly diagnosing that the project requires hypothesis registration before that determination can be made. The response identified both competing parent sets, explained the routing decision, and outlined the subsequent workflow steps (conflict-resolution, research-plan, proof-conclusion). No required element of the routing task was omitted."
+                "rationale": "Claude addressed the user's question about which parents are actually the subject's by correctly diagnosing that the project state requires hypothesis registration before comparison can proceed. The response explained the two competing parent sets, identified the routing requirement, and confirmed the delegation. No required element of the routing decision was omitted. The response appropriately declined to perform inline elimination and instead delegated to the correct skill."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made a single MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the expected fixture and returned successfully (matched.kind == 'live'). No tool call errors or fixture_not_found issues occurred. The arguments were appropriate for the routing task."
+                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call succeeded (matched.kind == 'live') and returned the expected project context. No tool calls failed with fixture_not_found errors. The arguments passed match what was expected for retrieving the project state."
               }
             ],
-            "judge_cost_usd": 0.015408999999999999,
+            "judge_cost_usd": 0.015456,
             "duration_ms": 5554.444599896669,
             "error": null,
-            "input_tokens": 13444,
+            "input_tokens": 13441,
             "cached_input_tokens": 0,
-            "output_tokens": 393
+            "output_tokens": 403
           },
           "started_at": 1792756856.917628,
           "ended_at": 1792756917.302774
@@ -16899,27 +16899,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the project state: both questions have 13 and 5 unlinked assertions respectively, and person-evidence is the required next step before conflict resolution or proof conclusion. Claude accurately described the diagnostic evidence (a_006 showing Elizabeth Duncan vs. Phillis Mackannel as mothers, sibling evidence from Hutton Rudby, burial age calculation) and correctly routed to person-evidence without making identity decisions itself. The narration stays factual and supported by the tool responses."
+                "rationale": "Claude correctly identified that both questions have unlinked assertions (13 for q_001, 5 for q_002) and appropriately routed to person-evidence without making identity decisions itself. The analysis of a_006 (Elizabeth Duncan vs. Phillis Mackannel discrepancy) was framed as diagnostic context for why person-evidence is needed, not as a conclusion about which record belongs to the subject. Claude did not claim which baptism is correct or decide identity\u2014it properly deferred that to person-evidence. All factual claims about the assertion counts and question status match the tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to 'settle which is his and write the conclusion' by correctly recognizing that identity linking must precede any settlement or conclusion. It retrieved assertions for both questions (13 for q_001, 5 for q_002), identified the shared assertions (a_002, a_006, a_012), and routed to person-evidence with full context. The hand-off included the key diagnostic (a_006 mother discrepancy) and explained why person-evidence must complete before the next steps."
+                "rationale": "Claude addressed the user's request to 'settle which is his and write the conclusion' by correctly recognizing that the prerequisite step\u2014person-evidence linking\u2014must occur first. It retrieved both assertion sets (q_001 and q_002), confirmed the counts and unlinked status, and explained why routing to person-evidence was necessary before conflict-resolution and proof-conclusion could proceed. No required action was omitted; the routing decision itself was the appropriate response to the current project state."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three MCP calls used correct arguments: project_context with the correct projectPath, research_query for q_001 assertions, and research_query for q_002 assertions. No fixture_not_found errors occurred. The calls matched expected patterns and retrieved the full assertion sets (13 and 5 items respectively) without truncation. Arguments were semantically correct and complete."
+                "rationale": "All three MCP tool calls used correct arguments: project_context with correct projectPath, research_query for q_001 assertions with correct section and questionId, and research_query for q_002 assertions with correct section and questionId. No calls returned fixture_not_found errors. Arguments matched expected_args semantically. No extraneous or incorrect parameters were passed."
               }
             ],
-            "judge_cost_usd": 0.025343,
+            "judge_cost_usd": 0.02539,
             "duration_ms": 7039.259199984372,
             "error": null,
-            "input_tokens": 23078,
+            "input_tokens": 23075,
             "cached_input_tokens": 0,
-            "output_tokens": 453
+            "output_tokens": 463
           },
           "started_at": 1792756856.9410553,
           "ended_at": 1792756969.5372558
@@ -17508,27 +17508,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's narration accurately reflects the project state and the routing decision. The response correctly identifies log_002 as a positive outcome with no assertions extracted, accurately describes the household record details (dwelling 112, family 131, Billerica, Middlesex County, five household members with correct names and ages), and appropriately delegates to record-structurer for extraction. No fabricated material or unsupported claims."
+                "rationale": "Claude's narration accurately reflects the project state and the log entries retrieved. The description of log_002 as a positive outcome with the household record pasted in notes is correct. Claude correctly identified that no assertions have been extracted yet and that the next step is routing to record-structurer. The household details cited (dwelling 112, family 131, Billerica, Middlesex County, five members with ages and occupations) match the notes in log_002. Claude did not write sources or assertions itself, did not ask for the capture again, and did not make household role decisions\u2014all correct per the routing test constraints."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to drive the workflow forward. The response correctly identified the open question (q_001), examined the log entries to determine the next step, recognized that extraction is needed, and routed to record-structurer as the appropriate next action. All required elements of the routing decision were covered."
+                "rationale": "Claude addressed the user's request to research the next open question and drive the workflow forward. It identified the open question (q_001), retrieved the relevant log entries showing the positive MyHeritage result, confirmed no assertions had been extracted, and explained the delegation to record-structurer. All required context was examined: project status, log entries, and assertion state. The response is complete for a routing skill that delegates extraction work downstream."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three MCP tool calls used correct arguments: project_context with correct projectPath, research_query for log section with correct projectPath and questionId, and research_query for assertions section with correct projectPath and questionId. All calls matched expected_args semantically and returned live matches with no fixture_not_found errors."
+                "rationale": "All three MCP tool calls used correct arguments. project_context was called with the correct projectPath. research_query was called twice with correct section ('log' and 'assertions') and questionId ('q_001') parameters. All calls matched expected_args semantically and returned live results with no fixture_not_found errors. Arguments were appropriate and well-formed."
               }
             ],
-            "judge_cost_usd": 0.010898000000000001,
+            "judge_cost_usd": 0.011293000000000001,
             "duration_ms": 5642.547099851072,
             "error": null,
             "input_tokens": 9048,
             "cached_input_tokens": 0,
-            "output_tokens": 370
+            "output_tokens": 449
           },
           "started_at": 1792757093.3354714,
           "ended_at": 1792757177.2532754
@@ -18073,27 +18073,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the project state, retrieved the active plan targeting MyHeritage's 1855 Massachusetts State Census, and accurately described the task: a MyHeritage search for Josiah Barnes. The narration is honest about delegating to search-external-sites and does not fabricate any results or claims. No factual errors in the response."
+                "rationale": "Claude correctly identified the open question (q_001), retrieved the active plan (pl_001) with its single MyHeritage search item (pli_001), and accurately characterized the task: searching the 1855 Massachusetts State Census on MyHeritage for Josiah Barnes. The narration is factually sound about what was delegated and what remains to be done. No fabricated claims or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to research the next open question by checking project state, retrieving plan details, and routing to the appropriate external search skill. The workflow progression is clear: identify the question, pull the plan, and hand off to search-external-sites. All required steps for the router's own work were completed."
+                "rationale": "Claude completed the routing task fully. It retrieved project context, examined the active plan, identified the next actionable step (the MyHeritage search), and handed off to search-external-sites as required. The response addresses everything the input state required: understanding the question, locating the plan, and delegating to the correct downstream skill."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls used correct arguments. The project_context call passed the correct projectPath. The research_query call correctly specified section='plans', questionId='q_001', and status='active' to retrieve the active plan. All arguments matched the expected shape and values."
+                "rationale": "Both MCP tool calls passed correct arguments. The project_context call used the correct projectPath. The research_query call correctly specified section='plans', questionId='q_001', and status='active' to retrieve the active plan. All arguments matched the fixture's expected shape and semantics. No critical identifiers were wrong, and no calls landed in fixture_not_found."
               }
             ],
-            "judge_cost_usd": 0.010073,
+            "judge_cost_usd": 0.010268000000000001,
             "duration_ms": 5124.374999664724,
             "error": null,
             "input_tokens": 8318,
             "cached_input_tokens": 0,
-            "output_tokens": 351
+            "output_tokens": 390
           },
           "started_at": 1792757163.8399062,
           "ended_at": 1792757210.1621718
@@ -18505,27 +18505,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified and presented the FamilySearch hints for Patrick Flynn (LZNY-BRF). The hint summaries are accurate: Hint 1 (1870 census showing Patrick in Thomas Flynn's household) and Hint 2 (1880 census with indexing error) are both validly described. Claude appropriately noted that Hint 3 (death certificate) was already extracted as src_004. The factual claims about the hints' content and confidence levels are supported by the tool response. Claude correctly refrained from making accept/reject decisions, instead asking the researcher for verdicts as instructed."
+                "rationale": "Claude correctly identified and presented the three FamilySearch hints for Patrick Flynn (LZNY-BRF). The hint details (1870 census showing Patrick in Thomas Flynn's household, 1880 census with indexing error, 1908 death certificate already extracted) are accurate. Claude appropriately noted that hint 3 was already part of the research (src_004, pe_005). The factual claims about the hints' content and relevance are supported by the tool responses and prior state. Claude did not fabricate any hint details or make unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the user's request to check FamilySearch hints on Patrick Flynn. All three hints returned by the search-hints tool were presented and evaluated. Claude provided context about each hint's relevance to the parentage research question, noted which were already in the project (src_004), and appropriately deferred the accept/reject decision to the researcher. The response included the necessary URLs and confidence levels for each hint."
+                "rationale": "Claude addressed the user's request to check FamilySearch hints on Patrick Flynn (LZNY-BRF) and provide verdicts on their validity. All three hints were reviewed and presented with recommendations (Accept for hints 1 and 2, No action for hint 3). Claude correctly identified the significance of the 1870 hint for the parentage question and asked the researcher for their verdicts before proceeding to extraction, which is the appropriate stopping point for a routing test."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude in this response. The search-hints tool was invoked by the routing system (as indicated in 'Skills Claude invoked'), but Claude itself made no direct MCP calls. Therefore, Tool Arguments is N/A per the scoring rules for zero tool calls."
+                "rationale": "No MCP tool calls were made by Claude in this response. The skill correctly routed to search-hints via the agent mechanism (as noted in 'Skills Claude invoked'), and Claude presented the stubbed triage return to the researcher without making independent tool calls. This is the correct behavior for a routing test where the delegation carries personId and projectPath without accept/reject verdicts."
               }
             ],
-            "judge_cost_usd": 0.01461,
+            "judge_cost_usd": 0.014717000000000001,
             "duration_ms": 5550.555900204927,
             "error": null,
-            "input_tokens": 12435,
+            "input_tokens": 12432,
             "cached_input_tokens": 0,
-            "output_tokens": 435
+            "output_tokens": 457
           },
           "started_at": 1792757157.5878956,
           "ended_at": 1792757202.696581
@@ -19042,27 +19042,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's narration accurately reflects what occurred: the project context was retrieved, locality-guide was delegated first (as required by the routing table), and research-plan was delegated next. The claim that 'the routing table required two steps before a search can be executed' is correct\u2014the question was in 'framed' state with no plan and no localities entry for Muhlenberg County. Claude correctly identified the jurisdiction's record landscape as the first step and the research plan as the second. No fabricated material or unsupported claims; all assertions align with the tool responses and the before-state."
+                "rationale": "Claude's narration accurately reflects what occurred: the project context was retrieved, locality-guide was delegated first (as required by the routing table), and research-plan was delegated next. The claim that 'the routing table required two steps before a search can be executed' is correct\u2014the question was in 'framed' state with no plan and no localities entry for Muhlenberg County. Claude correctly identified that the locality guide must be established first to inform the research plan. The response contains no fabricated material, contradictions, or unsupported claims. All assertions align with the tool responses and the before-state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed everything the input state required. The user message asked to 'research the next open question on this project \u2014 drive the workflow forward.' Claude correctly identified q_001 as the open question in 'framed' state, recognized that no plan existed and no localities entry was present for Muhlenberg County, and delegated to locality-guide first (per the routing table), then to research-plan. The workflow was advanced to the next required step. No silent omissions of items the input state made obvious."
+                "rationale": "Claude addressed everything the input state required. The user message asked to 'research the next open question on this project \u2014 drive the workflow forward.' Claude correctly identified q_001 as the open question in 'framed' state, recognized the two prerequisite steps (locality guide and research plan), delegated both in the correct order, and explained the workflow path forward. The response did not need to execute searches or persist plan data\u2014those are downstream tasks. The routing and delegation were complete and correct."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The single MCP tool call (mcp__genealogy__project_context) was invoked with the correct projectPath argument. The expected_args field was null, indicating no specific argument validation was required for this call. The call matched successfully (matched.kind == 'live'), and the response provided the necessary project context (open questions, person details, question status). No fixture_not_found errors or argument mismatches occurred."
+                "rationale": "The single MCP tool call (mcp__genealogy__project_context) was invoked with the correct projectPath argument. The expected_args field was null, indicating no specific argument validation was required for this call. The call succeeded with matched.kind == 'live', confirming correct tool usage. No fixture_not_found errors occurred. The tool arguments were appropriate and correctly formed."
               }
             ],
-            "judge_cost_usd": 0.010348,
+            "judge_cost_usd": 0.010298,
             "duration_ms": 6905.48470010981,
             "error": null,
             "input_tokens": 7963,
             "cached_input_tokens": 0,
-            "output_tokens": 477
+            "output_tokens": 467
           },
           "started_at": 1792757121.3074284,
           "ended_at": 1792757180.4247544
@@ -19601,27 +19601,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's narration accurately describes the hand-off to research-plan. The response correctly identifies the open question (q_001), accurately characterizes the research strategy (parish registers and military levy rolls), and properly explains the patronymic convention and the value of l\u00e6gdsruller as direct parentage evidence. No fabricated claims or unsupported assertions. The statement that 'the plan will sequence searches' correctly describes delegation without falsely claiming the plan was persisted to research.json."
+                "rationale": "The skill correctly identified the open question (q_001), accurately described the research context (Danish patronymic naming, military levy rolls as direct parentage evidence), and properly delegated to research-plan. The narration accurately reflects the hand-off without falsely claiming a plan was saved. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request to 'research the next open question' and 'drive the workflow forward.' It correctly identified q_001 as the open question, retrieved the project context (including the locality guide already in place), and handed off to research-plan as the routing table prescribes. The response explains the research strategy and the significance of the evidence types, fulfilling the scope of the router's own work."
+                "rationale": "The skill addressed the user's request to research the next open question and drive the workflow forward. It correctly identified that a research plan was the next step, retrieved the project context, and made the appropriate hand-off to research-plan. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The single MCP call (mcp__genealogy__project_context) was made with the correct projectPath argument. The call succeeded (matched.kind == 'live') and returned the expected project state, including the open question, subject person, and locality guide with collections. No tool call errors or argument mismatches."
+                "rationale": "The single MCP call to mcp__genealogy__project_context passed the correct projectPath argument. The call matched successfully (matched.kind == 'live') and returned the expected project state including the open question, subject person, and locality guide with collections."
               }
             ],
-            "judge_cost_usd": 0.010185999999999999,
+            "judge_cost_usd": 0.009791,
             "duration_ms": 6174.763000104576,
             "error": null,
             "input_tokens": 8136,
             "cached_input_tokens": 0,
-            "output_tokens": 410
+            "output_tokens": 331
           },
           "started_at": 1792757202.8750346,
           "ended_at": 1792757238.5550153
@@ -20028,27 +20028,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly relayed the two research suggestions from tree-survey (Hannah Pruitt and Frank Ellery & Ruth Ashby) with accurate details: Hannah's birth year (~1862), location (Lancaster, Pennsylvania), and the lack of recorded parents; Frank and Ruth's marriage location (Dayton, Ohio) and lack of recorded children. The suggestions and questions are factually grounded in the stubbed tree-survey response. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly relayed the two research suggestions from tree-survey (Hannah Pruitt and Frank Ellery & Ruth Ashby) with accurate details: Hannah's ID (LZ00-AAA), birth year (~1862), location (Lancaster, Pennsylvania), and the research question about her parents. Frank and Ruth's ID (LZ00-BBB), marriage location (Dayton, Ohio), and the question about their children are all accurate. No fabricated material or unsupported claims. The response appropriately stopped after presenting suggestions and requesting the researcher's choice, as expected for a routing scenario."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to start a new research project by invoking tree-survey (the correct routing per the per-test context), relaying its suggestions, and asking the user to pick one or propose an alternative. The response completed the router's task: present options and wait for the researcher's choice without prematurely spawning init-project."
+                "rationale": "The skill addressed the user's request to start a new research project by surveying the FamilySearch tree and presenting promising research opportunities. Both suggestions from tree-survey were included with sufficient detail (names, IDs, locations, birth/marriage information, and research questions). The response appropriately asked the researcher to choose which person to research or propose an alternative, completing the expected interaction for this routing scenario."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude in this response. The tree-survey skill was invoked as a hand-off (routing), not as a direct tool call by Claude. Tool Arguments is N/A when zero MCP calls occur."
+                "rationale": "No MCP tool calls were made by Claude in this response. The suggestions and details came from tree-survey (the routed-to skill), not from Claude's own tool invocations. Tool Arguments is N/A when zero MCP tool calls occur."
               }
             ],
-            "judge_cost_usd": 0.008409999999999999,
+            "judge_cost_usd": 0.008607,
             "duration_ms": 4734.060500282794,
             "error": null,
-            "input_tokens": 6540,
+            "input_tokens": 6537,
             "cached_input_tokens": 0,
-            "output_tokens": 374
+            "output_tokens": 414
           },
           "started_at": 1792757239.0111341,
           "ended_at": 1792757278.8500772
@@ -20467,27 +20467,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that no research.json exists in the empty project folder and accurately stated the routing condition from the routing table. The explanation of why init-project was the appropriate hand-off is factually sound: the folder is empty and the message names both a person (Hannah Pruitt) and an objective (find her parents). No fabricated claims or unsupported assertions were made."
+                "rationale": "Claude correctly identified that no research.json exists in the empty project folder and accurately described the routing condition from the routing table. The explanation of why init-project is the appropriate next step is factually sound: the message names a person (Hannah Pruitt) and states a clear objective (find her parents), which matches the routing rule. No fabricated claims or unsupported assertions were made."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the core requirement of this routing test: recognizing the empty project state and routing to init-project with the stated objective and FamilySearch ID. The response included the person's name, the objective, and the identifier needed for init-project to seed the project. No required elements were omitted."
+                "rationale": "Claude addressed the complete routing scenario. It checked for project existence, identified the absence of research.json, recognized the routing condition was met, and explained the handoff to init-project with the user's objective and FamilySearch ID preserved. The response included the reasoning for the routing decision and outlined the expected downstream workflow, fulfilling what the routing task required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude in this response. The routing decision itself is handled deterministically by the harness (test_routes_to_expected_skill), not by Claude's tool invocation. Tool Arguments is N/A when zero MCP tool calls occur."
+                "rationale": "No MCP tool calls were made by Claude in this response. The skill performed routing logic and decision-making without invoking any tools, so this dimension is not applicable."
               }
             ],
-            "judge_cost_usd": 0.008274,
+            "judge_cost_usd": 0.008211,
             "duration_ms": 4066.7841997928917,
             "error": null,
-            "input_tokens": 6514,
+            "input_tokens": 6511,
             "cached_input_tokens": 0,
-            "output_tokens": 352
+            "output_tokens": 340
           },
           "started_at": 1792757257.9505727,
           "ended_at": 1792757300.4860437
@@ -21937,21 +21937,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude completed all required preparatory work before routing. It retrieved project context, queried the log entries, queried assertions, and performed person_evidence cross-checks for all five assertions (a_001 through a_005). The state derivation is complete: Claude confirmed the chain is clean, all positive entries are covered, and no conflicts exist. The response correctly identifies that the next step is to invoke research-exhaustiveness for the exhaustiveness assessment, which is the appropriate routing decision given the completed plan and evidence-gathered state."
+                "rationale": "Claude completed all required work for a routing test. It performed the log-vs-assertion cross-check as stated, verified person-evidence links for all assertions, confirmed the absence of conflicts and unregistered disagreements, and correctly identified that the question has reached the evidence-gathered stage. The response appropriately summarizes what has been searched and delegates the exhaustiveness judgment to research-exhaustiveness without attempting to make that determination itself. All necessary preparatory analysis was performed before the hand-off."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All seven MCP tool calls used correct arguments. The project_context call used the correct projectPath. The research_query calls correctly specified section ('log', 'assertions', 'person_evidence'), questionId ('q_001'), personId ('I1'), and assertionIds ('a_003', 'a_004', 'a_005'). All calls matched their expected_args semantically and returned live responses with matched.kind='live'. No fixture_not_found errors occurred. The arguments were well-formed and targeted the correct data."
+                "rationale": "All seven MCP tool calls used correct arguments. The project_context call correctly specified the project path. The three research_query calls for log, assertions, and person_evidence sections all used correct section names and appropriate identifiers (questionId for log and assertions, personId and assertionId for person_evidence lookups). All calls matched expected_args semantically and returned live responses with matched.kind == 'live'. No fixture_not_found errors occurred. Arguments were well-formed and targeted the correct data."
               }
             ],
-            "judge_cost_usd": 0.01696,
+            "judge_cost_usd": 0.01687,
             "duration_ms": 7515.292400028557,
             "error": null,
             "input_tokens": 14260,
             "cached_input_tokens": 0,
-            "output_tokens": 540
+            "output_tokens": 522
           },
           "started_at": 1792756970.0143783,
           "ended_at": 1792757057.7552843
@@ -22544,21 +22544,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to 'research the next open question on this project \u2014 drive the workflow forward.' The skill correctly identified q_001 as the open question, retrieved the plan details via tool calls, and routed to search-records to execute pli_001. The narration explains the rationale for choosing Unna as the search principal (distinctive patronymic vs. common name). No required steps were omitted; the routing decision itself is deterministically validated separately."
+                "rationale": "Claude addressed the user's request to 'research the next open question on this project \u2014 drive the workflow forward.' The skill correctly identified q_001 as the open question, retrieved the active plan (pl_001) and its single item (pli_001), and routed execution to search-records with appropriate context. The narration explains the rationale for using Unna's distinctive patronymic as the search anchor. No required steps were omitted; the handoff to search-records is the appropriate next action given the plan state."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls passed correct arguments. The first call to mcp__genealogy__project_context used the correct projectPath. The second call to mcp__genealogy__research_query correctly specified section='plans' and questionId='q_001'. Both calls matched the fixture's expected behavior (expected_args: null indicates live tools with no strict argument schema). No critical identifiers were wrong, and no calls landed in fixture_not_found."
+                "rationale": "Both MCP tool calls passed correct arguments. The first call to mcp__genealogy__project_context used the correct projectPath. The second call to mcp__genealogy__research_query correctly specified section='plans' and questionId='q_001' to retrieve the active plan. Both calls matched the fixture's expected behavior (expected_args: null indicates the harness did not constrain these calls, and both returned ok: true with matched.kind: 'live'). No tool calls failed with fixture_not_found errors."
               }
             ],
-            "judge_cost_usd": 0.011967,
+            "judge_cost_usd": 0.012117,
             "duration_ms": 6472.130700014532,
             "error": null,
             "input_tokens": 9622,
             "cached_input_tokens": 0,
-            "output_tokens": 469
+            "output_tokens": 499
           },
           "started_at": 1792757146.1161816,
           "ended_at": 1792757232.5976088
@@ -23036,27 +23036,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The router correctly identified that the project has only an objective with no questions yet, and accurately explained this gap. The state derivation from project_context was sound: objective exists, openQuestions is empty, no prior research. The narration 'No questions registered yet \u2014 routing to question-selection to frame the first research question' is factually accurate and supported by the tool response showing openQuestions: []."
+                "rationale": "The router correctly identified that the project has only an objective with no questions yet, and accurately explained this gap. The state derivation from project_context was sound: objective exists, openQuestions is empty, no prior research. The router's statement 'No questions registered yet' is factually correct per the tool response. The decision to route to question-selection rather than attempt proof-conclusion is the correct behavior per SKILL.md \u00a7 'Direct user requests name a destination, not a shortcut' \u2014 the router must walk the decision table from row 1 when preconditions are unmet, which it did."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The router completed its required work: it read project context, identified the precondition gap (no questions), explained what was missing, and routed to the appropriate next skill (question-selection). Per the per-test context, the router is not responsible for completing the full research\u2014only for recognizing the unmet precondition and delegating. The hand-off is the correct endpoint."
+                "rationale": "The router addressed everything required: it read the project context to determine state, identified the missing precondition (no questions), explained what was missing, and routed to the appropriate next skill (question-selection). The user's request to research 'through to a proof conclusion' was correctly interpreted as a destination name, not a shortcut to skip intermediate steps. The router did not attempt to perform question-selection's work itself, which is the correct scope boundary."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The single MCP call to mcp__genealogy__project_context passed the projectPath argument correctly. The call matched kind 'live' with ok: true, indicating successful execution. No validation errors or fixture_not_found issues occurred. The tool was used appropriately to derive project state before routing."
+                "rationale": "The single MCP call to mcp__genealogy__project_context passed no arguments (expected_args is null), which is correct for a context-read operation. The tool matched successfully (matched.kind == 'live'), confirming the call was well-formed. No fixture_not_found errors occurred. The call was appropriate and necessary to derive the project state before deciding where to route."
               }
             ],
-            "judge_cost_usd": 0.009063,
+            "judge_cost_usd": 0.009448,
             "duration_ms": 5072.551699820906,
             "error": null,
             "input_tokens": 7158,
             "cached_input_tokens": 0,
-            "output_tokens": 381
+            "output_tokens": 458
           },
           "started_at": 1792757232.7917023,
           "ended_at": 1792757275.5358362
@@ -23806,27 +23806,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the project state (q_001 in evidence-gathered, six unlinked assertions covering John and Bridget Flynn), accurately described the household composition from the 1850 census data, and appropriately routed to person-evidence for the identity-linking and tree-building work. The narration is factually grounded in the tool responses and makes no unsupported claims. Claude did not attempt to perform person-evidence's work (minting persons, writing relationships) \u2014 it correctly delegated that responsibility."
+                "rationale": "Claude correctly identified the project state (q_001 in evidence-gathered, six unlinked assertions covering two household children), accurately characterized the work remaining (person-minting and edge-writing for John and Bridget Flynn), and honestly described what it delegated to person-evidence. No fabricated claims or unsupported assertions. The narration accurately reflects the tool responses: seven assertions extracted, one person-linked (Thomas via pe_001), six remaining unlinked (a_002\u2013a_007 covering John and Bridget). Claude's statement that it 'handed these six assertions to person-evidence' is truthful about the delegation, and its description of next steps (log-vs-assertion cross-check, research-exhaustiveness, proof-conclusion) is sound. No contradictions with input state or tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the full scope of the routing task: it queried the project context and assertions, identified all six unlinked assertions (a_002\u2013a_007) covering the two household children (John and Bridget Flynn), explained why person-evidence was the appropriate next step, and outlined the downstream workflow (log-vs-assertion cross-check, research-exhaustiveness, proof-conclusion). It also flagged the absence of Patrick Flynn from the 1850 household as an identity question to be surfaced, which is part of the household skeleton evaluation."
+                "rationale": "Claude addressed everything the routing scenario required. It queried project context, retrieved person_evidence links and assertions, correctly identified the gap (six unlinked assertions for two unminted household members), and routed to person-evidence with honest narration of what that agent must do (mint John and Bridget, link assertions, write parent-child edges). It also flagged the absence of Patrick from the 1850 household as an identity question to surface later. No silent omissions of required analysis or routing work."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three MCP tool calls passed correct arguments: project_context with the correct projectPath, research_query for person_evidence section with correct projectPath, and research_query for assertions with correct projectPath and questionId (q_001). No calls returned fixture_not_found errors. Arguments match the expected shape and semantics."
+                "rationale": "All three MCP calls passed correct arguments. (1) project_context with correct projectPath \u2014 matched live, no fixture_not_found. (2) research_query for person_evidence section with correct projectPath \u2014 matched live. (3) research_query for assertions with correct projectPath and questionId='q_001' \u2014 matched live. No critical identifier errors, no fixture_not_found responses, no noisy extra arguments. All calls semantically match expected_args (which were null, indicating any reasonable call to these live tools was acceptable)."
               }
             ],
-            "judge_cost_usd": 0.014093000000000001,
+            "judge_cost_usd": 0.014613000000000001,
             "duration_ms": 8265.457199886441,
             "error": null,
             "input_tokens": 11858,
             "cached_input_tokens": 0,
-            "output_tokens": 447
+            "output_tokens": 551
           },
           "started_at": 1792757014.0116498,
           "ended_at": 1792757092.6693618
@@ -24445,27 +24445,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the two unregistered disagreements blocking q_001 (Elizabeth Barker's birthplace across a_007, a_023, a_044; Sarah Martha Barker's birthplace across a_011, a_027) and accurately described the routing requirement. The project_context tool confirmed these exact unregistered disagreements in the nextStep field. Claude made no factual errors, did not weigh the conflicts itself, and did not treat the patron's request to 'wrap up' as permission to skip conflict-resolution. The response accurately reflects the project state and routing table requirements."
+                "rationale": "Claude correctly identified the two unregistered disagreements blocking q_001 (Elizabeth Barker's birthplace across a_007, a_023, a_044; Sarah Martha Barker's birthplace across a_011, a_027) and accurately stated that these must be resolved before exhaustiveness and proof-conclusion can proceed. The project_context tool confirmed these exact unregistered disagreements in its response. Claude made no factual errors, did not weigh the conflicts itself, and did not treat the patron's request to 'wrap up' as permission to skip conflict-resolution. The routing decision and rationale are factually sound."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed everything the user message and input state required. The user asked to wrap up q_001 and write the conclusion; Claude correctly recognized that this cannot proceed without resolving the unregistered conflicts first. Claude identified both conflicts, named the affected persons and assertions, explained why conflict-resolution is required, and outlined the subsequent steps (research-exhaustiveness, then proof-conclusion). No required work was omitted."
+                "rationale": "Claude addressed everything required by the input state and the routing test. It identified both unregistered disagreements, named the specific assertion IDs involved, explained why conflict-resolution must occur before the next steps, and clearly articulated the sequence: conflict-resolution \u2192 research-exhaustiveness \u2192 proof-conclusion. The response fully covers the state derivation and the delegation required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call (mcp__genealogy__project_context) with the correct projectPath argument. The call matched the expected_args semantically and returned successfully (ok: true). The tool response confirmed the project state and the unregistered disagreements Claude cited, validating that the arguments were correct."
+                "rationale": "Claude made one MCP tool call (mcp__genealogy__project_context) with the correct projectPath argument. The call matched the expected_args (null, meaning no specific args were expected beyond the path). The tool returned successfully with matched.kind == 'live' and provided the project context needed to identify the unregistered disagreements. No tool call errors occurred."
               }
             ],
-            "judge_cost_usd": 0.015545,
+            "judge_cost_usd": 0.015587,
             "duration_ms": 6343.193400185555,
             "error": null,
-            "input_tokens": 13385,
+            "input_tokens": 13382,
             "cached_input_tokens": 0,
-            "output_tokens": 432
+            "output_tokens": 441
           },
           "started_at": 1792757122.1641092,
           "ended_at": 1792757178.1776354
@@ -24877,27 +24877,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly relayed the GPS mentor's feedback without fabrication. The response accurately surfaces the mentor's two substantive points: the unsearched 1880 census and the unresolved maternal line. Claude did not invent verdict categories, scores, or state changes. The narrative accurately reflects what the stub returned and does not claim the verdict was recorded or logged. All factual claims are grounded in the mentor's response."
+                "rationale": "The response accurately relays the GPS mentor's feedback without fabrication or misrepresentation. The mentor identified two substantive points: the unsearched 1880 census and the unresolved maternal line. Claude correctly surfaces these findings and attributes them to the mentor. No false claims about file changes, verdict recording, or state modifications appear. The response appropriately declines to re-open the resolved question or force remediation, consistent with the mentor's 'consider_addressing' verdict."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the user's request for a second opinion by invoking the GPS mentor and surfacing its complete narrative. The response includes both critiques the mentor identified (1880 census gap and mother's identity unresolved), explains their significance, and offers the user clear next-step options. Nothing the input state required was omitted."
+                "rationale": "The response fully addresses the user's request for a second opinion. It surfaces the mentor's narrative_for_user completely: both the 1880 census gap and the mother's unresolved status are clearly communicated. The response offers appropriate next steps (search 1880, expand narrative, or share as-is with caveat), giving the user agency over remediation. No required element of the mentor's feedback is omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude in this response. The routing to gps-mentor is deterministically verified by the harness (test_routes_to_expected_skill), not graded here. Tool Arguments is N/A."
+                "rationale": "No MCP tool calls were made by Claude in this response. The routing to gps-mentor was handled by the harness deterministically (asserted by test_routes_to_expected_skill), not by Claude's own tool invocation. Therefore Tool Arguments is N/A."
               }
             ],
-            "judge_cost_usd": 0.012336999999999999,
+            "judge_cost_usd": 0.012544,
             "duration_ms": 4302.035100292414,
             "error": null,
-            "input_tokens": 10542,
+            "input_tokens": 10539,
             "cached_input_tokens": 0,
-            "output_tokens": 359
+            "output_tokens": 401
           },
           "started_at": 1792757180.946671,
           "ended_at": 1792757210.0946355
@@ -26088,27 +26088,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 2,
-                "rationale": "Claude correctly identified that the 1861 death record contradicts h_002's timeline (a man dead in 1861 cannot marry in 1870), and correctly flagged this as breaking the 1870 marriage attribution. However, Claude made an unsupported inference by stating the death record 'actually adds new support for the parentage side of that claim' regarding Robert being a sibling of Polley A.P. Burton. The researcher reported only that the death record names 'James and Elizabeth Eastham' as parents\u2014no information about their birthplaces or any connection to Polley. Claude inferred a sibling relationship without evidence. Additionally, Claude stated 'If Polley A.P. Burton is also a child of James and Elizabeth Eastham, a search of James Eastham's household in Pulaski County records should turn up her name'\u2014but the researcher never stated where James and Elizabeth lived. Claude added a location (Pulaski County) that was not in the reported record. The core contradiction identification is sound, but these inferences exceed what the researcher's report supports."
+                "rationale": "Claude correctly identifies that the 1861 death record contradicts h_002's timeline (a man dead in 1861 cannot marry in 1870), and appropriately flags this as breaking the 1870 marriage attribution. However, Claude makes an unsupported inference by stating the death record 'actually adds new support for the parentage side of that claim' regarding h_002's sibling hypothesis. The researcher reported only that the death record names James and Elizabeth Eastham as parents\u2014no information about their birthplaces or whether they match Polley's parents. Claude infers this supports the sibling hypothesis without evidence. The reply also states 'If Polley A.P. Burton is also a child of James and Elizabeth Eastham, a search of James Eastham's household in Pulaski County records should turn up her name'\u2014but this is presented as a forward plan, not as support already present. The core error is characterizing new parental names as 'support' for a hypothesis about shared parentage when only the names themselves are new, not any corroborating details."
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "Claude addressed all the key elements the researcher's message required: identified the contradiction with h_002's timeline, recognized the new parental names (James and Elizabeth Eastham) as new evidence, routed appropriately to hypothesis-tracking and research-plan agents, and asked for the record identifier to proceed with extraction. The response correctly noted that the record cannot yet be formally cited without an ID and outlined the next steps (searching for the death record, then searching for James Eastham's household). No required element from the researcher's message was omitted."
+                "score": 2,
+                "rationale": "Claude addresses the key contradiction (1861 death vs. 1870 marriage) and identifies the new parental names (James and Elizabeth Eastham) as a research lead. However, the response incompletely addresses what the death record means for the existing research direction. The researcher's message reports a death in Pulaski County in 1861 matching 'the two censuses with the Burton household'\u2014establishing that the Robert in the 1850 and 1860 Burton censuses died in 1861. Claude does not explicitly confirm this identity or extract the implications for the Burton household composition in those years. Additionally, Claude does not address whether this death record might help resolve q_001 or q_002 (the questions about Mary Ann Eastham's identity), which are the active research questions. The response focuses on h_002 and the new parental lead but does not systematically evaluate the record against both active hypotheses and questions."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made three MCP tool calls: project_context (no args expected), research_query for hypotheses (section='hypotheses'), and research_query for questions (section='questions'). All calls matched expected patterns. The project_context call retrieved the current state correctly. The research_query calls used the correct section parameters to pull hypothesis and question data. No tool calls returned fixture_not_found errors. Arguments were semantically correct and appropriate for the task."
+                "rationale": "Claude made three tool calls: project_context, research_query (hypotheses), and research_query (questions). All calls used correct arguments matching the expected fixture structure. The projectPath argument was correct, and the section parameters ('hypotheses' and 'questions') were appropriate for retrieving the relevant research state. No tool calls returned fixture_not_found errors. The calls were well-formed and targeted the right data to ground the analysis."
               }
             ],
-            "judge_cost_usd": 0.029932,
+            "judge_cost_usd": 0.030344000000000003,
             "duration_ms": 9035.527900326997,
             "error": null,
-            "input_tokens": 26932,
+            "input_tokens": 26929,
             "cached_input_tokens": 0,
-            "output_tokens": 600
+            "output_tokens": 683
           },
           "started_at": 1792756856.9379902,
           "ended_at": 1792757034.6455767
@@ -26190,5 +26190,6 @@
       "research_query": "058ec55959f09ab1ffb9b44533e8f3f91a6bbdb463a9753a974c92cd00a793d0",
       "sidecar_read": "a78db5f0efb59b15d812c4654b58377ab27f9b7dcd5115d9373894185096af01"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }
