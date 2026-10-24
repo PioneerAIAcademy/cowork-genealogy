@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 9, hint-samples.csv row 250, flags adds_father/adds_mother, confidence 3). Draft transcribed from an 1853 Krásno nad Kysucou Catholic baptism of Josephus Martassek naming his parents Joannes Martassek and Maria Tizsinyák; unverified. The tree gives the subject no birth date, so the 1853 baptism is linked on name and parish alone. CSV country Czechoslovakia; the record is in present-day Slovakia, tagged SK."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 9, hint-samples.csv row 250, flags adds_father/adds_mother, confidence 3). Resolved 2026-10-23 as a FALSE MATCH: the hint, an 1853 Krásno nad Kysucou Catholic baptism of Josephus Martassek naming parents Joannes Martassek and Maria Tizsinyák, concerns an infant who died aged five months on 9 October 1853 (Karásznó death register No. 119, ark:/61903/1:1:6N98-SCLC), so he cannot be the subject, who married Maria Szuchony and had children baptised at Krásno 1878-1893. Findings are an avoid guard on those parents plus a required documented rejection. CSV country Czechoslovakia; the record is in present-day Slovakia, tagged SK.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:V171-T6D",
+    "identity": "different"
+  }
 }

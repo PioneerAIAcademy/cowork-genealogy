@@ -28,19 +28,34 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 9, `hint-samples.csv` row 250,
-flags `adds_father,adds_mother`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Slovakia, Church and Synagogue Books, 1592-1935", the 1853 Krásno nad Kysucou baptism of Josephus Martassek, son of Joannes Martassek and Maria Tizsinyák. The index gives only the year. Retrieval was tool-assisted (`dev/try-record-read.ts`).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Joannes Martassek and Maria Tizsinyák as his parents, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-23: FALSE MATCH** (issue #3625; identity `different`).
+The hint record — "Slovakia, Church and Synagogue Books, 1592-1935", the
+1853 Krásno nad Kysucou (Karásznó) Catholic baptism of Josephus Martassek,
+son of Joannes Martassek and Maria Tizsinyák (`ark:/61903/1:1:V171-T6D`) —
+is not the subject's baptism. The same parish's death register, entry
+No. 119 (`ark:/61903/1:1:6N98-SCLC`), records that Josephus Martassek, son
+of Joannes Martassek and Maria Tizsinyák, died aged five months on 9 October
+1853 and was buried on 11 October 1853.
+A child dead in 1853 cannot be the Joseph Martassek (L8JK-KDK) who married
+Maria Szuchony and had children baptised at Krásno between 1878 and 1893.
+The decision rests on the two index entries above. Retrieval was by hand on
+familysearch.org.
+
+The baptism scan (image 50 of 249) was also read, and entry 27 reads
+Josephus Martassek, 19 May 1853, father Joannes Martassek, mother Maria
+Tizsinyák. That reading is **unlicensed**: the calibration against two other
+indexed entries on the same page could not be done, because FamilySearch's
+click-to-highlight did not work, so no other entry was checked. Nothing in
+the fixture relies on it, and `image_basis` is not set.
+
+`expected-findings.json` therefore carries an `avoid` guard (f1) against
+naming Joannes Martassek and Maria Tizsinyák as his parents, and a required
+finding (f2) that the report documents the rejection and leaves his parents
+unestablished. The subject's actual parents remain open. The Krásno nad
+Kysucou marriage registers for 1873-1878 ("Slovakia, Church and Synagogue
+Books, 1592-1935") were searched by hand for his marriage to Maria Szuchony,
+which would normally give his age and parents; no entry was found. A
+different Josephus Martassek baptised at Krásno around 1845-1858 is the
+likely candidate class, but none has been identified as his.
 
 CSV country "Czechoslovakia"; the record and the family are in Krásno nad Kysucou, present-day Slovakia, so the fixture is tagged `SK`.
-
-A plausible candidate on name, parish and age. The baptism is in the same parish as all five of the subject's children, and a man born in 1853 would have been 25 at his first child's baptism in 1878 and 40 at his last in 1893. None of the subject's sources is his own baptism or marriage, so the hint is not a re-index of anything in the tree.
-
-The weakness is that the tree gives the subject no birth date at all, so the hint links them on name and parish alone. Martassek is a common surname in Krásno, and a parish of that size could easily baptise two or three boys named Josephus Martassek within a decade. The discriminating check is the subject's marriage to Maria Szuchony, which should be in the same parish's registers shortly before 1878. Slovak Catholic marriage entries of the 1870s usually give the groom's age and often his parents. If it names Joannes Martassek and Maria Tizsinyák, or gives an age that fits 1853, the hint holds. A search of the Krásno baptisms for other Josephus Martassek entries between about 1845 and 1858 shows how many candidates there are.
