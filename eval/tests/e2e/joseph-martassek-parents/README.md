@@ -33,8 +33,9 @@ The hint record — "Slovakia, Church and Synagogue Books, 1592-1935", the
 1853 Krásno nad Kysucou (Karásznó) Catholic baptism of Josephus Martassek,
 son of Joannes Martassek and Maria Tizsinyák (`ark:/61903/1:1:V171-T6D`) —
 is not the subject's baptism. The same parish's death register, entry
-No. 119 (`ark:/61903/1:1:6N98-SCLC`), records that this Josephus Martassek
-died aged five months on 9 October 1853 and was buried on 11 October 1853.
+No. 119 (`ark:/61903/1:1:6N98-SCLC`), records that Josephus Martassek, son
+of Joannes Martassek and Maria Tizsinyák, died aged five months on 9 October
+1853 and was buried on 11 October 1853.
 A child dead in 1853 cannot be the Joseph Martassek (L8JK-KDK) who married
 Maria Szuchony and had children baptised at Krásno between 1878 and 1893.
 The decision rests on the two index entries above. Retrieval was by hand on
