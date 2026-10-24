@@ -128,7 +128,7 @@ DELIVERY_GUIDANCE = (
 # Shared because the hosted alpha reproduced, twice, the failure the prototype
 # already fixed. The Stop hook cannot see that the turn is waiting on its own
 # background subagent -- it reads `project.status` and its own counters -- so it
-# nudges ("invoke the next GPS sub-skill"), and the model, told to get on with
+# nudges ("invoke the `research` skill"), and the model, told to get on with
 # it, starts a DUPLICATE of the agent still running. Measured on the alpha:
 # duplicate `q_001`/`q_002` from two question-selection spawns (feedback issue
 # #3156), and four record-extractors relaunched synchronously while the
@@ -331,8 +331,8 @@ def terminal_reason(
 CONTINUE_REASON = (
     "You are mid-run in an autonomous /research session and the "
     "project is not yet complete (project.status is not "
-    "'completed'). Re-read research.json and invoke the next GPS "
-    "sub-skill now; keep going until project.status is "
+    "'completed'). Re-read research.json and invoke the `research` skill "
+    "now; keep going until project.status is "
     "'completed' or you hit a genuine, logged blocker."
 )
 
