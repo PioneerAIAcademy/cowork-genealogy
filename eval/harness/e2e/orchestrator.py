@@ -2775,8 +2775,8 @@ async def _run_agent(
             "reason": (
                 "You are mid-run in an autonomous /research session and the "
                 "project is not yet complete (project.status is not "
-                "'completed'). Re-read research.json and invoke the next GPS "
-                "sub-skill now; keep going until project.status is "
+                "'completed'). Re-read research.json and invoke the `research` "
+                "skill now; keep going until project.status is "
                 "'completed' or you hit a genuine, logged blocker."
             ),
         }
