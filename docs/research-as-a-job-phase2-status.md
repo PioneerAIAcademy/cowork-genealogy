@@ -1,7 +1,36 @@
 # Research as a job — phase 2 status log
 
-**Branch:** `research-as-a-job-phase2`. **Draft PR #3262.**
-**Last updated:** 2026-10-13. Update this file whenever the branch moves.
+**Branch:** `research-as-a-job-phase2`, **closed unmerged 2026-10-23** at tag
+`phase2-final`. **PR #3262 closed.**
+**Last updated:** 2026-10-23. **This log is finished — the branch no longer moves.**
+
+**Final entry.** The branch was closed rather than merged. Measured against `main` that
+day, most of the 1,124 lines it still held were the PRE-REVIEW ancestors of code `main`
+already carried in reviewed form, and a trial merge dropped branch lines in 12
+NON-conflicted files with no conflict marker — including `validator.ts`'s whole
+`supporting_assertion_ids` block, which the 232-test validation suite passed with and
+without. Re-cutting what had genuinely not landed was smaller and safer than resolving
+40 conflicts to reach code `main` already had.
+
+| Landed from the branch | |
+|---|---|
+| #3577 | the front door, `rejected_links`, the reading experience, and the viewer's job-state half |
+| #3589 | step-mode phase 0 measurements and decisions 23-25 |
+| #3662 | the orphan reaper, the web-tier routes, `job_state.py` |
+| #3674 | the step-mode plan scope correction |
+
+| Re-cut from `main` afterwards | |
+|---|---|
+| #3794 | `tool_calls.wrote` — the writer-record unit and its migration |
+| #3795 | the `person_search` probe evidence this repo's docs cite |
+| #3801 | the stall backoff, and the nudge that named a retired skill |
+
+**Not carried forward, and why:** the phase-3 decision exit (phase-3 scope — see
+`docs/plan/research-as-a-job-phase3-loop.md`); `person-search-hales-namesakes.json`
+(referenced by zero tests anywhere); `person-search-flynn.json`'s rework (mutates a
+shared fixture's recorded values with no justification found);
+`open-ask-still-a-job.json` (two `judge_context` lines that would owe a paid run); and
+several stale assertions `main` has moved past. All recoverable from `phase2-final`.
 
 **Everything this file said was blocking is now closed:** #2793 and #2927 (2026-10-03),
 #3119 (2026-10-08), #2122 (2026-10-12). Nothing external gates this branch.
@@ -470,8 +499,10 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    the behaviour table. The example a reader would copy carried no `pick`.
 
 16. **The deferred "candidate cards" item is smaller than the parent plan thought, and
-   measured now.** `dev/probe-candidate-distinguishability.ts`, four live queries: every
-   flood query returned birth/death facts on **5 of 5** top candidates, distinguishable
+   measured now.** `dev/probe-candidate-distinguishability.ts` (`3551593027`, at tag
+   `phase2-final`; not on `main`), four live queries: every
+   flood query returned birth/death FACT TYPES on **5 of 5** top candidates (dated on
+   3 of 5 and 1 of 5 in the two flood queries), distinguishable
    4/5 (hales), 2/5 (smith), 5/5 (hales-year-place). So lifespan and places need no
    enrichment — `person_search` already carries them and the ask is answerable today.
    Only parents and spouse are genuinely absent. The parent's "its top candidate had
@@ -480,7 +511,8 @@ first search says what to expect. Eval green: 14 pass, 1 partial, zero reds.
    20 by default and all 20 share the top score.
 
    **And the flood fixture was unrealistic — now FIXED.**
-   `person-search-hales-namesakes.json` gave its five tied candidates no facts at all,
+   `person-search-hales-namesakes.json` (at tag `phase2-final`; not on `main`, where
+   no test references it) gave its five tied candidates no facts at all,
    so `ut_init_project_012` measured an ask over five identical blank options. Replaced
    with a **live capture used verbatim**: 20 tied (not 5), 8 distinct given names, 10 of
    20 with a birth date, 17 with a residence, and **0 of 20 with no facts at all**. The

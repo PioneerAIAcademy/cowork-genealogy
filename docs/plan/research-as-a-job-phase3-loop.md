@@ -1,7 +1,25 @@
 # Phase 3 — the loop (detailed pass)
 
-**Status:** BUILT EXCEPT ITEM 2, on the `research-as-a-job-phase2` branch (unmerged —
-`main` has none of it). Written 2026-09-30, revised after plan-critic round 1, which found
+**Status, corrected 2026-10-23:** this said "`main` has none of it", and that is no
+longer true. Items 3, 4 and 5, and item 1's UI half, landed with #3577 (`9bb384fd5d`) —
+`rejected-links.ts`,
+`review-ranking.ts`, `plan-item-plausibility.ts` and `DecisionCard.tsx` are all on `main`.
+
+What is NOT on `main` is item 1's **back half**, the decision exit itself
+(`DECISION_REASON`, `DECISION_TOOL`, `on_decision`). Its code is at tag `phase2-final`;
+the `research-as-a-job-phase2` branch was closed unmerged on 2026-10-23 and its other
+work re-cut into #3794, #3795 and #3801, which deliberately left the decision exit here
+because it is phase-3 scope.
+
+**So `main` ships the dead FRONT half:** `job_state.py` has `_NEEDS_YOU = {"decision"}`
+and the web tier renders a decision card, but no worker ever emits a `decision` outcome,
+so "needs you" is unreachable until the exit lands. Harmless, and recorded here rather
+than filed, since this plan is where whoever builds item 1 will look.
+
+Item 2 remains blocked on #1830.
+
+**Original status (2026-09-30, superseded above):** BUILT EXCEPT ITEM 2 on that branch.
+Written 2026-09-30, revised after plan-critic round 1, which found
 five blocking defects; all applied. Parent:
 `docs/plan/research-as-a-job-later-REVISED.md`, "## Phase 3 — the loop".
 

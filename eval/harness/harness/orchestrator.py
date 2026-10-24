@@ -136,6 +136,25 @@ class OrchestratorPaths:
     runlogs_root: Path = DEFAULT_RUNLOGS
 
 
+def _other_suite_names(skill: str, skills_dir: Path, agents_dir: Path) -> set[str]:
+    """Every skill and plugin agent other than `skill` -- used by rule 3 to
+    detect "routing to another skill" patterns in short responses without
+    false-flagging legitimate concise outputs.
+
+    Agents count because a skill converted to an agent (2026-09-22 ruling)
+    leaves the skills dir: with skills alone, a decline naming `search-records`
+    read as substantive once #3567 moved it, and an out-of-scope negative that
+    routed correctly failed as activated."""
+    names = {
+        d.name for d in Path(skills_dir).iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    }
+    if Path(agents_dir).is_dir():
+        names |= {p.stem for p in Path(agents_dir).glob("*.md")}
+    names.discard(skill)
+    return names
+
+
 # Validators that assert the persisted project files are valid (schema-
 # conformant, references resolve). A test that declares its scenario broken
 # on purpose (`intentionally_invalid: true`) expects these to fail — the
@@ -647,13 +666,7 @@ async def _execute_single_run(
         file_changes["tree.gedcomx.json"] = tree_diff
     file_changes = file_changes or None
 
-    # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
-    # used by rule 3 to detect "routing to another skill" patterns in
-    # short responses without false-flagging legitimate concise outputs.
-    other_skill_names = {
-        d.name for d in paths.skills_dir.iterdir()
-        if d.is_dir() and not d.name.startswith(".") and d.name != spec.skill
-    }
+    other_skill_names = _other_suite_names(spec.skill, paths.skills_dir, DEFAULT_PLUGIN_AGENTS)
 
     agents_spawned = spawned_agents(result.builtin_tool_calls)
     activated = derive_activated(
@@ -1039,6 +1052,20 @@ def _is_retryable_abort(result) -> bool:
     return _is_zero_progress_timeout(result)
 
 
+_STALL_ABORTS = {"sdk_stream_silence"}
+
+
+def retry_delay_for(aborted_reason: str | None, base_delay: float) -> float:
+    """The FIRST backoff before re-running after `aborted_reason`.
+
+    Only the reason measured to need it gets the long wait; an unknown reason keeps
+    the fast retry rather than silently inheriting minutes of delay.
+    """
+    if aborted_reason in _STALL_ABORTS:
+        return max(base_delay, DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6)
+    return base_delay
+
+
 async def _execute_skill_with_retry(
     *,
     run_index: int,
@@ -1093,7 +1120,6 @@ async def _execute_skill_with_retry(
        test and stays non-retryable; one that burned the whole budget
        without a single turn never started, which is the same transient
        class as (1) and (2).
-
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
     delay = base_delay
@@ -1196,8 +1222,8 @@ async def _execute_skill_with_retry(
             f"(attempt {attempt + 2}/{attempts})",
             file=sys.stderr,
         )
-        await asyncio.sleep(delay)
-        delay *= 2
+        await asyncio.sleep(retry_delay_for(result.aborted_reason, delay))
+        delay = retry_delay_for(result.aborted_reason, delay) * 2
 
     # Unreachable: the final attempt always returns above. Present so
     # type-checkers see a definite return.
