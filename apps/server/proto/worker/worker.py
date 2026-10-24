@@ -219,6 +219,7 @@ from proto.worker.options import (  # noqa: E402
     STOP_REASON,
     STORE_UNAVAILABLE_REASON,
     TERMINAL_BUDGET,
+    TERMINAL_COMPLETED,
     TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
@@ -232,6 +233,7 @@ from proto.worker.options import (  # noqa: E402
     dev_paths,
     model_provider,
     parse_blocked_tools,
+    project_completed,
     ProviderError,
     tool_server_url,
 )
@@ -1057,6 +1059,29 @@ def read_auto_reply_state(conn: psycopg.Connection, session_id: str) -> dict[str
     return state if isinstance(state, dict) else None
 
 
+def close_context(
+    conn: psycopg.Connection, boundary: Any, project_id: str, result_text: str | None, log: Any,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """The two things the close reads off the project and the turn's last line:
+    ``research.json`` and the step the turn OFFERS.
+
+    One read, serving three callers -- the `completed` outcome, `turn_done.options`
+    and the reply decision -- because the close is the first place the worker reads
+    research.json at all and three reads of a jsonb document would be three.
+
+    Both are None-safe: a store that has gone down ends the run and renders no
+    buttons, which is strictly better than failing a turn that already finished.
+    """
+    if boundary is None:
+        return (None, None)
+    try:
+        return (read_research(conn, project_id), boundary.offered_step(result_text))
+    except Exception as exc:  # noqa: BLE001 - never fail a finished turn over its close reads
+        log(ev="close_context_unavailable", project_id=project_id,
+            error=f"{type(exc).__name__}: {exc}")
+        return (None, None)
+
+
 def plan_auto_reply(
     conn: psycopg.Connection,
     boundary: Any,
@@ -1064,7 +1089,7 @@ def plan_auto_reply(
     *,
     turn_mode: str,
     outcome: str,
-    result_text: str | None,
+    offered: str | None,
     log: Any,
 ) -> dict[str, Any] | None:
     """Section A2's decision for this turn: ``{"reply", "state"}``, or None.
@@ -1088,7 +1113,7 @@ def plan_auto_reply(
             turn_mode,
             read_prev_step(conn, session_id, turn_id),
             read_turn_step(conn, turn_id)[0],
-            boundary.offered_step(result_text),
+            offered,
             outcome,
         )
     except Exception as exc:  # noqa: BLE001 - never fail a finished turn over its reply
@@ -2868,10 +2893,22 @@ async def _run_turn(
             # 1b/1c: what the browser renders for this ending. The Stop hook's verdict
             # wins when it fired; a turn halted by the PreToolUse hook may never reach a
             # Stop dispatch at all, so the flag is re-read here rather than assumed.
+            # Section A/A2: research.json and the turn's offer line, read once and used
+            # three times below -- the `completed` outcome, `turn_done.options`, and the
+            # host's reply.
+            research, offered = close_context(conn, boundary, project_id,
+                                              getattr(result, "result", None), log)
             outcome = TRANSCRIPT_LOST_OUTCOME if transcript_lost else (
                 terminal["reason"]
                 or (TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME)
             )
+            # A step turn that finished the project has no Stop verdict to say so -- at
+            # cap 0 no plane binds the Stop hook -- so the honest `completed` label would
+            # never reach the browser on a step turn without this. Only where the close
+            # was an ordinary `ok`: a stop, a cap or a lost transcript each say something
+            # the project's own status does not override.
+            if outcome == OK_OUTCOME and project_completed(research):
+                outcome = TERMINAL_COMPLETED
             # A stopped turn is NOT a zero-progress attempt, and the order matters twice
             # over. A turn killed at the ceiling (or by a crash, a deploy or SIGTERM)
             # after Stop comes back as exactly the synthetic zero-turn result 0a keys on
@@ -2904,6 +2941,12 @@ async def _run_turn(
             # ResultMessage's own cost_usd on every turn, which is what calibrates the
             # price vector on the first real runs.
             detail = {k: terminal[k] for k in ("limit", "spent_usd") if k in terminal}
+            # The replies this turn admits, as exact phrases: the browser shows a button
+            # for each and nothing else. Left OUT when empty, as `reply_follows` is, so a
+            # turn making no offer renders no buttons rather than an empty row.
+            options = (boundary.reply_options(offered, research) if boundary and offered else [])
+            if options:
+                detail["options"] = options
             try:
                 detail["spend_estimate_usd"] = round(session_spend_usd(conn, sdk_session_id), 4)
             except Exception as exc:  # noqa: BLE001 - a calibration figure never fails a turn
@@ -2916,7 +2959,7 @@ async def _run_turn(
                 # carries the offer.
                 auto_reply=plan_auto_reply(
                     conn, boundary, turn, turn_mode=turn_mode, outcome=outcome,
-                    result_text=getattr(result, "result", None), log=log,
+                    offered=offered, log=log,
                 ),
                 max_nudges=max_nudges,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,

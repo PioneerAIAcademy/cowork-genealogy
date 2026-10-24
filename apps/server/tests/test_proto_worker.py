@@ -6270,3 +6270,82 @@ def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
     assert cols[-1] == "wrote", "wrote must stay LAST — _tool_call_decisions reads p[6] positionally"
     assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
 
+
+
+# ── A/A2: what the close reads off the project and the turn's last line ───────────
+
+_CONCLUDE = "Continue with writing the conclusion?"
+_RESEARCH = {"questions": [{"id": "q_1", "status": "in_progress", "question": "Who were her parents?"}]}
+
+
+def _turn_done_payload(conn: FakeConn) -> dict:
+    """The turn_done event's payload, as row_to_wire spreads it onto the wire."""
+    for sql, params in conn.executed:
+        if "INSERT INTO session_events" in sql and "'turn_done'" in sql:
+            return dict(params[2].obj)
+    raise AssertionError("no turn_done was written")
+
+
+def test_the_turn_offers_its_reply_options_on_turn_done(turn_env):
+    """The browser shows a button per phrase and nothing else, so the list has to ride
+    the frame that ends the turn."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("the report"), _result(text=f"the report\n\n{_CONCLUDE}")])
+    payload = _turn_done_payload(turn_env["conn"])
+    assert payload["options"] == ["Continue.", "Keep going."], payload
+    # Not Wrap it up: Continue already concludes. Not Search more: the question has no
+    # `resources_spent` stop, so this is not the low-risk choice.
+
+
+def test_a_turn_that_makes_no_offer_carries_no_options_key(turn_env):
+    """Left OUT rather than empty, as `reply_follows` is -- a step that ended on a
+    question for the researcher must render no buttons at all."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("x"), _result(text="I found three. What was her maiden name?")])
+    assert "options" not in _turn_done_payload(turn_env["conn"])
+
+
+def test_search_more_appears_only_at_the_low_risk_choice(turn_env):
+    """A `resources_spent` stop with no proof summary yet: concluding is the default and
+    searching more is the alternative."""
+    turn_env["conn"].research = {"questions": [
+        {"id": "q_1", "status": "in_progress", "question": "Who?",
+         "search_stop": {"stopped_because": "resources_spent"}}]}
+    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert "Search more." in _turn_done_payload(turn_env["conn"])["options"]
+
+
+def test_a_step_turn_that_finished_the_project_closes_completed(turn_env):
+    """At cap 0 no plane binds the Stop hook, so a step turn has no Stop verdict to
+    report the project finishing. Without this read the browser would render the
+    honest `completed` label on no step turn at all."""
+    turn_env["conn"].research = {"project": {"status": "completed"}}
+    summary = _run(turn_env, _good())
+    assert summary["outcome"] == "completed"
+    assert _turn_done_payload(turn_env["conn"])["outcome"] == "completed"
+
+
+def test_an_unfinished_project_still_closes_ok(turn_env):
+    turn_env["conn"].research = _RESEARCH
+    assert _run(turn_env, _good())["outcome"] == "ok"
+
+
+def test_a_project_with_no_research_json_yet_still_offers_continue_and_keep_going(turn_env):
+    """A brand-new project reads no document and that is not a failure: there is no
+    current question, so Wrap it up does not apply, but the step still has a next one."""
+    turn_env["conn"].research = None
+    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
+
+
+def test_a_store_that_has_gone_down_closes_ok_with_no_options(turn_env, monkeypatch):
+    """The read RAISING is the dead store -- distinct from a project that simply has no
+    research.json yet, above. Failing a turn that already finished, and was already
+    paid for, over a read for its BUTTONS would be the worse trade by a wide margin."""
+    def down(*a, **k):
+        raise RuntimeError("the store is gone")
+
+    monkeypatch.setattr(worker, "read_research", down)
+    summary = _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert summary["outcome"] == "ok"
+    assert "options" not in _turn_done_payload(turn_env["conn"])
