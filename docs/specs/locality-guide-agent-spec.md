@@ -29,7 +29,8 @@ full, plus each record-type subsection the delegation names and each record type
 substitutes for a named one missing for the period; every other record type gets one line
 (what exists, its level, where held). Research tips are capped at six bullets and the
 repository tables list only repositories holding the record types written in full. A
-request naming no record type gets every section in full.
+request naming no record type gets at most three bullets per record-type subsection, and every guide stays
+under 12,000 characters.
 
 The substitute clause exists because naming alone drops what a genealogist relies on: for
 County Antrim in the 1820s a baptism question names church records, but the tithe books and
@@ -37,6 +38,13 @@ Griffith's Valuation (land records) are the standard stand-in for the destroyed 
 returns. Measured on two hosted guides (2026-10-07 Antrim, 24.7k characters; 2026-10-15
 Freeborn County, 25.2k), one-lining the unnamed record types alone cut 30-33%; research
 tips (3.6-4.6k) and the repository tables were the largest remaining sections.
+
+The 12,000-character cap is also what keeps the write inside the eval harness's
+180-second silence limit: the guide goes into one `research_append` call, a
+single message. On 2026-10-24 main's guide write already took about 150 s
+(8,000-8,700 output tokens on three unit tests), and the first version of the
+scoping, which still wrote every section in full when no record type was named,
+stalled past 180 s on 11 of 24 unit tests while main passed the same three.
 
 ## Saved fields other agents read
 
