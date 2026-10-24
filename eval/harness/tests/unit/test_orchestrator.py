@@ -13,6 +13,7 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
+    _other_suite_names,
     _stop_at_stub,
     _stopped_at_a_handoff,
     _routing_short_circuit_skills,
@@ -665,10 +666,13 @@ def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatc
 # skill has none. These specs are synthetic labels, so the name only has to be a skill
 # that still ships.
 def _positive_spec(skill="research"):
+    # A stub, because a positive test in a routing suite (research) with none is
+    # refused at the runnability gate (#3568).
     return load_test_from_dict({
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
+        "execution": {"stub_skills": ["question-selection"]},
         "judge_context": [],
     })
 
@@ -2225,6 +2229,36 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     assert seen.get("stub_skills") == {"gps-mentor": None, "research": None}
 
 
+def test_run_agents_reaches_run_skill_as_the_live_set(tmp_path, monkeypatch):
+    """The orchestrator hop of deny-by-default (#3568). `live_agents=None` means
+    'deny nothing', so dropping the keyword at `_execute_single_run` or the retry
+    wrapper would switch the default off with every unit test still green. Uses
+    the committed ut_research_rpn, whose two opt-ins are the point."""
+    import asyncio
+
+    spec = load_test(REPO_ROOT / "eval/tests/unit/research/handle-negative-probate-result.json")
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-21_10-00-00",
+    ))
+    assert seen.get("live_agents") == {"research", "research-plan", "question-selection"}
+
+
 # --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
 
 
@@ -2847,3 +2881,58 @@ def test_pg_store_faults_reach_the_run_logs_warnings(tmp_path, monkeypatch):
     (w,) = [w for w in warnings if w["kind"] == "pg_store_fault"]
     assert w["faults"] == [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
     assert seen_workspaces, "the faults were read for the run's workspace"
+
+
+def test_a_stall_retry_waits_the_stall_backoff_in_the_loop(tmp_path, monkeypatch):
+    """The call site, not just the helper.
+
+    `test_retry_delay.py` calls `retry_delay_for` directly, so every one of its tests
+    still passes if the loop goes back to `asyncio.sleep(delay)` / `delay *= 2`. This
+    runs the loop and reads what it actually slept, so a reverted call site -- or a
+    `delay = delay * 2` that drops the stall wait on the second attempt -- fails here.
+    """
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    slept: list[float] = []
+
+    async def fake_sleep(seconds):
+        slept.append(seconds)
+
+    async def fake_run_skill(**kwargs):
+        return _retry_stub_result(aborted_reason="sdk_stream_silence")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator.asyncio, "sleep", fake_sleep)
+    asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        attempts=3, base_delay=1.0,
+    ))
+    stall = orchestrator.DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6
+    assert slept == [stall, stall * 2]
+
+def test_other_suite_names_counts_plugin_agents(tmp_path):
+    """A skill converted to an agent still names a hand-off: ut_survey_surname_d4's
+    decline named `search-records`, an agent since #3567, and read as activation."""
+    from harness.runlog import derive_activated
+
+    skills = tmp_path / "skills"
+    agents = tmp_path / "agents"
+    (skills / "research").mkdir(parents=True)
+    agents.mkdir()
+    for name in ("search-records", "survey-surname"):
+        (agents / f"{name}.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+
+    names = _other_suite_names("survey-surname", skills, agents)
+    assert names == {"research", "search-records"}
+
+    assert derive_activated(
+        skill="survey-surname",
+        skills_invoked=[],
+        file_changes=None,
+        files_created=[],
+        text_response="That's a search for one person's record \u2014 please use search-records.",
+        other_skill_names=names,
+        agents_spawned=["survey-surname"],
+    ) is False

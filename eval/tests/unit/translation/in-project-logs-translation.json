@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_translation_015",
+    "skill": "translation",
+    "name": "Inside a project, the translation is returned and logged as one research-log entry",
+    "type": "positive",
+    "description": "Issue #3524. The French civil birth record from ut_translation_004, run inside a project: the agent translates exactly as it does anywhere else, then logs the full translation as one `translation` research-log entry and writes nothing else.",
+    "tags": [
+      "french",
+      "civil-registration",
+      "birth",
+      "names",
+      "parentage",
+      "direct-arm",
+      "logs-report"
+    ]
+  },
+  "input": {
+    "delegation": "Translate this French civil birth record: 'L'an mil huit cent quarante-trois, le quinze mars, devant nous, maire et officier de l'état civil de la commune de Saint-Malo, a comparu Jean Baptiste Lefèvre, cultivateur, âgé de trente ans, lequel nous a présenté un enfant du sexe masculin, né hier à six heures du matin, de lui déclarant et de Marie Anne Dubois, son épouse, et auquel il a déclaré vouloir donner le prénom de Guillaume.'\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "Should translate the structure: on 15 March 1843, before the mayor and civil registrar of the commune of Saint-Malo, Jean Baptiste Lefèvre (a farmer, aged 30) presented a male child born the previous day at 6 a.m., to himself (the declarant) and Marie Anne Dubois his wife, to be named Guillaume.",
+    "Should keep names in their original French form (Jean Baptiste, Guillaume, Marie Anne Dubois) and note the English equivalents only if helpful, not silently anglicize them.",
+    "Should explain the genealogically significant terms: `officier de l'état civil` (civil registrar, who is the recorder), `a comparu` (appeared before — the formulaic opening of a French civil act), `cultivateur` (farmer — the father's occupation), `son épouse` (his wife — establishes the marital relationship), `déclarant` (the declarant, here the father).",
+    "Should flag that the record names both the father (Jean Baptiste Lefèvre) and the mother (Marie Anne Dubois) and states their relationship, making this a high-value parentage source, and should note the event date (birth) is 14 March 1843 — the day before the registration date of 15 March.",
+    "The working folder holds a project, so after answering the agent logs its reply with one research_log_append call. That entry is checked by validators, not by you; do not grade it."
+  ]
+}

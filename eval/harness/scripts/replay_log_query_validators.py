@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Replay the two log-query `report_*` validators over the committed unit corpus.
+"""Replay the log-query validators over the committed unit corpus.
 
-`report_log_query_traces_to_record_search_call` (test_search_records.py) and
-`report_log_query_traces_to_url_tool_call` (test_search_external_sites.py) are
+`report_log_query_traces_to_record_search_call` and the gate
+`test_unstaged_log_query_filters_were_sent` (test_search_records.py), and
+`report_log_query_traces_to_url_tool_call` (test_search_external_sites.py), are
 outside every snapshot, and nothing in CI runs a validator over the committed
 run logs, so a check that fires on half the corpus would land green and surface
 only in someone else's paid `make eval-skill` run. This is that replay, committed
@@ -63,9 +64,11 @@ def query_source_by_log_id(tool_calls) -> dict[str, str]:
     return out
 
 
+# Label -> (the skill whose run logs it replays, the check).
 CHECKS = {
-    "search-records": lambda before, after, calls, test: sr.report_log_query_traces_to_record_search_call(before, after, calls),
-    "search-external-sites": lambda before, after, calls, test: ses.report_log_query_traces_to_url_tool_call(before, after, calls, test),
+    "search-records": ("search-records", lambda before, after, calls, test: sr.report_log_query_traces_to_record_search_call(before, after, calls)),
+    "search-records gate": ("search-records", lambda before, after, calls, test: sr.test_unstaged_log_query_filters_were_sent(before, after, calls)),
+    "search-external-sites": ("search-external-sites", lambda before, after, calls, test: ses.report_log_query_traces_to_url_tool_call(before, after, calls, test)),
 }
 
 
@@ -75,7 +78,7 @@ def main() -> int:
         ["git", "rev-parse", "--short=9", "HEAD"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=True
     ).stdout.strip()
     print(f"HEAD {head}")
-    for skill, check in CHECKS.items():
+    for label, (skill, check) in CHECKS.items():
         files = subprocess.run(
             ["git", "ls-files", f"eval/runlogs/unit/{skill}"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=True
         ).stdout.split()
@@ -112,7 +115,7 @@ def main() -> int:
                             lines.append(
                                 f"  {Path(f).name} {t.get('test_id')} run {run.get('run_index')} [{key[1]}]: {claim.strip()[2:]}"
                             )
-        print(f"\n{skill}: {len(files)} run logs, {runs} runs, {judged} judged, {fired} fired in {len(tests_fired)} test(s)")
+        print(f"\n{label}: {len(files)} run logs, {runs} runs, {judged} judged, {fired} fired in {len(tests_fired)} test(s)")
         print("  claims: " + (", ".join(f"{n} {cls} ({src} query)" for (cls, src), n in sorted(classes.items())) or "none"))
         print(f"  tests: {', '.join(sorted(tests_fired)) or 'none'}")
         if show:

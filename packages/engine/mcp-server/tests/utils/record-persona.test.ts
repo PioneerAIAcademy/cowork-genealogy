@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   RECORD_PERSONA_SKIP_TYPES,
   materializesToPersonFact,
+  personaRolesById,
   projectRecordPersonas,
   projectedRecordDocument,
   recordPartyKeyer,
@@ -291,6 +292,41 @@ describe("recordPartyKeyer (#2537)", () => {
 
   it("returns null for an assertion with neither", () => {
     expect(recordPartyKeyer([])(a({ record_role: undefined }))).toBeNull();
+  });
+});
+
+describe("personaRolesById", () => {
+  it("collects the distinct roles each persona id carries, in order of first appearance", () => {
+    const roles = personaRolesById([
+      a({ record_role: "child", record_persona_id: "p_1" }),
+      a({ record_role: "father", record_persona_id: "p_2" }),
+      a({ record_role: "child", record_persona_id: "p_1" }),
+      a({ record_role: "father", record_persona_id: "p_1" }),
+    ]);
+    expect([...roles.keys()]).toEqual(["p_1", "p_2"]);
+    expect([...(roles.get("p_1") ?? [])]).toEqual(["child", "father"]);
+    expect([...(roles.get("p_2") ?? [])]).toEqual(["father"]);
+  });
+
+  it("leaves out negative evidence, and assertions with no persona id or no role", () => {
+    const roles = personaRolesById([
+      a({ record_role: "absent", record_persona_id: "p_1" }),
+      a({ record_role: "child", record_persona_id: null }),
+      a({ record_role: "child", record_persona_id: "" }),
+      a({ record_role: null, record_persona_id: "p_2" }),
+      a({ record_role: "", record_persona_id: "p_3" }),
+      a({ record_role: "mother", record_persona_id: "p_4" }),
+    ]);
+    expect([...roles.keys()]).toEqual(["p_4"]);
+  });
+
+  it("is the rule recordPartyKeyer keys on: an id with two roles keys on its role", () => {
+    const list = [
+      a({ record_role: "child", record_persona_id: "p_1" }),
+      a({ record_role: "father", record_persona_id: "p_1" }),
+    ];
+    expect(personaRolesById(list).get("p_1")?.size).toBe(2);
+    expect(list.map(recordPartyKeyer(list))).toEqual(["child", "father"]);
   });
 });
 

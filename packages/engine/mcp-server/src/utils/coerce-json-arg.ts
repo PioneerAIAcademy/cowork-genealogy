@@ -25,3 +25,38 @@ export function coerceJsonArg(value: unknown): unknown {
     return value;
   }
 }
+
+/** Why a string argument could not be parsed: the engine's own message, and where. */
+export interface JsonParseFailure {
+  message: string;
+  offset: number | null;
+}
+
+// The reason `coerceJsonArg` swallowed, for the one caller that wants to give
+// it back. A batch with a stray comma otherwise surfaces as "`ops` must be a
+// non-empty array" and the model has nothing to fix. A sibling rather than a
+// new return type on `coerceJsonArg`, which seven tools share.
+//
+// `undefined` unless `value` is a string that `JSON.parse` rejects. `offset` is
+// V8's own position when its message ends with one, the length of the string
+// for "Unexpected end of JSON input", and null otherwise: V8 gives no position
+// in its "Unexpected token 'x', ..." message, but that message quotes the text
+// around the token, so a "position N" inside the quoted text is not a position.
+
+/** V8's own position, which is always the END of its message: `... at position
+ *  36 (line 1 column 37)`, or without the line and column on an older engine. */
+export const V8_POSITION_SUFFIX = / at position (\d+)(?: \(line \d+ column \d+\))?$/;
+
+export function jsonParseFailure(value: unknown): JsonParseFailure | undefined {
+  if (typeof value !== "string") return undefined;
+  try {
+    JSON.parse(value);
+    return undefined;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const at = V8_POSITION_SUFFIX.exec(message);
+    if (at) return { message, offset: Number(at[1]) };
+    if (message.startsWith("Unexpected end of JSON input")) return { message, offset: value.length };
+    return { message, offset: null };
+  }
+}

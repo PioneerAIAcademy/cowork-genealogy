@@ -1097,14 +1097,14 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("web", "fastapi", None),
         ("web", "uvicorn", None),
         ("web", "psycopg-binary", None),
-        ("worker", "claude-agent-sdk", "0.2.128"),
+        ("worker", "claude-agent-sdk", "0.2.172"),
         ("worker", "psycopg-binary", None),
         ("worker", "botocore", None),
         # U3: grants.py decrypts what web/auth.py encrypts, at the one locked version.
         ("worker", "cryptography", None),
         # Issue #3263: the hosted agent's SDK, which bundles the CLI every session runs.
-        # 0.2.165 bundles Claude Code 2.1.294 (dev/probe_session_start_cache.py).
-        ("sandbox", "claude-agent-sdk", "0.2.165"),
+        # 0.2.172 bundles Claude Code 2.1.308, the CLI the worker runs too.
+        ("sandbox", "claude-agent-sdk", "0.2.172"),
         ("sandbox", "websockets", None),
     ],
 )

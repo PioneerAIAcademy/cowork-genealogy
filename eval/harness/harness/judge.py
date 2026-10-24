@@ -39,6 +39,8 @@ DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
 # not — `temperature` is removed on the Opus 4.7/4.8 family and returns a 400,
 # so that judge cannot be pinned at all (see e2e/judge.py).
 JUDGE_TEMPERATURE = 0.0
+# The last API version that accepts sampling parameters; 2026-10-21 rejects them.
+LEGACY_SAMPLING_API_VERSION = "2023-06-01"
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
@@ -606,14 +608,16 @@ def grade(
 
 
 def _create_message_with_retry(
-    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=3
+    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=6
 ):
     """Call Anthropic with retry-with-backoff on transient errors.
 
     Wraps client.messages.create so a 529 overload or rate-limit response
     doesn't abort one test out of the suite. Returns the response on
     success; raises JudgeError after _attempts exhausted with the last
-    error captured.
+    error captured. The waits (2, 4, 8, 16, 30 s) span about a minute: a
+    connection that drops for longer than the old 1 + 2 s fails the test
+    ungraded, which costs a full paid re-run of the suite.
 
     Splits the prompt into a cacheable prefix (rubric, stable per skill)
     and a varying suffix (per-test content). cache_control: ephemeral on
@@ -628,14 +632,20 @@ def _create_message_with_retry(
     `temperature=None` omits the parameter entirely rather than sending the
     API's default value — the caller asks for default sampling without this
     module having to hardcode what that default currently is.
+
+    A set `temperature` goes out in the body on API version 2023-06-01. SDK 2.x
+    sends 2026-10-21, which answers any sampling parameter with a 400, and drops
+    `temperature` from `create()`'s signature; the migration guide's remedy for a
+    request that relies on a non-default value is to keep it on 2023-06-01.
     """
     import time as _time
 
     sampling_kwargs: dict[str, Any] = {}
     if temperature is not None:
-        sampling_kwargs["temperature"] = temperature
+        sampling_kwargs["extra_body"] = {"temperature": temperature}
+        sampling_kwargs["extra_headers"] = {"anthropic-version": LEGACY_SAMPLING_API_VERSION}
 
-    delay = 1.0
+    delay = 2.0
     last_error: Exception | None = None
     for attempt in range(_attempts):
         try:
@@ -672,7 +682,7 @@ def _create_message_with_retry(
             if attempt + 1 >= _attempts:
                 break
             _time.sleep(delay)
-            delay *= 2
+            delay = min(delay * 2, 30.0)
 
     raise JudgeError(
         f"judge API call failed after {_attempts} attempts: {last_error}"

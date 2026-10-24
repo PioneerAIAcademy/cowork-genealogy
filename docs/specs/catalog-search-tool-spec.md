@@ -18,7 +18,10 @@ filial of a mother parish, and sending the user to the wrong registers.
 
 Every figure below is measured, from `packages/engine/mcp-server/dev/probe-catalog.ts`
 (sections A–G, 2026-09-14). Where this spec states a number, that probe is the
-source; re-run a section rather than trusting a figure that looks stale.
+source; re-run a section rather than trusting a figure that looks stale. The
+exception is **Answer size**, whose figures come from
+`packages/engine/mcp-server/dev/try-catalog-search.ts`, run over answers saved from
+live calls on 2026-10-22.
 
 ## Design
 
@@ -264,20 +267,104 @@ an error; the flag tells the agent its place filter is looser than it asked for.
     notes?: string[],
     authors?: string[],
     subjects?: string[],
-    filmNotes?: [{
+    filmNotes?: [{                // one entry per reel (a dense reel is several), see below
       filmNumber?: string,        // legacy microfilm
       imageGroupNumber?: string,  // DGS — feeds image_search / fulltext_search
       indexed?: string,
-      shelf?: string,
       copyLocation?: string,
-      text?: string,
-      imageStartNumber?: string,
+      text?: string,              // what the reel covers; several notes' texts joined with " | "
     }],
+    filmNotesTotal?: number,      // only when filmNotes was cut short: how many entries the item has
+    filmNotesHint?: string,       // only with filmNotesTotal: how many are listed, how to get the rest
     availableOnline?: boolean,
     digitalLibraryUrl?: string,
-  }]
+  }],
+  hitsOmitted?: number,         // only when hits were left off the end of hits: how many
+  hitsOmittedHint?: string,     // only with hitsOmitted: what to ask instead
 }
 ```
+
+`returned` is the number of hits in `hits`: the `count` asked for, or fewer when
+the Catalog had fewer or when some were left off the end (`hitsOmitted`).
+
+### Film notes: one entry per reel
+
+One reel can carry many film notes, each with its own `text` and the same
+numbers. The tool returns one entry per reel, and a dense reel as several.
+
+Film notes that agree on all four of `filmNumber`, `imageGroupNumber`,
+`indexed` and `copyLocation` are one reel, and become one entry. Their `text`
+values are joined with `" | "`, in the order the Catalog gave them. A note with
+no text adds nothing, not even a separator. Entries come out in the order their
+reel first appeared. The four fields are every field of the tool's film-note
+table but `text`, so the reel key is derived from the one list the tool reads
+fields from, and a field added to that table becomes part of the key. The key is
+the four values written as JSON, so one field cannot run into the next: film
+number `1` with image group `23` is not film number `12` with image group `3`.
+
+A reel whose joined text would pass 2,000 characters is several entries in a
+row. Each carries the reel's four fields and a run of whole note texts, joined
+the same way and in the same order, and a run is closed when the next note would
+take it past 2,000. A note is never cut in two, so a note longer than that stands
+alone. The point is the size budget below: a reel merged into one entry cannot be
+cut by listing fewer entries, and the largest reel in the saved Ireland answer
+joins 38 notes into about 14,000 characters. 2,000 is small enough that part of a
+dense reel can still be listed when all of it cannot, and large enough that an
+ordinary reel stays one entry. The entries of a reel sit together, and a reel's
+next entry is its next run.
+
+Nothing is lost. Every text is kept, once. Notes that differ in any one of the
+four fields stay apart, and so does a note that lacks a field another has. The
+same reel held in two places is therefore two entries. That matters because the
+plugin reads `copyLocation` and `imageGroupNumber` off each entry as a fact
+about one reel, and a merge across a difference would give an entry that says
+something no note said. Splitting the joined `text` of the entries of a reel
+back into its notes is exact while no note text contains the separator. None did
+in the answers that `packages/engine/mcp-server/dev/try-catalog-search.ts` saved
+on 2026-10-22.
+
+`shelf` and `imageStartNumber` are not carried. `shelf` names the format or
+shelving area (for example `Digital`, `Film`, `Fiche`, `B1 Floor Film`), not
+which reel it is. `imageStartNumber`, the Catalog's `item_image_start_no`, was
+absent from every film note in those same answers. No plugin body, validator or
+recorded fixture reads either field.
+
+### `filmNotesTotal` and `filmNotesHint`
+
+A hit carries these two fields only when its `filmNotes` list was cut short to
+keep the answer within its size budget (see **Answer size**). On a hit that
+lists every entry both are absent.
+
+`filmNotesTotal` is how many entries the item has, counted after merging and
+splitting, so it is in the same unit as the list. `filmNotes` then holds the
+entries that fit, each one whole and in the order the item has them: an entry
+that did not fit is skipped, and the entries after it are still listed (see
+**Answer size**). `filmNotesTotal` is the item's entry count, whichever were
+listed.
+
+`filmNotesHint` is one line. It says how many entries are listed, out of how
+many, and the way to the rest that can work for this hit. `hydrate` is a prefix
+count over the hits that carry a `url`, so a smaller value un-hydrates the hits
+below that position and leaves more room to the hits above it. The hint
+therefore says "call again with `hydrate: r`", where `r` is the position of this
+hit among the hits that carry a `url`, only when `r` is fewer than the `hydrate`
+the call used. At `hydrate: 1`, or for the last hit the call hydrated, a smaller
+`hydrate` would un-hydrate the hit itself, so the hint does not offer it. The
+other way, "search with keywords that name this item", is always offered: a
+search that matches the item alone hydrates it alone. The hint names no input the
+tool does not have. It does not name the hit's `url`: that is the Catalog's item
+record, which answered 401 without a sign-in token when probed on 2026-10-22, so
+neither an agent nor a person can open it.
+
+### `hitsOmitted` and `hitsOmittedHint`
+
+An answer carries these two fields only when hits were left off the end of
+`hits` to keep the answer within its size budget (see **Answer size**). On an
+answer that lists every hit the Catalog sent, both are absent. `hitsOmitted` is
+how many were left off, and `hitsOmittedHint` is one line that says so and says
+to ask with a smaller `count`, or a narrower query. `returned` is the number of
+hits that are listed. The hits that are listed are the first ones, in the order
+the Catalog gave them.
 
 ### The item URL needs no parsing — it is `identifier.value`
 
@@ -349,6 +436,199 @@ not digitized**.
 Library, which no tool here reaches. The URL is surfaced as
 `digitalLibraryUrl`; the service behind it is not called.
 
+## Answer size
+
+The serialized answer is kept at or under 40,000 characters. The film notes of
+the hydrated hits give way first. If the hits alone are still over, hits are
+left off the end.
+
+### Why
+
+Claude Code saves any tool result longer than 50,000 characters to a file and
+hands the agent a preview. The agent has to read that file back to see the rest,
+and the plugin cannot count on that (see `docs/specs/sidecar-read-tool-spec.md`,
+section 4). `locality-guide` has `Read` but no `Bash`. So an answer over the line
+loses the hits past the preview, and this tool has to stay under it.
+
+A default call could go over. On 2026-10-22, Ireland with `Catholic parish
+registers baptism marriage`, at the defaults, was 55,803 characters.
+
+### The budget
+
+`ANSWER_CHAR_BUDGET` is 40,000 characters, a constant in the tool's own file. It
+leaves 10,000 under the 50,000 line. This is a budget of characters, not the 50 s
+time budget under **Design**.
+
+It is measured on the serialized answer, `JSON.stringify(result)`, which is how
+the server sends it, compact. Every character counts: keys, quotes, braces,
+commas, and the two fields a cut hit adds (`filmNotesTotal` and
+`filmNotesHint`). Counting only the film-note text would leave the answer over.
+
+### What gives way
+
+Two things, in this order.
+
+1. The film notes of the hydrated hits. In the answers saved before the shaping
+   they were 73.6% of the Ireland answer, 86.5% of the Hammer one and 99.3% of the
+   Norway one (the calls measured below). Every other field of a hit stays whole.
+   The cut is a list, so the answer stays valid and says what it left out.
+2. Hits, from the end of the list, and only when the answer is still over the
+   budget with every film-note list at the least it can be. At a large `count`
+   the hits alone can pass the line: a hit with no detail takes roughly 250 to
+   450 characters in the answers measured on 2026-10-22.
+
+### How the room is shared
+
+`shapeAnswer` runs once every hit is hydrated. It merges each hit's film notes
+into entries, fits the entries into the budget, then, if the answer is still
+over, leaves hits off the end. The fit:
+
+1. Measure everything except the film notes of the hydrated hits: the envelope,
+   every unhydrated hit, and every other field of the hydrated hits. What is
+   left under 40,000 is the room.
+2. A hit's **need** is what its whole list of entries costs, commas included. Its
+   **floor** is the least it can cost: its need when that is no more than its
+   cheapest cut (one entry and the two fields a cut adds), else that cheapest
+   cut. An item with a single entry has that entry as its floor, since a cut
+   would only add the two fields to it.
+3. Every floor is reserved first. What is left of the room is the **surplus**. If
+   the floors do not fit, no listing within the budget exists, there is no
+   surplus, and every hit is listed at its floor.
+4. Take the hydrated hits that have film notes in order of **demand**, what each
+   needs beyond its floor, smallest first. With `m` hits left, a hit is offered
+   its floor plus the surplus that remains divided by `m`, rounded down.
+5. A hit whose need is no more than its offer is listed whole. What it did not use
+   stays in the surplus for the hits after it.
+6. A hit that needs more is cut. It lists every entry that fits its offer, trying
+   the first entry of every reel first and then the rest in order. An entry that
+   does not fit is skipped and the ones after it are still tried, so one large
+   entry does not end the list while room stays. The entries come out in the
+   order the item has them. The two fields a cut adds are paid for out of the
+   same offer, and what the hit leaves unused stays in the surplus.
+
+The first entry of every reel goes first because those carry the numbers the
+plugin reads (`filmNumber`, `imageGroupNumber`), where a later entry of a dense
+reel adds only text. Without that rule the early entries of one dense reel can use
+the room that the numbers of a reel later in the item need: on the saved Ireland
+answer, listing the entries in order loses one of the item's seven reels
+entirely.
+
+A cut never costs as much as listing the hit whole. A hit is cut only when its
+need is more than its offer, and the cut stays within the offer. The floor is
+what keeps a hit of two small entries whole when one entry and the two fields
+would cost more than both. A cut hit lists at least one entry, because its offer
+is never less than its floor.
+
+Sharing by demand keeps a giant at rank 1 from taking the room the small hits
+behind it need, and handing down what a hit leaves gives that room to the others.
+Reserving the floors first is what keeps the answer within the budget whenever any
+listing within it exists, and it keeps shaping an answer a second time from
+changing it: without it, a hit's first entry kept whatever it cost can leave the
+answer over the budget while a listing within it exists, and shaping the answer
+again then cuts a hit the first pass listed whole. Nothing is cut mid-entry. The
+serialized answer is never truncated.
+
+### Hits left off the end
+
+When the answer is still over the budget with every film-note list at its floor,
+hits are left off the END, one at a time, until it fits. One hit is always kept.
+Which hits stay is decided first, and the film notes of the hits that stay are
+then fitted into what is left of the budget, so the room a hit left off frees goes
+to them rather than unused.
+`hitsOmitted` says how many went, `hitsOmittedHint` says to ask with a smaller
+`count` or a narrower query, and `returned` is the number listed. The two fields
+are counted in the budget. An answer that fits loses no hit and carries neither
+field. An answer shaped again into a smaller budget adds to the count it already
+carries.
+
+### The bound
+
+The answer is at most 40,000 characters. Two cases go over, on purpose:
+
+- One hit, the first, is over the budget by itself: its fields other than the film
+  notes pass it. Every later hit is left off, and the first is listed as it is.
+- A hit's cheapest listing passes what is left of the room: the one entry of an
+  item that has only one, or the cheapest entry of a cut hit. The tool lists it
+  whole rather than nothing.
+
+In both the answer is as small as this tool will make it. A dense reel does not
+reach the second case, since a run is at most 2,000 characters unless it is one
+note.
+
+Tests pin the bound at the default `count`, at `hydrate` 1, 10 and 25, with items
+of up to 1,804 entries, at `count` 100, 120 and 200, and over random answers
+against a brute-force search for the least a list can cost. They pin the two
+exceptions.
+
+### Measured
+
+Each call was run live on 2026-10-22 with
+`packages/engine/mcp-server/dev/try-catalog-search.ts` at the tool's defaults
+(`count` 25, `hydrate` 10), and its whole answer saved before the shaping existed.
+Both columns are measured on that saved answer with the same script: `--from FILE`
+for "before", and `--from FILE --shape` for "after", which puts the answer through
+`shapeAnswer`, the function the tool ends in. So the columns hold the same hits and
+differ only by the shaping, and they are the saved answers re-shaped, not fresh
+live runs. The Catalog moves, so a live re-run differs a little: the Ireland call
+came back 55,803 and, run again at once, 55,802.
+
+| call | before | after | what the answer holds |
+|---|--:|--:|---|
+| `Ireland` + `Catholic parish registers baptism marriage` | 55,803 | 39,112 | 25 hits, 10 hydrated. The hit at rank 1 lists 15 of its 19 entries (it carried 76 notes on 7 reels), and all 7 reels' numbers are among them. The other hydrated hits are whole |
+| `Hammer, Hordaland, Norway` + `kirkebøker` | 25,595 | 9,619 | 3 hits, all whole. 144 notes are 16 entries |
+| `Cook, Illinois, United States` + `church records` | 18,012 | 16,614 | 25 hits, none cut. 21 notes became 11 entries, and `shelf` is gone |
+| `Norway` + `kirkebøker` | 1,476,812 | 39,939 | every hit listed; 9 of 25 cut, each to its first 30 or 31 of 434 to 1,804 entries |
+
+The Norway call is the tail. It carried ten hydrated hits, nine of them
+`Norway, kirkebøker : Volume N`, with 434 to 1,804 notes each and every note its
+own image group, so merging cannot shrink them. On some live runs an item call
+gave no detail, so fewer hits were hydrated than asked, which only leaves more room
+for the ones that were.
+
+### How to get the rest
+
+A hit with `filmNotesTotal` lists only some of the entries of its item. There are
+two ways to the rest through this tool, the same two its `filmNotesHint` offers
+where they can work:
+
+- **Call again with the `hydrate` that reaches the hit.** The room is shared among
+  the hydrated hits, and `hydrate` is a prefix count over the hits that carry a
+  `url`, so `hydrate: r`, with `r` the hit's position among them, leaves the hits
+  below it unhydrated and the room to the ones above. It helps only when `r` is
+  fewer than the `hydrate` the call used. At `hydrate: 1`, or for the last hit the
+  call hydrated, a smaller value would un-hydrate the hit itself, and the hint does
+  not offer it. With `hydrate: 1` the Ireland hit at rank 1 lists all 19 of its
+  entries, where at the default it lists 15. A test pins that.
+- **Search with keywords that name the item.** A search that matches the item
+  alone hydrates it alone, which is the same thing by another road.
+
+A caller with its own call budget may stop at what is listed. The hint says what
+was cut either way, so nothing is cut without saying so.
+
+### What this does not cover
+
+- An item whose entries do not fit in one whole answer cannot be listed in full
+  through this tool, even as the only hydrated hit. The largest item measured on
+  2026-10-22, a `Norway, kirkebøker` volume of 1,804 entries, is more than four
+  times the budget by itself, after merging and without `shelf`. The tool has no
+  input for paging through an item's entries. For that item an agent cannot reach
+  the rest; a person can read it in the FamilySearch Catalog.
+- At a large `count` the hits that are left off the end are not listed at all. The
+  answer says how many, and a smaller `count` or a narrower query brings them back.
+
+### Recorded answers
+
+The recorded answers in `eval/fixtures/mcp/catalog-search-*.json` stand in for
+the tool in the eval runs, so they are held in the shape the tool returns. They
+were reshaped by running each through `shapeAnswer`, with
+`packages/engine/mcp-server/dev/reshape-catalog-fixtures.ts`, not by hand, and a
+test fails if shaping any of them would change it, or if one carries a total
+without its hint, a hint without its total, a total that is not more than the
+entries it lists, or the same slips in the two hit-list fields. An `{ error }`
+envelope has no hits and is left as it is. Shaping a shaped answer changes
+nothing: a hit that carries `filmNotesTotal` is counted as it stands and is not
+merged again, and an answer that carries `hitsOmitted` keeps it.
+
 ## Paging
 
 **This tool does not page, and does not expose `offset`.**
@@ -402,7 +682,7 @@ thing this tool got wrong most often — five reviews found it at a new depth
 each time, always in a node whose siblings were already defended:
 `repositoryCalls`, then `searchHits`, then `identifier`, then `title`/
 `creator`, then `item.source` (the *parent* of four defended fields), then
-`metadataHit`/`metadata` (two layers further up), the seven `film_note` keys,
+`metadataHit`/`metadata` (two layers further up), the `film_note` keys,
 `available_online`, `totalHits`, `note.type`, and finally the top-level body
 itself.
 
@@ -417,7 +697,7 @@ readers and every access uses one of them:
 
 `scalarOf` is the one that keeps a new field from being half-defended: a bare
 `str()` reads a string or a number and silently drops `{value}`, `{text}` and
-`["x"]`, which is how all seven film-note keys, `available_online` and
+`["x"]`, which is how every film-note key, `available_online` and
 `note.type` each failed while their neighbours worked.
 
 ## Tests
@@ -470,10 +750,48 @@ readers and every access uses one of them:
 | an item landing exactly on the deadline is discarded | the expiry timer fires AT the deadline, so `>` let it write after the race settled |
 | the 403 does not state its cause as fact | a 403 cannot be told from a missing entitlement, which waiting never clears |
 | `parseUpstreamErrorBody` falls through to `detail` when `errors` yields nothing | present-but-unusable is not absent |
-| every film-note field maps to its own key | seven near-identical spreads where one mistyped repeat would be invisible |
+| every film-note field maps to its own key, and `shelf` and `imageStartNumber` are not carried | the five fields are one table read once each, where seven near-identical spreads let a mistyped repeat go unseen; the two dropped fields stay dropped, as the service sends them |
+| hydration reads neither `shelf` nor `item_image_start_no` when the service sends them, and a note with nothing but those two is no entry | a field added to the table by mistake would otherwise reach the entry only through the reel key; a note of `{}` claims the item was filmed while naming neither the film nor the DGS |
 | `hydrateRequested` is echoed | with the defaults 15 of 25 hits are `hydrated: false` purely for sitting past the window |
 | place resolution eating the budget names the place | otherwise a bare `timed out after 0ms` quoting the query URL |
 | a 400 carries the Catalog's own `detail` | the service says which parameter it rejected; discarding it left the agent retrying the same query |
+| notes on one reel become one entry, texts joined with `" \| "` in the order given; a note with no text adds no separator, and a reel with no text has no `text` key | the merge rule, and a stray separator or an empty `text` |
+| two notes that differ only in `filmno`, `digital_film_no`, `fs_indexed` or `copy_location` stay apart, and so does a note missing a field the other has | a merge across a difference gives an entry that says something no note said; the same reel held in two places must stay two entries, because the plugin reads `copyLocation` off each |
+| the reel key is every field of the film-note table but `text`, looped over the table: a note differing only in one of them is a second entry, and every field of the table is on the entry | a field added to the table is a field the key and the entry carry, with no second list to forget |
+| the reel key cannot run one field into the next: film number `1` with image group `23` is not `12` with `3`, for every adjacent pair of key fields | the key as a plain join passed every other test |
+| a field that is absent and a field never set are the same reel | the key writes an absent field the same way whichever way it is absent |
+| notes that differ only in `shelf` are one reel | `shelf` is where the reel sits, not which reel it is |
+| entries keep the order their reel first appeared in, and a later note joins its reel's entry | the Catalog's order is the order the agent reads |
+| a reel whose joined text passes the cap is several entries in a row, each with the reel's fields and whole notes, each run as full as it can be, and the texts in order are the notes' | a reel merged into one entry cannot be cut, and the 720-note reel was 50,033 characters at the default `count` |
+| a joined text of exactly the cap is one entry and one character more is two; a note longer than the cap stands alone with its neighbours in order; the runs of a dense reel sit together ahead of the next reel | the edges of the split |
+| a reel's text is split into entries of at most 2,000 characters, the figure this spec gives | the other dense-reel tests derive their notes from the constant, so a changed cap would keep them true; this one pins the value |
+| `mergeFilmNotes` is empty for no notes, leaves a lone note as it was, drops any field the answer does not carry, is idempotent (on a dense reel too) and leaves its input alone | it runs on saved answers as well as live ones, and a reel's runs must not join again |
+| on the saved Ireland answer, the 76 notes of one hit become entries one reel after another, every reel and every text survives in its order, and none passes the cap | the merge loses nothing on real data; the reels are counted independently of the code |
+| 720 notes on one reel, at the default `count`, come back within the budget, with a total and a hint, and whole notes only | the dense reel the merge used to turn into one entry nothing could cut |
+| the saved Ireland answer rebuilds into upstream responses | `packages/engine/mcp-server/tests/fixtures/catalog-search/ireland-catholic-parish-registers.answer.json` is the tool's own answer of 2026-10-22 at the defaults, before the merge and the budget (433 hits, 25 returned, 10 hydrated, 55,803 characters); the tests that follow feed the tool responses rebuilt from it |
+| the answer budget is 40,000, at least 10,000 under the 50,000 spill line | every other budget test imports the constant, so a changed value would leave them true; this one pins the value |
+| the Ireland call at the defaults stays under the spill line and the budget, lists all 25 hits, changes nothing but the film notes, and keeps the DGS on a hydrated hit's first entry | the call that was 55,803 characters |
+| on that call only the giant at rank 1 is cut; it lists some of its entries, whole and in the item's order, with all seven reels' numbers (the last two DGS among them), a total that is the entry count, and a hint that says "call again with hydrate: 1" and the keywords; the other nine carry neither field | a list that ended at the first entry that did not fit lost two reels while a third of the budget stayed unused |
+| `hydrate: 1` on that call lists every entry of the giant, with no total and no hint | the way back that needs no new input |
+| a Norway-sized page (ten hydrated items of 3 to 1,804 entries) is within the budget at the defaults, lists all 25 hits, and cuts each giant to a prefix of its own entries (they are equal-sized, so skipping lists the same); 25 giants at `hydrate: 25` are within it too; one giant alone gets far more entries than when ten share the room | the 1,476,812-character case is bounded by the shaping, not by the default |
+| a hit that needs less than an equal share is listed whole and what it leaves goes to the giant; a giant at rank 1 does not starve the small hits behind it, and the room they leave is used; what a cut hit leaves unused goes on to the hits after it | smallest demand first with the hand-down. They bound the size above and below, so an equal share for every hit goes red, and so does charging a cut hit its whole offer |
+| a hit that fits its offer exactly is listed whole, and one a character short is cut | the edge is "no more than", not "less than" |
+| a first entry too big to fit beside another hit does not push the answer over the budget, and a lone 38,000-character entry beside a 15,000-character hit ends under the spill line by cutting the hit | the first entry of a hit was kept whatever it cost, and a second pass then cut the hit the first had listed whole |
+| the floor of a hit is its whole list when that costs no more than its cheapest cut, and the cheapest cut when it costs more | every floor is reserved, so the answer fits whenever any listing does |
+| ten hits of two entries of about 150 characters each, offered 250 each, are all listed whole; on saved answers padded to count 100, no cut hit is bigger than the same hit whole | a cut that adds two fields can cost more than the entries it removes |
+| a cut skips an entry that does not fit and goes on listing the ones after it; it tries the first entry of every reel before a reel's later ones; it lists a reel by a later entry when its first does not fit; what it lists is whole and in the item's order | a large entry ended the list while room stayed, and a dense reel could take the room another reel's numbers needed |
+| the exact size of 10 entries lists them all and one character less lists one fewer, and the same at 100 | the two fields grow a character when the number listed gains a digit, and a cap measured for one digit count let the tenth entry in a character over the budget |
+| the hint names the hydrate value that reaches the hit only when one is given, and always the keywords; at `hydrate` 1 it never says to hydrate, a giant at rank 2 of a call that hydrated ten is told `hydrate: 2`, a giant at the last rank a call hydrated and a hit with no `url` are offered only the keywords, and an off-host hit above a giant does not move the value | `hydrate` is a prefix count over the hits that carry a `url`, so "hydrate fewer" at hydrate 1, or for a hit below rank 1, un-hydrates the hit |
+| a cut keeps at least one entry when the rest of the answer already exceeds the budget; a single huge entry is listed whole and is not called cut, and the hit beside it is listed at its floor; one hit whose fields other than the film notes pass the budget is listed whole with the rest left off | the two cases the bound allows to go over |
+| every character is counted, the two fields a cut hit adds included, at five budgets; over random answers the answer is its base plus what the lists cost | the serialized answer is at most the budget |
+| over random answers the answer ends within the budget whenever a brute-force search finds a listing within it, and otherwise hits are left off the end only as far as it takes with every hit at its floor, and the hits that stay are then fitted into the room the others freed; an answer that fits is left exactly as it came | the floors are reserved, nothing is left off that need not be, and the room a hit left off frees is not wasted |
+| over random answers shaping a shaped answer changes nothing, every cut is some of the item's entries whole and in order, never none and never all, and a cut hit costs less than the whole hit; shaping is also idempotent on the shapes the first version moved | cutting it again would count the entries it lists as the entries it has, and `filmNotesTotal` would understate the item |
+| a hit that was not cut carries neither `filmNotesTotal` nor `filmNotesHint`, and the hint never names the hit's `url` | the two fields appear only when something was left out, and the `url` is an API record nobody can open |
+| counts 100, 120 and 200 at the defaults come back within the budget with the hits left off their end counted (`returned`, `hitsOmitted`, `hitsOmittedHint`); count 200 with no hydration is bounded by the hits alone; count 25 is unchanged and carries neither field | the film notes were fitted, yet the hits alone passed the spill line |
+| hits are left off the end until the answer fits and exactly as many as it takes; an answer that fits loses none and carries neither field; an answer shaped again into a smaller budget adds to its count; one hit is kept however small the budget; `1 more hit was` for one | the bound on the hit list |
+| a hit beside a 39,000-character hit is listed whole once that hit is left off, not held at its floor | a fit made before hits are left off cuts the hits that stay for room nobody then uses |
+| an `{ error }` envelope comes back from `shapeAnswer` as it came | it has no hits, and a tool can return that envelope |
+| every `catalog-search-*.json` under `eval/fixtures/mcp/` is unchanged by shaping, carries neither `shelf` nor `imageStartNumber`, and has no cut field without its partner, and the glob finds the files it guards; the guard on the cut fields rejects a total without its hint, a hint without its total, a total that is not more than the entries listed, and the same slips in the two hit-list fields, and passes a cut answer, an uncut one and an error envelope | the recorded evals are graded on an answer the tool still gives. `mcp-fixture-shape.test.ts` reads keys one level below the response and does not see film notes |
 
 ## Live check
 
@@ -481,10 +799,46 @@ readers and every access uses one of them:
 cd packages/engine/mcp-server
 npx tsx dev/try-catalog-search.ts "Maine, United States"
 npx tsx dev/try-catalog-search.ts "Javorje nad Škofjo Loko, Slovenia"
+npx tsx dev/try-catalog-search.ts "Ireland" "Catholic parish registers baptism marriage"
+npx tsx dev/try-catalog-search.ts "Hammer, Hordaland, Norway" "kirkebøker"
+npx tsx dev/try-catalog-search.ts "Cook, Illinois, United States" "church records"
+npx tsx dev/try-catalog-search.ts "Norway" "kirkebøker"
+npx tsx dev/try-catalog-search.ts "Ireland" "Catholic parish registers baptism marriage" --count 120
 ```
 
 The second is the alpha-feedback case: a place with unindexed holdings where
 the agent previously guessed a mother parish.
+
+The last five are the answer-size check: the four calls measured on 2026-10-22,
+and the Ireland call at `--count 120`, which is the check of the bound on the hit
+list. The Norway call is the one that was 1,476,812 characters, so run it again
+after any change to the shaping. The script sends `count` and `hydrate` only when
+given `--count` and `--hydrate`, so a bare run is the tool's defaults. In the
+output look for:
+
+- The `JSON.stringify(result).length` line: under the 50,000 spill line. And the
+  `budget 40,000` line: `within it`. The script exits 1 when the answer is over
+  the budget, with `OVER THE BUDGET` on stderr, so a run that exits 0 is one that
+  is within it.
+- `every hit listed: true` on that same line. At a large `--count` it is `false`,
+  and a `hits left off the end` line then says how many and prints the hint.
+- The `filmNotes` column of the per-hit table: `listed/total` on a hit that was
+  cut, a plain count on the rest. The first three hits are printed in full, and
+  a cut one shows its hint.
+- The reconciliation line: `0 unattributed`. The per-field table is counted from
+  the answer's structure, every brace, bracket and comma from the keys and items
+  it separates, and compared with `JSON.stringify` at every level, so a table that
+  does not add up prints `RECONCILIATION FAILED` on stderr and exits 1.
+
+`--save FILE` writes the answer as the tool returned it, which is already shaped,
+after it has been printed. `--from FILE` re-measures a saved answer as it stands,
+with no login and no network, and `--from FILE --shape` puts it through
+`shapeAnswer` first. The "before" and "after" columns of the table under **Answer
+size** are those two on an answer saved before the shaping existed, so the table
+can be regenerated from the saved answers.
+
+No CI job sees the size of a live answer. The tests pin the fixtures they build,
+so this run is the check that the bound holds on the Catalog as it is today.
 
 ## Not in this spec
 

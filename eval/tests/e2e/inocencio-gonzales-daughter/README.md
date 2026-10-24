@@ -28,19 +28,58 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 2, `hint-samples.csv` row 91,
-flag `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Bolivia, Catholic Church Records, 1566-2020", the baptism of Juana Gonsalo, born 19 July 1895 and baptised 21 July 1895 at Sacaca, Alonzo de Ibáñez, Potosí, naming her parents as Inocencio Gonsalo and Antonia Araque.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Juana as Inocencio's daughter, plus a `required` finding that the report documents
-the rejection.
+**Resolved: TRUE MATCH** (adjudicated 2026-10-23). Retrieval was tool-assisted
+(MCP `record_read` / `record_search` against live FamilySearch); the identity
+judgement is an independent genealogist's (**Isaac Boateng**, second opinion —
+the case was borderline, so a second opinion was obtained per the issue).
 
-A plausible candidate on names. The father's given name is uncommon and his surname is spelled Gonzalo on the 1905 entry, which is the hint's spelling. The mother's surname, Araque, sits within the spread the tree's own two entries already show for her (Uraque, Elsaque). Juana would be about nine years younger than Victoria. Both tree records are Potosí marriages, and Sacaca is in Potosí department. The tree holds no baptism for any child, so this is not a re-index of an existing source.
+**Verdict and basis (index-based).** The 1895 Sacaca baptism of **Juana Gonsalo**
+(`ark:/61903/1:1:6CB7-Y7JY`; the hinted persona is her father's, `ark:/61903/1:1:6CB7-Y7JB`) — born 19 July 1895, baptised 21 July 1895, event
+place as **indexed** *Sacaca, Alonzo de Ibáñez, Potosí, Bolivia*, parents
+**Inocencio Gonsalo** and **Antonia Araque** — is accepted as a daughter of the
+subject **Inocencio Gonzales** (`GY75-S9D`) and his wife **Antonia**. The
+resolution rests on the FamilySearch **index**, not the register image (see
+"Image limitation" below), so `image_basis` is false.
 
-Two things weaken it. First, the tree's sources give no parish for the marriages. They are indexed only as "Bolivia", so nothing yet puts the family in Sacaca rather than elsewhere in Potosí, and Gonzalo/Gonzales is a common surname. Second, the tree's 1853 birth year for Antonia Uraque comes from her 1903 marriage to Antonio Gonzales. If that bride is the subject's wife, she was about 42 at a July 1895 birth, which is late but possible. It would also mean Inocencio died before October 1903. That woman may be someone else, though, which would leave the mother's age open.
+**Why the indexed father is the subject.** The conjunction of several index
+facts, not any one: **given name** — "Inocencio" is uncommon, borne by both;
+**wife** — "Antonia" matches exactly and her surname "Araque" sits in the same
+cluster the tree shows ("Uraque" 1914, "Elsaque" 1905); **surname** — "Gonsalo"
+is the tree's "Gonzales" (the 1905 marriage spells it "Gonzalo"); **place** —
+both Potosí, baptism at Sacaca; **chronology** — Juana (b. 1895) fits as a
+younger child of the couple whose daughter Victoria was born about 1886. This is
+a most-probable identification — a genealogical judgement that a second, distinct
+Inocencio-and-Antonia couple of this surname cluster in Potosí in the same years
+is unlikely — not a documentary linkage; such a namesake couple cannot be
+formally excluded from the index alone, and the subject's marriages carry no
+parish to place the family in Sacaca.
 
-The discriminating check is the parish on the register images of the 1905 and 1914 marriages already in the tree. If either was celebrated at Sacaca (San Luis de Sacaca), the hint is very likely right. A parish elsewhere in Potosí makes a namesake couple the live alternative, and a search of the Sacaca baptisms for other children of Inocencio and Antonia would decide it.
+**What the index does NOT establish.** Gonzalo/Gonzales is common, and the
+subject's marriages (Victoria's 1905/1914) are indexed only "Bolivia" — no parish
+— so nothing in the subject's own records places the family in Sacaca. One
+further San Luis de Sacaca baptism (José Miguel Gonsales, Nov 1899,
+`ark:/61903/1:1:6ZQR-FS49`) is only **suggestive, not conclusive**: its index is
+garbled (father mis-indexed "Inocencio Oraque", no mother persona, junk personas,
+mismatched image dates), so it is **not relied upon** as sibling evidence.
+Identity rests on the name/place/era conjunction plus the genealogist's judgement.
+
+**Independent second opinion (Isaac Boateng).** Isaac concludes the hint is a
+true match — Juana is another daughter of Inocencio Gonzales and Antonia, likely
+born 19 July 1895 and baptised 21 July 1895 at Sacaca — considering the surname
+differences consistent with the couple's variants, and recommends accepting. He
+also cautions there are **possible duplicate profiles** for the wife Antonia and
+the daughter Victoria to investigate before any merge, and that the **1903
+marriage** of an Antonia Uraque to *Antonio* (not Inocencio) Gonzales **may
+concern a different woman** needing verification. These cautions are for
+reviewers; they are out of scope for this fixture.
+
+**Image limitation (uncalibrated — not relied upon).** Isaac examined the
+original register image and reports "legitimate" daughter, "two days old", and
+the mother read as "Antonia **Oraque**". The issue's Step 1a calibration
+(compare two other same-page indexed entries to their images before reading the
+target) was **not performed**, so under the issue rules that reading is
+**unlicensed** and is **not used**. The fixture uses the **indexed** mother name
+"Antonia **Araque**" and the **indexed** event place, and sets `image_basis`
+false. The baptism image ark (`ark:/61903/3:1:33S7-9Y94-9J21`) and the "San Luis
+de Sacaca" parish are collection/image metadata, not a calibrated register
+reading, and are noted only for reference.

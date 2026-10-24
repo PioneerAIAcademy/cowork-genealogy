@@ -566,6 +566,21 @@ describe("namesake cap", () => {
       expect(errors.some((e) => /^ops\[1\]: .*namesakes\[1\].*'place'/.test(e))).toBe(true);
     });
 
+    it("still holds the link that applied to the cap when another op in the call fails, labelled with its own index", async () => {
+      // ops[0] fails on its own, so only ops[1] applies; the cap's refusal of it must
+      // still come back, as ops[1] (its place in the call), not ops[0] (its place among
+      // the ops that applied), and in the same response as the failure.
+      await setup();
+      await attest(["a_020", P]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await call({ section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } }, link("a_020", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toMatch(/^ops\[0\]: entryId 'c_999' not found in 'conflicts'/m);
+      expect(capErrors(r)).toHaveLength(1);
+      expect(capErrors(r)[0]).toMatch(/^ops\[1\]: confidence 'probable' is not available on link 'pe_001'/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
     it("keys the refusal to the last op that wrote the link", async () => {
       await setup(research({ person_evidence: [standing("pe_001", "a_020", N, "speculative")] }));
       await attest(["a_020", P]);
@@ -1023,8 +1038,9 @@ describe("namesake cap", () => {
           "for 'KWCB-111': 1 probable or confident link(s) to 'KWCB-111' stand with nothing in their record " +
           "tying them to 'KWCB-111': 'pe_001' (assertion 'a_010' on source 'src_002', name). 1 fact(s) on " +
           "'KWCB-111' were copied through them: 'F1' Occupation (cites S2). The row is recorded and these stay " +
-          "as they are, but materialize_facts will not copy any further fact onto 'KWCB-111' through these " +
-          "links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+          "as they are, but materialize_facts will not copy any further fact onto 'KWCB-111' through these links, " +
+          "and tree_edit and tree_correct will not cite their records' S entries onto 'KWCB-111''s facts or " +
+          "names unless another record on the same S entry ties to 'KWCB-111'. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
           "namesake. Remove a listed fact that belongs to the namesake with tree_correct (operation 'remove', " +
           "its factId and personId 'KWCB-111').",
       ]);

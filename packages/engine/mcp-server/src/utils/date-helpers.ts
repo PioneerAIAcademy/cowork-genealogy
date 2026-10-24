@@ -27,7 +27,7 @@ const MONTH_ABBRS = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec';
 const QUARTER_START: Record<number, number> = { 1: 1, 2: 4, 3: 7, 4: 10 };
 const QUARTER_END: Record<number, number> = { 1: 3, 2: 6, 3: 9, 4: 12 };
 
-interface ParsedDate {
+export interface ParsedDate {
   modifier: string | null;
   day: number | null;
   month: number | null;  // 1-12
@@ -226,46 +226,66 @@ export function getDayRange(
   std: string,
   imperfectDateFudgeDays = 0,
 ): DateRange | null {
+  const parts = parseStdDate(std);
+  if (!parts) return null;
+  if (parts.kind === "range") {
+    return {
+      min: minDayNum(parts.start, imperfectDateFudgeDays),
+      max: maxDayNum(parts.end, imperfectDateFudgeDays),
+    };
+  }
+  if (parts.kind === "or") {
+    return {
+      min: Math.min(
+        minDayNum(parts.a, imperfectDateFudgeDays),
+        minDayNum(parts.b, imperfectDateFudgeDays),
+      ),
+      max: Math.max(
+        maxDayNum(parts.a, imperfectDateFudgeDays),
+        maxDayNum(parts.b, imperfectDateFudgeDays),
+      ),
+    };
+  }
+  return {
+    min: minDayNum(parts.date, imperfectDateFudgeDays),
+    max: maxDayNum(parts.date, imperfectDateFudgeDays),
+  };
+}
+
+/** A standardized date's shape: one date, a `Bet X and Y` range, or an
+ *  `X or Y` alternative. */
+export type StdDateParts =
+  | { kind: "single"; date: ParsedDate }
+  | { kind: "range"; start: ParsedDate; end: ParsedDate }
+  | { kind: "or"; a: ParsedDate; b: ParsedDate };
+
+/**
+ * Parse a stdDate() result into its parts, after stripping a trailing
+ * parenthetical or `?` ("1845 (?)" parses as 1845). Null when no year can be
+ * extracted, or when either side of a range or alternative fails to parse —
+ * the same rule `getDayRange` applies. `earliestYear`/`latestYear` keep their
+ * own parsing: they need only one side of a range.
+ */
+export function parseStdDate(std: string): StdDateParts | null {
   const cleaned = cleanInput(std);
   if (!cleaned) return null;
 
-  // Check for range: "Bet X and Y"
   const rangeMatch = cleaned.match(/^Bet\s+(.+?)\s+and\s+(.+)$/);
   if (rangeMatch) {
     const start = parseSingle(rangeMatch[1]);
     const end = parseSingle(rangeMatch[2]);
-    if (!start || !end) return null;
-    return {
-      min: minDayNum(start, imperfectDateFudgeDays),
-      max: maxDayNum(end, imperfectDateFudgeDays),
-    };
+    return start && end ? { kind: "range", start, end } : null;
   }
 
-  // Check for "or": "X or Y"
   const orMatch = cleaned.match(/^(.+?)\s+or\s+(.+)$/);
   if (orMatch) {
     const a = parseSingle(orMatch[1]);
     const b = parseSingle(orMatch[2]);
-    if (!a || !b) return null;
-    return {
-      min: Math.min(
-        minDayNum(a, imperfectDateFudgeDays),
-        minDayNum(b, imperfectDateFudgeDays),
-      ),
-      max: Math.max(
-        maxDayNum(a, imperfectDateFudgeDays),
-        maxDayNum(b, imperfectDateFudgeDays),
-      ),
-    };
+    return a && b ? { kind: "or", a, b } : null;
   }
 
-  // Single date
-  const p = parseSingle(cleaned);
-  if (!p) return null;
-  return {
-    min: minDayNum(p, imperfectDateFudgeDays),
-    max: maxDayNum(p, imperfectDateFudgeDays),
-  };
+  const date = parseSingle(cleaned);
+  return date ? { kind: "single", date } : null;
 }
 
 /**

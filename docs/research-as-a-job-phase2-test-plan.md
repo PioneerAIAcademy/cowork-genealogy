@@ -1,6 +1,13 @@
 # Phase 2 — the manual test plan
 
-**For:** testing PR #3262 (`research-as-a-job-phase2`) by hand, before un-draft.
+**Status, 2026-10-23:** PR #3262 is CLOSED and its branch will not be merged, so the
+"before un-draft" framing below is spent. The walkthrough is NOT: what it tests is the
+phase-2 UX, which shipped through #3577 and #3662 and is on `main`. Kept rather than deleted
+because it is the hand-test script for that UX and the step-mode work will want it.
+Anything it says is only on the branch now lives at tag `phase2-final`.
+
+**For:** testing the phase-2 UX by hand. Originally written against PR #3262
+(`research-as-a-job-phase2`), before un-draft.
 **Written:** 2026-10-13. Supersedes the 2026-10-08 plan, which is now wrong in five
 places — images, uploads, spend-resume, compaction state and collapsed-card identity
 were all listed there as "not built, do not test" and all shipped on 2026-10-13.

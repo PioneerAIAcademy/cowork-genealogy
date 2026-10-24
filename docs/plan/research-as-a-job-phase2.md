@@ -14,7 +14,8 @@ section below is kept as the record of what was tried and the measurement behind
 undelivered on the rest) — read it as history, not as a description of the current system.
 
 **Original status (2026-09-29/30, superseded above):** BUILT on the
-`research-as-a-job-phase2` branch (unmerged). R1 and R4 are complete end to end; the
+`research-as-a-job-phase2` branch, closed 2026-10-23 (tag `phase2-final`). R1 and R4
+are complete end to end there; the
 acceptance measurement is blocked on #2793/#2927. Originally written 2026-09-29 against
 the code as it stands on `research-as-a-job-phase2`, after the *Before phase 2* sweep.
 Supersedes nothing; the parent is `research-as-a-job-later-REVISED.md`, whose R1 and R4
@@ -43,7 +44,8 @@ Three findings bind this plan, each measured rather than assumed:
 ## R1 — re-enter the router from `PreToolUse`
 
 **The problem, restated against the code.** `CONTINUE_REASON`
-(`app/agent/continue_policy.py:170`) says *"invoke the next GPS sub-skill now"*. It
+(`app/agent/continue_policy.py:331-337`) said *"invoke the next GPS sub-skill now"*, now
+reworded to name the `research` skill. It
 never names the router, so the router's contracts — the second question, completion
 routing — hold only when the model happens to pick it. And it rides `make_stop_hook`,
 which fires only at a voluntary yield.

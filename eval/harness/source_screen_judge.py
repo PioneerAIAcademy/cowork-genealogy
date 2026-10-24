@@ -41,6 +41,12 @@ KINDS = {"indexing", "misattributed", "source_conflict", "unchecked"}
 DEFAULT_MAX_TOOL_CALLS = 150
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 1200
 DEFAULT_MAX_TURNS = 60
+# The agent runs as a subagent, whose tokens the CLI does not stream to the
+# parent, so its final report arrives as one message after a silent gap. On
+# the truth-set run those gaps were 250-438 s on profiles with many sources,
+# against run_skill's 180 s default; every such copy finished when allowed to.
+# The wall-clock cap still bounds a real hang.
+DEFAULT_SILENCE_SECONDS = 600
 
 FINDINGS_INSTRUCTION = (
     "After your report, end with one fenced ```json block holding a list with one "
@@ -49,6 +55,18 @@ FINDINGS_INSTRUCTION = (
     "List each audit-list source you could not check as kind \"unchecked\". "
     "Do not list a source that belongs on the profile and has no problem. "
     "An empty list is []. Write the block once, as the last thing in your reply."
+)
+
+# --tree-sources only: an experiment, not production. The shipped agent body has
+# no rule for tree links, and production record_read refuses 2:2:/2:3: ARKs,
+# which the mock here serves from the snapshot's trees/ cache.
+TREE_SOURCES_INSTRUCTION = (
+    "Some sources link to other trees. A source whose URL holds `4:1:<id>` points to another "
+    "FamilySearch Tree person: call person_read on that id and say whether it is the same "
+    "individual as this profile (a duplicate) or a different person (a wrong link). A source "
+    "whose URL holds `2:2:` or `2:3:` is a user-submitted compiled tree: call record_read on "
+    "its ARK, compare its conclusions with the profile, and treat it as weak evidence. Report a "
+    "wrong link as \"misattributed\"; a duplicate is not a finding, so say so in the report only."
 )
 
 _ARK_CORE = re.compile(r"ark:/61903/\d:\d:[A-Za-z0-9.-]+")
@@ -156,7 +174,14 @@ def _safe(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", name)
 
 
-def generate_fixtures(snapshot: Path, copy: str, fixtures_dir: Path) -> tuple[list[str], dict[str, Any]]:
+def compiled_tree_path(snapshot: Path, ark: str) -> Path:
+    """The snapshot's trees/ cache file for a 2:2:/2:3: ARK (matches compiledTreeFile in source-screen.ts)."""
+    return snapshot / "trees" / (re.sub(r"^ark:/61903/", "", ark).replace(":", "-") + ".json")
+
+
+def generate_fixtures(
+    snapshot: Path, copy: str, fixtures_dir: Path, tree_sources: bool = False
+) -> tuple[list[str], dict[str, Any]]:
     """Write mock fixtures for one copy; return (fixture names, facts about the copy)."""
     d = _copy_dir(snapshot, copy)
     read = _read_json(d / "person-read.json")
@@ -177,6 +202,15 @@ def generate_fixtures(snapshot: Path, copy: str, fixtures_dir: Path) -> tuple[li
         if rec is None:
             rec = {"is_error": True, "error": f"Record {rid} was not read in the snapshot."}
         out.append((f"record-read-{rid}", _fixture("record_read", {"recordId": f"~{rid}"}, rec)))
+
+    if tree_sources:
+        for e in audit["entries"]:
+            if e.get("class") != "compiled_tree" or e.get("level") != "subject":
+                continue
+            rid = bare_id(e["ark"])
+            path = compiled_tree_path(snapshot, e["ark"])
+            body = _read_json(path) if path.exists() else {"is_error": True, "error": f"Compiled tree {rid} was not read in the snapshot."}
+            out.append((f"compiled-tree-{rid}", _fixture("record_read", {"recordId": f"~{rid}"}, body)))
 
     att_path = d / "attachments.json"
     subject_arks = [to_ark(e["ark"]) for e in personas if e.get("level") == "subject"]
@@ -246,10 +280,11 @@ def parse_findings(text: str) -> tuple[list[dict[str, Any]], str | None, list[An
     return findings, None, rejected
 
 
-def delegation_for(subject_id: str, workspace: Path) -> str:
+def delegation_for(subject_id: str, workspace: Path, tree_sources: bool = False) -> str:
+    extra = f"{TREE_SOURCES_INSTRUCTION}\n\n" if tree_sources else ""
     return (
         f"Audit the sources attached to {subject_id}. Tell me which of them belong on the profile "
-        f"and what is wrong with any that do not.\n\nprojectPath: {workspace}\n\n{FINDINGS_INSTRUCTION}"
+        f"and what is wrong with any that do not.\n\nprojectPath: {workspace}\n\n{extra}{FINDINGS_INSTRUCTION}"
     )
 
 
@@ -288,6 +323,8 @@ async def judge_copy(
     direct_dispatch_prompt: Callable[[str, str], str],
     agent_return_text: Callable[[Any, str], str],
     quota_reason: str,
+    tree_sources: bool = False,
+    silence_seconds: int = DEFAULT_SILENCE_SECONDS,
 ) -> dict[str, Any]:
     """Run the agent on one copy and write judge/<copy>.json (or .aborted.json)."""
     judge_dir = snapshot / "judge"
@@ -298,11 +335,11 @@ async def judge_copy(
         fixtures_dir = tmp / "fixtures"
         build_workspace(None, SCENARIOS_DIR, SKILLS_DIR, workspace, stage_skills=False)
         shutil.copyfile(_copy_dir(snapshot, copy) / "tree.gedcomx.json", workspace / "tree.gedcomx.json")
-        names, facts = generate_fixtures(snapshot, copy, fixtures_dir)
+        names, facts = generate_fixtures(snapshot, copy, fixtures_dir, tree_sources)
         started = time.time()
         try:
             result = await run_skill(
-                user_message=direct_dispatch_prompt(AGENT, delegation_for(facts["subject_id"], workspace)),
+                user_message=direct_dispatch_prompt(AGENT, delegation_for(facts["subject_id"], workspace, tree_sources)),
                 workspace=workspace,
                 fixture_names=names,
                 fixtures_dir=fixtures_dir,
@@ -311,6 +348,7 @@ async def judge_copy(
                 max_turns=DEFAULT_MAX_TURNS,
                 max_tool_calls=max_tool_calls,
                 max_wall_clock_seconds=max_wall_clock_seconds,
+                sdk_message_silence_seconds=silence_seconds,
             )
         finally:
             cleanup_session_store(workspace)
@@ -331,6 +369,7 @@ async def judge_copy(
             "parse_error": parse_error,
             "rejected_findings": rejected,
             "harness_miss": harness_miss,
+            "tree_sources": tree_sources,
             "not_audited": facts["not_audited"],
             "calls": calls,
             "tool_args": [
@@ -407,7 +446,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--model")
     ap.add_argument("--max-tool-calls", type=int, default=DEFAULT_MAX_TOOL_CALLS)
     ap.add_argument("--max-wall-clock-seconds", type=int, default=DEFAULT_MAX_WALL_CLOCK_SECONDS)
+    ap.add_argument("--tree-sources", action="store_true", help="experiment: tell the agent how to read 4:1:/2:2:/2:3: sources, and serve them")
+    ap.add_argument("--silence-seconds", type=int, default=DEFAULT_SILENCE_SECONDS)
     args = ap.parse_args(argv)
+    if not 0 < args.silence_seconds <= args.max_wall_clock_seconds:
+        raise JudgeError(f"--silence-seconds must be between 1 and --max-wall-clock-seconds ({args.max_wall_clock_seconds}), got {args.silence_seconds}")
     snapshot = guard_path(args.snapshot)
     if not (snapshot / "run.json").exists():
         raise JudgeError(f"{snapshot} holds no run.json; run source-screen snapshot or plant first")
@@ -447,6 +490,8 @@ def main(argv: list[str] | None = None) -> int:
                     direct_dispatch_prompt=direct_dispatch_prompt,
                     agent_return_text=agent_return_text,
                     quota_reason=QUOTA_ABORT_REASON,
+                    tree_sources=args.tree_sources,
+                    silence_seconds=args.silence_seconds,
                 )
             )
             state = rec["aborted_reason"] or ("harness_miss" if rec["harness_miss"] else "parse_error" if rec["parse_error"] else "ok")

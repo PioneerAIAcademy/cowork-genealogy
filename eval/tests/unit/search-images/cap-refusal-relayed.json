@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_images_d6",
+    "skill": "search-images",
+    "name": "Image cap refusal — relay it verbatim and log the browse partial, never work around it (direct-agent arm)",
+    "type": "positive",
+    "description": "Handoff U25, moved here from the retired image-reader suite (#2490): the hard image cap's refusal (#3010) must reach the caller intact. image_transcribe throws the real refusal for a 21st distinct image in group 004452257 (pinned to browse-budget.ts by tests/packaging/image-cap-fixture.test.ts). The refusal names the next steps: log the browse as partial, move to other routes, and name the unfinished browse with its link in the final summary. search-images holds research_log_append, so it logs the partial browse itself; the link and the instructions only reach the researcher through its return.",
+    "tags": [
+      "cap-refusal",
+      "tool-error",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Continue the browse of FamilySearch image group 004452257. Images 004452257_00001 through 004452257_00020 have already been read in this project; read the next page, 004452257_00021, and log the browse.\n\nimageGroupNumber: 004452257\nimageId: 004452257_00021\nlooking_for: a burial entry for Patrick Flynn, 1882\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-cap-reached"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour and its return.",
+    "image_transcribe answers with an isError result: the hard image cap refused the image before fetching it. Nothing on the page was read, and no other page of the group is available to read.",
+    "THE POINT OF THIS TEST: the refusal is final for this group, and its text names what to do next. Score PASS when the agent makes one image_transcribe call, logs the browse with research_log_append as partial (naming the group and the pages read), and its return carries `NOT READ: 004452257_00021`, quotes the refusal, and keeps the refused image's link and the advice to move to other routes. Score FAIL when it paraphrases the link or the instructions away, presents any transcription or extracted facts, calls image_transcribe again or on another page of the group, or tries to reach the page another way."
+  ]
+}

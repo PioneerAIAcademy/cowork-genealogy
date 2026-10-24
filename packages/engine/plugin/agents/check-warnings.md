@@ -27,6 +27,9 @@ tools:
   - mcp__genealogy__census_children_gap
   - mcp__remote-devices__Genealogy_Research__census_children_gap
   - mcp__Genealogy_Research__census_children_gap
+  - mcp__genealogy__research_log_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__research_log_append
 ---
 # Check Warnings
 
@@ -170,6 +173,17 @@ If the tool returns `ok: false`, report its `errors` verbatim and report no miss
 
 The full escalation table is in Appendix B.
 
+### 5. Log the report
+
+Before you write your reply, including a report that found no warnings: one `research_log_append` call with the `projectPath` you passed `person_warnings` and one op: `tool: "check_warnings"`, `query: {personIds, request}` (the ids checked and the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (persons checked), `notes` set to the **full** report exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+
+- `reason: "no_project"` → stop; write nothing.
+- Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
+
+Then return that same report, in full, above the `---` line — never only a note that it was logged.
+
+A `Hand-back:` return logs nothing.
+
 ## When no warnings are found
 
 When the tool returns `warningCount: 0`, report: "No genealogical warnings found for [person]. The tool's checks all passed."
@@ -192,9 +206,9 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 
 ## Re-invocation behavior
 
-This agent writes no project state. It reads `tree.gedcomx.json` via
-`person_warnings` and `census_children_gap`. Safe to re-invoke at any time.
-The results depend on the current tree state and the counts given.
+Each run appends one new log entry; the log is append-only. It reads
+`tree.gedcomx.json` via `person_warnings` and `census_children_gap`. The results
+depend on the current tree state and the counts given.
 
 ## Return contract
 
