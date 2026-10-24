@@ -71,13 +71,19 @@ def main() -> int:
     url = f"{args.jaeger.rstrip('/')}/api/traces?service={args.service}&limit=50&lookback=1h"
     with urllib.request.urlopen(url, timeout=30) as r:
         spans = [s for t in json.loads(r.read().decode("utf-8"))["data"] for s in t["spans"]]
-    mine = [json.dumps(s) for s in spans if str(stamp) in json.dumps(s)]
+    mine = [s for s in spans if str(stamp) in json.dumps(s)]
     if len(mine) < 4:
         print(f"found {len(mine)} of 4 spans for this run; is the gateway exporting to {args.jaeger}?", file=sys.stderr)
         return 2
-    blob = "\n".join(mine)
+    # Each marker is looked for only in the tag it would leave in: the call request's user
+    # text names the toolcallargs marker, and a reply may echo any marker, so a match
+    # anywhere in the span would report a field present that the gateway never exported.
+    tags = {key: "\n".join(str(t.get("value")) for s in mine for t in s.get("tags", []) if t.get("key") == key)
+            for key in ("gen_ai.prompt", "gen_ai.tool_calls")}
     for k, v in m.items():
-        print(f"{k:16} {'EXPORTED' if v in blob else 'absent'}")
+        key = "gen_ai.tool_calls" if k == "toolcallargs" else "gen_ai.prompt"
+        print(f"{k:16} {'EXPORTED' if v in tags[key] else 'absent'} (in {key})")
+    blob = "\n".join(json.dumps(s) for s in mine)
     print(f"image bytes      {'EXPORTED' if 'iVBORw0KGgo' in blob else 'absent'} (only meaningful after an image call)")
     return 0
 
