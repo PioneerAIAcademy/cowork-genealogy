@@ -562,8 +562,9 @@ _STAGED_COMPACTORS: dict[str, str] = {
 
 def _record_match_score(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
-) -> bool:
-    """Write the attestation a real `same_person` call would have written.
+) -> tuple[bool, dict[str, Any] | None]:
+    """Write the attestation a real `same_person` call would have written, and
+    work out whom the call is about.
 
     `same_person` is not in LIVE_TOOLS -- it calls FamilySearch -- so the
     compiled tool never executes here and `recordMatchScore` never runs. That
@@ -575,6 +576,17 @@ def _record_match_score(
     Calls the compiled build rather than restating the derivation, because a
     Python copy of the pairing rule is a second implementation no drift test
     can see. `buildRecordedScore` is exported from the tool for exactly this.
+    It files the persona production resolves for the call (the caller's
+    `recordPersonaId`, else the persona a sibling assertion carries for the
+    `recordRole` asked), through the same lookup production uses, and the role
+    the record gives that persona when the caller named it.
+
+    The same node process also runs `describeScoredPair`, which says whom the
+    call is about (the record persona and the tree person) from research.json
+    and tree.gedcomx.json; `_overlay_parties` serves that, because a canned
+    fixture answers every pairing its test makes with the one it was recorded
+    for. A second process per call is what `_stage_and_compact_search_results`
+    warns against.
 
     Scoped deliberately:
       * project-relative arm only -- the explicit two-GedcomX arm records
@@ -585,13 +597,16 @@ def _record_match_score(
         and `recordMatchScore` no-ops when persona id and role are both empty,
         so both cases simply write nothing and the caller stays silent.
 
-    Returns True when an attestation was written. Never raises: a harness that
-    fails the run over its own bookkeeping is worse than one that does not
-    attest, and the writer-side gate failing loudly is the signal we want.
+    Returns `(attested, parties)`: whether an attestation was written, and the
+    `recordPersona`/`treePerson` the documents give for this call (None when
+    there are none, or the tree could not be read: that costs the overlay only,
+    never the attestation). Never raises: a harness that fails the run over its
+    own bookkeeping is worse than one that does not attest, and the writer-side
+    gate failing loudly is the signal we want.
     """
     score = response.get("score")
     if not isinstance(score, (int, float)):
-        return False
+        return False, None
     assertion_id = args.get("assertionId")
     tree_person_id = args.get("treePersonId")
     if not isinstance(assertion_id, str) or not isinstance(tree_person_id, str):
@@ -600,13 +615,13 @@ def _record_match_score(
         # absent assertion, so the write would not happen anyway (confirmed by
         # mutation: removing this changes no test). It is an early-out that
         # avoids spawning a node process per two-document call.
-        return False
+        return False, None
 
     sp_js = _MCP_BUILD / "tools" / "same-person.js"
     ms_js = _MCP_BUILD / "utils" / "match-scores.js"
     pio_js = _MCP_BUILD / "utils" / "project-io.js"
     if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
-        return False
+        return False, None
 
     _url = _node_module_url
 
@@ -615,6 +630,7 @@ def _record_match_score(
         "assertionId": assertion_id,
         "treePersonId": tree_person_id,
         "role": args.get("recordRole"),
+        "recordPersonaId": args.get("recordPersonaId"),
         "result": {
             "score": score,
             "matched": bool(response.get("matched")),
@@ -627,25 +643,30 @@ def _record_match_score(
     # `samePersonFromProject`; mirroring that here keeps the mock's side effect
     # the same operation rather than a near-copy of it.
     script = (
-        f"import {{ buildRecordedScore }} from '{_url(sp_js)}';"
+        f"import {{ buildRecordedScore, describeScoredPair }} from '{_url(sp_js)}';"
         f"import {{ recordMatchScore }} from '{_url(ms_js)}';"
         f"import {{ readProjectJson, withProjectLock }} from '{_url(pio_js)}';"
         "let raw='';for await (const c of process.stdin) raw+=c;"
         "const i=JSON.parse(raw);"
         "const research=await readProjectJson(i.projectPath,'research.json');"
         "const rec=buildRecordedScore(research,i.assertionId,i.treePersonId,"
-        "  i.role ?? undefined,i.result);"
+        "  i.role ?? undefined,i.result,i.recordPersonaId ?? undefined);"
         "if (rec!==null) await withProjectLock(i.projectPath, async () => {"
         "  await recordMatchScore(i.projectPath,rec); });"
-        "process.stdout.write(JSON.stringify({wrote: rec!==null}));"
+        "let parties=null;"
+        "try { const tree=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
+        "  parties=describeScoredPair(research,tree,i.assertionId,i.treePersonId,"
+        "    i.role ?? undefined,i.recordPersonaId ?? undefined); } catch {}"
+        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties}));"
     )
     try:
         proc = _run_node_eval(
             script, input_str=json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG
         )
         if proc.returncode != 0:
-            return False
-        return bool(json.loads(proc.stdout or "{}").get("wrote"))
+            return False, None
+        out = json.loads(proc.stdout or "{}")
+        return bool(out.get("wrote")), out.get("parties")
     except subprocess.TimeoutExpired:
         # Never raises, by contract -- but a swallowed timeout is indistinguishable
         # from "no score", and the writer-side gate turns that into a refusal of a
@@ -656,9 +677,43 @@ def _record_match_score(
             f"for assertion {assertion_id}; the link will be refused as unattested",
             stacklevel=2,
         )
-        return False
+        return False, None
     except Exception:
-        return False
+        return False, None
+
+
+def _overlay_parties(
+    response: dict[str, Any], parties: dict[str, Any] | None
+) -> dict[str, Any]:
+    """The served response with `recordPersona` and `treePerson` naming THIS
+    call's pairing.
+
+    A fixture whose predicate is `~` serves every pairing its test makes, so the
+    persona it was recorded with is wrong for all but one of them, and the agent
+    reads that persona as the one the score is about. `parties` is what the
+    compiled `describeScoredPair` derives from the workspace's own documents.
+
+    The fixture's value is kept only when nothing the documents DO say
+    contradicts it. A field the documents cannot supply (a persona id the record
+    never gave, a name no assertion carries) is empty in `parties`, and an empty
+    field contradicts nothing, so the pairing the fixture was written for keeps
+    its name; a call for another role has a role of its own that does
+    contradict, so it is never handed this fixture's persona. The record persona
+    and the tree person are judged separately.
+    """
+    if not parties:
+        return response
+    out = dict(response)
+    for key in ("recordPersona", "treePerson"):
+        derived, recorded = parties.get(key), response.get(key)
+        if not isinstance(derived, dict):
+            continue
+        agrees = isinstance(recorded, dict) and all(
+            value in (None, "") or value == recorded.get(field)
+            for field, value in derived.items()
+        )
+        out[key] = recorded if agrees else derived
+    return out
 
 
 def _stage_and_compact_search_results(
@@ -1259,7 +1314,8 @@ def create_mock_server(
                 and _workspace is not None
                 and "error" not in response
             ):
-                entry["attested"] = _record_match_score(_workspace, args, response)
+                entry["attested"], parties = _record_match_score(_workspace, args, response)
+                response = _overlay_parties(response, parties)
 
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.

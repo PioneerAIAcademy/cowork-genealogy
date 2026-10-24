@@ -88,8 +88,11 @@ alone does not separate the cases, and an absent score counts as not decisive.
 
 ### Step 0 DONE: probed live, 2026-09-30 — and the rule I proposed was wrong
 
-`dev/probe-person-search-decisiveness.ts`, eight live queries spanning qualified, flood and
-the middle cases, responses committed beside it. What it found:
+`dev/probe-person-search-decisiveness.ts` (`1ced02ac4`, deleted with `pick` in
+`f6d5fad6ea`), eight live queries spanning the qualified, flood and middle shapes. The
+script and its recorded responses are reachable at tag `phase2-final`; neither is on
+`main`, because `pick` is gone and the probe went with it
+(`docs/specs/person-search-tool-spec.md`). What it found:
 
 | Probe | totalMatches | top-5 scores | tied at top |
 |---|---|---|---|
@@ -123,8 +126,10 @@ make.
 **And the mock fixture is fiction.** `person-search-flynn.json` carries `totalMatches: 3` and
 scores 4.85 / 3.21 / 2.10 — a gap of 1.64 that occurs nowhere in eight live queries, where real
 gaps are 0, 0.01 or 0.73. Deriving a threshold from it would have encoded a world the API does
-not produce. It is updated to probed values, which under the derived rule stays decisive (a
-unique top score) and keeps `ut_init_project_004` passing.
+not produce. The fixture was updated to probed values on the phase 2 branch, which under the
+derived rule stays decisive (a unique top score) and keeps `ut_init_project_004` passing.
+**Not on `main`:** `main`'s `person-search-flynn.json` still carries the pre-probe
+`totalMatches: 3`. The reworked fixture is at tag `phase2-final`.
 
 ## Order of work
 
@@ -167,8 +172,9 @@ Adding a signal to `person_search`'s response is not one file:
   looked. The parent asks for cards showing what FamilySearch uses to tell namesakes
   apart: lifespan, places, **parents and spouse**. Two of those four already arrive.
 
-  `dev/probe-candidate-distinguishability.ts`, four live queries, responses committed
-  beside it (2026-09-30). Every flood query returned birth/death facts on **5 of 5** of
+  `dev/probe-candidate-distinguishability.ts` (`3551593027`, deleted in `f6d5fad6ea`),
+  four live queries, 2026-09-30; script and recorded responses at tag `phase2-final`,
+  not on `main`. Every flood query returned birth/death FACT TYPES on **5 of 5** of
   its top candidates, and the top five were distinguishable from one another 4/5
   (hales-flood), 2/5 (smith-flood) and 5/5 (hales-year-place):
 
@@ -223,11 +229,12 @@ Adding a signal to `person_search`'s response is not one file:
 ## Acceptance — runnable, with a named test
 
 "Ends the turn `decision`, not `no_progress`" was **unrunnable as written**: the `decision`
-outcome and its card exist only on the unmerged `research-as-a-job-phase2` branch, and no
+outcome and its card exist only on the closed `research-as-a-job-phase2` branch (tag `phase2-final`), and no
 Mary-Hales-shaped test exists anywhere — the captures are one-off feeds, not repeatable
 fixtures.
 
-1. **MET.** `ut_init_project_012` + `eval/fixtures/mcp/person-search-hales-namesakes.json`; passes in `v6_2026-09-30_13-45-44.json`. **A new unit test and fixture** carry the real check: a `person_search` mock with
+1. **MET.** `ut_init_project_012` + `eval/fixtures/mcp/person-search-hales-namesakes.json`
+   (at tag `phase2-final`; not on `main`, where no test references it); passes in `v6_2026-09-30_13-45-44.json`. **A new unit test and fixture** carry the real check: a `person_search` mock with
    `totalMatches: 35921` and tied top scores, and a `judge_context` requiring the agent to
    present candidates and ask — calling neither `person_read` nor the project writers.
 2. **MET.** Passes in the same run. `ut_init_project_004` **still auto-picks and still passes**, against a fixture updated to

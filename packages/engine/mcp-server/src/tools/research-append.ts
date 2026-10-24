@@ -3163,8 +3163,10 @@ export function namesakeRowWarnings(
     return (
       `namesake ${rowText} recorded for '${p}': ${refused.length} probable or confident link(s) to '${p}' ` +
       `stand with nothing in their record tying them to '${p}': ${linkText}.${factText}${nameText} The row is recorded ` +
-      `and these stay as they are, but materialize_facts will not copy any further fact onto '${p}' through ` +
-      "these links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+      `and these stay as they are, but materialize_facts will not copy any further fact onto '${p}' through these ` +
+      `links, and tree_edit and tree_correct will not cite their records' S entries onto '${p}''s facts or names ` +
+      `unless another record on the same S entry ties to '${p}'. ` +
+      "For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
       "namesake." +
       (facts.length === 0
         ? ""
@@ -3172,6 +3174,157 @@ export function namesakeRowWarnings(
           `factId and personId '${p}').`)
     );
   });
+}
+
+// ─── The namesake check on tree writes (issue #3363, item 8) ────────────────
+//
+// A record cited onto a fact or name of a person with a namesake row must tie
+// to that person: each ref needs, among the research sources it reaches, one
+// with a live probable or confident link from it to the person that the cap
+// allows. Relationships, and facts on them, are left to Rule T (#3032).
+
+/** A citation one tree write adds onto a person's fact or name. */
+export interface IntroducedCitation {
+  /** The op that added it; null in the single op form. */
+  index: number | null;
+  personId: string;
+  kind: "fact" | "name";
+  nodeId: string;
+  /** How the node reads in a refusal. */
+  label: string;
+  /** Whether the op made the node, rather than changed it. */
+  added: boolean;
+  /** The bare refs (no leading `#`) the op added to the node. */
+  refs: string[];
+}
+
+/** The citations onto the facts and names of `holders` that `after` holds and
+ *  `before` does not: every ref of a new node, and the refs an existing node
+ *  gained, compared bare. A node is matched by id on the same person, so a
+ *  fact id reused on another person is not read as this one. */
+export function introducedCitations(
+  before: any,
+  after: any,
+  holders: ReadonlySet<string>,
+  index: number | null,
+): IntroducedCitation[] {
+  const out: IntroducedCitation[] = [];
+  const beforeById = new Map<string, any>(
+    ((before?.persons ?? []) as any[]).filter((p) => p && typeof p.id === "string").map((p) => [p.id, p]),
+  );
+  for (const person of (after?.persons ?? []) as any[]) {
+    if (!person || !holders.has(person.id)) continue;
+    const prior = beforeById.get(person.id);
+    for (const kind of ["fact", "name"] as const) {
+      const nodes = ((kind === "fact" ? person.facts : person.names) ?? []) as any[];
+      const priorNodes = ((kind === "fact" ? prior?.facts : prior?.names) ?? []) as any[];
+      for (const node of nodes) {
+        if (!node) continue;
+        const was = typeof node.id === "string" ? priorNodes.find((n) => n?.id === node.id) : undefined;
+        const had = new Set(bareRefsOf(was));
+        const refs = [...new Set(bareRefsOf(node))].filter((r) => !had.has(r));
+        if (refs.length === 0) continue;
+        const label =
+          kind === "fact"
+            ? `fact '${node.id ?? "(new)"}' (${String(node.type ?? "")})`
+            : `name '${node.id ?? "(new)"}' (${[node.given, node.surname].filter((x) => typeof x === "string" && x !== "").join(" ")})`;
+        out.push({ index, personId: person.id, kind, nodeId: String(node.id ?? ""), label, added: !was, refs });
+      }
+    }
+  }
+  return out;
+}
+
+/** The per op citations a whole call still adds: a ref a node did not carry
+ *  before the call and does after it. A ref one op drops and a later op puts
+ *  back, or one op adds and a later op drops, is not charged; a ref several ops
+ *  add is charged once, on the last of them. */
+export function netIntroducedCitations(
+  perOp: ReadonlyArray<IntroducedCitation>,
+  before: any,
+  after: any,
+  holders: ReadonlySet<string>,
+): IntroducedCitation[] {
+  const nodeKey = (c: IntroducedCitation) => `${c.personId}\u0000${c.kind}\u0000${c.nodeId}`;
+  const net = new Map(introducedCitations(before, after, holders, null).map((c) => [nodeKey(c), new Set(c.refs)]));
+  const lastOp = new Map<string, number>();
+  perOp.forEach((c, i) => {
+    for (const r of c.refs) if (net.get(nodeKey(c))?.has(r)) lastOp.set(`${nodeKey(c)}\u0000${r}`, i);
+  });
+  return perOp
+    .map((c, i) => ({ ...c, refs: c.refs.filter((r) => lastOp.get(`${nodeKey(c)}\u0000${r}`) === i) }))
+    .filter((c) => c.refs.length > 0);
+}
+
+/** The check on tree writes: for each ref an introduced citation onto a person
+ *  with a namesake row adds, one finding per research source the ref reaches,
+ *  unless one of them has a live probable or confident link to that person
+ *  that `namesakeVerdicts` allows. An S entry can back several research
+ *  sources, one per persona of a record, so one tied source is enough. A ref
+ *  that reaches no research source is not judged. `tree` is the tree the cap
+ *  reads relatives from: the caller passes the tree as it stood before the
+ *  call. */
+export function namesakeCitationRefusals(
+  research: any,
+  tree: any,
+  introduced: ReadonlyArray<IntroducedCitation>,
+  startingPersonIds?: ReadonlySet<string>,
+): Array<{ index: number | null; message: string }> {
+  if (!Array.isArray(research?.namesakes) || research.namesakes.length === 0 || introduced.length === 0) return [];
+  const assertionById = new Map<string, any>(
+    ((Array.isArray(research?.assertions) ? research.assertions : []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  const entries = ((Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]).filter(
+    (e) => e && !e.superseded_by && typeof e.id === "string",
+  );
+  const reached = new Map<string, string[]>();
+  const sourcesOf = (ref: string) => {
+    let ids = reached.get(ref);
+    if (!ids) reached.set(ref, (ids = [...refsReach([ref], research).sourceIds]));
+    return ids;
+  };
+  const verdictsOf = new Map<string, NamesakeVerdicts | null>();
+  const findings: Array<{ index: number | null; message: string }> = [];
+  for (const c of introduced) {
+    const own = namesakeRowsOf(research, c.personId);
+    if (own.length === 0) continue;
+    if (!verdictsOf.has(c.personId)) {
+      verdictsOf.set(c.personId, namesakeVerdicts(c.personId, research, tree, { startingPersonIds }));
+    }
+    const v = verdictsOf.get(c.personId) ?? null;
+    const mine = entries.filter((e) => e.person_id === c.personId);
+    const strongFrom = (src: string) =>
+      mine.filter((e) => capSource(assertionById.get(e.assertion_id)) === src).filter(isLiveStrong);
+    const ties = (src: string) => strongFrom(src).some((e) => v?.verdicts.get(e.id)?.allowed === true);
+    const judged = new Set<string>();
+    for (const ref of c.refs) {
+      if (sourcesOf(ref).some(ties)) continue;
+      for (const src of sourcesOf(ref)) {
+        if (judged.has(src)) continue;
+        judged.add(src);
+        const strong = strongFrom(src);
+        const judgedStrong = strong.find((e) => v?.verdicts.get(e.id) !== undefined);
+        const reason =
+          strong.length === 0
+            ? `it has no probable or confident link to '${c.personId}'`
+            : judgedStrong === undefined
+              ? `its only link to '${c.personId}' rests on an assertion that records an absence, which ties nothing`
+              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it"}`;
+        findings.push({
+          index: c.index,
+          message:
+            `'${c.personId}' has a recorded namesake (${own.map((r) => `'${r.id}'`).join(", ")}), so a record goes ` +
+            `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
+            `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
+            `Nothing was written. Cite only records that tie to '${c.personId}', or tie the record first through ` +
+            "person-evidence; a relationship added in this same call does not count, so add it in an earlier call.",
+        });
+      }
+    }
+  }
+  return findings;
 }
 
 /** The namesake cap on one research_append call, judged on its end state: one
