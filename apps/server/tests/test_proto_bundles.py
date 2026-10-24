@@ -11,7 +11,7 @@ to each zip's root. Plan: docs/plan/familysearch-handoff.md, U12; the interface 
   ``?``, ``&`` or ``,`` -- and no secret, API-level or dev-only variable is in any template;
 - U11: no file under a template directory but its README, and no tier ``Dockerfile``,
   names one of ``layout.py``'s dev-only variables outside a comment;
-- the logs block, the health paths, nginx at 1800 s for tools, one instance for worker
+- no logs block (the deployer sets it; under Blueprint it fails the launch), the health paths, nginx at 1800 s for tools, one instance for worker
   and tools until U18 chooses the scaling metric (U6's fencing is built);
 - the worker's ``ENGINE_PLUGIN_DIR`` is where its predeploy hook puts the plugin, and the
   hook is executable in git and runs under ``set -euo pipefail``;
