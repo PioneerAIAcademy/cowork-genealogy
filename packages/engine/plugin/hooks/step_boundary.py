@@ -39,7 +39,6 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "search-full-text",
         "search-external-sites",
         "record-structurer",
-        "image-reader",
     ),
     "link": ("person-evidence",),
     "conflict": ("conflict-resolution",),
