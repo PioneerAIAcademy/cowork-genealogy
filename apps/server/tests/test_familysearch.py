@@ -335,8 +335,8 @@ async def test_sync_fs_token_none_without_row():
 # ── Allowlist revocation (security audit #1018 Task 6) ─────────
 
 async def test_token_calls_send_the_browser_user_agent(monkeypatch):
-    """ident answers 403 to python-httpx from FamilySearch's own AWS (handoff step 18,
-    2026-10-24), so the code exchange and the refresh both send the browser UA."""
+    """Imperva's rules for ident differ by endpoint (handoff step 18, 2026-10-24), so the
+    code exchange and the refresh both send the browser UA."""
     agents: list[str | None] = []
 
     def handler(request: httpx.Request) -> httpx.Response:

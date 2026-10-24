@@ -34,8 +34,9 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
   load-balanced environments with a Classic load balancer at 60 s (handoff F12, F14;
   2026-10-24), so `03-tools-classic-elb.config` raises that one to 1,800 s. Each file is
   ignored on the other type: Beanstalk validated both options against a Classic
-  environment without a message. Whether Blueprint's `stack_options` can choose an ALB at
-  creation is untested.
+  environment without a message. Blueprint's `stack_options` can also choose an ALB at creation
+  (`LoadBalancerType: application`); through either, a request held 90 s answered 200
+  (2026-10-24).
 - **Not in the bundle:** `GENEALOGY_PG_DSN`, `GENEALOGY_S3_BUCKET` (both required, or
   `build/http.js` exits 2 before listening), the other `GENEALOGY_S3_*` variables, and the
   config overrides in `../tools/README.md`. Each is an API-level setting.

@@ -34,8 +34,9 @@ FS_CURRENT_USER_URL = "https://api.familysearch.org/platform/users/current"
 FS_ACCEPT = "application/x-fs-v1+json"
 # api.familysearch.org and ident.familysearch.org sit behind Imperva, which 403s
 # non-browser UAs. Mirrors packages/engine/mcp-server/src/constants.ts
-# BROWSER_USER_AGENT. From FamilySearch's own AWS, ident 403s python-httpx too, though
-# not from the VPN (handoff step 18, 2026-10-24), so the token calls send it as well.
+# BROWSER_USER_AGENT. From FamilySearch's own AWS ident's discovery endpoint 403s
+# python-httpx while its token endpoint takes it (handoff step 18, 2026-10-24); the rules
+# differ by endpoint, so the token calls send the browser UA too.
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
