@@ -129,6 +129,7 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "research_append",
     "extraction_append",
+    "evaluation_append",
     "research_log_append",
     "tree_edit",
     "tree_correct",
@@ -1689,6 +1690,8 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "evaluation_append":
+        return _make_evaluation_append_handler(workspace, call_log)
     if tool_name == "timeline_build":
         return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
     compiled = _COMPILED_TOOLS.get(tool_name)
@@ -2018,6 +2021,67 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
         }
         call_log.append(entry)
         return _tool_envelope("research_append", response)
+
+    return handler
+
+
+def _make_evaluation_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """Build the live handler for evaluation_append.
+
+    Same shape as `_make_research_append_handler`, but imports the lane-scoped
+    `evaluationAppend` export (not `researchAppendFromCaller`), so the mock
+    enforces the same `allowedSections` restriction the server does — a write
+    to any section but `evaluations` is refused. projectPath is overridden with
+    the workspace and the full input is piped via stdin.
+    """
+    append_js = _MCP_BUILD / "tools" / "evaluation-append.js"
+
+    async def handler(args, _ws=workspace, _ajs=append_js):
+        if _ws is None or not _ajs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_ajs}"
+            response: dict[str, Any] = {
+                "ok": False,
+                "errors": [f"evaluation_append: {reason}"],
+            }
+        else:
+            append_url = _node_module_url(_ajs)
+
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+
+            script = (
+                f"import {{ evaluationAppend }} from '{append_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await evaluationAppend(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"evaluation_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {
+                    "ok": False,
+                    "errors": [f"evaluation_append: {e}"],
+                }
+
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__evaluation_append",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:evaluation_append",
+            "response": response,
+        }
+        call_log.append(entry)
+        return _tool_envelope("evaluation_append", response)
 
     return handler
 

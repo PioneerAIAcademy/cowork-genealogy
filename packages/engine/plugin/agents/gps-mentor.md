@@ -23,7 +23,7 @@ tools:
   - mcp__genealogy__research_query
   - mcp__genealogy__project_context
   - mcp__genealogy__sidecar_read
-  - mcp__genealogy__research_append
+  - mcp__genealogy__evaluation_append
   - mcp__genealogy__validate_research_schema
   - mcp__genealogy__place_search
   - mcp__genealogy__place_distance
@@ -34,7 +34,7 @@ tools:
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__remote-devices__Genealogy_Research__sidecar_read
-  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__remote-devices__Genealogy_Research__evaluation_append
   - mcp__remote-devices__Genealogy_Research__validate_research_schema
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__remote-devices__Genealogy_Research__place_distance
@@ -45,7 +45,7 @@ tools:
   - mcp__Genealogy_Research__research_query
   - mcp__Genealogy_Research__project_context
   - mcp__Genealogy_Research__sidecar_read
-  - mcp__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__evaluation_append
   - mcp__Genealogy_Research__validate_research_schema
   - mcp__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_distance
@@ -246,7 +246,7 @@ After completing your review, perform these steps in order. Step 1 must
 complete before step 2. If the write fails, report the error explicitly
 in the narrative rather than silently proceeding.
 
-1. **Persist the verdict with ONE `research_append` call.** Pass the
+1. **Persist the verdict with ONE `evaluation_append` call.** Pass the
    structured verdict body as the top-level `verdict` argument and the
    pointer record as `entry`. The tool writes
    `evaluations/<focus>-<target_id>-<short_iso>.json`, creates the
@@ -254,7 +254,7 @@ in the narrative rather than silently proceeding.
    validates, and writes both — or writes neither.
 
    ```
-   research_append({
+   evaluation_append({
      projectPath: "<project folder>",
      section: "evaluations",
      op: "append",

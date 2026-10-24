@@ -533,7 +533,7 @@
         "agent:gps-mentor"
       ],
       "writerTools": [
-        "research_append"
+        "evaluation_append"
       ],
       "enforceableAt": [],
       "notes": "The owner is an agent, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it cannot express an agent owner. Since 2026-09-02 test_no_out_of_lane_section_writes does see the agent caller, and because evaluations is outside proof-conclusion's lane a write there from that agent IS denied on the unit plane — incidentally, via the lane rule, not as a declared owner check for this row. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
