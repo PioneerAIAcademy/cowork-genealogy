@@ -103,6 +103,8 @@ HTTP_NS = "aws:elbv2:listener:default"
 CERT_DAYS = 30
 MANAGED_NS = "aws:elasticbeanstalk:managedactions"
 HEALTH_NS = "aws:elasticbeanstalk:healthreporting:system"
+# Set here, not in the bundles: under Blueprint StreamLogs fails the launch (handoff step 14).
+LOGS_NS = "aws:elasticbeanstalk:cloudwatch:logs"
 
 # The sqsd options whose values the worker also reads from its environment (U5).
 # ErrorVisibilityTimeout has none.
@@ -1133,6 +1135,7 @@ class Rehearsal:
             opt(EBENV_NS, "ServiceRole", self.role_arn("service")),
             opt(MANAGED_NS, "ManagedActionsEnabled", "false"),
             opt(HEALTH_NS, "SystemType", "enhanced"),
+            opt(LOGS_NS, "StreamLogs", "true"), opt(LOGS_NS, "DeleteOnTerminate", "false"),
         ]
         for var, key in TIER_SECRETS[tier].items():
             out.append(opt(SECRETS_NS, var, self.state.get("secrets", {}).get(key) or self.secret_arn(key)))

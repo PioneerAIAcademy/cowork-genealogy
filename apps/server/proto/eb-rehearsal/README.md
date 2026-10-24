@@ -100,8 +100,9 @@ they run against a fake `aws`.
 
 Every tier gets its security group and instance profile through
 `aws:autoscaling:launchconfiguration`, its `InstanceTypes` through `aws:ec2:instances`, ASG 1/1,
-`ManagedActionsEnabled=false` and enhanced health. `--env <tier>:NAME=VALUE` adds a non-secret
-operator setting, which the same guard checks.
+`ManagedActionsEnabled=false`, enhanced health, and `StreamLogs: true` with
+`DeleteOnTerminate: false` (the bundles leave logs to the deployer, handoff step 14).
+`--env <tier>:NAME=VALUE` adds a non-secret operator setting, which the same guard checks.
 
 ### Loopback sign-in
 

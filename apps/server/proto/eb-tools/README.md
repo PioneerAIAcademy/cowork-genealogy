@@ -8,7 +8,7 @@ deploy (`docs/plan/familysearch-handoff.md`, step 9).
 | File | Role |
 |---|---|
 | `Procfile` | `web: node build/http.js --host 127.0.0.1 --port 8080`. Mandatory: without one the platform runs `npm start`, which is the stdio server. Loopback, so only nginx reaches the port. |
-| `.ebextensions/01-tools.config` | `PORT=8080` (equal to the Procfile's `--port`), `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the bundle's `certs/rds-global-bundle.pem`, `HealthCheckPath: /healthz`, one instance (`asg` 1/1), CloudWatch log streaming kept after terminate |
+| `.ebextensions/01-tools.config` | `PORT=8080` (equal to the Procfile's `--port`), `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the bundle's `certs/rds-global-bundle.pem`, `HealthCheckPath: /healthz`, one instance (`asg` 1/1); no logs block (handoff step 14) |
 | `.ebextensions/02-tools-alb.config` | ALB `IdleTimeout` 1800, alone in its file (below) |
 | `.ebextensions/03-tools-classic-elb.config` | Classic `ConnectionSettingIdleTimeout` 1800, alone in its file (below) |
 | `.platform/nginx/conf.d/01-tools-timeouts.conf` | `proxy_read_timeout` and `proxy_send_timeout` 1800 s, nginx's 60 s default being shorter than a tool call |
@@ -16,7 +16,7 @@ deploy (`docs/plan/familysearch-handoff.md`, step 9).
 `apps/server/tests/test_proto_bundles.py` pins them: the Procfile's shape and `--port`
 against `PORT`, every environment value inside Beanstalk's character set, no secret or
 dev-only variable, the CA path equal to `scripts/eb_bundles/layout.py`'s, the health path,
-the logs block, `asg` 1/1, and nginx at 1800 s or more.
+no logs block, `asg` 1/1, and nginx at 1800 s or more.
 
 - **TLS without a query string.** Beanstalk documents environment values as excluding
   `? & % #`, so `GENEALOGY_PG_DSN` carries no `sslmode`; a DSN `sslmode` would override

@@ -267,10 +267,9 @@ def test_the_scan_sees_each_shape(tier, text, dev):
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
-def test_logs_stream_and_survive_terminate(tier):
-    logs = _settings(tier, LOGS_NS)
-    assert logs.get("StreamLogs", "").lower() == "true", (tier, logs)
-    assert logs.get("DeleteOnTerminate", "").lower() == "false", (tier, logs)
+def test_bundles_leave_logs_to_the_deployer(tier):
+    # Under Blueprint StreamLogs fails the launch (handoff step 14); rehearse.py sets it at API level.
+    assert not _settings(tier, LOGS_NS), (tier, _settings(tier, LOGS_NS))
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)

@@ -971,6 +971,7 @@ def test_tiers_carry_their_security_group_profile_and_type(stack):
         assert o[(rh.LC_NS, "IamInstanceProfile")].endswith(f"instance-profile/genealogy-u13/genealogy-u13-{tier}")
         assert o[(rh.INSTANCES_NS, "InstanceTypes")] == rh.INSTANCE_TYPES[tier]
         assert o[(rh.MANAGED_NS, "ManagedActionsEnabled")] == "false"
+        assert (o[(rh.LOGS_NS, "StreamLogs")], o[(rh.LOGS_NS, "DeleteOnTerminate")]) == ("true", "false")
         assert (o[(rh.ASG_NS, "MinSize")], o[(rh.ASG_NS, "MaxSize")]) == ("1", "1")
         for var, key in rh.TIER_SECRETS[tier].items():
             assert o[(rh.SECRETS_NS, var)].startswith(f"arn:aws:secretsmanager:us-east-1:{ACCOUNT}:secret:genealogy-u13/{key}")
