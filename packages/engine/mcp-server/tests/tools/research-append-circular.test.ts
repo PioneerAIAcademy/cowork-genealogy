@@ -265,6 +265,16 @@ describe("circular corroboration (issue #2943)", () => {
     });
   });
 
+  it("still refuses the link when another op in the batch fails", async () => {
+    const r = research();
+    await setup(r);
+    await attest(r, ["a_001", W]);
+    const res = await call({ section: "plan_items", op: "append", planId: "pl_999", entry: {} }, link("a_001", W));
+    expect(res.ok).toBe(false);
+    expect(circular(res)).toHaveLength(1);
+    expect(errs(res)).toContain("ops[1]");
+  });
+
   describe("what lets a link through", () => {
     it("accepts a link whose second index is dated to the year only: the edge source then reads as another record", async () => {
       const r = research({

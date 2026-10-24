@@ -8929,6 +8929,7 @@ export async function researchAppend(
           tree,
           projectPath,
           startingPersonIds: prep.startingPersonIds,
+          startingTree: prep.startingTree,
           applyOp,
           fmt,
         });
@@ -8950,13 +8951,7 @@ export async function researchAppend(
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
-    const namesakeMsgs: string[] = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt);
-    // Circular corroboration (issue #2943), on the same end state: a tree whose
-    // relationships came from the record cannot confirm that record.
-    namesakeMsgs.push(
-      ...circularCorroborationCallCheck({ research: beforeResearch }, { research, tree }, applied, prep.startingTree)
-        .map((f) => (f.index === null ? f.message : fmt(f.index, f.message))),
-    );
+    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -9276,8 +9271,12 @@ function namesakeMessages(
   applied: readonly AppliedOp[],
   startingPersonIds: ReadonlySet<string>,
   fmt: (i: number, msg: string) => string,
+  startingTree: SimplifiedGedcomX | null,
 ): string[] {
-  return namesakeCallCheck(before, after, applied, startingPersonIds).map((f) =>
+  return [
+    ...namesakeCallCheck(before, after, applied, startingPersonIds),
+    ...circularCorroborationCallCheck(before, after, applied, startingTree),
+  ].map((f) =>
     f.index === null ? f.message : fmt(applied[f.index].opIndex, f.message),
   );
 }
@@ -9410,6 +9409,7 @@ async function everyOpFailure(c: {
   tree: any;
   projectPath: string;
   startingPersonIds: ReadonlySet<string>;
+  startingTree: SimplifiedGedcomX | null;
   applyOp: ApplyOp;
   fmt: (i: number, msg: string) => string;
 }): Promise<{ errors: string[]; hints: ExampleHint[] }> {
@@ -9455,7 +9455,7 @@ async function everyOpFailure(c: {
     );
     const found = documentFailure({
       validation,
-      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt),
+      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree),
       doc,
       ops: applied.map((a) => ops[a.opIndex]),
       applied,
