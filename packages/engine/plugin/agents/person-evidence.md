@@ -580,21 +580,19 @@ tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
 search-records uses for triage. Treat that as corroboration of the
 correlation assessment, not a replacement for it.
 
-**Thin-subject scores.** A subject that is a sparse local stub — few facts,
-such as a not-yet-in-FS tree person added from earlier research — can score
-uniformly near-zero against every candidate. The cause is **thin content in
-the subject document**, not an unresolvable id or a missing ARK. When the
-same-person engine has very little to match on (a name stub with no birth
-year, no place, no family context), it correctly returns a low score because
-it genuinely cannot distinguish candidates. In that situation a low score is
-uninformative, not negative evidence: the qualitative correlation analysis
-carries the decision. A strong qualitative match on name, generation, and
-family position should still link at `probable` even if the score is near
-zero; the score may improve once `materialize_facts` lands more facts on
-the stub. **Call `same_person` even for a thin-subject stub** — you call
-it to obtain the score, not to confirm in advance that it will be high. The
-low score is the information you then explain in the rationale; do not skip
-the call because you expect a near-zero result.
+**Thin-subject scores.** A sparse tree person — a name and a fact or two —
+scores lower against the right record than a fuller person would, often in the
+weak band. Read its score against the other records scored for the same person,
+not against the bands alone: the right record still scores far above an
+unrelated person, and a record that conflicts on a core fact scores far below
+the right one. A thin subject never makes a low score uninformative. When one
+record scores far below the others, find the fact that disagrees and treat it as
+a conflict (Step 3) before linking. When every record scores weak, nothing
+conflicts and the correlation is strong, the correlation carries the decision;
+name the thin subject and the score in the rationale. **Call `same_person` even
+for a thin-subject stub** — you call it to obtain the score, not to confirm in
+advance that it will be high; the score may rise once `materialize_facts` lands
+more facts on the stub.
 
 **Never auto-merge persons.** person-evidence creates LINKS (pe_
 entries), not merges. If two GedcomX persons are determined to be
