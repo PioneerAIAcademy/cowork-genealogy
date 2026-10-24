@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FeedbackDialog from '../FeedbackDialog'
@@ -13,7 +13,11 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 
-function mount(): { submitFeedback: ReturnType<typeof vi.fn> } {
+// vitest 4 types a bare vi.fn() as Mock<Procedure | Constructable>, which is not
+// callable; this is vitest 3's default, so mock.calls stays indexable.
+type LooseMock = Mock<(...args: any[]) => any>
+
+function mount(): { submitFeedback: LooseMock } {
   const submitFeedback = vi.fn(async () => ({ ok: true as const }))
   vi.mocked(useResearchData).mockReturnValue({ ...buildMockContext(), submitFeedback })
   render(<FeedbackDialog onClose={() => {}} />)
@@ -248,7 +252,7 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
   it('says it could not check, rather than claiming an empty folder, when the lookup fails', async () => {
     const user = userEvent.setup()
     // Same loose typing as mount()'s mock, so mock.calls is indexable.
-    const submitFeedback: ReturnType<typeof vi.fn> = vi.fn(async () => ({ ok: true as const }))
+    const submitFeedback: LooseMock = vi.fn(async () => ({ ok: true as const }))
     vi.mocked(useResearchData).mockReturnValue({
       ...buildMockContext(),
       submitFeedback,
