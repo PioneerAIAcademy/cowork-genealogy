@@ -18,7 +18,7 @@
     ]
   },
   "input": {
-    "delegation": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001. Check if any results are already attached to tree persons.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001. Check if any results are already attached to tree persons.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1850\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1850 census places Patrick in a household, identifying candidate parents.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"~1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": null\n}",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [

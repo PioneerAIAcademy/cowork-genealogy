@@ -2366,8 +2366,9 @@ def test_touched_agent_with_no_suite_is_untouched_by_the_identity_rule(
     monkeypatch, capsys, tmp_path
 ):
     """Keyed on directory existence, so an agent with no suite of its own
-    (image-reader, record-extractor today) stays ungated until one lands —
-    and arms itself when it does, with no constant to remember to edit."""
+    (image-reader and record-extractor, both retired with their suites) stays
+    ungated until one lands — and arms itself when it does, with no constant to
+    remember to edit."""
     skills = _make_skills_tree(tmp_path)
     tests_unit = tmp_path / "tests-unit"
     tests_unit.mkdir()
@@ -3167,3 +3168,252 @@ def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeyp
     out = capsys.readouterr().out
     assert rc == 1, out
     assert "skill `convert-dates`" in out and "tools.fixture" in out
+
+
+# --- #3568: a touched agent gates a suite only if its graded log can see it -----
+
+_AGENT_REL = "packages/engine/plugin/agents/callee.md"
+_CALLEE = "---\nname: callee\ndescription: Does x.\ntools:\n  - Read\n---\nbody v1\n"
+
+
+def _routing_repo(tmp_path, monkeypatch, snapshot=None, *, released=True):
+    """A routing suite `router` (SKILL.md naming @plugin:callee, plus a test
+    directory) whose graded run log holds `snapshot` (None: no run log at all)."""
+    repo = tmp_path / "repo"
+    skills = repo / "packages/engine/plugin/skills"
+    (skills / "router").mkdir(parents=True)
+    (skills / "router" / "SKILL.md").write_text(
+        "---\nname: router\n---\nDelegate via `@plugin:callee`.\n", encoding="utf-8"
+    )
+    (repo / _AGENT_REL).parent.mkdir(parents=True)
+    (repo / _AGENT_REL).write_text(_CALLEE, encoding="utf-8")
+    tests_unit = repo / "eval/tests/unit"
+    (tests_unit / "router").mkdir(parents=True)
+    (tests_unit / "router" / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_router_001"}}), encoding="utf-8"
+    )
+    runlogs = repo / "eval/runlogs/unit"
+    runlogs.mkdir(parents=True)
+    if snapshot is not None:
+        (runlogs / "router").mkdir()
+        name = "v1.json" if released else "v1_2026-10-21_10-00-00.json"
+        (runlogs / "router" / name).write_text(json.dumps({"snapshot": snapshot}), encoding="utf-8")
+    for attr, value in (
+        ("REPO_ROOT", repo), ("RUNLOGS_DIR", runlogs), ("PLUGIN_SKILLS_DIR", skills),
+        ("TEST_ONLY_SKILLS_DIR", repo / "eval/skills"), ("TESTS_UNIT_DIR", tests_unit),
+    ):
+        monkeypatch.setattr(check_runlogs, attr, value)
+    return repo
+
+
+def _frontmatter_digest(text):
+    from harness.snapshot import hash_content
+
+    return hash_content(
+        check_runlogs.frontmatter_fingerprint_text(normalize(_AGENT_REL, text.encode("utf-8")))
+    )
+
+
+def _changed(value):
+    def fake(agent, **_):
+        return value
+    return fake
+
+
+def test_a_body_only_edit_to_a_frontmatter_fingerprinted_agent_gates_nothing(tmp_path, monkeypatch):
+    """The point of #3568: the routing suite's graded log holds the agent's
+    `#frontmatter` key and the PR left the frontmatter alone."""
+    _routing_repo(tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)})
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == set()
+
+
+def test_a_frontmatter_edit_gates_the_routing_suite(tmp_path, monkeypatch):
+    _routing_repo(tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)})
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(True))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"router"}
+
+
+def test_a_graded_log_holding_the_full_key_gates_on_any_edit(tmp_path, monkeypatch):
+    """An opted-in agent, or any agent in a log written before #3568. The
+    frontmatter comparison is not even consulted."""
+    _routing_repo(tmp_path, monkeypatch, {_AGENT_REL: "0" * 64})
+
+    def must_not_run(agent, **_):
+        raise AssertionError("a full key must gate without a frontmatter comparison")
+
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", must_not_run)
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"router"}
+
+
+def test_a_suite_with_no_graded_log_is_gated_so_rule_2_can_report_it(tmp_path, monkeypatch):
+    _routing_repo(tmp_path, monkeypatch, snapshot=None)
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"router"}
+
+
+def test_a_graded_log_with_no_key_for_the_agent_is_not_gated(tmp_path, monkeypatch):
+    """Rule 2 never reports a path its snapshot does not list, so gating here
+    would only run the other rules on a suite the edit cannot reach."""
+    _routing_repo(tmp_path, monkeypatch, {"packages/engine/plugin/skills/router/SKILL.md": "0" * 64})
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == set()
+
+
+def test_the_agents_own_suite_is_gated_though_its_log_has_no_key_for_it(tmp_path, monkeypatch):
+    """A skill converted to an agent keeps its suite, and that suite's graded log
+    can predate the conversion (search-records' graded log was v7.json, written
+    while it was still a skill, until v8). Its next run embeds the agent in full, so the edit
+    reaches it: the own suite is gated whatever key form its log holds."""
+    repo = _routing_repo(tmp_path, monkeypatch, {"packages/engine/plugin/skills/router/SKILL.md": "0" * 64})
+    (repo / "eval/tests/unit/callee").mkdir()
+    (repo / "eval/runlogs/unit/callee").mkdir()
+    (repo / "eval/runlogs/unit/callee/v1.json").write_text(
+        json.dumps({"snapshot": {"packages/engine/plugin/skills/callee/SKILL.md": "0" * 64}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {}) == {"callee"}
+
+
+def test_the_log_this_pr_adds_decides_over_the_released_one(tmp_path, monkeypatch):
+    """The released v1 holds the bare key, the PR's own candidate the reduced one:
+    the PR is graded on the log it ships."""
+    repo = _routing_repo(tmp_path, monkeypatch, {_AGENT_REL: "0" * 64})
+    added = "v2_2026-10-21_10-00-00.json"
+    (repo / "eval/runlogs/unit/router" / added).write_text(
+        json.dumps({"snapshot": {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    assert check_runlogs.suites_gated_by_touched_agents({"callee"}, {"router": [added]}) == set()
+
+
+def test_main_blocks_a_description_edit_on_a_stale_routing_log(tmp_path, monkeypatch, capsys):
+    """End to end: the graded log fingerprinted the old description, the PR
+    changed it, so research-like suites go stale and rule 2 blocks."""
+    repo = _routing_repo(
+        tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)}
+    )
+    (repo / _AGENT_REL).write_text(_CALLEE.replace("Does x.", "Does y."), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(True))
+    _patch_diffs(monkeypatch, [_AGENT_REL])
+
+    rc = check_runlogs.main()
+
+    out = capsys.readouterr().out
+    assert rc == 1, out
+    assert "skill `router`" in out
+    assert "#frontmatter" in out
+
+
+def test_main_lets_a_body_only_edit_through(tmp_path, monkeypatch, capsys):
+    repo = _routing_repo(
+        tmp_path, monkeypatch, {_AGENT_REL + "#frontmatter": _frontmatter_digest(_CALLEE)}
+    )
+    (repo / _AGENT_REL).write_text(_CALLEE.replace("body v1", "body v2"), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed(False))
+    _patch_diffs(monkeypatch, [_AGENT_REL])
+
+    rc = check_runlogs.main()
+
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "skill `router`" not in out
+
+
+def test_agent_gates_suite_reads_the_key_form():
+    key = _AGENT_REL
+    assert check_runlogs.agent_gates_suite("callee", None) is True
+    assert check_runlogs.agent_gates_suite("callee", {key: "x"}) is True
+    assert check_runlogs.agent_gates_suite("callee", {"other": "x"}) is False
+
+
+# The merge-base comparison, against a REAL git repository: a monkeypatched
+# helper cannot show the three-dot convention holds (the phantom it guards
+# against was only ever found against real commits).
+
+
+def _git(repo, *args):
+    subprocess.run(
+        ["git", "-c", "user.email=t@example.com", "-c", "user.name=t", *args],
+        cwd=repo, check=True, capture_output=True,
+    )
+
+
+def _rev(repo, ref="HEAD"):
+    return subprocess.run(
+        ["git", "rev-parse", ref], cwd=repo, check=True, capture_output=True,
+        text=True, encoding="utf-8",
+    ).stdout.strip()
+
+
+@pytest.fixture
+def agent_git_repo(tmp_path):
+    """A0 adds the agent; `main` edits its description after the fork; the PR
+    branch is created from A0."""
+    repo = tmp_path / "git"
+    (repo / "packages/engine/plugin/agents").mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    (repo / _AGENT_REL).write_text(_CALLEE, encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "A0")
+    a0 = _rev(repo)
+    (repo / _AGENT_REL).write_text(_CALLEE.replace("Does x.", "Does main's thing."), encoding="utf-8")
+    _git(repo, "commit", "-q", "-am", "main moves the description")
+    return repo, a0, _rev(repo)
+
+
+def _pr_branch(repo, a0, name, edit):
+    _git(repo, "checkout", "-q", "-b", name, a0)
+    edit(repo / _AGENT_REL)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", name)
+    return _rev(repo)
+
+
+@pytest.mark.parametrize(
+    ("edit", "expected"),
+    [
+        (lambda p: p.write_text(_CALLEE.replace("body v1", "body v2"), encoding="utf-8"), False),
+        (lambda p: p.write_text(_CALLEE.replace("  - Read\n", "  - Read\n  - Write\n"), encoding="utf-8"), True),
+        (lambda p: p.write_text(_CALLEE.replace("Does x.", "Does z."), encoding="utf-8"), True),
+        (lambda p: p.unlink(), True),
+    ],
+    ids=["body-only-while-main-moved-the-description", "tools", "description", "deleted"],
+)
+def test_agent_frontmatter_changed_against_a_real_merge_base(agent_git_repo, monkeypatch, edit, expected):
+    repo, a0, main_tip = agent_git_repo
+    head = _pr_branch(repo, a0, "pr", edit)
+    monkeypatch.setenv("BASE_SHA", main_tip)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert check_runlogs.agent_frontmatter_changed("callee", cwd=repo) is expected
+
+
+def test_agent_frontmatter_changed_fails_closed_without_the_shas(monkeypatch):
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    assert check_runlogs.agent_frontmatter_changed("callee") is True
+
+
+def test_agent_frontmatter_changed_fails_closed_on_a_git_error(agent_git_repo, monkeypatch):
+    repo, _, main_tip = agent_git_repo
+    monkeypatch.setenv("BASE_SHA", main_tip)
+    monkeypatch.setenv("HEAD_SHA", "0" * 40)  # no such commit
+    assert check_runlogs.agent_frontmatter_changed("callee", cwd=repo) is True
+
+
+def test_every_embedded_agent_reaches_its_suite_through_the_superset():
+    """Corpus property: every agent a suite's snapshot embeds (any form) is one
+    whose edit the superset maps back to that suite, so no embedded agent can be
+    edited with its suite left unexamined."""
+    from harness.snapshot import agent_embed_forms
+
+    referencing = check_runlogs.skills_referencing_agents(check_runlogs.PLUGIN_SKILLS_DIR)
+    missed = []
+    suites = [p.name for p in sorted(check_runlogs.TESTS_UNIT_DIR.iterdir()) if p.is_dir()]
+    assert "research" in suites
+    for suite in suites:
+        for agent in agent_embed_forms(suite, check_runlogs.REPO_ROOT):
+            if suite not in check_runlogs.skills_gated_by_agent(agent, referencing):
+                missed.append(f"{suite} embeds {agent}")
+    assert not missed, missed

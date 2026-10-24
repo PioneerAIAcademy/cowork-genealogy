@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_validate_schema_011",
+    "skill": "validate-schema",
+    "name": "With no project in the working folder, validation points to starting one and writes nothing",
+    "type": "positive",
+    "description": "Issue #3524. The working folder holds no research.json. validate_research_schema answers reason: \"no_project\"; the agent says there is no project to validate and points the user to starting one. It logs nothing and creates no file.",
+    "tags": [
+      "validation",
+      "no-project",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
+    "scenario": "empty-folder-no-project"
+  },
+  "judge_context": [
+    "The working folder holds no project. validate_research_schema answers ok: false with reason: \"no_project\"; that is the correct finding, not a failed call, and (no file changes) is the correct outcome.",
+    "Should say there is no project to validate and point the user to starting one (both files are created together). Must not claim the files are valid, and must not invent schema errors."
+  ]
+}

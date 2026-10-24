@@ -1135,3 +1135,31 @@ def test_duration_is_none_not_zero_without_two_timestamps(records):
     from e2e.subagent_capture import subagent_duration_seconds
 
     assert subagent_duration_seconds(records) is None
+
+
+def test_backfill_captures_a_background_agents_staged_transcription(shortspace: Path, monkeypatch):
+    """A background agent's `image_transcribe` returns a ref (#2490); the
+    backfill saves the staged page under the same key a synchronous call gets."""
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY, backfill_background_tool_calls
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc123"
+    ref = "results/.staging/p.json"
+    (workspace / "results" / ".staging").mkdir(parents=True)
+    (workspace / ref).write_text(
+        json.dumps({"tool": "image_transcribe", "payload": {"results": [{"id": "X", "transcription": "the page"}]}}),
+        encoding="utf-8",
+    )
+    response = json.dumps({"staged": {"resultsRef": ref, "returnedCount": 1}, "digest": {"id": "X", "chars": 8}})
+    records = [
+        _assistant_rec([_tool_use_block("tu0", "mcp__genealogy__image_transcribe", {"imageId": "X"})]),
+        _user_rec([_tool_result_block("tu0", response)]),
+    ]
+    _seed_transcript(home, workspace, "bg778", records, meta={"agentType": "search-images"})
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    tool_calls: list[dict] = [_async_launch_entry("bg778")]
+    backfill_background_tool_calls(workspace, tool_calls)
+    [entry] = [tc for tc in tool_calls if tc.get("agent_id") == "bg778"]
+    assert entry[STAGED_TRANSCRIPTION_KEY] == "the page"

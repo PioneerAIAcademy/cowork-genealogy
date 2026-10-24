@@ -136,6 +136,25 @@ class OrchestratorPaths:
     runlogs_root: Path = DEFAULT_RUNLOGS
 
 
+def _other_suite_names(skill: str, skills_dir: Path, agents_dir: Path) -> set[str]:
+    """Every skill and plugin agent other than `skill` -- used by rule 3 to
+    detect "routing to another skill" patterns in short responses without
+    false-flagging legitimate concise outputs.
+
+    Agents count because a skill converted to an agent (2026-09-22 ruling)
+    leaves the skills dir: with skills alone, a decline naming `search-records`
+    read as substantive once #3567 moved it, and an out-of-scope negative that
+    routed correctly failed as activated."""
+    names = {
+        d.name for d in Path(skills_dir).iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    }
+    if Path(agents_dir).is_dir():
+        names |= {p.stem for p in Path(agents_dir).glob("*.md")}
+    names.discard(skill)
+    return names
+
+
 # Validators that assert the persisted project files are valid (schema-
 # conformant, references resolve). A test that declares its scenario broken
 # on purpose (`intentionally_invalid: true`) expects these to fail — the
@@ -440,16 +459,32 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
 
 
 def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | None:
-    """The `stub_skills` entries to deny when reached by an agent spawn.
+    """The `stub_skills` entries to deny, with their canned text, when reached
+    by an agent spawn.
 
     Exactly the entries with no skill directory: a callee converted from a skill
     to an agent (issue #2825), which the router now spawns rather than loads. A
-    name that is still a skill keeps its `Skill`-call stub only, so its agent
-    half can still be spawned for real. (`route-shortcut-guard.json`, which
-    motivated this, now ends at its first stubbed hand-off instead: `stop_at_stub`.)
+    name that is still a skill keeps its `Skill`-call stub here; its agent half
+    is denied anyway by `_live_agents`' default unless the test opts it in, and
+    the hook gives that denial the same canned text (#3568).
     """
     stubbed = parse_stub_skills(spec.execution)
     return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
+
+
+def _live_agents(spec: TestSpec) -> set[str]:
+    """The agents a main-thread spawn may reach for real (#3568).
+
+    The suite's own agent (the direct arm's dispatcher spawns it) and every
+    agent the test names in `execution.run_agents`. Every other main-thread
+    spawn is denied with a stub — built-in types such as `general-purpose`
+    included — so an agent no test opts in can never run, and the snapshot may
+    fingerprint it by its frontmatter alone (`snapshot.agent_embed_forms`).
+    A negative test's `correct_skill` needs no entry: the routing short-circuit
+    stops that spawn before the default denial is reached.
+    """
+    run_agents = (spec.execution or {}).get("run_agents") or []
+    return {spec.skill} | {name for name in run_agents if isinstance(name, str) and name}
 
 
 # Field names inside one `modelUsage` entry, as the CLI emits them.
@@ -587,6 +622,7 @@ async def _execute_single_run(
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
+        live_agents=_live_agents(spec),
         stop_at_stub=_stop_at_stub(spec),
         tool_search=tool_search,
     )
@@ -630,13 +666,7 @@ async def _execute_single_run(
         file_changes["tree.gedcomx.json"] = tree_diff
     file_changes = file_changes or None
 
-    # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
-    # used by rule 3 to detect "routing to another skill" patterns in
-    # short responses without false-flagging legitimate concise outputs.
-    other_skill_names = {
-        d.name for d in paths.skills_dir.iterdir()
-        if d.is_dir() and not d.name.startswith(".") and d.name != spec.skill
-    }
+    other_skill_names = _other_suite_names(spec.skill, paths.skills_dir, DEFAULT_PLUGIN_AGENTS)
 
     agents_spawned = spawned_agents(result.builtin_tool_calls)
     activated = derive_activated(
@@ -1022,6 +1052,20 @@ def _is_retryable_abort(result) -> bool:
     return _is_zero_progress_timeout(result)
 
 
+_STALL_ABORTS = {"sdk_stream_silence"}
+
+
+def retry_delay_for(aborted_reason: str | None, base_delay: float) -> float:
+    """The FIRST backoff before re-running after `aborted_reason`.
+
+    Only the reason measured to need it gets the long wait; an unknown reason keeps
+    the fast retry rather than silently inheriting minutes of delay.
+    """
+    if aborted_reason in _STALL_ABORTS:
+        return max(base_delay, DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6)
+    return base_delay
+
+
 async def _execute_skill_with_retry(
     *,
     run_index: int,
@@ -1033,6 +1077,7 @@ async def _execute_skill_with_retry(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
@@ -1075,7 +1120,6 @@ async def _execute_skill_with_retry(
        test and stays non-retryable; one that burned the whole budget
        without a single turn never started, which is the same transient
        class as (1) and (2).
-
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
     delay = base_delay
@@ -1126,6 +1170,7 @@ async def _execute_skill_with_retry(
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
                         stub_agents=stub_agents,
+                        live_agents=live_agents,
                         stop_at_stub=stop_at_stub,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
@@ -1177,8 +1222,8 @@ async def _execute_skill_with_retry(
             f"(attempt {attempt + 2}/{attempts})",
             file=sys.stderr,
         )
-        await asyncio.sleep(delay)
-        delay *= 2
+        await asyncio.sleep(retry_delay_for(result.aborted_reason, delay))
+        delay = retry_delay_for(result.aborted_reason, delay) * 2
 
     # Unreachable: the final attempt always returns above. Present so
     # type-checkers see a definite return.

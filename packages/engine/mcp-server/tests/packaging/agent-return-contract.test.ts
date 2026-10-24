@@ -18,9 +18,9 @@ import { fileURLToPath } from "node:url";
 // that agent's next body edit rather than flipping four run logs in one PR.
 // An entry here is checked in BOTH directions: an agent on the list that has
 // gained the heading fails ("stale entry — remove it"), and an agent off the
-// list that lacks it fails. Three agents are excluded outright rather than
-// pending, each with its reason in `EXCLUDED` below: `image-reader`,
-// `record-structurer` and `source-evaluation`.
+// list that lacks it fails. Two agents are excluded outright rather than
+// pending, each with its reason in `EXCLUDED` below: `record-structurer` and
+// `source-evaluation`.
 //
 // NOTE for anyone converting an agent: exclusion silences this lint in both
 // directions, so a green run says nothing about whether the excluded body is
@@ -32,7 +32,6 @@ const agentsDir = join(here, "..", "..", "..", "plugin", "agents");
 const HEADING = /^#{2,4}\s+`summary_for_user`\s*$/m;
 
 const EXCLUDED: Record<string, string> = {
-  "image-reader.md": "returns a full transcription and nothing else, by spec",
   "record-structurer.md":
     "returns extraction_append's code-written summary verbatim (lead, 2026-09-29)",
   // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the

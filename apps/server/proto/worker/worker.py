@@ -31,7 +31,7 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the thirty bare agent names
+``options.py``; ``get_server_info()`` checked for the twenty-nine bare agent names
 (``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 2
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
@@ -283,7 +283,6 @@ EXPECTED_AGENTS = frozenset({
     "gps-mentor",
     "historical-context",
     "hypothesis-tracking",
-    "image-reader",
     "init-project",
     "locality-guide",
     "person-evidence",
@@ -845,8 +844,13 @@ def choose_sdk_session_id(conn: psycopg.Connection, session_id: str, candidate: 
 def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
     with conn.cursor() as cur:
         cur.execute(
+            # `wrote` is appended LAST and must stay last: `_tool_call_decisions` in
+            # test_proto_worker.py reads the decision param positionally as p[6], so
+            # inserting a column before it silently corrupts that helper rather than
+            # failing.
             "INSERT INTO tool_calls (turn_id, session_id, agent_id, agent_type, tool_name, "
-            "input_path, decision, tool_use_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            "input_path, decision, tool_use_id, wrote) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 row["turn_id"],
                 row["session_id"],
@@ -856,6 +860,11 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
                 row.get("input_path"),
                 row["decision"],
                 row.get("tool_use_id"),
+                # The SHAPE of what this call wrote, for change review. None for a read,
+                # for a denied call and for a halted one -- the column is sparse by
+                # design, and the migration's index is `WHERE wrote IS NOT NULL`, so a
+                # row here IS a claim that a write was attempted.
+                Jsonb(row["wrote"]) if row.get("wrote") else None,
             ),
         )
     conn.commit()

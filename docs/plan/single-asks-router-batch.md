@@ -81,18 +81,24 @@ The other three #2813 items are deliberately NOT here:
   Whichever of #2813-item-3 and #2122 lands second carries the other's edit and re-runs
   `make eval-skill SKILL=init-project`.
 - **Item 7** (viewer) costs no eval run at all — `packages/viewer-ui/` is in no snapshot —
-  but #2813 says to build it with phase 2's "One view of job state", which is **DONE on the
-  unmerged `research-as-a-job-phase2` branch** (29 viewer files, including the `offPlan.ts`
-  group item 7 names), not on `main`. It is independent of this batch and should be planned
-  separately, against whichever base that work ends up on.
+  but #2813 says to build it with phase 2's "One view of job state". **Corrected
+  2026-10-23: that work is now ON `main`** — it landed with #3577 (`9bb384fd5d`), and
+  `offPlan.ts`,
+  `JobStateBadge.tsx` and `job_state.py` are all there. This paragraph previously said it
+  was only on the `research-as-a-job-phase2` branch, which was true when written and is
+  not now; the branch itself was closed unmerged on 2026-10-23 (tag `phase2-final`).
+
+  So item 7 no longer waits on a base. It is independent of this batch and can be planned
+  against `main` directly.
 
 ## Blocking dependency
 
 1. ~~PR #3147~~ **MERGED 2026-10-05.** The exit is on `main`.
 2. **The router re-entry, still unbuilt.** #2813 item 1 says to put the decision in "the
    router every hosted turn re-enters **under your Before phase 2 section**". That re-entry
-   does not exist: `apps/server/app/agent/continue_policy.py:175-181` still carries
-   `CONTINUE_REASON`, whose text is "invoke the next GPS sub-skill now" with no router
+   does not exist: `apps/server/app/agent/continue_policy.py:331-337` still carries
+   `CONTINUE_REASON`, whose text WAS "invoke the next GPS sub-skill now" and is now
+   "invoke the `research` skill now", with no router
    re-entry, and the default web path
    never enters the router at all — `apps/web/src/components/chatEvents.ts:114` prefixes
    every new session's first message with `OPENING_TURN`, so `init-project` ran and nothing
@@ -117,7 +123,8 @@ works "only because the per-turn `DELIVERY_GUIDANCE` names the tool". The field 
 not: alpha reported the agent answering a bounded question and carrying on. "End your turn"
 in the body and "call `research_delivered`" in the prompt competed, and the body won. The
 router's bounded close names the tool now. On the hosted path a toolless voluntary stop is vetoed
-and nudged with `CONTINUE_REASON` ("invoke the next GPS sub-skill now"), which contradicts
+and nudged with `CONTINUE_REASON` (then "invoke the next GPS sub-skill now"; now
+"invoke the `research` skill now"), which contradicts
 the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
 names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.
 

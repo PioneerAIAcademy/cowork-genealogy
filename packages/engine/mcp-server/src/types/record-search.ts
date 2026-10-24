@@ -74,8 +74,21 @@ export interface FSField {
   values?: FSFieldValue[];
 }
 
+/**
+ * A record relationship. Only Couple rows' `facts` are read, and endpoints are
+ * matched on `resource: "#<persona id>"` (#3695). Search payloads also carry
+ * `resourceId`, which nothing here reads, so it is not declared.
+ */
+export interface FSRecordRelationship {
+  type?: string;
+  person1?: { resource?: string };
+  person2?: { resource?: string };
+  facts?: FSFact[];
+}
+
 export interface FSGedcomx {
   persons?: FSPerson[];
+  relationships?: FSRecordRelationship[];
   sourceDescriptions?: FSSourceDescription[];
   fields?: FSField[];
 }

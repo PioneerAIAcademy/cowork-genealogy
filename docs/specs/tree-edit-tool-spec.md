@@ -497,6 +497,57 @@ inferred or invented. Supplying **both** `name` and `names` is rejected loudly
 than silently resolving one, because the downstream one-preferred normalizer
 would otherwise receive ambiguous input.
 
+### 4.5 Citations onto a person with a recorded namesake
+
+When `research.json` records a namesake row (`namesakes`) for a person, a fact
+or name may cite a record onto that person only when the record ties to them.
+After the ops apply in memory, each op's **introduced citations** onto a row
+holder's facts and names are judged (`introducedCitations`: every ref of a node
+the op makes, and the refs an existing node gains, compared without a leading
+`#`; a node is matched by id on the same person). A batch is charged with what
+the call adds as a whole (`netIntroducedCitations`): a ref one op drops and a
+later op restores, or one op adds and a later op drops, is not charged, and a
+ref several ops add is charged once, on the last of them. Each ref passes when
+one of the research sources it reaches (`refsReach`) has a live `probable` or
+`confident` link from one of its assertions to the person that the namesake cap
+allows (`namesakeCitationRefusals`, on `namesakeVerdicts`). An S entry can back
+several research sources, one per persona of a record, so one that ties is
+enough; when none does, each is named. A ref that reaches no research source is
+not judged. Relationships, and facts on them, are left to
+Rule T, and a person-level `sources` ref is not judged: the lead's ruling of
+2026-10-18 names facts and names. The cap reads relatives from the tree as it
+stood **before the call**, as `materialize_facts`' copy gate does, so a
+relationship the same call adds does not tie the record; one committed call has
+that shape (`spriggs-parents-1898` 2026-06-24, call 89; unmeasured, its captures
+stripped). The starting tree is read for the cap's starting-person ids; a missing
+or unreadable one reads as none, so a relative it held whose only refs reach the
+cited record reads as made from it, and does not tie it.
+
+A finding refuses the whole call and nothing is written, `ops[i]: <text>` in the
+batch form:
+
+> `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or tie the record first through person-evidence; a relationship added in this same call does not count, so add it in an earlier call.`
+
+**Measured** at `bb8af9a54` by `dev/measure-namesake-cap.ts` §6 over the committed
+e2e runs, with a row planted on every person holding a live `probable` or
+`confident` link: 39 calls cite a record onto such a person's fact or name, 14
+onto the subject. At call time, where the replay has the run's links (15 calls;
+the other 24 had their captures stripped), it refuses 5 of the 10 it judges, 3
+only because the run linked the record after writing the fact. On each run's
+final state it refuses 14 of the 34 calls whose citations reach a research
+source, 11 of the 13 onto the subject: every refused citation but one is a link
+the cap refuses, and that one rests on an assertion that records an absence
+(`wilkins-death-kentucky` 2026-07-25, call 118). The replay keeps no tree, so it
+rebuilds the refs a fact or name carried before an update from the starting tree
+and the run's earlier citing writes; it also judges every update charged none
+and every one of its refs, and the ten updates that move a count between those
+two are read from their run logs instead (`TRACED_PRIOR_REFS`; a floor fails on
+one that is not). Known let through: a ref cited
+before its record is registered as a research source is never judged, even when
+a later call restates it (committed instance: `antonio-lucas-spouse` 2026-08-04,
+S5 on I12 since `add_person` at call 184, restated at call 214). Labelled cases:
+`tests/tools/tree-edit-namesake.test.ts`.
+
 ---
 
 ## 5. Persistence — validate-before-persist, atomic, tree-only
@@ -516,11 +567,15 @@ Sequence (validate-before-persist, tree-only):
    for the cross-file validation pass.
 2. Apply the operation **in memory**: allocate ids, run the primary/preferred
    swaps, resolve `standard_place`.
-3. **Validate** the would-be tree with `validateParsed(research, tree, { projectPath })`
+3. **Judge citations onto a person with a recorded namesake** (§4.5): when the
+   project records a namesake row, the citations the call as a whole introduces
+   onto a row holder's facts and names. A finding writes nothing and returns
+   `{ ok: false, errors }`.
+4. **Validate** the would-be tree with `validateParsed(research, tree, { projectPath })`
    before any write. If the call introduces an error → write nothing, return
    `{ ok: false, errors }`; a pre-existing error the call did not introduce rides
    as a warning.
-4. Persist: `atomicWriteJson` the new tree. **Only `tree.gedcomx.json` is written** —
+5. Persist: `atomicWriteJson` the new tree. **Only `tree.gedcomx.json` is written** —
    `research.json` is untouched (ad-hoc adds create ids nothing references yet;
    corrections change values, not ids; `remove` deletes facts/relationships, not
    persons — so no person-id reference can dangle). This is the Mode-1 write shape.
@@ -610,6 +665,7 @@ Sequence (validate-before-persist, tree-only):
 | Condition | Behavior |
 |-----------|----------|
 | `projectPath` missing `tree.gedcomx.json` / invalid JSON | input error; write nothing |
+| An op cites a record onto a fact or name of a person with a namesake row, and the record does not tie to them (§4.5) | refused; write nothing; the error names the record, why it does not tie, and the route |
 | `personId` / `factId` / `nameId` / `relationshipId` / `sourceId` not found in the on-disk tree | staleness error; write nothing |
 | `operation` requires a payload that is absent (e.g. `add_fact` with no `fact`, `add_source` with no `source`, `update_source` with no `sourceId`/`source`) | input error |
 | `add_source` / `update_source` payload carries an `id` | rejected (add) / ignored (update — `id` is immutable) |
@@ -701,6 +757,14 @@ The caller (`tree-edit` skill) still:
 - **validate-before-persist** — an edit that would invalidate the project writes
   nothing and returns `{ ok: false, errors }`; no `.bak` written.
 - **research.json untouched** — byte-unchanged after any operation.
+- **Namesake citation check** (§4.5) — `tests/tools/tree-edit-namesake.test.ts`:
+  a fact, name or update citing an untied record onto the row holder is refused
+  with both files unchanged; a tied record, no row, a row on a relative only, a
+  ref no research source cites, a fact on a relationship, an update restating or
+  respelling a ref, and a relative the starting tree holds are all written; a
+  relationship the same call adds does not tie the record. An S entry two
+  research sources share passes on one that ties and names each when none does;
+  a batch is judged as a whole, each ref charged once, to the last op adding it.
 
 ---
 
