@@ -115,6 +115,7 @@ if str(PROTO_DIR) not in sys.path:
 
 import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
+import turn_message  # noqa: E402  (the queue body, shared with the worker)
 import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
@@ -421,21 +422,12 @@ def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
 
 
 def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, nudges: int) -> dict[str, Any]:
-    """The turn message the worker receives. One definition, so a test driving a fake
-    store still asserts the shape production enqueues.
-
-    ``max_nudges`` is 1a's carrier: the worker prefers it over its own
-    ``AUTONOMOUS_MAX_NUDGES`` because one worker serves the browser and
-    ``make proto-demo`` and cannot tell them apart. It comes from ``nudges`` -- this
-    tier's environment -- and never from the request."""
-    return {
-        "turn_id": turn_id,
-        "session_id": session.session_id,
-        "project_id": session.project_id,
-        "text": text,
-        "enqueued_at": enqueued_at,
-        "max_nudges": nudges,
-    }
+    """This tier's call into the shared builder (``proto/turn_message.py``), which the
+    worker also enqueues through. Kept as a wrapper because every call site here holds
+    a ``SessionRow`` and the worker holds none."""
+    return turn_message.queue_body(
+        turn_id, session.session_id, session.project_id, text, enqueued_at, nudges
+    )
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:

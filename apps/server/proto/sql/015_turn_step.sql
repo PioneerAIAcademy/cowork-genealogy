@@ -24,3 +24,17 @@ ALTER TABLE turns ADD COLUMN IF NOT EXISTS mode text;
 CREATE INDEX IF NOT EXISTS turns_session_step_idx
     ON turns (session_id, completed_at DESC)
     WHERE step IS NOT NULL;
+
+-- The "Keep going" run state (section A2). `next_auto_reply` is pure: it is handed the
+-- state, returns the next one, and the host persists it. The run spans turns, so the
+-- state cannot live in the worker process -- the turn that writes it and the turn that
+-- reads it are different attempts, often on different machines.
+--
+--   auto_reply  {"replies": int, "planning_rounds": int, "answered": [[step, offer]]}
+--               while a run is in flight, NULL otherwise. Cleared the moment a run ends,
+--               so the researcher's next "Keep going." starts from an empty budget
+--               rather than inheriting a spent one.
+--
+-- On `sessions`, not `turns`: it is a property of the run, and a turn row is written
+-- before anyone knows whether a reply will follow it.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS auto_reply jsonb;
