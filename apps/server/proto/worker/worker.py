@@ -224,6 +224,7 @@ from proto.worker.options import (  # noqa: E402
     check_registration,
     cli_env_blanks,
     gateway_plugin_copy,
+    plugin_copy_missing,
     hook_path,
     make_posttool_hook,
     make_pretool_hook,
@@ -318,8 +319,10 @@ _stdout_lock = threading.Lock()
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
 # The directory every attempt passes as plugins=: ENGINE_PLUGIN_DIR, or on the gateway
-# provider its copy with Bedrock agent models (gateway_plugin_copy).
+# provider its copy with Bedrock agent models (gateway_plugin_copy), rebuilt by
+# attempt_plugin_dir when the tmpfiles cleanup has taken any of it.
 _PLUGIN_DIR: str = ENGINE_PLUGIN_DIR
+_PLUGIN_COPY_LOCK = threading.Lock()
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
 # AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap for a message WITHOUT max_nudges
 # (turn_max_nudges); 0 = no Stop hook for those. The web tier stamps its own cap on every
@@ -1525,13 +1528,10 @@ def prepare() -> None:
         gateway = False  # refused at start by require_start_config
     if gateway and _AGENTS_ERROR is None:
         try:
-            # Under TMPDIR, which every slot user can reach (setup_turn_users); mkdtemp is
-            # 0700. One worker per instance, so an earlier start's copy is stale.
+            # One worker per instance, so an earlier start's copy is stale.
             for old in Path(tempfile.gettempdir()).glob("plugin-gateway-*"):
                 shutil.rmtree(old, ignore_errors=True)
-            dest = tempfile.mkdtemp(prefix="plugin-gateway-")
-            os.chmod(dest, 0o755)
-            _PLUGIN_DIR = gateway_plugin_copy(ENGINE_PLUGIN_DIR, dest)
+            _PLUGIN_DIR = new_gateway_plugin_copy()
         except OSError as exc:
             _AGENTS_ERROR = f"gateway plugin copy: {type(exc).__name__}: {exc}"
             log(ev="prepare", step="plugin_copy", error=_AGENTS_ERROR)
@@ -1552,6 +1552,31 @@ def prepare() -> None:
         error=_AGENTS_ERROR, plugin_dir=_PLUGIN_DIR,
         cli_version=cli_version,
     )
+
+
+def new_gateway_plugin_copy() -> str:
+    """A fresh gateway copy of ENGINE_PLUGIN_DIR under TMPDIR, which every slot user can
+    reach (setup_turn_users); mkdtemp is 0700, so it is opened to 0755."""
+    dest = tempfile.mkdtemp(prefix="plugin-gateway-")
+    os.chmod(dest, 0o755)
+    return gateway_plugin_copy(ENGINE_PLUGIN_DIR, dest)
+
+
+def attempt_plugin_dir() -> str:
+    """The plugins= directory for one attempt. On the gateway provider, a copy that has
+    lost any file is replaced by a fresh one; the old one is left to attempts still
+    reading it. A failed rebuild raises, so the attempt answers 500 and is redelivered."""
+    global _PLUGIN_DIR
+    if _PLUGIN_DIR == ENGINE_PLUGIN_DIR:
+        return _PLUGIN_DIR
+    with _PLUGIN_COPY_LOCK:
+        missing = plugin_copy_missing(ENGINE_PLUGIN_DIR, _PLUGIN_DIR)
+        if missing:
+            stale = _PLUGIN_DIR
+            _PLUGIN_DIR = new_gateway_plugin_copy()
+            log(ev="plugin_copy", step="rebuilt", missing=len(missing), first=missing[0],
+                stale=stale, plugin_dir=_PLUGIN_DIR)
+        return _PLUGIN_DIR
 
 
 def require_agents() -> dict[str, Any]:
@@ -2487,6 +2512,8 @@ async def _run_turn(
                 # normal path -- median two attempts, longest six.
                 nudges_used=nudges_so_far(conn, turn_id) if receive_count > 1 else 0,
             )
+        # Before a slot is taken, so a failed rebuild holds none.
+        plugin_dir = attempt_plugin_dir()
         # U3: this attempt's CLI runs as a slot user that owns its config dir and home and
         # nothing of any other turn's.
         if TURN_POOL is not None:
@@ -2501,7 +2528,7 @@ async def _run_turn(
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
-            plugin_dir=_PLUGIN_DIR,
+            plugin_dir=plugin_dir,
             agents=agents,
             store=store,
             config_dir=config_dir,

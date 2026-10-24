@@ -274,6 +274,15 @@ def gateway_plugin_copy(plugin_dir: str, dest: str) -> str:
     return dest
 
 
+def plugin_copy_missing(plugin_dir: str, dest: str) -> list[str]:
+    """The files of ``plugin_dir`` that ``dest`` lacks, as relative paths. A copy under
+    ``/tmp`` loses files on Amazon Linux 2023, whose tmpfiles cleanup removes any not
+    touched for 10 days; the CLI reads a skill's other files only when that skill runs."""
+    src = Path(plugin_dir)
+    return sorted(str(p.relative_to(src)) for p in src.rglob("*")
+                  if p.is_file() and not (Path(dest) / p.relative_to(src)).is_file())
+
+
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
 # contract is four headers the entrypoint reads, all per request and never process state:
 # `Authorization: Bearer <patron token>` becomes the request's principal, and

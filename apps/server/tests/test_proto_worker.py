@@ -1317,6 +1317,28 @@ def test_prepare_passes_the_gateway_copy_as_the_plugin_dir(monkeypatch, tmp_path
     monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
     worker.prepare()
     assert worker._PLUGIN_DIR == str(PLUGIN_DIR), "the Anthropic API takes the bare ids"
+    assert worker.attempt_plugin_dir() == str(PLUGIN_DIR)
+
+
+def test_an_attempt_rebuilds_a_copy_the_tmp_cleanup_has_thinned(monkeypatch, tmp_path):
+    """Amazon Linux 2023 clears /tmp files untouched for 10 days, and a skill's other files
+    are read only when it runs: a copy can lose single files while the worker serves turns."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(worker, "_PLUGIN_DIR", worker.new_gateway_plugin_copy())
+    first = worker._PLUGIN_DIR
+    assert worker.attempt_plugin_dir() == first and not logged, "a whole copy is reused"
+    lost = next(p for p in Path(first).rglob("*") if p.is_file() and p.parent.name != "agents")
+    lost.unlink()
+    second = worker.attempt_plugin_dir()
+    assert second != first and Path(first).is_dir(), "a fresh copy; the old one stays for attempts still reading it"
+    assert options.plugin_copy_missing(str(PLUGIN_DIR), second) == []
+    assert (Path(second) / "agents" / "search-wikipedia.md").read_text(encoding="utf-8").count("model: us.anthropic.") == 1
+    [rebuilt] = [f for f in logged if f.get("ev") == "plugin_copy"]
+    assert rebuilt["missing"] == 1 and rebuilt["first"] == str(lost.relative_to(first))
+    assert worker.attempt_plugin_dir() == second
 
 
 # ── the container ─────────────────────────────────────────────────────────────────
@@ -1687,6 +1709,17 @@ def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
     assert "cost_usd = COALESCE" in update and "output_tokens = COALESCE" in update
     assert summary["cost_usd"] == 0.01 and summary["num_turns"] == 1 and summary["resumed"] is False
     assert summary["events"] == 1 and summary["sdk_session_id"] == SID and summary["seq"] == 2, "text event, then turn_done"
+
+
+def test_run_turn_passes_a_whole_gateway_copy_as_plugins(turn_env, monkeypatch, tmp_path):
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(worker, "_PLUGIN_DIR", worker.new_gateway_plugin_copy())
+    thinned = worker._PLUGIN_DIR
+    next(p for p in Path(thinned).rglob("*") if p.is_file()).unlink()
+    _run(turn_env, _good())
+    used = turn_env["options"]["plugin_dir"]
+    assert used != thinned and options.plugin_copy_missing(str(PLUGIN_DIR), used) == []
 
 
 def test_run_turn_resumes_when_the_store_already_holds_the_session(turn_env):
