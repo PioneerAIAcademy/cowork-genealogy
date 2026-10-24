@@ -54,7 +54,7 @@
         "image-transcribe-any",
         "person-read-flynn"
       ],
-      "outcome": "fail",
+      "outcome": "partial",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -158,7 +158,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_search_hints_006_2026-10-20_07-55-34_0",
-          "outcome": "fail",
+          "outcome": "partial",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 99614.66879956424,
@@ -823,46 +823,46 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 1,
-                "rationale": "Claude claimed the death certificate (MDEF) is 'already extracted in the project' and 'not yet linked to Patrick Flynn (I1) through a person_evidence entry,' then recommended accepting it and handing it to person-evidence to create the linking. The per-test context explicitly states: 'Reporting it as already linked (or already in the project) and giving it no recommendation is wrong' and 'A deferral is a reply that gives MDEF no accept/reject/not-enough recommendation of its own.' Claude gave the accept recommendation, which is correct, but the framing 'already extracted' combined with 'handed to person-evidence to create the linking entry' reads as a deferral of the identity decision itself. The per-test context requires the agent to make the identity recommendation independently: 'The return should name src_004, say it is extracted but not linked, and make the identity recommendation itself; handing that call to person-evidence is a deferral.' Claude's statement 'This does not undermine the identification. The record should be accepted as this person's, and then handed to person-evidence to create the linking entry' conflates the identity recommendation (which Claude did make) with the linking action (which is person-evidence's job). However, re-reading more carefully, Claude does state 'accept' as the verdict on the hint line, which is the independent recommendation. The core error is the phrase 'already extracted in the project' \u2014 the certificate was extracted but the identity question was never resolved (no person_evidence link exists). This mischaracterizes the state and suggests the identity was already decided, when in fact Claude is deciding it now. This is a factual error about the project state that changes the framing of the work."
+                "score": 2,
+                "rationale": "Claude correctly identified and triaged three pending hints with sound reasoning on M70C and M80C. However, on MDEF (the death certificate), Claude stated it was 'already extracted in the project' and 'not yet linked,' then recommended accepting it and routing to person-evidence for linking. The per-test context explicitly states: 'Reporting it as already linked (or already in the project) and giving it no recommendation is wrong' and 'A reply that says Hint MDEF: accept \u2014 extracted as src_004, not linked; <reasoning> is correct and complete.' Claude did provide the accept recommendation and correctly noted it was extracted but not linked, which satisfies the core requirement. However, the phrasing 'This record is already extracted in the project' could be misread as claiming it was already linked, when the key point is that it is extracted but NOT linked. The recommendations themselves are sound: M70C matches strongly on all identity points; M80C's index error (Glynn vs Flynn) was correctly resolved by reading the image; MDEF's Pennsylvania birthplace disagreement was correctly contextualized against the project's resolved conflict. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude reviewed all three pending hints (M70C, M80C, MDEF) and provided a recommendation for each: accept, accept, accept. Each recommendation names the deciding facts and the FamilySearch confidence level. The user message asked 'which look valid,' and Claude addressed all three hints with clear verdicts. No hints were omitted."
+                "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a recommendation (accept, accept, accept) with reasoning. Claude stated FamilySearch confidence levels for all three (3 for M70C, 2 for M80C, 2 for MDEF). Claude correctly identified that MDEF was extracted but not linked, and explained the workflow (routing to person-evidence for linking). The response covered everything the input state required: all pending hints were reviewed, each received a verdict with supporting facts, and the identity question on MDEF was addressed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. person_record_matches was called with id='LZNY-BRF' and status=['pending'], matching expected args. research_query calls for person_evidence, assertions, and sidecar_read were appropriate. record_read calls for M70C, M80C, and MDEF matched expected recordId patterns. image_transcribe was called with the correct imageArk for the 1880 census image. person_read was called with the correct personId. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. person_record_matches was called with correct id (LZNY-BRF) and status filter (pending). research_query calls queried the correct sections (person_evidence, assertions) with correct recordIds. record_read calls used correct recordIds (M70C, M80C, MDEF). image_transcribe used the correct imageArk for the 1880 census image. person_read used the correct personId. No calls landed in fixture_not_found; all matched successfully. The minConfidence parameter added to person_record_matches was a reasonable addition not contradicting the fixture's expectations."
               },
               {
                 "source": "rubric",
                 "name": "Hint scope",
                 "score": 3,
-                "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches: M70C (1870 census, confidence 3), M80C (1880 census, confidence 2), and MDEF (death certificate, confidence 2). Each hint's FamilySearch confidence was stated. The 1850 census (MXYZ) was correctly not presented as a hint because it is an accepted match, not pending. Claude did not invent hints or review non-pending matches as hints."
+                "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF). Each hint's FamilySearch confidence was stated: M70C confidence 3 (moderate), M80C confidence 2 (low), MDEF confidence 2 (low). No accepted or rejected matches were mixed into the list. The 1850 census (MXYZ), which is an accepted match per the per-test context, was correctly not presented as a hint to decide. Claude did not invent hints or review non-pending matches."
               },
               {
                 "source": "rubric",
                 "name": "Recommendation soundness",
-                "score": 2,
-                "rationale": "Claude's recommendations are mostly defensible but contain a significant framing error on the death certificate. For M70C (1870 census): accept is sound, based on name, birth year, birthplace, county, father's name, and occupation all agreeing. For M80C (1880 census): Claude correctly identified the index-vs-tree disagreement (Glynn vs Flynn), read the image as required by the rubric rule ('an index-vs-tree disagreement is a reason to read the image, never a reason to reject'), confirmed the image shows 'Flynn, Patrick,' and recommended accept. This is exemplary. For MDEF (death certificate): Claude recommended accept based on name, death date, death place, and father name matching the tree, and acknowledged the birthplace disagreement (Pennsylvania vs Ireland) was already resolved in the project's conflict c_001. However, Claude stated 'This record is already extracted in the project' and 'not yet linked to Patrick Flynn (I1) through a person_evidence entry,' which mischaracterizes the state. The certificate was extracted but the identity question was never resolved\u2014Claude is making that recommendation now, not confirming an already-decided identity. The per-test context states this framing is incorrect. The recommendation itself (accept) is sound, but the narrative suggests the identity was pre-decided rather than being Claude's independent judgment."
+                "score": 3,
+                "rationale": "Each recommendation names its deciding facts and is defensible. M70C: name, birth year, birthplace, county, father's name, and occupation all agree across multiple independent points\u2014strong evidence. M80C: the index disagreement (Glynn vs Flynn) was checked against the image before recommendation; the image clearly shows 'Flynn, Patrick,' resolving the discrepancy. Claude correctly applied the rule that an index-vs-tree disagreement is a reason to read the image, never a reason to reject. MDEF: the Pennsylvania birthplace disagreement was contextualized against the project's resolved conflict c_001, which already weighed the evidence and concluded the son-in-law informant was likely in error. Claude did not rely on FamilySearch confidence alone; confidence was stated but not the deciding factor. No hint was forced to accept or reject; all three received accept recommendations with clear supporting facts. Claude correctly identified that MDEF's identity question (whether the certificate is Patrick's) should be resolved by person-evidence after acceptance, not deferred without a recommendation."
               },
               {
                 "source": "rubric",
                 "name": "Verdict recording",
-                "score": 3,
-                "rationale": "This is a triage test (the agent was spawned in triage mode, not record mode). The rubric dimension 'Verdict recording' applies only to record mode and should score N/A on triage tests. However, the instruction states to score it 3 on triage because the agent correctly produced no log entries, no person_evidence links, and no tree edits\u2014only recommendations. Claude provided accept/reject/not-enough verdicts without persisting any changes to the project state, which is the correct triage behavior."
+                "score": null,
+                "rationale": "This is a triage test (the agent was spawned in triage mode to recommend accept/reject/not-enough-information, not to record verdicts). Verdict recording applies only to record mode. Score is N/A."
               }
             ],
-            "judge_cost_usd": 0.023226,
+            "judge_cost_usd": 0.022351000000000003,
             "duration_ms": 17958.271000068635,
             "error": null,
             "input_tokens": 16306,
             "cached_input_tokens": 0,
-            "output_tokens": 1384
+            "output_tokens": 1209
           },
           "started_at": 1792483117.6387358,
           "ended_at": 1792483238.0670648
@@ -2866,39 +2866,39 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: recorded verdicts for all three hints provided in the delegation, correctly distinguished between new hints (M70C, M80C) and an already-linked hint (MDEF), created log entries only for the two new verdicts, and returned the accepted hint's ark and log id (log_006) for extraction handoff. No required action was omitted."
+                "rationale": "The skill addressed all required elements: recorded both verdicts the researcher stated (M70C accept, M80C reject), correctly omitted a log entry for MDEF (already extracted), returned the accepted hint's ark and log id (log_006) for extraction handoff, and provided clear notes explaining the verdict for each hint. The response explicitly stated why MDEF needed no new entry, fulfilling the requirement to explain the three-hint scenario completely."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed arguments matching the fixture's expectations. The research_query calls for person_evidence, assertions, and log sections were correctly formed. The research_log_append call correctly structured two log operations with tool person_record_matches, the correct recordIds (M70C, M80C), outcomes (positive, negative) matching the researcher's verdicts, and plan_item_id null as required. No critical identifiers were wrong and no calls landed in fixture_not_found."
+                "rationale": "All four MCP tool calls passed arguments matching the fixture's expectations. The person_evidence and assertions queries used correct projectPath and section/recordId parameters. The log append operation correctly structured two ops with tool person_record_matches, query objects naming the personId and recordId, outcome values (positive/negative) matching the verdicts, and notes clearly attributing the verdict to the researcher. No critical identifiers were wrong, no calls landed in fixture_not_found, and no extraneous arguments were added."
               },
               {
                 "source": "rubric",
                 "name": "Hint scope",
                 "score": 3,
-                "rationale": "The skill reviewed only the three pending hints provided in the delegation (M70C, M80C, MDEF). It correctly identified MDEF as already linked (not a pending hint to decide) and did not present it as a new hint to triage. The skill did not invent hints or review accepted matches as pending. Each hint's FamilySearch confidence was not explicitly stated in the response text, but the tool responses (person_evidence and assertions) contained confidence levels and the skill's handling of the hints was scoped correctly to the pending matches only."
+                "rationale": "The skill reviewed only the three pending hints provided in the delegation (M70C, M80C, MDEF). It correctly identified that MDEF was already accepted and linked (not a pending hint to decide), and did not present it as a new hint to triage. The response stayed within the scope of the three arks named in the verdicts array and did not invent or omit any hints."
               },
               {
                 "source": "rubric",
                 "name": "Recommendation soundness",
-                "score": 3,
-                "rationale": "This is a record-mode test (not triage), so the skill was not required to make recommendations. The skill correctly recorded the researcher's verdicts without substituting its own judgment. The verdicts were logged with notes naming the hint ark and the researcher's verdict (accept/reject), following the delegation's stated decisions. No recommendation was made; the skill deferred to the researcher's stated verdicts as required in record mode."
+                "score": null,
+                "rationale": "This is a record-mode test, not a triage test. The skill's task was to log the researcher's verdicts, not to make or justify recommendations. The rubric dimension 'Recommendation soundness' applies only to triage mode. Score is N/A."
               },
               {
                 "source": "rubric",
                 "name": "Verdict recording",
                 "score": 3,
-                "rationale": "The skill correctly recorded exactly two log entries (log_006 for M70C positive, log_007 for M80C negative) with outcomes following the researcher's verdicts, not the agent's view. Both entries have tool person_record_matches and plan_item_id null as required. MDEF was correctly not logged (already extracted and linked by pe_005). The return statement names the accepted M70C hint's ark and log id (log_006) for extraction handoff. No extraction, person_evidence link, or tree edit occurred in record mode."
+                "rationale": "The skill correctly recorded one log entry per decided hint with outcomes following the researcher's verdicts: M70C \u2192 positive (accept), M80C \u2192 negative (reject). Both entries named the tool person_record_matches, set plan_item_id to null as required, and included notes explicitly stating the verdict as the researcher's decision ('the researcher's verdict is accept/reject'). The return provided the accepted M70C hint's ark and log id (log_006) for extraction. No extraction, person_evidence link, or tree edit occurred. MDEF was correctly omitted from logging."
               }
             ],
-            "judge_cost_usd": 0.0179177,
+            "judge_cost_usd": 0.0176927,
             "duration_ms": 13295.489000156522,
             "error": null,
             "input_tokens": 12965,
             "cached_input_tokens": 4177,
-            "output_tokens": 907
+            "output_tokens": 862
           },
           "started_at": 1792483260.7181284,
           "ended_at": 1792483344.3842463
@@ -4373,6 +4373,5 @@
       "research_query": "7ee7572ae84b3f6494d74205d6ac06c766272f5c5a04d18f09ac920077a0ee3a",
       "sidecar_read": "a78db5f0efb59b15d812c4654b58377ab27f9b7dcd5115d9373894185096af01"
     }
-  },
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  }
 }
