@@ -1,10 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest'
 import { render, act, waitFor } from '@testing-library/react'
 import { ResearchDataProvider } from '../ResearchDataProvider'
 import { useResearchData, type ResearchDataState } from '../ResearchDataContext'
 import type { SidecarFile } from '../../lib/schema'
 import type { ResearchTransport } from '../../transport'
 import { openFamilySearch } from '../../lib/external'
+
+// vitest 4 types a bare vi.fn() as Mock<Procedure | Constructable>, which is not
+// callable; this is vitest 3's default, so mock.calls stays indexable.
+type LooseMock = Mock<(...args: any[]) => any>
 
 // ============================================================
 // Test harness
@@ -40,9 +44,9 @@ function makeHarness(transport?: ResearchTransport): {
 let sidecarUpdatedHandler: ((e: { logId: string; mtime: number }) => void) | null = null
 let noticeHandler: ((message: string) => void) | null = null
 let researchHandler: ((data: unknown) => void) | null = null
-let currentReadSidecar: ReturnType<typeof vi.fn> = vi.fn()
+let currentReadSidecar: LooseMock = vi.fn()
 
-function installApiMock(readSidecar: ReturnType<typeof vi.fn>): void {
+function installApiMock(readSidecar: LooseMock): void {
   sidecarUpdatedHandler = null
   currentReadSidecar = readSidecar
 }
