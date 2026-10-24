@@ -35,8 +35,18 @@ def _runnable_test_dict():
         },
         "input": {"user_message": "look it up", "scenario": None},
         "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
+        # `research` is a routing suite, and a positive test there must list its
+        # stubs (#3568); one stub keeps every gate below the one under test.
+        "execution": {"stub_skills": ["question-selection"]},
         "judge_context": [],
     }
+
+
+# A tests root holding no suite at all. The helpers that test a gate against an
+# EMPTY or partial `execution` block point here, so the routing-suite stub rule
+# (#3568, which needs the suite's test directory) cannot pre-empt the gate under
+# test. That rule has its own tests at the end of this file.
+NO_SUITE_TESTS = REPO_ROOT / "eval" / "tests" / "unit" / "__no_suite_here__"
 
 
 def test_happy_path_runnable():
@@ -177,6 +187,9 @@ def test_runnable_when_mcp_skill_has_non_keyword_dimension_name(tmp_path):
     d = _runnable_test_dict()
     d["test"]["skill"] = "search-records-clone"
     d["mcp_fixtures"] = []
+    # Not a routing suite (no @plugin: refs), so it needs no stub, and the
+    # helper's stub names an agent this temporary layout does not have.
+    d["execution"] = {}
     spec = load_test_from_dict(d)
     result = check_runnable(
         spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
@@ -232,7 +245,7 @@ def _stub_check(execution):
     d["execution"] = execution
     return check_runnable(
         load_test_from_dict(d), scenarios_dir=SCENARIOS,
-        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=NO_SUITE_TESTS,
     )
 
 
@@ -379,7 +392,7 @@ def _check_with(tags, execution):
     d["execution"] = execution
     return check_runnable(
         load_test_from_dict(d), scenarios_dir=SCENARIOS,
-        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=NO_SUITE_TESTS,
     )
 
 
@@ -834,3 +847,131 @@ def test_an_unknown_skill_still_fails_the_skill_gate():
     result = check_runnable(spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
     assert result.runnable is False
     assert "skill not found" in result.reason
+
+
+# ---- execution.run_agents and the routing-suite stub rule (#3568) --------
+#
+# Every main-thread spawn a test does not opt in is denied by default, so a
+# `run_agents` entry that cannot fire fails silently: the agent is denied and
+# the invariant it was meant to give teeth to passes vacuously. Each such shape
+# is refused at load time.
+
+
+def _negative_research_dict(run_agents, *, correct_skill=("research-exhaustiveness",),
+                            fixtures=(), stub_skills=None):
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {"correct_skill": list(correct_skill), "explanation": "x"}
+    d["mcp_fixtures"] = list(fixtures)
+    d["execution"] = {"run_agents": list(run_agents)}
+    if stub_skills is not None:
+        d["execution"]["stub_skills"] = list(stub_skills)
+    return d
+
+
+def _check(d, **kw):
+    kw.setdefault("skills_dir", SKILLS)
+    kw.setdefault("tests_dir", TESTS)
+    return check_runnable(load_test_from_dict(d), scenarios_dir=SCENARIOS,
+                          fixtures_dir=FIXTURES, **kw)
+
+
+def test_run_agents_accepts_an_agent_whose_tools_need_no_fixture():
+    """question-selection's tools are all live, so a negative test may opt it
+    in with no fixtures. Negative tests are allowed: every shipped opt-in is one."""
+    result = _check(_negative_research_dict(["question-selection"]))
+    assert result.runnable is True, result.reason
+
+
+def test_run_agents_accepts_an_agent_whose_fixtures_are_stocked():
+    result = _check(_negative_research_dict(
+        ["research-exhaustiveness"], correct_skill=["research-plan"], fixtures=["wiki-read-any"],
+    ))
+    assert result.runnable is True, result.reason
+
+
+@pytest.mark.parametrize(
+    ("run_agents", "kwargs", "needle"),
+    [
+        (["no-such-agent"], {}, "is not an agent"),
+        (["forget-and-rederive"], {}, "is not an agent"),  # a skill, not an agent
+        (["question-selection"], {"stub_skills": ["question-selection"]}, "BOTH run_agents and stub_skills"),
+        (["research-exhaustiveness"], {}, "correct_skill"),
+        (["research-plan"], {"correct_skill": ["research-exhaustiveness"]}, "research-plan will call"),
+    ],
+    ids=["no-such-agent", "skill-only-name", "also-stubbed", "is-correct-skill", "uncovered-fixtures"],
+)
+def test_run_agents_refuses_an_entry_that_cannot_fire(run_agents, kwargs, needle):
+    result = _check(_negative_research_dict(run_agents, **kwargs))
+    assert result.runnable is False
+    assert needle in result.reason
+
+
+def test_run_agents_uncovered_fixture_message_names_both_remedies():
+    result = _check(_negative_research_dict(["research-plan"]))
+    assert "stock a fixture" in result.reason
+    assert "remove the agent from execution.run_agents" in result.reason
+    assert "stub_skills" not in result.reason.splitlines()[-1], (
+        "the remedy must not send the author to stub_skills, which run_agents refuses"
+    )
+
+
+def test_run_agents_refuses_the_suites_own_agent(tmp_path):
+    """Only reachable for a skill-agent pair (none ship today): a routed suite
+    whose skill directory and agent file share a name."""
+    skills = tmp_path / "plugin" / "skills"
+    (skills / "pairx").mkdir(parents=True)
+    (skills / "pairx" / "SKILL.md").write_text("---\nname: pairx\n---\nbody\n", encoding="utf-8")
+    agents = tmp_path / "plugin" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "pairx.md").write_text("---\nname: pairx\ntools:\n  - Read\n---\nbody\n", encoding="utf-8")
+    d = _runnable_test_dict()
+    d["test"]["skill"] = "pairx"
+    d["mcp_fixtures"] = []
+    d["execution"] = {"run_agents": ["pairx"]}
+
+    result = _check(d, skills_dir=skills, tests_dir=tmp_path / "tests")
+
+    assert result.runnable is False
+    assert "own agent" in result.reason
+
+
+def test_run_agents_refuses_a_direct_arm_test():
+    d = _direct_test_dict()
+    d["execution"] = {"run_agents": ["question-selection"]}
+    result = _check(d)
+    assert result.runnable is False
+    assert "routed tests" in result.reason
+
+
+def test_a_positive_test_in_a_routing_suite_must_list_stubs():
+    d = _runnable_test_dict()
+    d["execution"] = {}
+    result = _check(d)
+    assert result.runnable is False
+    assert "routing suite" in result.reason
+
+
+def test_the_routing_suite_stub_rule_is_inert_on_a_negative_test():
+    d = _negative_research_dict(["question-selection"])
+    del d["execution"]["run_agents"]
+    assert _check(d).runnable is True
+
+
+def test_no_committed_test_trips_the_run_agents_or_routing_suite_rules():
+    """The corpus carries 5 opt-ins and 29 research positives; none may be
+    refused by the #3568 rules (a refusal for an older reason is out of scope
+    here). Shown to fail by removing one research positive's stub_skills."""
+    tripped = []
+    seen = 0
+    for path in sorted(TESTS.rglob("*.json")):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict) or "test" not in raw:
+            continue
+        seen += 1
+        result = check_runnable(load_test_from_dict(raw), scenarios_dir=SCENARIOS,
+                                fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
+        if not result.runnable and ("run_agents" in result.reason or "routing suite" in result.reason):
+            tripped.append(f"{path.relative_to(TESTS)}: {result.reason}")
+    assert seen > 100
+    assert not tripped, "\n".join(tripped)

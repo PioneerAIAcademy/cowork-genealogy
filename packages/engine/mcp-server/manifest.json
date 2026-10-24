@@ -76,6 +76,7 @@
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
     { "name": "census_children_gap" },
+    { "name": "timeline_build" },
     { "name": "build_external_search_url" },
     { "name": "tree_edit" },
     { "name": "tree_correct" },

@@ -32,7 +32,7 @@ import { populationTool, type PopulationToolInput } from "./tools/place-populati
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
 import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
-import { imageTranscribeTool } from "./tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "./tools/image-transcribe.js";
 import { volumeBisectTool } from "./tools/volume-bisect.js";
 import type { ImageTranscribeInput } from "./types/image-transcribe.js";
 import type { VolumeBisectInput } from "./types/volume-bisect.js";
@@ -112,6 +112,8 @@ import {
 } from "./tools/project-context.js";
 import { extractionAppend } from "./tools/extraction-append.js";
 import { evaluationAppend } from "./tools/evaluation-append.js";
+import { timelineBuild } from "./tools/timeline-build.js";
+import type { TimelineBuildInput } from "./types/timeline-build.js";
 import { materializeFacts } from "./tools/materialize-facts.js";
 import type { MaterializeFactsInput } from "./types/materialize-facts.js";
 import {
@@ -391,7 +393,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "image_transcribe") {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
-        const result = await imageTranscribeTool(args, principal);
+        const result = await imageTranscribeMcpTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
         };
@@ -722,6 +724,16 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as CensusChildrenGapInput;
         const result = await censusChildrenGapTool(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "timeline_build") {
+      try {
+        const args = request.params.arguments as unknown as TimelineBuildInput;
+        const result = await timelineBuild(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

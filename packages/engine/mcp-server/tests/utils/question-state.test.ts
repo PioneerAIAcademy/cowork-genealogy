@@ -193,13 +193,14 @@ describe("questionStatus — the state ladder", () => {
     expect(s.nextStep).toMatch(/research-exhaustiveness/);
   });
 
-  it("concluded, uncritiqued, unresolved: the next step is marking it resolved", () => {
+  it("concluded, uncritiqued, unresolved: the next step is re-concluding with proof-conclusion", () => {
     // gps-mentor runs only on request (issue #2951), so an uncritiqued summary
-    // is not a step. What is still outstanding is the `resolved` write.
+    // is not a step. A summary on an open question was written while blocked,
+    // and the resolve belongs to proof-conclusion, not question-selection.
     const d = doc({ proof_summaries: [{ id: "ps_001", question_id: Q }] });
     const s = questionStatus(d, question());
     expect(s.state).toBe("concluded");
-    expect(s.nextStep).toMatch(/mark the question resolved/);
+    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude ps_001");
     expect(s.nextStep).not.toMatch(/gps-mentor/);
   });
 
@@ -220,9 +221,9 @@ describe("questionStatus — the state ladder", () => {
     });
     const s = questionStatus(d, question());
     expect(s.state).toBe("critiqued");
-    // An on-demand critique does not change what is outstanding: the `resolved`
-    // write, the transition no skill body claims.
-    expect(s.nextStep).toMatch(/mark the question resolved/);
+    // An on-demand critique does not change what is outstanding: concluding
+    // again, which proof-conclusion owns.
+    expect(s.nextStep).toBe("proof-conclusion — concluded while blocked: re-conclude ps_001");
   });
 
   it("critiqued AND resolved has nothing outstanding", () => {
@@ -254,6 +255,30 @@ describe("questionStatus — the state ladder", () => {
 });
 
 describe("questionStatus — conflicts outrank everything", () => {
+  it("a not_proved summary blocked by an open conflict routes to conflict-resolution, not back to proof-conclusion", () => {
+    // The re-conclude arm sits below the conflict arm, so a question concluded
+    // while blocked cannot loop between proof-conclusion and the router.
+    const d = doc({
+      proof_summaries: [{ id: "ps_001", question_id: Q, tier: "not_proved" }],
+      conflicts: [{ id: "c_001", status: "unresolved", blocks_question_ids: [Q] }],
+    });
+    const s = questionStatus(d, question());
+    expect(s.nextStep).toMatch(/^conflict-resolution — unresolved c_001/);
+    expect(s.nextStep).not.toMatch(/proof-conclusion/);
+  });
+
+  it("the latest summary is the one named when a question was concluded twice while blocked", () => {
+    const d = doc({
+      proof_summaries: [
+        { id: "ps_001", question_id: Q, tier: "not_proved" },
+        { id: "ps_004", question_id: Q, tier: "not_proved" },
+      ],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "proof-conclusion — concluded while blocked: re-conclude ps_004",
+    );
+  });
+
   it("a conflict blocking this question is the next step", () => {
     const d = doc({
       proof_summaries: [{ id: "ps_001", question_id: Q }],
@@ -388,7 +413,7 @@ describe("questionStatus — a question with no linked assertion routes to perso
       assertions: extracted("a_1"),
       proof_summaries: [{ id: "ps_001", question_id: Q }],
     });
-    expect(questionStatus(d, question()).nextStep).toMatch(/^question-selection — concluded/);
+    expect(questionStatus(d, question()).nextStep).toMatch(/^proof-conclusion — concluded while blocked/);
   });
 
   it("a question with no assertions yet is not affected", () => {

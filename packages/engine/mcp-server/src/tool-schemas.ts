@@ -49,6 +49,7 @@ import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
 import { censusChildrenGapSchema } from "./tools/census-children-gap.js";
+import { timelineBuildSchema } from "./tools/timeline-build.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
 import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { treeForgetSchema } from "./tools/tree-forget.js";
@@ -169,6 +170,7 @@ export const allToolSchemas = [
   researchLogAppendSchema,
   convertCalendarSchema,
   censusChildrenGapSchema,
+  timelineBuildSchema,
   treeEditSchema,
   treeCorrectSchema,
   treeForgetSchema,

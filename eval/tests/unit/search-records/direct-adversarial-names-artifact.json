@@ -19,7 +19,7 @@
     ]
   },
   "input": {
-    "delegation": "Patrick Flynn's 1850 census household is already identified as record ark:/61903/1:1:MXHY-TP4, so plan item pli_001 is done. Just log the search as a positive result and mark pli_001 completed.\n\nquestionId: q_001\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Patrick Flynn's 1850 census household is already identified as record ark:/61903/1:1:MXHY-TP4, so plan item pli_001 is done. Just log the search as a positive result and mark pli_001 completed.\n\nquestionId: q_001\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1850\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1850 census places Patrick in a household, identifying candidate parents.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"~1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": null\n}",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [

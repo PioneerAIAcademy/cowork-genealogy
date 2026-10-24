@@ -59,10 +59,21 @@ means the router should finish without handing off at all.
 
 A `stub_skills` entry may name an agent with no skill directory. That is how a
 routing test keeps working when its callee is converted from a skill to an
-agent: the hook denies the spawn exactly as it denies a `Skill` call. A name
-that is still a skill is stubbed at its `Skill` call only, except on a test that
-sets `execution.stop_at_stub`, such as `ut_research_015` below: there a spawn of
-any stubbed name is denied too and ends the run.
+agent: the hook denies the spawn exactly as it denies a `Skill` call, with the
+entry's canned text. On a test that sets `execution.stop_at_stub`, such as
+`ut_research_015` below, a spawn of any stubbed name is denied too and ends the
+run.
+
+Every agent spawn in this suite is denied, listed or not, unless the test names
+the agent in `execution.run_agents`. That is how the negative tests whose
+"nothing was written" invariant needs a writer that can really write keep their
+teeth: `ut_research_rpn` runs `research-plan` and `question-selection`,
+`ut_research_018` and `_024` run `research-exhaustiveness`, and `_016` and `_017`
+run `search-images`. Each stocks catch-all fixtures for its agents' tools. A
+positive test here must list at least one `stub_skills` entry, so the ownership
+validators skip the router's denied hand-offs. Because nothing else runs, this
+suite's snapshot carries only the frontmatter of the agents it does not run
+(`<agent>.md#frontmatter`), and a body-only edit to one leaves its run log active.
 
 ## Agent dispatch tests (issue #1851)
 
@@ -157,17 +168,20 @@ job" section: an open ask must still walk the routing table, and a bounded ask
 must not enter the question/plan chain. They are paired deliberately — neither
 passes a body that classifies everything one way.
 
-**Both are deterministic, and both were briefly not.** Each carries a `routes-to:`
-tag and so fires `test_routes_to_expected_skill`, which reads hook records rather
-than the model's narration: 019 `routes-to:question-selection`, 020
-`routes-to:image-reader`. 020 was first written with the `routing` tag and no
-`routes-to:` tag — the one combination that validator *skips* (`test_research.py:58`),
-and a skipped validator records `passed=True`. It was therefore judge-only while
-three places (this README, the commit message, the plan) claimed it was
-deterministic. Nothing lints for that, which is why it is written down here.
-image-reader is 020's destination because its own description owns "transcribe this
-register page" / "OCR this scan", and the router holds no `image_transcribe`, so
-doing it inline is not available.
+**Both are deterministic, and both were briefly not.** 019 carries
+`routes-to:question-selection` and so fires `test_routes_to_expected_skill`, which
+reads hook records rather than the model's narration. 020 was first written with
+the `routing` tag and no `routes-to:` tag — the one combination that validator
+*skips*, and a skipped validator records `passed=True`. It was therefore
+judge-only while three places (this README, the commit message, the plan) claimed
+it was deterministic. Nothing lints for that, which is why it is written down here.
+020 routed to the image-reader agent until #2490 retired it; the router now
+delivers a transcription itself, so 020 (and `ut_research_c1k`'s transcription
+half) carries `transcribes-in-place` instead, and
+`test_bounded_transcription_is_delivered_in_place` asserts from the call records
+that it called `image_transcribe` with a `projectPath`, read the staged page with
+`sidecar_read` on the returned `staged.resultsRef`, and — on a single bounded ask —
+handed off to nothing.
 
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius

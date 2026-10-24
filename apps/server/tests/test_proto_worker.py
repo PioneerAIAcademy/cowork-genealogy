@@ -89,6 +89,8 @@ from typing import Any
 
 import pytest
 import yaml
+
+from psycopg.types.json import Jsonb
 from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage, SystemMessage, TextBlock
 
 from proto.worker import deny, options, worker
@@ -109,7 +111,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -836,7 +838,10 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
     assert out == {}
     assert rows == [{"turn_id": "turn-1", "session_id": "sess-1", "agent_id": None, "agent_type": None,
                      "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow",
-                     "tool_use_id": "tu-1"}]
+                     "tool_use_id": "tu-1",
+                     # convert_calendar is a READ, so it wrote nothing. The key is carried
+                     # on every recorded row so the shape does not vary by tool.
+                     "wrote": None}]
 
 
 @pytest.mark.parametrize("tool_name", ["Agent", "Task"])
@@ -1016,7 +1021,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=6)
 
 
-def test_the_plugin_ships_thirty_agents_and_two_skills():
+def test_the_plugin_ships_twenty_nine_agents_and_two_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
@@ -1046,7 +1051,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-nine agents must not become the expectation"
+    assert agents is None, "twenty-eight agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -1058,7 +1063,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Thirty agents and 2 skills registered: clean. Twenty-nine, or 1: the miss, whatever loaded --
+    # Twenty-nine agents and 2 skills registered: clean. Twenty-eight, or 1: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 2)) == []
@@ -1121,6 +1126,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.resume is None and opts.session_id is None
     assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     [matcher] = opts.hooks["PreToolUse"]
@@ -1211,6 +1217,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
     on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
     assert on.env["ENABLE_TOOL_SEARCH"] == "true"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
@@ -1324,7 +1331,7 @@ def test_worker_dockerfile_shape():
     # mode (test_proto_config checks the export is current and the install shape).
     assert re.search(r"^COPY apps/server/proto/worker/requirements\.txt\s", body, re.M)
     requirements = (PROTO / "worker" / "requirements.txt").read_text(encoding="utf-8")
-    assert re.search(r"^claude-agent-sdk==0\.2\.128 ", requirements, re.M)
+    assert re.search(r"^claude-agent-sdk==0\.2\.172", requirements, re.M)
     assert re.search(r"^psycopg==", requirements, re.M) and re.search(r"^psycopg-binary==", requirements, re.M)
     # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
     assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"
@@ -2156,7 +2163,9 @@ def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row(
     worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
                                    "tool_use_id": "toolu_9"})
     sql, params = conn.executed[-1]
-    assert "tool_use_id" in sql and params[-1] == "toolu_9"
+    # `wrote` binds LAST now (it is the column the writer-record migration added), so
+    # the tool_use_id is the second-from-last param rather than the last.
+    assert "tool_use_id" in sql and params[-2] == "toolu_9"
     worker.finish_tool_call(conn, "t", "toolu_9")
     sql, params = conn.executed[-1]
     assert sql.startswith("UPDATE tool_calls SET duration_ms") and "now() - ts" in sql
@@ -6180,3 +6189,84 @@ def test_the_zero_progress_counter_is_fenced_to_the_attempt_s_epoch():
 
     with pytest.raises(worker.Superseded, match="zero-progress count left alone"):
         worker.bump_zero_progress(NoRow(), "turn-1", 4)
+
+
+# ── `wrote`: the shape of what a call changed (tool_calls.wrote) ──────────────
+
+
+# One representative writer call: a research_append UPDATE, which is the shape the
+# change-review scan most needs to tell from a read.
+_APPEND = {"tool_name": "mcp__genealogy__research_append",
+           "tool_input": {"section": "person_evidence", "op": "update", "entryId": "pe_1"}}
+
+
+
+def test_a_DENIED_writer_records_no_write(tmp_path):
+    """A denied call never runs. Recording a shape would put a write that never happened
+    into the change-review scan, which the `WHERE wrote IS NOT NULL` index cannot filter
+    out — it has no decision clause."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+        config_root=str(tmp_path / "cfg"), record=rows.append,
+        blocked={"research_append"},
+    )
+    _call(hook, {**_APPEND, "tool_use_id": "tu-2"})
+    assert rows and rows[-1]["decision"] == "deny"
+    assert rows[-1]["wrote"] is None, "a denied write was recorded as a write"
+
+
+def test_a_HALTED_call_records_no_write(tmp_path):
+    """The halt arm records and then returns `_halt(...)`, so the tool body never runs. A
+    Stop pressed while a research_append is in flight must not leave a row claiming it
+    happened."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+        config_root=str(tmp_path / "cfg"), record=rows.append,
+        halt=lambda **_: "stopped by the researcher",
+    )
+    _call(hook, {**_APPEND, "tool_use_id": "tu-3"})
+    assert rows and rows[-1]["decision"] == "halt"
+    assert rows[-1]["wrote"] is None, "a halted call was recorded as a write"
+
+
+def test_an_allowed_writer_records_what_it_wrote(tmp_path):
+    rows: list[dict] = []
+    _call(_hook(rows, str(tmp_path), str(tmp_path / "cfg")), {**_APPEND, "tool_use_id": "tu-1"})
+    assert rows and rows[-1]["decision"] == "allow"
+    assert rows[-1]["wrote"] is not None, "an allowed write recorded nothing"
+    assert rows[-1]["wrote"]["ids"] == ["pe_1"]
+
+
+def test_a_read_stores_null_not_an_empty_json_document(tmp_path):
+    """The column is sparse by design and its index is `WHERE wrote IS NOT NULL`. A
+    `Jsonb(None)` would be indexed and read as a write that touched nothing."""
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read",
+                                   "decision": "allow"})
+    _, params = conn.executed[-1]
+    assert params[-1] is None
+
+
+def test_a_writer_call_stores_the_shape_as_jsonb(tmp_path):
+    conn = FakeConn()
+    shape = {"section": "person_evidence", "op": "update", "ids": ["pe_1"]}
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "x",
+                                   "decision": "allow", "wrote": shape})
+    _, params = conn.executed[-1]
+    assert isinstance(params[-1], Jsonb), f"wrote must bind as Jsonb, got {type(params[-1])}"
+
+
+def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
+    """The load-bearing one. `insert_tool_call` runs on every tool call, so a column/param
+    mismatch breaks every write path at once."""
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "x",
+                                   "decision": "allow", "wrote": {"section": "a", "op": "append", "ids": []}})
+    sql, params = conn.executed[-1]
+    cols = [c.strip() for c in sql.split("(", 1)[1].split(")", 1)[0].split(",")]
+    assert "wrote" in cols, "the INSERT does not name the column the migration added"
+    assert cols[-1] == "wrote", "wrote must stay LAST — _tool_call_decisions reads p[6] positionally"
+    assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
+

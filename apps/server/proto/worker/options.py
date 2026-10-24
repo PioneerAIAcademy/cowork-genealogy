@@ -80,6 +80,7 @@ from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
+from proto.worker.writer_record import writer_record
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
@@ -460,6 +461,10 @@ def make_pretool_hook(
                     "tool_name": tool_name or "unknown",
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                    # Explicitly None: this arm returns `_halt(...)` below, so the tool
+                    # body never runs. A Stop pressed while a research_append is in
+                    # flight must not leave a row claiming the append happened.
+                    "wrote": None,
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
                 if log is not None:
@@ -493,6 +498,9 @@ def make_pretool_hook(
                     "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     "decision": "delivered",
+                    # `research_delivered` is not a writer, so this is always None; the
+                    # key is carried so every recorded row has the same shape.
+                    "wrote": writer_record(tool_name, tool_input),
                     "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
@@ -546,6 +554,12 @@ def make_pretool_hook(
                 "input_path": input_path(tool_name, tool_input, cwd=cwd),
                 "decision": decision,
                 "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                # ONLY on an allow. A denied writer never runs -- `_BLOCKED` comes from
+                # BLOCKED_TOOLS and the e2e tree-read block is exactly this -- so
+                # recording a shape here would put a write that never happened into the
+                # "what changed this session" scan, which the migration's
+                # `WHERE wrote IS NOT NULL` index has no decision filter to exclude.
+                "wrote": writer_record(tool_name, tool_input) if decision == "allow" else None,
             })
         except Exception as exc:  # noqa: BLE001 - the log must not change the decision
             if log is not None:
@@ -814,6 +828,9 @@ def build_worker_options(
     project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
+        # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
+        # main thread's context and tools, not a plugin agent's `tools:` list.
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

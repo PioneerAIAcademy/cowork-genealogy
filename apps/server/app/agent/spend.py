@@ -97,6 +97,8 @@ MODEL_RATES = {
     "claude-sonnet-5": (2.0, 10.0),
     "claude-sonnet-5-5": (2.0, 10.0),
     "claude-haiku-4-5": (1.0, 5.0),
+    # The CLI's own small-model calls from 2.1.308. Prompts over 100K bill 5x; it sends none.
+    "claude-haiku-5-5": (0.10, 0.50),
     "claude-opus-4-8": (5.0, 25.0),
 }
 _DATED = re.compile(r"-\d{8}$")

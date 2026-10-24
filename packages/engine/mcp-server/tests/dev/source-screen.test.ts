@@ -39,6 +39,8 @@ import {
   runBaseline,
   runPlant,
   runRefreshAttachments,
+  runTreeSources,
+  classifyArk,
   runSnapshot,
   scoreFindings,
   SPEC_PATH,
@@ -104,6 +106,7 @@ interface World {
   quality?: Record<string, Json>;
   scores?: Record<string, number>;
   fail?: (tool: string, key: string) => string | undefined;
+  trees?: Record<string, Json>;
   calls: string[];
 }
 
@@ -137,6 +140,12 @@ function fakeTools(w: World): Tools {
       go("same_person", input.primaryId1, () => {
         const persona = input.gedcomx2.persons.find((p: Json) => p.id === input.primaryId2);
         return { matched: true, score: w.scores?.[persona.ark] ?? 0.9 };
+      }),
+    compiledTreeRead: (a) =>
+      go("compiled_tree_read", a, () => {
+        const t = w.trees?.[a];
+        if (!t) throw new Error(`Compiled tree entry ${a} was not found (404).`);
+        return structuredClone(t);
       }),
   };
 }
@@ -257,6 +266,7 @@ describe("error classes", () => {
       ["410 record", () => fetchMock.mockResolvedValue(res(410)), () => tools.recordRead(ark("QQQQ-118")), "permanent"],
       ["deleted person", () => fetchMock.mockResolvedValue(res(410)), () => tools.personRead("KWCB-QZ3"), "permanent"],
       ["tombstoned quality", () => fetchMock.mockResolvedValue(res(200, { isValid: true, visibility: "TOMBSTONED" })), () => tools.personQuality("KWCB-QZ4"), "permanent"],
+      ["404 compiled tree", () => fetchMock.mockResolvedValue(res(404)), () => tools.compiledTreeRead("ark:/61903/2:2:TEST-2A3"), "permanent"],
     ];
     const got: Record<string, string> = {};
     const want: Record<string, string> = {};
@@ -275,7 +285,7 @@ describe("error classes", () => {
     expect(classifyError("Person KWCB-429 not found in the FamilySearch Family Tree.")).toBe("permanent");
   }, 30_000);
 
-  it("stops the run on a 429 from every one of the five tools", async () => {
+  it("stops the run on a 429 from every one of the six tools", async () => {
     fetchMock.mockImplementation(async () => res(429));
     const gx = { persons: [{ id: "p1", names: [{ given: "A", surname: "B" }] }] };
     const calls: [string, () => Promise<unknown>][] = [
@@ -284,13 +294,14 @@ describe("error classes", () => {
       ["source_attachments", () => tools.sourceAttachments([ark("QQQQ-121")])],
       ["person_quality", () => tools.personQuality("KWCB-QZ5")],
       ["same_person", () => tools.samePerson({ gedcomx1: gx, primaryId1: "p1", gedcomx2: gx, primaryId2: "p1" })],
+      ["compiled_tree_read", () => tools.compiledTreeRead("ark:/61903/2:2:TEST-2A2")],
     ];
     const got: Record<string, string> = {};
     for (const [name, act] of calls) {
       const msg = await messageOf(act());
       got[name] = `${classifyError(msg)} <- ${msg}`;
     }
-    expect(Object.values(got).map((v) => v.split(" <- ")[0]), JSON.stringify(got, null, 2)).toEqual(Array(5).fill("stop"));
+    expect(Object.values(got).map((v) => v.split(" <- ")[0]), JSON.stringify(got, null, 2)).toEqual(Array(6).fill("stop"));
   }, 60_000);
 
   it("counts only the relationship note as a partial read", () => {
@@ -410,6 +421,85 @@ describe("resume follows the input-PID map", () => {
   });
 });
 
+// ─── tree-link sources ──────────────────────────────────────────────────────
+
+describe("tree-link sources", () => {
+  /** A subject whose sources are one persona, one 4:1: tree person and one 2:2: compiled tree. */
+  const linked = (id: string): Json => {
+    const p = person(id, { personas: ["REC1-111"] });
+    p.sources.push(
+      { id: "s_tp", title: "Same man", url: "https://familysearch.org/ark:/61903/4:1:TREE-PPP" },
+      { id: "s_ct", title: "Community Trees", url: "https://familysearch.org/ark:/61903/2:2:TEST-2A2" },
+    );
+    p.persons[0].sources.push({ ref: "s_tp" }, { ref: "s_ct" });
+    return p;
+  };
+  const ct = ark("REC1-111").replace("1:1:REC1-111", "2:2:TEST-2A2");
+  const tw = (over: Partial<World> = {}) =>
+    world({
+      persons: { "AAAA-111": linked("AAAA-111"), "TREE-PPP": person("TREE-PPP") },
+      records: { [ark("REC1-111")]: record("REC1-111") },
+      trees: { [ct]: { persons: [{ id: "2:2:TEST-2A2", display: { name: "John /Smith/" } }] } },
+      ...over,
+    });
+
+  it("classifies 4:1: tree persons and 2:2:/2:3: compiled trees apart from no-index sources", () => {
+    expect(classifyArk("ark:/61903/4:1:TEST-4D1")).toBe("tree_person");
+    expect(classifyArk("ark:/61903/2:2:TEST-2A2")).toBe("compiled_tree");
+    expect(classifyArk("ark:/61903/2:3:TEST-2B3")).toBe("compiled_tree");
+    expect(classifyArk("ark:/61903/3:1:TEST-3C1-XX")).toBe("no_index");
+    expect(classifyArk("ark:/61903/1:1:TEST-1A1")).toBe("persona");
+    expect(classifyArk(null)).toBe("no_index");
+  });
+
+  it("snapshot reads the tree person into others/ and the compiled tree into trees/", async () => {
+    const out = mkTmp();
+    const w = tw();
+    await snap(out, ["AAAA-111"], w);
+    const dir = join(out, "persons", "AAAA-111");
+    expect(readJson(join(dir, "audit.json")).entries.map((e: Json) => e.class).sort()).toEqual(["compiled_tree", "persona", "tree_person"]);
+    expect(existsSync(join(dir, "others", "TREE-PPP.json"))).toBe(true);
+    expect(readJson(join(out, "trees", "2-2-TEST-2A2.json")).persons[0].display.name).toBe("John /Smith/");
+  });
+
+  it("tree-sources reclassifies an old snapshot and fetches only what is not on disk", async () => {
+    const out = mkTmp();
+    const w = tw();
+    await snap(out, ["AAAA-111"], w);
+    const audit = join(out, "persons", "AAAA-111", "audit.json");
+    const a = readJson(audit);
+    for (const e of a.entries) if (e.class !== "persona") e.class = "no_index";
+    writeJson(audit, a);
+    rmSync(join(out, "trees"), { recursive: true, force: true });
+    w.calls.length = 0;
+
+    const ledger = await runTreeSources(out, fakeTools(w));
+    expect(ledger).toMatchObject({ copies: 1, tree_links: 2, tree_links_read: 2, errored: 0 });
+    expect(ledger.by_class).toEqual({ persona: 1, tree_person: 1, compiled_tree: 1 });
+    expect(w.calls).toEqual([`compiled_tree_read:${ct}`]);
+    expect(readJson(audit).entries.map((e: Json) => e.class).sort()).toEqual(["compiled_tree", "persona", "tree_person"]);
+  });
+
+  it("a missing compiled tree is cached as a permanent error, not retried", async () => {
+    const out = mkTmp();
+    const w = tw({ trees: {} });
+    await snap(out, ["AAAA-111"], w);
+    expect(readJson(join(out, "trees", "2-2-TEST-2A2.json")).is_error).toBe(true);
+    w.calls.length = 0;
+    const ledger = await runTreeSources(out, fakeTools(w));
+    expect(ledger).toMatchObject({ tree_links: 2, tree_links_read: 1 });
+    expect(w.calls).toEqual([]);
+  });
+
+  it("main runs tree-sources and refuses a flag it does not take", async () => {
+    const out = mkTmp();
+    const w = tw();
+    await snap(out, ["AAAA-111"], w);
+    expect(await main(["tree-sources", "--snapshot", out], fakeTools(w))).toBe(0);
+    await expect(main(["tree-sources", "--snapshot", out, "--tree", "X"], fakeTools(w))).rejects.toThrow(/does not take --tree/);
+  });
+});
+
 // ─── researcher-tree attachments ────────────────────────────────────────────
 
 describe("attachments refresh", () => {
@@ -429,7 +519,7 @@ describe("attachments refresh", () => {
     calls: [],
   });
 
-  it("keeps the Family Tree answer, writes the tree's, and re-reads others from it", async () => {
+  it("keeps the Family Tree answer, writes the tree's, and adds the tree's others to the reads already held", async () => {
     const out = mkTmp();
     const ft = familyTree();
     await snap(out, ["AAAA-111"], ft);
@@ -440,8 +530,8 @@ describe("attachments refresh", () => {
     expect(ledger).toMatchObject({ refreshed: 1, skipped: 0, errored: 0, subject_arks: 2, subject_arks_naming_subject: 2 });
     expect(readJson(join(dir, "attachments.family-tree.json")).attachments[ark("REC1-111")][0].personId).toBe("FTCP-111");
     expect(readJson(join(dir, "attachments.json")).attachments[ark("REC1-111")][0].personId).toBe("AAAA-111");
-    expect(existsSync(join(dir, "others.family-tree", "FTCP-111.json"))).toBe(true);
-    expect(readdirSync(join(dir, "others"))).toEqual(["OTHR-222.json"]);
+    expect(readdirSync(join(dir, "others")).sort()).toEqual(["FTCP-111.json", "OTHR-222.json"]);
+    expect(existsSync(join(dir, "others.family-tree"))).toBe(false);
     expect(readJson(join(dir, "attachments-tree.json")).tree).toBe("9NMM-TEST");
   });
 

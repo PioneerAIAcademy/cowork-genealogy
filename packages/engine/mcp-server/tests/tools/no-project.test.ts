@@ -34,6 +34,7 @@ import { LOCAL } from "../../src/auth/principal.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { evaluationAppend } from "../../src/tools/evaluation-append.js";
+import { timelineBuild } from "../../src/tools/timeline-build.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
@@ -42,7 +43,7 @@ import { treeForget } from "../../src/tools/tree-forget.js";
 import { projectContext } from "../../src/tools/project-context.js";
 import { researchQuery } from "../../src/tools/research-query.js";
 import { sidecarRead } from "../../src/tools/sidecar-read.js";
-import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
+import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
@@ -166,7 +167,9 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
   {
     tool: "image_transcribe",
-    call: (projectPath) => imageTranscribeTool({ projectPath, file: "uploads/scan.jpg" } as any, LOCAL),
+    // An imageId, not a `file`: the MCP entry classifies the project before any
+    // fetch for every input form (#2490), not only for an upload.
+    call: (projectPath) => imageTranscribeMcpTool({ projectPath, imageId: "004884748_02613" } as any, LOCAL),
   },
   {
     tool: "merge_tree_persons",
@@ -192,6 +195,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "validate_research_schema",
     call: (projectPath) => validateResearchSchema({ projectPath }),
+  },
+  {
+    tool: "timeline_build",
+    call: (projectPath) => timelineBuild({ projectPath, personId: "I1" }),
   },
 ];
 
@@ -259,7 +266,7 @@ describe("half a project — tree.gedcomx.json present, research.json missing", 
   const READS_RESEARCH = CALLS.filter(({ tool }) =>
     ["research_append", "extraction_append", "research_log_append", "tree_edit",
      "materialize_facts", "project_context", "research_query",
-     "merge_tree_persons"].includes(tool),
+     "merge_tree_persons", "timeline_build"].includes(tool),
   );
   for (const { tool, call } of READS_RESEARCH) {
     it(`${tool} stays loud`, async () => {
@@ -273,7 +280,7 @@ describe("half a project — research.json present, tree.gedcomx.json missing", 
   const READS_TREE = CALLS.filter(({ tool }) =>
     ["research_append", "extraction_append", "research_log_append", "tree_edit",
      "tree_correct", "materialize_facts", "tree_forget", "project_context",
-     "merge_tree_persons", "merge_warnings", "census_children_gap"].includes(tool),
+     "merge_tree_persons", "merge_warnings", "census_children_gap", "timeline_build"].includes(tool),
   );
   for (const { tool, call } of READS_TREE) {
     it(`${tool} stays loud`, async () => {
