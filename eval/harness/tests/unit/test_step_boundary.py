@@ -485,11 +485,13 @@ def test_the_ordinary_first_plan_does_not_spend_the_planning_round():
 def test_a_planning_round_clears_the_answered_pairs():
     """Pairs are tracked since the run's LAST planning round."""
     state = {"replies": 1, "planning_rounds": 0,
-             "answered": [["research-plan", "search-records"]]}
+             "answered": [["research-plan", "search"]]}
     out = _reply(state=state, prev="research-exhaustiveness", step="research-plan",
                  offer="search-records")
     assert out["reply"] == sb.REPLY_KEEP_GOING
-    assert out["state"]["answered"] == [["research-plan", "search-records"]]
+    # Cleared, then this turn's own pair appended -- so the one pair that stands is
+    # this one, recorded under the OFFER KEY the line parser yields.
+    assert out["state"]["answered"] == [["research-plan", "search"]]
 
 
 def test_next_auto_reply_does_not_mutate_the_state_it_was_given():
@@ -502,3 +504,81 @@ def test_next_auto_reply_survives_a_missing_or_junk_state():
     assert _reply(state=None)["reply"] == sb.REPLY_KEEP_GOING
     assert _reply(state={})["reply"] == sb.REPLY_KEEP_GOING
     assert _reply(state={"replies": "x", "answered": "x"})["reply"] == sb.REPLY_KEEP_GOING
+
+
+# ---------------------------------------------------------------------------
+# offered_step / offer_key: the read side of deny_reason (section A2)
+# ---------------------------------------------------------------------------
+
+
+def test_every_step_offer_parses_back_to_the_key_it_was_written_from():
+    """The property the whole reply path rests on: `deny_reason` WRITES the line and
+    `offered_step` READS it, so for every step the two must agree.
+
+    This is why the offer is a STEP_LABELS key and not an agent name. Five groups
+    have more than one member, so "running the searches" cannot say which of the
+    five it meant -- a parser returning an agent name would have to guess.
+    """
+    agents = sorted({m for members in sb.GROUPS.values() for m in members})
+    assert len(agents) > 20, "the table shrank; this would pass on a near-empty set"
+    disagreed = [a for a in agents if sb.offered_step(sb.deny_reason(a)) != sb.offer_key(a)]
+    assert disagreed == [], f"deny_reason writes a line offered_step cannot read back: {disagreed}"
+
+
+def test_the_wrapup_offer_round_trips_too():
+    """Mode `wrapup` renders the one label only the researcher can answer."""
+    assert sb.offered_step(sb.deny_reason("proof-conclusion", mode="wrapup")) == sb.WRAP_UP
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "   \n  \n",
+        "I found three records. What was her maiden name?",
+        "Continue with inventing a brand new step?",
+        "Continue with writing the conclusion?\nActually, one question first.",
+        "Continue with writing the conclusion",
+    ],
+    ids=["empty", "blank", "a question", "unknown label", "not the last line", "no question mark"],
+)
+def test_a_line_naming_no_entry_is_no_offer(text):
+    """No offer ends a "Keep going" run, so every one of these must read as None --
+    a parser that guessed here would keep a run going past a question for the
+    researcher, which is the failure the step boundary exists to prevent."""
+    assert sb.offered_step(text) is None
+
+
+def test_offered_step_is_none_rather_than_raising_on_junk():
+    for junk in (None, 3, [], {}):
+        assert sb.offered_step(junk) is None
+
+
+def test_the_offer_survives_the_markdown_the_router_writes_it_in():
+    for line in (
+        "**Continue with writing the conclusion?**",
+        "*Continue with writing the conclusion?*",
+        "`Continue with writing the conclusion?`",
+        "CONTINUE WITH WRITING THE CONCLUSION?",
+        "Continue with  writing the conclusion ?",
+    ):
+        assert sb.offered_step(f"The report.\n\n{line}") == "conclude", line
+
+
+def test_offer_key_accepts_a_key_an_agent_or_a_namespaced_spawn():
+    assert sb.offer_key("conclude") == "conclude"          # already a key
+    assert sb.offer_key("proof-conclusion") == "conclude"  # an agent name
+    assert sb.offer_key("genealogy-research:proof-conclusion") == "conclude"
+    assert sb.offer_key(sb.WRAP_UP) == sb.WRAP_UP
+    assert sb.offer_key(None) == "" and sb.offer_key("") == ""
+
+
+def test_the_reply_functions_read_an_agent_name_and_its_key_the_same_way():
+    """Callers pass a key (from the parser); the tests above pass agent names. The
+    two spellings must not diverge, or a test would pin behaviour production
+    never takes."""
+    research = _with_question()
+    for agent, key in (("proof-conclusion", "conclude"), ("research-plan", "plan"),
+                       ("question-selection", "setup"), ("search-records", "search")):
+        assert sb.reply_options(agent, research) == sb.reply_options(key, research), agent
+        assert _reply(offer=agent)["reply"] == _reply(offer=key)["reply"], agent

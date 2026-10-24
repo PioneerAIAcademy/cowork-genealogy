@@ -20,6 +20,7 @@ in, because the planes read ``research.json`` by different means (the worker wit
 from __future__ import annotations
 
 from collections.abc import Callable
+import re
 from typing import Any
 
 # The router itself is never a step: it is what spawns them.
@@ -370,6 +371,39 @@ def _is_low_risk_choice(question, research: dict) -> bool:
     return not _has_proof_summary(research, question.get("id"))
 
 
+# The read side of `deny_reason`. That function renders STEP_LABELS[key] where
+# `key` is `home_group(name) or name`, so the line names a GROUP, not an agent:
+# five groups have several members and "running the searches" cannot say which
+# of the five it meant. The key is therefore what an offer resolves to, and
+# `offer_key` puts a caller's agent name into the same space -- so
+# `offered_step(deny_reason(x))` and `offer_key(x)` agree for every step.
+_OFFER_RE = re.compile(r"continue\s+with\s+(?P<label>.+?)\s*\?", re.IGNORECASE)
+_LABEL_TO_KEY = {label.casefold(): key for key, label in STEP_LABELS.items()}
+
+
+def offer_key(step) -> str:
+    """The `STEP_LABELS` key a step is offered under: a key passes through, an
+    agent name resolves to its home group, and anything unknown stays itself."""
+    name = bare_name(step) if step else ""
+    return (home_group(name) or name) if name else ""
+
+
+def offered_step(text: str | None) -> str | None:
+    """The step the turn's LAST line offers, as a `STEP_LABELS` key, or None.
+
+    Only the last line, because that is where the router is told to put it; a
+    line naming no entry is no offer, which is how a step that ended on a
+    question for the researcher ends a "Keep going" run.
+    """
+    lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
+    if not lines:
+        return None
+    match = _OFFER_RE.search(lines[-1])
+    if match is None:
+        return None
+    return _LABEL_TO_KEY.get(match.group("label").strip().strip("*_`").casefold())
+
+
 def reply_options(offered_step, research: dict | None = None) -> list[str]:
     """The replies that apply to this turn, as exact phrases.
 
@@ -377,7 +411,7 @@ def reply_options(offered_step, research: dict | None = None) -> list[str]:
     never on the step the turn ran, so a wrap-up turn that ends by offering the
     next question still gets its buttons.
     """
-    offer = bare_name(offered_step) if offered_step else ""
+    offer = offer_key(offered_step)
     if not offer:
         return []
     if offer == WRAP_UP:
@@ -390,9 +424,9 @@ def reply_options(offered_step, research: dict | None = None) -> list[str]:
     # Not beside proof-conclusion (Continue already concludes), and not beside
     # question-selection (the offer after a wrap-up, where the current question
     # may be one a conflict held open).
-    if question is not None and offer not in ("proof-conclusion", "question-selection"):
+    if question is not None and offer not in ("conclude", "setup"):
         options.append(REPLY_WRAP_UP)
-    if offer == "proof-conclusion" and _is_low_risk_choice(question, research):
+    if offer == "conclude" and _is_low_risk_choice(question, research):
         options.append(REPLY_SEARCH_MORE)
     return options
 
@@ -431,7 +465,7 @@ def next_auto_reply(
     """
     replies, rounds, answered = _auto_reply_state(state)
     step = bare_name(turn_step) if turn_step else ""
-    offer = bare_name(offered_step) if offered_step else ""
+    offer = offer_key(offered_step)
     prev = bare_name(prev_step) if prev_step else ""
 
     def done(reply, rounds=rounds, answered=answered):
@@ -471,7 +505,7 @@ def next_auto_reply(
         return done(None)
     answered = answered + [pair]
 
-    if offer == "research-plan" and rounds >= 1:
+    if offer == "plan" and rounds >= 1:
         return done(REPLY_WRAP_UP, rounds, answered)
     return done(REPLY_KEEP_GOING, rounds, answered)
 
