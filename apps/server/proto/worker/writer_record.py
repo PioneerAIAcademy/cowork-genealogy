@@ -30,6 +30,7 @@ from typing import Any
 _WRITERS: dict[str, tuple[str, str]] = {
     # tool                  (section,       default op)
     "research_append":      ("",            "append"),      # names its own section
+    "evaluation_append":    ("",            "append"),      # research_append scoped to evaluations; names its own section
     "research_log_append":  ("log",         "append"),
     "extraction_append":    ("extractions", "append"),
     "tree_edit":            ("tree",        "edit"),
