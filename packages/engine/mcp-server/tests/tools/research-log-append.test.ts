@@ -2408,3 +2408,190 @@ describe("research_log_append — wholly JSON-escaped notes are decoded (#3414)"
     expect(await storedNotes()).toEqual([note]);
   });
 });
+
+// A zero-hit `fulltext_search` that set a post-search filter does not rule the
+// record out — the filter may be excluding it. research_log_append refuses such
+// an op unless an unfiltered retry (same keywords/nlQuery, strict-subset
+// filters) is in the same batch or already in log[] (issue #3432, §8.4).
+describe("research_log_append — filtered zero-hit fulltext names its unfiltered retry (issue #3432)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-fnr-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const writeProject = async (research: any) => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  };
+  const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
+  const stageFulltext = (query: any, n: number) =>
+    stageSearchResults({
+      projectPath: dir,
+      tool: "fulltext_search",
+      response: { query, results: Array.from({ length: n }, (_v, i) => ({ id: `r${i}` })) },
+    });
+
+  it("refuses a filtered nil logged with no staged ref (the reachable path)", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+      query: { keywords: "+Flynn +Patrick", place: "Schuylkill County, Pennsylvania" },
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/0 results with the filter.*place.*unfiltered retry/s);
+    expect((r as any).errors.join(" ")).toContain('fulltext_search({keywords: "+Flynn +Patrick"})');
+    expect((await readJson("research.json")).log).toHaveLength(0);
+  });
+
+  it("refuses a filtered op whose staged payload recomputes to a zero count (defensive branch)", async () => {
+    await writeProject(baseResearch());
+    // A real zero-hit fulltext_search stages nothing (stageSearchResults returns
+    // null on empty results), so this count-0 envelope is hand-written via the
+    // active store — the branch that fires if a ref ever carries a 0 count.
+    const ref = `${STAGING_SUBDIR}/zero-hit.json`;
+    await backingStore().writeJson(dir, ref, {
+      tool: "fulltext_search",
+      retrieved: "2026-01-01T00:00:00.000Z",
+      returned_count: 0,
+      payload: { query: { keywords: "+Flynn +Patrick", recordPlace0: "10" }, results: [] },
+    });
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      // query omitted — read from the staged echo, as production fills it
+      stagedResultsRef: ref,
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/0 results with the filter.*recordPlace0/s);
+    expect((await readJson("research.json")).log).toHaveLength(0);
+  });
+
+  it("allows it when the unfiltered retry is in the same batch", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        {
+          tool: "fulltext_search",
+          outcome: "negative",
+          resultsExamined: 0,
+          resultsAvailable: 0,
+          query: { keywords: "+Flynn +Patrick", place: "Schuylkill County, Pennsylvania" },
+          planItemId: null,
+        },
+        {
+          tool: "fulltext_search",
+          outcome: "negative",
+          resultsExamined: 0,
+          resultsAvailable: 0,
+          query: { keywords: "+Flynn +Patrick" },
+          planItemId: null,
+        },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(2);
+  });
+
+  it("allows it when the unfiltered retry is already in log[]", async () => {
+    await writeProject(
+      baseResearch([
+        {
+          id: "log_001",
+          plan_item_id: null,
+          performed: "2026-01-01T00:00:00.000Z",
+          tool: "fulltext_search",
+          query: { keywords: "+Flynn +Patrick" },
+          outcome: "negative",
+          results_examined: 0,
+          external_site: null,
+          results_ref: null,
+        },
+      ]),
+    );
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+      query: { keywords: "+Flynn +Patrick", place: "Schuylkill County, Pennsylvania" },
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(2);
+  });
+
+  it("exempts a name-field query (no stable sibling key)", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+      query: { name: "Patrick Flynn", place: "Schuylkill County, Pennsylvania" },
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(1);
+  });
+
+  it("allows a filtered search that had hits but was logged negative (keyed on hits, not outcome)", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageFulltext(
+      { keywords: "+Flynn +Patrick", place: "Schuylkill County, Pennsylvania" },
+      3,
+    );
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 3,
+      resultsAvailable: 3,
+      stagedResultsRef: handle!.resultsRef,
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows a positive filtered search with hits", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageFulltext({ keywords: "+Flynn +Patrick", recordType: "probate" }, 2);
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "positive",
+      resultsExamined: 2,
+      resultsAvailable: 2,
+      stagedResultsRef: handle!.resultsRef,
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows a lossy no-ref log of a search that had hits (resultsAvailable > 0 is not a nil)", async () => {
+    await writeProject(baseResearch());
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 5,
+      query: { keywords: "+Flynn +Patrick", place: "Schuylkill County, Pennsylvania" },
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(1);
+  });
+});

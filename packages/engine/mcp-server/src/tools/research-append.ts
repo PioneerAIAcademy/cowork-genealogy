@@ -4886,6 +4886,78 @@ function planItemLogAttributionInvariants(
   ];
 }
 
+/**
+ * Starter vocabulary per plan-item `record_type`: the terms whose presence in an
+ * attributed `log[]` entry's tool/notes/query confirms the completing search
+ * touched this record type. **Ported verbatim from the eval validator
+ * `RECORD_TYPE_TERMS` in `eval/harness/validators/test_search_full_text.py`; the
+ * two planes must agree — change both or neither.** A `record_type` absent here
+ * gets the structural check (`planItemLogAttributionInvariants`) only, never a
+ * content assertion it has no vocabulary for.
+ */
+const RECORD_TYPE_TERMS: Record<string, readonly string[]> = {
+  probate: [
+    "estate", "executor", "executrix", "administrator", "administratrix",
+    "appraise", "appraisement", "inventory", "bequeath", "testament",
+    "heir", "legatee", "probate",
+  ],
+  church: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  church_record: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  vital: ["birth", "death", "marriage"],
+  vital_record: ["birth", "death", "marriage"],
+  marriage: ["marriage", "wedding", "banns", "matrimon"],
+  census: ["census", "household", "dwelling", "enumerat"],
+  naturalization: ["naturaliz", "declaration of intent"],
+  obituary: ["obituary", "death notice"],
+};
+
+/**
+ * A plan item with a vocabulary-bearing `record_type` may not stand at
+ * `completed` unless some `log[]` entry attributed to it names a search of THAT
+ * record type. Completing a probate item off a deed/land search — the
+ * `ut_search_full_text_016`/`_020` shape, deep-dive #1651 finding 3 — claims
+ * probate work no part of the document evidences.
+ *
+ * This is the CONTENT half of the completion check; `planItemLogAttributionInvariants`
+ * is the STRUCTURAL half (some entry must name the item at all). The two never
+ * double-report: when nothing is attributed this returns [] and leaves the
+ * refusal to that gate; a `record_type` outside `RECORD_TYPE_TERMS` gets the
+ * structural check only. Keyed to the same trigger as that gate (the entry ends
+ * at `completed`) and reads the same LIVE `research.log` for the same reason —
+ * `log[]` is append-only and owned by `research_log_append`, so the live
+ * document and the pre-call snapshot carry an identical log.
+ *
+ * Mirrors the eval validator `test_plan_item_completion_matches_its_own_record_type`,
+ * including its haystack (each attributed entry's `tool`, `notes` and JSON-
+ * serialized `query`, lowercased). Decidable from `research.json` alone
+ * (ADR-0011's first question), so it is a writer-tool precondition rather than
+ * the agent-body prose it was first diagnosed as (#3592).
+ */
+export function planItemCompletionRecordTypeInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed") return [];
+  const pid = entry?.id;
+  if (typeof pid !== "string" || pid === "") return [];
+  const terms = RECORD_TYPE_TERMS[String(entry?.record_type ?? "").toLowerCase()];
+  if (!terms) return []; // record_type outside the starter table — structural check only
+  const attributed = (Array.isArray(research?.log) ? research.log : []).filter(
+    (e: any) => e && e.plan_item_id === pid,
+  );
+  if (attributed.length === 0) return []; // planItemLogAttributionInvariants' job, not this one's
+  const haystack = attributed
+    .map((e: any) => `${e.tool ?? ""} ${e.notes ?? ""} ${JSON.stringify(e.query ?? {})}`)
+    .join(" ")
+    .toLowerCase();
+  if (terms.some((t) => haystack.includes(t))) return [];
+  return [
+    `plan_items[${pid}]: record_type '${entry.record_type}', but no log[] entry attributed to it ` +
+      `names a ${entry.record_type} search — none mentions any of ` +
+      `${terms.map((t) => `'${t}'`).join(", ")}. Completing it would claim a ${entry.record_type} ` +
+      `search the document does not record. Run and log the ${entry.record_type} search this item ` +
+      `calls for with research_log_append({ planItemId: "${pid}", ... }) before completing it, or ` +
+      `leave it 'in_progress' if that search was not done.`,
+  ];
+}
+
 // A plan item whose external-site search is still awaiting a capture must not
 // be marked terminal (`completed`/`skipped`): search-external-sites cannot
 // search a paywalled site — it hands the user a URL and waits for a PDF — so a
@@ -6830,6 +6902,7 @@ function applyOne(
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
         // from being bypassed. `isAppend: true` — an item arriving inline has
@@ -6877,6 +6950,7 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+      invariantErrors.push(...planItemCompletionRecordTypeInvariants(resultEntry, research));
     }
     // Capture-pending guard (#1226): refuse moving an item INTO a terminal
     // status while its latest external-site search still awaits a capture.

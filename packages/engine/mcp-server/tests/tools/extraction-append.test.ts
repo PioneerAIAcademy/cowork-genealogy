@@ -998,7 +998,10 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     plan_item_id: planItemId,
     performed: "2026-01-01T00:00:00Z",
     tool,
-    query: { surname: "Miller" },
+    // Every item() is record_type "census", so the search that found the record
+    // names census — satisfying planItemCompletionRecordTypeInvariants when the
+    // extracted record completes the item.
+    query: { surname: "Miller", recordType: "census" },
     outcome,
     results_examined: 1,
     external_site: null,
