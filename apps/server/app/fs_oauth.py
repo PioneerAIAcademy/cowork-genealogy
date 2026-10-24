@@ -32,9 +32,10 @@ FS_AUTHORIZE_URL = "https://ident.familysearch.org/cis-web/oauth2/v3/authorizati
 FS_TOKEN_URL = "https://ident.familysearch.org/cis-web/oauth2/v3/token"
 FS_CURRENT_USER_URL = "https://api.familysearch.org/platform/users/current"
 FS_ACCEPT = "application/x-fs-v1+json"
-# api.familysearch.org sits behind Imperva, which 403s non-browser UAs. Mirrors
-# packages/engine/mcp-server/src/constants.ts BROWSER_USER_AGENT. (The ident
-# token endpoint does NOT need it; the platform /users/current call does.)
+# api.familysearch.org and ident.familysearch.org sit behind Imperva, which 403s
+# non-browser UAs. Mirrors packages/engine/mcp-server/src/constants.ts
+# BROWSER_USER_AGENT. From FamilySearch's own AWS, ident 403s python-httpx too, though
+# not from the VPN (handoff step 18, 2026-10-24), so the token calls send it as well.
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
@@ -80,7 +81,7 @@ async def exchange_code_for_tokens(code: str, verifier: str) -> dict | None:
                 "code_verifier": verifier,
                 "redirect_uri": redirect_uri(),
             },
-            headers={"Accept": "application/json"},  # ident endpoint: no browser UA
+            headers={"Accept": "application/json", "User-Agent": BROWSER_USER_AGENT},
         )
     if resp.status_code != 200:
         return None
@@ -104,7 +105,7 @@ async def refresh_tokens(refresh_token: str) -> dict | None:
                 "refresh_token": refresh_token,
                 "client_id": s.familysearch_client_id,
             },
-            headers={"Accept": "application/json"},  # ident endpoint: no browser UA
+            headers={"Accept": "application/json", "User-Agent": BROWSER_USER_AGENT},
         )
     if resp.status_code != 200:
         return None

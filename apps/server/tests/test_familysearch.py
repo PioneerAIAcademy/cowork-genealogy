@@ -9,6 +9,7 @@ sandbox; with no row, nothing is written (mock mode never reads it).
 import json
 from datetime import datetime, timedelta, timezone
 
+import httpx
 import pytest
 
 from fastapi.testclient import TestClient
@@ -332,6 +333,23 @@ async def test_sync_fs_token_none_without_row():
 
 
 # ── Allowlist revocation (security audit #1018 Task 6) ─────────
+
+async def test_token_calls_send_the_browser_user_agent(monkeypatch):
+    """ident answers 403 to python-httpx from FamilySearch's own AWS (handoff step 18,
+    2026-10-24), so the code exchange and the refresh both send the browser UA."""
+    agents: list[str | None] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        agents.append(request.headers.get("user-agent"))
+        return httpx.Response(200, json={"access_token": "a", "refresh_token": "r"})
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(fs_oauth.httpx, "AsyncClient",
+                        lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw))
+    await fs_oauth.exchange_code_for_tokens("c", "v")
+    await fs_oauth.refresh_tokens("r")
+    assert agents == [fs_oauth.BROWSER_USER_AGENT] * 2
+
 
 def test_init_db_removes_stale_allowlist_entries():
     """Entries in the DB but not in ALLOWED_EMAILS are removed on init, so
