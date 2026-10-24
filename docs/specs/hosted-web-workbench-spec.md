@@ -620,6 +620,32 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   the web has no Continue button. Per-session on/off lands with
 >   the experience-level user setting. Cowork desktop has no control plane we
 >   own; the user clicks there.
+> - **Step mode replaces that chain (decision 25, 2026-10-21).** A turn runs one
+>   step, reports it, and ends with `Continue with <label>?` — where `<label>` is
+>   the step's `STEP_LABELS` entry in `packages/engine/plugin/hooks/step_boundary.py`,
+>   so a host can read which step is offered (`offered_step` parses it back; the
+>   round trip is pinned by `test_step_boundary.py`).
+>
+>   `turn_done` gains **`options`**: the exact phrases that turn admits, from
+>   `reply_options(offered_step, research)`. The web shows one button per phrase
+>   and nothing else, and each sends its phrase **verbatim** — `step_mode(text)`
+>   is exact-phrase only, so a button sending its friendly label would start no
+>   run. The field is left OUT when empty, as `reply_follows` is; a step that
+>   ended on a question for the researcher renders no buttons.
+>
+>   **"Keep going" is the host replying for the researcher**, not one long turn.
+>   `next_auto_reply` decides the reply after each turn; the prototype queues it
+>   inside `complete()`'s own transaction as a held turn row
+>   (`outcome='queued'`, `message.auto=true`) under the session's queue lock, and
+>   the existing `release_next_held` sends it. The run state lives in
+>   `sessions.auto_reply` because it spans turns. A turn the host answered itself
+>   carries no `options`: the choice is already made. The reply reaches the
+>   browser as a `user_msg` frame with `auto: true` and is drawn as the
+>   researcher's own message, marked "sent automatically".
+>
+>   `AUTO_CONTINUE_MAX_STEPS` is replaced by `MAX_AUTO_REPLIES` (30) in
+>   `step_boundary.py`, which every plane loads. The literal `Next: <step>.
+>   Continue?` and `AutoContinue` stay until the alpha moves over.
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)

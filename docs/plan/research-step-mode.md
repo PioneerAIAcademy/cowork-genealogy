@@ -931,7 +931,8 @@ records the measure.
 - **Leave out of the per-step figures** wrap-up turns, which run several steps (`turns.mode`).
   A host reply under "Keep going" is a one-step turn and counts.
 - **To break it down by step,** PR 1 adds nullable `turns.step` and `turns.mode` columns, and the
-  "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/014_*.sql`. The
+  "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/015_turn_step.sql`
+  (014 went to #3794 while this was in flight). The
   worker fills them, and they also seed a redelivered attempt (section A). "p90 by step"
   becomes one `GROUP BY`.
 - **e2e reports the same figure** from per-turn timing (`make e2e-latency`, section F), so a
