@@ -1343,6 +1343,86 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
 # and matches neither "fail" nor "pass" -- the exact exit-0-having-done-nothing
 # shape CLAUDE.md names.
 _RUN_OUTCOMES = frozenset({"pass", "partial", "fail", "aborted"})
+def modified_runlogs() -> list[tuple[str, str]]:
+    """(skill, repo-relative path) for every committed run log this PR MODIFIED.
+
+    Added logs are `pr_added_runlogs`; this is the other half. Renames are off
+    (`--no-renames`) for the reason rule 7 states: git pairs a prune's
+    delete+add as a rename, which would hide both sides.
+    """
+    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
+    if not base or not head:
+        return []
+    try:
+        out = subprocess.run(
+            ["git", "diff", "--no-renames", "--diff-filter=M", "--name-only",
+             f"{base}...{head}"],
+            capture_output=True, text=True, encoding="utf-8", cwd=REPO_ROOT, check=True,
+        ).stdout
+    except subprocess.CalledProcessError:
+        return []
+    found = []
+    for path in sorted(out.split()):
+        m = RUNLOG_PATH_RE.match(path)
+        if m and not path.endswith(".ann.json"):
+            found.append((m.group(1), path))
+    return found
+
+
+def rule6_regrade_outcomes(skill: str, path: str) -> int:
+    """Rule 6, regrade arm (blocking): a run log this PR MODIFIED must not turn
+    a test red that was not red at the merge base.
+
+    Rule 6 proper grades only run logs a PR **adds**, and that is deliberate:
+    `prune_runlogs.py` rewrites committed logs when it rehashes or prunes, and
+    `eval/CLAUDE.md` states a modified log "marks nothing touched". A prune does
+    not move an outcome, so that stayed true — until `make judge-regrade` began
+    rewriting grades in place. A regrade re-samples the judge, and a re-sampled
+    verdict can go red: measured on issue #3576, two tests moved to `fail`
+    across 28 regraded suites while this gate reported "graded 0 added run
+    log(s)" and passed.
+
+    So the predicate is the outcome MOVING, not the file changing: a prune or a
+    rehash passes untouched, and only a modification that newly reds a test
+    blocks. "Zero reds, not zero new reds" still governs an ADDED log (rule 6
+    proper); here the PR did not author the run, so it is answerable for what it
+    changed.
+    """
+    try:
+        base_text = git_show_at_merge_base(path)
+    except BaseUnreadable:
+        return 0
+    if base_text is None:
+        return 0
+    try:
+        base_log = json.loads(base_text)
+        head_log = json.loads((REPO_ROOT / path).read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return 0
+    was = {
+        t.get("test_id"): t.get("outcome")
+        for t in (base_log.get("tests") or [])
+    }
+    fails = 0
+    for test in head_log.get("tests") or []:
+        test_id = test.get("test_id", "<no id>")
+        now = test.get("outcome")
+        if now not in ("fail", "aborted"):
+            continue
+        before = was.get(test_id)
+        if before in ("fail", "aborted"):
+            continue
+        gh_error(
+            f"skill `{skill}`: `{Path(path).name}` is MODIFIED by this PR and "
+            f"test `{test_id}` moved `{before}` -> `{now}`. A regrade re-samples "
+            f"the judge, so a verdict can go red without the skill changing; "
+            f"zero reds still governs. Either resolve the red or state in the PR "
+            f"body why the new verdict is the correct one.",
+        )
+        fails += 1
+    return fails
+
+
 def rule6_outcomes(skill: str, log: dict, filename: str) -> int:
     """Rule 6 (blocking): no test in this run log resolves to
     `fail` or `aborted`.
@@ -2231,6 +2311,10 @@ def main() -> int:
             graded_logs += 1
             graded_tests += len(added_log.get("tests") or [])
             fails += rule6_outcomes(skill, added_log, added)
+
+    # Rule 6, regrade arm: a MODIFIED log that newly reds a test.
+    for skill, path in modified_runlogs():
+        fails += rule6_regrade_outcomes(skill, path)
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See

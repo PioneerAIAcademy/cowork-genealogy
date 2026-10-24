@@ -3531,3 +3531,65 @@ def test_trigger_paths_cover_every_module_the_render_graph_reaches():
         f"render graph reaches {sorted(reached - triggers)}, which no trigger "
         f"path covers — a PR editing those would warn instead of blocking"
     )
+
+
+# --- rule 6, regrade arm (issue #3576) ---------------------------------------
+# Rule 6 proper grades only ADDED logs, deliberately: a prune rewrites committed
+# logs and `eval/CLAUDE.md` says a modified log marks nothing touched. That held
+# until `make judge-regrade` began rewriting GRADES in place. The predicate here
+# is the outcome MOVING, so a prune still passes and only a new red blocks.
+
+def _rule6_regrade(monkeypatch, tmp_path, base_outcomes, head_outcomes):
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in head_outcomes.items()]}),
+        encoding="utf-8",
+    )
+    base = (
+        None
+        if base_outcomes is None
+        else json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in base_outcomes.items()]})
+    )
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule6_regrade_outcomes("demo", rel)
+
+
+def test_rule6_regrade_blocks_a_newly_red_test(monkeypatch, tmp_path, capsys):
+    rc = _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "fail"})
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "moved `pass` -> `fail`" in out
+
+
+def test_rule6_regrade_blocks_partial_to_fail(monkeypatch, tmp_path, capsys):
+    """`partial` never blocks on its own, but moving INTO fail does."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "partial"}, {"ut_a": "fail"}) == 1
+
+
+def test_rule6_regrade_passes_a_prune(monkeypatch, tmp_path, capsys):
+    """The direction that must keep working: a modified log whose outcomes did
+    not move is a rehash or a prune, and marks nothing touched."""
+    rc = _rule6_regrade(
+        monkeypatch, tmp_path, {"ut_a": "pass", "ut_b": "partial"}, {"ut_a": "pass", "ut_b": "partial"}
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule6_regrade_ignores_a_test_already_red_at_base(monkeypatch, tmp_path, capsys):
+    """Not this PR's doing — it did not author the run."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "fail"}, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_passes_when_the_log_is_new_at_base(monkeypatch, tmp_path, capsys):
+    """Absent at the merge base — rule 6 proper grades it as an ADDED log, and
+    grading it here too would double-report."""
+    assert _rule6_regrade(monkeypatch, tmp_path, None, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_blocks_a_move_to_aborted(monkeypatch, tmp_path):
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "aborted"}) == 1
