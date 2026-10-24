@@ -621,6 +621,7 @@ def build_run_log(
     model: str,
     judge_prompt_hash: str,
     judge_model: str | None = None,
+    judge_render_hash: str | None = None,
     instrument: dict[str, Any] | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
@@ -684,6 +685,11 @@ def build_run_log(
     # byte-identical rather than gaining a stray `"judge_model": null`.
     if judge_model:
         envelope["judge_model"] = judge_model
+    # judge_render_hash is optional (issue #3576): the fingerprint of the CODE
+    # that renders the judge's input, beside the prompt's own hash. Absent on
+    # logs written before the field, which rule 2b treats as a warning.
+    if judge_render_hash:
+        envelope["judge_render_hash"] = judge_render_hash
     if review_sample is not None:
         envelope["review_sample"] = review_sample
     if tool_search is not None:

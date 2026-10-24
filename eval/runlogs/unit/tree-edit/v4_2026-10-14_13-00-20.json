@@ -467,51 +467,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that F1 already reflects the resolved state: place='Ireland', date='~1845', primary=true, sourced to S1 (1850 census). The response accurately matches the conflict resolution c_001 (preferred a_002 over a_012). No fabricated claims; all assertions are grounded in the before-state data provided. The conclusion that no edit is needed is factually correct."
+                "rationale": "Claude correctly confirmed that F1 already reflects the resolved state: place='Ireland', date='~1845', marked primary=true, sourced to S1 (1850 Census). This matches the conflict resolution c_001 which preferred a_002 (Ireland, ~1845) over a_012 (Pennsylvania). Claude accurately cited the proof summary ps_001 as supporting this resolution. No fabricated claims; all assertions grounded in the before-state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all aspects of the user's request: confirmed F1's current state, verified it matches the resolved conflict c_001, and explicitly stated no edit is needed. The response also proactively noted the next research step (probate search gap 1860\u20131908), demonstrating thorough engagement with the project context. All required confirmations were provided."
+                "rationale": "Claude addressed the full scope of the user's request: confirmed F1's current state, verified it matches the conflict resolution, and explicitly stated no edit is needed. The per-test context required Claude to confirm the place and date values, avoid modifying other persons/facts, and explicitly tell the user the file is unchanged \u2014 all three requirements were met."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill performed a read-only verification of the tree state without invoking any tools. This is appropriate for a confirmation task that requires only inspection of existing data already provided in the before-state context."
+                "rationale": "No MCP tool calls were made. The skill correctly determined that a verification-only task required no tool invocation \u2014 the user asked Claude to check the tree state, and Claude responded based on the before-state context provided. This is appropriate for a confirmation task with no edit required."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": 3,
-                "rationale": "No edit was performed, so all existing data (F1, F2, all persons, all relationships, all sources) remains intact and unchanged. The skill correctly declined to modify anything, preserving the complete state of both research.json and tree.gedcomx.json."
+                "rationale": "No edit was performed, so all existing data (F1, F2, all persons, all relationships, all sources) remains intact. The skill correctly declined to modify anything, preserving the complete state of both research.json and tree.gedcomx.json."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "The skill made zero edits, which is the minimal possible intervention. The per-test context explicitly required that the skill NOT modify other persons (Thomas Flynn I2) or other facts (F2 death fact). By declining to edit, the skill achieved perfect edit minimality."
+                "rationale": "No edit was made. The skill correctly identified that the requested fact already matched the resolved state and made zero modifications. This is the minimal possible intervention \u2014 no collateral changes, no unnecessary rewrites. The per-test context explicitly required not modifying Thomas Flynn (I2) or other facts (F2), and this was honored by making no changes at all."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
-                "score": null,
-                "rationale": "This is not a merge operation. No person merging was requested or performed. The skill was asked to verify an existing fact, not to merge persons or rewrite cross-file references. This dimension does not apply."
+                "score": 3,
+                "rationale": "This is not a merge test. No person merge was requested or performed. The skill correctly verified a single fact on a single person without any merge operations. This dimension has nothing to grade and scores pass per the rubric guidance for non-merge tests."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "No new edit was made, so no grounding decision was required. The skill correctly verified that F1 is already grounded: it carries a source-ref to S1 (1850 census), an original source, and is marked primary=true consistent with the probable-tier proof_summary ps_001 that resolved the conflict. The existing state is properly grounded; no new unsourced facts were added."
+                "rationale": "This is a verification task, not an edit operation. Claude confirmed that F1 is already grounded in sourced evidence (S1, the 1850 Census) and backed by a probable-tier proof summary (ps_001). No new facts or edges were authored, so no new grounding was required. The existing fact is properly sourced and the conflict was resolved at the probable threshold, meeting all grounding requirements."
               }
             ],
-            "judge_cost_usd": 0.0134902,
+            "judge_cost_usd": 0.013167,
             "duration_ms": 8924.889500020072,
             "error": null,
             "input_tokens": 9122,
-            "cached_input_tokens": 5182,
-            "output_tokens": 770
+            "cached_input_tokens": 0,
+            "output_tokens": 809
           },
           "started_at": 1791984529.455461,
           "ended_at": 1791984556.34513
@@ -1073,51 +1073,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly added an Occupation fact (F4) to Patrick Flynn (I1) with the exact details requested: type 'Occupation', date '1860', place 'Schuylkill County, Pennsylvania', value 'Coal miner', and source reference to S2 with page 'dwelling 112'. The standard_place field was correctly populated with the place_search result 'Schuylkill, Pennsylvania, United States'. No fabricated material or unsupported claims are present. The tool response confirms successful validation and persistence."
+                "rationale": "The skill correctly added an Occupation fact (F4) to Patrick Flynn (I1) with the exact details requested: type 'Occupation', date '1860', place 'Schuylkill County, Pennsylvania', value 'Coal miner', and source reference to S2 with page 'dwelling 112'. The standard_place field was correctly populated from the place_search result ('Schuylkill, Pennsylvania, United States'). No fabricated material or unsupported claims; all assertions are grounded in the provided source and the delegation's explicit instruction."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements from the delegation: called place_search for Schuylkill County, Pennsylvania; added the Occupation fact to I1 with all specified fields (date, place, standard_place, value, source reference); and did not modify unrelated data. The fact was assigned the next available F-prefix id (F4) as expected. No required elements were omitted."
+                "rationale": "The skill addressed all requirements from the delegation: called place_search with the correct placeName, added the new Occupation fact with all required fields (id, type, date, place, standard_place, value, sources), and did not mark it primary (correctly following the rule that primary only applies when there are competing facts of the same type). No omissions of required work."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both tool calls passed correct arguments. The place_search call used 'Schuylkill County, Pennsylvania' which matches the expected substring '~Schuylkill'. The tree_edit call with operation 'add_fact' included all required fields: personId 'I1', fact type 'Occupation', date '1860', place and standard_place (copied verbatim from place_search result), value 'Coal miner', and sources array with ref 'S2' and page 'dwelling 112'. No fixture_not_found errors occurred."
+                "rationale": "Both tool calls passed correct arguments. place_search was called with placeName 'Schuylkill County, Pennsylvania', matching the expected substring ~Schuylkill. tree_edit was called with operation 'add_fact', personId 'I1', and a fact object with all required fields correctly structured. The source reference correctly used the existing S2 identifier (no duplicate created). No fixture_not_found errors; both calls matched their fixtures cleanly."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": 3,
-                "rationale": "The edit added a new fact (F4) without modifying or dropping any existing data. The file changes summary shows only 1 person modified (I1) with no deletions. The new Occupation fact is an addition, not a replacement, so all prior facts on I1 (F1 Birth, F2 Death) remain intact. No sources, relationships, or other persons were touched."
+                "rationale": "The edit added a single new fact (F4) without modifying or dropping any existing data. The before-state shows Patrick Flynn (I1) had facts F1 (Birth) and F2 (Death); the file changes summary confirms only 1 person was modified with no deletions. All prior facts, sources, relationships, and research.json entries remain intact. No data loss occurred."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "The skill made only the requested change: adding a single Occupation fact to I1. The file changes summary confirms only persons section was modified with ~1 person touched (I1 receiving the new fact). No other facts on I1 were altered, no other persons or relationships were modified, and research.json was not touched. The edit is surgical and confined to the requested operation."
+                "rationale": "The skill made only the requested change: adding a new Occupation fact to I1. The per-test context explicitly confirms that F1 (Birth) and F2 (Death) stay byte-identical, no other persons/relationships/sources are touched, and research.json is not modified. The edit is surgical and surgical only."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": null,
-                "rationale": "This test is not a person merge operation. The skill added a fact to an existing person (I1) without merging or consolidating persons. The merge-correctness dimension applies only to merge operations and has nothing to grade here."
+                "rationale": "This test is not a person merge operation. No deprecated person IDs are being remapped, no persons are being deleted from tree.gedcomx.json, and no cross-file references need rewriting. The dimension has nothing to grade and scores N/A."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "The new Occupation fact is grounded in sourced evidence: source S2 (1860 U.S. Census) was already cited on the project and the fact carries a source-ref (S2 with page 'dwelling 112'). The fact materializes from an existing source without requiring a proof conclusion, which is the correct gate for sourced-evidence layer edits per the rubric. The source reference is present and valid."
+                "rationale": "The new Occupation fact is grounded as sourced evidence: it carries a source-ref (S2, page 'dwelling 112') and the source is already linked in the project (src_003 references S2, the 1860 census). The fact materializes from an already-cited source without requiring a proof_summary conclusion. The edit meets the sourced-evidence layer requirement: a newly-authored fact with a non-null source-ref on an already-linked source."
               }
             ],
-            "judge_cost_usd": 0.015025199999999999,
+            "judge_cost_usd": 0.0149302,
             "duration_ms": 9989.429707988165,
             "error": null,
             "input_tokens": 9772,
             "cached_input_tokens": 5182,
-            "output_tokens": 947
+            "output_tokens": 928
           },
           "started_at": 1791984520.101456,
           "ended_at": 1791984550.782395
@@ -2098,51 +2098,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and executed the requested edit: F2.date was changed from '1908-03-21' to '1908-03-12', matching the death certificate (S3, cert. no. 4521) cited in the before-state. The tool call succeeded with ok: true and validation passed. The response accurately describes what was changed and confirms the correction aligns with the source document. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified and executed the requested edit: F2.date was changed from '1908-03-21' to '1908-03-12', matching the death certificate (S3, cert. no. 4521) cited in the before-state. The tool call succeeded with ok: true and valid schema. No fabricated material or unsupported claims. The correction is factually accurate against the provided source."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the complete request: corrected the date typo in F2 from 1908-03-21 to 1908-03-12, confirmed the change matches the cited source (S3), and reported that schema validation passed. The response includes both the correction and confirmation of post-edit validity as required by the per-test context."
+                "rationale": "The skill addressed the complete request: corrected the date typo and left everything else alone. The response confirmed the change, identified the source (S3), and noted that schema validation passed. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The mcp__genealogy__tree_correct call passed correct arguments: projectPath matched the workspace, operation was 'update_fact', personId 'I1' and factId 'F2' correctly identified the target, and the fact object contained only the date field with the correct new value '1908-03-12'. The tool matched as 'live' and returned ok: true with valid schema. Arguments align with expected usage."
+                "rationale": "The mcp__genealogy__tree_correct call passed correct arguments: projectPath matched the workspace, operation was 'update_fact', personId 'I1' and factId 'F2' correctly identified the target, and the fact object contained only the date field with the correct new value '1908-03-12'. All critical identifiers were accurate."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": 3,
-                "rationale": "All existing data was preserved. The tool call modified only F2.date; the response_summary confirms only tree.gedcomx.json persons section was modified (~1 modified). No other facts (F1, F3), no other persons (I2), no relationships (R1), no sources, and no research.json entries were touched. The source reference S3 on F2 remains intact."
+                "rationale": "The edit preserved all existing data. Only F2.date was modified; F2's type, place, source reference (S3), and primary status remained unchanged. No other facts (F1, F3), persons (I2), relationships (R1), or research.json entries were touched. The tool response confirms only tree.gedcomx.json persons section was modified with no deletions."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "The edit was surgical: only F2.date changed from '1908-03-21' to '1908-03-12'. Per the per-test context requirement, no other field on F2 (place, sources, type, primary) was modified; no other facts or persons were touched; research.json was not modified. The skill did not opportunistically normalize adjacent fields or re-resolve place data."
+                "rationale": "The edit was surgical: only F2.date changed from '1908-03-21' to '1908-03-12'. No adjacent fields were normalized or opportunistically re-resolved. No other facts, persons, relationships, or research.json content were modified. The per-test context explicitly required this constraint and it was met byte-for-byte."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": null,
-                "rationale": "This test is not a merge operation. No person merge was requested or executed. This dimension has nothing to grade and scores N/A per the rubric guidance that non-merge tests score pass on this dimension."
+                "rationale": "This test is not a merge operation. No person merge was requested or executed. This dimension does not apply."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "The edit is grounded as an objective-error correction verifiable against an already-cited source. S3 (Pennsylvania Death Certificate no. 4521) was on file before this run and explicitly cited in the user's request. The correction from 1908-03-21 to 1908-03-12 matches the source document's recorded date. The skill's response references the source ('matching what his death certificate actually records'), satisfying the evidence-grounding requirement for a verifiable correction to an existing cited source."
+                "rationale": "The edit is grounded as an objective-error correction verifiable against an already-cited source. S3 (Pennsylvania Death Certificate no. 4521) was on file before this run and records 12 March 1908. The skill correctly identified this as a transcription day-swap error and tied the correction to the cited source in its explanation. No new fact or relationship edge was created; an existing fact's date was corrected against documentary evidence already linked to the person."
               }
             ],
-            "judge_cost_usd": 0.0122192,
+            "judge_cost_usd": 0.011729199999999999,
             "duration_ms": 10647.632959065959,
             "error": null,
             "input_tokens": 7186,
             "cached_input_tokens": 5182,
-            "output_tokens": 903
+            "output_tokens": 805
           },
           "started_at": 1791984525.852376,
           "ended_at": 1791984552.296363
@@ -2664,51 +2664,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly created a Couple relationship (R1) between I2 (Thomas Flynn) and I3 (Mary Flynn) with a Marriage fact (F3) dated 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania. The marriage fact was placed on the Couple relationship, not on a person\u2014the correct location per the rubric. The sourceAssertionId 'a_005' was passed to the tool, which resolves to S5 (the church marriage register source), properly grounding the edge and fact. The date is in GedcomX-parseable format ('12 May 1843'). No fabricated material or unsupported claims appear in the response."
+                "rationale": "The skill correctly created a Couple relationship (R1) between I2 (Thomas Flynn) and I3 (Mary Flynn) with a Marriage fact placed on the relationship itself, not on a person. The marriage date '12 May 1843' is GedcomX-parseable, the place is documented, and the sourceAssertionId 'a_005' correctly grounds the edit to the church marriage register (src_005/S5). The response accurately describes what was written and why. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed the required task: creating a Couple relationship with the documented marriage fact, sourced to the church marriage register (a_005/S5). The user message (delegation) asked to record the marriage in the tree, and the skill did so. No required elements were omitted. The per-test context confirms the write is the sole target of this test, and it was executed."
+                "rationale": "The skill completed the required task: creating a Couple relationship with the Marriage fact correctly placed and sourced. The user message (delegation) asked to record the marriage of Thomas and Mary Flynn documented in the church register, and the skill did exactly that via a single add_relationship call with the marriage fact in the relationship's facts array. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The tree_edit call passed correct arguments: operation 'add_relationship', relationship type 'Couple', person1 'I2', person2 'I3', Marriage fact with date '12 May 1843', place 'St. Patrick's Church, Schuylkill County, Pennsylvania', standard_place resolved via the place_search tool, and sourceAssertionId 'a_005'. The place_search call used 'Schuylkill' as the search term, matching the expected_args predicate '~Schuylkill'. Both calls succeeded without fixture_not_found errors."
+                "rationale": "Both tool calls passed correct arguments. The place_search call used 'St. Patrick's Church, Schuylkill County, Pennsylvania' which matches the expected substring '~Schuylkill'. The tree_edit call passed operation 'add_relationship' with type 'Couple', person1 'I2', person2 'I3', a Marriage fact with date '12 May 1843', place, standard_place, and sourceAssertionId 'a_005'. All critical identifiers and parameters are correct."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": 3,
-                "rationale": "The edit added one new Couple relationship without modifying or deleting any existing data. The two ParentChild relationships (RT1, RT2) linking Thomas and Mary to Patrick remain unchanged. No facts, sources, or persons were dropped. All pre-existing data on I1, I2, I3 and their relationships survives intact."
+                "rationale": "The edit added one new Couple relationship without modifying or deleting any existing data. The two pre-existing ParentChild relationships (RT1, RT2) remain unchanged, all three persons (I1, I2, I3) are preserved, and all five sources remain on file. The marriage fact is newly authored but sourced to a_005, so no data loss occurred."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "The skill made only the requested change: creating a single Couple relationship with the Marriage fact. No unrelated fields were touched. The existing ParentChild relationships (RT1, RT2) were not modified. Person records I1, I2, I3 were not altered. The edit is surgical and confined to the one new relationship."
+                "rationale": "The skill made only the requested change: creating a single Couple relationship with the Marriage fact. The file changes summary shows '+1 added, ~0 modified, -0 deleted' in relationships. No unrelated fields were touched, no person facts were altered, and no existing relationships were rewritten. The edit is surgical and minimal."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": null,
-                "rationale": "This test is not a merge operation. No person merge was performed, no deprecated person IDs were remapped, and no persons were deleted from the tree. This dimension does not apply."
+                "rationale": "This test is not a merge operation. No person merge was performed, no deprecated person IDs were remapped, and no cross-file references needed rewriting. This dimension does not apply."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "The Marriage fact is evidence-grounded. Assertion a_005 / source src_005 (tree source S5) documents the marriage as direct primary evidence from the church marriage register. The skill passed sourceAssertionId 'a_005' to the tree_edit tool, which resolves the source reference onto both the Couple relationship edge and the Marriage fact. The fact carries a source-ref (via the assertion), satisfying the sourced-evidence layer requirement. No proof_summary was required because this is a sourced fact, not a concluded value or merge. The edit proceeds correctly without refusal."
+                "rationale": "The marriage fact is evidence-grounded. Assertion a_005 / source src_005 (tree source S5) documents the marriage as direct primary evidence from the church marriage register. The skill passed sourceAssertionId 'a_005' to the tree_edit tool, which resolves to S5 and attaches the source reference to both the Couple relationship edge and the Marriage fact. The fact is newly authored but carries a source-ref via the assertion, meeting the sourced-evidence layer requirement. No proof_summary was required because this is materializing sourced evidence, not concluding a value or executing a merge."
               }
             ],
-            "judge_cost_usd": 0.0129832,
+            "judge_cost_usd": 0.0127132,
             "duration_ms": 11301.790291909128,
             "error": null,
             "input_tokens": 7460,
             "cached_input_tokens": 5182,
-            "output_tokens": 1001
+            "output_tokens": 947
           },
           "started_at": 1791984494.293033,
           "ended_at": 1791984529.255334
@@ -3505,7 +3505,8 @@
                 "subagent_type": "tree-edit",
                 "text": "This is a guardianship bond, not a birth or baptism record, so it states a legal relationship \u2014 not a biological one. Here is what the record supports and what it does not.\n\n**What the 1821 bond establishes**\n\nRidley Stribling was appointed guardian of four minors surnamed Watts. That is all the bond itself says about the nature of the connection.\n\n**The leading interpretation**\n\nThe timing and surname pattern are significant. Ridley married Nancy Watts in November 1820 \u2014 less than a year before the 1821 guardianship appointment. The four children bear her surname. The most probable reading, following the pattern described in the relationship guidance (Appendix B), is that these are Nancy's children from a prior marriage and Ridley is their stepfather, with the appointment driven by his new role managing the children's inherited property from their deceased father.\n\nThat said, the bond and the marriage record together do not prove it. Nancy's surname \"Watts\" at her 1820 marriage could be her maiden name (a first marriage) or her prior married name (a widow's second marriage). If it is her maiden name, the four Watts children could instead be her brother's orphans, making Ridley an uncle by marriage rather than a stepfather. The bond itself does not resolve this.\n\n**What subtype to record**\n\nRecord **no subtype at all** on the parent-child edges between Ridley and each of the four children. The guardianship bond plus the marriage establishes the legal connection but does not prove whether the relationship is Step, Biological, or another type. Asserting \"Step\" at this stage would outrun the evidence.\n\nDo not assert Nancy's maternal edge to the children as Biological either \u2014 that rests on the same surname correspondence and gets the same treatment: edge with no subtype.\n\n**What would settle it**\n\n- The prior marriage record for Nancy or for a man named Watts who predeceased 1821 \u2014 if she was his widow, the step reading is confirmed\n- Estate or probate records for the children's father \u2014 a guardianship was routinely granted over a minor's inherited property, and the estate papers would name the father and likely the mother\n- Records naming the children's parents directly (birth records, earlier court documents)\n\n**Summary**\n\nAdd four parent-child edges from Ridley to John, Mary, Elizabeth, and Thomas Watts, each sourced to the 1821 guardianship bond, with no subtype set. If you also add Nancy as their mother, her four edges likewise carry no subtype. Flag these relationships for follow-up research to find the children's father's estate records and Nancy's earlier marriage if she was a widow.\n\nWould you like me to go ahead and add those edges to the tree now? If so, please confirm: are these four children already in the tree as persons, and what are their person IDs? Also confirm Ridley's person ID."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -3681,51 +3682,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's analysis is factually sound and well-grounded. The response correctly identifies the guardianship bond as establishing a legal relationship, not a biological one. The stepfather reading is presented as the leading interpretation based on the marriage timing (November 1820) and surname correspondence (Nancy Watts, four Watts minors, 1821 bond). Claude appropriately hedges by naming the competing reading (Watts as maiden name, making them Nancy's siblings' orphans) without treating it as equally likely. The recommendation to record parent-child edges without subtype is correct\u2014the evidence supports the connection but not the type. No fabricated material or unsupported claims appear."
+                "rationale": "Claude correctly identified the guardianship bond as establishing a legal relationship, not a biological one. The response accurately connects Ridley's November 1820 marriage to Nancy Watts with the 1821 guardianship appointment, making the stepfather reading the leading interpretation. The reasoning about surname correspondence, the timing, and the property-management context of guardianships is factually sound. Claude correctly notes that the bond and marriage together do not prove the relationship type, and appropriately identifies the competing reading (Nancy's maiden name, making the minors her siblings' orphans). No fabricated material or unsupported claims appear."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: identified the leading interpretation (stepfather), named the competing reading (uncle by marriage), explained why no subtype should be asserted, and specified what evidence would settle the question (Nancy's prior marriage, estate records, or direct naming of parents). The response directly answers the user's question about what relationships to record and with what subtype. The request for confirmation before proceeding is appropriate given the stateless context."
+                "rationale": "Claude addressed all required elements: made the unprompted inference connecting the marriage to the guardianship, presented the stepfather reading as leading, named the competing reading (maiden name hypothesis), explained why no subtype should be asserted, identified what would settle the question (Nancy's prior marriage, estate records, direct naming of parents), and provided clear guidance on what to record. The response directly answers the user's question about what relationships to record and with what subtype."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. This is correct for a stateless test where the user asked for interpretive guidance on what to record, not for the skill to execute a tree edit. The per-test context explicitly states that the correct run 'answers what to record and need make NO tool calls; the absence of a tree_edit call MUST NOT be scored as incomplete.'"
+                "rationale": "No MCP tool calls were made. Per the per-test context, this is a stateless test with no project on disk, and the correct behavior is to answer the craft determination without tool calls. The absence of tool calls is not a defect here."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": null,
-                "rationale": "This dimension applies only to edit operations that modify persisted data. No tree.gedcomx.json or research.json changes were made in this run\u2014the skill provided guidance on what to record but did not execute an edit. This is a non-merge, non-edit scenario, so data preservation has nothing to grade."
+                "rationale": "This is not an edit operation. No data was persisted to files, no merge occurred, and no facts were written to or removed from a tree. This dimension does not apply to a consultation-only response."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": null,
-                "rationale": "This dimension applies only to edit operations. No edits were performed; the skill provided interpretive guidance without modifying any project files. This is not an edit scenario, so edit minimality does not apply."
+                "rationale": "No edit was performed. Claude provided guidance on what to record but made no changes to any project files. This dimension does not apply."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": null,
-                "rationale": "This dimension applies only to person merges. No merge was attempted or executed. The skill provided guidance on recording relationships but did not merge any persons. This is not a merge scenario, so merge correctness does not apply."
+                "rationale": "No merge was performed. Claude provided guidance on recording relationships but did not execute a person merge. This dimension does not apply."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "Claude correctly grounds the interpretation in the available evidence: the 1821 guardianship bond and the November 1820 marriage record. The response appropriately refuses to assert a subtype (Step, Biological, etc.) because the bond and marriage together establish the legal connection but do not prove the biological relationship\u2014this is exactly the right gatekeeping. Claude explains that asserting 'Step' would 'outrun the evidence' and correctly identifies what additional sources would be needed (prior marriage record, estate records, direct naming of parents). The response does not over-gate by demanding proof before materializing sourced evidence; rather, it correctly identifies that the type itself cannot be concluded from the available sources. The guidance to record edges without subtype is grounded and appropriate."
+                "rationale": "Claude correctly refused to assert a subtype on the parent-child edges, recognizing that the guardianship bond plus the marriage establish a legal connection but do not prove whether the relationship is Step, Biological, or another type. The response appropriately distinguishes between what the sources establish (a legal guardianship and a marriage to a woman with the same surname as the minors) and what they do not establish (the biological or step relationship). Claude correctly identifies that asserting 'Step' would outrun the evidence and explains what additional sources would be needed to ground such a conclusion (Nancy's prior marriage record, estate records naming the father, or direct naming of parents). The guidance to record edges with no subtype is grounded in the available evidence."
               }
             ],
-            "judge_cost_usd": 0.0095142,
+            "judge_cost_usd": 0.0090342,
             "duration_ms": 10386.095041991211,
             "error": null,
             "input_tokens": 4326,
             "cached_input_tokens": 5182,
-            "output_tokens": 934
+            "output_tokens": 838
           },
           "started_at": 1791984449.4957309,
           "ended_at": 1791984485.664347
@@ -5088,11 +5089,11 @@
                 "rationale": "The merge is grounded by ps_002, a proof_summary at probable tier confirming I3 \u2261 I4 identity. The added birth fact (F6, ~1849) carries a source-ref to S5 (1880 census), satisfying the sourced-evidence layer requirement. The clearing of primary on F5 is a retirement of a concluded value in the face of conflicting evidence, which is grounded without requiring a proof_summary per evidence-grounded-edits.md. No newly-authored fact or relationship edge lacks a source-ref. The edit meets the grounding threshold."
               }
             ],
-            "judge_cost_usd": 0.016456000000000002,
+            "judge_cost_usd": 0.016974200000000002,
             "duration_ms": 14256.23695901595,
             "error": null,
             "input_tokens": 10101,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 5182,
             "output_tokens": 1271
           },
           "started_at": 1791984322.336962,
@@ -5530,51 +5531,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the single pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly characterized the match as moderately confident and accurately advised that a proof conclusion would be needed before any merge. No fabricated material or unsupported claims were made. The tool response was properly interpreted and presented."
+                "rationale": "The skill correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the single pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71, dates 1845\u20131908). The response correctly characterized the match confidence as moderate and appropriately advised that a proof conclusion would be needed before any merge. No fabricated material or unsupported claims were made. The tool response was accurately summarized and contextualized."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: called the correct tool with the correct ID, reported the one pending duplicate candidate with all relevant details (FamilySearch ID, name, dates, confidence score), confirmed no internal tree duplicates exist, and advised the user on the proof-conclusion requirement before merging. The response fully satisfied the per-test requirements without omission."
+                "rationale": "The skill addressed all required elements: called the correct tool with the correct ID, reported the one pending duplicate candidate with all relevant details (FamilySearch ID, name, dates, confidence score, status), provided local tree context (four persons, no internal duplicates), and advised the user on next steps (proof conclusion required before merge). No required information was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The skill called person_person_matches with id='LZNY-BRF' and includeSummary=true. The expected_args specified only id='LZNY-BRF', which was correctly provided. The includeSummary parameter was a reasonable addition to support the response narrative. The tool call matched the fixture's expected arguments semantically and the call succeeded (matched.kind == 'predicate')."
+                "rationale": "The tool call to mcp__genealogy__person_person_matches passed the correct critical argument: id='LZNY-BRF' matching the expected_args. The additional includeSummary=true parameter was a reasonable addition that enhanced the response without introducing noise. The call matched the fixture's expected_args semantically and returned valid results."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": 3,
-                "rationale": "This is a read-only duplicate check with no edits to tree.gedcomx.json or research.json. The file changes summary confirms no changes were made. All existing data (4 persons, 3 relationships, 9 sources, 1 conflict, etc.) remain intact. Data preservation is not applicable to a non-edit operation, and the skill correctly made no modifications."
+                "rationale": "This is a read-only duplicate check with no edits to tree.gedcomx.json or research.json. No data preservation concerns apply because no data was modified. The skill correctly made zero changes to the project files, as required by the per-test context."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "This is a read-only duplicate check operation. No edits were made to any project files. The skill correctly performed only the requested duplicate check without modifying unrelated data. Edit minimality is satisfied by the absence of any modifications."
+                "rationale": "No edits were made to any project files. The skill performed only a read-only query via person_person_matches and reported the results without modifying any data. This is the correct minimal behavior for a duplicate-check operation."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": 3,
-                "rationale": "This is not a merge operation. The skill correctly identified a potential duplicate candidate but explicitly advised against merging without a proof conclusion establishing identity. No merge was executed, and the skill appropriately deferred that decision to the user pending further research. Merge correctness is N/A for a non-merge operation, but the skill's guidance was sound."
+                "rationale": "This is not a merge operation. The skill correctly declined to merge and instead advised the user that a proof conclusion would be required before any merge could be executed. No merge was attempted, so this dimension has nothing to grade and scores pass per the rubric guidance for non-merge tests."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "This is a read-only duplicate check, not an edit operation. No new facts, relationships, or conclusions were written to the tree. The skill correctly advised that a proof conclusion would be required before any merge could proceed, demonstrating proper understanding of the grounding threshold. No edit grounding issues arise in a non-edit operation."
+                "rationale": "This is a read-only duplicate-check operation, not an edit operation. No new facts, relationships, or conclusions were written to the tree. The skill correctly advised that identity confirmation via proof conclusion would be needed before any merge, which is the appropriate grounding gate. No edit grounding issues apply to this non-edit operation."
               }
             ],
-            "judge_cost_usd": 0.014272199999999999,
+            "judge_cost_usd": 0.0140422,
             "duration_ms": 9555.067208013497,
             "error": null,
             "input_tokens": 9529,
             "cached_input_tokens": 5182,
-            "output_tokens": 845
+            "output_tokens": 799
           },
           "started_at": 1791984464.700611,
           "ended_at": 1791984496.9209752
@@ -6458,51 +6459,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that I1 (Patrick Flynn) and I2 (Thomas Flynn) are father and son, not the same person. The refusal is factually grounded: R1 documents a ParentChild relationship, the 1850 and 1860 censuses show Thomas as head of household with Patrick as child, and ps_001 treats them as distinct individuals. Claude's claim that merging would 'destroy the R1 parent-child relationship' is accurate. No fabricated material; all assertions are supported by the before-state."
+                "rationale": "Claude correctly refused the merge. The project state shows I1 (Patrick Flynn, b. ~1845) and I2 (Thomas Flynn, b. ~1818) are documented as father and son via R1 (ParentChild relationship), confirmed by 1850 census, 1860 census, and death certificate. ps_001 is a proof_summary about parentage, not identity. The delegation falsely claimed 'no proof is needed' \u2014 Claude correctly identified this as a safety violation. The refusal is factually grounded in the project's own records and SKILL.md requirements."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the full scope of the request: explicitly refused the merge, explained the genealogical relationship (father-son), cited the evidence (1850 census, 1860 census, death certificate, R1 relationship), and offered constructive guidance (identify if there is a genuine duplicate elsewhere). The response covers all required elements: the refusal, the reasoning, and the redirect."
+                "rationale": "Claude addressed all required elements: (1) refused the merge, (2) explained why (no identity proof_summary, only parentage proof), (3) noted the existing R1 relationship as evidence they are NOT the same person, (4) offered constructive redirection (write an identity proof_summary if genuinely believed to be the same), (5) did not capitulate to the delegation's pressure. No required action was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke merge_tree_persons or any other tool, which is the appropriate response when refusing the merge. N/A per the base rubric."
+                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke merge_tree_persons or any other tool, as the merge should not proceed. N/A per base rubric."
               },
               {
                 "source": "rubric",
                 "name": "Data preservation",
                 "score": 3,
-                "rationale": "No edits were made to tree.gedcomx.json or research.json. All existing facts, relationships (R1, R2, R3), persons (I1\u2013I4), sources, and conflicts remain intact. The refusal to merge preserves all data that would have been lost or corrupted by an incorrect merge."
+                "rationale": "No edit was made, so no data could be lost. The refusal preserved all existing facts, relationships (R1, R2, R3), sources (src_001\u2013src_009), conflicts (c_001), and person records (I1\u2013I4) intact. This is the correct outcome for a refused merge."
               },
               {
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "No edits were performed. The skill correctly declined to modify any fields or entries. This is the minimal correct action: zero collateral changes because zero changes were made."
+                "rationale": "No edit was performed. The skill correctly refused to modify any fields or relationships. Unrelated data remains byte-for-byte unchanged because no changes were made at all. This is the correct outcome."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": 3,
-                "rationale": "This is not a merge test \u2014 it is a negative test (refusal). The skill correctly refused to execute merge_tree_persons. Per the rubric, when the test is not a merge (including when a merge is correctly refused), this dimension scores pass. The refusal is the correct outcome."
+                "rationale": "This is a negative test (per-test context: 'Should REFUSE the merge'). The skill correctly refused to execute merge_tree_persons. No persons were merged, no references were rewritten, and the deprecated-person deletion did not occur \u2014 because the merge was correctly rejected. The per-test context explicitly states 'no proof_summary in research.json confirms I1 \u2261 I2' and 'Should NOT make any edits.' Claude met this requirement."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "This is a refusal, not an edit operation. Claude correctly identified that no proof_summary confirms identity (ps_001 is about parentage, not identity), and that the existing R1 relationship is evidence the two persons are distinct. The refusal is grounded in the correct threshold: a probable-tier proof_summary confirming identity is required before merging. Claude's explanation of what is missing (an identity proof_summary) is accurate and well-reasoned."
+                "rationale": "This is a negative test (refusal case). Claude correctly identified that a person merge requires a proof_summary at probable tier or higher confirming identity (per SKILL.md and evidence-grounded-edits.md). ps_001 is about parentage, not identity. Claude refused the edit because it lacked the required grounding \u2014 the correct behavior. No ungrounded edit was made."
               }
             ],
-            "judge_cost_usd": 0.0139312,
+            "judge_cost_usd": 0.0141862,
             "duration_ms": 9421.72320804093,
             "error": null,
             "input_tokens": 9328,
             "cached_input_tokens": 5182,
-            "output_tokens": 817
+            "output_tokens": 868
           },
           "started_at": 1791984443.993981,
           "ended_at": 1791984476.5258932
@@ -7009,5 +7010,6 @@
     "cursor": [],
     "seed": 1868
   },
-  "tool_search": true
+  "tool_search": true,
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }

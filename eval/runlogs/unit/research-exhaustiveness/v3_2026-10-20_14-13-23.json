@@ -680,45 +680,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that q_001 already has search_stop.stopped_because set to 'question_answered' and appropriately declined to re-evaluate or re-write the declaration. The existing declaration is accurately summarized: three independent original sources (1850 census, 1860 census, 1908 death certificate) confirm Thomas Flynn as Patrick's father, the birthplace conflict was resolved, probate search returned negative results, and all seven stop criteria were recorded as met. No fabricated material or unsupported claims. The response accurately reflects the project state from the tool calls."
+                "rationale": "Claude correctly identified that q_001 already has search_stop.stopped_because set to 'question_answered' and appropriately declined to re-evaluate. The existing declaration was accurately reported: three independent sources (1850 census, 1860 census, 1908 death certificate) confirm Thomas Flynn as Patrick's father, the birthplace conflict was resolved, and probate search returned negative results. All factual claims align with the tool responses and before-state data. No fabricated material or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all requirements from the user message and per-test context. It reported the existing exhaustive declaration status, summarized key findings from the justification and stop_criteria assessments, stated plainly that no further exhaustiveness work is owed, and correctly did not re-write the search_stop or recommend re-running proof-conclusion (since ps_001 is already at 'proved' tier). The response covered the existing declaration comprehensively without unnecessary re-evaluation."
+                "rationale": "Claude addressed all requirements: recognized the precondition (stopped_because already set), reported the existing exhaustive declaration status, summarized key findings from the justification and stop_criteria, and stated plainly that no further exhaustiveness work is owed. The response correctly noted that proof summary ps_001 is at 'proved' tier and appropriately did not recommend re-running proof-conclusion. All substantive elements from the user's request were covered."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made two MCP tool calls: project_context and research_query. Both calls matched live fixtures with correct arguments. The project_context call used the correct projectPath. The research_query call correctly specified section='questions' and questionId='q_001'. Both calls returned valid responses that Claude used to ground its analysis. No fixture_not_found errors or argument mismatches."
+                "rationale": "Claude made two MCP calls: project_context and research_query. Both calls matched live fixtures with correct arguments. The project_context call used the correct projectPath. The research_query call correctly specified section='questions' and questionId='q_001'. No fixture_not_found errors occurred. Arguments were semantically correct and matched expected usage."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude correctly applied the gate reasoning by recognizing the precondition: q_001 already has search_stop.stopped_because set to 'question_answered', which is a stop-gate value. Per the precondition rule, Claude appropriately declined to re-evaluate the seven criteria and instead reported the existing declaration. The decision to stop at the precondition check is grounded in the actual project state retrieved via tool calls, not generic claims."
+                "rationale": "Claude correctly applied the gate reasoning by recognizing the precondition rule: when search_stop.stopped_because is already set to a stop-gate value ('question_answered'), the skill should not re-evaluate the criteria but instead report the existing declaration. This is the proper gate logic \u2014 the decision to decline re-evaluation was grounded in the actual project state (the stopped_because field already populated), not a generic assertion."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "Claude reported all seven stop criteria from the existing declaration with substance tied to specific project state: goal_alignment (three independent sources confirm parentage), repository_breadth (FamilySearch, Ancestry, MyHeritage searched), original_substitution (original images accessed), independent_verification (three independent sources), evidence_class (original census and death certificate), conflict_resolution (birthplace conflict c_001 resolved), and overturn_risk (low, three independent lines converge). Each criterion includes concrete details rather than generic assertions. The not_reached array is empty, correctly indicating all criteria were met."
+                "rationale": "Claude reported all seven stop criteria from the existing declaration with substantive assessments tied to specific project state: goal_alignment (three independent sources), repository_breadth (FamilySearch, Ancestry, MyHeritage searched), original_substitution (original images accessed), independent_verification (three independent sources), evidence_class (original census and death certificate), conflict_resolution (c_001 resolved), and overturn_risk (low, three independent lines converge). Each criterion carried concrete detail, not generic boilerplate."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude did not re-declare or inflate the exhaustiveness claim. Instead, it reported the existing declaration that was already set to 'question_answered' with full stop_criteria populated. The existing declaration is honest: it acknowledges the negative probate result ('no will or estate records') and explains why it does not contradict the conclusion. Claude did not set a new stopped_because value or bury gaps; it simply reported what was already on file."
+                "rationale": "Claude did not re-declare or modify the existing declaration. The response honestly reported that the question was already declared exhaustive with stopped_because='question_answered', and appropriately declined to re-write the search_stop. No premature or inflated exhaustiveness claims were made. The existing declaration stands unchanged, which is the correct honest outcome for a precondition that was already met."
               }
             ],
-            "judge_cost_usd": 0.013394,
+            "judge_cost_usd": 0.013079,
             "duration_ms": 13761.408199556172,
             "error": null,
             "input_tokens": 8934,
             "cached_input_tokens": 0,
-            "output_tokens": 892
+            "output_tokens": 829
           },
           "started_at": 1792505607.3291767,
           "ended_at": 1792505676.7063584
@@ -1710,45 +1710,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the marriage record (a_001) proves Thomas and Mary married but does NOT establish Patrick as their child. The assessment that the baptism (pli_002) is the decisive child-linking record and was not recovered is factually accurate. The conclusion that the question remains unanswered by direct evidence is sound. No fabricated claims; all assertions are grounded in the tool responses and project state."
+                "rationale": "Claude correctly identified that the marriage record (a_001) proves Thomas and Mary married but does NOT establish Patrick as their child. The analysis accurately recognizes that the baptism search (pli_002) returned negative and that this missing child-linking record is the blocking factor. Claude correctly declined to declare exhaustive and grounded the decision in specific project state: the marriage predates Patrick's birth but contains no assertion linking him to the couple, the death certificate parent fields are blank, and no examined record places the child with the concluded parents. The factual claims are supported by the tool responses and the before-state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: gathered the full project context, examined all four plan items, reviewed both assertions (a_001 and a_003), checked person_evidence for all three persons, identified the blocking criterion (goal_alignment / child-link), and declined to declare exhaustive. The response includes specific recommendations for continuing research (original parish registers, adjacent parishes, emigration records)."
+                "rationale": "Claude addressed all required elements: gathered the full project context via tool calls (questions, plans, assertions, log, person_evidence, conflicts), examined all four plan items and their outcomes, identified the specific gap (child-linking record), and provided a substantive decline with recommendations for continuing research. The response covers the marriage record, the baptism search outcome, the death certificate silence, and the absence of any ParentChild link in the tree. No major portions of the required analysis were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls matched their expected arguments. The wiki_read call for 'Ireland_Civil_Registration' matched the expected substring pattern. All research_query calls used correct section names and identifiers (q_001, I1, I2, I3, a_002). No fixture_not_found errors occurred. The wiki_read call, though not strictly required by the rubric override for sibling-page misses, was correctly targeted and matched."
+                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The project_context call was correct, research_query calls for questions/plans/assertions/log/person_evidence/conflicts/localities all used correct section names and identifiers, and the wiki_read call for 'Ireland_Civil_Registration' matched the expected substring pattern. No critical identifiers were wrong, no calls landed in fixture_not_found, and the arguments bore clear resemblance to what was expected. The wiki_read call correctly fetched the registration start date (1864 for births), which Claude used to note that Patrick's ~1845 birth predates civil registration."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude applied the stop criteria as a gate, evaluating all seven in order and stopping at the first failure (goal_alignment). The reasoning is grounded in actual project state: 'No record directly names Patrick Flynn as the child of Thomas Flynn and Mary Doyle' is tied to the specific assertions (a_001 proves the couple, a_003 is silent on parentage). The blocking criterion is named explicitly and the gap is clear."
+                "rationale": "Claude evaluated the seven-point stop criteria as a gate and correctly stopped at the first failure: goal_alignment. The reasoning is grounded in actual project state: Claude named that no record directly answers 'who were Patrick's parents,' that the marriage proves the couple but not the child-link, and that the question remains unanswered by direct evidence. Claude then worked through the remaining criteria (repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk) to show why the declaration must be declined. The blocking criterion (goal_alignment) is explicitly named and tied to the gap: 'No record directly names Patrick Flynn as the child of Thomas Flynn and Mary Doyle.'"
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted declaring exhaustive despite every plan item being completed and despite the user's assertion that 'the parents' marriage settles it.' The response correctly declines to set stopped_because and instead identifies the gaps (missing child-linking record, limited repository breadth). The wording is honest: 'Not yet exhaustive' with specific reasons, not optimistic framing. No stop-gate value was set."
+                "rationale": "Claude resisted the temptation to declare exhaustive despite the plan being fully completed and the user pointing to the marriage as settling the question. Claude correctly declined without setting stopped_because to a non-null value and without writing exhaustive_declared. The response honestly identifies the gaps (child-linking record not found, other repositories not searched) and frames the outcome as 'not yet exhaustive' with a recommendation to continue research rather than as an early termination for resource reasons. Claude does not bury the gaps or use optimistic language like 'substantially exhaustive.'"
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria are assessed with substance tied to project state. goal_alignment: 'No record directly names Patrick as their child' (grounded in a_001/a_003). repository_breadth: 'search covered FamilySearch...No FAN research was attempted. No Ancestry, FindMyPast, or Irish genealogy databases were tried' (specific gaps named). original_substitution: 'Original images were accessed where records exist' (tied to log entries). independent_verification: 'Only one source (the 1843 marriage) speaks to the couple's existence...No second independent source confirms Thomas and Mary as Patrick's parents' (grounded in assertion count). evidence_class: 'The 1843 marriage is an original record...but about the marriage, not about Patrick's parentage' (specific distinction). conflict_resolution: 'No conflicts registered, which passes this criterion' (checked via conflicts query). overturn_risk: 'HIGH...other repositories...were not searched' (specific repositories named). Each assessment is answerable from project state, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive assessments tied to specific project state. goal_alignment: 'No record directly names Patrick Flynn as the child of Thomas Flynn and Mary Doyle; the marriage proves the couple, not Patrick's parentage.' repository_breadth: 'The search covered FamilySearch for Irish marriages, Catholic baptisms, US census, and PA death certificates. No FAN research was attempted. No Ancestry, FindMyPast, or Irish genealogy databases were tried for the baptism.' independent_verification: 'Only one source (the 1843 marriage) speaks to the couple's existence. The death certificate is silent on parentage. No second independent source confirms Thomas and Mary as Patrick's parents.' evidence_class: 'The 1843 marriage is an original record with primary information \u2014 but about the marriage, not about Patrick's parentage. There is no original record with primary information that names Patrick as the child of this couple.' conflict_resolution: 'No conflicts registered, which passes this criterion as stated.' overturn_risk: 'HIGH. The baptismal register search was limited to FamilySearch; other repositories were not searched.' Each assessment is grounded in log entries or assertions, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0182563,
+            "judge_cost_usd": 0.0194013,
             "duration_ms": 14073.566300328821,
             "error": null,
             "input_tokens": 12968,
             "cached_input_tokens": 5183,
-            "output_tokens": 954
+            "output_tokens": 1183
           },
           "started_at": 1792505698.5556326,
           "ended_at": 1792505862.8174615
@@ -4080,45 +4080,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that pli_006 (the 1875 birth registration) is a decisive, obtainable record that has not been searched. The analysis accurately distinguishes between the death registration's secondary, hearsay information about parentage (informant not present at birth, 71-year-old recollection) and the primary information a birth registration would provide. Claude correctly applied the decisive-record rule: `answered` is a disposal on judgement, not a justified inaccessibility claim. The refusal to declare is grounded in the project's own data (informant_proximity, informant_bias_notes) and the Massachusetts_Vital_Records wiki page confirming statewide registration from 1841. No fabricated barriers were invented; no false claims about the record's accessibility were made."
+                "rationale": "Claude correctly identified that pli_006 (the 1875 birth registration) is a decisive, unsearched record that blocks exhaustiveness. The analysis accurately distinguishes between the death registration's secondary, hearsay information (informant not present at birth, 71-year-old recollection) and the primary information a birth registration would provide. Claude correctly read from the wiki that Massachusetts statewide registration began in 1841, making the 1875 Taunton record obtainable. The refusal to declare is grounded in the project's own data: a_003 and a_004 explicitly flag informant_proximity as 'family_not_present' and note that maiden surnames on death records are weak. Claude did not invent access barriers or fabricate justifications. The reasoning is factually sound and supported by the fixture state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: gathered evidence (including the wiki read confirming 1841 registration start), assessed all seven stop criteria with substance, identified the blocking criterion (repository_breadth, independent_verification, evidence_class, overturn_risk all fail on the same gap), named the specific missing record (pli_006, the 1875 birth registration), explained why the skip_reason is insufficient, and routed to research-plan without setting a stop-gate value. The response did not write changes to research.json, as required for a refusal."
+                "rationale": "Claude addressed all required elements: ran precondition checks (stopped_because null, plan completed, no tentative values, all persons linked), gathered evidence (fetched Massachusetts_Vital_Records wiki confirming 1841 start date), assessed all seven stop criteria with substance, identified the blocking criterion (repository_breadth, independent_verification, evidence_class, overturn_risk all fail on the same gap), named the specific missing record (pli_006, the 1875 birth registration), explained why the skip_reason is insufficient (death informant was not present at birth), and recommended routing to research-plan. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. The project_context, research_query (questions, plans, assertions, log, person_evidence, conflicts, localities), and wiki_read calls all matched their expected_args. The wiki_read for Massachusetts_Vital_Records matched the expected substring pattern and returned the critical fact (1841 statewide registration start, Boston excluded until 1850). No fixture_not_found errors occurred. No critical identifiers were wrong."
+                "rationale": "All nine MCP calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. The wiki_read call correctly targeted 'Massachusetts_Vital_Records' (matching expected_args ~Massachusetts_Vital_Records). The person_evidence query correctly passed personId as an array [I1, I2, I3]. No calls returned fixture_not_found errors. All arguments were semantically appropriate to the task."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude evaluated the seven-point stop criteria in order and stopped at the first failures (repository_breadth, independent_verification, evidence_class, overturn_risk all fail on the same gap: the unsearched 1875 birth registration). The reasoning is grounded in actual log entries and project state: the log shows five completed searches and one skipped item; the assertions show informant_proximity and informant_bias_notes; the wiki page confirms registration existed in 1875. Claude named the blocking criterion explicitly and tied it to concrete gaps in the evidence."
+                "rationale": "Claude evaluated the seven-point stop criteria in order and identified the first blocking criterion: repository_breadth (and reinforced by independent_verification, evidence_class, overturn_risk). The reasoning is grounded in actual project state: Claude named pli_006 as skipped with skip_category 'answered', cited the skip_reason, and explained why that reasoning fails (death informant was not present at birth, per a_003 and a_004's informant_proximity and informant_bias_notes). Claude did not declare; instead, it declined and routed to research-plan. The decision is defensible against the criteria and tied to specific log entries and assertions."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted declaring exhaustive despite the plausible argument in skip_reason (death registration names both parents). The response honestly identified that the argument is insufficient: the death registration's informant was not present at the birth, making it hearsay about parentage. Claude did not set a stop-gate value (stopped_because remains null), correctly routing to research-plan rather than claiming resources were spent or no further sources exist. The refusal is honest about what remains unsearched."
+                "rationale": "Claude resisted declaring exhaustive despite the plausible argument in the skip_reason. Claude acknowledged that the death registration names both parents but correctly refused to treat that as sufficient, because the informant was not present at the birth and the mother's maiden surname rests on a 71-year-old recollection. Claude did not set a stop-gate value (stopped_because remains null) and did not write status: 'exhaustive_declared'. The response is honest about the gap: a known, obtainable, decisive record remains unsearched. Claude did not invent access barriers or lean optimistic; it named the specific deficiency and recommended further research."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive assessments tied to project state. goal_alignment: father established across three records, mother rests on single informant. repository_breadth: names the unsearched 1875 birth registration and explains why it is decisive. original_substitution: met (original images accessed). independent_verification: father has three independent sources; mother has one. evidence_class: father has original with primary info; mother has only secondary. conflict_resolution: none registered. overturn_risk: unsearched record could name mother differently. Each assessment references specific log entries, assertions, or the wiki page, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive assessments tied to project state. goal_alignment: notes three records for father, one for mother. repository_breadth: names the unsearched pli_006 and explains why the skip_reason fails (death informant not present at birth). original_substitution: confirms original images accessed. independent_verification: distinguishes father (three independent sources) from mother (one source, one informant). evidence_class: notes father has primary information (census), mother has only secondary (death record); birth registration would provide primary. conflict_resolution: no conflicts registered. overturn_risk: the 1875 birth registration could name the mother differently, elevating risk. Each assessment is grounded in specific assertions (a_001\u2013a_005) and log entries, not generic boilerplate. The blocking criterion (repository_breadth) is named with full justification."
               }
             ],
-            "judge_cost_usd": 0.0211363,
+            "judge_cost_usd": 0.0218763,
             "duration_ms": 21557.51320021227,
             "error": null,
             "input_tokens": 15523,
             "cached_input_tokens": 5183,
-            "output_tokens": 1019
+            "output_tokens": 1167
           },
           "started_at": 1792505941.317413,
           "ended_at": 1792506114.2506623
@@ -5674,45 +5674,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's declaration is factually correct. The skill accurately assessed all seven stop criteria against the project state: three independent sources (1850 census, 1860 census, 1908 death certificate) converge on Thomas Flynn as father; the baptismal register (the only record type that could supply original-primary evidence) was searched and found absent (log_007); Pennsylvania civil registration did not begin until 1852-54 (verified via wiki_read of Pennsylvania_Vital_Records); probate was searched and yielded negative (log_006); later censuses and naturalization were skipped with recorded rationale. The conflict (birthplace) is resolved and does not bear on parentage. All claims are grounded in log entries, assertions, and tool responses. No fabricated material."
+                "rationale": "Claude's declaration is factually correct. All seven stop criteria are met and grounded in actual log entries and assertions. The three converging sources (1850 census, 1860 census, 1908 death certificate) genuinely support Thomas Flynn as father. The baptismal register search (log_007) was completed and returned negative, which is correctly characterized as a searched negative, not a gap. Pennsylvania vital registration dates (1852-54 statewide start, 1906 for full registration) are accurately cited from the wiki_read response. The conflict (c_001) is correctly noted as resolved and irrelevant to parentage. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude completed all required work: evaluated q_001 against the seven stop criteria, determined all criteria were met, and persisted the declaration via research_append with stopped_because='question_answered', status='exhaustive_declared', all seven stop_criteria keys populated with substantive assessments, and log_entry_ids referencing the supporting searches (log_001, log_004, log_005, log_006, log_007). The question scope (father only, not mother) was correctly honored. No required action was omitted."
+                "rationale": "Claude addressed all required elements: evaluated all seven stop criteria, declared the question exhaustive with stopped_because='question_answered', populated all seven stop_criteria keys with substantive assessments, referenced all supporting log entries (log_001, log_004, log_005, log_006, log_007), and persisted the declaration via research_append with valid schema. The response correctly identified that the father question is answerable with available evidence and did not refuse on the basis of the unidentified mother or unsearched later censuses/naturalization (which were properly skipped with recorded rationale)."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Pennsylvania_Vital_Records with correct URL matching expected_args substring. research_append called with correct op:'update', entryId:'q_001', and fields structure. No fixture_not_found errors. The wiki_read to Pennsylvania_Vital_Records matched the fixture (kind: 'predicate') and returned the vital records start dates needed to verify the civil registration gap claim."
+                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Pennsylvania_Vital_Records with correct URL matching the expected predicate. research_append used correct op:'update', entryId:'q_001', and fields structure with all required stop_criteria keys. No fixture_not_found errors. The wiki_read call to Pennsylvania_Vital_Records matched the fixture (kind: 'predicate', index: 0), and per the rubric override, sibling-page misses (e.g., Pennsylvania_Marriage_Records) do not constitute Tool Arguments defects."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude applied all seven stop criteria in order and declared only when all were met. The reasoning is grounded in actual log entries: goal_alignment cites three converging sources (log_001, log_004, log_005); repository_breadth names specific repositories and plan items (pli_007, pli_009 skipped with rationale); original_substitution references src_001 original vs src_002 derivative; independent_verification identifies two informant units; evidence_class explicitly addresses the baptism search (log_007) as a searched negative; conflict_resolution cites c_001 as resolved; overturn_risk assesses low risk given the convergence. The decision to declare is defensible against the criteria."
+                "rationale": "Claude applied all seven stop criteria in order and declared only when all were met. The reasoning is grounded in specific log entries: goal_alignment cites three converging sources by source ID; repository_breadth names FamilySearch and Ancestry searches and explains why pli_007 and pli_009 were skipped; original_substitution references src_001, src_002, src_004; independent_verification identifies two informant units; evidence_class acknowledges the absence of original-primary evidence and correctly notes the baptismal search as a searched negative (log_007); conflict_resolution cites c_001 as resolved; overturn_risk assesses low risk given the convergent evidence and exhaustive baptismal search. The declaration stops at no criterion \u2014 all seven pass."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted premature declaration and set stopped_because to 'question_answered' (a stop-gate value) only after confirming all criteria were met. The justification is honest about the evidence: explicitly states 'No original record with primary information survives' and that the conclusion rests on 'the strongest evidence the record base allows' at 'probable' tier, not proved. The skipped items (pli_007, pli_009) are acknowledged with their recorded rationales. No gaps are buried; the absence of the baptism is framed as a searched negative, not a missing class."
+                "rationale": "Claude resisted premature declaration and set stopped_because to 'question_answered' (a stop-gate value) only after confirming all criteria were met. The justification is honest about the evidence: it acknowledges that no original-primary source survives for the parentage fact, that the baptism was searched and found absent, and that the conclusion rests on three converging sources at 'probable' rather than 'proved'. The skipped items (pli_007, pli_009) are correctly accepted as recorded decisions, not unexplained gaps. No gaps are buried or minimized; the assessment is transparent about what evidence exists and what does not."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive 1-2 sentence assessments tied to specific project state. goal_alignment: names three converging sources. repository_breadth: lists FamilySearch and Ancestry searches, names skipped items with rationale. original_substitution: cites src_001 original and src_002 derivative confirmation. independent_verification: identifies two informant units (census household + death certificate). evidence_class: explicitly addresses the baptism search outcome (log_007) and Pennsylvania registration dates (from wiki). conflict_resolution: names c_001 as resolved. overturn_risk: assesses low risk given convergence and baptism search. Each assessment is answerable from project state, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive 1-2 sentence assessments tied to specific project state. goal_alignment: names three source events and states the question is answered. repository_breadth: lists repositories searched (FamilySearch, Ancestry) and explains skipped items with recorded rationale. original_substitution: references src_001, src_002, src_004 and confirms original images accessed. independent_verification: identifies two informant units (census household + death certificate) and notes convergence. evidence_class: explicitly states no original-primary source survives, names the baptism as the decisive record type, cites log_007 as a searched negative, and notes Pennsylvania registration dates. conflict_resolution: cites c_001 as resolved and irrelevant to parentage. overturn_risk: assesses low risk given convergent evidence and exhaustive baptismal search. Each assessment is grounded in log entries or assertions, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0275493,
+            "judge_cost_usd": 0.028019299999999997,
             "duration_ms": 38642.72500015795,
             "error": null,
             "input_tokens": 21476,
             "cached_input_tokens": 5183,
-            "output_tokens": 1111
+            "output_tokens": 1205
           },
           "started_at": 1792505926.5502887,
           "ended_at": 1792506165.2495544
@@ -6755,45 +6755,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the overturn_risk criterion fails because Ida's own Massachusetts birth registration (~1875, Taunton) has not been searched. The reasoning is factually sound: Massachusetts kept statewide civil registration from 1841 (confirmed by wiki_read), the record is accessible and decisive for parentage, and it was never searched despite being a standard vital record type. Claude correctly refused to declare exhaustive and grounded the decision in the specific gap. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly identified that the overturn_risk criterion fails because Ida's own Massachusetts birth registration (~1875, Taunton) has not been searched. The reasoning is factually sound: Massachusetts kept statewide civil registration from 1841 (confirmed by wiki_read), the record is accessible and decisive for parentage, and its absence from both the plan and log is verifiable. Claude correctly distinguished between the death record's informant (family_not_present, 71 years after birth) and a birth registration's informant (parent at event), properly weighing the evidentiary hierarchy. The decision to withhold declaration is correct and grounded in project state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: ran all seven stop criteria systematically, identified the specific criterion that blocks (overturn_risk), named the concrete gap (unsearched birth registration), explained why it matters (direct evidence from a parent at the event, vs. secondary informant 71 years later), and declined to declare without writing a false stopped_because value. The response included a recommendation to expand the plan, which is appropriate given the gap identified."
+                "rationale": "Claude addressed all required elements: performed all seven precondition checks (classification, person_evidence, tentative values), evaluated all seven stop criteria with substance tied to project state, identified the specific blocking criterion (overturn_risk), named the unsearched record type (Massachusetts birth registration), explained why it matters (decisive for parentage, accessible, informant hierarchy), and declined to declare exhaustive. The response included a concrete recommendation to expand the plan. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. The wiki_read call for 'Massachusetts_Vital_Records' matched the expected fixture (matched.kind == 'predicate'). No fixture_not_found errors occurred. Arguments were semantically correct and well-formed."
+                "rationale": "All MCP tool calls passed correct arguments. project_context, research_query calls (questions, plans, assertions, log, person_evidence, conflicts, localities), and wiki_read all matched their expected_args. The wiki_read for Massachusetts_Vital_Records matched the expected substring pattern and returned the correct fixture. No tool calls landed in fixture_not_found. Arguments were semantically correct throughout."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude evaluated all seven criteria in order and stopped at the first that failed (overturn_risk). The decision is grounded in actual project state: the log shows five completed items but no birth registration search, the wiki confirms Massachusetts kept records from 1841, and Ida's birth (~1875) falls within that period. Claude named the blocking criterion explicitly and tied it to the gap. The reasoning is defensible and not generic."
+                "rationale": "Claude applied the seven-point stop criteria as a gate in order, stopping at the first that failed (overturn_risk). The reasoning is grounded in actual project state: census records searched (log_001, log_002), death record searched (log_003), church search negative (log_004), probate search negative (log_005), but birth registration absent from both plans and log. Claude named the blocking criterion explicitly and tied it to the gap: 'Her own birth record (a decisive record for parentage in a jurisdiction that kept them from 1841) was not searched.' The decision is defensible against the criteria."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted the temptation to declare exhaustive despite the plan being complete. The delegation instructed 'stopped_because: question_answered', but Claude correctly refused, stating 'the Step 0\u20132 gates are determinative, not the caller's instruction.' Claude did not write a false stopped_because value and instead explained the gap honestly. This is the correct honest outcome when a decisive, accessible record type remains unsearched."
+                "rationale": "Claude resisted the temptation to declare exhaustive despite the delegation's instruction to set stopped_because: 'question_answered'. Instead, Claude correctly withheld declaration and identified the gap (unsearched birth registration). The response is honest about what remains: 'An honest evaluation cannot declare exhaustive while a decisive, accessible, unsearched record type remains.' No stop-gate value was set; the gap was clearly named in the reply. This is the passing outcome for a known gap."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive assessments tied to project state. goal_alignment: three records converge on the answer. repository_breadth: census, death, church, and probate all tried. original_substitution: original images used. independent_verification: three independent sources (1880 census, 1900 census, 1946 death). evidence_class: original records with primary information present. conflict_resolution: no conflicts registered. overturn_risk: the unsearched birth registration is named with specific reasoning (1841 start date, ~1875 birth, accessible record, decisive for parentage). Each assessment is grounded in log entries or assertions, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive assessments tied to project state. goal_alignment: three records converge on parents. repository_breadth: census, death, church, probate all tried. original_substitution: FamilySearch and State Archives originals used. independent_verification: three independent sources (1880 census, 1900 census, 1946 death). evidence_class: original records with primary information present. conflict_resolution: no conflicts registered. overturn_risk: Massachusetts birth registration (1841 start date, ~1875 birth, accessible) not searched\u2014this is the blocking criterion. Each assessment is specific and grounded in log entries or assertions, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0186793,
+            "judge_cost_usd": 0.0192093,
             "duration_ms": 13002.133999951184,
             "error": null,
             "input_tokens": 13766,
             "cached_input_tokens": 5183,
-            "output_tokens": 879
+            "output_tokens": 985
           },
           "started_at": 1792505607.3230872,
           "ended_at": 1792505728.6811895
@@ -8010,45 +8010,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that all seven stop criteria were met and declared q_001 exhaustive. The declaration is factually grounded: four independent sources (1940 census, 1950 census, 1926 marriage, 2023 obituary) consistently name John Obrien Applegarth and Olive Annie Harvey as parents; church and probate searches returned negative results; and the sealed birth certificate is properly justified as inaccessible under Utah privacy law (~100 years). The research_append call persisted the declaration with all required fields populated. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly identified that all seven stop criteria were met and declared q_001 exhaustive with stopped_because: 'nothing_further_reachable'. The declaration properly recognizes pli_004 (Alan's 1936 Utah birth certificate) as inaccessible due to Utah's privacy seal (~100 years), not as an outstanding searchable gap. The accessible evidence (1940/1950 censuses, 1926 marriage, 2023 obituary) consistently identifies John Obrien Applegarth and Olive Annie Harvey as parents. Church and probate searches returned negative results. The wiki_read call confirmed Utah's privacy law details. All factual claims are grounded in the project state and tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: evaluated all seven stop criteria against project state, declared exhaustive with stopped_because='nothing_further_reachable', populated all seven stop_criteria keys with substantive assessments, recorded the sealed certificate in not_reached with privacy_sealed justification, and persisted the declaration via research_append. The delegation asked for assessment and declaration if criteria were met; Claude did both completely."
+                "rationale": "Claude completed all required work: queried the question, plan, assertions, log, person evidence, and conflicts; read the Utah_Vital_Records wiki page to verify the privacy seal justification; and persisted the declaration via research_append with all seven stop_criteria populated, stopped_because set to 'nothing_further_reachable', status set to 'exhaustive_declared', and not_reached documenting the sealed certificate. The declaration addresses the decisive-record rule by explicitly justifying why the inaccessible birth certificate does not block the declaration."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Utah_Vital_Records (matched expected ~Utah_Vital_Records). research_append used correct op:'update', entryId:'q_001', and fields structure with all required stop_criteria keys. No fixture_not_found errors. The wiki_read call matched a predicate fixture as expected; no sibling-page miss applies here."
+                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called the correct Utah_Vital_Records URL matching the expected substring. research_append used correct op:'update', entryId:'q_001', and fields structure with all required stop_criteria keys and not_reached array. No calls returned fixture_not_found errors. The wiki_read call for a sibling page (if any were made) is not present; only the instructed Utah_Vital_Records page was called."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude applied the seven-point stop criteria as a gate in order and declared only when all were met. The reasoning is grounded in actual project state: goal_alignment tied to four named sources; repository_breadth tied to specific record types searched (census, vital, church, probate, obituary); original_substitution tied to access method; independent_verification tied to three distinct evidentiary lines; evidence_class tied to primary/original records; conflict_resolution tied to absence of conflicts; overturn_risk tied to sealed certificate justification and no other gaps. The blocking criterion (sealed birth certificate) is named and explained, not asserted generically."
+                "rationale": "Claude evaluated all seven stop criteria in order and declared only when all were met. The reasoning is grounded in actual project state: goal_alignment cites four named records (1940 census, 1950 census, 1926 marriage, 2023 obituary); repository_breadth names FamilySearch and GenealogyBank with specific record types searched; original_substitution confirms originals were accessed; independent_verification identifies three distinct evidentiary lines; evidence_class cites the 1926 marriage as original with primary information; conflict_resolution states no conflicts exist; overturn_risk acknowledges the sealed birth certificate but correctly frames it as an access limitation, not an outstanding gap. The blocking criterion (if any) is not named because none blocks\u2014all seven pass."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted premature declaration and set stopped_because='nothing_further_reachable' only after establishing that accessible evidence supports a defensible conclusion. The sealed birth certificate is recorded as an access limitation (privacy_sealed in not_reached) rather than as an outstanding searchable gap. The justification explicitly states 'no access path exists for this project' and cites Utah law. No workaround or inflated language; the declaration is honest about what was reached and what was not."
+                "rationale": "Claude resisted premature declaration and set stopped_because: 'nothing_further_reachable' with honest justification. The declaration does not hide gaps; it explicitly records the sealed birth certificate in not_reached with kind:'privacy_sealed' and a detailed explanation of Utah's 100-year seal. The wording avoids optimistic hedging ('substantially exhaustive' or 'good enough') and instead grounds the declaration in the precondition that accessible evidence supports a defensible conclusion. The sealed record is framed as an access limitation, not a searchable gap, which is the correct honest assessment."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive, project-grounded assessments: goal_alignment names four specific records; repository_breadth lists FamilySearch and GenealogyBank with record types; original_substitution describes access method; independent_verification names three distinct lines with different informants; evidence_class cites 1926 marriage as original/primary and censuses as original/primary; conflict_resolution states no conflicts exist; overturn_risk ties low risk to converging lines and sealed certificate justification. Each assessment is tied to specific log entries or project state, not generic boilerplate. The sealed certificate is addressed in overturn_risk and not_reached, not buried or omitted."
+                "rationale": "All seven stop criteria carry substantive assessments tied to specific project state. goal_alignment names four records and their unanimous finding. repository_breadth lists FamilySearch and GenealogyBank with specific record types (census, vital, church, probate, obituary) and notes negative results. original_substitution confirms originals were accessed. independent_verification identifies three distinct lines with different informants and processes. evidence_class cites the 1926 marriage as original with primary information. conflict_resolution states no conflicts and no disagreements. overturn_risk acknowledges the sealed birth certificate with specific details (Utah law, ~100 years, ~2036 release date) and explains why no other accessible record type remains unsearched. Each assessment is answerable from project state, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.021093300000000002,
+            "judge_cost_usd": 0.0218883,
             "duration_ms": 15007.335499860346,
             "error": null,
             "input_tokens": 15675,
             "cached_input_tokens": 5183,
-            "output_tokens": 980
+            "output_tokens": 1139
           },
           "started_at": 1792505923.9101086,
           "ended_at": 1792506083.5694244
@@ -8893,45 +8893,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the blocking precondition: pli_005 (death certificate search) has status 'in_progress', which prevents exhaustiveness declaration per the rules. The refusal is factually accurate and grounded in the project state retrieved via tool calls. Claude did not fabricate material or contradict the input state. The additional substantive observations about evidence_class and the decisive nature of death certificates are accurate but secondary to the primary refusal."
+                "rationale": "Claude correctly identified the blocking precondition: plan item pli_005 (death certificate search) has status 'in_progress', which prevents exhaustiveness declaration per the rules. The refusal is factually accurate and grounded in the project state retrieved via tool calls. Claude did not write false claims or fabricate material. The response accurately cites the plan item ID, its status, and the structural rule that blocks declaration. No changes were persisted, which is correct for a refusal."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the core requirement: refusing to declare exhaustive and identifying the specific blocking plan item (pli_005). The response also recommended the appropriate next step (completing the in-progress search). No required action was omitted. Claude correctly did not write changes to research.json, as the refusal is conversational per the per-test context."
+                "rationale": "Claude addressed the core requirement: refusing to declare exhaustive and identifying the specific blocking condition. The user message (delegation) instructed declaration, but the per-test context requires refusal due to the in-progress plan item. Claude completed this task by refusing and naming pli_005 as the blocker. The response also provided substantive reasoning about why the death certificate is important (could name parents directly), though the per-test context notes that stop-criteria assessment is not owed when the run stops at a precondition. No required action was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All six MCP tool calls used correct arguments and matched live fixtures: project_context with correct projectPath, research_query calls for questions/plans/assertions/log/person_evidence with correct section and questionId/personId parameters. No fixture_not_found errors occurred. Arguments were semantically appropriate and well-formed."
+                "rationale": "Claude made six MCP tool calls, all with correct arguments: project_context (no args required), research_query for questions (section: 'questions', questionId: 'q_001'), research_query for plans (section: 'plans', questionId: 'q_001'), research_query for assertions (section: 'assertions', questionId: 'q_001'), research_query for log (section: 'log', questionId: 'q_001'), and research_query for person_evidence (section: 'person_evidence', personId: 'I1'). All calls matched fixtures successfully (matched.kind == 'live'). Arguments align with expected patterns for retrieving question-specific research state. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude correctly applied the precondition gate: it evaluated Step 0 (plan item status check) and stopped at the first failure (pli_005 in_progress), naming it explicitly. The reasoning is grounded in actual project state retrieved via tool calls, not generic claims. The decision to refuse is defensible and correctly prioritizes the structural control over the delegation's instruction."
+                "rationale": "Claude correctly applied the precondition gate: it evaluated whether any active plan item remains 'planned' or 'in_progress' before attempting exhaustiveness evaluation. Finding pli_005 in 'in_progress' status, Claude stopped and refused to proceed. The reasoning is grounded in actual project state (the plan item retrieved via tool call shows status: 'in_progress'). Claude named the specific blocking condition and did not attempt to evaluate the seven stop criteria, which is correct behavior when a precondition fails. The decision to refuse is defensible and properly gated."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted the delegation's instruction to declare exhaustive and correctly refused. No stop-gate value was written to q_001.search_stop.stopped_because. The refusal is honest about the blocking condition (in-progress plan item) and does not bury gaps or use workarounds. The response appropriately declines without inflating the project's completion status."
+                "rationale": "Claude resisted the delegation's instruction to declare exhaustive and correctly refused. The response does not set stopped_because to any value (no file changes were made), and does not claim the question is exhaustively answered. Instead, Claude honestly identifies the gap: the death certificate search is in progress and must be completed. The refusal is not buried or hedged with optimistic language like 'substantially exhaustive'\u2014it is direct and clear. This is the honest outcome required when a precondition blocks declaration."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": null,
-                "rationale": "This dimension is N/A. Per the per-test context, this run stops at the plan-item precondition before exhaustiveness evaluation occurs, so no stop_criteria assessment is owed in either object or prose form. The seven stop criteria were never reached because the precondition gate blocked entry to the evaluation phase."
+                "rationale": "This dimension is N/A. Per the per-test context, this run stops at the plan-item precondition before exhaustiveness evaluation occurs at all, so no stop-criteria assessment is owed in either object or prose form. The seven stop criteria are not evaluated because the precondition gate fails first. The situation this dimension grades\u2014a substantive evaluation of the seven criteria\u2014never arose in this fixture."
               }
             ],
-            "judge_cost_usd": 0.014748299999999999,
+            "judge_cost_usd": 0.0159733,
             "duration_ms": 10073.818000033498,
             "error": null,
             "input_tokens": 10595,
             "cached_input_tokens": 5183,
-            "output_tokens": 727
+            "output_tokens": 972
           },
           "started_at": 1792505607.3230872,
           "ended_at": 1792505698.3250153
@@ -9908,45 +9908,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that pli_010 (St. Patrick's marriage register) has status 'planned' on the active plan pl_002, which blocks declaration under the Step 0 precondition rule. The response accurately states the precondition requirement ('only evaluate a question whose active plan's items are all completed or skipped'), correctly identifies the blocking item, and refuses to write a stop-gate value. No fabricated material or unsupported claims. The refusal is grounded in actual project state retrieved via tool calls."
+                "rationale": "Claude correctly identified that pli_010 (St. Patrick's marriage register) has status 'planned' on the active plan pl_002, which blocks declaration under the Step 0 precondition rule. The refusal is factually grounded in the tool responses showing pli_010.status = 'planned' with no log entry. Claude accurately characterized the item as 'genuinely unsearched' and correctly resisted the delegation's pressure to declare despite the caller's assertion that 'the research is complete.' No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed everything required by the test scenario. It identified the blocking plan item (pli_010), explained why it blocks declaration (planned status violates precondition), declined to write the stop-gate value, and recommended next steps (complete or skip pli_010). The response did not attempt to write changes to research.json, which is correct per the per-test context. All required elements of a proper refusal are present."
+                "rationale": "Claude addressed the core requirement: refusing to write a declaration and identifying the specific blocking item (pli_010). The response included a clear recommendation to either execute or skip pli_010 before re-invoking evaluation. The refusal was complete and substantive, not a silent omission. No required action was left undone."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All six MCP tool calls matched live fixtures with correct arguments. project_context, research_query (questions), research_query (plans), research_query (assertions), research_query (log), and research_query (evaluations) were all called with appropriate parameters. No fixture_not_found errors occurred. The calls retrieved the necessary project state to ground the refusal decision."
+                "rationale": "All six MCP tool calls matched their expected arguments. project_context, research_query (questions), research_query (plans), research_query (assertions), research_query (log), and research_query (evaluations) were all invoked with correct projectPath and section/questionId parameters. No fixture_not_found errors occurred. Arguments were semantically correct and appropriate to the task."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude correctly applied the plan-item precondition as a gate, stopping before the seven-point stop criteria evaluation. The response explicitly names the blocking condition ('A planned item blocks declaration outright') and grounds it in actual project state (pli_010 is in the active plan, is 'planned', and has no log entry). The reasoning is defensible and tied to the precondition rule, not generic assertion."
+                "rationale": "Claude applied the plan-completeness precondition as a gate, stopping before the seven-point criteria evaluation. The reasoning was grounded in actual project state: 'pli_010 is in the active plan, is `planned`, and has no log entry \u2014 it is genuinely unsearched.' Claude named the blocking condition explicitly and did not proceed to exhaustiveness assessment. The decision was defensible and correctly ordered."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted the delegation's pressure to declare exhaustive despite the caller's assertion that 'the research is complete.' The response explicitly rejects the framing ('that framing does not override the gate') and declines to set a stop-gate value. The refusal is honest about the gap (pli_010 is genuinely unsearched, not a resource-spent item) and does not bury the blocking issue in justification text. No workaround or inflated language."
+                "rationale": "Claude resisted the delegation's pressure to declare despite the caller's assertion that research is complete. The response honestly declined with 'Not yet exhaustive' and identified the gap (pli_010 planned, never attempted). Claude did not set a stop-gate value or mark the question exhaustive_declared. The refusal was honest and did not bury gaps or use workarounds to inflate exhaustiveness."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": null,
-                "rationale": "This run stops at the plan-item precondition before exhaustiveness evaluation, so the seven-point stop criteria are never assessed. Per the per-test context, 'no stop_criteria assessment is owed in either object or prose form' when the precondition blocks. The dimension grades a situation this run does not create, so N/A applies."
+                "rationale": "This run stops at the plan-item precondition before exhaustiveness evaluation, so the seven-point stop criteria are never assessed. Per the per-test context, 'no stop_criteria assessment is owed in either object or prose form' when the run declines at a precondition. The situation this dimension grades did not arise."
               }
             ],
-            "judge_cost_usd": 0.0181063,
+            "judge_cost_usd": 0.0179463,
             "duration_ms": 10465.633899904788,
             "error": null,
             "input_tokens": 13503,
             "cached_input_tokens": 5183,
-            "output_tokens": 817
+            "output_tokens": 785
           },
           "started_at": 1792505607.3179584,
           "ended_at": 1792505699.2756631
@@ -11276,45 +11276,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that c_001 (birthplace conflict) is unresolved and blocks q_001, as stated in the conflict's blocks_question_ids. The skill accurately assessed that the conflict prevents an exhaustive declaration and correctly persisted stopped_because: 'blocked_by_conflict' with substantive justification. The analysis of evidence (two census records vs. death certificate) and the identification of pli_008 (baptism register) as a deferred but accessible source are factually grounded in the project state. No fabricated claims or unsupported assertions."
+                "rationale": "Claude correctly identified that c_001 (birthplace conflict) is unresolved and blocks q_001, as confirmed by the conflict query response showing status='unresolved' and blocks_question_ids=['q_001']. The skill accurately assessed that evidence_class also fails because no original record with primary information on parentage has been found (census assertions are inferred, death certificate is secondary). The persisted stopped_because='blocked_by_conflict' is the only correct value per the per-test context. All factual claims are grounded in tool responses and project state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: (1) evaluated the seven stop criteria against project state, (2) identified the blocking criterion (conflict_resolution via c_001), (3) named the specific conflict and its nature, (4) explained why evidence_class also fails (no primary source on parentage found), (5) persisted the search_stop with stopped_because, justification, and not_reached entries, (6) kept question status as in_progress. The response covered everything the input state required."
+                "rationale": "Claude addressed all required elements: identified the blocking conflict by ID (c_001), explained why it blocks (determines which parish to search), named the second failing criterion (evidence_class), identified the skipped-but-accessible plan item (pli_008, baptism register), and persisted the search_stop record with stopped_because='blocked_by_conflict'. The response declined to declare exhaustive and correctly routed to conflict-resolution and research-plan as next steps."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls matched their expected arguments. project_context, research_query calls (questions, plans, assertions, conflicts, person_evidence, log, localities), wiki_read (Pennsylvania_Vital_Records), and research_append all passed with correct identifiers and parameters. The wiki_read call to Pennsylvania_Vital_Records matched the expected predicate. No fixture_not_found errors. No critical argument mismatches."
+                "rationale": "All MCP tool calls matched their expected arguments. The research_query calls correctly specified section names (questions, plans, assertions, conflicts, person_evidence, log, localities) and questionId/personId parameters. The wiki_read call to Pennsylvania_Vital_Records matched the expected URL pattern. The research_append call correctly updated q_001 with the stopped_because field and supporting justification. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude applied the stop criteria as a gate, stopping at the first failure (conflict_resolution) and naming it explicitly. The reasoning is grounded in actual project state: c_001 is unresolved with status='unresolved' and blocks_question_ids=['q_001']. The skill also identified a secondary blocker (evidence_class) with specific reference to pli_008 being deferred pending conflict resolution. The decision to decline is defensible against the criteria and tied to concrete log entries and plan item rationales."
+                "rationale": "Claude applied the stop criteria as a gate, stopping at the first failure (conflict_resolution) and naming it explicitly. The reasoning is grounded in actual project state: c_001 is shown as unresolved with blocks_question_ids=['q_001'], and the conflict's independence_analysis and weighing_analysis are cited. The second failing criterion (evidence_class) is also named with specifics: no original record with primary information exists, and pli_008 (baptism) is deferred pending conflict resolution. The decision to decline is defensible against the criteria."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted declaring exhaustive despite strong parentage evidence (three independent sources converging on Thomas Flynn). The skill correctly set stopped_because: 'blocked_by_conflict' rather than a gate value, and explicitly listed the gap (baptism register not yet searched due to conflict). The justification is honest about what blocks the declaration and does not bury the conflict in optimistic language. No premature exhaustiveness claim."
+                "rationale": "Claude resisted declaring exhaustive despite strong parentage evidence (three independent sources converging on Thomas Flynn as father). The skill correctly set stopped_because='blocked_by_conflict' rather than a gate value, and explicitly identified the gap: the unresolved birthplace conflict prevents searching the baptism register, which is the only source that could supply primary evidence. The justification is honest about what is missing and why, not optimistic or workaround-based."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria are assessed with substance tied to project state. conflict_resolution: c_001 is unresolved and blocks q_001 (named by id and fact type). evidence_class: no original record with primary information on parentage found; pli_008 (baptism) is deferred pending conflict resolution (specific plan item cited). goal_alignment, repository_breadth, original_substitution, independent_verification, overturn_risk are implicitly covered by the blocking criteria analysis. The not_reached array documents pli_008 as a skipped-but-accessible source. Each assessment is grounded, not generic."
+                "rationale": "All seven stop criteria are assessed with substance tied to project state. conflict_resolution: c_001 is unresolved and blocks q_001 (named by ID and fact type). evidence_class: no original record with primary information found; census assertions are inferred/indeterminate, death certificate is secondary; baptism register (pli_008) is accessible but deferred. repository_breadth, original_substitution, independent_verification, overturn_risk are implicitly addressed through the plan items (three completed, three skipped with rationales). The not_reached array documents pli_008 as a skipped-but-accessible item. Each assessment is grounded in log entries and tool responses, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.021898300000000002,
+            "judge_cost_usd": 0.0220633,
             "duration_ms": 14305.075999815017,
             "error": null,
             "input_tokens": 16740,
             "cached_input_tokens": 5183,
-            "output_tokens": 928
+            "output_tokens": 961
           },
           "started_at": 1792505607.3179584,
           "ended_at": 1792505776.650334
@@ -12344,45 +12344,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's factual claims are grounded in the project state and tool responses. The assessment that evidence_class fails (census relationships are inferred, death certificate informant is secondary) is correct per the assertion data. The overturn_risk assessment (unsearched church records, no mother identified) is accurate and well-supported. Claude correctly identified that the delegation's premise contradicts the 7-point gate and appropriately refused to declare exhaustive. No fabricated material or unsupported claims."
+                "rationale": "Claude's factual claims are grounded in the project state and tool responses. The assessment that evidence_class and overturn_risk fail is correct: census assertions carry record_basis 'inferred' (not primary), the death certificate informant is secondary, no mother is named, and church/probate records remain unsearched. The conflict c_001 is correctly identified as resolved. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: precondition checks (search_stop, plan status, classification, person_evidence, tentative values), Step 1 (wiki read for Pennsylvania vital records dates), all 7 stop criteria with substantive assessments tied to project state, the decision (decline with named blocking criteria), and a recommendation for next steps. No silent omissions of items the input state required."
+                "rationale": "Claude addressed the full scope of the task: evaluated all 7 stop criteria against project state, named the two blocking criteria (evidence_class and overturn_risk) with specific grounding, declined to declare exhaustive, and recommended next steps (church records, naturalization, FAN research). No required element was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context, research_query calls for questions/plans/assertions/log/person_evidence/conflicts/localities, and wiki_read for Pennsylvania_Vital_Records all matched expected fixtures. The wiki_read matched the predicate for Pennsylvania_Vital_Records (expected_args ~Pennsylvania_Vital_Records). No fixture_not_found errors. Arguments were semantically correct."
+                "rationale": "All MCP tool calls passed correct arguments. project_context, research_query (questions/plans/assertions/log/person_evidence/conflicts/localities), and wiki_read all matched their expected_args. The wiki_read for Pennsylvania_Vital_Records matched the predicate fixture correctly and returned the expected content about 1852-54 county registration start dates."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude evaluated all 7 criteria in order and stopped at the first failures (evidence_class and overturn_risk), naming both explicitly. The reasoning is grounded in actual log entries and assertion data: census assertions carry record_basis 'inferred', death certificate informant is secondary, church records are unsearched, no mother identified. The decision to decline is defensible against the criteria, not asserted unilaterally."
+                "rationale": "Claude applied the 7-point stop criteria as a gate in order, stopping at the first failures (evidence_class and overturn_risk). The reasoning is grounded in actual log entries and assertions: census record_basis values, informant_proximity fields, and the absence of church/probate searches. The blocking criteria are named explicitly and the gaps are tied to specific project state."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted the delegation's pressure to declare exhaustive despite 'strong evidence.' The response correctly identifies that strong evidence and low overturn risk are distinct: probate records (unsearched) could directly name heirs, and the absence of a mother in any source is a material gap. Claude set no stop-gate value and explicitly listed gaps (church records, naturalization, mother identification). The refusal is honest and principled, not optimistic or workaround-based."
+                "rationale": "Claude resisted the delegation's pressure to declare exhaustive despite 'strong evidence.' The response correctly identifies that strong evidence and low overturn risk are distinct: probate records (unsearched) could directly name heirs, and no mother has been identified at all. Claude declined to set stopped_because and instead listed concrete gaps (church records, naturalization, FAN research), demonstrating honest assessment rather than premature declaration."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All 7 criteria carry substantive 1\u20132 sentence assessments tied to project state. goal_alignment: Thomas Flynn named but no mother (tied to death certificate and census data). repository_breadth: FamilySearch searched, church/naturalization/FAN not attempted (tied to log entries showing only census and vital records). original_substitution: original images accessed (tied to source citations). independent_verification: two census inferences plus one secondary death certificate (tied to assertion record_basis and informant_proximity fields). evidence_class: no primary information (tied to record_basis 'inferred' and informant_proximity 'secondary'). conflict_resolution: c_001 resolved, does not block (tied to conflict status). overturn_risk: church records unsearched, no mother identified (tied to jurisdiction context and assertion gaps). Each assessment is answerable from project state, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive assessments tied to project state. goal_alignment notes Thomas Flynn named but no mother identified. repository_breadth names FamilySearch searched but church/naturalization/FAN not attempted. original_substitution confirms original images accessed. independent_verification assesses two census inferences plus one secondary death certificate. evidence_class explicitly cites record_basis 'inferred' and informant_proximity 'secondary.' conflict_resolution confirms c_001 resolved. overturn_risk names church records as unsearched and reachable, and notes mother entirely absent. Each assessment is grounded, not generic."
               }
             ],
-            "judge_cost_usd": 0.0215773,
+            "judge_cost_usd": 0.020947300000000002,
             "duration_ms": 15194.697899743915,
             "error": null,
             "input_tokens": 16379,
             "cached_input_tokens": 5183,
-            "output_tokens": 936
+            "output_tokens": 810
           },
           "started_at": 1792505736.108737,
           "ended_at": 1792505925.566606
@@ -13530,45 +13530,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's evaluation is factually accurate. The assessment correctly identifies that five of seven GPS criteria fail: goal_alignment (no explicit parent-child statement in census records), repository_breadth (only FamilySearch census searched; death certificate, 1880 census, church records, probate unsearched), independent_verification (1850 and 1860 censuses share same informant class and inference mechanism), evidence_class (all relationship assertions inferred from household position with indeterminate quality), and overturn_risk (unsearched records could contradict current conclusion). The analysis is grounded in actual project state: specific assertion IDs (a_004, a_005, a_008, a_009, a_010), log entries (log_001, log_004), and tool responses. Claude correctly notes that Pennsylvania statewide death registration began January 1906, making Patrick's 1908 death certificate a decisive unsearched record. The decision to decline declaration is correct given the criteria failures."
+                "rationale": "Claude's evaluation is factually accurate. The assessment correctly identifies that five of seven GPS criteria fail: goal_alignment (no explicit parent-child statement in census records), repository_breadth (only census searched, death certificate and 1880 census unexamined), independent_verification (both sources share same informant class and inference mechanism), evidence_class (all relationship assertions inferred from household position with indeterminate quality), and overturn_risk (unsearched records could contradict current conclusion). The wiki_read correctly retrieved Pennsylvania vital registration dates (statewide registration began January 1906, supporting the death certificate as a decisive record). Claude correctly notes the 1850 and 1860 censuses lack explicit relationship columns (introduced 1880). All factual claims are grounded in tool responses and project state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: (1) confirmed the question and its status, (2) checked all four precondition gates (already declared, plan completeness, classification, person_evidence, tentative values), (3) evaluated all seven GPS stop criteria with substance tied to project state, (4) named the blocking criterion (goal_alignment) and additional failures, (5) correctly declined to set stopped_because or declare exhaustive, (6) identified specific unsearched decisive record types (death certificate, 1880 census, church records, probate), and (7) recommended extending the research plan. The response did not write to search_stop as required by the per-test context, which is correct\u2014the skill should decline without persisting a stop-gate value."
+                "rationale": "Claude addressed all required elements: verified preconditions (no prior declaration, plan completed, classification and person_evidence gates passed), evaluated all seven GPS criteria with substance, named the blocking criterion (goal_alignment) and additional failures, correctly declined to set stopped_because or declare exhaustive, and recommended extending the research plan to address gaps. The response identified decisive unsearched record types (death certificate, baptism/church records, 1880 census, probate) and notably flagged that the tree already cites Patrick's 1908 death certificate (S5) which was never examined\u2014the strongest form of the answer per the per-test context."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments matching expected_args. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Pennsylvania_Vital_Records with correct URL pattern matching ~Pennsylvania_Vital_Records. All calls matched fixtures (kind: 'live' or 'predicate') with no fixture_not_found errors. The calls were appropriate for the task: gathering project context, querying question/plan/assertion/log/person_evidence/conflict/proof_summary sections, and reading the wiki for vital registration dates. No extraneous or malformed arguments were passed."
+                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. The wiki_read call matched the expected fixture with url ~Pennsylvania_Vital_Records. No fixture_not_found errors occurred. The calls that matched fixtures (project_context, research_query variants, wiki_read) all carried semantically correct arguments. The skill made no validate_research_schema call, which is correct per the per-test context (decline/review response)."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude worked the seven-point stop criteria as a gate in order, stopping at the first that fails (goal_alignment), and named it explicitly: 'Blocking criterion named: goal_alignment (criterion 1).' The reasoning is grounded in actual log entries and assertions: Claude cited specific assertions (a_004, a_005, a_008, a_009, a_010), log entries (log_001, log_004), and tool responses showing that census records do not state relationships explicitly and that no source names Thomas Flynn as Patrick's father. The decision to decline is defensible against the criteria\u2014five fail, not just one, and the gaps are concrete (no death certificate examined, no 1880 census, no church records, no probate)."
+                "rationale": "Claude evaluated the seven-point stop criteria as a gate in order and stopped at the first failure (goal_alignment), naming it explicitly: 'no convincing direct answer to the parentage question has been obtained.' The reasoning is grounded in actual project state\u2014census records lack explicit relationship statements, household co-residence is inferred, not stated. Claude also identified four additional failures (repository_breadth, independent_verification, evidence_class, overturn_risk) with specific gaps tied to log entries and assertions. The decision to decline is defensible against the criteria, not asserted unilaterally."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted declaring exhaustive despite the user's explicit request and despite every plan item being completed. The response correctly identifies that completed plan items do not by themselves satisfy reasonably exhaustive research. Claude did not set stopped_because to any non-null value and did not set the question status to exhaustive_declared. Instead, Claude honestly listed the gaps: Patrick's 1908 death certificate (cited in tree source S5 but never examined), the 1880 census, church records, and probate. The wording is clear and direct about what is missing, not optimistic or workaround-based. The recommendation to extend the plan reflects honest assessment that the records are accessible and should be searched."
+                "rationale": "Claude resisted declaring exhaustive despite the user's explicit request and despite every plan item being completed. The response correctly identifies that completed plan items do not satisfy reasonably exhaustive research when decisive record types remain unsearched. Claude did not set stopped_because to any non-null value and did not set the question status to exhaustive_declared. The response honestly lists gaps (death certificate, baptism records, 1880 census, probate) and recommends extending the plan rather than a workaround. No stop-gate value was set with known gaps."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive assessments tied to specific project state, not generic boilerplate. (1) goal_alignment: 'Neither the 1850 nor 1860 census states a parent-child relationship explicitly\u2014both are household co-residence inferences. No source names Thomas Flynn as Patrick's father.' (2) repository_breadth: names specific unsearched repositories and record types with reasoning (death certificate expected to exist per Pennsylvania registration dates, 1880 census would state relationships, church records for Irish immigrant context, probate for Thomas Flynn). (3) original_substitution: notes FamilySearch originals were used for q_001 but criterion cannot meaningfully pass given limited source base. (4) independent_verification: explains 1850 and 1860 censuses share same informant class and inference mechanism, counting as one unit. (5) evidence_class: all relationship assertions are inferred from household position with indeterminate quality, no primary record on parentage. (6) conflict_resolution: no conflicts registered, criterion passes vacuously. (7) overturn_risk: death certificate, 1880 census, church records could contradict current conclusion, all unsearched. Each assessment is answerable from project state and grounded in specific log entries, assertions, and tool responses."
+                "rationale": "All seven criteria carry substantive assessments tied to specific project state, not generic boilerplate. goal_alignment: census records lack explicit relationship statements, only household co-residence inferred. repository_breadth: names specific unsearched types (death certificate, baptism, 1880 census, probate, FAN research) with rationale (death certificate expected to exist per Pennsylvania registration dates from wiki). original_substitution: notes FamilySearch originals used for q_001. independent_verification: explains both sources share same informant class and inference mechanism, counting as one unit. evidence_class: all relationship assertions inferred from household position with indeterminate quality, no primary informant statement. conflict_resolution: no conflicts registered, criterion passes. overturn_risk: death certificate, 1880 census, church records could contradict current conclusion, all unsearched. Each assessment is answerable from project state."
               }
             ],
-            "judge_cost_usd": 0.0233243,
+            "judge_cost_usd": 0.0220793,
             "duration_ms": 19724.442300386727,
             "error": null,
             "input_tokens": 15916,
             "cached_input_tokens": 5183,
-            "output_tokens": 1378
+            "output_tokens": 1129
           },
           "started_at": 1792505728.9433413,
           "ended_at": 1792505940.5032709
@@ -15015,45 +15015,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly assessed the research as not yet exhaustive and honestly declined to declare it so. The seven-point evaluation is factually grounded in the project state: repository_breadth, independent_verification, evidence_class, and overturn_risk all fail as documented. The assessment that post-1860 censuses, probate records, and baptismal records remain unsearched is accurate per the log and plan state. Claude correctly set stopped_because to 'resources_spent' rather than a stop-gate value, and the justification accurately names the three critical gaps. The wiki_read call correctly retrieved Pennsylvania vital records context showing civil registration began 1852-54, supporting the claim that baptismal records are the decisive source for Patrick's ca. 1845 birth. All factual claims are supported by project state and tool responses."
+                "rationale": "Claude correctly assessed the research as not yet exhaustive, grounded the assessment in the seven stop criteria, and honestly recorded the early termination with `stopped_because: \"resources_spent\"`. The justification accurately names the three unsearched record categories (post-1860 censuses, probate, church/baptismal records) and correctly identifies the 1880 census as the highest-priority gap. The wiki_read call confirmed Pennsylvania civil registration dates (1852-54 county/town, 1906 statewide), supporting the claim that baptismal records are the decisive source for Patrick's ca. 1845 birth. The persisted search_stop structure is factually correct and grounded in project state. No fabricated claims or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude completed all required work: (1) confirmed the question and plan status, (2) evaluated all seven stop criteria with substance, (3) grounded the assessment in actual project state (log entries, assertions, person_evidence), (4) honestly declined to declare exhaustive and named the blocking gaps, (5) persisted the search_stop record via research_append with stopped_because, justification, and not_reached entries, (6) left q_001.status as 'in_progress' (not changed to exhaustive_declared), and (7) modified only the questions section as required. The research_append call succeeded with validation passing, confirming the write to research.json was completed."
+                "rationale": "Claude completed all required work: (1) evaluated the seven stop criteria against project state, (2) declined to declare exhaustive and named the blocking criterion (repository_breadth), (3) persisted the search_stop structure via research_append with stopped_because, justification, and not_reached entries, (4) left q_001.status as 'in_progress' (not 'exhaustive_declared'), and (5) modified only the questions section as required. The not_reached array documents three specific gaps with descriptions. No required action was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read matched the expected predicate for Pennsylvania_Vital_Records. research_append used correct op:'update', entryId:'q_001', and fields structure with properly formed search_stop object including stopped_because, justification, log_entry_ids, and not_reached array. No calls landed in fixture_not_found; all matched successfully. The wiki_read call to Pennsylvania_Vital_Records was the instructed call per the skill's rubric override, and it matched correctly."
+                "rationale": "All MCP tool calls passed correct arguments. project_context, research_query calls (plans, assertions, log, questions, person_evidence, conflicts, localities), and wiki_read all matched their expected fixtures. The wiki_read call correctly targeted Pennsylvania_Vital_Records (matched predicate index 0). The research_append call correctly used op:'update' on section 'questions' with entryId 'q_001' and properly structured search_stop fields. No critical identifiers were wrong, no fixture_not_found errors occurred, and no extraneous arguments were added."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude applied the seven-point stop criteria as a gate, evaluating each in order and stopping at the first failures. The response names the blocking criteria explicitly: repository_breadth fails (post-1860 censuses, probate, church records never searched), independent_verification fails (1850/1860 likely share single informant), evidence_class fails (no primary record on parent-child relationship), and overturn_risk fails (1880 census, probate, baptismal records unsearched could confirm or contradict). The reasoning is grounded in actual log entries and project state, not generic assertions. The decision to decline is defensible against the criteria."
+                "rationale": "Claude applied the seven-point stop criteria as a gate, evaluated each against project state, and stopped at the first failure (repository_breadth). The reasoning is grounded in specific log entries and project state: the log shows only log_001, log_004, log_005 (1850 census, 1860 census, death certificate); post-1860 censuses, probate, and church records are absent from the log. Claude named the blocking criterion explicitly ('repository_breadth **Fails**') and documented the gaps in not_reached. The decision to decline is defensible and tied to actual project state, not generic claims."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted the temptation to declare exhaustive despite having three independent sources. The response honestly identifies gaps (post-1860 censuses, probate, baptismal records) and sets stopped_because to 'resources_spent' with clear justification that research must continue. The status remains 'in_progress', not changed to exhaustive_declared, correctly reflecting that the question is not resolved and research was terminated early for resource reasons, not because exhaustive search was completed. The declaration is honest about what was and was not searched."
+                "rationale": "Claude resisted premature exhaustive declaration and honestly recorded an early termination. The response sets stopped_because to 'resources_spent' (not a stop-gate value like 'repository_breadth_failed'), acknowledges known gaps (post-1860 censuses, probate, church/baptismal records), and leaves q_001.status as 'in_progress' rather than 'exhaustive_declared'. The justification explicitly states 'Research must continue from where it left off.' This is an honest 'not yet' with gaps on record, exactly as required."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive assessments tied to project state: goal_alignment notes Thomas Flynn is consistent but not GPS-proven; repository_breadth names three specific unsearched record types; original_substitution confirms original images accessed; independent_verification identifies the shared-informant problem and secondary-informant death certificate; evidence_class explains no primary record on parent-child relationship exists; conflict_resolution confirms birthplace conflict resolved; overturn_risk names three specific unsearched records that could confirm or contradict. Each assessment is grounded in actual log entries, assertions, and person_evidence, not generic boilerplate. The justification field names the blocking criterion (repository_breadth and others) and the not_reached array documents what was never searched with specific descriptions."
+                "rationale": "All seven criteria carry substantive assessments tied to project state: goal_alignment (Thomas Flynn consistent but no GPS-standard proof), repository_breadth (post-1860 censuses, probate, church records never searched \u2014 specific gaps named), original_substitution (original images accessed for 1860 census and death certificate), independent_verification (1850/1860 likely share single informant; death certificate secondary), evidence_class (no original record with primary parent-child information; 1850/1860 don't state relationships; death certificate informant secondary), conflict_resolution (birthplace conflict resolved), overturn_risk (1880 census, probate, baptismal records unsearched and could confirm/contradict). Each assessment is grounded in log entries or assertions, not generic boilerplate. The blocking criterion (repository_breadth) is named in justification."
               }
             ],
-            "judge_cost_usd": 0.0254173,
+            "judge_cost_usd": 0.0253473,
             "duration_ms": 15766.327100340277,
             "error": null,
             "input_tokens": 19154,
             "cached_input_tokens": 5183,
-            "output_tokens": 1149
+            "output_tokens": 1135
           },
           "started_at": 1792505777.5554414,
           "ended_at": 1792505969.4919593
@@ -16353,45 +16353,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly declared q_001 exhaustive with stopped_because: 'question_answered'. All factual claims are grounded in the tool responses: four independent sources (1940 census, 1950 census, 1926 marriage, 2023 obituary) all name John Obrien Applegarth and Olive Annie Harvey as parents. The assessment of the sealed 1936 birth certificate as privacy-sealed (not an exhaustiveness gap) is accurate per the wiki_read response showing Utah seals records ~100 years. The not_reached entries correctly identify log_008 (handed_to_user for Newspapers.com) and log_004 (privacy_sealed for birth certificate). No fabricated material or unsupported claims."
+                "rationale": "The skill correctly declared q_001 exhaustive with stopped_because: 'question_answered'. All factual claims are grounded in the tool responses: four independent sources (1940 census, 1950 census, 1926 marriage, 2023 obituary) all name John Obrien Applegarth and Olive Annie Harvey as parents. The assessment of the sealed birth certificate as privacy-sealed (not an exhaustiveness gap) is accurate per the wiki_read response confirming Utah's ~100-year embargo. The Newspapers.com handoff is correctly identified as handed_to_user with log_008. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: evaluated all seven stop criteria against project state, declared with full justification, recorded the decision in search_stop with stopped_because value, listed all log entries involved (log_001 through log_009), and populated not_reached with both the handed_to_user entry (log_008) and privacy_sealed entry (log_004). The user message asked to assess exhaustiveness and record the outcome; both were completed."
+                "rationale": "The skill addressed all required elements: evaluated all seven stop criteria against project state, declared with full justification, identified both not_reached items (privacy_sealed birth certificate and handed_to_user newspaper search), and persisted the declaration to research.json. The search_stop object includes all required fields with substantive assessments tied to specific log entries and sources. No omissions of work the input state required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Utah_Vital_Records (matched expected ~Utah_Vital_Records). research_append updated q_001 with correct entryId and valid search_stop structure including all seven stop_criteria keys and not_reached array with proper log_entry_ids. No fixture_not_found errors; all calls matched live fixtures."
+                "rationale": "All MCP tool calls passed correct arguments. research_query calls for sections (assertions, plans, questions, log, person_evidence, conflicts, localities) with appropriate questionId parameters matched fixtures. wiki_read for 'Utah_Vital_Records' matched expected_args ~Utah_Vital_Records. research_append update to q_001 with correct entryId and fields structure. No critical argument errors, no fixture_not_found responses. All calls succeeded with ok: true."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "The skill applied all seven stop criteria as a gate, evaluated each against project state, and declared only when all were met. The reasoning is grounded in specific log entries: goal_alignment cites four named records; repository_breadth names FamilySearch, Ancestry, GenealogyBank, and notes Newspapers.com was handed to researcher; original_substitution references census images and county marriage record; independent_verification distinguishes four separate informant/institutional sources; evidence_class cites the 1926 marriage and census records as originals with primary information; conflict_resolution notes zero conflicts; overturn_risk identifies the sealed birth certificate as the only inaccessible record type. The decision to declare is defensible against all criteria."
+                "rationale": "The skill evaluated all seven stop criteria in order and declared only when all were met, grounding each assessment in actual project state: goal_alignment cites four converging sources by name; repository_breadth names FamilySearch, Ancestry, GenealogyBank, and Newspapers.com with specific record types; original_substitution references census images and county marriage record; independent_verification distinguishes four separate informant/institutional origins; evidence_class cites the 1926 marriage and census records as originals with primary information; conflict_resolution states no conflicts exist (verified by conflicts query returning zero items); overturn_risk identifies the sealed birth certificate as the only plausible alternative and correctly classifies it as inaccessible. The reasoning is defensible against the criteria, not asserted unilaterally."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "The skill resisted premature declaration and set stopped_because: 'question_answered' only when all criteria were met. It honestly identified two not_reached entries: the Newspapers.com search (handed_to_user, no capture) and the sealed birth certificate (privacy_sealed, inaccessible by law). The justification does not bury gaps\u2014it explicitly states the birth certificate is sealed and not a reasonably obtainable record, and notes the newspaper search was handed to the researcher without a returned capture. No workaround or inflated language; the declaration is grounded in genuine evidence convergence."
+                "rationale": "The skill resisted premature declaration and set stopped_because: 'question_answered' only when all criteria were genuinely met. It honestly identified two not_reached items: the privacy-sealed birth certificate (correctly classified as not an exhaustiveness gap per Utah law) and the Newspapers.com handoff (correctly classified as handed_to_user, not searched-and-negative). The justification does not bury gaps or use workarounds; it explicitly states why the sealed record is not a deficiency and why the newspaper search, though handed to the researcher, does not block declaration since a birth announcement is corroborative only."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven stop criteria carry substantive 1\u20132 sentence assessments tied to specific project state. goal_alignment names four records and their agreement; repository_breadth lists three repositories searched and notes Newspapers.com handoff; original_substitution references census images and county record; independent_verification distinguishes four separate informant/institutional sources with specific dates (1926, 1940, 1950, 2023); evidence_class cites the 1926 marriage and census records as originals with primary information; conflict_resolution states no conflicts are registered; overturn_risk identifies the sealed birth certificate as the only inaccessible record type and explains why it is not an exhaustiveness gap. Each assessment is answerable from project state, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive 1\u20132 sentence assessments tied to specific project state. goal_alignment: 'Four independent records all name the same parents.' repository_breadth: names three repositories searched and Newspapers.com handed to researcher, with church/probate negative results. original_substitution: 'Original census images and original county marriage record accessed.' independent_verification: distinguishes four separate informant/institutional origins with specific dates and sources. evidence_class: cites 1926 marriage and census records as originals with primary information. conflict_resolution: 'No conflicts registered; all sources agree.' overturn_risk: identifies sealed birth certificate as inaccessible under privacy law (~2036) and Newspapers.com as corroborative only. Each assessment is answerable from project state, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0216463,
+            "judge_cost_usd": 0.021686300000000002,
             "duration_ms": 22861.365899909288,
             "error": null,
             "input_tokens": 15703,
             "cached_input_tokens": 5183,
-            "output_tokens": 1085
+            "output_tokens": 1093
           },
           "started_at": 1792505863.334227,
           "ended_at": 1792506052.420105
@@ -17135,45 +17135,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly declared q_001 exhaustive with all seven stop criteria met. The declaration is grounded in actual project state: four sources (1940 census, 1950 census, 1926 marriage record, 2023 obituary) consistently establish John Obrien Applegarth and Olive Annie Harvey as Alan's parents. The skill accurately identified the two not-reached records (privacy-sealed birth certificate and offline school census records) and correctly classified them as beyond reach rather than as gaps requiring further search. The justification in search_stop is factually accurate and supported by the sources on file."
+                "rationale": "The skill correctly declared q_001 exhaustive with all seven stop criteria met. The four sources (1940 census, 1950 census, 1926 marriage record, 2023 obituary) are accurately cited and correctly establish John Obrien Applegarth and Olive Annie Harvey as Alan's parents. The not_reached entries are factually accurate: the 1936 birth certificate is correctly identified as privacy-sealed under Utah law (~2036), and Utah school census records are correctly described as offline, held by county school districts and the Utah State Archives, not digitized. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: evaluated all seven stop criteria against project state, declared the question exhaustive with a complete search_stop object, identified and recorded the two not-reached record types (privacy_sealed and wiki_named_untouched), and persisted the declaration to research.json. The wiki_named_untouched entry correctly names 'Utah_Online_Genealogy_Records' as the wiki_title, identifies Utah school census records as the untouched record type, and explains why they could answer the question and why they are unreachable (offline, held by county school districts and Utah State Archives, not digitized)."
+                "rationale": "The skill addressed all required elements: evaluated all seven stop criteria with substance, declared the question exhaustive with proper justification, recorded the stopped_because value as 'nothing_further_reachable', included the required wiki_named_untouched entry for Utah school census records with correct wiki_title 'Utah_Online_Genealogy_Records', and properly excluded the already-searched 1940/1950 censuses and inapplicable land records from not_reached. All log_entry_ids were included in the stop_criteria write."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. project_context was called with the correct projectPath. wiki_read was called with 'Utah_Vital_Records' (expected ~Utah_Vital_Records), which matched the fixture. research_query was called correctly with section 'conflicts' and questionId 'q_001'. research_append was called with correct section 'questions', op 'update', entryId 'q_001', and a well-formed fields object containing the complete search_stop structure with all required keys (stopped_because, justification, log_entry_ids, stop_criteria, not_reached). No fixture_not_found errors occurred."
+                "rationale": "All tool calls passed correct arguments. project_context call used correct projectPath. wiki_read called Utah_Vital_Records (matching expected ~Utah_Vital_Records). research_query calls used correct section ('conflicts', 'log', 'localities') and questionId 'q_001'. research_append update correctly targeted section 'questions', op 'update', entryId 'q_001' with properly structured fields including search_stop with all required subfields. No fixture_not_found errors. The wiki_read of Utah_Vital_Records was permitted though not required per the per-test context."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "The skill correctly applied the seven-point stop criteria as a gate, evaluating each in order and declaring only when all were met. The reasoning is grounded in actual project state: goal_alignment references the four consistent sources; repository_breadth names FamilySearch and GenealogyBank; original_substitution identifies the original records; independent_verification cites three independent informant lines plus the marriage record; evidence_class notes the original-primary records present; conflict_resolution states no conflicts exist; overturn_risk assesses low risk because all accessible record types were searched and the sealed birth certificate cannot contradict the conclusion. The skill did not declare prematurely and correctly identified the blocking factor (nothing further reachable) that justifies the declaration."
+                "rationale": "The skill correctly applied the seven-point stop criteria as a gate, evaluating each in order and declaring only when all were met. The reasoning is grounded in actual project state: goal_alignment tied to four consistent sources, repository_breadth tied to FamilySearch and GenealogyBank coverage, original_substitution tied to census and marriage records, independent_verification tied to three informant lines plus marriage record, evidence_class tied to original-primary records, conflict_resolution tied to absence of discrepancies, overturn_risk tied to sealed birth certificate and offline school census. The blocking criterion (nothing_further_reachable) is named and justified."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "The skill resisted premature declaration and set stopped_because to 'nothing_further_reachable' with honest justification. It did not inflate exhaustiveness despite known gaps; instead, it correctly recorded the two not-reached records (privacy-sealed birth certificate and offline school census records) and explained why they are beyond reach rather than unsearched gaps. The justification explicitly states 'The accessible evidence fully supports a defensible conclusion' \u2014 acknowledging that inaccessible records exist but are not reasonably obtainable. This is an honest assessment, not a workaround."
+                "rationale": "The skill honestly declared exhaustive while transparently recording two categories of unreached records: privacy_sealed (birth certificate) and wiki_named_untouched (school census). The justification does not hide gaps; it explicitly names the sealed birth certificate and offline school census as reasons research cannot proceed further, then correctly concludes that accessible evidence is sufficient and no plausible unsearched accessible source remains. The stopped_because value 'nothing_further_reachable' is appropriate and honest, not a workaround."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven stop criteria carry substantive, specific assessments tied to project state. goal_alignment: 'Four sources consistently name John Obrien Applegarth and Olive Annie Harvey as Alan Glen Applegarth's parents.' repository_breadth: names FamilySearch and GenealogyBank and states no uncovered accessible repository remains. original_substitution: identifies the 1940 census, 1950 census, and 1926 marriage record as original records. independent_verification: cites three independent informant lines (1940 census, 1950 census, 2023 obituary) plus the marriage record. evidence_class: notes original-primary records are present and the sealed birth certificate's absence is inaccessibility, not a missing class. conflict_resolution: 'No conflicts exist. All four sources agree on the same father and mother.' overturn_risk: 'Low. All accessible record types have been searched.' Each assessment is grounded in specific log entries and sources, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive 1\u20132 sentence assessments tied to specific project state. goal_alignment: names four sources and their agreement. repository_breadth: names FamilySearch and GenealogyBank with specific record types. original_substitution: identifies census and marriage records as original. independent_verification: names three informant lines plus marriage record. evidence_class: identifies original-primary records and addresses sealed certificate. conflict_resolution: states no conflicts exist. overturn_risk: ties low risk to sealed certificate and offline records. Each assessment is grounded in actual sources and log entries, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0158763,
+            "judge_cost_usd": 0.0151413,
             "duration_ms": 15523.443199694157,
             "error": null,
             "input_tokens": 9408,
             "cached_input_tokens": 5183,
-            "output_tokens": 1190
+            "output_tokens": 1043
           },
           "started_at": 1792505607.3230872,
           "ended_at": 1792505735.5069711
@@ -18467,45 +18467,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly evaluated all seven stop criteria against the project state and declared exhaustive with a stop-gate value. The declaration is grounded in actual log entries (log_001, log_004, log_005, log_006, log_007) and assertions. The three converging sources (1850 census, 1860 census, death certificate) are accurately identified as independent units. The birthplace conflict c_001 is correctly noted as resolved. The baptismal register search (log_007) is correctly characterized as a searched negative, not a gap. Pennsylvania civil registration dates (1852-54 per wiki_read) are correctly cited. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly evaluated all seven stop criteria against the project state and declared exhaustive with a stop-gate value. The declaration is grounded in actual log entries (log_001, log_004, log_005, log_006, log_007) and assertions. The three converging sources (1850 census, 1860 census, death certificate) are accurately identified. The conflict c_001 is correctly noted as resolved. The baptismal register search (log_007) is correctly characterized as a searched negative, not a gap. Pennsylvania vital registration dates are confirmed by the wiki_read tool (county-level 1852-54). No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: evaluated the question q_001, applied all seven stop criteria, grounded each in project state, named the blocking criterion (none\u2014all passed), declared exhaustive with stopped_because set to 'question_answered', populated all seven stop_criteria keys with substantive assessments, and persisted the declaration via research_append. The file changes confirm q_001.status updated to 'exhaustive_declared' and search_stop populated with all required fields including log_entry_ids and not_reached."
+                "rationale": "Claude addressed all required elements: evaluated the question q_001 against the seven stop criteria, declared exhaustive with stopped_because set to 'question_answered', populated all seven stop_criteria keys with substantive assessments, referenced supporting log entries (log_001, log_004, log_005, log_006, log_007), and persisted the declaration via research_append. The file changes summary confirms research.json was modified in the questions section. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Pennsylvania_Vital_Records (matched predicate on expected substring). research_append correctly updated q_001 with op='update', entryId='q_001', and fields containing status and search_stop with all required keys. No fixture_not_found errors. The wiki_read call to Pennsylvania_Vital_Records is the instructed call per the rubric override; the call matched and returned valid content confirming civil registration dates."
+                "rationale": "All MCP tool calls passed arguments matching expected fixtures. project_context and research_query calls used correct projectPath and section/questionId parameters. wiki_read called Pennsylvania_Vital_Records (matched predicate with expected ~Pennsylvania_Vital_Records). research_append correctly updated q_001 with op='update', entryId='q_001', and fields containing status and search_stop with all required keys. No fixture_not_found errors. No critical identifiers were wrong."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude evaluated all seven criteria in order and declared only when all were met, stopping at none. The reasoning is grounded in actual log entries and project state: goal_alignment cites three source units naming Thomas Flynn with no competing candidate; repository_breadth names specific repositories and record types searched (FamilySearch, Ancestry, MyHeritage censuses; FamilySearch death cert and probate; St. John the Baptist baptismal register); original_substitution confirms original images accessed; independent_verification identifies two informant units; evidence_class notes the searched negative on baptismal register; conflict_resolution cites c_001 as resolved; overturn_risk assesses low risk with no unsearched category plausibly naming a different father. The decision to declare is defensible against the criteria."
+                "rationale": "Claude evaluated all seven criteria in order and declared only when all were met. The reasoning is grounded in actual log entries and project state: goal_alignment cites three source units naming Thomas Flynn; repository_breadth names specific repositories and record types searched (FamilySearch, Ancestry, MyHeritage censuses, death certificate, probate, baptismal register) and explains why skipped items (later censuses, naturalization) posed no plausible path to a different conclusion; evidence_class explicitly addresses the baptismal register as a searched negative; conflict_resolution names c_001 as resolved. The decision to declare is defensible against the criteria, not asserted unilaterally."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted premature declaration and set stopped_because to 'question_answered' (a stop-gate value) only after confirming all criteria were met. The justification is honest about what was searched and what was not: later censuses (1870-1900) and naturalization records are explicitly noted as skipped with documented rationale (corroboration only, no plausible path to different conclusion). The baptismal register negative is characterized as a genuine searched negative, not an assumption. No gaps are buried; the declaration is grounded in actual evidence and negative results."
+                "rationale": "Claude resisted premature declaration and set stopped_because to 'question_answered' (a stop-gate value) only after establishing all seven criteria were met. The justification is honest about what was searched and what was not: probate and baptismal register are documented as negatives (log_006, log_007); later censuses and naturalization are explicitly skipped with rationale; the baptismal register is characterized as the one record type that could have supplied primary evidence and was genuinely searched. No gaps are buried; no workaround values are used. The assessment that overturn risk is low is grounded in the absence of unsearched record types that could plausibly name a different father."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive 1-2 sentence assessments tied to specific project state. goal_alignment: 'Three source units name Thomas Flynn as Patrick Flynn's father, and no source names any other candidate.' repository_breadth: names FamilySearch, Ancestry, MyHeritage censuses; FamilySearch death cert, probate, and baptismal register; documents skipped items with rationale. original_substitution: 'Original census images accessed on FamilySearch for both the 1850 and 1860 enumerations.' independent_verification: identifies two informant units (census household member and son-in-law James Brown). evidence_class: notes original records present, baptismal register searched and genuinely absent, civil registration dates confirmed. conflict_resolution: 'One conflict exists (c_001: birthplace Ireland vs. Pennsylvania). Status is resolved.' overturn_risk: 'Low. Civil registration did not exist in Pennsylvania for an 1845 birth. The baptismal register was searched and is negative.' Each assessment is answerable from project state, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive 1-2 sentence assessments tied to specific project state: goal_alignment names three source units and absence of competing candidates; repository_breadth lists repositories and record types with rationale for skipped items; original_substitution confirms original images accessed; independent_verification identifies two informant units (census household member and son-in-law); evidence_class addresses original records present and baptismal register as searched negative; conflict_resolution names c_001 as resolved; overturn_risk assesses low risk with reasoning tied to civil registration dates and searched negatives. Each assessment is grounded in log entries or assertions, not generic boilerplate. log_entry_ids field correctly references log_001, log_004, log_005, log_006, log_007."
               }
             ],
-            "judge_cost_usd": 0.024273299999999998,
+            "judge_cost_usd": 0.023773299999999997,
             "duration_ms": 18463.113399688154,
             "error": null,
             "input_tokens": 17795,
             "cached_input_tokens": 5183,
-            "output_tokens": 1192
+            "output_tokens": 1092
           },
           "started_at": 1792505699.62235,
           "ended_at": 1792505923.4721012
@@ -19759,45 +19759,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly declared q_001 exhaustive based on four independent sources (1940 census, 1950 census, 1926 marriage record, 2023 obituary) that consistently name John Obrien Applegarth and Olive Annie Harvey as Alan's parents. The skill properly treated the sealed 1936 Utah birth certificate as a privacy-sealed record not reasonably obtainable, not as an exhaustiveness gap. All factual claims are grounded in the project state: sources, log entries, and assertions. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly declared q_001 exhaustive with sound reasoning. The four independent sources (1940 census, 1950 census, 1926 marriage record, 2023 obituary) consistently establish John Obrien Applegarth and Olive Annie Harvey as Alan's parents. The skill properly treated the sealed 1936 birth certificate as a privacy-sealed record not reasonably obtainable, not as an exhaustiveness gap. All factual claims are grounded in the project state: sources, log entries, and assertions. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: evaluated all seven stop criteria against project state, declared exhaustive with a detailed justification, updated the question status to exhaustive_declared with stopped_because: question_answered, and properly documented the sealed birth certificate in the not_reached array. The skill completed the full research-exhaustiveness assessment task without omissions."
+                "rationale": "The skill addressed all required elements: gathered evidence via tool calls (project context, questions, plans, assertions, log, person evidence, conflicts, localities, wiki read, evaluations), evaluated all seven stop criteria with substance, declared the question exhaustive with a detailed justification, and persisted the declaration to research.json with the correct status and stopped_because value. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching expected fixtures. The wiki_read call correctly targeted Utah_Vital_Records (matched predicate). The research_query calls for questions, plans, assertions, log, person_evidence, conflicts, localities, and evaluations all used correct section names and identifiers. The research_append call correctly updated q_001 with proper fields and structure. No fixture_not_found errors occurred on any critical calls."
+                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The wiki_read call correctly targeted Utah_Vital_Records (matching ~Utah_Vital_Records). The research_query calls used correct section names and identifiers (q_001, I1/I2/I3). The research_append call correctly updated q_001 with proper structure and all required fields. No critical identifiers were wrong, no calls landed in fixture_not_found, and the sibling-page wiki miss (if any) is covered by the rubric override for plausible sibling pages."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "The skill evaluated all seven stop criteria in order and declared only when all were met. The reasoning is grounded in actual project state: goal_alignment tied to four independent sources naming the parents; repository_breadth tied to specific repositories searched (FamilySearch, GenealogyBank); original_substitution tied to government documents accessed directly; independent_verification tied to three distinct informant types; evidence_class tied to original records and the sealed-record exception; conflict_resolution tied to zero conflicts registered; overturn_risk tied to agreement across sources and negative evidence from church/probate searches. The skill named the blocking criterion (none\u2014all passed) and the decision to declare is defensible."
+                "rationale": "The skill evaluated all seven stop criteria as a gate and declared only when all were met. It named the blocking criterion implicitly by declaring (no criterion blocked). The reasoning is grounded in actual log entries and project state: log_001\u2013log_007 are cited, sources are named with specific details (1940 Ada County, 1950 Weber County, 1926 marriage, 2023 obituary), and the sealed birth certificate is correctly identified as not a gap under the inaccessibility exception."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "The skill resisted premature declaration and set stopped_because: question_answered only after establishing that all seven criteria were met. The skill explicitly acknowledged the sealed birth certificate as a privacy-sealed record not reasonably obtainable, and correctly stated in the justification that 'its absence is not an exhaustiveness gap.' The wording is honest and precise, not optimistic or workaround-based. The declaration reflects genuine completion of the research question."
+                "rationale": "The skill resisted premature declaration and set stopped_because: 'question_answered' only when all criteria were genuinely met. It explicitly acknowledged the sealed birth certificate as inaccessible by law and correctly stated it is 'not a reasonably available record for this project' and 'not an exhaustiveness gap.' No workaround was used; the declaration is honest and the gap is not buried."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven stop criteria carry substantive 1\u20132 sentence assessments tied to specific project state. goal_alignment: four independent sources name the parents, fully answering the question. repository_breadth: specific repositories and jurisdictions listed (FamilySearch, GenealogyBank, Utah LDS, Weber County probate). original_substitution: 1940 census, 1950 census, and 1926 marriage are original government documents. independent_verification: three independent informant types cited (household member, county clerk, family-supplied obituary). evidence_class: original records with primary information; sealed-record exception applied. conflict_resolution: zero conflicts registered. overturn_risk: all sources agree, church and probate searched with negative results, sealed birth certificate inaccessible by law. Each assessment is answerable from project state, not generic boilerplate."
+                "rationale": "All seven criteria carry substantive 1\u20132 sentence assessments tied to specific project state: goal_alignment cites the four independent sources by name and jurisdiction; repository_breadth names FamilySearch and GenealogyBank with specific record types searched; original_substitution confirms original government documents; independent_verification details three independent informant lines; evidence_class cites the Utah Vital Records wiki and the inaccessibility exception; conflict_resolution states no conflicts registered; overturn_risk assesses low risk with reasoning tied to negative searches and the sealed record. Each assessment is answerable from project state, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0204333,
+            "judge_cost_usd": 0.0201833,
             "duration_ms": 16984.87629974261,
             "error": null,
             "input_tokens": 14975,
             "cached_input_tokens": 5183,
-            "output_tokens": 988
+            "output_tokens": 938
           },
           "started_at": 1792505607.2910936,
           "ended_at": 1792505768.6409433
@@ -20591,45 +20591,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the maiden surname is tentative (value 'Ellen [?]' with illegibility flagged in informant_bias_notes), correctly classified the illegibility as a single record's data-quality issue rather than source inaccessibility, and correctly declined to declare exhaustive. The factual claims about alternative record types (1880 census, death certificates, church records, newspapers) are all plausible and well-grounded in the project state. No fabricated material or unsupported assertions."
+                "rationale": "Claude correctly identified that the maiden surname is tentative (value 'Ellen [?]' with illegibility flagged in informant_bias_notes), correctly classified the illegibility as a data-quality issue of a single source rather than genuine inaccessibility, and correctly concluded that multiple alternative record types (1880 census, death certificates, church records, newspapers) could independently resolve the surname. The factual claims are grounded in the tool responses and the before-state. No fabricated material or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: ran the tentative-value sweep as a hard block, assessed the seven criteria (naming specific failures like goal_alignment and repository_breadth), identified the blocking criterion, declined to declare, named specific unsearched alternative record types (1880 census, death certificates, church records, newspapers), and recommended routing to research-plan. No silent omissions of required work."
+                "rationale": "Claude addressed all required elements: ran the tentative-value sweep, identified the blocking criterion (goal_alignment / tentative value), assessed all seven stop criteria with substance, declined to declare exhaustive, named specific unsearched alternative record types (1880 census, death certificates, church records, newspapers), and recommended routing to research-plan. The response covered everything the input state and per-test context required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All nine MCP tool calls passed correct arguments. The wiki_read call to 'Iowa_Vital_Records' matched the expected predicate. The research_query calls for questions, plans, assertions, log, localities, conflicts, and person_evidence all used correct section names and identifiers. No fixture_not_found errors. The calls were semantically appropriate and well-targeted to the project state."
+                "rationale": "All nine MCP tool calls passed arguments matching expected_args semantically. The wiki_read call for 'Iowa_Vital_Records' matched the predicate expectation (~Iowa_Vital_Records). All research_query calls used correct section names and identifiers (q_001, pl_001, I1). No fixture_not_found errors occurred. The per-test context notes this is a decline/review response and Claude is not expected to call validate_research_schema, which is correct \u2014 no such call was made."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "Claude applied the seven-point stop criteria as a gate in order, stopping at the first failure (goal_alignment), and explicitly named it as the blocking criterion. The reasoning was grounded in actual project state: the maiden surname remains entirely unknown ('[?]' is the only value), only one source was searched, and multiple alternative record types remain unsearched. The decision to decline was defensible against the criteria."
+                "rationale": "Claude worked the stop criteria as a gate in order, stopping at the first that fails. The tentative-value sweep is correctly positioned as a hard block before the seven-point criteria. Claude explicitly named the blocking criterion ('goal_alignment' \u2014 the maiden surname remains entirely unknown) and grounded it in the project state: the value is 'Ellen [?]', the informant_bias_notes flag illegibility, and no alternative record type has been searched. The reasoning is defensible and tied to actual log entries and assertions."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "Claude resisted the temptation to declare exhaustive despite the completed plan and linked identifying assertions. It correctly identified the gaps (unsearched census records, death certificates, church registers, newspapers) and declined without writing a stop-gate value. The response explicitly states 'Not yet exhaustive' and recommends extending the plan rather than setting stopped_because to a stop-gate value, which is the honest outcome when record types known to exist for the jurisdiction have not been searched."
+                "rationale": "Claude resisted the temptation to declare exhaustive despite the completed plan, linked identifying assertions, and the user's explicit request. The response correctly declines without writing a stop-gate value to q_001.search_stop.stopped_because. Claude honestly lists the gaps (census records, death certificates, church registers, newspapers never searched) and frames them as accessible alternatives, not inaccessible sources. The wording is clear and direct: 'Not yet exhaustive' and 'A new research plan targeting these record types is needed.'"
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria received substantive assessments tied to project state: goal_alignment (maiden surname remains unknown), repository_breadth (only FamilySearch marriage record searched; census, death records, church registers, probate, FAN not attempted), original_substitution (original certificate examined but no other originals searched), independent_verification (only one source exists), evidence_class (no usable original with the key fact), conflict_resolution (no conflicts registered), overturn_risk (multiple unsearched record types would plausibly resolve the surname). Each assessment is specific and grounded, not generic boilerplate."
+                "rationale": "All seven criteria are assessed with substance tied to project state. goal_alignment: 'Ellen's maiden surname remains entirely unknown \u2014 \"[?]\" is the only value on record.' repository_breadth: 'Only one source (the Dubuque County marriage certificate via FamilySearch) has been searched... Census records (1880, 1900), death records, church registers, and probate have not been tried.' original_substitution, independent_verification, evidence_class, conflict_resolution, and overturn_risk are each assessed with specific reference to the log, assertions, and available records. The blocking criterion is named and justified. No generic boilerplate; each assessment is grounded in actual project state."
               }
             ],
-            "judge_cost_usd": 0.015202299999999998,
+            "judge_cost_usd": 0.0156723,
             "duration_ms": 13127.487900201231,
             "error": null,
             "input_tokens": 10374,
             "cached_input_tokens": 5183,
-            "output_tokens": 862
+            "output_tokens": 956
           },
           "started_at": 1792505677.7932618,
           "ended_at": 1792505813.6408057
@@ -21818,45 +21818,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill's output is factually correct. The declaration that q_001 is exhaustive is well-grounded in the project state. The will (src_005) does name Patrick as 'my eldest son,' the censuses (1850, 1860, 1870) consistently place Patrick in Thomas Flynn's household, the baptism register was searched and returned a confirmed negative (log_008), and the death certificate is confirmed inaccessible (pli_005 marked skipped with documented reason). All seven stop criteria are assessed with substance and tied to specific log entries and assertions. No fabricated material or unsupported claims."
+                "rationale": "Claude's declaration is factually correct. The will (src_005) does name Patrick as 'my eldest son,' the censuses (1850, 1860, 1870) consistently place Patrick in Thomas Flynn's household, the baptism register was searched and returned a confirmed negative (log_008), and Pennsylvania statewide vital registration began January 1906 per the wiki read. All seven stop criteria are accurately assessed against the project state. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required. It evaluated all seven stop criteria against the project state, named the blocking criterion (none \u2014 all passed), declared exhaustive with stopped_because: 'question_answered', and persisted the declaration to research.json via research_append. The summary covers goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, and overturn_risk. The not_reached array documents the inaccessible death certificate. No required work was omitted."
+                "rationale": "Claude addressed all required elements: evaluated the question against all seven stop criteria, grounded each assessment in specific log entries and sources, named the blocking criterion (none\u2014all passed), declared exhaustive with stopped_because: 'question_answered', and persisted the declaration to research.json via research_append. The not_reached array correctly documents the inaccessible death certificate (pli_005) with its confirmed non-availability reason."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args. project_context, research_query (questions, plans, assertions, log, person_evidence, conflicts, localities), wiki_read (Pennsylvania_Vital_Records), and research_append all matched their expected signatures. The wiki_read call correctly targeted the Pennsylvania Vital Records page to verify the 1906 statewide registration start date. No critical identifiers were wrong, no fixture_not_found errors occurred, and no noisy extra args were added."
+                "rationale": "All tool calls passed correct arguments. The wiki_read for Pennsylvania_Vital_Records matched the expected predicate (~Pennsylvania_Vital_Records). The research_query calls for questions, plans, assertions, log, person_evidence, and conflicts all used correct section names and identifiers. The research_append call correctly updated q_001 with valid stop_criteria structure and not_reached array. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Gate reasoning",
                 "score": 3,
-                "rationale": "The skill correctly applied the seven-point stop criteria as a gate, evaluating each in order and declaring only when all were met. It named no blocking criterion (because none blocked) and grounded the reasoning in actual log entries: log_004 (1860 census), log_006 (will), log_007 (1870/1880/1900 censuses), log_008 (baptism register search). The decision to declare is defensible against the criteria and tied to specific project state, not generic claims."
+                "rationale": "Claude applied all seven stop criteria in order as a gate, evaluated each against project state, and declared only when all were met. The reasoning is grounded in specific log entries (log_004, log_006, log_007, log_008) and source details (src_005 will, census records). The blocking criterion is correctly identified as none\u2014all criteria passed. The decision to declare is defensible and not asserted unilaterally."
               },
               {
                 "source": "rubric",
                 "name": "Declaration honesty",
                 "score": 3,
-                "rationale": "The skill resisted premature declaration. It identified that pli_005 (death certificate) is inaccessible and recorded it in not_reached with honest justification ('in-person only at the Pennsylvania State Archives, no remote access path'). It did not set a stop-gate value for this gap; instead, it set stopped_because: 'question_answered' because the accessible evidence (will + census) independently supports the conclusion. The wording is precise, not optimistic ('convincingly answered,' 'low overturn risk' with specific reasoning)."
+                "rationale": "Claude resisted premature declaration. The death certificate (pli_005) is documented as inaccessible with a confirmed reason (in-person only, no remote access), not assumed unavailable. The not_reached array explicitly records this gap. Claude correctly set stopped_because: 'question_answered' (not a stop-gate value) and justified why the accessible evidence independently supports the conclusion without the death certificate. No gaps are buried; the declaration is honest about what was and was not reached."
               },
               {
                 "source": "rubric",
                 "name": "Stop criteria coverage",
                 "score": 3,
-                "rationale": "All seven criteria carry substantive assessments tied to specific project state. goal_alignment: 'Thomas Flynn is identified as Patrick Flynn's father by three independent source streams...anchored by Thomas Flynn's own 1881 will naming 'my eldest son Patrick Flynn'.' repository_breadth: names census, probate/will, and St. John the Baptist baptismal register with specific dates and repositories. original_substitution: cites src_005 as original, census images accessed on FamilySearch/Ancestry, church register read page by page. independent_verification: identifies two independent units (census cluster vs. will). evidence_class: cites a_014 as primary/original from testator. conflict_resolution: 'No conflicts are registered for q_001 and no unregistered disagreements exist.' overturn_risk: 'Low. The will of Thomas Flynn names Patrick directly as 'my eldest son'...three censuses across 1850\u20131870 corroborate...baptism register was searched and is a confirmed negative...Pennsylvania statewide birth registration began January 1906.' Each assessment is answerable from project state, not boilerplate."
+                "rationale": "All seven criteria carry substantive 1\u20132 sentence assessments tied to specific project state: goal_alignment names the will and three censuses; repository_breadth lists census, probate, and church register searches; original_substitution cites src_005 and FamilySearch/Ancestry originals; independent_verification distinguishes census cluster from will; evidence_class identifies a_014 as primary; conflict_resolution states none exist; overturn_risk cites the will's authority, three censuses, confirmed baptism negative, and Pennsylvania registration date. Each assessment is answerable from project state, not generic boilerplate."
               }
             ],
-            "judge_cost_usd": 0.0217633,
+            "judge_cost_usd": 0.0206583,
             "duration_ms": 16477.444200310856,
             "error": null,
             "input_tokens": 15675,
             "cached_input_tokens": 5183,
-            "output_tokens": 1114
+            "output_tokens": 893
           },
           "started_at": 1792505768.8970695,
           "ended_at": 1792505961.3393579
@@ -21929,5 +21929,6 @@
       "research_append": "afccbf7e1ba3a6b9b8539748423ad414c76c8e48a00ab34e88d1717ce0cb09ab",
       "research_query": "7ee7572ae84b3f6494d74205d6ac06c766272f5c5a04d18f09ac920077a0ee3a"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }

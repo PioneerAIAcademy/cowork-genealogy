@@ -2590,6 +2590,100 @@ def _stub_current_prompt_hash(monkeypatch, hex_digest: str) -> None:
     )
 
 
+# --- rule 2b, render half (issue #3576) ------------------------------------
+# `judge_prompt_hash` covers the prompt TEMPLATE. These cover the code that
+# fills its slots: a change there moved no fingerprint and left every committed
+# log ACTIVE while the judge saw different text.
+
+_ACTIVE_RENDER_LOG = {"snapshot": {}, "judge_render_hash": "a" * 64}
+_STALE_RENDER_LOG = {
+    "snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"},
+    "judge_render_hash": "a" * 64,
+}
+_NO_RENDER_HASH_LOG = {"snapshot": {}, "judge_prompt_hash": "a" * 64}
+
+
+def _stub_current_render_hash(monkeypatch, hex_digest: str) -> None:
+    monkeypatch.setattr(check_runlogs, "judge_render_hash", lambda: hex_digest)
+
+
+def test_rule2b_render_blocks_when_render_code_moved(monkeypatch, capsys):
+    """Hash differs + active log + a render-graph file touched → BLOCK."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "`make judge-regrade`" in out
+    assert "older judge render code" in out
+
+
+def test_rule2b_render_passes_when_touched_but_hash_unchanged(monkeypatch, capsys):
+    """The load-bearing property: the rule RECOMPUTES rather than blocking on
+    "file touched". An edit to a trigger file outside the render graph leaves
+    the hash alone, so it must pass — otherwise every PR touching
+    orchestrator.py for any reason goes red."""
+    _stub_current_render_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule2b_render_warns_when_log_is_already_skill_side_stale(monkeypatch, capsys):
+    """Rule 2 blocks for its own reason; a regrade cannot satisfy a log that
+    owes a paid `make eval-skill` run."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _STALE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "cannot satisfy" in out
+
+
+def test_rule2b_render_warns_when_mismatch_without_render_edit(monkeypatch, capsys):
+    """A mixed-era corpus is not this PR's doing — warn, never block."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+
+
+def test_rule2b_render_warns_when_log_has_no_render_hash(monkeypatch, capsys):
+    """A log written before the field cannot be checked. Warn so the reviewer
+    knows the PR's render change went ungraded against it — never block, which
+    would owe a regrade for every log in the corpus on day one."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "carries no" in out
+
+
+def test_rule2b_render_silent_when_no_hash_and_nothing_touched(monkeypatch, capsys):
+    """No field and no render edit — nothing to say."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
 def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):
     """Hash mismatch + skill-side-active log + judge_prompt_edited → BLOCK."""
     _stub_current_prompt_hash(monkeypatch, "b" * 64)
@@ -3417,3 +3511,85 @@ def test_every_embedded_agent_reaches_its_suite_through_the_superset():
             if suite not in check_runlogs.skills_gated_by_agent(agent, referencing):
                 missed.append(f"{suite} embeds {agent}")
     assert not missed, missed
+
+
+def test_trigger_paths_cover_every_module_the_render_graph_reaches():
+    """Finding 6: `JUDGE_RENDER_TRIGGER_PATHS` is hand-written. If the graph
+    grows into a sixth module, a PR editing that module moves the hash but
+    matches no trigger path, so `rule2b_judge_render` takes the
+    "not this PR's doing" branch and WARNS on the PR that caused it.
+
+    Derived from the same walk the hash uses, so this cannot drift.
+    """
+    from harness.judge_render import judge_render_graph_modules
+
+    reached = judge_render_graph_modules()
+    triggers = {
+        "harness." + Path(p).stem for p in check_runlogs.JUDGE_RENDER_TRIGGER_PATHS
+    }
+    assert reached <= triggers, (
+        f"render graph reaches {sorted(reached - triggers)}, which no trigger "
+        f"path covers — a PR editing those would warn instead of blocking"
+    )
+
+
+# --- rule 6, regrade arm (issue #3576) ---------------------------------------
+# Rule 6 proper grades only ADDED logs, deliberately: a prune rewrites committed
+# logs and `eval/CLAUDE.md` says a modified log marks nothing touched. That held
+# until `make judge-regrade` began rewriting GRADES in place. The predicate here
+# is the outcome MOVING, so a prune still passes and only a new red blocks.
+
+def _rule6_regrade(monkeypatch, tmp_path, base_outcomes, head_outcomes):
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in head_outcomes.items()]}),
+        encoding="utf-8",
+    )
+    base = (
+        None
+        if base_outcomes is None
+        else json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in base_outcomes.items()]})
+    )
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule6_regrade_outcomes("demo", rel)
+
+
+def test_rule6_regrade_blocks_a_newly_red_test(monkeypatch, tmp_path, capsys):
+    rc = _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "fail"})
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "moved `pass` -> `fail`" in out
+
+
+def test_rule6_regrade_blocks_partial_to_fail(monkeypatch, tmp_path, capsys):
+    """`partial` never blocks on its own, but moving INTO fail does."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "partial"}, {"ut_a": "fail"}) == 1
+
+
+def test_rule6_regrade_passes_a_prune(monkeypatch, tmp_path, capsys):
+    """The direction that must keep working: a modified log whose outcomes did
+    not move is a rehash or a prune, and marks nothing touched."""
+    rc = _rule6_regrade(
+        monkeypatch, tmp_path, {"ut_a": "pass", "ut_b": "partial"}, {"ut_a": "pass", "ut_b": "partial"}
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule6_regrade_ignores_a_test_already_red_at_base(monkeypatch, tmp_path, capsys):
+    """Not this PR's doing — it did not author the run."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "fail"}, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_passes_when_the_log_is_new_at_base(monkeypatch, tmp_path, capsys):
+    """Absent at the merge base — rule 6 proper grades it as an ADDED log, and
+    grading it here too would double-report."""
+    assert _rule6_regrade(monkeypatch, tmp_path, None, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_blocks_a_move_to_aborted(monkeypatch, tmp_path):
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "aborted"}) == 1

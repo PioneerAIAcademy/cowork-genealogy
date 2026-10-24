@@ -988,11 +988,11 @@
                 "rationale": "The question is concrete and answerable: 'Which children of Margaret Mercer (b. ~1868, Ohio) and Thomas Mercer are missing from the tree, as indicated by the census counts of 6 born / 5 living in 1900 and 8 born / 7 living in 1910?' It names specific persons (Margaret and Thomas Mercer), specific facts (missing children identified by census discrepancies), and specific time periods (1900 and 1910 enumerations). A follow-up search could be designed to answer it by locating vital records and census household entries for the two unaccounted children."
               }
             ],
-            "judge_cost_usd": 0.0124004,
+            "judge_cost_usd": 0.011986,
             "duration_ms": 8804.722500033677,
             "error": null,
             "input_tokens": 8651,
-            "cached_input_tokens": 4144,
+            "cached_input_tokens": 0,
             "output_tokens": 667
           },
           "started_at": 1792313964.460478,
@@ -3411,27 +3411,27 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: it queried the project context to understand the objective and stub person, checked for existing questions (none found), created a single research question that restates the objective at the appropriate scope, persisted it to research.json with all required fields populated (question, rationale, selection_basis, priority, status, depends_on, unblocks, search_stop), and provided a clear next step. The response includes both the terse caller-facing section and the detailed researcher-facing explanation separated by '---' as required by the per-test context."
+                "rationale": "The skill addressed everything required: it read the project context, confirmed no prior questions exist, derived a first research question from the objective, persisted it to research.json with all required fields (question, rationale, selection_basis, priority, status, depends_on, unblocks, search_stop), and provided a clear explanation of the next step. The question includes the three identifying criteria (name, approximate date, place) as required by the per-test context. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All six MCP tool calls passed arguments matching the fixture's expected behavior. The project_context call correctly queried the project state. The research_query calls for questions, conflicts, hypotheses, and timelines all correctly queried their respective sections with the right projectPath. The person_warnings call correctly identified the stub person I1. The research_append call correctly appended a question entry to the questions section with all required fields (question, rationale, selection_basis, priority, status, depends_on, unblocks, search_stop). No tool calls resulted in fixture_not_found errors; all matched.kind values are 'live'. Arguments are semantically correct and no critical identifiers are wrong."
+                "rationale": "All six MCP tool calls passed arguments matching the fixture's expected behavior. The project_context call correctly retrieved the objective and confirmed the empty state. The research_query calls for questions, conflicts, hypotheses, and timelines all correctly queried the appropriate sections and received empty results. The person_warnings call correctly identified the stub record. The research_append call correctly appended a well-formed question entry to the questions section with all required fields populated. No critical arguments were wrong, no fixture_not_found errors occurred, and no extraneous arguments were added."
               },
               {
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The question 'Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA?' is concrete and answerable. It names the specific person (Patrick Flynn), the approximate time period (ca. 1845 birth, 1908 death), the geographic location (Pennsylvania, Schuylkill County), and the specific fact being sought (parentage/parents). This is sufficiently specific to drive a search strategy without being narrowed to a single record set. The question passes the specificity requirement by naming the fact precisely rather than asking vaguely to 'learn more about Patrick' or 'who is Patrick Flynn.'"
+                "rationale": "The question 'Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA?' is concrete and answerable. It names the specific person (Patrick Flynn), the approximate time period (ca. 1845 birth, 1908 death), the geographic location (Pennsylvania, Schuylkill County), and the specific fact sought (parentage). A follow-up search could be designed to answer it by consulting census records, death certificates, church registers, and other vital records. The question is not vague or overly broad; it precisely targets the objective fact without being record-scoped."
               }
             ],
-            "judge_cost_usd": 0.0100134,
+            "judge_cost_usd": 0.0097434,
             "duration_ms": 9116.773499641567,
             "error": null,
             "input_tokens": 5804,
             "cached_input_tokens": 4144,
-            "output_tokens": 759
+            "output_tokens": 705
           },
           "started_at": 1792314108.6638875,
           "ended_at": 1792314165.6636722
@@ -5870,33 +5870,33 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly decomposed a motivation objective into a concrete event question about when Patrick Flynn's family arrived in Schuylkill County. The question asks for a single unknown fact (arrival date), not the reason itself. The response correctly identifies that the 'why' cannot be answered until foundational facts are established. The date window (1850\u20131880) is properly treated as a bound on which questions to ask, not as a cap on evidence. The rationale explains that historical context will provide the reason once facts are established, not that the question itself will answer 'why'. All tool calls succeeded and the question was properly persisted to research.json."
+                "rationale": "The skill correctly decomposed a motivation objective ('why did the family come?') into a foundational event question ('When did the family establish residence in Schuylkill County?'). The question asks for one unknown fact (arrival timing), not the reason itself. The response correctly states the reason will be explained from historical context rather than proved. The question is factually sound and does not cap evidence to the date window. All tool calls succeeded and the question was properly persisted to research.json."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill completed all required work: it queried the project context, examined existing questions/conflicts/hypotheses/timelines, checked person warnings, and appended a new question to research.json. The response includes both the terse caller-facing section (q_001 written with the question text) and the detailed researcher-facing section after the '---' separator. The researcher section names the question chosen, explains the decomposition logic, and states that the reason will be explained from historical context rather than proved. No required elements were omitted."
+                "rationale": "The skill addressed all required elements: it selected an appropriate first question for an empty project with a motivation objective, provided clear rationale for the selection, explained the decomposition strategy, and persisted the question to the project file. The response includes both the terse caller-facing section and the detailed researcher-facing explanation after the '---' divider, as required by the per-test context."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All six MCP tool calls passed with correct arguments. The project_context call retrieved the objective and project state. The research_query calls for questions, conflicts, hypotheses, and timelines correctly queried those sections. The person_warnings call checked I1 for data gaps. The research_append call correctly appended the new question with proper schema fields (question, rationale, selection_basis, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). All calls matched the live fixture and returned ok: true with no validation errors."
+                "rationale": "All seven MCP tool calls used correct arguments. The project_context, research_query (for questions, conflicts, hypotheses, timelines), person_warnings, and research_append calls all matched expected patterns. The research_append call correctly structured the question entry with all required fields (question, rationale, selection_basis, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The question 'When did Patrick Flynn (born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA) and his family establish residence in Schuylkill County, Pennsylvania?' is concrete and answerable. It names the specific person (Patrick Flynn), the specific fact sought (establishment of residence/arrival date), and the specific location (Schuylkill County, Pennsylvania). It is specific enough that a follow-up search targeting Pennsylvania census records 1850\u20131880 can be designed to answer it. The question holds one unknown (when), not multiple unknowns."
+                "rationale": "The question is concrete and answerable: 'When did Patrick Flynn (born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA) and his family establish residence in Schuylkill County, Pennsylvania?' It names the specific person (Patrick Flynn), the specific location (Schuylkill County, Pennsylvania), and the specific fact sought (establishment/arrival date). A follow-up search targeting Pennsylvania census records 1850\u20131880 can be designed to answer it. The question is not vague or overly broad."
               }
             ],
-            "judge_cost_usd": 0.0096324,
+            "judge_cost_usd": 0.0091424,
             "duration_ms": 9623.902200255543,
             "error": null,
             "input_tokens": 5718,
             "cached_input_tokens": 4144,
-            "output_tokens": 700
+            "output_tokens": 602
           },
           "started_at": 1792314096.749031,
           "ended_at": 1792314158.8126447
@@ -10829,33 +10829,33 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that all planned direct searches are exhausted (1850, 1860, 1870, 1880, 1900 censuses, death certificate, probate, church records) and proposed a FAN pivot question. The question is factually grounded in the project state: q_001 is in_progress with search_stop.stopped_because='record_exhausted', the hypothesis h_001 names Thomas Flynn as a supported candidate, and no Priority 1\u20135 signals apply. The new question q_003 was correctly appended with selection_basis='fan_pivot', depends_on=['q_001'], and unblocks=['q_001']. All claims are supported by the tool responses and project state."
+                "rationale": "The skill correctly identified that all planned direct searches are exhausted (1850, 1860, 1870, 1880, 1900 censuses, death certificate, probate, church records) and proposed a FAN pivot question. The question is factually grounded in the project state: q_001 is in_progress with search_stop.stopped_because='record_exhausted', hypothesis h_001 supports Thomas Flynn as father, and no Priority 1-5 signals apply. The new question q_003 was correctly appended with selection_basis='fan_pivot', depends_on=['q_001'], and unblocks=['q_001']. All claims in the response are supported by the tool responses and project state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: recognized direct searches are complete, proposed a FAN question with specific persons (Thomas Flynn) and time period (1850\u20131870), set selection_basis to 'fan_pivot', and included depends_on=['q_001'] referencing the question that identified Thomas Flynn. The rationale explains why FAN research is the next step and what records will be searched (land deeds, neighbor clusters, associative records). No required work was omitted."
+                "rationale": "The skill addressed all required elements: recognized direct searches are complete, proposed a FAN question with specific persons (Thomas Flynn) and time period (1850-1870), set selection_basis to 'fan_pivot', included depends_on referencing q_001 (the question that identified Thomas Flynn), and provided clear rationale explaining why FAN research is the next step. The new question was successfully persisted to research.json as q_003."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All eight MCP tool calls passed correct arguments. project_context and research_query calls used the correct projectPath and section parameters. The final research_append call correctly appended a new question with all required fields (question, rationale, selection_basis, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). No tool calls returned fixture_not_found errors. The validation succeeded on first attempt with no self-correction needed."
+                "rationale": "All eight MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section parameters. The final research_append call correctly appended a new question with proper schema structure (question, rationale, selection_basis, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). No validation errors occurred; the append succeeded on first attempt with valid=true. All critical identifiers (projectPath, section names, question structure) matched expected patterns."
               },
               {
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, between 1850 and 1870?' is concrete and answerable. It names the specific person (Thomas Flynn), the jurisdiction (Schuylkill County, Pennsylvania), the time period (1850\u20131870), and the fact sought (neighbors and associates). A follow-up search could be designed to answer it by examining land deeds, census neighbor clusters, and associative records. The question is not vague or overly broad."
+                "rationale": "The question 'Who were the neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania, between 1850 and 1870?' is concrete and answerable. It names specific persons (Thomas Flynn), a specific jurisdiction (Schuylkill County, Pennsylvania), a specific time period (1850-1870), and a specific fact being sought (neighbors and associates). This is sufficiently precise to drive a follow-up search for land deed witnesses, census neighbors, and community associates, unlike vague alternatives like 'learn more about Thomas Flynn.'"
               }
             ],
-            "judge_cost_usd": 0.016543000000000002,
+            "judge_cost_usd": 0.0169874,
             "duration_ms": 8776.11430035904,
             "error": null,
             "input_tokens": 13178,
-            "cached_input_tokens": 0,
-            "output_tokens": 673
+            "cached_input_tokens": 4144,
+            "output_tokens": 679
           },
           "started_at": 1792313816.4643636,
           "ended_at": 1792313889.5225418
@@ -11929,33 +11929,33 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the high-severity timeline gap from 1860 to 1908 as the primary research priority, selected the appropriate selection_basis ('timeline_gap'), and created a specific, answerable research question targeting the 1870, 1880, and 1900 censuses. The question text is factually grounded in the project state: the proof summary explicitly identifies these three census years as 'primary remaining gaps,' the timeline shows a 'high' severity gap with '1870_census', '1880_census', and '1900_census' listed as expected events, and the 1880 census relationship column is correctly noted as potentially providing direct evidence. The dependencies (depends_on q_002, unblocks q_001) are accurate and logically sound. No fabricated material or unsupported claims are present."
+                "rationale": "The skill correctly identified the high-severity timeline gap from 1860 to 1908 as the primary research priority. The question q_003 targets the 1870, 1880, and 1900 censuses\u2014exactly the unsearched record sets flagged in the proof summary's exhaustive_search_summary field. The selection_basis 'timeline_gap' is appropriate and well-justified. The dependency structure (depends_on q_002, unblocks q_001) is correct. All factual claims about the project state are supported by the tool responses: the proof summary explicitly states '1870, 1880, and 1900 censuses and Thomas Flynn's probate records not yet searched,' and the timeline shows a high-severity gap with expected_events including '1870_census', '1880_census', '1900_census'. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: recognized the timeline gap as the highest-priority signal, selected the correct selection_basis, created a specific research question naming the three census years and the key fact sought (father identification), provided a clear rationale explaining why these records matter, specified correct dependencies and unblocks, and persisted the question to research.json. The per-test context requirements were all met: the gap was recognized, timeline_gap basis was selected, objective_decomposition was correctly not selected, and the rationale explains the gap's priority. No required work was omitted."
+                "rationale": "The skill addressed all required elements: (1) recognized the high-severity timeline gap spanning 1860\u20131908; (2) selected selection_basis 'timeline_gap' (Priority 3) rather than objective_decomposition (Priority 4), correctly prioritizing the gap over further decomposition; (3) proposed a specific, answerable question targeting the three unsearched census years; (4) explained the rationale grounding the selection in the proof summary's explicit identification of these gaps; (5) established correct dependencies (depends_on q_002, unblocks q_001); (6) persisted the question to research.json via mcp__genealogy__research_append. The per-test context requirements were all met."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All nine MCP tool calls passed arguments matching the fixture's expected_args semantically. The final call to mcp__genealogy__research_append correctly appended the new question with all required fields (question text, rationale, selection_basis, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). The entry structure matches the schema, and the validation response confirms 'valid: true' with no warnings. No tool calls landed in fixture_not_found, and no critical arguments were wrong."
+                "rationale": "All nine MCP tool calls passed arguments matching the fixture's expected_args semantically. The initial calls (project_context, research_query for questions/conflicts/hypotheses/plans/timelines/proof_summaries/person_warnings/log) used correct projectPath and section parameters. The final research_append call correctly specified section='questions', op='append', and a well-formed entry object with all required fields (question, rationale, selection_basis, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). No tool calls returned fixture_not_found errors; all matched.kind == 'live'. No validation errors occurred. The per-test context note on validate_research_schema does not apply here (that tool was not called)."
               },
               {
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The question is concrete and answerable: 'Where was Patrick Flynn enumerated in the 1870, 1880, and 1900 U.S. censuses, and do those census records identify his father as Thomas Flynn?' It names specific persons (Patrick Flynn), specific time periods (1870, 1880, 1900), and specific facts being sought (enumeration location and father identification). A follow-up search could be directly designed to answer it by searching those three census years in Schuylkill County. The question avoids vague phrasing like 'learn more' and is not record-set scoped; it targets a concrete genealogical fact."
+                "rationale": "The question is concrete and answerable: 'Where was Patrick Flynn enumerated in the 1870, 1880, and 1900 U.S. censuses, and do those census records identify his father as Thomas Flynn?' It names specific persons (Patrick Flynn), specific time periods (1870, 1880, 1900), and specific facts being sought (enumeration location and father identification). A follow-up search could be designed to answer it by querying those three census years in Schuylkill County, Pennsylvania. The question is not vague or overly broad; it is precise enough to drive a research plan."
               }
             ],
-            "judge_cost_usd": 0.0175224,
+            "judge_cost_usd": 0.0180124,
             "duration_ms": 10113.439599983394,
             "error": null,
             "input_tokens": 13328,
             "cached_input_tokens": 4144,
-            "output_tokens": 756
+            "output_tokens": 854
           },
           "started_at": 1792313816.4090354,
           "ended_at": 1792313905.4911885
@@ -16125,33 +16125,33 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The question correctly identifies the load-bearing premise: Rosalind's recorded surname 'Hartwell' is unverified and may be her married name rather than birth name. The question 'What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio)?' directly names the fact needed to unlock the parentage search. The rationale accurately explains why this premise must be resolved first, citing the FamilySearch source quality (1, unverified compiled data) and the marriage to Thomas Hartwell. The suggested research approach (Ohio census records 1860s-1870s, birth registers, marriage records) is factually sound for establishing maiden name. No fabricated claims or unsupported assertions."
+                "rationale": "The question correctly identifies the load-bearing premise: Rosalind's recorded surname 'Hartwell' is unverified and may be her married name rather than birth name. The question 'What was the birth surname of Rosalind Hartwell (b. ca. 1855, Ohio)?' directly names the fact needed to unlock the parentage objective. The rationale accurately cites the FamilySearch source quality (1, unverified compiled data) and correctly explains why this premise must be resolved before parentage research can proceed. The suggested next steps (Ohio census records 1860s-1870s, birth registers, marriage records) are factually sound research methods for establishing maiden names. No fabricated claims or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request completely. It selected and recorded the first research question, provided the question text, explained the basis (objective_decomposition), identified dependencies and what it unblocks, and outlined the next research steps. The question was persisted to research.json with appropriate metadata (status, priority, selection_basis). All required elements for a question-selection task were included."
+                "rationale": "The skill addressed the user's request completely. It selected and recorded the first research question, provided the question text, explained the basis (objective_decomposition), clarified dependencies and what it unblocks, and outlined the next research steps. The question directly targets the gating fact (birth surname) that the objective requires. All required elements of a question-selection response are present: the question itself, rationale, selection basis, priority, status, and dependency information were all written to research.json."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All six MCP tool calls used correct arguments. The project_context, research_query (questions, conflicts, hypotheses, timelines), and person_warnings calls all matched expected patterns with correct projectPath. The research_append call correctly specified section='questions', op='append', and included a well-formed entry object with all required fields. No calls returned fixture_not_found errors; all matched.kind='live'. Arguments were semantically correct throughout."
+                "rationale": "All MCP tool calls used correct arguments. The project_context call correctly identified the project path. The research_query calls for questions, conflicts, hypotheses, and timelines all used correct section names and project path. The person_warnings call correctly targeted person I1 (Rosalind). The research_append call correctly appended to the questions section with valid entry structure including question text, rationale, selection_basis, priority, status, depends_on, unblocks, and other required fields. All calls matched expected patterns and returned ok: true with no fixture_not_found errors."
               },
               {
                 "source": "rubric",
                 "name": "Question specificity",
                 "score": 3,
-                "rationale": "The question is concrete and answerable. It names the specific person (Rosalind Hartwell), includes identifying details (b. ca. 1855, Ohio), and specifies the exact fact sought (birth surname). The question is not vague like 'learn more about Rosalind' or 'who are her parents'\u2014it precisely targets the surname premise that must be resolved first. A follow-up search can be directly designed to answer it by examining census records, birth registers, and marriage documents."
+                "rationale": "The question is concrete and answerable. It names the specific person (Rosalind Hartwell with birth year ca. 1855 and location Ohio), specifies the exact fact being sought (birth surname), and is phrased as an open value question. The question is specific enough that a follow-up search could be designed to answer it through census records, birth registers, and marriage documents. It avoids vague phrasing like 'learn more about' and instead targets a precise, researchable fact that directly addresses the gating premise of the objective."
               }
             ],
-            "judge_cost_usd": 0.0096434,
+            "judge_cost_usd": 0.009963399999999999,
             "duration_ms": 8221.648999955505,
             "error": null,
             "input_tokens": 6049,
             "cached_input_tokens": 4144,
-            "output_tokens": 636
+            "output_tokens": 700
           },
           "started_at": 1792313991.8105035,
           "ended_at": 1792314051.4133868
@@ -16223,5 +16223,6 @@
       "research_append": "46bb5d157ea2b428dd8aabe4d0c7f6bcb0a0b4a8cdab7ec62e31353e11a32adb",
       "research_query": "7ee7572ae84b3f6494d74205d6ac06c766272f5c5a04d18f09ac920077a0ee3a"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }

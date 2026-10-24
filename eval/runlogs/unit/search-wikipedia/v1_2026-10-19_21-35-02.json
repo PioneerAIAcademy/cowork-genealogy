@@ -193,7 +193,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "This request is outside this toolkit's scope, as I handle genealogy research tasks only. If you have questions about looking up Wikipedia articles, searching historical records, or other genealogy research work, I am glad to help."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -964,11 +965,11 @@
                 "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of the content appears in the reply. The article content is correctly held in the log entry's notes, not duplicated in the response."
               }
             ],
-            "judge_cost_usd": 0.0080817,
+            "judge_cost_usd": 0.007608,
             "duration_ms": 9296.75661600777,
             "error": null,
             "input_tokens": 3988,
-            "cached_input_tokens": 4737,
+            "cached_input_tokens": 0,
             "output_tokens": 724
           },
           "started_at": 1792445818.6433158,
@@ -2773,7 +2774,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "# Albert Einstein\n\nAlbert Einstein (14 March 1879 \u2013 18 April 1955) was a German-born theoretical physicist who is widely held to be one of the greatest and most influential scientists of all time. Best known for developing the theory of relativity, Einstein also made important contributions to quantum mechanics. He emigrated from Germany to the United States in 1933 and became a U.S. citizen in 1940.\n\n---\n[Source](https://en.wikipedia.org/wiki/Albert_Einstein)"
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -6346,5 +6348,6 @@
     "live_modules": {
       "research_log_append": "1585d48736cc340502e166cacbb5e133414bcc32768127fa357254fe479fdb4f"
     }
-  }
+  },
+  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
 }
