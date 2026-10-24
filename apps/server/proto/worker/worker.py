@@ -223,6 +223,7 @@ from proto.worker.options import (  # noqa: E402
     build_worker_options,
     check_registration,
     cli_env_blanks,
+    gateway_plugin_copy,
     hook_path,
     make_posttool_hook,
     make_pretool_hook,
@@ -316,6 +317,9 @@ _stdout_lock = threading.Lock()
 # Parsed once at start (prepare); a real turn refuses to run without them.
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
+# The directory every attempt passes as plugins=: ENGINE_PLUGIN_DIR, or on the gateway
+# provider its copy with Bedrock agent models (gateway_plugin_copy).
+_PLUGIN_DIR: str = ENGINE_PLUGIN_DIR
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
 # AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap for a message WITHOUT max_nudges
 # (turn_max_nudges); 0 = no Stop hook for those. The web tier stamps its own cap on every
@@ -1508,12 +1512,29 @@ def prepare() -> None:
     """Everything a real turn needs that touches no network, done once; a failure is
     logged, fails only the real turns (the stub arms keep working) and fails /healthz.
     The schema is checked after listen, by ``start_schema_thread``."""
-    global _AGENTS, _AGENTS_ERROR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
+    global _AGENTS, _AGENTS_ERROR, _PLUGIN_DIR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
         log(ev="prepare", step="cwd", error=f"{type(exc).__name__}: {exc}", cwd=WORKER_CWD)
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
+    _PLUGIN_DIR = ENGINE_PLUGIN_DIR
+    try:
+        gateway = model_provider(os.environ) == "gateway"
+    except ProviderError:
+        gateway = False  # refused at start by require_start_config
+    if gateway and _AGENTS_ERROR is None:
+        try:
+            # Under TMPDIR, which every slot user can reach (setup_turn_users); mkdtemp is
+            # 0700. One worker per instance, so an earlier start's copy is stale.
+            for old in Path(tempfile.gettempdir()).glob("plugin-gateway-*"):
+                shutil.rmtree(old, ignore_errors=True)
+            dest = tempfile.mkdtemp(prefix="plugin-gateway-")
+            os.chmod(dest, 0o755)
+            _PLUGIN_DIR = gateway_plugin_copy(ENGINE_PLUGIN_DIR, dest)
+        except OSError as exc:
+            _AGENTS_ERROR = f"gateway plugin copy: {type(exc).__name__}: {exc}"
+            log(ev="prepare", step="plugin_copy", error=_AGENTS_ERROR)
     _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
     try:
         _AUTONOMOUS_MAX_NUDGES = parse_max_nudges(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
@@ -1528,7 +1549,7 @@ def prepare() -> None:
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
         blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
-        error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR,
+        error=_AGENTS_ERROR, plugin_dir=_PLUGIN_DIR,
         cli_version=cli_version,
     )
 
@@ -2480,7 +2501,7 @@ async def _run_turn(
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
-            plugin_dir=ENGINE_PLUGIN_DIR,
+            plugin_dir=_PLUGIN_DIR,
             agents=agents,
             store=store,
             config_dir=config_dir,

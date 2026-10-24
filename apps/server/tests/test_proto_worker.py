@@ -1257,6 +1257,68 @@ def test_every_shipped_agent_model_has_a_gateway_id():
     assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
 
 
+def _bedrock_or_inherit(model: str | None) -> bool:
+    return model is None or model.startswith(("us.", "global."))
+
+
+def test_gateway_plugin_copy_gives_every_namespaced_agent_a_bedrock_id(tmp_path):
+    """plugins= registers each agent again as genealogy-research:<agent> from its file; a
+    bare id there reached the gateway and got a 400 (handoff F4, 2026-10-24)."""
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    dest = options.gateway_plugin_copy(str(PLUGIN_DIR), str(tmp_path / "copy"))
+    source, copied = load_agent_definitions(PLUGIN_DIR), load_agent_definitions(Path(dest))
+    assert set(copied) == set(source) == AGENTS
+    assert any(not _bedrock_or_inherit(a.model) for a in source.values()), "the source keeps its bare ids"
+    wrong = sorted(n for n, a in copied.items() if not _bedrock_or_inherit(a.model))
+    assert not wrong, f"still a bare model id in the copy: {wrong}"
+    assert {n: a.model for n, a in copied.items()} == {
+        n: a.model for n, a in options.gateway_agent_models(source).items()}, "the same ids as agents="
+    for name, agent in copied.items():
+        assert (agent.prompt, agent.description, agent.tools) == (
+            source[name].prompt, source[name].description, source[name].tools), f"{name}: only the model changes"
+    rest = [p.relative_to(PLUGIN_DIR) for p in PLUGIN_DIR.rglob("*") if p.is_file() and p.parent.name != "agents"]
+    assert rest and all((Path(dest) / r).read_bytes() == (PLUGIN_DIR / r).read_bytes() for r in rest)
+
+
+def test_gateway_plugin_copy_rewrites_the_frontmatter_only(tmp_path):
+    agents = tmp_path / "src" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "mapped.md").write_text("---\nname: mapped\nmodel: claude-sonnet-5\n---\nmodel: claude-sonnet-5\n", encoding="utf-8")
+    (agents / "inherit.md").write_text("---\nname: inherit\n---\nmodel: claude-sonnet-4-6\n", encoding="utf-8")
+    (agents / "custom.md").write_text("---\nname: custom\nmodel: us.anthropic.claude-opus-5\n---\nbody\n", encoding="utf-8")
+    dest = Path(options.gateway_plugin_copy(str(tmp_path / "src"), str(tmp_path / "dest"))) / "agents"
+    assert (dest / "mapped.md").read_text(encoding="utf-8") == (
+        "---\nname: mapped\nmodel: us.anthropic.claude-sonnet-5\n---\nmodel: claude-sonnet-5\n")
+    assert (dest / "inherit.md").read_text(encoding="utf-8") == "---\nname: inherit\n---\nmodel: claude-sonnet-4-6\n"
+    assert (dest / "custom.md").read_text(encoding="utf-8") == "---\nname: custom\nmodel: us.anthropic.claude-opus-5\n---\nbody\n"
+    assert (agents / "mapped.md").read_text(encoding="utf-8").count("model: claude-sonnet-5") == 2, "source untouched"
+
+
+def test_prepare_passes_the_gateway_copy_as_the_plugin_dir(monkeypatch, tmp_path):
+    monkeypatch.setattr(worker, "log", lambda **f: None)
+    monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
+    monkeypatch.setattr(worker, "load_plugin_agents", lambda plugin_dir: ({}, None))
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+        monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
+    stale = tmp_path / "plugin-gateway-stale"
+    stale.mkdir()
+    monkeypatch.setenv("MODEL_PROVIDER", "gateway")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gw.example/bedrock")
+    worker.prepare()
+    copy = Path(worker._PLUGIN_DIR)
+    assert copy.parent == tmp_path and copy.name.startswith("plugin-gateway-") and worker._AGENTS_ERROR is None
+    assert not stale.exists(), "an earlier start's copy is removed"
+    if POSIX_MODES:
+        assert stat.S_IMODE(copy.stat().st_mode) == 0o755, "slot users read it"
+    assert (copy / "agents" / "search-wikipedia.md").read_text(encoding="utf-8").count("model: us.anthropic.") == 1
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    worker.prepare()
+    assert worker._PLUGIN_DIR == str(PLUGIN_DIR), "the Anthropic API takes the bare ids"
+
+
 # ── the container ─────────────────────────────────────────────────────────────────
 
 
