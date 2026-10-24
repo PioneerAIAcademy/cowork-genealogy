@@ -262,11 +262,15 @@ export async function finalizeStagedResults(args: {
 
   // 5. Write the real sidecar.
   const resultsRef = `results/${logId}.json`;
+  // `staged_ref` names the staged file this sidecar came from, so a re-send of an
+  // already-logged ref (after a context compaction) can be answered with the
+  // existing log id instead of a "not in results/.staging/" refusal (issue #3547).
   const sidecar = {
     log_id: logId,
     tool: envelope.tool,
     retrieved: envelope.retrieved,
     returned_count: returnedCount,
+    staged_ref: projectRelativeRef(projectPath, stagedResultsRef),
     payload,
   };
   await getProjectStore().writeJson(projectPath, resultsRef, sidecar);
@@ -277,6 +281,41 @@ export async function finalizeStagedResults(args: {
   const payloadQuery = stripQueryPlumbing((payload as { query?: unknown }).query);
 
   return { resultsRef, returnedCount, payloadQuery };
+}
+
+/**
+ * The log entry a staged ref was already finalized into, found through the
+ * `staged_ref` its sidecar records, or undefined. Consulted only when the staged
+ * file is gone (a live staged file has not been logged), so the sidecar scan runs
+ * on the re-log path alone. A sidecar written before `staged_ref` existed never
+ * matches, and a project whose sidecars cannot be read degrades to undefined.
+ */
+export async function findLoggedStagedRef(
+  projectPath: string,
+  stagedResultsRef: string,
+  log: readonly { id?: unknown; results_ref?: unknown }[],
+): Promise<{ logId: string; resultsRef: string; returnedCount: number | null } | undefined> {
+  const store = getProjectStore();
+  let ref: string;
+  try {
+    ref = projectRelativeRef(projectPath, stagedResultsRef);
+    if (await store.exists(projectPath, ref)) return undefined;
+  } catch {
+    return undefined;
+  }
+  for (const entry of log) {
+    if (typeof entry?.id !== "string" || typeof entry.results_ref !== "string") continue;
+    try {
+      const sidecar = JSON.parse(await store.readText(projectPath, entry.results_ref));
+      if (sidecar?.staged_ref === ref) {
+        const count = sidecar.returned_count;
+        return { logId: entry.id, resultsRef: entry.results_ref, returnedCount: typeof count === "number" ? count : null };
+      }
+    } catch {
+      // an unreadable sidecar is the validator's concern, not this lookup's
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -317,8 +356,9 @@ export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | unde
 }
 
 /**
- * Read a staged handle's producing tool and its plumbing-stripped echoed query,
- * without consuming it. Only a handle under `results/.staging/` is read, by the
+ * Read a staged handle's producing tool, its plumbing-stripped echoed query, its
+ * row count and the producer's `totalMatches` (undefined when absent or not a
+ * non-negative integer), without consuming it. Only a handle under `results/.staging/` is read, by the
  * same resolved-path test `finalizeStagedResults` applies; anything else, a
  * missing file or invalid JSON returns undefined, because a bad ref is
  * finalize's error to report.
@@ -326,7 +366,15 @@ export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | unde
 export async function readStagedEnvelopeQuery(
   projectPath: string,
   stagedResultsRef: string,
-): Promise<{ tool: string; query: Record<string, unknown> | undefined } | undefined> {
+): Promise<
+  | {
+      tool: string;
+      query: Record<string, unknown> | undefined;
+      returnedCount: number;
+      totalMatches: number | undefined;
+    }
+  | undefined
+> {
   try {
     const abs = assertInsideProject(projectPath, stagedResultsRef);
     if (!isInsideProject(join(projectPath, STAGING_SUBDIR), abs)) return undefined;
@@ -334,7 +382,14 @@ export async function readStagedEnvelopeQuery(
       await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
     );
     if (typeof envelope?.tool !== "string") return undefined;
-    return { tool: envelope.tool, query: stripQueryPlumbing(envelope.payload?.query) };
+    const results = envelope.payload?.results;
+    const total = envelope.payload?.totalMatches;
+    return {
+      tool: envelope.tool,
+      query: stripQueryPlumbing(envelope.payload?.query),
+      returnedCount: Array.isArray(results) ? results.length : 0,
+      totalMatches: Number.isInteger(total) && total >= 0 ? total : undefined,
+    };
   } catch {
     return undefined;
   }

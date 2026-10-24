@@ -568,6 +568,8 @@ export interface SidecarFile {
   tool: SidecarTool
   retrieved: string
   returned_count: number
+  /** The `results/.staging/` file this sidecar was finalized from; absent on older sidecars. */
+  staged_ref?: string
   payload: {
     results?: Array<RecordSearchResult | FulltextSearchResult>
     [key: string]: unknown

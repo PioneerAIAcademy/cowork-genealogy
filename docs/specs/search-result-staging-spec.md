@@ -242,7 +242,10 @@ When the log editor is called with `stagedResultsRef`, it (host-side):
    per `research-log-editor-spec.md` §4 ("never trusted from the caller"); the
    staged file's count is advisory.
 4. Wraps it as the full sidecar `{ log_id, tool, retrieved, returned_count,
-   payload }` and writes `results/<log_id>.json`.
+   staged_ref, payload }` and writes `results/<log_id>.json`. `staged_ref` is the
+   staged file's project-relative path, so a later re-send of the same ref (after a
+   context compaction) is answered with this entry's id instead of a refusal
+   (`research-log-editor-spec.md`, "A staged ref that was already logged").
 5. **After `research.json` commits**, removes the staged file
    (`consumeStagedResults`). Never before: finalize itself only writes, so a call
    refused after finalizing — a later op in a batch, the `query`-required check, or
@@ -301,9 +304,11 @@ same ground truth production does.
 - **A successful log consumes it; a refused one never does.** `research_log_append`
   removes the staged file only after its `research.json` write commits (§6 step 5).
   Every refusal — whatever stage it comes from — leaves the file, so a corrected
-  re-send finds it. A ref that is missing gets a message saying each staged ref can
-  be logged once, and whether to re-run the search or leave it: already logged,
-  pruned, or never staged.
+  re-send finds it. A missing ref that a sidecar records as its `staged_ref` was
+  already logged, and is answered with that entry (`research-log-editor-spec.md`,
+  "A staged ref that was already logged"). Any other missing ref, pruned or never
+  staged, gets a message saying each staged ref can be logged once, and whether to
+  re-run the search or leave it.
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally
