@@ -198,7 +198,7 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 
 ## Open questions for FamilySearch
 
-Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28, and none is recorded since. Rechecked against TAP's EKS gateway config on 2026-10-14: F2 is done and F4 answered (below), and F1, F3, F5 and F13 are reworded. Rechecked against fs-eng's own repos on 2026-10-23: F10 and most of F12 answered, F11's edge arms measured, and F11, F12 and F18 narrowed.
+Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28, and none is recorded since. Rechecked against TAP's EKS gateway config on 2026-10-14: F2 is done and F4 answered (below), and F1, F3, F5 and F13 are reworded. Rechecked against fs-eng's own repos on 2026-10-23: F10 answered, F11's edge arms measured, F11 and F18 narrowed; F12 answered by a Blueprint deploy on 2026-10-24.
 
 **Sent or drafted:**
 
@@ -214,13 +214,12 @@ Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sen
 - **F2:** agentgateway v1.6.0 runs on TAP's EKS gateway since our PR fs-eng/tap-gateway#46 merged 2026-10-12. Tool search through it is unmeasured: U14.
 - **F4:** no model allowlist exists, no `model:` is pinned and Sonnet 5 is aliased, so our ids pass. Sonnet 5 enabled is inferred; U14's first call shows it.
 - **F10 (sent 2026-09-18; no reply needed):** the Help team's stream is a plain `SseEmitter`, published through the `www` alias, so through DTM; it has no load test and says nothing about concurrency, which moves to F11.
-- **F12, most of it:** from the provisioner's source, Blueprint takes Python 3.12 and Node 24 on AL2023 (no custom AMI; no Docker), a `Beanstalk Worker v1_1` on Python (a warning, not an error), all of step 11's sqsd values as `worker_options`, and our `.ebextensions` and hooks (the worker hook renamed to the provisioner's `1XX_` convention).
+- **F12, by deploy (2026-10-24):** a Python 3.12 `Beanstalk Worker v1_1` deployed Green through Blueprint in FS112 (`fs-eng/search-agent-tools`): sqsd delivered, a 90 s turn and nginx's 43,200 s override held, a 500 was retried every 300 s and dead-lettered after 5. Three changes for us: `worker_options` override the bundle's sqsd file and `RetentionPeriod` comes out 1,209,600; CloudWatch log streaming fails the launch; load-balanced services get a Classic load balancer at 60 s. FamilySearch's build runner built all three bundles with Node 24 beside Python, once PR #3821 cleared Artifactory curation.
 
 **Not yet asked:**
 
 - **F8, InfoSec:** live bearer on every internal hop, grant at rest, a sha256 of the live bearer on `turns`, tool-server isolation: acceptable? Unblocks U3.
 - **F11, FS platform:** how many concurrent long-lived connections DTM and HAProxy carry, and may we load-test SSE through `www`? The edge arms are measured (2026-10-23, n=1 per path): no layer buffers or rewrites an SSE stream.
-- **F12, FS platform and DTL:** does a Python `Beanstalk Worker v1_1` deploy and run with the provisioner's own configs, and do our nginx overrides survive? A deploy answers it; we can run that ourselves from an fs-eng repo. Unblocks any FamilySearch deploy.
 - **F13, FS network:** VPC, egress and gateway allowlists (the gateway admits the VPN /14 and named security groups in its own shared VPC, so our VPC decides the ask), internal names past Imperva, HAProxy idle timer. Unblocks U14.
 - **F14, Blueprint:** Postgres, S3, SQS and DLQ, secrets, IAM; every worker-to-tools idle timeout, including the tool-server LB, ≥ 1,800 s; static S3 keys? For the scaling metric (U18): two Simple Scaling policies on different SQS metrics, a custom or metric-math metric, worker-set scale-in protection, the T3 credit mode. Unblocks any deploy.
 - **F15, FS OAuth owners (team unknown):** an integ client with our https redirect (F18), later production. The lifetimes are documented and revoke-on-refresh was measured, so only the client is asked. Unblocks U2, U3.
