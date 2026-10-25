@@ -919,15 +919,16 @@ Present the materialized household plainly.
 
 ### 8. Check the persons you linked to, then present
 
-After your last link, call `person_warnings` once for each person you linked
-to that **already existed in the tree before this invocation**, all of these
-calls in one message; never call it twice for the same person. Not a stub you minted this run — its facts
+After your last link, call `person_warnings` once, with `personId` set to the
+list of every person you linked to that **already existed in the tree before
+this invocation**. Not a stub you minted this run — its facts
 went through `materialize_facts`, which refuses a write that introduces an
 unjustified warning. A `pe_` link does not go through a writer tool, so an
 imported relative's pre-existing impossibility is surfaced by nothing else.
 
-Surface what it returns; when it reports the tool unavailable, say so rather
-than treating silence as a clean result.
+Surface what it returns, per person in `results`; an entry's `error`, a
+`birthplaceCheck` of `not_checked`, or the tool reported unavailable is a check
+that did not run — say so rather than treating it as a clean result.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
