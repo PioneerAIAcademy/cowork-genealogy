@@ -160,7 +160,10 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
     expect(errors[0]).toMatch(
       /^ops\[0\]: 'KWCB-111' has a recorded namesake \('ns_001'\), so a record goes onto 'KWCB-111''s facts and names only when something in it ties it to 'KWCB-111'\. The fact '.*' \(Occupation\) this op adds cites S2 \(research source 'src_002'\), and its link 'pe_3' to 'KWCB-111' is not tied: /,
     );
-    expect(errors[0]).toContain("Nothing was written. Cite only records that tie to 'KWCB-111', or tie the record first through person-evidence");
+    expect(errors[0]).toContain(
+      "Nothing was written. Cite only records that tie to 'KWCB-111', or hand the link to the person-evidence agent, which owns person_evidence, to tie it first",
+    );
+    expect(errors[0]).not.toMatch(/\.\.\s/);
   });
 
   it("T2 writes a fact citing a record its wife's link ties", async () => {

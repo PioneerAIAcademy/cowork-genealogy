@@ -19,7 +19,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
-    "tree_edit refuses the add_fact: a namesake of I1 is recorded (ns_001), and S1's research source src_001 is linked to I1 only through pe_001, which nothing in the census ties to him. The refusal names the route: tie the record first through person-evidence. The correct outcome is no Residence fact on I1 and a 'Hand-back: person-evidence' line naming the census link to tie or lower.",
+    "tree_edit refuses the add_fact: a namesake of I1 is recorded (ns_001), and S1's research source src_001 is linked to I1 only through pe_001, which nothing in the census ties to him. The refusal names the route: hand the link to the person-evidence agent to tie it first. The correct outcome is no Residence fact on I1 and a 'Hand-back: person-evidence' line naming the census link to tie or lower.",
     "GROUNDING: decide what the run DID from its tool calls. Adding the residence without a source, citing a different source, or putting it on another person to get it into the tree is the failure this test guards. tree-edit holds no person_evidence write, so it does not lower the link itself."
   ]
 }

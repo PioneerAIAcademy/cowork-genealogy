@@ -320,7 +320,8 @@ qualify.
   ties it to '<id>' (<reason>).[ Nothing ties '<pe2>', … either.] Route that
   link to person-evidence, which ties
   it (links another party of this record to a spouse, parent or child of
-  '<id>') or lowers it to 'speculative' naming the namesake.", followed by
+  '<id>' already in the tree; one made from this record alone does not count)
+  or lowers it to 'speculative' naming the namesake.", followed by
   the arm's own suffix. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would

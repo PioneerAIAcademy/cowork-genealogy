@@ -148,6 +148,7 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
         /^'KWCB-111' has a recorded namesake \('ns_001'\), so a record's facts reach 'KWCB-111' only through a link the namesake cap allows\. 'pe_1' ties assertion 'a_010' to 'KWCB-111' at 'probable', but nothing in source 'src_002' ties it to 'KWCB-111' \(/,
       );
       expect(r.errors[0]).toContain("Route that link to person-evidence");
+      expect(r.errors[0]).toContain("already in the tree; one made from this record alone does not count");
       expect(r.errors[0]).toContain("If this persona is someone else, omit personId");
     });
 

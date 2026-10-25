@@ -526,7 +526,7 @@ cited record reads as made from it, and does not tie it.
 A finding refuses the whole call and nothing is written, `ops[i]: <text>` in the
 batch form:
 
-> `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or tie the record first through person-evidence; a relationship added in this same call does not count, so add it in an earlier call.`
+> `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or hand the link to the person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same call does not count, so add it in an earlier call.`
 
 **Measured** at `bb8af9a54` by `dev/measure-namesake-cap.ts` §6 over the committed
 e2e runs, with a row planted on every person holding a live `probable` or

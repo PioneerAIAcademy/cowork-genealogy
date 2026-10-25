@@ -3323,15 +3323,16 @@ export function namesakeCitationRefusals(
             ? `it has no probable or confident link to '${c.personId}'`
             : judgedStrong === undefined
               ? `its only link to '${c.personId}' rests on an assertion that records an absence, which ties nothing`
-              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it"}`;
+              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${(v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it").replace(/\.$/, "")}`;
         findings.push({
           index: c.index,
           message:
             `'${c.personId}' has a recorded namesake (${own.map((r) => `'${r.id}'`).join(", ")}), so a record goes ` +
             `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
             `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
-            `Nothing was written. Cite only records that tie to '${c.personId}', or tie the record first through ` +
-            "person-evidence; a relationship added in this same call does not count, so add it in an earlier call.",
+            `Nothing was written. Cite only records that tie to '${c.personId}', or hand the link to the ` +
+            "person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same " +
+            "call does not count, so add it in an earlier call.",
         });
       }
     }
