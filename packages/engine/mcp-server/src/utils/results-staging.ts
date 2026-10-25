@@ -262,15 +262,11 @@ export async function finalizeStagedResults(args: {
 
   // 5. Write the real sidecar.
   const resultsRef = `results/${logId}.json`;
-  // `staged_ref` names the staged file this sidecar came from, so a re-send of an
-  // already-logged ref (after a context compaction) can be answered with the
-  // existing log id instead of a "not in results/.staging/" refusal (issue #3547).
   const sidecar = {
     log_id: logId,
     tool: envelope.tool,
     retrieved: envelope.retrieved,
     returned_count: returnedCount,
-    staged_ref: projectRelativeRef(projectPath, stagedResultsRef),
     payload,
   };
   await getProjectStore().writeJson(projectPath, resultsRef, sidecar);
@@ -285,37 +281,28 @@ export async function finalizeStagedResults(args: {
 
 /**
  * The log entry a staged ref was already finalized into, found through the
- * `staged_ref` its sidecar records, or undefined. Consulted only when the staged
- * file is gone (a live staged file has not been logged), so the sidecar scan runs
- * on the re-log path alone. A sidecar written before `staged_ref` existed never
- * matches, and a project whose sidecars cannot be read degrades to undefined.
+ * `staged_ref` the entry records, or undefined. A scan of the research.json the
+ * caller already holds, with no sidecar reads: on a hosted store each sidecar is
+ * an object fetch of a full payload, and the missing-ref path (expired refs
+ * included) would pay one per logged search. Consulted only when the staged file
+ * is gone, since a live staged file has not been logged. An entry written before
+ * `staged_ref` existed never matches, so its re-log keeps the refusal.
  */
 export async function findLoggedStagedRef(
   projectPath: string,
   stagedResultsRef: string,
-  log: readonly { id?: unknown; results_ref?: unknown }[],
-): Promise<{ logId: string; resultsRef: string; returnedCount: number | null } | undefined> {
-  const store = getProjectStore();
+  log: readonly { id?: unknown; results_ref?: unknown; staged_ref?: unknown }[],
+): Promise<{ logId: string; resultsRef: string | null } | undefined> {
   let ref: string;
   try {
     ref = projectRelativeRef(projectPath, stagedResultsRef);
-    if (await store.exists(projectPath, ref)) return undefined;
+    if (await getProjectStore().exists(projectPath, ref)) return undefined;
   } catch {
     return undefined;
   }
-  for (const entry of log) {
-    if (typeof entry?.id !== "string" || typeof entry.results_ref !== "string") continue;
-    try {
-      const sidecar = JSON.parse(await store.readText(projectPath, entry.results_ref));
-      if (sidecar?.staged_ref === ref) {
-        const count = sidecar.returned_count;
-        return { logId: entry.id, resultsRef: entry.results_ref, returnedCount: typeof count === "number" ? count : null };
-      }
-    } catch {
-      // an unreadable sidecar is the validator's concern, not this lookup's
-    }
-  }
-  return undefined;
+  const entry = log.find((e) => e?.staged_ref === ref && typeof e.id === "string");
+  if (!entry) return undefined;
+  return { logId: entry.id as string, resultsRef: typeof entry.results_ref === "string" ? entry.results_ref : null };
 }
 
 /**

@@ -31,6 +31,7 @@ import {
   noProjectResult,
   isInsideProject,
   assertInsideProject,
+  projectRelativeRef,
 } from "../utils/project-io.js";
 import {
   checkStagedResults,
@@ -2023,6 +2024,9 @@ async function applyLogAppendOp(
     resultsRef = fin.resultsRef;
     returnedCount = fin.returnedCount;
     entry.results_ref = resultsRef;
+    // The staged file this entry came from, so a re-send of the same ref after a
+    // context compaction is answered with this entry (findLoggedStagedRef).
+    entry.staged_ref = projectRelativeRef(projectPath, stagedResultsRef);
     sidecarsCreated.push(resultsRef);
     stagedConsumed.push(stagedResultsRef);
 
@@ -2183,7 +2187,7 @@ export async function researchLogAppend(
       return found;
     };
     const alreadyLoggedResult = (
-      found: { logId: string; resultsRef: string; returnedCount: number | null },
+      found: { logId: string; resultsRef: string | null },
       field: string,
     ): ResearchLogAppendOpResult => {
       const prior = research.log.find((e: { id?: string }) => e.id === found.logId);
@@ -2194,7 +2198,7 @@ export async function researchLogAppend(
         logId: found.logId,
         performed: typeof prior?.performed === "string" ? prior.performed : "",
         resultsRef: found.resultsRef,
-        returnedCount: found.returnedCount,
+        returnedCount: null,
         alreadyLogged: true,
       };
     };

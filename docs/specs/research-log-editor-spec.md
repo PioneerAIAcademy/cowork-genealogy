@@ -133,13 +133,14 @@ them all; the batch still writes all or nothing.
 
 **A staged ref that was already logged.** Re-sending a `stagedResultsRef` whose
 staged file is gone because an earlier call finalized it (typically after a
-context compaction) is answered with that entry, not refused: the sidecar records
-the staged file it came from (`staged_ref`, research-schema-spec §5.4.1), the call
-returns that entry's `logId`, `resultsRef` and `returnedCount` with
+context compaction) is answered with that entry, not refused: the log entry records
+the staged file it came from (`staged_ref`, research-schema-spec log entry), so the
+lookup is a scan of the `research.json` already loaded, with no sidecar read. The
+call returns that entry's `logId` and `resultsRef` (`returnedCount` null) with
 `alreadyLogged: true` and a warning naming the id, and writes nothing for that op.
 A re-send that names a different `tool`, `planItemId` or `outcome` than the
 entry is refused instead, naming the entry and each difference.
-In a batch, every other op is logged as usual. A ref no sidecar names keeps the
+In a batch, every other op is logged as usual. A ref no log entry names keeps the
 "not in `results/.staging/`" refusal.
 
 **Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
@@ -224,8 +225,8 @@ no other `tool` value is touched.
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`
 (`results/<log_id>.json` when a sidecar is written, else `null`), and the entire
 sidecar envelope — `log_id`, `retrieved`, `returned_count` (counted from the
-payload, never trusted from the caller) and `staged_ref` (the staged file it came
-from). For a record_search `stagedResultsRef`, it also fills `outcome`,
+payload, never trusted from the caller). On the log entry it also writes
+`staged_ref`, the staged file the sidecar came from. For a record_search `stagedResultsRef`, it also fills `outcome`,
 `results_examined` and `results_available` when the caller omits them (§7). Because `results_ref` is tool-constructed
 as `results/<log_id>.json`, the validator's path-traversal guard is satisfied by
 construction.
@@ -408,8 +409,8 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
-| `stagedResultsRef` names no staged file and no sidecar records it — pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
-| `stagedResultsRef` names no staged file, but a sidecar records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
+| `stagedResultsRef` names no staged file and no log entry records it — pruned after 24h, never staged, or logged before `staged_ref` existed | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
+| `stagedResultsRef` names no staged file, but a log entry records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
 | that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |

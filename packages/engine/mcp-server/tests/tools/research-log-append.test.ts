@@ -236,11 +236,26 @@ describe("research_log_append", () => {
       expect((result as { errors: string[] }).errors[0]).toContain("missing required fields `outcome`, `query`");
     });
 
-    it("records the staged ref in the sidecar", async () => {
+    it("records the staged ref on the log entry, not the sidecar", async () => {
       await writeProject(baseResearch());
       const handle = await stage();
       await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
-      expect((await readJson("results/log_001.json")).staged_ref).toBe(handle!.resultsRef);
+      expect((await readJson("research.json")).log[0].staged_ref).toBe(handle!.resultsRef);
+      expect((await readJson("results/log_001.json")).staged_ref).toBeUndefined();
+      expect((await validateProject(dir)).valid).toBe(true);
+    });
+
+    it("keeps the refusal for an entry logged before staged_ref existed", async () => {
+      await writeProject(baseResearch());
+      const handle = await stage();
+      await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
+      const research = await readJson("research.json");
+      delete research.log[0].staged_ref;
+      await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+
+      const again = await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
+      expect(again.ok).toBe(false);
+      expect((again as { errors: string[] }).errors[0]).toContain("is not in results/.staging/");
     });
 
     it("answers a re-sent, already-logged ref with the existing entry and writes nothing", async () => {
