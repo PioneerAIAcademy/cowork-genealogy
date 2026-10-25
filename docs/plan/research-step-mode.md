@@ -1277,7 +1277,8 @@ in parallel with PR 2.
   (`test_step_boundary_premises.py`, `test_effort_settings.py`, `test_proto_worker.py`,
   `test_write_lockdown.py`, and the harness's `test_foreground_rewrite_parity.py`,
   `test_skill_runner.py` and `test_e2e_context_block.py`). Re-point the comments that give the
-  veto as their reason (`delegation.py`'s docstring, `test_write_lockdown.py`'s section on it).
+  veto as their reason: `delegation.py`'s docstring, `real_agent.py`'s comment above the
+  rewrite, and `test_write_lockdown.py`'s section on it.
 - **Delete the same-turn hand-off lines** in research-plan and search-records. That makes
   search-records a paid run here.
 
