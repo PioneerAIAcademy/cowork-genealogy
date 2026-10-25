@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_024",
+    "skill": "proof-conclusion",
+    "name": "A death proved only by a record untied to a person with a namesake is not encoded onto him",
+    "type": "positive",
+    "description": "A namesake row is recorded on I1 Elijah Wilkins, and the 1885 estate record's death link to him has been lowered to speculative for it. Concluding q_001, the agent may write a proof summary at the tier the evidence supports, but tree_edit refuses a death fact on I1 citing that record, and nothing else attests the death. The agent must not encode the death by another route; it names the way to tie the record (person-evidence linking the administrator, his son Jesse, to I2) as the next step. Issue #3363, PR 2 (the 1e check).",
+    "tags": [
+      "namesake",
+      "namesake-encoding"
+    ]
+  },
+  "input": {
+    "delegation": "Run your preconditions gate, then conclude the question at whatever tier the evidence supports, including `possible` or `not_proved`, and encode the conclusion in the tree. Decline only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "namesake-planted-bounded-death"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "judge_context": [
+    "With a namesake recorded on I1 (ns_001) and pe_001 lowered to speculative naming him, the estate record does not establish the death for I1 above possible, and tree_edit refuses any fact on I1 citing S1: no link from that record to I1 is one the namesake cap allows. A proof summary at possible or not_proved, no death fact encoded, and the route named (person-evidence can tie the record by linking the administrator Jesse Wilkins to I2, I1's son) is the correct outcome.",
+    "GROUNDING: decide what the run DID from its tool calls. Encoding a Death fact on I1 by another route (citing a different source, citing none, or putting it on another person) is the failure this test guards. A refused tree_edit call followed by an honest report is correct, not a defect.",
+    "A gate-stop that declines to conclude because the only identity link is speculative is also acceptable, provided nothing is encoded and the reason is stated."
+  ]
+}

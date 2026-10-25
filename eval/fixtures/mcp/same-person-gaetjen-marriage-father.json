@@ -1,0 +1,24 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the father of the bride (Hermann Gaetjen, persona p_10727698602) in the 1913 marriage of Amelie Ottilie Gaetjen against tree person I1. Hand-authored for ut_person_evidence_028 (issue #3363), not a live capture: the record is already attached to this person in the FamilySearch tree (S8, S33, S48 in the scenario), so a strong score is the realistic answer.",
+  "args": {
+    "assertionId": "~a_020",
+    "treePersonId": "~I1"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 9,
+    "score": 0.97,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "p_10727698602",
+      "name": "Hermann Gaetjen",
+      "role": "father_of_bride"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Hermann Gaetjen"
+    }
+  }
+}

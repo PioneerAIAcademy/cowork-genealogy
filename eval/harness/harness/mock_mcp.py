@@ -118,8 +118,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
-# `tree_forget`, `external_links_search`) have no handler to mirror. The drift lint in
+# LIVE_TOOLS — the two that are not live here (`tree_forget`,
+# `external_links_search`) have no handler to mirror. The drift lint in
 # tests/unit/test_mock_mcp.py pins that intersection, so a new tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
@@ -133,6 +133,7 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "tree_edit",
     "tree_correct",
     "materialize_facts",
+    "merge_tree_persons",
     "project_context",
     "research_query",
     # Every `ok: false` but `no_project` (invalid_ref, not_found, not_text) is
@@ -1634,6 +1635,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "tree_correct": ("tree-correct.js", "treeCorrect"),
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
     "merge_warnings": ("merge-warnings.js", "mergeWarnings"),
+    "merge_tree_persons": ("merge-tree-persons.js", "mergeTreePersons"),
     "person_warnings": ("person-warnings.js", "personWarningsTool"),
     "project_context": ("project-context.js", "projectContext"),
     "research_query": ("research-query.js", "researchQuery"),

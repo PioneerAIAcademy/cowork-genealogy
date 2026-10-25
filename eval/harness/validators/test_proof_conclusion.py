@@ -863,3 +863,18 @@ def test_stale_proof_refreshed(before_state, after_state, test):
         f"{_STALE_PROOF_ID}'s {', '.join(stale)} still lists Walworth's Hyde "
         "Genealogy as still to search, though log_021 searched both volumes"
     )
+
+
+def test_namesake_untied_death_not_encoded(before_state, after_state, test):
+    """Tag-gated (`namesake-encoding`): with a namesake recorded on I1 and the
+    estate record untied to him, no Death or Burial fact is added to I1."""
+    if "namesake-encoding" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-encoding test")
+
+    def facts(state):
+        tree = state.get("tree_gedcomx_json") or {}
+        person = next((p for p in tree.get("persons") or [] if p.get("id") == "I1"), {})
+        return person.get("facts") or []
+
+    added = [f for f in facts(after_state) if f not in facts(before_state) and f.get("type") in ("Death", "Burial")]
+    assert not added, f"a death was encoded onto I1 from a record untied to him under the namesake row: {added}"
