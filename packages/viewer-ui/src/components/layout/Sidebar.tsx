@@ -81,6 +81,7 @@ export default function Sidebar({
       label: 'Person Evidence',
       countFn: () => research?.person_evidence?.length ?? 0
     },
+    { key: 'namesakes', label: 'Namesakes', countFn: () => research?.namesakes?.length ?? 0 },
     { key: 'conflicts', label: 'Conflicts', countFn: () => research?.conflicts?.length ?? 0 },
     { key: 'hypotheses', label: 'Hypotheses', countFn: () => research?.hypotheses?.length ?? 0 },
     { key: 'timelines', label: 'Timelines', countFn: () => research?.timelines?.length ?? 0 },
