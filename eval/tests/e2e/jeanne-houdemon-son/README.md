@@ -28,17 +28,48 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 12, `hint-samples.csv` row 391,
-flag `adds_son`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "France, Mayenne, Parish and Civil Registration, 1427-1897", the baptism of François Ferré at Saint-Michel-de-la-Roë on 14 April 1679, son of Michel Ferré and **Jeanne Jourdan**. The index gives no godparents.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming François Ferré (bapt. 1679) as her son, plus a `required` finding that the report documents
-the rejection.
+**Resolved: TRUE MATCH** (Resolved 2026-10-25; index-based, `image_basis: false`).
+Retrieval was tool-assisted (MCP `record_read` / `record_search` against live
+FamilySearch); the identity judgement is the genealogists'.
 
-A plausible candidate on father, place and date, with one obstacle: the mother's surname. The father's name and the parish match exactly, and April 1679 falls in the 1674–1682 gap between the couple's dated baptisms, when Jeanne was 37. The surname is the problem — the index reads **Jourdan**, not Houdemon. Against that, the indexers have already read her surname as Houdemon, Houderon, Houderoun, Goudron and plain "Jeanne" across her own sources, and "Jourdan" sits within that spread for a hand where H/G/J and -mon/-ron/-dan are easily confused. None of the tree's sources is this baptism.
+**What the index establishes.** The hinted 1679 baptism
+(`ark:/61903/1:1:6ZQJ-FPG4`) records François Ferré, baptised 14 April 1679 at
+Saint-Michel-de-la-Roë, with the father's indexed name **Michel Ferré**, the
+mother's given name **Jeanne**, and the parish — all matching the subject's
+couple. The father's name is **strongly discriminating** against the subject's
+sister's household: **Renée Houdemon's husband is René Ferré** — named as father
+on her children's baptisms (Jacquinne 1675 `6ZQJ-GDNH`; René and Marie 1678
+`6Z76-XRNS`, `6Z76-ZSLQ`) — and no other Michel Ferré couple appeared among the
+parish's 1678–1680 Ferré baptisms that were examined. The baptism falls in the
+gap between the couple's documented children, **Marguerite (18 Apr 1674,
+`6ZQJ-62ZH`)** and **Marie (29 Dec 1682, `6ZQJ-RMQL`)**, with the mother about 37.
 
-The second risk is a competing household. Her sister **Renée Houdemon** also had children surnamed Ferré in the same parish (René and Marie, April 1678; Jacquinne, 1675; Marguerite, 1680), so there was more than one Ferré–Houdemon couple baptising children here in these years, and a Michel Ferré/Fevre also appears beside Renée in 1686. The discriminating check is the baptism image: read the mother's surname on the page, comparing it with how the same curé wrote "Houdemon" on the 1674 Marguerite and 1682 Marie entries, and the father's name against Renée's husband's on the 1678 and 1680 entries. If the 1679 entry reads Houdemon (or a recognisable form of it) with father Michel, the son is Jeanne's; a genuinely different surname, or Renée's husband as father, makes it someone else's child.
+**The maternal surname — supports, does not prove.** The one field that does not
+read "Houdemon" is the mother's surname, and it is rendered differently across
+the couple's own entries: **"Janne Houderon"** on the 1674 baptism, **blank** on
+the 1682 baptism, and **"Jourdan"** on this 1679 entry. These varying renderings
+are consistent with a single hard-to-read surname and **support** the conclusion
+that the same woman is meant, but they do **not** independently prove it.
+
+**Direct register reading — supporting context, not a licensed finding.** The
+researcher examined the original 1679 register (image
+`ark:/61903/3:1:3QHV-V3DF-YZXX`; film 008719491, image 1451) and reads the
+mother's surname as **"Houdemoy"**, a plausible variant of Houdemon. This is
+**supporting context from direct human examination only.** It is **not** a
+calibrated image finding: **Step 1a same-page calibration could not be
+completed**, because the two other baptisms on the page (Mathurin Feron,
+19 Mar 1679; Brigitte le Bretton, 7 Apr 1679) are not in the FamilySearch index,
+leaving fewer than two indexed same-page entries to license a reading. The reading
+is therefore **unlicensed** and is not the basis of this resolution. The machine
+OCR of the page was unstable across passes (it rendered the surname
+"Gaudenoy"/"Gaudrioy") and is **not** the source of the "Houdemoy" reading and is
+**not** cited as confirming any reading.
+
+**Conclusion.** On the index evidence — father Michel Ferré, the mother's given
+name Jeanne, the parish, and the sibling-gap chronology, with the differing
+renderings of the maternal surname taken as variation in the indexed surname
+rather than evidence of a different woman — the hint is accepted as a **true
+match**: François Ferré (baptised 14 April 1679) is the son of Michel Ferré and
+Jeanne Houdemon. `image_basis` is false; the resolution rests on the index and
+chronology, not on the unlicensed register reading. Isaac Boateng, a second
+genealogist, concurs with the true-match assessment.
