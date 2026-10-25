@@ -134,13 +134,14 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     and phase 2 keeps it when it deletes the veto.
 27. **Cowork's agents run in the foreground too.** Cowork ships no step hook (decision 25). Its
     plugin hook sees every `Agent` call, to deny forks (PR #3762), but does not rewrite it, and
-    nothing in the plugin sets the key. In Cowork a delegation's result already arrives later,
-    as a message (ADR-0005, the third Cowork session), and on the hosted alpha the model left
-    the key out or set it true on 26–72% of its spawns. So a Cowork step can report and offer
-    "Continue with …?" before its agents return. **Open, for the lead:** the mechanism. Either
-    the router's spawn rule (`skills/research/SKILL.md:215`) and forget-and-rederive's two
-    spawns pass `run_in_background: false`, or a stateless arm in the plugin hook rewrites the
-    call, or both. PR 2's router and its tests wait on the answer.
+    nothing in the plugin sets the key. On the hosted alpha the model left the key out or set
+    it true on 26–72% of its spawns, so a Cowork step can report and offer "Continue with …?"
+    before its agents return. Still unmeasured in Cowork: whether its `Agent` schema offers the
+    key, whether it applies a plugin hook's `updatedInput`, and whether it moves a long agent to
+    the background after about two minutes (`CLAUDE_AUTO_BACKGROUND_TASKS`). **Open, for the
+    lead:** the mechanism. Either the router's spawn rule (`skills/research/SKILL.md:215`) and
+    forget-and-rederive's two spawns pass `run_in_background: false`, or a stateless arm in the
+    plugin hook rewrites the call, or both. PR 2's router and its tests wait on the answer.
 28. **Step mode measures cost as well as wait:** spend per step, and the reply each boundary
     got (Measuring "respond sooner").
 
