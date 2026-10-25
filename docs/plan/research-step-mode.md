@@ -132,16 +132,29 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     because it cannot see a background agent, and from PR 1 no hosted turn binds it (cap 0,
     section A). So PR 1 keeps the rewrite bound in the hook it edits (section A's host table),
     and phase 2 keeps it when it deletes the veto.
-27. **Cowork's agents run in the foreground too.** Cowork ships no step hook (decision 25). Its
-    plugin hook sees every `Agent` call, to deny forks (PR #3762), but does not rewrite it, and
-    nothing in the plugin sets the key. On the hosted alpha the model left the key out or set
-    it true on 26–72% of its spawns, so a Cowork step can report and offer "Continue with …?"
-    before its agents return. Still unmeasured in Cowork: whether its `Agent` schema offers the
-    key, whether it applies a plugin hook's `updatedInput`, and whether it moves a long agent to
-    the background after about two minutes (`CLAUDE_AUTO_BACKGROUND_TASKS`). **Open, for the
-    lead:** the mechanism. Either the router's spawn rule (`skills/research/SKILL.md:215`) and
-    forget-and-rederive's two spawns pass `run_in_background: false`, or a stateless arm in the
-    plugin hook rewrites the call, or both. PR 2's router and its tests wait on the answer.
+27. **Cowork's agents run in the foreground too, by the router's wording first.** Cowork ships
+    no step hook (decision 25). Its plugin hook sees every `Agent` call, to deny forks (PR
+    #3762), but does not rewrite it, and nothing in the plugin sets the key. On the hosted alpha
+    the model left the key out or set it true on 26–72% of its spawns, so a Cowork step can
+    report and offer "Continue with …?" before its agents return.
+    - **The wording:** the router's spawn rule (`skills/research/SKILL.md:215`) passes
+      `run_in_background: false` on every `@plugin:` spawn, with a test (PR 2).
+      forget-and-rederive's two spawns stay as they are: the skill is alpha-only and goes at the
+      end of 2026.
+    - **One Cowork session first** (Praise, as in phase 0), before PR 2's paid router run. It
+      records Cowork's Claude Code version (from the transcript), whether its `Agent` tool offers
+      `run_in_background`, whether it applies a plugin hook's `updatedInput` (a probe plugin that
+      rewrites the key), and whether it moves an agent running over about two minutes to the
+      background (`CLAUDE_AUTO_BACKGROUND_TASKS`). If the tool does not offer the key, neither the
+      wording nor a hook can work, and this decision goes back to the lead.
+    - **The miss rate:** after PR 2 the worker's `ev=foregrounded` log line fires only on a spawn
+      the wording did not mark `false`, and the wording is the same on every plane, so that rate
+      stands for Cowork's, as rider 2's halt count does.
+    - **A hook arm only if needed:** a stateless rewrite in `guard_project_files.py`, built only if
+      the Cowork session shows Cowork applies a plugin hook's `updatedInput` and the miss rate is
+      high. It must then stand aside on the hosted planes, through a variable they set: when two
+      hooks rewrite one call, the last to finish replaces the whole input (measured 2026-10-25 on
+      2.1.215 to 2.1.308), so a plugin arm would drop the alpha's `effort`.
 28. **Step mode measures cost as well as wait:** spend per step, and the reply each boundary
     got (Measuring "respond sooner").
 
@@ -1193,7 +1206,8 @@ in parallel with PR 2.
   - question-selection's two-fact ask would end a hosted turn the Stop veto still re-opens, and
     e2e's two-question fixtures are re-scoped only in PR 1; its gate text states PR 1's rule.
   - **the router:** A's deletions; the step report and only the replies that apply; the search
-    fan-out, external items included (D, I); the choice replacing the loop row (the row beginning *"`research-exhaustiveness` returned \"not yet exhaustive\""*; `:258` on `main`);
+    fan-out, external items included (D, I); the spawn rule passing `run_in_background: false`
+    on every `@plugin:` spawn (decision 27); the choice replacing the loop row (the row beginning *"`research-exhaustiveness` returned \"not yet exhaustive\""*; `:258` on `main`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
     proof-conclusion; the different-question reply and its wrap-up offer, and the conflict row
     following the ladder's `nextStep` with the no-next-step row above it (E); the upload turn
@@ -1223,7 +1237,11 @@ in parallel with PR 2.
     - the new tests for B2's wrap-up before evidence, E's different-question reply, I and J in
       acceptance item 7, and the unsettled-conflict "continue runs no step" case;
     - a search step with a hints item reports triage's recommendations as statements and still
-      ends "Continue with linking the records?" (D), when issue #3153 has landed.
+      ends "Continue with linking the records?" (D), when issue #3153 has landed;
+    - a `test_research.py` validator: every main-thread `Agent` spawn in `builtin_tool_calls`
+      carries `run_in_background` `"False"` (the unit harness records the model's own input
+      before its rewrite), shown failing on today's router (decision 27).
+  - **Before PR 2's paid router run, one Cowork session** (Praise; decision 27's four checks).
   - **After deploy, one manual check on the alpha** (lead, 2026-10-21): open a session and
     confirm a step ends at its question and WAITS for the researcher. Nobody has measured
     `AskUserQuestion` on the alpha — ADR-0005 item 10 measured it in Cowork, where it waits
@@ -1365,6 +1383,8 @@ in parallel with PR 2.
    - a decline writes the overturn-risk verdict and offers its default;
    - a plan of five or more items runs its independent searches as parallel tool calls. The
      4-spawn width test moves to issue #2243's PR (section D);
+   - every main-thread `Agent` spawn in a research test passes `run_in_background: false`
+     (decision 27);
    - an unresolved conflict that needs new evidence ends offering a research-plan step, not a
      new question, and hypothesis-tracking, timeline and proof-conclusion route
      a needed search the same way;
