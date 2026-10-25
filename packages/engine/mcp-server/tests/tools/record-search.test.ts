@@ -438,14 +438,26 @@ describe("buildSearchUrl param mapping", () => {
   });
 
   // Issue #3547: a search built straight from a plan item is not refused.
-  it.each(["land", "court", "tax"])("19a. plan type %s searches 'other' (f.recordType=7)", (type) => {
+  // Issue #3547: a plan item's record_type searches where its records are
+  // indexed (dev/probe-record-type-aliases.ts), one f.recordType per type.
+  it.each([
+    ["land", [7]],
+    ["tax", [7, 3]],
+    ["court", [7, 6]],
+    ["vital_record", [0, 1, 2]],
+    ["church", [0, 1, 2]],
+    ["cemetery", [2]],
+  ])("19a. plan type %s sends f.recordType %j", (type, codes) => {
     expect(() => validateInput({ surname: "Smith", recordType: type as never })).not.toThrow();
-    expect(buildSearchUrl({ surname: "Smith", recordType: type as never })).toContain("f.recordType=7");
+    const url = buildSearchUrl({ surname: "Smith", recordType: type as never });
+    const sent = [...url.matchAll(/f\.recordType=(\d+)/g)].map((m) => Number(m[1]));
+    expect(sent).toEqual(codes);
   });
 
-  it.each(["vital_record", "church", "cemetery"])("19b. plan type %s sends no type filter", (type) => {
-    expect(() => validateInput({ surname: "Smith", recordType: type as never })).not.toThrow();
-    expect(buildSearchUrl({ surname: "Smith", recordType: type as never })).not.toContain("f.recordType");
+  it("19b. an upstream type still sends exactly one f.recordType", () => {
+    const url = buildSearchUrl({ surname: "Smith", recordType: "census" });
+    expect([...url.matchAll(/f\.recordType=/g)]).toHaveLength(1);
+    expect(url).toContain("f.recordType=3");
   });
 
   it("19c. the schema enum advertises the plan types it accepts", () => {
