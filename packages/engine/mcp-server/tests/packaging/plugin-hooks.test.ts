@@ -755,6 +755,45 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("person_evidence");
   });
 
+  // ── caller-routed sections: research_append + namesakes (issue #3363) ──
+  //
+  // Section-scoped like person_evidence. The owner also writes plan_items, so a
+  // row batched with its plan item's status is the case its lane must admit.
+  const NS_OWNER = "genealogy-research:search-records";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "namesakes", op: "append", entry: {} }, {}],
+    ["update in place, no agent_id", { section: "namesakes", op: "update", entryId: "ns_001", fields: {} }, {}],
+    ["agent_type present but agent_id absent", { section: "namesakes", op: "append" }, { agent_type: NS_OWNER }],
+    ["a general-purpose stand-in", { section: "namesakes", op: "append" }, { agent_id: "a1", agent_type: "general-purpose" }],
+    ["the person-evidence agent", { section: "namesakes", op: "append" }, { agent_id: "a1", agent_type: PE_OWNER }],
+  ])("denies research_append on namesakes — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("namesakes");
+  });
+
+  it("names search-records as the route out of a main-thread namesakes write", () => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input: { section: "namesakes", op: "append", entry: {} } });
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:search-records");
+  });
+
+  it.each([
+    ["a row", { section: "namesakes", op: "append", entry: {} }],
+    [
+      "a row batched with its plan item's status",
+      {
+        ops: [
+          { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+          { section: "namesakes", op: "append", entry: {} },
+        ],
+      },
+    ],
+  ])("permits the search-records agent — %s", (_label, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type: NS_OWNER });
+    expect(out).toEqual({});
+  });
+
   // ── claim-routed: conflicts (issue #1852) ──
   //
   // CLAIM-scoped over several fields, not section-scoped: six skills open a

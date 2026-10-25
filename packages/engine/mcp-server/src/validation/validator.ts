@@ -747,7 +747,7 @@ export const RESEARCH_SHAPES = {
   ]),
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
-    "log_entry_ids", "notes", "created",
+    "log_entry_ids", "record_persona_ids", "notes", "created",
   ]),
 };
 
@@ -1883,6 +1883,19 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
           if (typeof l !== "string") addError(report, lp, "must be a string");
           else checkRefExists(l, ids.log, "log entry", lp, report);
         });
+      }
+    }
+    if ("record_persona_ids" in ns) {
+      const stamp = ns.record_persona_ids;
+      if (stamp === null || typeof stamp !== "object" || Array.isArray(stamp)) {
+        addError(report, np, "record_persona_ids must be an object");
+      } else {
+        const listed = new Set(Array.isArray(ns.record_ids) ? ns.record_ids : []);
+        for (const [rid, persona] of Object.entries(stamp)) {
+          const sp = `${np}/record_persona_ids/${rid}`;
+          if (typeof persona !== "string" || persona === "") addError(report, sp, "must be a non-empty string");
+          if (!listed.has(rid)) addError(report, sp, "keys a record not in record_ids");
+        }
       }
     }
     checkIsoDate(ns, "created", np, report);

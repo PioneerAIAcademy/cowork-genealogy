@@ -120,6 +120,11 @@ OWNED_SECTIONS = {
     # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
     # cannot be written by something that could not have made the link.
     "rejected_links": "person-evidence",
+    # namesakes, 2026-10-25 (issue #3363). The leads ruled search-records the sole
+    # writer: a row caps the person's links for good, so only the agent that saw
+    # the namesake in its own search results records one. merge_tree_persons
+    # re-keys rows by tool identity and never reaches this hook.
+    "namesakes": "search-records",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -234,10 +239,11 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
-    # search-records updates the status of the plan item a search executed (Step 6).
-    # Its search log goes through research_log_append, which carries no `section`.
-    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
-    "search-records": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6)
+    # and records the namesakes its searches turn up, the section routed to it
+    # above. Its search log goes through research_log_append, which carries no
+    # `section`.
+    "search-records": frozenset({"plan_items", "namesakes"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire

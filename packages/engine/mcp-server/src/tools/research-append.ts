@@ -3004,6 +3004,52 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+/** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
+ *  each row the call appended, or updated through `record_ids` or
+ *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
+ *  count what a persona-keyed refusal would catch. Overwrites whatever the
+ *  caller supplied; an update cannot set the field (`updatableFields`). A found
+ *  record id is stored in the sidecar's form, as an assertion's is. */
+export async function stampNamesakePersonas(
+  research: any,
+  ops: ReadonlyArray<ResearchAppendOp>,
+  applied: ReadonlyArray<AppliedOp>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<void> {
+  const logById = new Map<string, any>(
+    (Array.isArray(research?.log) ? research.log : [])
+      .filter((e: any) => e && typeof e.id === "string")
+      .map((e: any) => [e.id, e]),
+  );
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  for (const a of applied) {
+    if (a.section !== "namesakes" || a.noop) continue;
+    const fields = (ops[a.opIndex] as any)?.fields;
+    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    const row = rows.find((r) => r && r.id === a.entryId);
+    if (!row) continue;
+    const stamp: Record<string, string> = {};
+    const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
+      if (typeof id !== "string") return id;
+      for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+        const entry = logById.get(logId);
+        if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+        const hit = (await readResults(entry.results_ref))?.find(
+          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
+        );
+        if (!hit) continue;
+        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
+        return hit.recordId;
+      }
+      // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
+      return id;
+    });
+    row.record_ids = await Promise.all(recordIds);
+    if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
+    else delete row.record_persona_ids;
+  }
+}
+
 /** What the namesake warning lists for one person. */
 export interface NamesakeRowListing {
   personId: string;
@@ -7617,6 +7663,28 @@ async function checkLocalityFirstPlaces(
   }
 }
 
+/** A per-call reader of a sidecar's `payload.results`, cached by ref: null when
+ *  the ref is outside the project, unreadable, or holds no results array. */
+function sidecarResultsReader(projectPath: string): (ref: string) => Promise<any[] | null> {
+  const cache = new Map<string, any[] | null>();
+  return async (ref) => {
+    if (cache.has(ref)) return cache.get(ref)!;
+    let results: any[] | null = null;
+    if (isInsideProject(projectPath, ref)) {
+      try {
+        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
+        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
+          results = sc.payload.results;
+        }
+      } catch {
+        // unreadable sidecar — the document validator reports it; skip enforcement
+      }
+    }
+    cache.set(ref, results);
+    return results;
+  };
+}
+
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
  *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
  *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
@@ -7883,23 +7951,7 @@ async function prepareOps(
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
   }
-  const sidecarCache = new Map<string, any[] | null>();
-  const readSidecarResults = async (ref: string): Promise<any[] | null> => {
-    if (sidecarCache.has(ref)) return sidecarCache.get(ref)!;
-    let results: any[] | null = null;
-    if (isInsideProject(projectPath, ref)) {
-      try {
-        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
-        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
-          results = sc.payload.results;
-        }
-      } catch {
-        // unreadable sidecar — the document validator reports it; skip enforcement
-      }
-    }
-    sidecarCache.set(ref, results);
-    return results;
-  };
+  const readSidecarResults = sidecarResultsReader(projectPath);
 
   // The other places each record's assertions name in this batch: a bare place
   // ("Shenandoah") is resolved against them, not against the whole world.
@@ -8621,6 +8673,8 @@ export async function researchAppend(
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+
+    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(projectPath));
 
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
