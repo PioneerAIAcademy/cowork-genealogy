@@ -1206,3 +1206,21 @@ def test_the_summary_carries_tool_messages():
     records = [_msg("msg_1", _tool_use("mcp__genealogy__person_warnings"),
                     _tool_use("mcp__genealogy__person_warnings"))]
     assert summarize_transcript(records)["tool_messages"] == [["person_warnings", "person_warnings"]]
+
+
+def _blob(*blocks):
+    """The id-less `api-request-blob` copy newer Claude Code writes after a message."""
+    return {"type": "api-request-blob", "agentId": "a", "hash": "h", "sessionId": "s",
+            "message": {"role": "assistant", "content": list(blocks)}}
+
+
+def test_a_request_blob_copy_is_not_a_second_message():
+    pw = _tool_use("mcp__genealogy__person_warnings")
+    records = [_msg("msg_1", pw), _msg("msg_1", pw), _blob(pw, pw),
+               _msg("msg_2", _tool_use("Read")), _blob(_tool_use("Read"))]
+    assert subagent_tool_messages(records) == [["person_warnings", "person_warnings"], ["Read"]]
+
+
+def test_a_request_blob_is_not_counted_as_a_turn():
+    records = [_msg("msg_1", _tool_use("Read")), _blob(_tool_use("Read"))]
+    assert summarize_transcript(records)["num_assistant_turns"] == 1

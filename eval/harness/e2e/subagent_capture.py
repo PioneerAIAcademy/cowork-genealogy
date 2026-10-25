@@ -71,6 +71,21 @@ WINDOW_FIELDS = (
 )
 
 
+#: A record type newer Claude Code writes beside each assistant message: the
+#: whole message as it is resent in the next request, with no `message.id`, no
+#: `uuid` and no usage. It is a copy, not a turn -- counted, it doubles every
+#: message (seen on 2.1.30x, issue #3713).
+_REQUEST_BLOB = "api-request-blob"
+
+
+def _is_assistant_record(rec: Any) -> bool:
+    """An assistant message record, not a request-blob copy of one."""
+    if not isinstance(rec, dict) or rec.get("type") == _REQUEST_BLOB:
+        return False
+    message = rec.get("message")
+    return isinstance(message, dict) and message.get("role") == "assistant"
+
+
 def _bare_tool_name(name: str) -> str:
     """`mcp__genealogy__project_context` -> `project_context`; leave others as-is."""
     return name.split("__")[-1] if name.startswith("mcp__") else name
@@ -361,11 +376,9 @@ def subagent_tool_messages(records: list[dict[str, Any]]) -> list[list[str]]:
     by_message: dict[str, list[str]] = {}
     anon = 0
     for rec in records:
-        if not isinstance(rec, dict):
+        if not _is_assistant_record(rec):
             continue
-        message = rec.get("message")
-        if not isinstance(message, dict) or message.get("role") != "assistant":
-            continue
+        message = rec["message"]
         key = message.get("id")
         if not isinstance(key, str) or not key:
             key = f"__anon_{anon}"
@@ -490,10 +503,9 @@ def summarize_transcript(
     """Roll a subagent's raw records up into the compact runlog summary."""
     turns: list[dict[str, Any]] = []
     for rec in records:
-        message = rec.get("message")
-        if not isinstance(message, dict) or message.get("role") != "assistant":
+        if not _is_assistant_record(rec):
             continue
-        turns.append(summarize_turn(message))
+        turns.append(summarize_turn(rec["message"]))
 
     out_tokens = [t["output_tokens"] for t in turns if isinstance(t.get("output_tokens"), int)]
     summary: dict[str, Any] = {
