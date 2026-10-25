@@ -38,7 +38,8 @@ primary_region = "iad"
   DEFAULT_MODEL = "claude-sonnet-4-6"
   # Reasoning effort (T4.1). Unset = the CLI's own default, today `high` everywhere.
   # Create-time only: a sandbox keeps the levels it was born with. Levels: low, medium,
-  # high, xhigh, max. Lowering the alpha is the lead's call -- none is set here.
+  # high, xhigh, max. The lead set the main thread to low on 2026-10-21; agents keep the
+  # default until the lead sets theirs.
   ORCHESTRATOR_EFFORT = "low"
   # SUBAGENT_EFFORT = "high"
   # SUBAGENT_EFFORT_BY_AGENT = '{"question-selection": "low"}'
