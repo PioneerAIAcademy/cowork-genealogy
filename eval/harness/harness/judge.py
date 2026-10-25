@@ -421,6 +421,63 @@ def _live_args_omitted(args: Any) -> Any:
     return marker if full_len > len(marker) else args
 
 
+# A tool that REFUSED a call wrote nothing, but its args were rendered verbatim
+# and read by the judge as the agent's conclusion (issue #3839): in
+# ut_proof_conclusion_32f the failing rationales quoted the refused draft's
+# narrative while the saved rewrite passed every validator. `judge_context`
+# already forbids that in prose, and prose does not hold.
+#
+# WRITERS ONLY. Of the 121 refused reader calls in the committed corpus, 67
+# carry argument values that appear nowhere in their response, and `Tool
+# Arguments` is a base dimension graded on every run — blanking a read would
+# erase evidence the judge is still required to score. A refused reader's args
+# are the question asked; a refused writer's are a conclusion it did not reach.
+_WRITER_TOOLS = frozenset(
+    {
+        "research_append",
+        "research_log_append",
+        "extraction_append",
+        "tree_edit",
+        "tree_correct",
+        "project_create",
+        "materialize_facts",
+        "merge_tree_persons",
+        "tree_forget",
+    }
+)
+
+# Must stay <= the ~66 chars `_live_args_omitted` renders a live call's args at
+# in the MEASURED view, or the refusal marker grows the drop budget and pushes
+# out the earliest calls -- the regression #3442 records, where a dropped call
+# made the judge score a correct citation as fabricated.
+# `test_refusal_marker_cannot_grow_the_size_guard_budget` pins it.
+_REFUSED_ARGS_MARKER = "[tool refused this call; it wrote nothing - args omitted]"
+
+
+def _is_refused_writer(call: dict[str, Any]) -> bool:
+    """A writer call the tool refused.
+
+    The predicate is `resp.get("ok") is False`, never `resp["ok"]`: 8,502 calls
+    in the corpus carry `response: None` and 2,518 dict responses have no `ok`
+    key at all. Tool names are fully qualified (`mcp__genealogy__<name>`), so
+    this suffix-matches -- a bare-name set silently matches nothing.
+    """
+    resp = call.get("response")
+    if not (isinstance(resp, dict) and resp.get("ok") is False):
+        return False
+    return str(call.get("tool", "")).rsplit("__", 1)[-1] in _WRITER_TOOLS
+
+
+def _args_for_render(call: dict[str, Any], live_args: Callable[[Any], Any]) -> Any:
+    """The `args` value to render. Returns a new value; never mutates `call` --
+    `_run_judge` runs before `output.tool_calls` is built from these same dicts,
+    so an in-place write would land a fabricated value in the committed run log.
+    """
+    if _is_refused_writer(call):
+        return _REFUSED_ARGS_MARKER
+    return live_args(call["args"]) if _is_live_call(call) else call["args"]
+
+
 def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
     """Render the tool_calls slot with a total-size cap.
 
@@ -445,7 +502,7 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
             [
                 {
                     "tool": c["tool"],
-                    "args": live_args(c["args"]) if _is_live_call(c) else c["args"],
+                    "args": _args_for_render(c, live_args),
                     "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     # array_sample=None: render EVERY result, not the first 3.

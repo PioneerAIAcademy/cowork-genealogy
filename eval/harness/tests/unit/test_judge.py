@@ -2479,3 +2479,105 @@ def test_state_and_response_observations_coexist():
     )
     assert "response mentions a volume" in out
     assert "field X missing" in out
+
+
+# --- refused writer calls (issue #3839) --------------------------------------
+# A tool that REFUSED a call wrote nothing, but its args were rendered verbatim
+# and the judge read them as the agent's conclusion: in ut_proof_conclusion_32f
+# the failing rationales quoted the refused draft's narrative while the saved
+# rewrite passed every validator. `judge_context` already says in prose not to
+# do that; prose does not hold.
+#
+# Scope is WRITER calls only. Measured over the committed corpus, 67 of the 121
+# refused READER calls carry argument values that appear nowhere in their
+# response, and `Tool Arguments` is a base dimension graded on every run — so
+# blanking a read erases evidence the judge is still required to score. A
+# refused reader's args are the question asked, not a conclusion claimed.
+
+
+def _refused(tool: str, args: dict, kind: str = "live") -> dict:
+    return {
+        "tool": f"mcp__genealogy__{tool}",
+        "args": args,
+        "matched": {"kind": kind, "index": None},
+        "response": {"ok": False, "errors": ["refused for a reason"]},
+    }
+
+
+def _ok(tool: str, args: dict) -> dict:
+    return {
+        "tool": f"mcp__genealogy__{tool}",
+        "args": args,
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"ok": True},
+    }
+
+
+def test_refused_writer_args_are_replaced_by_a_marker():
+    calls = [_refused("research_append", {"entry": {"narrative_markdown": "SECRET-DRAFT"}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "SECRET-DRAFT" not in rendered, "the refused draft reached the judge"
+    assert judge._REFUSED_ARGS_MARKER in rendered
+
+
+def test_refused_writer_keeps_its_response_summary():
+    """The refusal itself must stay legible — only the args go."""
+    calls = [_refused("research_append", {"entry": {"narrative_markdown": "D"}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "refused for a reason" in rendered
+    assert '"ok": false' in rendered
+
+
+def test_refused_writer_is_marked_even_when_not_a_live_call():
+    """Gating the blank inside the live branch passes every other row — 444 of
+    the corpus's 445 refusals are live — while missing the one that is not."""
+    calls = [_refused("research_append", {"entry": {"narrative_markdown": "SECRET"}}, kind="none")]
+    assert "SECRET" not in judge._render_tool_calls_with_size_guard(calls)
+
+
+def test_refused_reader_args_are_kept():
+    calls = [_refused("convert_calendar", {"date": {"year": 1582}, "jurisdiction": "Spain"})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "Spain" in rendered, "a refused read's args are the question asked, not a claim"
+    assert judge._REFUSED_ARGS_MARKER not in rendered
+
+
+def test_successful_writer_args_are_untouched():
+    calls = [_ok("research_append", {"entry": {"narrative_markdown": "KEEP-ME"}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "KEEP-ME" in rendered
+    assert judge._REFUSED_ARGS_MARKER not in rendered
+
+
+def test_a_response_with_no_ok_key_is_untouched():
+    """2,518 dict responses in the corpus carry no `ok` key, and 8,502 calls
+    carry `response: None`. Neither may be read as a refusal."""
+    for response in ({"note": "no ok key"}, None):
+        calls = [{
+            "tool": "mcp__genealogy__research_append",
+            "args": {"entry": {"narrative_markdown": "KEEP"}},
+            "matched": {"kind": "live", "index": None},
+            "response": response,
+        }]
+        rendered = judge._render_tool_calls_with_size_guard(calls)
+        assert "KEEP" in rendered
+        assert judge._REFUSED_ARGS_MARKER not in rendered
+
+
+def test_rendering_does_not_mutate_the_caller_s_tool_calls():
+    """`_run_judge` runs BEFORE `output.tool_calls` is built from these same
+    dicts, so mutating `args` in place would write a fabricated value into the
+    committed run log, permanently and silently."""
+    args = {"entry": {"narrative_markdown": "ORIGINAL"}}
+    calls = [_refused("research_append", args)]
+    judge._render_tool_calls_with_size_guard(calls)
+    assert calls[0]["args"] is args
+    assert args == {"entry": {"narrative_markdown": "ORIGINAL"}}
+
+
+def test_refusal_marker_cannot_grow_the_size_guard_budget():
+    """`_live_args_omitted` returns the RAW args when they are shorter than its
+    own ~66-char marker, so a longer refusal marker grows the measured view and
+    drops earliest calls — the #3442 direction."""
+    probe = judge._live_args_omitted({"x": "y" * 500})
+    assert len(judge._REFUSED_ARGS_MARKER) <= len(probe)
