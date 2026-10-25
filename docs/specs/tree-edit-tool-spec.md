@@ -542,11 +542,13 @@ rebuilds the refs a fact or name carried before an update from the starting tree
 and the run's earlier citing writes; it also judges every update charged none
 and every one of its refs, and the ten updates that move a count between those
 two are read from their run logs instead (`TRACED_PRIOR_REFS`; a floor fails on
-one that is not). Known let through: a ref cited
+one that is not). Known let throughs: a ref cited
 before its record is registered as a research source is never judged, even when
 a later call restates it (committed instance: `antonio-lucas-spouse` 2026-08-04,
-S5 on I12 since `add_person` at call 184, restated at call 214). Labelled cases:
-`tests/tools/tree-edit-namesake.test.ts`.
+S5 on I12 since `add_person` at call 184, restated at call 214); and one `S` entry
+backing both the row holder's own tied record and the namesake's passes on the
+tied one, so a fact copied from the namesake's record gets through (no committed
+instance; T16c). Labelled cases: `tests/tools/tree-edit-namesake.test.ts`.
 
 ---
 

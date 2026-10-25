@@ -309,6 +309,15 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
     await written(() => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S1") }] } as any));
   });
 
+  it("T16c known let through: writes a fact citing an S entry his tied census shares with the namesake's own record", async () => {
+    // REC-VOT is the record the row lists as the namesake's. Filed on the
+    // census's S entry, a fact copied from it passes on the census's tie.
+    const r = research();
+    r.sources = [source("src_001", "S1"), source("src_002", "S1")];
+    await setup(r, tree());
+    await written(() => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S1") }] } as any));
+  });
+
   it("T16b refuses an S entry two research sources share when neither ties, naming each", async () => {
     const r = research({ links: [...LINKS(), link("pe_4", "a_021", W)] });
     r.sources.push(source("src_004", "S2"));
