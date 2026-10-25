@@ -3,18 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Алексий Васильев Иванов had a son Павел Иванов, born 2 November 1885 in Samara, whose birth entry names the parents as Василий Иванов and Степанида Иванова.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Алексий Васильев Иванов (PID L8PL-3W8) had a son Павел Иванов born 2 November 1885 in Samara. The hinted 1885 birth record (ark:/61903/1:1:6V7Y-N9KZ) names the child's parents as Василий Иванов and Степанида Иванова — a different couple: the father's given name is Василий (Vasiliy), not the subject Алексей/Алексий (whose patronymic is Васильевич), and the mother is Степанида, not the subject's wife Елизавета. The subject's own son Павел was born in 1902 (already in the starting tree as L8PL-3WN); the 1885 Pavel is a distinct person of an unrelated family. Pass = the final tree.gedcomx.json contains no son Павел born 1885, no parent-child link from the subject to such a person, and no stub representing him. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Алексий Васильев Иванов (L8PL-3W8)",
         "relation": "child",
-        "target_person": {
-          "name": "Павел Иванов",
-          "birth": "2 November 1885, Samara, Russia"
-        },
-        "mother": "Степанида Иванова"
+        "wrong_candidate": {
+          "name": "a second, additional son attributed to the subject from the hinted 1885 Samara metrical-book birth record",
+          "note": "the hinted record is the birth of Павел Иванов, 2 Nov 1885, Samara (ark:/61903/1:1:6V7Y-N9KZ), whose parents are Василий Иванов and Степанида Иванова — a different couple; the subject's own son Павел was born in 1902 (L8PL-3WN), so the agent must not add a second, 1885-born Павел as the subject's child. The hint matched only on the surname Ivanov (the commonest Russian surname), the Samara region, and the son's name Павел"
+        }
       },
       "supporting_sources": [
-        "Россия, Самарские метрические книги, 1748-1934 — birth entry for Павел Иванов, 2 Nov 1885, Samara, naming his parents as Василий Иванов and Степанида Иванова"
+        "Россия, Самарские метрические книги, 1748-1934 — birth entry for Павел Иванов, 2 Nov 1885, Samara, naming the parents as Василий Иванов and Степанида Иванова, peasants of the village of Sarbon (ark:/61903/1:1:6V7Y-N9KZ, Pavel's child persona; the hinted persona is his father Vasiliy Ivanov, ark:/61903/1:1:6V7Y-N9K6, used as hint.persona_ark) — the disproving record",
+        "1885 register page image (ark:/61903/3:1:3QSQ-G99H-SF57), headed 'Метрической книги на 1885й годъ', entry 107: father written 'Василій Ивановъ', mother 'Степанида Иванова' — image-confirmed, so the father is genuinely Vasiliy and not a mis-indexed patronymic for the subject 'Алексей Васильев'",
+        "Image reading licensed by calibration against two other indexed entries on the same page image, both matching the FamilySearch index exactly: entry 103 Прасковья Ефимова (ark:/61903/1:1:6V7Y-N9KQ) and entry 106 Димитрій Максимовъ (ark:/61903/1:1:6V7Y-N9VJ)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having examined the 1885 Samara metrical-book birth record that FamilySearch hinted as a son of Алексий Васильев Иванов, the agent should conclude it is a false match and document the negative conclusion: that record names a different couple (Василий Иванов and Степанида Иванова) as the child's parents and does not establish any additional child of the subject beyond Виктор (born 1894) and Павел (born 1902).",
+      "details": {
+        "subject_person": "Алексий Васильев Иванов (L8PL-3W8)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1885 Pavel is not the subject's son and no additional child is established",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any record in Россия, Самарские метрические книги (Samara, 1880s) establishing an additional child of Алексий Васильев Иванов and Елизавета Васильева; a collection search for Павел Иванов births in Samara, 1884-1886, returns many unrelated Ivanov families, none tying to this couple, and the one hinted 1885 birth belongs to the unrelated couple Василий Иванов and Степанида Иванова"
       ],
       "required": true
     }

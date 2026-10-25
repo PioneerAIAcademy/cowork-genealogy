@@ -180,7 +180,10 @@ def test_is_error_fixture_sets_is_error_only_on_its_own_match():
         refused = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00021"})
         assert refused.get("is_error") is True
         assert _extract_response_dict(refused) == {"error": "Image cap reached: ..."}
-        ok = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00001"})
+        # projectPath: without it the mock refuses the call, as production does (#2490).
+        ok = _invoke(
+            tools_by_name, "image_transcribe", {"imageId": "004452257_00001", "projectPath": str(tmp)}
+        )
         assert "is_error" not in ok
 
 
@@ -1504,6 +1507,453 @@ def test_same_person_attestation_records_a_projection_route(tmp_path):
     assert entry["record_source"] == "projection"
 
 
+# --- the attestation and the served answer name the persona production resolves --
+#
+# A fetched household: one record naming a child and her father. The harness
+# performs no fetch, so what production resolves from a fetched `persons[]` has
+# to come from the project documents, through the same compiled lookup.
+
+_HH_RECORD = "ark:/61903/1:1:6LYF-G8RJ"
+
+
+def _household_workspace(tmp_path):
+    ws = tmp_path / "household"
+    ws.mkdir()
+
+    def assertion(id_, role, persona, fact_type, value, structured=None):
+        return {
+            "id": id_, "record_id": _HH_RECORD, "record_role": role,
+            "record_persona_id": persona, "fact_type": fact_type, "value": value,
+            "structured_value": structured, "record_basis": "stated",
+            "log_entry_id": "log_1",
+        }
+
+    (ws / "research.json").write_text(
+        json.dumps(
+            {
+                "log": [{"id": "log_1", "tool": "record_read",
+                         "results_ref": "results/log_1.json"}],
+                "assertions": [
+                    assertion("a_031", "child", "p_child", "name", "Maria Elisabeth Mouchang"),
+                    assertion("a_034", "father", "p_father", "name", "Pierre Mouchang"),
+                    assertion("a_038", "child", "p_child", "relationship",
+                              "child of Pierre Mouchang",
+                              {"relationship_type": "child", "related_person_role": "father"}),
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (ws / "tree.gedcomx.json").write_text(
+        json.dumps(
+            {
+                "persons": [
+                    {"id": "I1", "names": [{"given": "Pierre", "surname": "Mouchang",
+                                            "preferred": True}]},
+                    {"id": "I3", "names": [{"given": "Maria Elisabeth", "surname": "Mouchang",
+                                            "preferred": True}]},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return ws
+
+
+def _serve_same_person(ws, args, fixtures=("same-person-flynn-degenerate",), fixtures_dir=FIXTURES_DIR):
+    """The answer the mock serves for one project-arm call, as the agent reads it."""
+    _cfg, _log, tools = mock_mcp.create_mock_server(list(fixtures), fixtures_dir, workspace=ws)
+    out = asyncio.run(tools["same_person"].handler({"projectPath": str(ws), **args}))
+    return _extract_response_dict(out)
+
+
+def _written_scores(ws):
+    files = sorted((ws / "results" / ".scores").glob("*.json"))
+    assert len(files) == 1, "expected one results/.scores/ file"
+    return json.loads(files[0].read_text(encoding="utf-8"))["scores"]
+
+
+def _synthetic_fixture(tmp_path, recorded_persona, recorded_tree_person):
+    """A `~` fixture of the test's own, so what it was recorded with is known."""
+    fixtures_dir = tmp_path / "fixtures"
+    fixtures_dir.mkdir()
+    (fixtures_dir / "same-person-synthetic.json").write_text(
+        json.dumps(
+            {
+                "tool": "same_person",
+                "description": "a `~` fixture for the overlay tests",
+                "args": {"assertionId": "~", "treePersonId": "~"},
+                "response": {
+                    "matched": True, "confidence": 4, "score": 0.7,
+                    "recordSource": "record_read", "recorded": True,
+                    "recordPersona": recorded_persona, "treePerson": recorded_tree_person,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return fixtures_dir
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_the_persona_of_the_requested_role(tmp_path):
+    """A call for the father files the father's persona, as production does.
+
+    The attestation used to file the assertion's own persona whatever role the
+    call asked for: a child's persona under the role father."""
+    ws = _household_workspace(tmp_path)
+    _serve_same_person(
+        ws, {"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"}
+    )
+    entry = _written_scores(ws)["a_038|I1"]
+    assert entry["record_persona_id"] == "p_father"
+    assert entry["record_role"] == "father"
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_an_explicit_record_persona_id(tmp_path):
+    ws = _household_workspace(tmp_path)
+    _serve_same_person(
+        ws, {"assertionId": "a_034", "treePersonId": "I3", "recordPersonaId": "p_child"}
+    )
+    # The caller named the persona, so that is the persona, not the assertion's own.
+    assert _written_scores(ws)["a_034|I3"]["record_persona_id"] == "p_child"
+
+
+def _add_assertion(ws, assertion):
+    """Append one assertion to a workspace's research.json."""
+    path = ws / "research.json"
+    research = json.loads(path.read_text(encoding="utf-8"))
+    research["assertions"].append(assertion)
+    path.write_text(json.dumps(research), encoding="utf-8")
+
+
+def _father_assertion(id_, persona, value):
+    return {
+        "id": id_, "record_id": _HH_RECORD, "record_role": "father",
+        "record_persona_id": persona, "fact_type": "name", "value": value,
+        "structured_value": None, "record_basis": "stated", "log_entry_id": "log_1",
+    }
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_the_role_the_named_persona_holds(tmp_path):
+    """Naming a persona files the role the record gives THAT persona, and the
+    answer served names the same role: the entry never lists the role asked
+    beside another persona's id."""
+    ws = _household_workspace(tmp_path)
+    served = _serve_same_person(
+        ws,
+        {"assertionId": "a_038", "treePersonId": "I3", "recordRole": "father",
+         "recordPersonaId": "p_child"},
+    )
+    entry = _written_scores(ws)["a_038|I3"]
+    assert entry["record_persona_id"] == "p_child"
+    assert entry["record_role"] == "child"
+    assert served["recordPersona"]["role"] == entry["record_role"]
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_no_persona_the_record_gives_to_several_roles(tmp_path):
+    """The record stamps the child's persona id on the father's assertion too. That
+    id names no single party, so a call for the father files no persona, as
+    production's lookup finds none, and the answer names the one group at the role."""
+    ws = _household_workspace(tmp_path)
+    research = json.loads((ws / "research.json").read_text(encoding="utf-8"))
+    for a in research["assertions"]:
+        if a["id"] == "a_034":
+            a["record_persona_id"] = "p_child"
+    (ws / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    served = _serve_same_person(
+        ws, {"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"}
+    )
+    assert _written_scores(ws)["a_038|I1"]["record_persona_id"] is None
+    assert served["recordPersona"] == {"id": None, "name": "Pierre Mouchang", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_no_own_persona_the_record_gives_to_several_roles(tmp_path):
+    """The child's persona id is on the father's OWN assertion too. With no other
+    role asked, that id names no single party, so the entry files no persona
+    (production passes it over and finds the father by his name) and the answer
+    names the one group at the role."""
+    ws = _household_workspace(tmp_path)
+    research = json.loads((ws / "research.json").read_text(encoding="utf-8"))
+    for a in research["assertions"]:
+        if a["id"] == "a_034":
+            a["record_persona_id"] = "p_child"
+    (ws / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    served = _serve_same_person(ws, {"assertionId": "a_034", "treePersonId": "I1"})
+    assert _written_scores(ws)["a_034|I1"]["record_persona_id"] is None
+    assert served["recordPersona"] == {"id": None, "name": "Pierre Mouchang", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_attests_an_own_persona_one_role_carries(tmp_path):
+    """The other direction: an own id that one role carries is filed, as before."""
+    ws = _household_workspace(tmp_path)
+    served = _serve_same_person(ws, {"assertionId": "a_034", "treePersonId": "I1"})
+    assert _written_scores(ws)["a_034|I1"]["record_persona_id"] == "p_father"
+    assert served["recordPersona"] == {"id": "p_father", "name": "Pierre Mouchang", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_names_nobody_production_would_refuse(tmp_path):
+    """Two fathers on the record: production refuses to choose between them, so the
+    answer served does not name one."""
+    ws = _household_workspace(tmp_path)
+    _add_assertion(ws, _father_assertion("a_050", "p_other", "Johann Mouchang"))
+    served = _serve_same_person(
+        ws, {"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"}
+    )
+    assert served["recordPersona"] == {"id": None, "name": "", "role": "father"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_serves_each_pairing_its_own_persona(tmp_path):
+    """One `~` fixture answers every pairing its test makes. Each answer names
+    the pair that call asked for, not the pair the fixture was recorded with."""
+    ws = _household_workspace(tmp_path)
+    fixtures_dir = _synthetic_fixture(
+        tmp_path,
+        {"id": "P1", "name": "Patrick Flynn", "role": "child_1"},
+        {"id": "I1", "name": "Patrick Flynn"},
+    )
+    _cfg, _log, tools = mock_mcp.create_mock_server(
+        ["same-person-synthetic"], fixtures_dir, workspace=ws
+    )
+
+    def call(args):
+        out = asyncio.run(tools["same_person"].handler({"projectPath": str(ws), **args}))
+        return _extract_response_dict(out)
+
+    father = call({"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"})
+    child = call({"assertionId": "a_031", "treePersonId": "I3"})
+
+    assert father["recordPersona"] == {"id": "p_father", "name": "Pierre Mouchang", "role": "father"}
+    assert father["treePerson"] == {"id": "I1", "name": "Pierre Mouchang"}
+    assert child["recordPersona"] == {
+        "id": "p_child", "name": "Maria Elisabeth Mouchang", "role": "child"
+    }
+    assert child["treePerson"] == {"id": "I3", "name": "Maria Elisabeth Mouchang"}
+    # Only the persona and tree person are overlaid: the fixture's own score stands.
+    assert father["score"] == child["score"] == 0.7
+
+
+def _wildcard_same_person_fixtures():
+    """Every committed same_person fixture that answers ANY pairing: both ids `~`."""
+    out = []
+    for path in sorted(FIXTURES_DIR.glob("same-person-*.json")):
+        args = json.loads(path.read_text(encoding="utf-8"))["args"]
+        if args == {"assertionId": "~", "treePersonId": "~"}:
+            out.append(path.stem)
+    return out
+
+
+def test_there_are_wildcard_same_person_fixtures_to_check():
+    # A parametrize over an empty list runs nothing and reports nothing wrong.
+    assert len(_wildcard_same_person_fixtures()) >= 5
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize("fixture", _wildcard_same_person_fixtures())
+def test_a_committed_wildcard_fixture_serves_each_pairing_its_own_persona(tmp_path, fixture):
+    """The same, on the real fixtures: whichever `~` fixture a test loads, two
+    pairings through it name two different pairs."""
+    ws = _household_workspace(tmp_path)
+    _cfg, _log, tools = mock_mcp.create_mock_server([fixture], FIXTURES_DIR, workspace=ws)
+
+    def call(args):
+        out = asyncio.run(tools["same_person"].handler({"projectPath": str(ws), **args}))
+        return _extract_response_dict(out)
+
+    father = call({"assertionId": "a_038", "treePersonId": "I1", "recordRole": "father"})
+    child = call({"assertionId": "a_031", "treePersonId": "I3"})
+    assert father["recordPersona"] == {"id": "p_father", "name": "Pierre Mouchang", "role": "father"}
+    assert father["treePerson"] == {"id": "I1", "name": "Pierre Mouchang"}
+    assert child["recordPersona"] == {
+        "id": "p_child", "name": "Maria Elisabeth Mouchang", "role": "child"
+    }
+    assert child["treePerson"] == {"id": "I3", "name": "Maria Elisabeth Mouchang"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_keeps_the_fixture_persona_when_the_documents_cannot_contradict_it(tmp_path):
+    """A party the documents cannot name (no persona id, no name assertion) keeps
+    the fixture's own persona on the one pairing the fixture was written for."""
+    ws = tmp_path / "silent"
+    ws.mkdir()
+    (ws / "research.json").write_text(
+        json.dumps({"assertions": [{"id": "a_005", "record_id": "r1", "record_role": "principal",
+                                    "fact_type": "marriage", "value": "married",
+                                    "record_persona_id": None, "record_basis": "stated"}],
+                    "log": []}),
+        encoding="utf-8",
+    )
+    (ws / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": "I2", "names": [{"given": "Thomas", "surname": "Flynn"}]}]}),
+        encoding="utf-8",
+    )
+    recorded = {"id": "MP1", "name": "Thomas Flynn", "role": "principal"}
+    fixtures_dir = _synthetic_fixture(tmp_path, recorded, {"id": "I2", "name": "Thomas Flynn"})
+    served = _serve_same_person(
+        ws, {"assertionId": "a_005", "treePersonId": "I2"},
+        fixtures=("same-person-synthetic",), fixtures_dir=fixtures_dir,
+    )
+    assert served["recordPersona"] == recorded
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_does_not_borrow_the_fixture_persona_for_another_role(tmp_path):
+    """The same silent documents, but the call asks for the bride: the fixture's
+    persona is the principal, so it must not be served as hers."""
+    ws = tmp_path / "silent"
+    ws.mkdir()
+    (ws / "research.json").write_text(
+        json.dumps({"assertions": [{"id": "a_005", "record_id": "r1", "record_role": "principal",
+                                    "fact_type": "marriage", "value": "married",
+                                    "record_persona_id": None, "record_basis": "stated"}],
+                    "log": []}),
+        encoding="utf-8",
+    )
+    (ws / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": "I2", "names": [{"given": "Mary", "surname": "Doyle"}]}]}),
+        encoding="utf-8",
+    )
+    fixtures_dir = _synthetic_fixture(
+        tmp_path, {"id": "MP1", "name": "Thomas Flynn", "role": "principal"},
+        {"id": "I1", "name": "Thomas Flynn"},
+    )
+    served = _serve_same_person(
+        ws, {"assertionId": "a_005", "treePersonId": "I2", "recordRole": "bride"},
+        fixtures=("same-person-synthetic",), fixtures_dir=fixtures_dir,
+    )
+    assert served["recordPersona"] == {"id": None, "name": "", "role": "bride"}
+    assert served["treePerson"] == {"id": "I2", "name": "Mary Doyle"}
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_overlay_never_stops_the_attestation(tmp_path):
+    """The overlay reads the tree, and a tree that cannot be read must cost the
+    overlay only: the attestation is the side effect a writer-side gate reads, and
+    the call log must still say it was written."""
+    ws = _household_workspace(tmp_path)
+    (ws / "tree.gedcomx.json").write_text("not json", encoding="utf-8")
+    _cfg, call_log, tools = mock_mcp.create_mock_server(
+        ["same-person-flynn-degenerate"], FIXTURES_DIR, workspace=ws
+    )
+    out = asyncio.run(
+        tools["same_person"].handler(
+            {"projectPath": str(ws), "assertionId": "a_034", "treePersonId": "I1"}
+        )
+    )
+    assert "a_034|I1" in _written_scores(ws)
+    assert call_log[-1]["attested"] is True
+    # Nothing was overlaid, so the persona and the tree person are the fixture's own.
+    # The score is no evidence of that: the overlay never touches it. What the
+    # documents alone say for this call is the father (p_father), not the fixture's
+    # child_1, so an overlay that ran despite the unreadable tree would show here.
+    fixture = json.loads(
+        (FIXTURES_DIR / "same-person-flynn-degenerate.json").read_text(encoding="utf-8")
+    )["response"]
+    served = _extract_response_dict(out)
+    assert served["recordPersona"] == fixture["recordPersona"]
+    assert served["treePerson"] == fixture["treePerson"]
+
+
+@pytest.mark.requires_engine_build
+def test_same_person_does_not_overlay_the_two_document_arm(tmp_path):
+    """That arm names no assertion or tree person, so there is nothing to overlay."""
+    ws = _household_workspace(tmp_path)
+    fixtures_dir = tmp_path / "explicit"
+    fixtures_dir.mkdir()
+    response = {
+        "matched": True, "score": 0.9,
+        "queryArk": "ark:/61903/4:1:KGS8-LY1", "candidateArk": "ark:/61903/4:1:KCWM-J9H",
+        "apiTitle": "Matches for ark:/61903/4:1:KGS8-LY1", "updated": "2026-05-15T01:58:23.913Z",
+    }
+    (fixtures_dir / "same-person-explicit.json").write_text(
+        json.dumps({"tool": "same_person", "description": "the explicit arm",
+                    "args": {"primaryId1": "~"}, "response": response}),
+        encoding="utf-8",
+    )
+    _cfg, _log, tools = mock_mcp.create_mock_server(
+        ["same-person-explicit"], fixtures_dir, workspace=ws
+    )
+    out = asyncio.run(
+        tools["same_person"].handler(
+            {"gedcomx1": {"persons": []}, "primaryId1": "X",
+             "gedcomx2": {"persons": []}, "primaryId2": "I1"}
+        )
+    )
+    assert _extract_response_dict(out) == response
+
+
+# The overlay's merge rule, without a node process: the fixture's persona is
+# served only when nothing the documents do say contradicts it.
+
+_STATIC = {
+    "recordPersona": {"id": "P1", "name": "Patrick Flynn", "role": "child_1"},
+    "treePerson": {"id": "I1", "name": "Patrick Flynn"},
+    "score": 0.5,
+}
+
+
+def test_overlay_parties_leaves_the_response_alone_when_there_is_nothing_to_overlay():
+    assert mock_mcp._overlay_parties(_STATIC, None) == _STATIC
+    assert mock_mcp._overlay_parties(_STATIC, {}) == _STATIC
+
+
+def test_overlay_parties_serves_what_the_documents_say_when_it_differs_from_the_fixture():
+    derived = {
+        "recordPersona": {"id": "p_father", "name": "Pierre Mouchang", "role": "father"},
+        "treePerson": {"id": "I9", "name": "Pierre Mouchang"},
+    }
+    out = mock_mcp._overlay_parties(_STATIC, derived)
+    assert out["recordPersona"] == derived["recordPersona"]
+    assert out["treePerson"] == derived["treePerson"]
+    assert out["score"] == 0.5
+
+
+def test_overlay_parties_keeps_a_fixture_value_the_documents_leave_empty():
+    derived = {
+        "recordPersona": {"id": None, "name": "", "role": "child_1"},
+        "treePerson": {"id": "I1", "name": ""},
+    }
+    out = mock_mcp._overlay_parties(_STATIC, derived)
+    assert out["recordPersona"] == _STATIC["recordPersona"]
+    assert out["treePerson"] == _STATIC["treePerson"]
+
+
+def test_overlay_parties_judges_the_record_persona_and_the_tree_person_separately():
+    derived = {
+        "recordPersona": {"id": None, "name": "", "role": "child_1"},   # silent: keep
+        "treePerson": {"id": "I7", "name": "Someone Else"},             # contradicts: replace
+    }
+    out = mock_mcp._overlay_parties(_STATIC, derived)
+    assert out["recordPersona"] == _STATIC["recordPersona"]
+    assert out["treePerson"] == derived["treePerson"]
+
+
+def test_overlay_parties_does_not_borrow_a_fixture_persona_held_for_another_role():
+    derived = {
+        "recordPersona": {"id": None, "name": "", "role": "mother"},
+        "treePerson": {"id": "I1", "name": "Patrick Flynn"},
+    }
+    out = mock_mcp._overlay_parties(_STATIC, derived)
+    assert out["recordPersona"] == derived["recordPersona"]
+
+
+def test_overlay_parties_supplies_the_fields_a_fixture_lacks():
+    derived = {
+        "recordPersona": {"id": "P2", "name": "Anna", "role": "mother"},
+        "treePerson": {"id": "I2", "name": "Anna"},
+    }
+    out = mock_mcp._overlay_parties({"score": 0.5}, derived)
+    assert out["recordPersona"] == derived["recordPersona"]
+    assert out["treePerson"] == derived["treePerson"]
+
+
 # --- A canned live record_read stages, so extractor mode is reachable ----------
 #
 # Before this, the mock staged only search responses. A canned `record_read`
@@ -1918,3 +2368,165 @@ def test_live_log_append_applies_the_census_check_to_a_staged_1850_search(tmp_pa
         assert "relationship-to-head" in json.dumps(out), out
     else:
         assert out.get("ok") is True, out
+
+
+# --- image_transcribe returns a ref, not the page (#2490) ----------------------
+
+_WILL_ARGS = {"imageId": "007936749_00008", "lookingFor": "Thomas Flynn"}
+
+
+def _transcribe(tmp_path, args):
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "image_transcribe", args))
+    return body, tools_by_name
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_stages_the_page_and_drops_the_inline_text(tmp_path):
+    """Production stages the page and strips `transcription` from the response;
+    the fixture keeps the full text, and the staged element is what it carries."""
+    full = json.loads(
+        (FIXTURES_DIR / "image-transcribe-schuylkill-probate-flynn-will.json").read_text(
+            encoding="utf-8"
+        )
+    )["response"]["transcription"]
+    body, _t = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    assert body.get("staged"), body.get("stagingError")
+    assert "transcription" not in body, "the page went back inline although it was staged"
+    assert body["digest"]["chars"] == len(full)
+    assert body["digest"]["excerpt"] == full[:300]
+    assert body["digest"]["id"] == "007936749_00008"
+    assert body["metadata"]["model"]
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["tool"] == "image_transcribe"
+    assert envelope["payload"]["query"] == _WILL_ARGS
+    [element] = envelope["payload"]["results"]
+    assert element["id"] == "007936749_00008"
+    assert element["source"] == {"imageId": "007936749_00008"}
+    assert element["transcription"] == full
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_keeps_the_text_inline_when_staging_fails(tmp_path, monkeypatch):
+    """The other direction: with no staged copy, the inline text is the only
+    one, so it stays, beside `staged: null` and a `stagingError`."""
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _boom)
+    with pytest.warns(UserWarning, match="could not be staged"):
+        body, _t = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    assert body["staged"] is None
+    assert body["stagingError"]
+    assert body["transcription"].startswith("Will Book G, page 112.")
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_path):
+    """The read the callers are told to make: sidecar_read on `staged.resultsRef`
+    returns the page the response no longer carries."""
+    body, tools_by_name = _transcribe(tmp_path, {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    assert body.get("staged"), body.get("stagingError")
+    read = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "sidecar_read",
+            {"projectPath": str(tmp_path), "ref": body["staged"]["resultsRef"]},
+        )
+    )
+    assert read.get("ok") is not False, read
+    assert "In the name of God, Amen" in json.dumps(read)
+
+
+def test_image_transcribe_without_project_path_is_refused_not_served(tmp_path):
+    """Production refuses a call with no projectPath before any OCR, so the
+    fixture's page must not reach the agent either."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "image_transcribe", dict(_WILL_ARGS))
+    body = _extract_response_dict(result)
+    assert result.get("is_error") is True, body
+    assert body == {"error": mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
+    assert "In the name of God" not in json.dumps(body)
+
+
+def test_image_transcribe_needs_project_message_has_not_drifted_from_the_typescript_source():
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tools/image-transcribe.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE =(.*?);\n", src, re.DOTALL)
+    assert decl, "IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE is gone from image-transcribe.ts"
+    ts_msg = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+    assert ts_msg, "parsed an empty message — the declaration's shape changed"
+    assert ts_msg == mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE
+
+
+def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
+    """A `file` has no FamilySearch identifier; its element id is
+    `capture:<basename without extension>`, production's captureIdFor."""
+    seen = {}
+
+    def _capture(script, stdin, timeout):
+        seen.update(json.loads(stdin))
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(
+            tmp_path, {"file": "uploads/will-scan.page1.jpg"}, {"transcription": "x"}
+        )
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen["element"]["id"] == "capture:will-scan.page1"
+    assert seen["element"]["source"] == {"file": "uploads/will-scan.page1.jpg"}
+
+
+@pytest.mark.parametrize("args,expected", [
+    ({"imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"}, "ark:/61903/3:1:3Q9M-CS80-L7Q2"),
+    ({"ark": "  ", "imageArk": "ark:/61903/3:1:3Q9M-CS80-L7Q2"}, "ark:/61903/3:1:3Q9M-CS80-L7Q2"),
+    ({"ark": "ark:/61903/3:1:AAAA-BBBB-CCC", "imageArk": "  "}, "ark:/61903/3:1:AAAA-BBBB-CCC"),
+])
+def test_image_transcribe_folds_image_ark_into_ark(tmp_path, monkeypatch, args, expected):
+    """record_read hands back `imageArk`; production folds it into `ark`, so the
+    staged page is keyed and sourced by it rather than staged with an empty id."""
+    seen = {}
+
+    def _capture(script, stdin, timeout):
+        seen.update(json.loads(stdin))
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(tmp_path, args, {"transcription": "x"})
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen["element"]["id"] == expected
+    assert seen["element"]["source"] == {"ark": expected}
+
+
+def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypatch):
+    """Production stages the retained scan's imageRef as `image_ref`, which
+    extraction_append cites as the source's image_filename; a response with no
+    imageRef stages none."""
+    seen = []
+
+    def _capture(script, stdin, timeout):
+        seen.append(json.loads(stdin)["element"])
+        raise TimeoutError("stop here")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _capture)
+    with pytest.warns(UserWarning):
+        mock_mcp._stage_image_transcribe(
+            tmp_path, {"imageId": "007936749_00008"},
+            {"transcription": "x", "imageRef": "images/007936749_00008.jpg"},
+        )
+        mock_mcp._stage_image_transcribe(tmp_path, {"imageId": "007936749_00008"}, {"transcription": "x"})
+    if not seen:
+        pytest.skip("no engine build: the node script was never reached")
+    assert seen[0]["image_ref"] == "images/007936749_00008.jpg"
+    assert "image_ref" not in seen[1]

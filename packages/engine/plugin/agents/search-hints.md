@@ -38,6 +38,9 @@ tools:
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
 ---
 
 # Search Hints
@@ -128,8 +131,10 @@ Otherwise proceed.
    household.
 4. **An index-vs-tree disagreement is a reason to look, never a reason to
    reject.** When an indexed field disagrees with the tree and the record carries
-   an `imageArk`, read the image with `image_transcribe({ ark: <imageArk>,
-   lookingFor: <the disputed field> })` before recommending anything. Indexes of
+   an `imageArk`, transcribe it with `image_transcribe({ ark: <imageArk>,
+   projectPath, lookingFor: <the disputed field> })`, then read the page with
+   `sidecar_read({ projectPath, ref: staged.resultsRef })` (or the inline
+   `transcription` when `staged` is null) before recommending anything. Indexes of
    European parish and civil registers are routinely wrong; the image outranks
    the index. If the image cannot be read, the recommendation is `not enough
    information to judge`. When the record carries no `imageArk`, say the index

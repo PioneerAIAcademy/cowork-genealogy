@@ -74,9 +74,10 @@ Current live tools:
   without it, a skill that follows that instruction hits an uncovered tool
   call and grades badly for doing the right thing.
 - sidecar_read: a paged read of one sidecar text file under the workspace's
-  own `evaluations/` or `uploads/` — deterministic in workspace state like
-  research_query, so a fixture could only drift from what was actually
-  written. gps-mentor reads a prior verdict body through it.
+  own `evaluations/`, `uploads/` or `results/` — deterministic in workspace
+  state like research_query, so a fixture could only drift from what was
+  actually written. gps-mentor reads a prior verdict body through it, and an
+  `image_transcribe` caller the page staged under `results/.staging/`.
 - timeline_build: runs the compiled tool against the workspace, so the person
   timeline it writes is computed from the links the run actually made. Its
   Places lookups are answered from the test's own `place_search` fixtures
@@ -428,6 +429,13 @@ UNLOGGED_SEARCHES_NOTE = (
     "that did not happen, and the staged response is deleted 24h after it was made."
 )
 
+#: Verbatim copy of IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE in
+#: packages/engine/mcp-server/src/tools/image-transcribe.ts (#2490).
+IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE = (
+    "projectPath is required: image_transcribe stages the page under the project's "
+    "results/ and returns its ref, not the text."
+)
+
 #: Mirrors UNLOGGED_REFS_SHOWN / formatUnloggedRefs in results-staging.ts. A join is
 #: safe to restate here; the PAIRING rule is not, and is called out of the build.
 UNLOGGED_REFS_SHOWN = 5
@@ -554,8 +562,9 @@ _STAGED_COMPACTORS: dict[str, str] = {
 
 def _record_match_score(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
-) -> bool:
-    """Write the attestation a real `same_person` call would have written.
+) -> tuple[bool, dict[str, Any] | None]:
+    """Write the attestation a real `same_person` call would have written, and
+    work out whom the call is about.
 
     `same_person` is not in LIVE_TOOLS -- it calls FamilySearch -- so the
     compiled tool never executes here and `recordMatchScore` never runs. That
@@ -567,6 +576,17 @@ def _record_match_score(
     Calls the compiled build rather than restating the derivation, because a
     Python copy of the pairing rule is a second implementation no drift test
     can see. `buildRecordedScore` is exported from the tool for exactly this.
+    It files the persona production resolves for the call (the caller's
+    `recordPersonaId`, else the persona a sibling assertion carries for the
+    `recordRole` asked), through the same lookup production uses, and the role
+    the record gives that persona when the caller named it.
+
+    The same node process also runs `describeScoredPair`, which says whom the
+    call is about (the record persona and the tree person) from research.json
+    and tree.gedcomx.json; `_overlay_parties` serves that, because a canned
+    fixture answers every pairing its test makes with the one it was recorded
+    for. A second process per call is what `_stage_and_compact_search_results`
+    warns against.
 
     Scoped deliberately:
       * project-relative arm only -- the explicit two-GedcomX arm records
@@ -577,13 +597,16 @@ def _record_match_score(
         and `recordMatchScore` no-ops when persona id and role are both empty,
         so both cases simply write nothing and the caller stays silent.
 
-    Returns True when an attestation was written. Never raises: a harness that
-    fails the run over its own bookkeeping is worse than one that does not
-    attest, and the writer-side gate failing loudly is the signal we want.
+    Returns `(attested, parties)`: whether an attestation was written, and the
+    `recordPersona`/`treePerson` the documents give for this call (None when
+    there are none, or the tree could not be read: that costs the overlay only,
+    never the attestation). Never raises: a harness that fails the run over its
+    own bookkeeping is worse than one that does not attest, and the writer-side
+    gate failing loudly is the signal we want.
     """
     score = response.get("score")
     if not isinstance(score, (int, float)):
-        return False
+        return False, None
     assertion_id = args.get("assertionId")
     tree_person_id = args.get("treePersonId")
     if not isinstance(assertion_id, str) or not isinstance(tree_person_id, str):
@@ -592,13 +615,13 @@ def _record_match_score(
         # absent assertion, so the write would not happen anyway (confirmed by
         # mutation: removing this changes no test). It is an early-out that
         # avoids spawning a node process per two-document call.
-        return False
+        return False, None
 
     sp_js = _MCP_BUILD / "tools" / "same-person.js"
     ms_js = _MCP_BUILD / "utils" / "match-scores.js"
     pio_js = _MCP_BUILD / "utils" / "project-io.js"
     if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
-        return False
+        return False, None
 
     _url = _node_module_url
 
@@ -607,6 +630,7 @@ def _record_match_score(
         "assertionId": assertion_id,
         "treePersonId": tree_person_id,
         "role": args.get("recordRole"),
+        "recordPersonaId": args.get("recordPersonaId"),
         "result": {
             "score": score,
             "matched": bool(response.get("matched")),
@@ -619,25 +643,30 @@ def _record_match_score(
     # `samePersonFromProject`; mirroring that here keeps the mock's side effect
     # the same operation rather than a near-copy of it.
     script = (
-        f"import {{ buildRecordedScore }} from '{_url(sp_js)}';"
+        f"import {{ buildRecordedScore, describeScoredPair }} from '{_url(sp_js)}';"
         f"import {{ recordMatchScore }} from '{_url(ms_js)}';"
         f"import {{ readProjectJson, withProjectLock }} from '{_url(pio_js)}';"
         "let raw='';for await (const c of process.stdin) raw+=c;"
         "const i=JSON.parse(raw);"
         "const research=await readProjectJson(i.projectPath,'research.json');"
         "const rec=buildRecordedScore(research,i.assertionId,i.treePersonId,"
-        "  i.role ?? undefined,i.result);"
+        "  i.role ?? undefined,i.result,i.recordPersonaId ?? undefined);"
         "if (rec!==null) await withProjectLock(i.projectPath, async () => {"
         "  await recordMatchScore(i.projectPath,rec); });"
-        "process.stdout.write(JSON.stringify({wrote: rec!==null}));"
+        "let parties=null;"
+        "try { const tree=await readProjectJson(i.projectPath,'tree.gedcomx.json');"
+        "  parties=describeScoredPair(research,tree,i.assertionId,i.treePersonId,"
+        "    i.role ?? undefined,i.recordPersonaId ?? undefined); } catch {}"
+        "process.stdout.write(JSON.stringify({wrote: rec!==null, parties}));"
     )
     try:
         proc = _run_node_eval(
             script, input_str=json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG
         )
         if proc.returncode != 0:
-            return False
-        return bool(json.loads(proc.stdout or "{}").get("wrote"))
+            return False, None
+        out = json.loads(proc.stdout or "{}")
+        return bool(out.get("wrote")), out.get("parties")
     except subprocess.TimeoutExpired:
         # Never raises, by contract -- but a swallowed timeout is indistinguishable
         # from "no score", and the writer-side gate turns that into a refusal of a
@@ -648,9 +677,43 @@ def _record_match_score(
             f"for assertion {assertion_id}; the link will be refused as unattested",
             stacklevel=2,
         )
-        return False
+        return False, None
     except Exception:
-        return False
+        return False, None
+
+
+def _overlay_parties(
+    response: dict[str, Any], parties: dict[str, Any] | None
+) -> dict[str, Any]:
+    """The served response with `recordPersona` and `treePerson` naming THIS
+    call's pairing.
+
+    A fixture whose predicate is `~` serves every pairing its test makes, so the
+    persona it was recorded with is wrong for all but one of them, and the agent
+    reads that persona as the one the score is about. `parties` is what the
+    compiled `describeScoredPair` derives from the workspace's own documents.
+
+    The fixture's value is kept only when nothing the documents DO say
+    contradicts it. A field the documents cannot supply (a persona id the record
+    never gave, a name no assertion carries) is empty in `parties`, and an empty
+    field contradicts nothing, so the pairing the fixture was written for keeps
+    its name; a call for another role has a role of its own that does
+    contradict, so it is never handed this fixture's persona. The record persona
+    and the tree person are judged separately.
+    """
+    if not parties:
+        return response
+    out = dict(response)
+    for key in ("recordPersona", "treePerson"):
+        derived, recorded = parties.get(key), response.get(key)
+        if not isinstance(derived, dict):
+            continue
+        agrees = isinstance(recorded, dict) and all(
+            value in (None, "") or value == recorded.get(field)
+            for field, value in derived.items()
+        )
+        out[key] = recorded if agrees else derived
+    return out
 
 
 def _stage_and_compact_search_results(
@@ -834,6 +897,108 @@ def _stage_record_read(
     if staged is None:
         return {**inline, "staged": None, "stagingError": "mock: staging the canned record failed"}
     return {**inline, "staged": staged}
+
+
+#: The compiled function that drops `image_transcribe`'s inline text once the
+#: page is staged. Not in `_STAGED_COMPACTORS`: it takes the whole response,
+#: where those take the `{results}` payload `_stage_and_compact_search_results`
+#: hands them.
+_IMAGE_TRANSCRIBE_COMPACTOR = "compactStagedImageTranscribe"
+
+#: The `image_transcribe` arguments production stages as the element's `source`.
+_IMAGE_TRANSCRIBE_SOURCE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
+
+
+def _stage_image_transcribe(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned `image_transcribe` page the way `image-transcribe.ts` does
+    (#2490), and return the response production sends: `staged` and `digest`
+    beside it and the inline `transcription` dropped.
+
+    The payload is production's one-element `{ query, results }` under tool
+    `image_transcribe`; the element's `id` is the `capture:<basename>` of a
+    `file`, else the image the caller named. Staging, the digest excerpt and the
+    strip all run in ONE node process, through the compiled `stageSearchResults`
+    and `compactStagedImageTranscribe`, so the strip has one definition. A
+    staging throw keeps the text inline with `staged: null` and `stagingError`,
+    as production does; a node failure returns the same shape, with a warning.
+    """
+    stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    # Production folds record_read's `imageArk` into `ark` (foldImageArkInput):
+    # a blank `ark` counts as absent, and a blank alias is ignored.
+    alias, ark = args.get("imageArk"), args.get("ark")
+    if not (isinstance(ark, str) and ark.strip()) and isinstance(alias, str) and alias.strip():
+        args = {**{k: v for k, v in args.items() if k != "imageArk"}, "ark": alias}
+    source = {k: args[k] for k in _IMAGE_TRANSCRIBE_SOURCE_KEYS if args.get(k) is not None}
+    if isinstance(args.get("file"), str):
+        element_id = "capture:" + re.sub(r"\.[A-Za-z0-9]+$", "", args["file"].split("/")[-1])
+    else:
+        element_id = next((str(v) for v in source.values()), "")
+    metadata = response.get("metadata") if isinstance(response.get("metadata"), dict) else {}
+    transcription = str(response.get("transcription") or "")
+    element: dict[str, Any] = {
+        "id": element_id,
+        "source": source,
+        "content_type": metadata.get("contentType", "image/jpeg"),
+        "size_bytes": metadata.get("sizeBytes", 0),
+        "model": metadata.get("model", ""),
+        "transcription": transcription,
+    }
+    if response.get("truncated"):
+        element["truncated"] = True
+    if response.get("found"):
+        element["found"] = response["found"]
+    # Production stages the retained scan's imageRef beside the text, and
+    # extraction_append cites it as the source's image_filename.
+    if isinstance(response.get("imageRef"), str) and response["imageRef"]:
+        element["image_ref"] = response["imageRef"]
+    query = {**source, **({"lookingFor": args["lookingFor"]} if args.get("lookingFor") else {})}
+
+    def _unstaged(why: str) -> dict[str, Any]:
+        warnings.warn(f"mock image_transcribe could not be staged ({why})", stacklevel=3)
+        return {**response, "staged": None, "stagingError": f"mock: staging the canned page failed ({why})"}
+
+    if not (stager_js.exists() and compactor_js.exists()):
+        return _unstaged(f"no engine build at {_MCP_BUILD}")
+
+    script = (
+        f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
+        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const el = input.element;"
+        " let staged; let stagingError;"
+        " try { staged = await stageSearchResults({ projectPath: input.projectPath,"
+        " tool: 'image_transcribe', response: { query: input.query, results: [el] } }); }"
+        " catch (e) { staged = null; stagingError = String(e?.message ?? e); }"
+        " const digest = { id: el.id, chars: el.transcription.length,"
+        " excerpt: el.transcription.slice(0, 300),"
+        " ...(el.found ? { found: el.found } : {}), ...(el.truncated ? { truncated: true } : {}) };"
+        " const { metadata, ...rest } = input.response;"
+        " const out = { ...rest, staged, ...(stagingError !== undefined ? { stagingError } : {}),"
+        " digest, ...(metadata !== undefined ? { metadata } : {}) };"
+        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "element": element,
+        "query": query,
+        "response": response,
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return _unstaged(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or "staged" not in parsed:
+            return _unstaged("the node script returned no `staged` key")
+        return parsed
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        return _unstaged(f"{type(exc).__name__}: {exc}")
 
 
 def _unlogged_staged_handles(
@@ -1149,7 +1314,8 @@ def create_mock_server(
                 and _workspace is not None
                 and "error" not in response
             ):
-                entry["attested"] = _record_match_score(_workspace, args, response)
+                entry["attested"], parties = _record_match_score(_workspace, args, response)
+                response = _overlay_parties(response, parties)
 
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
@@ -1257,6 +1423,27 @@ def create_mock_server(
                 and isinstance(response.get("persons"), list)
             ):
                 response = _stage_record_read(_workspace, args, response)
+
+            # Production's image_transcribe stages the page and returns its ref,
+            # not the text (#2490): `staged` + `digest`, `transcription` dropped.
+            # The fixture keeps the full page; this is what production sends.
+            # A call with no projectPath is refused before any OCR in production,
+            # so it must not come back with the fixture's page.
+            _refused_no_project = (
+                _name == "image_transcribe"
+                and "error" not in response
+                and not args.get("projectPath")
+            )
+            if _refused_no_project:
+                response = {"error": IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
+            elif (
+                _name == "image_transcribe"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and isinstance(response.get("transcription"), str)
+            ):
+                response = _stage_image_transcribe(_workspace, args, response)
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
@@ -1369,6 +1556,8 @@ def create_mock_server(
             # A fixture marked `is_error` stands for a THROWN tool error, which
             # production's catch arms return with `isError: true` beside `{error}`.
             if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            if _refused_no_project:
                 envelope["is_error"] = True
             return envelope
 

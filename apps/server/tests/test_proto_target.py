@@ -1411,7 +1411,7 @@ def test_template_turn_users_match_the_worker_config():
     env = rh.template_env("worker")
     assert env["WORKER_TURN_USERS"] == bounds.TEMPLATE_TURN_USERS
     assert int(env["SQSD_VISIBILITY_TIMEOUT_S"]) == bounds.TEMPLATE_SQSD_VISIBILITY_S
-    hook = (SERVER / "proto" / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh").read_text(
+    hook = (SERVER / "proto" / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh").read_text(
         encoding="utf-8")
     [literal] = re.findall(r'^TURN_USERS="([^"]*)"', hook, re.M)
     assert tuple(literal.split()) == bounds.TURN_USERS_ALL and len(bounds.TURN_USERS_ALL) == bounds.MAX_SESSIONS

@@ -273,7 +273,7 @@ export interface DocumentMode {
   /** person id -> the text's own relation word. */
   statedRelations: Map<string, string>;
   /** `${personId}#${factIndex}` -> the fact's marks. */
-  factMarks: Map<string, { computed: string[]; note?: string }>;
+  factMarks: Map<string, { computed: string[]; note?: string; uncertain?: true }>;
   /** person id -> a note on the name reading. */
   nameNotes: Map<string, string>;
   /** The year of the event the source is about (the death on an obituary). */
@@ -287,6 +287,11 @@ const PRINCIPAL_EVENT: Partial<Record<RecordType, RegExp>> = {
   newspaper_announcement: /^(birth|marriage|engagement|anniversary)$/,
   probate: /^death$/,
 };
+
+/** `uncertain: true` on a name means the reading keeps its `[?]`; an agent that
+ *  sets the flag and drops the marker still gets one. A fact's flag rides
+ *  `factMarks` and is applied to the assertion's value in the extractor. */
+const markDoubted = (s: string) => `${s} [?]`;
 
 const yearOf = (v: string | undefined) => {
   const m = String(v ?? "").match(/\d{4}/);
@@ -304,7 +309,7 @@ export function documentToExtract(
   censusStatedRelationships: (place: string | undefined, year: number | undefined) => boolean | null,
 ): { extract: ExtractDocument; mode: DocumentMode } {
   const statedRelations = new Map<string, string>();
-  const factMarks = new Map<string, { computed: string[]; note?: string }>();
+  const factMarks = new Map<string, { computed: string[]; note?: string; uncertain?: true }>();
   const nameNotes = new Map<string, string>();
   const indexFields: Record<string, PersonaIndexFields> = {};
 
@@ -313,8 +318,12 @@ export function documentToExtract(
     const nameNote = p.names.map((n) => n.note).filter(Boolean).join("; ");
     if (nameNote) nameNotes.set(p.id, nameNote);
     p.facts.forEach((f, j) => {
-      if ((f.computed && f.computed.length) || f.note) {
-        factMarks.set(`${p.id}#${j}`, { computed: [...(f.computed ?? [])], ...(f.note ? { note: f.note } : {}) });
+      if ((f.computed && f.computed.length) || f.note || f.uncertain) {
+        factMarks.set(`${p.id}#${j}`, {
+          computed: [...(f.computed ?? [])],
+          ...(f.note ? { note: f.note } : {}),
+          ...(f.uncertain ? { uncertain: true as const } : {}),
+        });
       }
     });
     const fields: PersonaIndexFields = {
@@ -333,7 +342,13 @@ export function documentToExtract(
       id: p.id,
       ...(p.principal ? { principal: true } : {}),
       ...(gender ? { gender: gender === "male" ? "Male" : "Female" } : {}),
-      names: p.names.map((n) => ({ ...(n.given ? { given: n.given } : {}), ...(n.surname ? { surname: n.surname } : {}) })),
+      names: p.names.map((n) => {
+        const doubted = n.uncertain && ![n.given, n.surname].some((s) => s?.includes("[?]"));
+        return {
+          ...(n.given ? { given: doubted && !n.surname ? markDoubted(n.given) : n.given } : {}),
+          ...(n.surname ? { surname: doubted ? markDoubted(n.surname) : n.surname } : {}),
+        };
+      }),
       facts: p.facts.map((f) => ({
         type: f.type,
         ...(f.value !== undefined ? { value: f.value } : {}),
@@ -369,9 +384,18 @@ export function documentToExtract(
     relationships,
   } as unknown as SimplifiedGedcomX;
 
-  const principal = doc.persons.find((p) => p.principal) ?? doc.persons[0];
+  const principals = doc.persons.filter((p) => p.principal);
+  const principal = principals[0] ?? doc.persons[0];
   const eventRe = PRINCIPAL_EVENT[doc.recordType];
-  const eventFact = eventRe ? principal?.facts.find((f) => eventRe.test(f.type.toLowerCase())) : undefined;
+  const events = eventRe ? principal?.facts.filter((f) => eventRe.test(f.type.toLowerCase())) ?? [] : [];
+  // A pair event beats a birth, for any number of principals: a wedding notice
+  // that also gives the groom's birthplace is not a birth announcement, so the
+  // order the agent sent the facts in does not decide it. Among pair events,
+  // the one every principal carries wins.
+  const allCarry = (f: (typeof events)[number]) =>
+    principals.slice(1).every((o) => o.facts.some((g) => g.type.toLowerCase() === f.type.toLowerCase()));
+  const pairs = events.filter((f) => f.type.toLowerCase() !== "birth");
+  const eventFact = pairs.find(allCarry) ?? pairs[0] ?? events[0];
   const eventYear = yearOf(eventFact?.date);
 
   const hasWill =
