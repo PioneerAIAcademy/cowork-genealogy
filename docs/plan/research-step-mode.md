@@ -120,6 +120,30 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
 
     Decision 23 stays reversed: the `AskUserQuestion` carrier is kept.
 
+## Decisions taken (lead, 2026-10-25)
+26. **`foreground_rewrite` stays, through PR 1 and phase 2.** Claude Code still runs an `Agent`
+    call with no `run_in_background` key in the background: its own tool text says so through
+    2.1.308 ("Agents run in the background by default"), and all 111 such launches that started
+    on the alpha's Sep 21 and Oct 5 builds did. The turn then ends while its agents run. The
+    prototype worker reads a turn only to its first result and then kills the CLI (`_run_turn`
+    in `worker.py`: `client.disconnect()`, then `kill_uid` on the slot), so an agent still
+    running dies mid-search: D17 lost both background extractors that way (the
+    `DELEGATION_TOOLS` comment in `continue_policy.py`). The Stop veto never covered this,
+    because it cannot see a background agent, and from PR 1 no hosted turn binds it (cap 0,
+    section A). So PR 1 keeps the rewrite bound in the hook it edits (section A's host table),
+    and phase 2 keeps it when it deletes the veto.
+27. **Cowork's agents run in the foreground too.** Cowork ships no step hook (decision 25). Its
+    plugin hook sees every `Agent` call, to deny forks (PR #3762), but does not rewrite it, and
+    nothing in the plugin sets the key. In Cowork a delegation's result already arrives later,
+    as a message (ADR-0005, the third Cowork session), and on the hosted alpha the model left
+    the key out or set it true on 26–72% of its spawns. So a Cowork step can report and offer
+    "Continue with …?" before its agents return. **Open, for the lead:** the mechanism. Either
+    the router's spawn rule (`skills/research/SKILL.md:215`) and forget-and-rederive's two
+    spawns pass `run_in_background: false`, or a stateless arm in the plugin hook rewrites the
+    call, or both. PR 2's router and its tests wait on the answer.
+28. **Step mode measures cost as well as wait:** spend per step, and the reply each boundary
+    got (Measuring "respond sooner").
+
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
 "not exhaustive" verdict auto-produced a new plan:
@@ -242,10 +266,10 @@ that apply:
 
   | Plane | Hook | Turn steps from | Notes |
   |---|---|---|---|
-  | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the worker stores the turn's first step and mode in `turns.step` and `turns.mode`, and a redelivered attempt (`receive_count > 1`) seeds from them |
+  | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the worker stores the turn's first step and mode in `turns.step` and `turns.mode`, and a redelivered attempt (`receive_count > 1`) seeds from them. The check sits in `_pretool` ahead of the `foreground_rewrite` return and only denies or halts, so an allowed step's `Agent` calls are still foregrounded (decision 26) |
   | Alpha | `apps/server/app/agent/real_agent.py` | `handle_turn(text)`, reset in `_begin_turn_hook_state` | The main hook's matcher omits `Skill`. Put the step check in the `count_only` hook, or widen the matcher and update `test_write_lockdown.py`. No redelivery **SUPERSEDED by decision 25**. The alpha gets nothing under decision 25. |
-  | Unit harness | `eval/harness/harness/skill_runner.py`'s `pretool_hook` | the one turn | Run the step check **before** the stub, so a stub's canned reply never replaces the step denial |
-  | e2e harness | `eval/harness/e2e/orchestrator.py`'s `PreToolUse` | the user messages it sends (section F) | The resume-on-stall prompt is not a new turn |
+  | Unit harness | `eval/harness/harness/skill_runner.py`'s `pretool_hook` | the one turn | Run the step check **before** the stub, so a stub's canned reply never replaces the step denial, and ahead of the `foreground_rewrite` return (decision 26) |
+  | e2e harness | `eval/harness/e2e/orchestrator.py`'s `PreToolUse` | the user messages it sends (section F) | The resume-on-stall prompt is not a new turn. The check goes ahead of the non-MCP `foreground_rewrite` return (decision 26) |
   | Cowork | the plugin hook's own entry point (phase 0 picks the signal) | its prompt text | The hook is a fresh process per call, so the entry point keeps the turn's steps in a session state file, or reads them from the transcript (phase 0) **SUPERSEDED by decision 25**. Cowork ships no hook under decision 25. |
 
   - **There is no plugin step hook** (lead, 2026-10-21). The prototype worker
@@ -579,9 +603,9 @@ that apply:
 ### D. Executing the plan in parallel
 - **search-records becomes an agent** (issue #2243). That is the prerequisite for the fan-out.
 - **The router dispatches one search agent per plan item, one level down,** at most 4 per
-  assistant message. **The spawn-width test belongs in #2243's PR** (or the first PR after it),
-  because it needs search-records to be an agent. PR 2 (the router) ships the interim parallel
-  tool calls below.
+  assistant message, each in the foreground (decisions 26 and 27). **The spawn-width
+  test belongs in #2243's PR** (or the first PR after it), because it needs search-records to
+  be an agent. PR 2 (the router) ships the interim parallel tool calls below.
   - **Items with `fallback_for`** run only after their primary finds nothing; otherwise they
     are skipped as `fallback_not_triggered`.
   - **Then** one `extraction_append({ recordIds })` call covers the FamilySearch hits, and one
@@ -762,7 +786,7 @@ that apply:
     attached-records plan's PR D has landed, keep its test passing: on a project with no
     questions and a `high` gap, the first question still restates the objective.
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
-  (`skills/research/SKILL.md:364-365`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
+  (`skills/research/SKILL.md:364-365`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:263` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
   `compound-objective-*` router tests point at that statement.
 - **research-plan's FAN-pivot hand-off** (`agents/research-plan.md:751`) becomes a plan
@@ -931,9 +955,17 @@ records the measure.
 - **Leave out of the per-step figures** wrap-up turns, which run several steps (`turns.mode`).
   A host reply under "Keep going" is a one-step turn and counts.
 - **To break it down by step,** PR 1 adds nullable `turns.step` and `turns.mode` columns, and the
-  "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/014_*.sql`. The
-  worker fills them, and they also seed a redelivered attempt (section A). "p90 by step"
-  becomes one `GROUP BY`.
+  "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/015_*.sql` (014
+  is taken). The worker fills them, and they also seed a redelivered attempt (section A). "p90
+  by step" becomes one `GROUP BY`.
+- **Cost per step and the reply at each boundary** (decision 28), from the same columns:
+  - spend per step, priced from each turn's token columns (`input_tokens`,
+    `cache_creation_tokens`, `cache_read_tokens`, `output_tokens`), not `turns.cost_usd`, which
+    covers only the completing attempt (`004_worker.sql`);
+  - which reply each boundary got: the next turn's `turns.message` against the step its
+    predecessor offered (Continue, Keep going, Wrap it up, Search more, or none). That shows
+    whether researchers stop at the "not exhaustive" choice, which is the whole offset in
+    Costs.
 - **e2e reports the same figure** from per-turn timing (`make e2e-latency`, section F), so a
   change's effect on wait time is visible before it ships.
 - **The baseline** comes from the #3475 and #3459 bundles: person-evidence took 5–56 minutes,
@@ -1160,7 +1192,7 @@ in parallel with PR 2.
   - question-selection's two-fact ask would end a hosted turn the Stop veto still re-opens, and
     e2e's two-question fixtures are re-scoped only in PR 1; its gate text states PR 1's rule.
   - **the router:** A's deletions; the step report and only the replies that apply; the search
-    fan-out, external items included (D, I); the choice replacing the loop row (the row beginning *"`research-exhaustiveness` returned \"not yet exhaustive\""*; `:225` on `main`);
+    fan-out, external items included (D, I); the choice replacing the loop row (the row beginning *"`research-exhaustiveness` returned \"not yet exhaustive\""*; `:258` on `main`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
     proof-conclusion; the different-question reply and its wrap-up offer, and the conflict row
     following the ladder's `nextStep` with the no-next-step row above it (E); the upload turn
@@ -1219,7 +1251,14 @@ in parallel with PR 2.
 - **Delete the Stop veto:** `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
   counters, `stop_checker.py`'s veto, and `AUTONOMOUS_MAX_NUDGES` with its compose, Beanstalk
   and bundle settings, and the alpha's `autonomous_max_nudges` and `auto_continue_max_steps`.
-  `hand_back.py` and the runner's chain stay; they carry "Keep going".
+  `hand_back.py` and the runner's chain stay; they carry "Keep going". `foreground_rewrite` and
+  `DELEGATION_TOOLS` stay too (decision 26), with every hook that applies them (`real_agent.py`,
+  `proto/worker/options.py`, and the harness copy `eval/harness/harness/delegation.py` with its
+  calls in `skill_runner.py` and `e2e/orchestrator.py`) and every test that pins them
+  (`test_step_boundary_premises.py`, `test_effort_settings.py`, `test_proto_worker.py`,
+  `test_write_lockdown.py`, and the harness's `test_foreground_rewrite_parity.py`,
+  `test_skill_runner.py` and `test_e2e_context_block.py`). Re-point the comments that give the
+  veto as their reason (`delegation.py`'s docstring, `test_write_lockdown.py`'s section on it).
 - **Delete the same-turn hand-off lines** in research-plan and search-records. That makes
   search-records a paid run here.
 
@@ -1246,7 +1285,10 @@ in parallel with PR 2.
 2. **Host tests** on the worker (including the redelivery seed from `turns.step`), the unit
    harness and the e2e paths. Not the alpha and not Cowork: neither enforces the boundary, so
    neither has a hook to test. There is no plugin hook entry point and no
-   `GENEALOGY_STEP_HOST`, so nothing steps aside for anything.
+   `GENEALOGY_STEP_HOST`, so nothing steps aside for anything. On the worker and both harness
+   hooks, with a turn's first step recorded, an allowed same-group `Agent` call still comes
+   back with `run_in_background: false`, and an out-of-group one gets the deny, not the
+   rewrite (decision 26).
 3. **No Stop veto, and "Keep going":**
    - no hosted turn binds a Stop hook: `turn_max_nudges` returns 0, and the alpha's
      `_build_hooks` binds no `Stop`;
@@ -1368,7 +1410,8 @@ in parallel with PR 2.
     fixture with a conflict that cannot be settled, the run ends after one evidence round with a
     `not_proved` summary, well under the reply cap.
 11. **The prototype's `turns.step` and `turns.mode`** are filled for every turn and survive
-    redelivery, and a per-step p50/p90 query over `turns` returns figures.
+    redelivery, and per-step p50/p90, per-step spend and reply-per-boundary queries over
+    `turns` return figures.
 
 ## Coordinates with
 - **PR #3262 and `research-as-a-job-later.md` (Praise):** see "Integrating with
@@ -1408,7 +1451,11 @@ in parallel with PR 2.
 - **About +20–30% model calls** per run, roughly two per step boundary. "Keep going" runs pay
   it too, since each step is its own turn.
 - **A reply after more than 5 minutes rewrites the main-thread cache:** about $0.11 per 30k
-  tokens.
+  tokens. At the first boundary that is more than $0.18, since the main thread's first call
+  alone holds about 48k tokens on current builds. Late in a run the alpha's main thread holds
+  100–160k (it compacts near 164k; the Oct 5 sessions averaged about 118k a call), so a slow
+  reply there costs $0.40–0.60. The prototype's model runs a 1M window (`GATEWAY_MODEL`), so
+  a late slow reply there can cost more.
 - **Offset:** a researcher who concludes at the "not exhaustive" choice skips passes like the
   two automatic extra ones in issue #3475, $26 of its $50. Under "Keep going" one extra round
   still runs, so the saving there is the third pass, about $20.
