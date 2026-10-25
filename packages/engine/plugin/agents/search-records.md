@@ -495,11 +495,12 @@ candidates; you still confirm the top ones:
   **that narrower search** as the next step. Extraction is available again only
   once an independent anchor confirms identity.
   **Record each same-named person you conclude is not the subject** (Step 6b),
-  on a stated ground: the tool's `birthYearConflict`, a precise date that cannot
-  be his, other parents or another spouse, or a second candidate when another
-  result is the subject. Anywhere in the jurisdiction the search covered counts.
-  An age that rules him out never drops him. Never record a candidate who may
-  still be the subject.
+  whatever the search was for (a search for a relative that turns up a person
+  of the subject's name counts), on a stated ground: the tool's
+  `birthYearConflict`, a precise date that cannot be his, other parents or
+  another spouse, or a second candidate when another result is the subject.
+  Anywhere in the jurisdiction the search covered counts. An age that rules him
+  out never drops him. Never record a candidate who may still be the subject.
   **This gate is not special to the namesake case — it applies to every top
   match.** Extraction may be offered only when the top match clears
   `needs-review` on every check above (logical cross-check, name/date
@@ -694,7 +695,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 6b. Record namesakes
 
-For each person Step 4 concluded is a different same-named person, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
+For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
 
 ### 7. Pass records to extraction
 
