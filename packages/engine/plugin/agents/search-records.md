@@ -494,6 +494,12 @@ candidates; you still confirm the top ones:
   expected year window, a matching spouse or child, a later residence); propose
   **that narrower search** as the next step. Extraction is available again only
   once an independent anchor confirms identity.
+  **Record each same-named person you conclude is not the subject** (Step 6b),
+  on a stated ground: the tool's `birthYearConflict`, a precise date that cannot
+  be his, other parents or another spouse, or a second candidate when another
+  result is the subject. Anywhere in the jurisdiction the search covered counts.
+  An age that rules him out never drops him. Never record a candidate who may
+  still be the subject.
   **This gate is not special to the namesake case — it applies to every top
   match.** Extraction may be offered only when the top match clears
   `needs-review` on every check above (logical cross-check, name/date
@@ -686,6 +692,10 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Do not** set status to `completed` from this agent — that is set once extraction has created the assertions.
 
+### 6b. Record namesakes
+
+For each person Step 4 concluded is a different same-named person, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
+
 ### 7. Pass records to extraction
 
 **Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves. Four things an index does to a record, each a reason the original still has to be examined: a transcription error from misread handwriting; partial indexing that omits fields the original carries; names or dates standardized differently than the original wrote them; and context that only the full document shows — marginal notes, adjacent entries, the structure of the page.
@@ -735,7 +745,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 9. Present results
 
-**Accuracy rule — do not overclaim persistence.** This agent writes only `log[]` entries and plan-item `status` — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
+**Accuracy rule — do not overclaim persistence.** This agent writes only `log[]` entries, plan-item `status` and `namesakes` rows — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
 
 - Summarize what was searched and what was found
 - Show the log entries created
@@ -761,12 +771,12 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 - **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
 - **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
-- **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries and plan-item status, not assertions.
+- **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries, plan-item status and namesake rows, not assertions.
 - **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?"
 
 ## Re-invocation behavior
 
-**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; and a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`).
+**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up (Step 6b).
 
 **On repeat invocation:** always append a new `log_` entry (and sidecar) — re-running a search is itself a logged event, never an edit of a prior one; update the plan item's `status` in place. Two runs of the same query produce two distinct log entries and sidecars — that is the audit trail, not a duplication bug.
 
@@ -778,6 +788,7 @@ Return **≤12 lines** to the caller, in this order:
 - the top match(es) with `matchScore`, attachment status, the cross-check result and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
+- each `ns_` row written, and when its call warned, `Hand-back: person-evidence — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
 - next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
