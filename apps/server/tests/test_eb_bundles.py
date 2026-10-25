@@ -262,7 +262,7 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 ".ebextensions/01-sqsd.config": (b"option_settings:\n  aws:elasticbeanstalk:sqsd:\n"
                                                  b"    HttpPath: \"/turn\"\n", f),
                 ".ebextensions/02-worker.config": (_config({"PORT": "8000", "PGSSLROOTCERT": CA}), f),
-                ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0o755),
+                ".platform/hooks/predeploy/100_worker-layout.sh": (b"#!/bin/bash\n", 0o755),
                 "requirements.txt": (REQS, f), "wheels/foo-1.0-py3-none-any.whl": (b"x", f),
                 "app/__init__.py": (b"", f), "app/agent/__init__.py": (b"", f), "app/agent/real_agent.py": (b"", f),
                 "proto/enqueue.py": (b"", f), "proto/grants.py": (b"", f), "proto/migrate.py": (b"", f),
@@ -398,10 +398,10 @@ REJECTED = {
     "an .ebextensions file that is not .config": ("tools", lambda: _add("tools", **{
         ".ebextensions/03-u13.yaml": b"option_settings: {}\n"}), "is not a .config file"),
     "a hook without its exec bit": ("worker", lambda: _add("worker", **{
-        ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0o644)}), "has no exec bit"),
+        ".platform/hooks/predeploy/100_worker-layout.sh": (b"#!/bin/bash\n", 0o644)}), "has no exec bit"),
     "a hook stored with no Unix mode": ("worker", lambda: _add("worker", **{
-        ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0)}), "has no exec bit"),
-    "no predeploy hook": ("worker", lambda: _drop("worker", ".platform/hooks/predeploy/01-worker-layout.sh"),
+        ".platform/hooks/predeploy/100_worker-layout.sh": (b"#!/bin/bash\n", 0)}), "has no exec bit"),
+    "no predeploy hook": ("worker", lambda: _drop("worker", ".platform/hooks/predeploy/100_worker-layout.sh"),
                           "missing .platform/hooks/predeploy/"),
     "no migrate.py in web": ("web", lambda: _drop("web", "migrate.py"), "missing migrate.py"),
     "no migrate.py in worker": ("worker", lambda: _drop("worker", "proto/migrate.py"), "missing proto/migrate.py"),
