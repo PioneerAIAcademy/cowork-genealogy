@@ -153,7 +153,7 @@ For each record type, assign a digitization level using the **Digitization level
 
 ### 5. Compile
 
-Use the template under **Locality Guide Output Format** below, scoped to the question, with every claim from tool results. Write in full: jurisdiction overview, boundary changes, the repository guide, records not online, known record losses, research tips, each record-type subsection the delegation names, and each record type that substitutes for a named one missing or destroyed for the period (e.g. land and tax records for lost census returns). Give every other record-type subsection one line: what exists, the level it is held at, and where. Research tips: at most six bullets. Repository tables: only repositories holding the record types written in full. When the request names no record type, give each record-type subsection at most three bullets. Keep the whole guide under twelve thousand characters. When `research_append` returns `ok: true` in Step 6, the guide is in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or does not return `ok: true`, the guide is your return.
+Use the template under **Locality Guide Output Format** below, with every claim from tool results. Give each record-type subsection at most three bullets and research tips at most six. When `research_append` returns `ok: true` in Step 6, the guide is in that entry, not your return, even when the delegation asks for a guide. When Step 6 does not run, or does not return `ok: true`, the guide is your return.
 
 ### 6. Persist the locality
 
@@ -181,7 +181,7 @@ research_append({
       "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first.",
       "Feliciana Parish split into East and West Feliciana Parish in 1824 — which side holds a given record depends on where within old Feliciana Parish the event occurred; search both unless that's pinned down."
     ],
-    guide_markdown: "<the whole guide as Step 5 scopes it, in markdown — never a pointer to it>",
+    guide_markdown: "<the whole guide as Step 5 caps it, in markdown — never a pointer to it>",
     pages_read: [
       { section: "home", url: "<page url or null>", found: true },
       { section: "getting_started", url: "...", found: true },
@@ -330,7 +330,7 @@ be found:
 
 ## Locality Guide Output Format
 
-Use this structure when compiling the final guide, scoped per Step 5,
+Use this structure when compiling the final guide, capped per Step 5,
 with specific data from MCP tool results. Omit sections only
 when the record type is clearly inapplicable (e.g., international
 border-crossing manifests for a locality far from any land border or

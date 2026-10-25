@@ -23,28 +23,29 @@ the body's output format.
 
 ## Guide scope
 
-The guide is scoped to the question: jurisdiction overview, boundary
-changes, repository guide, records not online, known record losses and research tips in
-full, plus each record-type subsection the delegation names and each record type that
-substitutes for a named one missing for the period; every other record type gets one line
-(what exists, its level, where held). Research tips are capped at six bullets and the
-repository tables list only repositories holding the record types written in full. A
-request naming no record type gets at most three bullets per record-type subsection, and every guide stays
-under 12,000 characters.
+Each record-type subsection gets at most three bullets and research tips at most
+six. The caps are the whole rule: no judgement about which record types the
+request named or which substitute for which.
 
-The substitute clause exists because naming alone drops what a genealogist relies on: for
-County Antrim in the 1820s a baptism question names church records, but the tithe books and
-Griffith's Valuation (land records) are the standard stand-in for the destroyed census
-returns. Measured on two hosted guides (2026-10-07 Antrim, 24.7k characters; 2026-10-15
-Freeborn County, 25.2k), one-lining the unnamed record types alone cut 30-33%; research
-tips (3.6-4.6k) and the repository tables were the largest remaining sections.
+Why plain caps. A first version scoped the guide to the question (named record
+types and their substitutes in full, the rest one line, no named type meant
+every section in full, a twelve-thousand-character limit). Measured on the unit
+suite on 2026-10-25 against main: saved guides fell from 17-20k to 13-16k
+characters, but the agent's output rose from about 10.5k to 13-16.5k tokens per
+test and cost per test from $0.33-0.38 to about $0.50. The guide was written once
+every time, so the extra output was deliberation over the scoping rules. On the
+hosted guides that motivated the change (Antrim 24.7k, Freeborn 25.2k
+characters) research tips (3.6-4.6k) and the record-type subsections were the
+bulk, which the caps cut directly.
 
-The 12,000-character cap is also what keeps the write inside the eval harness's
-180-second silence limit: the guide goes into one `research_append` call, a
-single message. On 2026-10-24 main's guide write already took about 150 s
-(8,000-8,700 output tokens on three unit tests), and the first version of the
-scoping, which still wrote every section in full when no record type was named,
-stalled past 180 s on 11 of 24 unit tests while main passed the same three.
+The substitute guidance survives as the body's "Record-type reminders": for
+County Antrim in the 1820s, the tithe books and Griffith's Valuation stand in
+for the destroyed census returns.
+
+The guide goes into one `research_append` call, a single message. On main that
+write was already about 8,000 output tokens and about 150 s, at the edge of the
+eval harness's 180-second silence watchdog, so every locality-guide test sets
+`sdk_message_silence_seconds: 360` as research-plan's tests do.
 
 ## Saved fields other agents read
 
