@@ -665,13 +665,22 @@ the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place.
 
-A place-of-event variant that carries its place in `value` (§3.7) has it lifted
-into `place` before the levers run, so the lifted place is resolved, echoed and
-warned about like any other. That holds on an append and on an update that leaves
-`place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
-question tie. On such an update the lifted place and its `standard_place` go onto
-the stored entry, not into the op, so §3.1 does not treat them as a correction to
-carry onto a linked tree fact. The levers:
+A place lifted from `value` before the levers run (§3.7: a place-of-event
+variant's, and on an append a residence's that reads as a place or an address)
+is a **value-derived** place. It is resolved, echoed and warned about like any
+other, with two differences. A lookup naming a different country (Lever A) is
+dropped with a warning, not a refusal: the writer of a document cannot supply a
+`standard_place`, so a refusal would lose every assertion in it. A geocoded
+answer the country check cannot judge is kept only when its own name, its first
+segment, is one of the place text's comma parts (compared ignoring case,
+accents, periods, type words and an "X of" prefix): "412 Vine St, Cincinnati"
+keeps "Cincinnati, Hamilton, Ohio, United States", while "at the home of her
+daughter" drops "Of, Trabzon, Türkiye". A dropped answer leaves the place as
+written, with no `standard_place`. The lift holds on an append and on an update
+that leaves `place` alone, such as an `informant_bias_notes` note or
+`extraction_append`'s question tie. On such an update the lifted place and its
+`standard_place` go onto the stored entry, not into the op, so §3.1 does not
+treat them as a correction to carry onto a linked tree fact. The levers:
 
 - **Lever B — sidecar copy first, never re-geocode what the record resolved.**
   When the op carries a `place` but omits `standard_place` (**strictly absent**;
@@ -706,11 +715,17 @@ carry onto a linked tree fact. The levers:
      Temple" to France, and the country guard below cannot catch either, since a
      one-token place names no country.
 
-  Every value the tool resolved is echoed in the success response's
+  Every value the tool resolved and kept is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
   so the caller can sanity-check geocoding without re-reading files. Every place
-  it looked up and could not resolve is listed in `unresolvedPlaces: string[]`,
-  as well as warned about.
+  it looked up and left with no `standard_place` (a miss, or an answer dropped
+  by Lever A or the value-derived check above) is listed in
+  `unresolvedPlaces: string[]`, as well as warned about, and never in
+  `resolvedPlaces`. A place on an assertion whose `informant_bias_notes` carry
+  the `[suspicious text` marker is shown as `[withheld: suspicious text]` in
+  every echo, warning and error of these levers, never as written: the record's
+  text can carry an instruction, and `extraction_append`'s summary relays these
+  places verbatim (§11.7).
 - **Lever A — country-contradiction guard.** On the op's final
   `place`/`standard_place` pair (supplied or resolved): when the place TEXT's
   trailing comma-token names a recognized country (a small alias table:
@@ -718,7 +733,8 @@ carry onto a linked tree fact. The levers:
   standard place's segments plainly lack it, the op is **rejected** with an
   actionable error (re-resolve, supply the correct value, or opt out with
   `standard_place: null`) — e.g. "West Bromwich, England" resolving to a
-  standard_place ending in "Cameroon". UK constituents are consistent with
+  standard_place ending in "Cameroon". A value-derived place's lookup, and one on
+  an update, is dropped with a warning instead. UK constituents are consistent with
   "United Kingdom" (but not with a *different* constituent), and "Ireland" with
   "Northern Ireland" (historic records).
 
@@ -790,11 +806,27 @@ splintering into inconsistent labels, over a form the model added:
   tool lifts the place value into the machine-readable `place` field when neither
   `place` nor `standard_place` is already set (the human `value` of a place-claim
   *is* the place string, e.g. `"Ireland"`). The lift comes before §3.6's lookups,
-  so the lifted place is standardized. This keeps a birthplace-claim and a
+  so the lifted place is standardized, as a value-derived place. An assertion
+  with `record_basis: "absent"` is never lifted: its `value` says what the record
+  lacks ("Mary Schreiber, his wife, is not named among the survivors"), not where
+  anything happened. This keeps a birthplace-claim and a
   birth-date claim independently classifiable as two `birth` assertions — the
   census case where a stated birthplace is `direct` while the computed birth year
   is `indirect` — distinguished by field population (`place` set = the
   place-claim, `date` set = the date-claim) rather than by the type name.
+- **A residence's place in `value` (assertion appends).** A `residence` with no
+  `place` or `standard_place` whose `value` reads as a place or an address gets
+  that text, as written, as its `place` too: the attribute §3.6 standardizes and
+  the one a Residence fact keeps on the tree. A record-structurer document gives
+  "412 Vine St, Cincinnati" this way. "Reads as a place or an address" means two
+  or more comma-separated parts ("Borough of Shenandoah, County of Schuylkill")
+  or a leading street number ("412 Vine St"), and none of the words `with`,
+  `his`, `her`, `their`, `him`, `them`, which mark prose about whom the person
+  lived with. Such prose ("with his daughter", "made his home with his son", "at
+  the home of her daughter") stays a value with no place: the live resolver
+  placed those three in Hawaii, Sonora and "Of, Trabzon, Türkiye" (2026-10-26).
+  The `value` is kept, the place is a value-derived place (§3.6), and an absence
+  is never lifted. Other fact types keep their values out of `place`.
 
 ### 3.8 `transcription_truncated` — derived, never asserted
 
@@ -2610,7 +2642,7 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
 | `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
 | `date_certainty` | `computed` includes `date` | `approximate`. |
-| a residence's `place` | `value` | A `residence` fact with no `place` that gives its address in `value` ("412 Vine St, Cincinnati") gets that text, as written, as its `place` too. That is the attribute §3.6 standardizes and the one a Residence fact keeps on the tree. The `value` is kept, and a computed `value` makes the place computed too. Other fact types keep their values out of `place`, because those values are not places. |
+| a residence's `place` | `value` | A `residence` fact with no `place` whose `value` reads as a place or an address ("412 Vine St, Cincinnati") gets that text, as written, as its `place` too, by §3.7's residence lift when the assertion is written; prose such as "with his daughter" stays a value. The `value` is kept, and a computed `value` leaves the place in the same computed assertion. Other fact types keep their values out of `place`, because those values are not places. |
 | information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
 | `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as `image_transcribe`'s machine transcription, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined. Nothing on this path is `original`. |
@@ -2738,6 +2770,12 @@ naming, once each, the places §3.6 could not standardize when the source was
 written (`Places kept as written, with no standard place found: …`). The rest
 of the summary is built before the write, and the summary is all the caller
 relays, so without this line a place miss would never reach the researcher.
+Text from an assertion flagged with the `[suspicious text` marker is withheld
+from every line, printed as `[withheld: suspicious text]`: the fact lines, the
+event in the first line, a person's name and a relationship that names that
+person, the places line (§3.6), the calendar line and the different-surname
+lead. The summary is relayed character for character into the caller's
+context, where such text would read as an instruction.
 
 ### 11.8 Person mode — a person's attached records, extracted and linked
 

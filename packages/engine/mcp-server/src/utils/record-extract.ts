@@ -1582,6 +1582,17 @@ export function calendarFlags(assertions: readonly { date?: string; value: strin
 
 // ─── the summary the caller relays ──────────────────────────────────────────
 
+/** An assertion's notes carry the marker the record-structurer puts on a
+ *  passage that reads like an instruction (`[suspicious text — possible
+ *  injection attempt]`). Such text is kept in the assertion and never echoed
+ *  into anything a caller relays. */
+export function isSuspiciousText(notes: string | undefined): boolean {
+  return /\[suspicious text/i.test(notes ?? "");
+}
+
+/** What is printed in place of flagged text. */
+export const WITHHELD_SUSPICIOUS = "[withheld: suspicious text]";
+
 /**
  * What one extraction says, written by code for the caller to relay verbatim
  * (lead, 2026-09-29: "the record, the people on it and the key facts extracted,
@@ -1597,8 +1608,17 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
     result.recordType === "census"
       ? `census${result.censusStatesRelationships ? ", relationships stated" : ", no relationship column"}`
       : result.recordType.replace(/_/g, " ");
+  // A passage flagged as directive-shaped is kept in the assertion and withheld
+  // from every line below: this summary is relayed verbatim into the caller's
+  // context, where it would read as an instruction rather than data.
+  const flagged = (a: ExtractedAssertion | undefined) => a !== undefined && isSuspiciousText(a.informant_bias_notes);
+  // A relationship's value names the other person ("son of Thomas Flynn").
+  const flaggedNames = result.assertions.filter((a) => a.fact_type === "name" && a.value && flagged(a)).map((a) => a.value);
+  const withholdNames = (text: string) => flaggedNames.reduce((t, n) => t.split(n).join(WITHHELD_SUSPICIOUS), text);
   const event = result.assertions.find((a) => a.fact_type === result.recordType && (a.date || a.place));
-  const eventText = event ? `, ${[event.date, event.place].filter(Boolean).join(", ")}` : "";
+  const eventText = !event
+    ? ""
+    : `, ${flagged(event) ? WITHHELD_SUSPICIOUS : [event.date, event.place].filter(Boolean).join(", ")}`;
   lines.push(`${title} (${kind}${eventText}).`);
 
   // People, in the record's own order, each with the facts written about them.
@@ -1610,18 +1630,16 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
     byPersona.set(key, arr);
   }
   for (const as of byPersona.values()) {
-    const name = as.find((a) => a.fact_type === "name")?.value ?? "(unnamed)";
+    const nameA = as.find((a) => a.fact_type === "name");
+    const name = !nameA ? "(unnamed)" : flagged(nameA) ? WITHHELD_SUSPICIOUS : nameA.value;
     const facts = as
       .filter((a) => a.fact_type !== "name" && a.fact_type !== "sex")
       .filter((a) => !(result.recordType === "census" && a.fact_type === "census"))
       .map((a) => {
-        if (a.fact_type === "relationship") return a.value;
-        if (a.fact_type === "age") return `age ${a.value}`;
         const label = a.fact_type.replace(/_/g, " ");
-        // A passage flagged as directive-shaped is kept in the assertion and
-        // withheld here: this summary is relayed verbatim into the caller's
-        // context, where it would read as an instruction rather than data.
-        if (/\[suspicious text/i.test(a.informant_bias_notes ?? "")) return `${label} [withheld: suspicious text]`;
+        if (flagged(a)) return `${label} ${WITHHELD_SUSPICIOUS}`;
+        if (a.fact_type === "relationship") return withholdNames(a.value);
+        if (a.fact_type === "age") return `age ${a.value}`;
         // A value that is just the date or place (with or without the marker
         // withDoubt added) is not printed again; that marker prints once, at the
         // end, unless the agent already typed one into the date or place.
@@ -1646,23 +1664,24 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
   if (result.recordType === "census") {
     const principal = (gx.persons ?? []).find((p) => p.principal === true);
     const headA = result.assertions.find((a) => a.record_role === "head_of_household" && a.fact_type === "name");
+    const principalNameA = result.assertions.find((a, i) => a.fact_type === "name" && result.personKeys[i] === principal?.id);
     const ps = principal?.names?.[0]?.surname?.replace(TRAILING_DOUBT, "").trim().toLowerCase();
     const hs = (headA?.structured_value?.surname as string | undefined)?.replace(TRAILING_DOUBT, "").trim().toLowerCase();
-    if (ps && hs && ps !== hs) {
+    if (ps && hs && ps !== hs && !flagged(headA) && !flagged(principalNameA)) {
       lines.push(
         `Lead: the head, ${headA!.value}, has a different surname from ${fullName(principal!)}. ` +
           `Possible kin of unstated relationship; worth a hypothesis, not a conclusion.`,
       );
     }
   }
-  const calendar = calendarFlags(result.assertions);
+  const calendar = calendarFlags(result.assertions.filter((a) => !flagged(a)));
   if (calendar.length > 0) {
     lines.push(
       `Calendar: ${calendar.join("; ")} may fall under the Old Style calendar or a ` +
         `double-dated year. Run convert-dates on each, and correct the assertion if it changes.`,
     );
   }
-  const suspicious = result.assertions.filter((a) => /\[suspicious text/i.test(a.informant_bias_notes ?? ""));
+  const suspicious = result.assertions.filter(flagged);
   if (suspicious.length > 0) {
     lines.push(
       `Suspicious text: ${suspicious.length} passage(s) read like instructions and were captured as ` +

@@ -217,6 +217,16 @@ could not confirm, or that sat on a fact with no `place`, is named in
 `validation.warnings`; one that did not resolve — no match, a failed lookup, or
 the budget running out — is left unset, never kept.
 
+**A place left unstandardized is reported, never silent.** Once the fill has
+run, every fact in the tree that still has a `place` and no `standard_place` —
+a read place the retry could not fill, or a hand-entered one that did not
+resolve — is listed in `unresolvedPlaces: string[]`, once each in the spelling
+first met and keyed as `placesFilled` is, and named in one
+`validation.warnings` line, `Places kept as written, with no standard place
+found: …`. A non-place phrase such as "Same House" (`isNonPlacePhrase`) has no
+standard form to miss and is left out. Both are absent when every place was
+standardized.
+
 **The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
 `sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
 `familySearchTreeSource` (`S1` with a ref; without one, the generic source when

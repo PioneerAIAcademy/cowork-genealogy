@@ -62,6 +62,7 @@ import {
   factsOf,
   normalizeHandBuilt,
   retryUnresolvedPlaces,
+  unresolvedPlacesOf,
   pidKey,
   type IdMap,
   type FilledPlace,
@@ -119,6 +120,9 @@ export type ProjectCreateResult =
       /** Places the read left without a `standard_place` that this create
        *  resolved; absent when there were none. */
       placesFilled?: FilledPlace[];
+      /** Places still without a `standard_place` once this create tried them,
+       *  each once; absent when there were none. */
+      unresolvedPlaces?: string[];
       validation: { valid: true; warnings: string[] };
     }
   | { ok: false; errors: string[] };
@@ -419,6 +423,10 @@ export async function projectCreate(
     // `standard_place` string to a fact that had none, which validation
     // already admits.
     const placesFilled = await fillAll();
+    const unresolvedPlaces = unresolvedPlacesOf(factsOf(tree));
+    if (unresolvedPlaces.length > 0) {
+      refWarnings.push(`Places kept as written, with no standard place found: ${unresolvedPlaces.join("; ")}.`);
+    }
     // The fill can take seconds, so check again that no other create landed
     // while it ran: create never overwrites.
     for (const ref of ["research.json", "tree.gedcomx.json"]) {
@@ -448,6 +456,7 @@ export async function projectCreate(
       },
       idMap,
       ...(placesFilled.length ? { placesFilled } : {}),
+      ...(unresolvedPlaces.length ? { unresolvedPlaces } : {}),
       validation: { valid: true, warnings: [...refWarnings, ...formatIssues(validation.warnings)] },
     };
   } catch (e) {

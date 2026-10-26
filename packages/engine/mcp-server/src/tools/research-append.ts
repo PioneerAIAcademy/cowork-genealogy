@@ -60,8 +60,10 @@ import {
   countryConsistency,
   isNonPlacePhrase,
   checkFirstPlace,
+  standardPlaceNamedInText,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
+import { isSuspiciousText, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -5983,19 +5985,50 @@ function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
 
-/** A folded place-of-event variant must keep its place machine-readable: when
- *  neither `place` nor `standard_place` is set, lift the human `value` (which
- *  for a place-claim IS the place string, e.g. "Ireland") into `place`. Reads
- *  `fact_type` as given, so it runs before the fold renames it. Returns whether
- *  it lifted. `prepareOps` calls it before its place lookups, so a lifted place
- *  is standardized like any other. */
+/** `value` may be lifted into `place`: neither `place` nor `standard_place` is
+ *  set, there is a value, and the assertion is not an absence, whose value says
+ *  what the record lacks rather than naming a place. */
+function placeLiftable(entry: Record<string, unknown>): boolean {
+  return isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(entry.value) && entry.record_basis !== "absent";
+}
+
+/** A folded place-of-event variant must keep its place machine-readable: lift
+ *  the human `value` (which for a place-claim IS the place string, e.g.
+ *  "Ireland") into `place` when `placeLiftable`. Reads `fact_type` as given, so
+ *  it runs before the fold renames it. Returns whether it lifted. `prepareOps`
+ *  calls it before its place lookups, so a lifted place is standardized, as a
+ *  value-derived place. */
 function liftVariantPlace(entry: Record<string, unknown>): boolean {
+  if (typeof entry.fact_type !== "string" || !PLACE_VARIANT_KEYS.has(factTypeKey(entry.fact_type)) || !placeLiftable(entry)) {
+    return false;
+  }
+  entry.place = entry.value;
+  return true;
+}
+
+/** Words that mark prose about whom a person lived with ("with his daughter",
+ *  "at the home of her son"), not a place. */
+const RELATIONAL_WORDS = /\b(?:with|his|her|their|him|them)\b/i;
+
+/** A residence `value` that reads as a place or an address: two or more comma
+ *  parts ("Borough of Shenandoah, County of Schuylkill") or a leading street
+ *  number ("412 Vine St"), and none of RELATIONAL_WORDS. */
+function readsAsPlace(value: string): boolean {
+  if (RELATIONAL_WORDS.test(value)) return false;
+  return placeSegments(value).length >= 2 || /^\s*\d+[a-z]?\s+\S/i.test(value);
+}
+
+/** A residence given only in `value` ("412 Vine St, Cincinnati", from a
+ *  record-structurer document) has its value lifted into `place`, the attribute
+ *  that is standardized and the one a Residence fact keeps on the tree, when
+ *  `placeLiftable` and the value `readsAsPlace`. Appends only, from
+ *  `prepareOps`. Returns whether it lifted. */
+function liftResidencePlace(entry: Record<string, unknown>): boolean {
   if (
     typeof entry.fact_type !== "string" ||
-    !PLACE_VARIANT_KEYS.has(factTypeKey(entry.fact_type)) ||
-    !isBlank(entry.place) ||
-    !isBlank(entry.standard_place) ||
-    isBlank(entry.value)
+    factTypeKey(entry.fact_type) !== "residence" ||
+    !placeLiftable(entry) ||
+    !readsAsPlace(entry.value as string)
   ) {
     return false;
   }
@@ -7922,12 +7955,15 @@ async function prepareOps(
     return results;
   };
 
-  // A place variant ("birthplace") carrying its place in `value` has it lifted
-  // into `place` here, before the lookups below, rather than by applyOne's fold
-  // after them.
+  // A place given only in `value` is lifted into `place` here, before the
+  // lookups below: a place variant's ("birthplace"), which applyOne's fold would
+  // otherwise lift after them, and a residence's that reads as a place. Each is
+  // a value-derived place, whose lookup applyPlaceLevers must confirm.
+  const liftedFromValue = new Set<object>();
   for (const op of ops) {
     if (op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object") {
-      liftVariantPlace(op.entry as Record<string, unknown>);
+      const e = op.entry as Record<string, unknown>;
+      if (liftVariantPlace(e) || liftResidencePlace(e)) liftedFromValue.add(e);
     }
   }
 
@@ -7944,29 +7980,38 @@ async function prepareOps(
 
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
-   *  `dropContradiction`, when it is left unset instead. */
+   *  `dropContradiction` or the place is `valueDerived` (lifted from `value`),
+   *  when the lookup is dropped instead. A value-derived place keeps a geocoded
+   *  answer the country check cannot judge only when the answer's own name is
+   *  in the place text. A dropped lookup is warned about and listed in
+   *  unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
+   *  as suspicious text is echoed as WITHHELD_SUSPICIOUS, never as written. */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
     matchedRecord: any,
-    dropContradiction = false,
+    { dropContradiction = false, valueDerived = false }: { dropContradiction?: boolean; valueDerived?: boolean } = {},
   ): Promise<void> => {
+    const shown: string = isSuspiciousText(entry.informant_bias_notes) ? WITHHELD_SUSPICIOUS : entry.place;
+    const unresolved = (why = "") => {
+      warnings.push(`could not resolve standard_place for '${shown}' (left unset)${why}`);
+      unresolvedPlaces.push(shown);
+    };
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
     // only a fully omitted field triggers resolution. A non-place phrase
     // ("Same House") is left unset, silently: it has no standard form.
-    let geocoded = false;
+    let filled: "sidecar" | "geocoded" | null = null;
     if (
       factText(entry.place) !== undefined &&
       entry.standard_place === undefined &&
       !isNonPlacePhrase(factText(entry.place)!)
     ) {
       let sp: string | null = null;
-      let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {
         sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
-        if (sp) source = "sidecar";
+        if (sp) filled = "sidecar";
       }
       if (!sp && input.resolveStandardPlace !== false) {
         // resolveStandardPlace swallows network failures and returns null, so
@@ -7979,48 +8024,47 @@ async function prepareOps(
         } catch {
           sp = null;
         }
-        if (sp) {
-          source = "geocoded";
-          geocoded = true;
-        } else {
-          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
-          unresolvedPlaces.push(entry.place);
-        }
+        if (sp) filled = "geocoded";
+        else unresolved();
       }
-      if (sp && source) {
-        entry.standard_place = sp;
-        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
-      }
+      if (sp) entry.standard_place = sp;
     }
 
     // ── Place lever (a): country-contradiction guard on the final pair
     // (supplied or resolved). Skipped when standard_place is null/absent.
-    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
-      const verdict = countryConsistency(entry.place, entry.standard_place);
-      if (verdict === "contradiction" && dropContradiction) {
-        entry.standard_place = undefined;
-        return;
-      }
-      if (verdict === "contradiction") {
-        errors.push(
-          fmt(
-            i,
-            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
-              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
-              "correct standard_place, or set standard_place: null if no standard form exists.",
-          ),
-        );
-        return;
-      }
-      if (verdict === "unverifiable" && geocoded) {
-        warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
-            "could not be cross-checked (either the place text names no country, or the standard place " +
-            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
-            "right place",
-        );
-      }
+    if (typeof entry.place !== "string" || typeof entry.standard_place !== "string") return;
+    const sp: string = entry.standard_place;
+    const verdict = countryConsistency(entry.place, sp);
+    if (verdict === "contradiction" && (dropContradiction || valueDerived)) {
+      delete entry.standard_place;
+      unresolved(`: the lookup's answer '${sp}' names a different country`);
+      return;
     }
+    if (verdict === "contradiction") {
+      errors.push(
+        fmt(
+          i,
+          `standard_place '${sp}' contradicts place '${shown}' — the place text ` +
+            "names a different country. Re-resolve with place_search / place_search_all and supply the " +
+            "correct standard_place, or set standard_place: null if no standard form exists.",
+        ),
+      );
+      return;
+    }
+    if (verdict === "unverifiable" && filled === "geocoded") {
+      if (valueDerived && !standardPlaceNamedInText(entry.place, sp)) {
+        delete entry.standard_place;
+        unresolved(`: the lookup's answer '${sp}' could not be confirmed, as the text names neither a country nor that place`);
+        return;
+      }
+      warnings.push(
+        `resolved standard_place '${sp}' for place '${shown}' — the country ` +
+          "could not be cross-checked (either the place text names no country, or the standard place " +
+          "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+          "right place",
+      );
+    }
+    if (filled) resolvedPlaces.push({ place: shown, standardPlace: sp, source: filled });
   };
 
   for (let i = 0; i < ops.length; i++) {
@@ -8193,7 +8237,7 @@ async function prepareOps(
       }
     }
 
-    await applyPlaceLevers(entry, i, matchedRecord);
+    await applyPlaceLevers(entry, i, matchedRecord, { valueDerived: liftedFromValue.has(entry) });
   }
 
   // An assertions update that corrects `place` to another place and says nothing of
@@ -8215,11 +8259,12 @@ async function prepareOps(
     // entry when the op leaves `place` alone: a note or a question tie is not a
     // place correction for rewriteLinkedFacts to carry onto the tree.
     const merged = { ...cur, ...fields };
-    if (liftVariantPlace(merged)) {
+    const lifted = liftVariantPlace(merged);
+    if (lifted) {
       if (!setsPlace) {
         cur.place = merged.place;
         const view: any = { ...merged, standard_place: undefined };
-        await applyPlaceLevers(view, i, null, true);
+        await applyPlaceLevers(view, i, null, { dropContradiction: true, valueDerived: true });
         if (typeof view.standard_place === "string") cur.standard_place = view.standard_place;
         continue;
       }
@@ -8229,14 +8274,15 @@ async function prepareOps(
     const place = factText(fields.place);
     if (place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    await applyPlaceLevers(view, i, null, true);
+    await applyPlaceLevers(view, i, null, { dropContradiction: true, valueDerived: lifted });
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {
       fields.standard_place = null;
+      const shown = isSuspiciousText(view.informant_bias_notes) ? WITHHELD_SUSPICIOUS : place;
       warnings.push(
         `assertion '${op.entryId}': cleared standard_place '${cur.standard_place}' because its place ` +
-          `was corrected to '${place}' and no standard form was found for the new place`,
+          `was corrected to '${shown}' and no standard form was found for the new place`,
       );
     }
   }

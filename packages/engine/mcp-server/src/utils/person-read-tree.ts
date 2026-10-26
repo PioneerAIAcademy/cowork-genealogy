@@ -25,6 +25,7 @@
 import type { SimplifiedFact, SimplifiedRelationship } from "../types/gedcomx.js";
 import { treePidOfArk } from "./ark.js";
 import { collectFacts, standardizePlaces } from "./gedcomx-convert.js";
+import { isNonPlacePhrase } from "./place-resolver.js";
 // The one relationship identity. A private copy here keyed on type and
 // endpoints only, so an import carrying both a Biological and a Step parent on
 // one pair was refused as a repeat — the opposite of what the tree says
@@ -496,12 +497,27 @@ export async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<Fi
         // Keyed as `standardizePlaces` groups places (trimmed, case-folded,
         // spaces collapsed): one resolution is reported once, in the spelling
         // first met, however else the raw text was written.
-        const key = `${f.place.trim().toLowerCase().replace(/\s+/g, " ")}\u0000${value}`;
+        const key = `${placeKey(f.place)}\u0000${value}`;
         if (!filled.has(key)) filled.set(key, { place: f.place, standardPlace: value });
       }
     }
   });
   return [...filled.values()];
+}
+
+/** A place as `standardizePlaces` groups it: trimmed, case-folded, spaces collapsed. */
+const placeKey = (place: string) => place.trim().toLowerCase().replace(/\s+/g, " ");
+
+/** The places among `facts` still without a `standard_place`, each once, in the
+ *  spelling first met, keyed as `retryUnresolvedPlaces` keys a fill. A non-place
+ *  phrase ("Same House") has no standard form to miss and is left out. */
+export function unresolvedPlacesOf(facts: readonly Obj[]): string[] {
+  const out = new Map<string, string>();
+  for (const f of facts) {
+    if (typeof f.place !== "string" || f.place.trim() === "" || f.standard_place || isNonPlacePhrase(f.place)) continue;
+    if (!out.has(placeKey(f.place))) out.set(placeKey(f.place), f.place);
+  }
+  return [...out.values()];
 }
 
 /**

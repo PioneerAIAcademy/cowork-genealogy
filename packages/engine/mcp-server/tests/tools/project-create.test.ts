@@ -810,6 +810,18 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
     }
   });
 
+  it("reports a read place the retry could not standardize either", async () => {
+    const result = structuredClone(FAMILY);
+    const fact = result.persons[0].facts.find((f: any) => f.standard_place);
+    delete fact.standard_place;
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result });
+    const ok: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: staged!.resultsRef });
+    expect(ok.ok).toBe(true);
+    expect(ok.placesFilled).toBeUndefined();
+    expect(ok.unresolvedPlaces).toEqual([fact.place]);
+    expect(ok.validation.warnings).toContain(`Places kept as written, with no standard place found: ${fact.place}.`);
+  });
+
   it("keeps the ark of an addition the read does not hold (a second person_read)", async () => {
     const ref = await stageFamily();
     const result: any = await projectCreate({
@@ -1098,6 +1110,27 @@ describe("project_create — hand-entered places are standardized by the tool", 
     const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
+    expect(result.unresolvedPlaces).toBeUndefined();
+  });
+
+  it("reports, once each, the hand-entered places it could not standardize", async () => {
+    const tree = {
+      persons: [
+        person([
+          { id: "F1", type: "Birth", place: "Boston" },
+          { id: "F2", type: "Death", place: "Ballyowen" },
+          { id: "F3", type: "Burial", place: "ballyowen " },
+          { id: "F4", type: "Residence", place: "Same House" },
+        ]),
+      ],
+      relationships: [],
+      sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect(result.unresolvedPlaces).toEqual(["Ballyowen"]);
+    expect(result.validation.warnings).toContain("Places kept as written, with no standard place found: Ballyowen.");
     expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
   });
 

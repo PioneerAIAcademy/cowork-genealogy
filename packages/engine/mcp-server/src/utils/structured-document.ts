@@ -16,7 +16,7 @@
 
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
-import { normalizeFactType, type ExtractDocument, type RecordType } from "./record-extract.js";
+import type { ExtractDocument, RecordType } from "./record-extract.js";
 
 export const DOCUMENT_RECORD_TYPES: readonly RecordType[] = [
   "census",
@@ -298,13 +298,6 @@ const yearOf = (v: string | undefined) => {
   return m ? Number(m[0]) : undefined;
 };
 
-/** The place a `residence` fact gives only in its `value` ("412 Vine St,
- *  Cincinnati"), as written. An indexed residence carries it in `place`, the
- *  attribute that is standardized and the one a Residence fact keeps on the
- *  tree, so it is read as the place too. */
-const residencePlaceInValue = (f: DocumentFact): string | undefined =>
-  normalizeFactType(f.type) === "residence" && !isStr(f.place) && isStr(f.value) ? f.value : undefined;
-
 /**
  * The document as the `ExtractDocument` the extractor already reads, plus the
  * `DocumentMode` carrying what a sidecar has no field for. Assumes a document
@@ -326,11 +319,8 @@ export function documentToExtract(
     if (nameNote) nameNotes.set(p.id, nameNote);
     p.facts.forEach((f, j) => {
       if ((f.computed && f.computed.length) || f.note || f.uncertain) {
-        const computed: string[] = [...(f.computed ?? [])];
-        // A place read from the value carries the value's mark.
-        if (computed.includes("value") && residencePlaceInValue(f) !== undefined) computed.push("place");
         factMarks.set(`${p.id}#${j}`, {
-          computed,
+          computed: [...(f.computed ?? [])],
           ...(f.note ? { note: f.note } : {}),
           ...(f.uncertain ? { uncertain: true as const } : {}),
         });
@@ -359,15 +349,12 @@ export function documentToExtract(
           ...(n.surname ? { surname: doubted ? markDoubted(n.surname) : n.surname } : {}),
         };
       }),
-      facts: p.facts.map((f) => {
-        const place = residencePlaceInValue(f) ?? f.place;
-        return {
-          type: f.type,
-          ...(f.value !== undefined ? { value: f.value } : {}),
-          ...(f.date !== undefined ? { date: f.date } : {}),
-          ...(place !== undefined ? { place } : {}),
-        };
-      }),
+      facts: p.facts.map((f) => ({
+        type: f.type,
+        ...(f.value !== undefined ? { value: f.value } : {}),
+        ...(f.date !== undefined ? { date: f.date } : {}),
+        ...(f.place !== undefined ? { place: f.place } : {}),
+      })),
     } as SimplifiedPerson;
   });
 

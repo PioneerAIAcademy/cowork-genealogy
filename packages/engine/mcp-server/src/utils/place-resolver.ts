@@ -553,6 +553,21 @@ export function countryConsistency(place: string, standardPlace: string): "ok" |
   return "contradiction";
 }
 
+/**
+ * The standard place's own name, its first segment, is one of the place text's
+ * comma parts, compared as `checkFirstPlace` compares a name (case, accents,
+ * periods, "St", type words and an "X of" prefix aside). "Cincinnati, Hamilton,
+ * Ohio, United States" is named in "412 Vine St, Cincinnati"; "Hawaii, United
+ * States" is not named in "with his daughter". It confirms an answer the
+ * country check cannot judge.
+ */
+export function standardPlaceNamedInText(place: string, standardPlace: string): boolean {
+  const name = placeSegments(standardPlace)[0];
+  if (!name) return false;
+  const keys = new Set(placeNameKeys(name));
+  return placeSegments(place).some((segment) => placeNameKeys(segment).some((k) => keys.has(k)));
+}
+
 /** Highest-scoring entry (FamilySearch ranks by relevance), else first. */
 function pickBest(entries: SearchEntry[]): SearchEntry | undefined {
   if (entries.length === 0) return undefined;
