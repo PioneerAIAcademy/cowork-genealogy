@@ -94,6 +94,7 @@ import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
+import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -4761,42 +4762,82 @@ export function activePlanItems(
  *  Same pre-call snapshot and active-plan discipline as
  *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
  *  question's plan is settled, so neither blocks. */
-function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
-  const unresolvedQuestions = new Set<string>(
-    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
-      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
-      .map((q: any) => q.id),
+/** Statuses that mean a question is still being worked: every one but
+ *  `resolved`. Derived, not listed, so a status added later blocks by default —
+ *  the safe direction, and the one the enum lint asks for. */
+const QUESTION_STILL_OPEN = new Set(
+  [...VALIDATOR_ENUMS.question_status].filter((s) => s !== "resolved"),
+);
+
+/** Plan-item statuses that mean the item is still to do: every one but
+ *  `completed` and `skipped`. Derived for the same reason. */
+const PLAN_ITEM_OUTSTANDING = [...VALIDATOR_ENUMS.plan_item_status].filter(
+  (s) => s !== "completed" && s !== "skipped",
+);
+
+/** A new question may not be opened while another question is still open.
+ *
+ *  Step mode (decision 25, section E) replaces the older in-flight gate, which
+ *  keyed on `plan_items` standing at `in_progress`. That gate let a second
+ *  question start whenever the first happened to have no running item — between
+ *  two steps, or before planning had begun — so "one question at a time" held
+ *  only by accident of timing. This keys on the QUESTION, which is the thing
+ *  the rule is actually about.
+ *
+ *  **The one exemption: a question with a proof summary and nothing left to do.**
+ *  proof-conclusion can conclude a question and still have to leave it open — an
+ *  identity conflict at `not_proved` (`agents/proof-conclusion.md:144-150`) —
+ *  and such a question must not lock the project against every new one. Both
+ *  halves are needed: E's own route can hand a concluded question fresh searches
+ *  (conflict-resolution, then research-plan), and while those are open a second
+ *  question waits, exactly as the old gate required of an in-flight item.
+ *
+ *  **A `resources_spent` stop does not unlock the project.** The "not
+ *  exhaustive" choice writes one, and admitting a new question there would leave
+ *  the old one unconcluded without the researcher ever being asked. The refusal
+ *  is what sends that case to the wrap-up offer, which is the point: a wrap-up
+ *  DOES unlock the project, because dispose closes every open item and
+ *  proof-conclusion writes the summary.
+ *
+ *  An item waiting only on an upload does not count as work in progress
+ *  (section I): the researcher is the blocker there, and the question would
+ *  otherwise be locked by a hand-off nobody can close from inside the project.
+ *
+ *  Decidable from the documents alone — `questions[].status`,
+ *  `proof_summaries[].question_id`, `plans[].items[].status` and `log[]` — so
+ *  ADR-0011 puts it here rather than in a skill body.
+ */
+function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: any): string[] {
+  const concluded = new Set<string>(
+    (Array.isArray(preCallResearch?.proof_summaries) ? preCallResearch.proof_summaries : [])
+      .map((summary: any) => summary?.question_id)
+      .filter((id: unknown): id is string => typeof id === "string"),
   );
-  const unblocks = new Set<string>(
-    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
-  );
-  const conflictBlocked = new Set<string>();
-  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
-    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
-    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
+  const waitingOnUpload = awaitingUploadItemIds(preCallResearch?.log);
+  const blocking: string[] = [];
+  for (const question of Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : []) {
+    if (typeof question?.id !== "string" || !QUESTION_STILL_OPEN.has(question.status)) continue;
+    const outstanding = activePlanItems(
+      preCallResearch,
+      (plan) => plan.question_id === question.id,
+      PLAN_ITEM_OUTSTANDING,
+    ).filter((item) => !waitingOnUpload.has(item.itemId));
+    if (concluded.has(question.id) && outstanding.length === 0) continue;
+    blocking.push(
+      outstanding.length === 0
+        ? `${question.id} (${question.status}, no proof summary)`
+        : `${question.id} (${question.status}, ${outstanding.map((i) => i.itemId).sort().join(", ")} still to do)`,
+    );
   }
-  const selfReportedContradiction =
-    entry?.selection_basis === "unresolved_conflict" &&
-    !(Array.isArray(entry?.depends_on) && entry.depends_on.length > 0);
-  const refused = activePlanItems(
-    preCallResearch,
-    (plan) =>
-      unresolvedQuestions.has(plan.question_id) &&
-      !selfReportedContradiction &&
-      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
-  ).map((item) => `${item.itemId} (on ${item.questionId})`);
-  if (refused.length === 0) return [];
-  const ids = refused.sort().join(", ");
+  if (blocking.length === 0) return [];
   return [
-    `a new question cannot be opened while research is still running: ${ids} ` +
-      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
-      "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. Three exceptions: (1) a question that resolves " +
-      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
-      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
-      "this check reads the project as it stood before the call, so write the resolution in " +
-      "its own call and append the new question in the next one; (3) a question with " +
-      "`selection_basis: \"unresolved_conflict\"` driven by a person_warnings contradiction.",
+    `a new question cannot be opened while another is still open: ${blocking.sort().join("; ")}. ` +
+      "Write no question now. Report which question is open and offer to wrap it up: a wrap-up " +
+      "disposes its remaining items and writes its proof summary, which is what frees the " +
+      "project for the next question. The one question that does NOT block is one that already " +
+      "has a proof summary and no `planned` or `in_progress` item left on its active plan — a " +
+      "conclusion that had to leave the question open, such as an identity conflict at " +
+      "`not_proved`. A `resources_spent` search stop is not a conclusion and does not unlock it.",
   ];
 }
 
@@ -6719,7 +6760,7 @@ function applyOne(
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
     if (op.op === "append") {
-      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
