@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_locality_guide_r7k",
+    "skill": "locality-guide",
+    "name": "Congregation attributed to the wrong civil parish on a volume place-string",
+    "type": "positive",
+    "description": "Mined from alpha feedback (case feedback-2026-10-07, project 'Ann Lyons Thompson's parents', Billy civil parish, County Antrim). volume_search returns Presbyterian christening/marriage registers whose FamilySearch place-string is 'Ballylinny, Billy, County Antrim', while a retrieved wiki page states the Ballylinny Presbyterian population attended church in Ballyclare (a different civil parish, barony of Lower Belfast) with registers from 1837. The locality-guide output adopted the volume's place-string and asserted a 'Ballylinny congregation (in Billy civil parish)', recommending those registers as a church-record source for a Billy-parish (Bushmills, north Antrim) subject. The guide should instead reconcile the two signals and not place the congregation in Billy on the strength of the catalog label alone.",
+    "tags": [
+      "locality",
+      "ireland",
+      "county-antrim",
+      "congregation-placement",
+      "from-cowork",
+      "congregation-wrong-civil-parish",
+      "re-invoke-safe"
+    ]
+  },
+  "input": {
+    "delegation": "I'm building out the parents of an ancestor born about 1825 in Billy civil parish, County Antrim, Ireland (the Bushmills area). Put together a locality guide for Billy parish for roughly 1780-1870: which record types are available, where they are held, and which church registers would cover a Presbyterian family there.",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "max_tool_calls": 70
+  },
+  "judge_context": [
+    "The target parish is Billy civil parish (post town Bushmills, poor union of Coleraine) in north County Antrim; Billy is partly in the barony of Carey and chiefly in Lower Dunluce, while the civil-parish summary table lists it as Cary (the same place, not a contradiction). A locality guide for Billy should attribute church registers to Billy only when the evidence places them there.",
+    "The ground truth the tools return in this scenario: the FamilySearch digitized-volume place-string labels a set of Presbyterian christening (1837-1868) and marriage (1837-1864) registers 'Ballylinny, Billy, County Antrim', but the retrieved FamilySearch Wiki page states the Ballylinny Presbyterian population attended church in Ballyclare, with registers beginning 1837, and that Ballylinny is a distinct civil parish in the barony of Lower Belfast (adjoining Ballyclare, surrounded by Ballymartin, Ballynure, Carnmoney, Grange of Doagh and Templepatrick) at the opposite end of the county from Billy.",
+    "When a digitized-volume place-string and a retrieved parish page disagree about which civil parish a congregation belongs to, the guide must reconcile the conflict rather than silently adopt the volume's hierarchy string. Taking a catalog place-label as proof of ecclesiastical/civil-parish membership is the failure under test.",
+    "The guide should not assert, without qualification, that the 'Ballylinny' Presbyterian registers are Billy civil parish's congregation, nor recommend them as Billy's own church records as though their parish membership were settled; flagging the ambiguity, or attributing the congregation to the Ballylinny/Ballyclare parish the wiki evidence names, both satisfy the behavior.",
+    "General class: a claim that a specific congregation's registers belong to the research parish must be grounded in evidence that states the congregation's parish, not inferred from a volume's or catalog entry's place-label alone. Grade the reconciliation of conflicting locality evidence, not any one preferred wording."
+  ],
+  "mcp_fixtures": [
+    "volume-search-billy-antrim",
+    "wiki-search-billy-presbyterian",
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-any",
+    "wiki-place-page-any",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ]
+}

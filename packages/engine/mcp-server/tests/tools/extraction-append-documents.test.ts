@@ -15,7 +15,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { runExtractionAppend, type ExtractionBatchResult } from "../../src/tools/extraction-append.js";
-import { validateStructuredDocument } from "../../src/utils/structured-document.js";
+import { validateStructuredDocument, probateDecedentId } from "../../src/utils/structured-document.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL } from "../../src/auth/principal.js";
@@ -1033,6 +1033,142 @@ describe("extraction_append: documents", () => {
       expect(r.ok).toBe(false);
       expect((r.errors ?? []).join(" ")).toMatch(/computed: '[^']+' is not an attribute/);
       expect((await read()).sources).toHaveLength(0);
+    });
+  });
+
+  describe("deed and probate roles are read, and a couple must be stated (#3660)", () => {
+    const person = (id: string, given: string, surname: string, statedRelation?: string, facts: any[] = []) =>
+      ({ id, gender: "male", names: [{ given, surname }], ...(statedRelation ? { statedRelation } : {}), facts });
+    const deed = (persons: any[], relationships?: any[]) => ({
+      recordType: "land",
+      documentForm: "page_image",
+      source: { title: "Hampshire Co. deeds, p. 384", repository: "FamilySearch" },
+      persons,
+      ...(relationships ? { relationships } : {}),
+    });
+    const meacham = () => [
+      person("p1", "Paul", "Meacham", "grantor"),
+      person("p2", "John", "Dewey", "grantee"),
+      person("p3", "Gad", "Palmer", "witness"),
+      person("p4", "John", "Ingersoll", "justice of the peace"),
+    ];
+    const rolesOf = async (id: string) => {
+      const out: Record<string, string> = {};
+      for (const a of await assertionsFor(id)) if (a.fact_type === "name") out[a.value] = a.record_role;
+      return out;
+    };
+
+    it("reads grantor, grantee, witness and officer from the stated relation, not the order", async () => {
+      const r = await run([{ recordId: "capture:deed-384", document: deed(meacham()) }]);
+      expect(r.ok).toBe(true);
+      expect(await rolesOf("capture:deed-384")).toEqual({
+        "Paul Meacham": "grantor_1",
+        "John Dewey": "grantee",
+        "Gad Palmer": "witness_1",
+        "John Ingersoll": "justice_of_the_peace_1",
+      });
+    });
+
+    it("is not moved by the principal flag", async () => {
+      const persons = meacham();
+      (persons[1] as any).principal = true;
+      await run([{ recordId: "capture:deed-flag", document: deed(persons) }]);
+      expect((await rolesOf("capture:deed-flag"))["Paul Meacham"]).toBe("grantor_1");
+    });
+
+    it("refuses a deed with no grantor or no grantee, naming the missing word, and writes nothing", async () => {
+      const before = await readFile(join(dir, "research.json"), "utf8");
+      const noGrantor = meacham().map((p) => (p.id === "p1" ? { ...p, statedRelation: undefined } : p));
+      const r = await run([{ recordId: "capture:deed-nograntor", document: deed(noGrantor) }]);
+      expect(r.ok).toBe(false);
+      expect(r.errors?.join(" ")).toMatch(/No party is stated as grantor\./);
+      const noGrantee = meacham().filter((p) => p.id !== "p2");
+      expect(validateStructuredDocument(deed(noGrantee)).join(" ")).toMatch(/No party is stated as grantee\./);
+      expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
+    });
+
+    it("writes 'Paul Meacham and Mary his wife' as co-grantors with their couple", async () => {
+      const persons = [
+        person("p1", "Paul", "Meacham", "grantor"),
+        { ...person("p2", "Mary", "Meacham", "wife"), gender: "female" },
+        person("p3", "John", "Dewey", "grantee"),
+      ];
+      const r = await run([{ recordId: "capture:deed-dower", document: deed(persons, [{ type: "couple", person1: "p1", person2: "p2" }]) }]);
+      expect(r.ok).toBe(true);
+      expect(await rolesOf("capture:deed-dower")).toMatchObject({ "Paul Meacham": "grantor_1", "Mary Meacham": "grantor_2", "John Dewey": "grantee" });
+    });
+
+    it("refuses a couple between two men with no stated relation", () => {
+      const errs = validateStructuredDocument(deed(meacham(), [{ type: "couple", person1: "p1", person2: "p2" }]));
+      expect(errs.join(" ")).toMatch(/couple p1 \(Paul Meacham\) and p2 \(John Dewey\) is not stated/);
+    });
+
+    it("reads 'widow of the deceased' and 'wife of Paul' as spouse words", () => {
+      for (const rel of ["widow of the deceased", "wife of Paul Meacham"]) {
+        const persons = [...meacham(), person("p5", "Mary", "Meacham", rel)];
+        expect(validateStructuredDocument(deed(persons, [{ type: "couple", person1: "p1", person2: "p5" }]))).toEqual([]);
+      }
+    });
+
+    it("does not read 'wife's mother' or 'daughter-in-law' as a spouse word", () => {
+      for (const rel of ["wife's mother", "daughter-in-law"]) {
+        const persons = [...meacham(), person("p5", "Ann", "Lee", rel)];
+        const errs = validateStructuredDocument(deed(persons, [{ type: "couple", person1: "p1", person2: "p5" }]));
+        expect(errs.join(" ")).toMatch(/is not stated/);
+      }
+    });
+
+    const probate = (persons: any[]) => ({
+      recordType: "probate",
+      documentForm: "page_image",
+      source: { title: "Hampshire probate case 96-42", repository: "FamilySearch" },
+      persons,
+    });
+
+    it("takes the decedent from the probate fact, not the first party", async () => {
+      const persons = [
+        person("p1", "Isaac", "Porter", "administrator"),
+        person("p2", "Paul", "Meacham", undefined, [{ type: "probate", date: "1790" }, { type: "death" }]),
+      ];
+      const r = await run([{ recordId: "capture:probate-96-42", document: probate(persons) }]);
+      expect(r.ok).toBe(true);
+      expect(await rolesOf("capture:probate-96-42")).toMatchObject({ "Paul Meacham": "decedent", "Isaac Porter": "administrator_1" });
+    });
+
+    it("breaks a tie on the probate fact by the flagged principal, then by order", () => {
+      const both = [
+        person("p1", "A", "One", undefined, [{ type: "probate" }]),
+        { ...person("p2", "B", "Two", undefined, [{ type: "probate" }]), principal: true },
+      ];
+      expect(probateDecedentId(probate(both) as any)).toBe("p2");
+      expect(probateDecedentId(probate(both.map((p) => ({ ...p, principal: undefined }))) as any)).toBe("p1");
+    });
+
+    it("refuses a probate document whose decedent is stated as the administrator", () => {
+      const persons = [
+        person("p1", "Isaac", "Porter", "administrator", [{ type: "death" }]),
+        person("p2", "Paul", "Meacham"),
+      ];
+      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(/Isaac Porter\) would be written as the decedent or testator but is stated as "administrator"/);
+    });
+
+    it("refuses an administrator written as decedent when no party carries a probate, will or death fact", () => {
+      const persons = [person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "residence", place: "Southwick" }])];
+      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(/Isaac Porter\) would be written as the decedent or testator/);
+      expect(validateStructuredDocument(probate([{ ...persons[0], statedRelation: undefined }, persons[1]]))).toEqual([]);
+    });
+
+    it("still writes a probate couple when one party is the wife, and an obituary couple with no spouse word", async () => {
+      const testator = person("p1", "Paul", "Meacham", undefined, [{ type: "will" }]);
+      const wife = { ...person("p2", "Mary", "Meacham", "wife"), gender: "female" };
+      const r = await run([{ recordId: "capture:probate-wife", document: { ...probate([testator, wife]), relationships: [{ type: "couple", person1: "p1", person2: "p2" }] } }]);
+      expect(r.ok).toBe(true);
+      const couple = [{ type: "couple", person1: "p1", person2: "p2" }];
+      expect(validateStructuredDocument({ ...probate([testator, wife]), relationships: couple })).toEqual([]);
+      const son = person("p1", "John", "Smith", "son");
+      const inLaw = { ...person("p2", "Mary", "Smith", "daughter-in-law"), gender: "female" };
+      const obit = { recordType: "obituary", documentForm: "verbatim_transcript", source: src("Obituary"), persons: [son, inLaw], relationships: couple };
+      expect(validateStructuredDocument(obit)).toEqual([]);
     });
   });
 });

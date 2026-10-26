@@ -130,7 +130,7 @@ def _delegated_item_ids(test: dict) -> str:
 
 def test_dispose_named_items(before_state, after_state, test):
     """Tag-gated (``research-plan-dispose``): Dispose mode (Step 1a) closes out
-    planned items and does nothing else.
+    the open items it was named and does nothing else.
 
     research-exhaustiveness refuses a stop-gate declaration while an item on the
     active plan is still `planned`, and the router then spawns research-plan to
@@ -177,8 +177,16 @@ def test_dispose_named_items(before_state, after_state, test):
             was, now = was_items[iid], now_items[iid]
             if was == now:
                 continue
-            if was.get("status") != "planned":
-                errors.append(f"{iid}: changed, but it was {was.get('status')!r}, not planned")
+            # `in_progress` counts too, since section B of
+            # docs/plan/research-step-mode.md: a search that ran without closing
+            # its item leaves it `in_progress`, and the router's dispose row now
+            # names those as well. Leaving them out is what let a searched item
+            # sit undisposed while the declaration stayed refused for good.
+            if was.get("status") not in ("planned", "in_progress"):
+                errors.append(
+                    f"{iid}: changed, but it was {was.get('status')!r}, "
+                    "not planned or in_progress"
+                )
                 continue
             if named and iid not in named:
                 errors.append(f"{iid}: changed, but the delegation did not name it")
@@ -189,6 +197,15 @@ def test_dispose_named_items(before_state, after_state, test):
             if status == "skipped":
                 if not now.get("skip_category"):
                     errors.append(f"{iid}: skipped with no skip_category")
+                # A search that RAN is never `skipped`: `research_append` refuses it
+                # (decision 9 of docs/plan/attached-records-baseline.md), because a
+                # skip says nothing was searched and research-exhaustiveness reads a
+                # disposed item as settled.
+                if iid in logged:
+                    errors.append(
+                        f"{iid}: skipped, but a log entry names it -- a searched item "
+                        "is `completed`, and research_append refuses the skip"
+                    )
                 disposed.append(iid)
             elif status == "completed":
                 if iid not in logged:
@@ -197,14 +214,17 @@ def test_dispose_named_items(before_state, after_state, test):
             else:
                 errors.append(f"{iid}: status {status!r} is not a disposal")
     if not disposed:
-        errors.append("no planned item was disposed of")
-    still_planned = {
+        errors.append("no item was disposed of")
+    still_open = {
         i.get("id")
         for p in (after.get("plans") or [])
         for i in (p.get("items") or [])
-        if i.get("status") == "planned"
+        if i.get("status") in ("planned", "in_progress")
     }
-    errors += [f"{iid}: named for disposal but still planned" for iid in sorted(named & still_planned)]
+    errors += [
+        f"{iid}: named for disposal but still open"
+        for iid in sorted(named & still_open)
+    ]
     assert not errors, "Dispose mode wrote the wrong thing:\n  - " + "\n  - ".join(errors)
 
 

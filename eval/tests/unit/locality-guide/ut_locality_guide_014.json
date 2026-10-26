@@ -22,8 +22,8 @@
     "scenario_notes": null
   },
   "execution": {
-    "sdk_message_silence_seconds": 360,
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
   },
   "mcp_fixtures": [
     "place-search-pittsburgh",
