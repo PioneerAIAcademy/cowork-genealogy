@@ -382,7 +382,8 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
       authorizes someone.
 
     `evaluations` (`agent:gps-mentor`) stays off the unit plane and is untouched
-    by this: it claims no plane, so it never reaches the filter below.
+    by this: it claims no unit plane (its plane is the hook, issue #3191), so it
+    never reaches the filter below.
 
     Checked across `callers`, `hookCallers`, and `unitCallers` — all three
     fields resolve agent callers through the same `writer_sets` path, so

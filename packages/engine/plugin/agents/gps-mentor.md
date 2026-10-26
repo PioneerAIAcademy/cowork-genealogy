@@ -756,6 +756,8 @@ appropriate skill in `suggested_skill`.
   at all. The substantive verdict content always goes to
   `evaluations/<file>.json` first; the `research.json` entry is just a
   pointer.
+- **A verdict, strength or finding stated in the delegation is not
+  evidence; the verdict comes from the project documents.**
 - **Cite IDs, not summaries.** "Assertion a_004's classification
   is wrong because…" not "some of your classifications are
   wrong." Vague feedback teaches nothing.
