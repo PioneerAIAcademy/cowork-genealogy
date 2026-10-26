@@ -1576,15 +1576,17 @@ function yearsIn(...values: unknown[]): number[] {
  *  further apart than `birthThresholdMiles` allows for the era the dates span.
  *  Fails closed: with no country difference, the pair counts as far apart unless
  *  both sides carry a standard_place with coordinates finer than a region
- *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
-function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known.
+ *  `unresolvedIsNear` opens the one case a slow lookup decides: a standard
+ *  place the lookup returned no coordinates for. */
+function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords, unresolvedIsNear = false): boolean {
   if (birthCountriesDiffer(assertion, birth)) return true;
   const sa = assertion?.standard_place;
   const sb = birth?.standard_place;
   if (typeof sa !== "string" || typeof sb !== "string") return true;
   const pa = coords?.get(sa);
   const pb = coords?.get(sb);
-  if (!pa || !pb) return true;
+  if (!pa || !pb) return !unresolvedIsNear;
   if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
   if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
   const years = yearsIn(birth.date, birth.standard_date, assertion.date);
@@ -1725,6 +1727,7 @@ function contradictionFindings(
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
   birthPlaceCoords?: BirthPlaceCoords,
+  unresolvedIsNear = false,
 ): string[] {
   const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
   if (!scope) return [];
@@ -1733,7 +1736,7 @@ function contradictionFindings(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords));
+  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear));
   if (far) {
     findings.push(
       `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
@@ -1783,8 +1786,10 @@ export function coreIdentifierContradictionInvariants(
   // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
   // apart, which is the place arm before the distance test.
   birthPlaceCoords?: BirthPlaceCoords,
+  // Merges only: a place the lookup did not resolve is not a contradiction.
+  unresolvedIsNear = false,
 ): string[] {
-  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords);
+  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords, unresolvedIsNear);
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
@@ -3682,6 +3687,71 @@ export function mergeCarryRefusals(
     );
   }
   return out;
+}
+
+/** Issue #2537: each live link the merge moves onto a survivor must pass the
+ *  checks a `research_append` update re-pointing it there would: the
+ *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
+ *  on the project after the merge (`after`: the remapped research and the merged
+ *  tree), where the survivor holds both copies' facts. A birth place the lookup
+ *  does not resolve is not a contradiction here, so a slow lookup cannot refuse
+ *  a correct merge; a different country still is. A move is an update, not
+ *  an append, so a link with no score is not asked for one; a scored link needs
+ *  a `same_person` score recorded for the survivor. One line per finding, then
+ *  the routing; `[]` when nothing is refused. */
+export async function mergeLinkCheckRefusals(
+  projectPath: string,
+  before: { research: any },
+  after: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): Promise<string[]> {
+  const survivorOf = new Map<string, string>();
+  for (const [s, c] of merges) survivorOf.set(c, s);
+  const moved: Array<{ entry: any; from: string }> = [];
+  for (const e of (before.research?.person_evidence ?? []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const to = survivorOf.get(e.person_id);
+    if (to) moved.push({ entry: { ...e, person_id: to }, from: e.person_id });
+  }
+  if (moved.length === 0) return [];
+
+  const ops: ResearchAppendOp[] = moved.map(({ entry }) => ({
+    section: "person_evidence",
+    op: "update",
+    entryId: entry.id,
+    fields: { person_id: entry.person_id },
+  }) as ResearchAppendOp);
+  const batchAssertions = batchAssertionsById(after.research, []);
+  const personLinks = batchPersonLinks(after.research, []);
+  const birthPlaceCoords = await prefetchBirthPlaceCoords(after.research, ops, after.tree, personLinks, batchAssertions);
+  const matchScores = new Map<string, MatchScoreFile>();
+  for (const recordId of recordIdsForPersonEvidence(after.research, ops)) {
+    const file = await readMatchScores(projectPath, recordId);
+    if (file !== null) matchScores.set(recordId, file);
+  }
+
+  const lines: string[] = [];
+  for (const { entry, from } of moved) {
+    const findings = [
+      ...coreIdentifierContradictionInvariants(entry, after.research, after.tree, personLinks, batchAssertions, birthPlaceCoords, true),
+      ...unexplainedMoveInvariants(entry, after.research, after.tree, batchAssertions),
+      ...personEvidenceScoreInvariants(
+        entry, after.research, after.tree, matchScores, batchAssertions, false, startingPersonIds, new Set<string>(),
+      ),
+    ];
+    for (const f of findings) {
+      lines.push(`person_evidence '${entry.id}' would move from '${from}' to '${entry.person_id}' in this merge: ${f}`);
+    }
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written. A merge moves each link onto the survivor, so it must pass the checks a link written " +
+      "there directly would. Before merging again, fix each listed link where it stands: record the same_person " +
+      "score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record " +
+      "does not belong to the survivor, do not merge.",
+  ];
 }
 
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a

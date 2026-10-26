@@ -33,6 +33,9 @@
 //       `mergeNamesakeRefusals`, `mergeCarryRefusals` and the pair checks on the
 //       call's state, with brackets, unmoved links, the gates a merge skips and
 //       a replay of lowering every refused link.
+//   §3b merge link checks (#2537): each §3 call through the shipped
+//       `mergeLinkCheckRefusals` on the merged tree and remapped research, no
+//       rows planted; birth places resolve live.
 //   §4  the namesake warning (1d): each committed e2e final state, rows
 //       written in one call on every person holding a live probable or
 //       confident link, then on the fixture subject alone; what
@@ -64,6 +67,7 @@ import {
   carryTriggerSources,
   mergeCarryRefusals,
   mergeDirections,
+  mergeLinkCheckRefusals,
   mergeNamesakeRefusals,
   namesakeRowListings,
   namesakeVerdicts,
@@ -77,6 +81,8 @@ import {
 import { isTwoParty } from "../src/utils/record-persona.js";
 import { joinedPairRefusals, survivorOrderRefusals } from "../src/tools/merge-tree-persons.js";
 import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
+import { mergeGedcomx } from "../src/utils/merge-gedcomx.js";
+import { remapResearchPersonIds } from "../src/tools/merge-shared.js";
 import { personaTargetRefusal } from "../src/tools/materialize-facts.js";
 import { bareName, opsOf, readRunLog, repoRoot, responseOf, toolCalls } from "./runlog-calls.js";
 
@@ -788,6 +794,8 @@ function section3(lines: any[], states: FinalState[]): void {
       `${scored} carrying a match score; the move rule would refuse ${moveRefused}`,
   );
 
+  measuredMergeWorlds = worlds;
+
   let replays = 0;
   // The lowering replay: at the call whose part 1 refuses links in A, lower
   // each refused link to speculative (what the routing offers an agent that
@@ -1207,6 +1215,49 @@ function section6(lines: any[], states: FinalState[]): void {
   }
 }
 
+// ─── §3b the link checks a merge runs (#2537) ───────────────────────────────
+
+let measuredMergeWorlds: MergeWorld[] = [];
+
+/** Each §3 call through the shipped `mergeLinkCheckRefusals`, on the merged
+ *  tree and the remapped research, with no namesake rows. Birth places resolve
+ *  live, and a place that does not resolve counts as far apart, so an offline
+ *  run is an upper bound on the contradiction cap. The project dir is empty, so
+ *  no recorded score exists and every moved link carrying one is refused. */
+async function section3b(): Promise<void> {
+  console.log("\n§3b merge link checks: each §3 call through mergeLinkCheckRefusals, no rows planted");
+  const scratch = mkdtempSync(join(tmpdir(), "merge-link-checks-"));
+  let moved = 0;
+  let refused = 0;
+  let unmerged = 0;
+  try {
+    for (const w of measuredMergeWorlds) {
+      const survivorOf = new Map(w.merges.map(([s, c]) => [c, s] as const));
+      const live = ((w.research.person_evidence ?? []) as any[]).filter((e) => e && !e.superseded_by && survivorOf.has(e.person_id));
+      moved += live.length;
+      let merged: any;
+      try {
+        merged = mergeGedcomx(w.tree, null, w.merges);
+      } catch (e) {
+        unmerged += 1;
+        console.log(`    ${w.line.run} #${w.line.call}: ${live.length} live links moved; the core refused the merge: ${e instanceof Error ? e.message : e}`);
+        continue;
+      }
+      const research = structuredClone(w.research);
+      remapResearchPersonIds(research, new Map(survivorOf));
+      const lines = await mergeLinkCheckRefusals(scratch, { research: w.research }, { research, tree: merged }, w.merges, w.startingIds);
+      const findings = lines.filter((l) => l.startsWith("person_evidence"));
+      refused += findings.length;
+      console.log(`    ${w.line.run} #${w.line.call}: ${live.length} live links moved, ${findings.length} refused`);
+      for (const f of findings) console.log(`      ${f}`);
+    }
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+  console.log(`  links moved ${moved}, refused ${refused}; calls the core could not merge ${unmerged}`);
+  floor(moved > 0, "§3b judged no moved link");
+}
+
 // ─── main ───────────────────────────────────────────────────────────────────
 
 console.log(`measured at ${sha} (working tree of this checkout)\n`);
@@ -1218,6 +1269,7 @@ const lines = dumpCallStates();
 shapesLine(lines);
 section2(lines, states);
 section3(lines, states);
+await section3b();
 section4(states);
 section5(states);
 section6(lines, states);
