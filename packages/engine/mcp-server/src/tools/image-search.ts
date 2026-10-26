@@ -182,34 +182,12 @@ async function fetchImageIds(
 
 // ─── Within-item addressing (spec § Within-item addressing) ─────────────────
 
-const ADDRESS_KEYS = new Set(["imageGroupNumber", "item", "itemImage"]);
 /** Cowork's call ceiling is ~60s (volume-bisect-tool-spec.md §8). */
 const ITEM_DEADLINE_MS = 45_000;
 const ITEM_LIST_CONCURRENCY = 6;
 const PER_REQUEST_TIMEOUT_MS = 30_000;
 /** A request started with less than this left would only report a timeout. */
 const MIN_REQUEST_MS = 1_000;
-
-/**
- * Nothing validates input against the schema (server.ts passes arguments
- * straight through), so a misspelled address would otherwise be ignored and
- * the whole film served. A key that is not ours throws when its name looks like
- * an address or its value is a number; across 118 recorded calls the only
- * other key ever sent was `lookingFor`, a string, which still passes.
- */
-function rejectUnknownAddressKeys(input: Record<string, unknown>): void {
-  for (const [key, value] of Object.entries(input)) {
-    if (ADDRESS_KEYS.has(key)) continue;
-    const numeric =
-      typeof value === "number" || (typeof value === "string" && /^\s*\d+\s*$/.test(value));
-    if (/item|image/i.test(key) || numeric) {
-      throw new Error(
-        `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, ` +
-          "or drop it to list the whole group.",
-      );
-    }
-  }
-}
 
 function readPositiveInteger(name: string, raw: unknown): number | undefined {
   if (raw === undefined || raw === null) return undefined;
@@ -443,7 +421,6 @@ export async function imageSearchTool(
   if (!input.imageGroupNumber) {
     throw new Error("image_search requires an imageGroupNumber.");
   }
-  rejectUnknownAddressKeys(input as unknown as Record<string, unknown>);
   const item = readPositiveInteger("item", input.item);
   const itemImage = readPositiveInteger("itemImage", input.itemImage);
   if (itemImage !== undefined && item === undefined) {

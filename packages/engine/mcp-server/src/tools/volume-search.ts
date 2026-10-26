@@ -6,7 +6,6 @@ import {
   RECORD_TYPE_GROUP_NAMES,
   assertKnownGroupNames,
   conceptIdsForGroups,
-  refuseRecordTypeAliases,
 } from "../utils/record-type-groups.js";
 import { resolveStandardPlaceToPlaceId, placeIdToRepIds, ambiguousPlaceError } from "../utils/place-resolver.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
@@ -69,23 +68,6 @@ function validate(input: VolumeSearchInput): void {
       "summary covers every matching volume, so it is given with the first page only; omit pageToken or summary."
     );
   }
-  // Near-miss spellings of *this* field only. `record_search` and
-  // `fulltext_search` both take a singular `recordType`, so that is the name an
-  // LLM reaches for here; `record_type` is the snake_case convention
-  // `research.json` uses elsewhere. Nothing validates input against the
-  // advertised JSON Schema — `src/server.ts` casts `request.params.arguments`
-  // straight to the handler — so an unrecognised field is ignored and the search
-  // silently runs unfiltered, returning everything with no signal.
-  //
-  // Deliberately not a general unknown-field check: the tool's year inputs have
-  // their own live spellings elsewhere (`yearFrom`/`yearTo`, `fromYear`/`toYear`)
-  // and catching those too is the schema-wide `additionalProperties` question the
-  // spec puts out of scope, not a bigger version of this list.
-  refuseRecordTypeAliases(
-    input,
-    ["recordType", "record_type", "recordTypes"],
-    (alias) => `volume_search filters by recordTypeGroups (an array of group names), not ${alias}.`
-  );
   if (input.recordTypeGroups != null) {
     if (!Array.isArray(input.recordTypeGroups)) {
       throw new Error("recordTypeGroups must be an array of group names.");

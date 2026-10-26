@@ -689,8 +689,8 @@ export async function catalogSearchTool(
   }
   const count = input.count ?? DEFAULT_COUNT;
   if (!Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
-    // JSON.stringify, not interpolation: the MCP boundary does not validate
-    // against inputSchema, so `count: "10"` arrives as a string and
+    // JSON.stringify, not interpolation: the MCP boundary checks argument
+    // names, not types, so `count: "10"` arrives as a string and
     // `count is 10` reads as a value that already satisfies the rule.
     throw new Error(
       `count is ${show(count)}; it must be a whole number from 1 ` +

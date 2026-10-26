@@ -312,13 +312,13 @@ describe("imageReadTool — input validation", () => {
   it("rejects when both imageId and ark are provided", async () => {
     await expect(
       imageReadTool({ imageId: "004884748_02613", ark: "ark:/61903/1:2:HSJG-CLNF" }, LOCAL)
-    ).rejects.toThrow(/exactly one of imageId, ark, or memoryArtifactUrl/i);
+    ).rejects.toThrow(/exactly one of imageId or ark\./i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("rejects when neither imageId nor ark is provided", async () => {
     await expect(imageReadTool({}, LOCAL)).rejects.toThrow(
-      /requires one of imageId, ark, or memoryArtifactUrl\. Received no keys\./i
+      /requires one of imageId or ark\. Received no keys\./i
     );
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -326,7 +326,7 @@ describe("imageReadTool — input validation", () => {
   it("names the keys it received when none of them is an image input", async () => {
     await expect(
       imageReadTool({ imageUrl: "https://x.example/a.jpg", projectPath: "/p" } as unknown as ImageReadInput, LOCAL)
-    ).rejects.toThrow(/requires one of imageId, ark, or memoryArtifactUrl\. Received keys: imageUrl, projectPath\./);
+    ).rejects.toThrow(/requires one of imageId or ark\. Received keys: imageUrl, projectPath\./);
     // A call with no arguments at all arrives as undefined.
     await expect(imageReadTool(undefined as unknown as ImageReadInput, LOCAL)).rejects.toThrow(
       /Received no keys\./

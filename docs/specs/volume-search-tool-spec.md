@@ -426,22 +426,16 @@ equivalence, because a volume carrying one event type generally carries others:
 | `probate` | `Probate` |
 | `other` | no correspondence — do not map it |
 
-> **The name mismatch fails silently, so `validate()` rejects it explicitly.**
-> Nothing in this server validates input against the advertised JSON Schema —
-> there is no `ajv` or `zod`, and `src/index.ts` casts `request.params.arguments`
-> straight to each handler — so a schema-level `additionalProperties: false`
-> would only produce an error if the *client* validated first, which is three
-> clients and untested in all three. (`rank_search_matches` does set it, on its
-> input schema, and it constrains what that tool accepts only through the same
-> client-side path. `research_append` does not: its `additionalProperties: false`
-> sits on `research.schema.json` and is enforced server-side by
-> `validate_research_schema`, a different mechanism.) `volume_search` therefore
-> rejects the wrong field server-side, in `validate()`:
+> **The name mismatch would fail silently, so the server refuses it.**
+> `server.ts` refuses every argument key a tool's schema does not list, before
+> the handler runs (`rejectUnknownArgs`, `src/utils/unknown-args.ts`); it checks
+> names only, not types (there is no `ajv` or `zod`). A schema-level
+> `additionalProperties: false` is not what does this: it would only produce an
+> error if the *client* validated first. For the three spellings below the guard
+> carries this tool's own message instead of its generic one:
 >
-> ```ts
-> if ("recordType" in input) throw new Error(
->   "volume_search filters by recordTypeGroups, not recordType. Valid groups: …"
-> );
+> ```text
+> volume_search filters by recordTypeGroups (an array of group names), not recordType. Valid groups: …
 > ```
 >
 > Without it, `recordType: "probate"` is ignored and the search runs unfiltered —
@@ -860,8 +854,8 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
-| `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
-| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters--read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
+| `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — the server checks argument names, not types — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
+| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Refused by the server's unknown-argument guard before the handler runs, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters--read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and those, like any other unknown key, get the guard's generic message naming the nearest parameters |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
@@ -1189,7 +1183,7 @@ of them.
 `135784` are ordinary roots.** The source list marks them "no large anchor
 (aggregate)"; they need no special treatment.
 
-**Unknown-field rejection happens in `validate()`, not the schema.** See the
+**Unknown-field rejection happens in `server.ts`, not the schema.** See the
 warning box under
 [Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters--read-before-naming-anything).
 A schema-level `additionalProperties: false` is unenforced server-side, so it would

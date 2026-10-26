@@ -125,14 +125,14 @@ caller checks it against the place in the citation. When place is null the
 item could not be checked: tell the user it was counted by image group and may
 not be the Catalog's item.
 
-**Misspelled parameters are errors, never ignored.** Nothing validates tool
-input against the advertised schema (`server.ts` passes arguments straight
-through), so an unrecognised key would otherwise silently return the whole
-film. Any key other than the three above is an error when its name matches
-`/item|image/i` (`itemNumber`, `item_number`, `imageNumber`, `imageId`) or its
-value is a number or all-digit string (`page: 10`, `frame: "632"`). Other
-keys pass: across 118 recorded `image_search` calls the only extra key ever
-sent was `lookingFor`, a string.
+**Misspelled parameters are errors, never ignored.** `server.ts` refuses
+every key other than the three above (`rejectUnknownArgs`,
+`src/utils/unknown-args.ts`), so an unrecognised key never silently returns
+the whole film. A key whose name matches `/item|image/i` (`itemNumber`,
+`item_number`, `imageNumber`, `imageId`) or whose value is a number or
+all-digit string (`page: 10`, `frame: "632"`) gets this tool's own message,
+pointing to `item` / `itemImage`; any other key, `lookingFor` included, gets the
+generic one naming the nearest parameters.
 
 ---
 

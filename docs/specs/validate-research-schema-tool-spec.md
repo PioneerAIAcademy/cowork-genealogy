@@ -99,7 +99,7 @@ prefix.
 One case escapes the structured result. `validateResearchSchema`
 destructures `input` before it enters its `try`, so a `tools/call` that
 omits `arguments` altogether — the MCP protocol marks `arguments`
-optional, and `server.ts` does not validate it against `inputSchema` —
+optional, and `server.ts` checks argument names only when it is present —
 throws `Cannot destructure property 'projectPath' of 'input' as it is
 undefined`. `server.ts` catches that and returns `{ error: "<message>" }`
 with `isError: true`. Whenever `arguments` is present, every outcome is a

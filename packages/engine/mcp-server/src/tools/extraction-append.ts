@@ -92,22 +92,6 @@ export async function runExtractionAppend(
 ): Promise<ExtractionBatchResult> {
   const MODES = ["recordIds", "documents", "absences", "personId"] as const;
   const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
-  // The hand-built forms, in both spellings (`ops`, and one flat op), and the
-  // one-record extractor mode (`logEntryId` + `recordId`).
-  const retired = (["ops", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId"] as const).filter((k) => (input as any)?.[k] !== undefined);
-  if (retired.length > 0) {
-    return {
-      ok: false,
-      records: [],
-      errors: [
-        `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
-          "classifications are decided in code, so there is nothing for a caller to compose. Send " +
-          "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
-          "any other source, or `absences` for people a search did not find. Correcting an " +
-          "existing assertion is not an extraction and is not done here.",
-      ],
-    };
-  }
   if (got.length !== 1) {
     return {
       ok: false,

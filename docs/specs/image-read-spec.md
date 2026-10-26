@@ -36,14 +36,17 @@ fetch, and so is an `ark` that is not a string. An empty `imageArk` is not
 folded, so the no-input error names it. Like
 `memoryArtifactUrl`, it is accepted without being advertised on the schema.
 
-**`memoryArtifactUrl` is accepted but deliberately not advertised.**
-`ImageReadInput extends FsImageInput`, the input schema carries no
-`additionalProperties: false`, and the tool forwards `memoryShape` on purpose —
-so a direct artifact URL passed here works, and a dedicated test pins it. What
-was declined (lead, 2026-09-29) is **advertising the parameter on the input
-schema**, for two reasons: it adds an MCP parameter to every conversation, and
-this tool refuses anything over `MAX_INLINE_IMAGE_BYTES` (700 KB raw), which
-turns away most register photos regardless.
+**`memoryArtifactUrl` is not advertised, and over MCP it is refused.**
+`server.ts` refuses every argument key a tool's schema does not list
+(`rejectUnknownArgs`), so an MCP call to `image_read` carrying
+`memoryArtifactUrl` is refused before the handler runs, and the tool's own
+errors name only `imageId` and `ark`. Memories pages go to `image_transcribe`,
+as the description says (decided at review, 2026-10-26). `ImageReadInput
+extends FsImageInput`, so a direct call can still carry it, and the tool forwards
+`memoryShape` on purpose for that path. Advertising the parameter was declined
+(lead, 2026-09-29): it adds an MCP parameter to every conversation, and this tool
+refuses anything over `MAX_INLINE_IMAGE_BYTES` (700 KB raw), which turns away most
+register photos regardless.
 
 A Memories **page** URL (`photos/artifacts/<id>` or `/memories/<id>`) is a
 different matter: it is not a bytes URL at all, and only `image_transcribe`

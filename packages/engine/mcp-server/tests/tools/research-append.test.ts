@@ -77,6 +77,7 @@ import {
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
+import { callTool } from "../helpers/call-tool.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -466,15 +467,15 @@ describe("research_append (Phase 1)", () => {
     it("(8) is research_append's alone: extraction_append refuses a correction", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
-      const r = await extractionAppend({
+      const r = await callTool("extraction_append", {
         projectPath: dir,
         section: "assertions",
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      } as any, LOCAL);
-      expect(r.ok).toBe(false);
-      expect((r.errors ?? []).join(" ")).toMatch(/Correcting an existing assertion is not an extraction/);
+      });
+      expect(r.isError).toBe(true);
+      expect(r.text).toMatch(/Correcting an existing assertion is not an extraction/);
       expect((await factF4()).standard_place).not.toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
     });
 

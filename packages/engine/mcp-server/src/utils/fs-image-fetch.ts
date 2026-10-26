@@ -259,13 +259,14 @@ export function resolveFsImageInput(
   input: FsImageInput,
   caller: string
 ): { url: string; label: string; fallbackUrl?: string; memoryShape: boolean } {
+  // image_read does not advertise memoryArtifactUrl, and server.ts refuses an
+  // unadvertised key, so its errors must not send a caller to one.
+  const keys = caller === "image_read" ? "imageId or ark" : "imageId, ark, or memoryArtifactUrl";
   const given = [input.imageId, input.ark, input.memoryArtifactUrl].filter(
     (v) => v !== undefined
   ).length;
   if (given > 1) {
-    throw new Error(
-      "Provide exactly one of imageId, ark, or memoryArtifactUrl."
-    );
+    throw new Error(`Provide exactly one of ${keys}.`);
   }
   if (input.memoryArtifactUrl !== undefined) {
     if (!MEMORY_ARTIFACT_PATTERN.test(input.memoryArtifactUrl)) {
@@ -295,7 +296,7 @@ export function resolveFsImageInput(
     return { url, label: input.ark, fallbackUrl, memoryShape: false };
   }
   throw new Error(
-    `${caller} requires one of imageId, ark, or memoryArtifactUrl. ${receivedKeys(input)}`
+    `${caller} requires one of ${keys}. ${receivedKeys(input)}`
   );
 }
 

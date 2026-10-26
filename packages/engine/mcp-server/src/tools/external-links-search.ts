@@ -111,8 +111,8 @@ export async function externalLinksSearchTool(
   input: ExternalLinksSearchInput
 ): Promise<ExternalLinksSearchResult> {
   const { standardPlace } = input;
-  // The MCP SDK does not validate arguments against inputSchema, and the
-  // LLM sometimes passes year values as strings despite the integer schema.
+  // server.ts checks argument names, not types, and the LLM sometimes passes
+  // year values as strings despite the integer schema.
   // Coerce defensively so the comparisons below stay numeric. Years are
   // optional; an omitted bound means "all periods".
   const hasStart = input.startYear != null;
