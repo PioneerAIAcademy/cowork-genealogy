@@ -1,0 +1,286 @@
+{
+  "run_log": "v1.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly selected eight collections and built prefilled search links for them. However, it incorrectly classified three additional collections as unbuildable, even though Fold3 and Chronicling America are supported hosts. These collections should have been given prefilled search links. The incorrect classification makes the response only partially correct."
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent selected eight relevant collections, including the exact 1870 census and several supplementary record sets. However, the selection could have prioritized other census-related collections more effectively. It also incorrectly excluded three collections as unbuildable despite their supported hosts. These issues reduce the quality of the selection."
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Most collection titles and year ranges were grounded in the returned tool data. However, the Pennsylvania Grand Army of the Republic collection was described as covering 1865–1936, while the tool returned an end year of 1956. The response also included unsupported reasoning in the relayed text, such as assuming Patrick Flynn was likely an Irish immigrant and making historical claims that were not established by the tool results."
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly identified eight curated Ancestry collections and provided accurate prefilled search links. However, the statement “8 entries, 3 also on file” is unsupported because the before-state contained no existing sources. This makes the response mostly correct but introduces an unsupported claim."
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The collection titles, year ranges, access levels, and search links are grounded in the tool results. However, the statement “8 entries, 3 also on file” is unsupported because the before-state contained no existing sources. Removing this claim would make the response better grounded in the available evidence."
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
