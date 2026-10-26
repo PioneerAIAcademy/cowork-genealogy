@@ -37,6 +37,7 @@ function storeReturning(text: string, calls: Array<[string, string]> = []): Proj
     writeBytes: async () => {},
     appendText: async () => {},
     remove: async () => {},
+    listProjects: async () => ({ mode: "folder" }),
   };
 }
 

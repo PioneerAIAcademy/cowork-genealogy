@@ -1,0 +1,3437 @@
+{
+  "project": {
+    "id": "rp_umbelina_azevedo_death",
+    "objective": "When and where did Umbelina Maria Azevedo die? She was the wife of Francisco Ant\u00f4nio Pariz and the mother of Alice Umbelina, Ant\u00f4nio Francisco, Maria Gl\u00f3ria, Florita Umbelina and Maura Umbelina, born between about 1902 and 1918, several of them in Esp\u00edrito Santo.",
+    "subject_person_ids": [
+      "GXSQ-V3L"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Umbelina Maria Azevedo, wife of Francisco Ant\u00f4nio Pariz and mother of children born about 1902\u20131918 in Esp\u00edrito Santo, die?",
+      "rationale": "This is the project's sole objective restated with identifying detail. Umbelina has a Death fact on the tree with no date or place. Her children all died in Rio de Janeiro in the mid-twentieth century and their death records from the Rio de Janeiro civil registration collection name her as mother, establishing her presence in that state. Civil registration records for Rio de Janeiro and Esp\u00edrito Santo \u2014 the two states where the family is documented \u2014 are available on FamilySearch and are the logical starting point.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-10-23"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-10-23",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Rio de Janeiro, Brazil",
+          "date_range": "1920-1990",
+          "repository": "FamilySearch",
+          "rationale": "Collection 1582573 (Brazil, Rio de Janeiro, Civil Registration, 1804-2013) is name-searchable and covers both the city of Rio de Janeiro (Federal District 1834\u20131960, Guanabara state 1960\u20131975) and the state under a single search interface, per loc_001. All five children died in Rio de Janeiro between 1971 and 1990, making Rio de Janeiro the highest-probability jurisdiction for Umbelina's death. Search for death (\u00f3bitos) records under both her maiden name \u2014 Azevedo, de Azevedo \u2014 and her married name \u2014 Pariz, Paris, Parez \u2014 as the loc_001 guide notes explicitly that women's death records may be filed under the married name. Existing children's death records name her as 'Umbelina Maria Azevedo', 'Umbelina Maria de Azevedo', and 'Umbelina Maria Pariz de Azevedo', confirming both forms appear. Date range 1920\u20131990 spans from the year after her last known child was born (Maura, 1918) through the death of her oldest surviving child (Alice, 1990).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Rio de Janeiro, Brazil",
+          "date_range": "1920-1990",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: Francisco Ant\u00f4nio Pariz (husband, GXSQ-FYP) has a Death fact in the tree with no date or place. His five existing sources are all children's death records naming him as father \u2014 his own death record has not been found. Search collection 1582573 (name-searchable) for his death under all surname variants (Pariz, Paris, Parez, P\u00e1ris). His death record is a FAN source bearing directly on Umbelina's death question: if he predeceased her, the record may note a surviving widow; if she predeceased him, his record may name her as the deceased spouse. Either outcome narrows the window for Umbelina's death or confirms a jurisdiction. Date range 1920\u20131990 covers his plausible death window given children born 1902\u20131918.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Rio de Janeiro, Brazil",
+          "date_range": "1920-1990",
+          "repository": "FamilySearch",
+          "rationale": "Collection 1719212 (Brazil, Rio de Janeiro, Catholic Church Records, 1616-2017) is name-searchable. Per loc_001, civil registration compliance in some municipalities was uneven through the early 1920s; a Catholic burial register entry may record Umbelina's death even in the absence of a civil record. Search for burial (sepultamentos or \u00f3bitos) under both name forms (Azevedo / Pariz). This item is a fallback if collection 1582573 yields no civil death record for Umbelina.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "cemetery",
+          "jurisdiction": "Rio de Janeiro, Brazil",
+          "date_range": "1920-1990",
+          "repository": "FamilySearch",
+          "rationale": "Collection 2137269 (Brazil, Cemetery Records, 1799-2024) is name-searchable. A cemetery burial record for Umbelina would supply a death date and burial location, and could be cross-referenced against the civil and church results. Search under maiden name Azevedo and married name Pariz. This item is a fallback if the church burial search (pli_003) also yields nothing.",
+          "fallback_for": "pli_003",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Espirito Santo, Brazil",
+          "date_range": "1900-1960",
+          "repository": "FamilySearch",
+          "rationale": "Collection 4426177 (Brazil, Esp\u00edrito Santo, Church Records, 1821-2000) is name-searchable. The Pariz family was in Esp\u00edrito Santo at least through 1915 (Florita born there); no dedicated Esp\u00edrito Santo civil registration collection was returned by collections_search. If Umbelina died in Esp\u00edrito Santo before or during the migration to Rio de Janeiro, her death would appear in a parish burial register there. No Esp\u00edrito Santo civil registration collection was found on FamilySearch, so Catholic church records are the primary available source for that state. Search under maiden name Azevedo and married name Pariz. Date range 1900\u20131960 brackets the family's Esp\u00edrito Santo period through a plausible late migration date. This item is a fallback if the Rio de Janeiro searches (pli_001, pli_003, pli_004) yield nothing.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-23",
+      "items": [
+        {
+          "id": "pli_006",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Espirito Santo, Brazil",
+          "date_range": "1900-1960",
+          "repository": "FamilySearch",
+          "rationale": "Collection 4473668 (Brazil, Esp\u00edrito Santo, Civil Registration, 1850-2019) is name-searchable. Prior item pli_005 searched only Esp\u00edrito Santo Catholic church records (collection 4426177) under the incorrect assumption that no civil registration collection existed for that state on FamilySearch; the FamilySearch wiki confirms collection 4473668 is available and fully indexed. The Pariz family was in Esp\u00edrito Santo at least through 1915 (Florita born there), making Esp\u00edrito Santo a plausible jurisdiction for Umbelina's death if she died before or during the family's migration to Rio de Janeiro. Search for death (\u00f3bitos) records under both the maiden name (Azevedo, de Azevedo) and the married name (Pariz, Paris, Parez), and with husband Francisco Pariz as a spouse anchor. Date range 1900\u20131960 spans the family's confirmed Esp\u00edrito Santo presence through a plausible late-migration date.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Brazil",
+          "date_range": "1920-1990",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 9799 (Brazil Civil Registration, 1870\u20132012) is name-searchable and covers civil registration records nationally, including both Esp\u00edrito Santo and Rio de Janeiro under a single search. This item was deferred during execution of the prior plan. A national-scope Ancestry search may surface civil records under Umbelina's name that FamilySearch's collection-specific searches did not return, due to differences in indexing coverage or transcription. Search under maiden name Azevedo and married name Pariz; also search husband Francisco Pariz as a spouse anchor. Date range 1920\u20131990 covers the full plausible death window from after the last child's birth (~1918) through the death of the last surviving child (Alice, 1990). This item is a fallback if collection 4473668 (pli_006) yields nothing in Esp\u00edrito Santo.",
+          "fallback_for": "pli_006",
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Ancestry (collection 9799, Brazil Civil Registration 1870-2012) requires a paid subscription and human browser access; automated search tools cannot execute this item. The researcher should open https://www.ancestry.com/search/collections/9799/ and search for death records under: (1) surname Azevedo, given name Umbelina Maria, death 1920-1990, country Brazil; (2) surname Pariz, given name Umbelina, death 1920-1990, country Brazil; (3) given name Umbelina, spouse surname Pariz, death 1920-1990, country Brazil. No prior search was ever logged against this item (contrary to a suggestion that log_035 covered it \u2014 log_035 does not exist in the log for any pli associated with q_001). The primary item pli_006 returned negative, so the fallback condition is met; this item should be executed by the researcher before research-exhaustiveness declares the plan complete."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 3,
+          "record_type": "newspaper",
+          "jurisdiction": "Rio de Janeiro, Brazil",
+          "date_range": "1978-2000",
+          "repository": "Hemeroteca Digital Nacional (Biblioteca Nacional Digital, hemerotecadigital.bn.gov.br)",
+          "rationale": "Search for death notices or obituaries for Umbelina Maria Azevedo (alive as of December 1978 per Maura's death record) in Rio de Janeiro newspapers including Jornal do Brasil, O Globo, and Correio da Manh\u00e3. Death notices were commonly published in Rio de Janeiro papers throughout this period. A notice would supply a death date, place and possibly surviving family members. Date range begins 1978 \u2014 the year Maura died and Umbelina was last confirmed alive \u2014 and extends to 2000 to cover the full plausible window. This item covers the Hemeroteca Digital gap identified by the exhaustiveness agent.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Hemeroteca Digital Nacional (hemerotecadigital.bn.gov.br) is free but bot-protected; automated search tools cannot execute this item. The build_external_search_url tool classified it as free_bot_protected. URLs were generated for the researcher to use manually in a browser \u2014 log_049 (https://hemerotecadigital.bn.gov.br/acervo-digital?q=Umbelina+Azevedo+falecimento) and log_051 (https://hemerotecadigital.bn.gov.br/acervo-digital?q=Umbelina+Pariz+falecimento) \u2014 both returned with captureReceived: false. With pli_007 (Ancestry) also skipped as inaccessible, all remaining unsearched sources require human browser access and the nothing_further_reachable exception applies."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-23T13:08:02.016Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina Maria",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "collectionId": "1582573",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1990
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "notes": "Surname Azevedo, given name Umbelina Maria, death 1920-1990, collection 1582573. 14,681 total matches. Top-ranked results (matchScore 0.12-0.38) all show Umbelina Maria de/Pariz de Azevedo as MOTHER or OTHER in other people's registrations, already attached to subject. No result found where she is the deceased principal."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-23T13:08:02.030Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Umbelina Maria",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "collectionId": "1582573",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1990
+      },
+      "outcome": "negative",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "notes": "Surname Pariz, given name Umbelina Maria, death 1920-1990, collection 1582573. Only 16 total matches. No death record found where she is the deceased principal."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-23T13:08:02.040Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Umbelina",
+        "surname": "Azevedo",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "collectionId": "1582573",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1990
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "notes": "Surname Azevedo, given name Umbelina only (dropping Maria), death 1920-1990, collection 1582573. 2,403 total matches. Several principal death records for Umbelina + Azevedo women exist but none match the subject's full name or include a Pariz connection. No candidate clears needs-review."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:11:47.727Z",
+      "tool": "external_links_search",
+      "query": {
+        "place": "Rio de Janeiro, Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "notes": "Pre-existing staged external links search for Brazil genealogy resources; logged per system reminder."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:11:47.734Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Francisco",
+        "recordType": "death",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1990,
+        "collectionId": "1582573",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "notes": "Pre-existing staged record_search (Francisco Pariz death, collection 1582573); logged per system reminder."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-23T13:11:47.742Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "collectionId": "1719212",
+        "recordCountry": "Brazil",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1990
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 114,
+      "notes": "Collection 1719212 (Brazil RJ Catholic Church Records) searched for Umbelina Azevedo death/burial 1920-1990. 114 total matches; all match scores below 0.05. No death or burial event found for subject in 1920-1990 range. Records are overwhelmingly 19th-century baptisms and marriage mentions."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-23T13:11:47.758Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Umbelina",
+        "collectionId": "1719212",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for married surname Pariz + Umbelina in collection 1719212. Surname Pariz not present in this Catholic church records index."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-23T13:11:47.758Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "spouseGivenName": "Francisco",
+        "spouseSurname": "Pariz",
+        "collectionId": "1719212",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 43,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 43,
+      "notes": "Added spouse filter Francisco Pariz to Azevedo+Umbelina search in collection 1719212. 43 results; relativeTerms shows spouse absent on all but one uninformative result. No death/burial event found. Francisco Pariz not co-indexed alongside any Umbelina Azevedo record in this collection."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T13:13:31.456Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Paris",
+        "givenName": "Francisco",
+        "recordType": "death",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1990,
+        "collectionId": "1582573",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "notes": "Surname variant 'Paris' + death type, 1920\u20131990. 62 total matches. Top result is 'Francisco Antonio Paris' as Other (attached to subject) on a death record for Maria Gloria Ferreira. No death record for Francisco Pariz/Paris as principal found."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T13:13:31.472Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Francisco",
+        "isPrincipal": true,
+        "collectionId": "1582573",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "notes": "Surname 'Pariz' + isPrincipal filter, all record types. 6 principal results. 'Francisco Pariz' (born 1890, died 18 July 1908) is only plain-name match as principal but died age ~18, before the research window and likely a different person. 'Francisco Da Rocha Pariz' (died 1940) has a different middle name. Subject GXSQ-FYP unresolvable \u2014 no dated/placed facts."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T13:13:31.480Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Parez",
+        "givenName": "Francisco",
+        "isPrincipal": true,
+        "collectionId": "1582573",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "notes": "Surname variant 'Parez' + isPrincipal, all types. 1,236 total \u2014 fuzzy expansion dominated by Peres/Perez phonetic matches unrelated to Pariz. Pool unusable for this subject."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T13:13:31.499Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Francisco",
+        "spouseGivenName": "Umbelina",
+        "collectionId": "1582573",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 18,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "notes": "Surname 'Pariz' + given 'Francisco' + spouseGivenName 'Umbelina'. 18 results. Two records explicitly name Umbelina as co-parent with Francisco: ark:/61903/1:1:WYG1-SQPZ (child Alice Umbelina dos Santos, relativeTerms spouse 'Umbelina Maria de Azevedo') and ark:/61903/1:1:79FM-TF6Z (child Florita Umbelina dos Santos, relativeTerms spouse 'Umbelina Maria Pariz de Azevedo'). Both already attached to GXSQ-FYP. No death record for Francisco found. FAN source goal unmet."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-23T13:15:18.199Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "collectionId": "2137269",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 20,
+      "notes": "20 results for Umbelina Azevedo in Brazil Cemetery Records (collection 2137269). Top results include 'Maria Unbelina Azevedo Cardoso' (born 1843, S\u00e3o Paulo \u2014 too early and different name), 'Joaquina Umbelina de Azevedo' (mother role, different given name), and 'Umbelina Ferreira de Azevedo' (different middle name). None match subject born ~1880-1895, wife of Francisco Ant\u00f4nio Pariz. Subject too thin to score (no dated/placed facts); manually triaged \u2014 no match found."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-23T13:15:18.207Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Umbelina",
+        "collectionId": "2137269",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "0 results for Umbelina Pariz (married surname) in Brazil Cemetery Records. The surname Pariz appears to have no indexed entries for 'Umbelina' in this collection."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-23T13:15:58.767Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "collectionId": "4426177",
+        "recordCountry": "Brazil",
+        "deathYearFrom": 1900,
+        "deathYearTo": 1960
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 276,
+      "notes": "Lever: dropped given name, searched surname Pariz alone in Brazil Cemetery Records. 276 total matches returned, first 20 all male (Jos\u00e9, Miguel, Sebasti\u00e3o, Antonio, Luiz, Oswaldo Pariz). All located in S\u00e3o Paulo area \u2014 no Rio de Janeiro entries visible. No female Umbelina Pariz found. Collection appears S\u00e3o Paulo-weighted; Rio de Janeiro coverage uncertain."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-23T13:15:58.779Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelin*",
+        "collectionId": "2137269",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 3,
+      "notes": "Lever: wildcard givenName Umbelin* + surname Azevedo in Brazil Cemetery Records. 3 results \u2014 same as prior search: Joaquina Umbelina de Azevedo (mother role) and Umbelina Ferreira de Azevedo (mother role). Both are non-matches. No new candidates."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:19:45.689Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "collectionId": "2137269",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "notes": "Orphaned staged result from a prior research session; query filled from staged file. Not examined in current invocation."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T13:19:45.698Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Umbelina",
+        "collectionId": "4426177",
+        "recordCountry": "Brazil",
+        "deathYearFrom": 1900,
+        "deathYearTo": 1960
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 1,
+      "notes": "Pariz + Umbelina + death 1900-1960 in collection 4426177. Single result 'Parisez' is an infant christening 1921, not the subject."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T13:19:45.712Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "collectionId": "4426177",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 138,
+      "notes": "Azevedo + Umbelina, all event types, collection 4426177. 138 total matches; top female hit 'Umbelina Francisco Gomes de Azevedo' appears as Other on a marriage record \u2014 different middle name (Francisco vs Maria), no Pariz element, likely a different person. No death or burial record for subject found."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T13:19:45.733Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Umbelina",
+        "collectionId": "4426177",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 2,
+      "notes": "Pariz + Umbelina, all event types, collection 4426177. Two results: 'Pariz Ribeiro Pinto de Mattos' (male, Other role) and infant christening 'Parisez'. Neither matches subject."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T13:19:45.739Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Umbelina",
+        "spouseSurname": "Pariz",
+        "collectionId": "4426177",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Given name Umbelina with spouse surname Pariz in collection 4426177. Zero results \u2014 neither surname Azevedo nor Pariz, combined with spouse anchor, returns any hit naming Umbelina as wife."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T13:19:45.739Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Francisco",
+        "spouseGivenName": "Umbelina",
+        "collectionId": "4426177",
+        "recordCountry": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 2,
+      "notes": "Husband Francisco Pariz as principal with spouseGivenName Umbelina in collection 4426177. Two results; relativeTerms spouse absent on both \u2014 neither record names Umbelina as spouse."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:22:37.284Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Umbelina +Pariz",
+        "place": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 245,
+      "notes": "FTS: +Umbelina +Pariz, place Brazil. 245 results. Top 5 examined: Carmo de Minas death 1961-1969 (Jos\u00e9 Carlos Pariz + Maria Umbelina Ventura de Jesus \u2014 different person), Piumhi Minas Gerais baptism 1887-1893 (Jos\u00e9 Florencio Pariz + Umbelina Candida de Mello \u2014 different name), S\u00e3o Paulo baptism 1918-1920 (Jo\u00e3o Pariz + Maria Umbelina Aljandrina \u2014 different name), Rio de Janeiro probate 1893 (Pariz as a place name + Umbelina Thereza Nunes \u2014 different name), Cear\u00e1 baptism 1911-1918 (Pariz as place token + Umbelina \u2014 no match). No record found naming Umbelina (Azevedo or Maria) alongside Francisco Antonio Pariz or connecting the Esp\u00edrito Santo/Rio de Janeiro Pariz family. The 245-result pool is dominated by records where 'Pariz' is a place name (Paris, France) or an unrelated family from Minas Gerais. Searched collection-wide across Brazil FTS corpus."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:22:37.291Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Umbelina Maria Azevedo\"",
+        "place": "Brazil"
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 37,
+      "notes": "FTS: phrase 'Umbelina Maria Azevedo', place Brazil. 37 results. Notable result: ark:/61903/3:1:3QHV-1Q2P-H975 \u2014 S\u00e3o Paulo, S\u00e3o Paulo, Brazil Medical Death Certificate 1976, collection M9J1-97V (Brazil, S\u00e3o Paulo, Deaths). Names listed: ALICE CARDOSO PINTO SILVA (likely principal/deceased), Francisco Pereira Gomes, Umbelina Maria Azevedo, JO\u00c3O FRANCISCO PINTO SILVA, Francisco Antonio Cardoso, Moys\u00e9s Barmak. 'Umbelina Maria Azevedo' appears alongside 'Francisco Antonio Cardoso' \u2014 possibly as parents of the deceased Alice. Source is unattached to any tree person. Cannot confirm identity from stubs alone; the deceased's surname is Cardoso Pinto Silva, not Pariz. Requires image verification. Other 4 results are 19th-century Bahia baptisms and 1940s Pernambuco marriages naming different women named Umbelina Maria Azevedo \u2014 not the subject."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:22:37.296Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Umbelina +Maria +Pariz",
+        "place": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "results_available": 237,
+      "notes": "FTS: +Umbelina +Maria +Pariz, place Brazil. 237 results. Top 5 are identical to the first search (+Umbelina +Pariz): Carmo de Minas death, Piumhi Minas Gerais baptism, S\u00e3o Paulo baptism, Cear\u00e1 baptism, Rio de Janeiro probate. Adding 'Maria' as a required term did not surface any new record connecting the subject (Umbelina Maria Azevedo, wife of Francisco Antonio Pariz) to a death document. 'Pariz' continues to match the Minas Gerais Pariz family and the city-name Paris in the top results. No death or burial record for subject found."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-23T13:23:03.594Z",
+      "tool": "source_evaluation",
+      "query": {
+        "personId": "GXSQ-V3L",
+        "request": "check children's death records for any notation that Umbelina was deceased at time of filing, or any death date/place for her"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "SOURCES CHECKED: Umbelina Maria Azevedo (GXSQ-V3L) \u2014 five children's death records read, ten record personas examined\n\nAll five children's death records from Brazil, Rio de Janeiro, Civil Registration, 1804-2013 (collection 1582573) were read \u2014 both the child's own indexed persona and Umbelina's separate persona from the same record. Every record names Umbelina as the mother.\n\nWhat each record shows in the index:\n\n1. Ant\u00f4nio Francisco Pariz \u2014 died 7 September 1971, Cascadura, Rio de Janeiro. Umbelina indexed as \"Umbelina Maria Azevedo,\" mother. No facts (birth, death, or deceased-status) indexed for her. Note: the father is indexed as \"Francisco Antonio Azevedo\" \u2014 surname Azevedo rather than Pariz \u2014 which is anomalous and may reflect an indexer's reading of an unusual notation in the original.\n\n2. Maura Umbelina Ferreira \u2014 died 19 December 1978, Duque de Caxias. Umbelina indexed as \"Umbelina Maria de Azevedo,\" mother. No facts indexed for her.\n\n3. Florita Umbelina dos Santos \u2014 died 2 July 1980, Rio de Janeiro. Umbelina indexed as \"Umbelina Maria Pariz de Azevedo,\" mother. No facts indexed for her.\n\n4. Maria Gl\u00f3ria Ferreira \u2014 died 17 May 1982, Rio de Janeiro. Umbelina indexed as \"Umbelina Maria de Azevedo,\" mother. No facts indexed for her.\n\n5. Alice Umbelina dos Santos \u2014 died 7 April 1990, Rio de Janeiro. Umbelina indexed as \"Umbelina Maria de Azevedo,\" mother. No facts indexed for her.\n\nConclusion: The FamilySearch index for this collection does not capture the alive/deceased status of parents listed in death registrations. The \"falecido/a\" (deceased) or \"vivo/a\" (living) notation that a Brazilian civil registration clerk would write beside a parent's name is not extracted as a structured data field. None of the five indexed records therefore carries any death fact or deceased-status for Umbelina, not because she was necessarily alive at the time but because the indexers did not capture that field.\n\nThe original page images are available for all five registrations and are the only way to read any parent-status notation. Those images are linked to each registration and can be opened on FamilySearch. Opening them is the next step to answer whether any of these records notes Umbelina as deceased, and if so, which is the earliest record to do so \u2014 that would give an upper-bound date for her death."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:24:59.812Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Ant\u00f4nio Francisco",
+        "deathYearFrom": 1971,
+        "deathYearTo": 1971,
+        "deathPlace": "Rio de Janeiro, Brazil",
+        "collectionId": "1582573",
+        "recordType": "death",
+        "subjectId": "GXSQ-VV2"
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "results_available": 8,
+      "notes": "Top match ark:/61903/1:1:77HN-KKT2 \u2014 Antonio Francisco Pariz, death 7 September 1971, Cascadura, Rio de Janeiro. matchScore 0.9999, already attached to subject GXSQ-VV2. Mother Umbelina Maria Azevedo named on record (p_113204041100). Father indexed as Francisco Antonio Azevedo \u2014 possible indexing error, original image needed. imageArk: ark:/61903/3:1:S3HT-62Y3-ZW5."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:24:59.821Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:77HN-KKT2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "results_available": 1,
+      "notes": "Record read for Antonio Francisco Pariz death entry. imageArk: ark:/61903/3:1:S3HT-62Y3-ZW5. Volume covers Sep 3\u2013Nov 6, 1971, Cascadura, Rio de Janeiro. Mother named as Umbelina Maria Azevedo. Goal: read image to see if Umbelina is noted as 'falecida' (deceased) at time of filing."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:33:47.998Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Maura",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "deathYearFrom": 1978,
+        "deathYearTo": 1979,
+        "collectionId": "1582573",
+        "motherGivenName": "Umbelina"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "notes": "Unlogged staged search recovered at cleanup."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:33:48.007Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Maria Gloria",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "deathYearFrom": 1982,
+        "deathYearTo": 1983,
+        "collectionId": "1582573",
+        "motherGivenName": "Umbelina"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "notes": "Unlogged staged search recovered at cleanup."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:33:48.019Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferreira",
+        "givenName": "Maura Umbelina",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "deathYearFrom": 1978,
+        "deathYearTo": 1979,
+        "collectionId": "1582573"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "notes": "Unlogged staged search recovered at cleanup."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:33:48.032Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Maria Gloria",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "deathYearFrom": 1982,
+        "deathYearTo": 1982,
+        "deathYearExact": true,
+        "collectionId": "1582573",
+        "motherGivenName": "Umbelina",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_032.json",
+      "notes": "Unlogged staged search recovered at cleanup."
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:33:48.054Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Umbelina",
+        "surname": "Azevedo",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "deathYearFrom": 1990,
+        "deathYearTo": 2015,
+        "collectionId": "1582573",
+        "spouseSurname": "Pariz"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_033.json",
+      "notes": "Unlogged staged search recovered at cleanup."
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:33:48.070Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Rio de Janeiro, Brazil",
+        "host": "ancestry.com",
+        "startYear": 1877,
+        "endYear": 1990
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_034.json",
+      "results_available": 95,
+      "notes": "Curated external links for Rio de Janeiro, Brazil, host-filtered to ancestry.com. 7 inline results returned; best match for civil death records: collection 9799 (Brazil, Civil Registration, 1870-2012). Collection 9797 (Brazil Select Deaths, 1750-1890) covers too early a period. No ancestry.com link specifically scoped to Rio de Janeiro death records \u2014 will use collection 9799 as baseUrl."
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:34:10.758Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "9799 \u2014 Brazil, Civil Registration, 1870-2012",
+        "givenName": "Umbelina",
+        "surname": "Azevedo",
+        "birthYear": 1881,
+        "birthPlace": "Brazil",
+        "deathPlace": "Rio de Janeiro, Brazil",
+        "spouseGivenName": "Francisco",
+        "spouseSurname": "Pariz"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/9799?name=Umbelina_Azevedo&birth=1881&birthplace=Brazil&deathplace=Rio+de+Janeiro%2C+Brazil&spouse=Francisco_Pariz",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires a user capture, which cannot happen while the run is working autonomously. Ancestry collection 9799 (Brazil, Civil Registration, 1870-2012) is the primary Ancestry holding for Brazilian civil death records and covers the full plausible window for Umbelina's death. Search built with maiden surname Azevedo, birth year ~1881, deathPlace Rio de Janeiro, and spouse Francisco Pariz. A second pass should be run with surname Pariz (married name) if the maiden-name search returns nothing, per the loc_001 quirk that women's death records may be filed under the married name. Access is subscription \u2014 researcher must be logged in. URL recorded so the researcher can open and capture it in a later session."
+    },
+    {
+      "id": "log_036",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:36:27.648Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:77F3-DD3Z"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_036.json"
+    },
+    {
+      "id": "log_037",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:36:27.658Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:79FM-TFN2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_037.json"
+    },
+    {
+      "id": "log_038",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:36:27.675Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:794X-QDZM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_038.json"
+    },
+    {
+      "id": "log_039",
+      "plan_item_id": null,
+      "performed": "2026-10-23T13:36:27.691Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:WYG1-SQT2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_039.json"
+    },
+    {
+      "id": "log_040",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T14:20:27.145Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Antonio Francisco",
+        "surname": "Pariz",
+        "recordCountry": "Brazil",
+        "recordType": "death",
+        "deathYearFrom": 1971,
+        "deathYearTo": 1971,
+        "deathYearExact": true,
+        "collectionId": "1582573",
+        "isPrincipal": true
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_040.json",
+      "notes": "Previously staged search being logged now; results not yet examined."
+    },
+    {
+      "id": "log_041",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T14:20:27.155Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "recordType": "death",
+        "collectionId": "4473668",
+        "recordCountry": "Brazil",
+        "recordSubdivision": "Esp\u00edrito Santo"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No death records found for Umbelina Azevedo in collection 4473668 (Brazil, Esp\u00edrito Santo, Civil Registration, 1850\u20132019)."
+    },
+    {
+      "id": "log_042",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T14:20:27.155Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Pariz",
+        "givenName": "Umbelina",
+        "recordType": "death",
+        "collectionId": "4473668",
+        "recordCountry": "Brazil",
+        "recordSubdivision": "Esp\u00edrito Santo"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No death records found for Umbelina Pariz (married-name variant) in collection 4473668."
+    },
+    {
+      "id": "log_043",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T14:20:27.155Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Umbelina",
+        "spouseGivenName": "Francisco",
+        "spouseSurname": "Pariz",
+        "recordType": "death",
+        "collectionId": "4473668",
+        "recordCountry": "Brazil",
+        "recordSubdivision": "Esp\u00edrito Santo"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No death records found for Umbelina with spouse Francisco Pariz in collection 4473668."
+    },
+    {
+      "id": "log_044",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T14:20:27.155Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "collectionId": "4473668",
+        "recordCountry": "Brazil",
+        "recordSubdivision": "Esp\u00edrito Santo"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No records of any type found for Umbelina Azevedo in collection 4473668 (no record-type filter)."
+    },
+    {
+      "id": "log_045",
+      "plan_item_id": null,
+      "performed": "2026-10-23T14:36:54.426Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-62Y3-ZW5"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Ant\u00f4nio Francisco Pariz death record, Cascadura, 8 September 1971. Mother listed as 'Umbelina Maria Azevo-do' with NO qualifier (neither 'dona' nor 'falecida'). The absence of a qualifier is ambiguous \u2014 Brazilian registrars of this era were inconsistent in applying alive/deceased markers. This record does not confirm or deny Umbelina's survival in September 1971."
+    },
+    {
+      "id": "log_046",
+      "plan_item_id": null,
+      "performed": "2026-10-23T14:36:54.426Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-D4P3-6DF"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Maria Gl\u00f3ria Ferreira (born Pariz) death record, Rio de Janeiro city, 17 May 1982. Mother listed as 'Umbelina Maria de Azevedo' with NO qualifier. Father surname misspelled 'Faria' instead of 'Pariz' \u2014 scribal error confirmed by all sibling records consistently showing 'Pariz'. No alive/deceased marker for Umbelina."
+    },
+    {
+      "id": "log_047",
+      "plan_item_id": null,
+      "performed": "2026-10-23T14:36:54.426Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-6X3Q-FL3"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Alice Umbelina dos Santos (born Pariz) death record, Duque de Caxias, 7 April 1990. Mother listed as 'Umbelina Maria de Cezevedo' [scribal spelling error for Azevedo] with NO qualifier. Alice's birth year given as 1890 (age 88 at death). No alive/deceased marker for Umbelina. Combined with Maura's 1978 record (which uses 'dona Umbelina' \u2014 a positive alive marker), the pattern across all FAN records shows: one explicit alive marker in 1978; three records (1971, 1982, 1990) without any qualifier. The absence of 'falecida' in the 1982 and 1990 records weakly corroborates survival past December 1978, but Brazilian registrar inconsistency means this cannot be relied upon as proof of life."
+    },
+    {
+      "id": "log_048",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-23T14:37:10.659Z",
+      "tool": "external_site",
+      "query": {
+        "collection": "9799",
+        "collectionTitle": "Brazil Civil Registration, 1870-2012",
+        "surname": "Azevedo",
+        "givenName": "Umbelina",
+        "spouseSurname": "Pariz",
+        "country": "Brazil"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/9799/?name=Umbelina_Azevedo&name_x=_1&death_x=_-2_Brazil&spouse=Francisco+Pariz&spouse_x=_1",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Ancestry collection 9799 (Brazil Civil Registration, 1870-2012) covers both Esp\u00edrito Santo and Rio de Janeiro in a single national search and may have different indexing than the FamilySearch per-state collections. Three strategies to run manually: (1) Surname Azevedo, given name Umbelina Maria, death 1920-1990; (2) Surname Pariz, given name Umbelina, death 1920-1990; (3) Given name Umbelina, spouse Francisco Pariz, death 1920-1990. A positive result would provide death date, municipality, and cart\u00f3rio reference \u2014 the core answer to q_001. No automated access available; researcher must run this manually on ancestry.com with a paid subscription."
+    },
+    {
+      "id": "log_049",
+      "plan_item_id": null,
+      "performed": "2026-10-23T14:48:42.157Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Umbelina",
+        "surname": "Azevedo",
+        "keywords": "falecimento"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "digital_newspaper_archive",
+        "url_generated": "https://hemerotecadigital.bn.gov.br/acervo-digital?q=Umbelina+Azevedo+falecimento",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "baseUrl: https://hemerotecadigital.bn.gov.br/acervo-digital"
+    },
+    {
+      "id": "log_050",
+      "plan_item_id": null,
+      "performed": "2026-10-23T14:49:03.124Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Rio de Janeiro, Brazil",
+        "host": "hemerotecadigital.bn.gov.br",
+        "startYear": 1978,
+        "endYear": 2000
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_050.json",
+      "results_available": 77,
+      "notes": "96 curated external links exist for Rio de Janeiro, Brazil (77 after year-filtering to 1978-2000). Zero match hemerotecadigital.bn.gov.br \u2014 FamilySearch does not curate a direct link to the Hemeroteca Digital Nacional for this jurisdiction and window. Case B applies: using the site's own search endpoint as baseUrl."
+    },
+    {
+      "id": "log_051",
+      "plan_item_id": null,
+      "performed": "2026-10-23T14:49:15.087Z",
+      "tool": "external_site",
+      "query": {
+        "site": "digital_newspaper_archive",
+        "baseUrl": "https://hemerotecadigital.bn.gov.br/acervo-digital",
+        "givenName": "Umbelina",
+        "surname": "Pariz",
+        "keywords": "falecimento",
+        "startYear": 1978,
+        "endYear": 2000
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://hemerotecadigital.bn.gov.br/acervo-digital?q=Umbelina+Pariz+falecimento",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Surname-variant search for Umbelina Pariz (married name) in Hemeroteca Digital Nacional, 1978-2000. URL handed off to researcher; no capture received yet."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77F3-D8T2 : Sun Oct 19 05:46:27 UTC 2025), Entry for Maura Umbelina Ferreira and Francisco Antonio Parez, 19 Dez 1978.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Maura Umbelina Ferreira, \u201cBrasil, Rio de Janeiro, Registro Civil, 1804-2013\u201d",
+        "when_created": "1918",
+        "when_accessed": "2026-10-23",
+        "where": "Brasil, Rio de Janeiro, Registro Civil, 1804-2013",
+        "where_within": "ark:/61903/1:1:77F3-DD3Z"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_036",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:79V6-2X3Z",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:79FM-TFZM : Sat Apr 18 01:16:24 UTC 2026), Entry for Florita Umbelina dos Santos and Antonio Francisco Pariz.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Florita Umbelina dos Santos, \u201cBrasil, Rio de Janeiro, Registro Civil, 1804-2013\u201d",
+        "when_created": "1980",
+        "when_accessed": "2026-10-23",
+        "where": "Brasil, Rio de Janeiro, Registro Civil, 1804-2013",
+        "where_within": "ark:/61903/1:1:79FM-TFN2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_037",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q1GX-ZK2M",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:794X-QD3Z : Thu Apr 23 01:15:52 UTC 2026), Entry for Maria Gl\u00f3ria Ferreira and Francisco Antonio Paris.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Maria Gl\u00f3ria Ferreira, \u201cBrasil, Rio de Janeiro, Registro Civil, 1804-2013\u201d",
+        "when_created": "1982",
+        "when_accessed": "2026-10-23",
+        "where": "Brasil, Rio de Janeiro, Registro Civil, 1804-2013",
+        "where_within": "ark:/61903/1:1:794X-QDZM"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_038",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q1KJ-2F6Z",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYG1-SQ2M : Mon Oct 13 13:36:30 UTC 2025), Entry for Alice Umbelina dos Santos and Francisco Antonio Pariz.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Alice Umbelina dos Santos, \u201cBrasil, Rio de Janeiro, Registro Civil, 1804-2013\u201d",
+        "when_created": "1990",
+        "when_accessed": "2026-10-23",
+        "where": "Brasil, Rio de Janeiro, Registro Civil, 1804-2013",
+        "where_within": "ark:/61903/1:1:WYG1-SQT2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_039",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:W943-B6W2",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77HN-KKT2 : Tue Mar 11 12:03:42 UTC 2025), Entry for Antonio Francisco Pariz and Francisco Antonio Azevedo.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entrada para Antonio Francisco Pariz, \u201cBrasil, Rio de Janeiro, Registro Civil, 1804-2013\u201d",
+        "when_created": "1971",
+        "when_accessed": "2026-10-23",
+        "where": "Brasil, Rio de Janeiro, Registro Civil, 1804-2013",
+        "where_within": "ark:/61903/1:1:77HN-KKT2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_028",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:79NQ-XB2M",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Maura Umbelina Ferreira",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maura Umbelina",
+        "surname": "Ferreira"
+      },
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "age",
+      "value": "60",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "death_registration",
+      "value": "19 Dez 1978",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "19 Dez 1978",
+      "place": "Duque de Caxias, Duque de Caxias, Rio de Janeiro, Brasil",
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001",
+      "standard_place": "Duque de Caxias, Duque de Caxias, Rio de Janeiro, Brazil"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "1918",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1918",
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Francisco Antonio Parez",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisco Antonio",
+        "surname": "Parez"
+      },
+      "record_persona_id": "p_113362264800",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113362264800",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Umbelina Maria de Azevedo",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Umbelina Maria",
+        "surname": "de Azevedo"
+      },
+      "record_persona_id": "p_113362264900",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113362264900",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Mariano Lopes Ferreira",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Mariano",
+        "surname": "Lopes Ferreira"
+      },
+      "record_persona_id": "p_113362265000",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Francisco Antonio Parez",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Umbelina Maria de Azevedo",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "spouse of Mariano Lopes Ferreira",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "other_1"
+      },
+      "record_persona_id": "p_113362264700",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:77F3-DD3Z",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Umbelina Maria de Azevedo",
+      "information_quality": "primary",
+      "informant": "the informant (usually a parent)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_113362264800",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Florita Umbelina dos Santos",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Florita Umbelina",
+        "surname": "dos Santos"
+      },
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "65 years",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "2 de julho de 1980",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "2 de julho de 1980",
+      "record_persona_id": "p_110444215800",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1915",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1915",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002",
+      "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Francisco Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio Francisco",
+        "surname": "Pariz"
+      },
+      "record_persona_id": "p_110444215900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Umbelina Maria Pariz de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Umbelina Maria",
+        "surname": "Pariz de Azevedo"
+      },
+      "record_persona_id": "p_110444216000",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Antonio Francisco Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Umbelina Maria Pariz de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_110444215800",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:79FM-TFN2",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Umbelina Maria Pariz de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_110444215900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Maria Gl\u00f3ria Ferreira",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Maria Gl\u00f3ria",
+        "surname": "Ferreira"
+      },
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "70 years",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1912",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1912",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003",
+      "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "17 de maio de 1982",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "17 de maio de 1982",
+      "record_persona_id": "p_110260558900",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Francisco Antonio Paris",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisco Antonio",
+        "surname": "Paris"
+      },
+      "record_persona_id": "p_110260559000",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Umbelina Maria de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Umbelina Maria",
+        "surname": "de Azevedo"
+      },
+      "record_persona_id": "p_110260559100",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Dias Ferreira",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jos\u00e9",
+        "surname": "Dias Ferreira"
+      },
+      "record_persona_id": "p_110260559200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Umbelina Maria de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Francisco Antonio Paris",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Umbelina Maria de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_110260559000",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:794X-QDZM",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Jos\u00e9 Dias Ferreira",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_038",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "other_1"
+      },
+      "record_persona_id": "p_110260558900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Alice Umbelina dos Santos",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Alice Umbelina",
+        "surname": "dos Santos"
+      },
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "88",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1902",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1902",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "7 Apr 1990",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "7 Apr 1990",
+      "record_persona_id": "p_151461148200",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004",
+      "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Francisco Antonio Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisco Antonio",
+        "surname": "Pariz"
+      },
+      "record_persona_id": "p_151461148300",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_151461148300",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Umbelina Maria de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Umbelina Maria",
+        "surname": "de Azevedo"
+      },
+      "record_persona_id": "p_151461148400",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_151461148400",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Atanagildo Virgilio dos Santos",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Atanagildo",
+        "surname": "Virgilio dos Santos"
+      },
+      "record_persona_id": "p_151461148500",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Umbelina Maria de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Francisco Antonio Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Atanagildo Virgilio dos Santos",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "other_1"
+      },
+      "record_persona_id": "p_151461148200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:WYG1-SQT2",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Umbelina Maria de Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_151461148300",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Antonio Francisco Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Antonio Francisco",
+        "surname": "Pariz"
+      },
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "62 years",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005",
+      "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1909",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "inferred",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1909",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "7 de setembro de 1971",
+      "information_quality": "primary",
+      "informant": "the certifying official",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "7 de setembro de 1971",
+      "record_persona_id": "p_113202890900",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Francisco Antonio Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Francisco Antonio",
+        "surname": "Azevedo"
+      },
+      "record_persona_id": "p_113202891000",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113202891000",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Umbelina Maria Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Umbelina Maria",
+        "surname": "Azevedo"
+      },
+      "record_persona_id": "p_113204041100",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_113204041100",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Rosa Almeida Pariz Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Rosa",
+        "surname": "Almeida Pariz Pariz"
+      },
+      "record_persona_id": "p_113204041200",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Umbelina Maria Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Francisco Antonio Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Rosa Almeida Pariz Pariz",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "other_1"
+      },
+      "record_persona_id": "p_113202890900",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:77HN-KKT2",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Umbelina Maria Azevedo",
+      "information_quality": "secondary",
+      "informant": "the personal informant named on the record",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "log_entry_id": "log_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_113202891000",
+      "informant_bias_notes": "reported by a survivor, not witnessed",
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: record birth ~1918 (age 60 at 1978 death) vs tree birth: none stated. Residence check: Duque de Caxias, Rio de Janeiro, 1978 vs nearest attested residence: none attested. Score 0.99998. Name 'Maura Umbelina Ferreira' in Maura's own 1978 death record matches tree. FamilySearch API confirmed at confidence 5.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1918 vs tree birth: none stated. Residence check: Duque de Caxias 1978 vs none attested. Score 0.99998. Sex Female consistent. Same child persona as a_001; confirmed.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: age 60 at 1978 \u2192 birth ~1918 vs tree birth: none stated. Residence check: Duque de Caxias 1978 vs none attested. Score 0.99998. Same child persona; confirmed.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1918 vs tree birth: none stated. Residence check: Duque de Caxias, Rio de Janeiro, 1978 vs none attested. Score 0.99998. Death registration for Maura's 1978 death. Same persona confirmed.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: record birth 1918 vs tree birth: none stated; gap N/A. Residence check: none stated vs none attested. Score 0.99998. Birth year assertion; same child persona confirmed.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99996. Name 'Francisco Antonio Parez' is transcription variant of tree 'Francisco Ant\u00f4nio Pariz' (Parez=Pariz). FamilySearch confirmed at confidence 5.",
+      "match_score": 0.999959,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99996. Sex Male consistent. Same father persona as a_006.",
+      "match_score": 0.999959,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for mother vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Name 'Umbelina Maria de Azevedo' matches tree 'Umbelina Maria Azevedo' (de Azevedo=Azevedo: standard preposition variant). Maura's 1978 death names her mother. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.99997175,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Sex Female consistent. Same mother persona as a_008.",
+      "match_score": 0.99997175,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null: stub I1 minted from this other_1 persona; comparison circular. Name 'Mariano Lopes Ferreira' in Maura's 1978 death record as her husband. Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1918 vs tree birth: none stated. Residence check: Duque de Caxias 1978 vs none attested. Score 0.99998. Relationship: Maura named as child of Francisco Antonio Parez; assertion also bears on Maura.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.0000014 (thin-subject: relationship assertion carries sparse data for second party; a_006 from same record scored 0.99996). Maura's death record names 'Francisco Antonio Parez' as father; qualitative match confident.",
+      "match_score": 1.4199932e-06,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1918 vs tree birth: none stated. Residence check: Duque de Caxias 1978 vs none attested. Score 0.99998. Relationship: Maura named as child of Umbelina; assertion bears on Maura.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00482 (thin-subject; a_008 from same record scored 0.99997). Maura's death names 'Umbelina Maria de Azevedo' as mother; qualitative match confident.",
+      "match_score": 0.004824579,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "PQHH-Y3W",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1918 vs tree birth: none stated. Residence check: Duque de Caxias 1978 vs none attested. Score 0.99998. Relationship: Maura named as spouse of Mariano Lopes Ferreira; assertion bears on Maura.",
+      "match_score": 0.99998236,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null (I1 minted from other_1; circular). Maura named as spouse of Mariano Lopes Ferreira (stub I1). Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99996. Same father persona as a_006. Relationship: Francisco states he is spouse of Umbelina; assertion bears on Francisco.",
+      "match_score": 0.999959,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00000035 (thin-subject; a_008 scored 0.99997). Francisco's assertion names 'Umbelina Maria de Azevedo' as spouse; qualitative match confident.",
+      "match_score": 3.4565022e-07,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: record birth ~1915 (age 65 at 1980 death) vs tree birth: none stated. Residence check: Rio de Janeiro, 1980 vs none attested. Score 0.9999951. Name 'Florita Umbelina dos Santos' in Florita's own 1980 death record. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1915 vs tree birth: none stated. Residence check: Rio de Janeiro 1980 vs none attested. Score 0.9999951. Sex Female consistent. Same deceased persona as a_015.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: age 65 at 1980 \u2192 birth ~1915 vs tree birth: none stated. Score 0.9999951. Same persona confirmed.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1915 vs tree birth: none stated. Residence check: Rio de Janeiro, Jul 1980 vs none attested. Score 0.9999951. Death date Jul 2 1980. Same persona confirmed.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: record birth 1915 (inferred) vs tree birth: none stated. Score 0.9999951. Same persona confirmed.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1915 vs tree birth: none stated. Residence check: Rio de Janeiro, 1980 vs none attested. Score 0.9999951. Death registration in Rio de Janeiro. Same persona confirmed.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99995. Name 'Antonio Francisco Pariz' in Florita's 1980 death record: name-element reversal of tree 'Francisco Ant\u00f4nio' (compare with son Ant\u00f4nio Francisco Pariz). FamilySearch confirmed at confidence 5.",
+      "match_score": 0.99994934,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99978. Name 'Umbelina Maria Pariz de Azevedo' includes married surname Pariz before maiden Azevedo; tree shows 'Umbelina Maria Azevedo'. All variants identify same person. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.99978167,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1915 vs tree birth: none stated. Score 0.9999951. Relationship: Florita named as child of Antonio Francisco Pariz; assertion bears on Florita.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99995 (scored directly via same_person with recordPersonaId=p_110444215900). Florita's record names 'Antonio Francisco Pariz' as father. FamilySearch confirmed.",
+      "match_score": 0.99994934,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "PQHC-328",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1915 vs tree birth: none stated. Score 0.9999951. Relationship: Florita named as child of Umbelina; assertion bears on Florita.",
+      "match_score": 0.9999951,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99978 (scored directly via recordPersonaId=p_110444216000). Florita's record names 'Umbelina Maria Pariz de Azevedo' as mother. FamilySearch confirmed.",
+      "match_score": 0.99978167,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99995. Same Francisco/father persona as a_021. Relationship: Francisco states he is spouse of Umbelina; bears on Francisco.",
+      "match_score": 0.99994934,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_025",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99978 (scored directly via recordPersonaId=p_110444216000). Francisco's assertion in src_002 names 'Umbelina Maria Pariz de Azevedo' as spouse. FamilySearch confirmed.",
+      "match_score": 0.99978167,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_026",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: record birth ~1912 (age 70 at 1982 death) vs tree birth: none stated. Residence check: Rio de Janeiro, 1982 vs none attested. Score 0.99991. Name 'Maria Gl\u00f3ria Ferreira' in Maria Gl\u00f3ria's 1982 death (Ferreira=married name; tree uses Pariz). FamilySearch confirmed at confidence 5.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_027",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1912 vs tree birth: none stated. Score 0.99991. Sex Female. Same persona as a_026.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_028",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: age 70 at 1982 \u2192 birth ~1912 vs tree birth: none stated. Score 0.99991. Same persona.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_029",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: record birth 1912 (inferred) vs tree birth: none stated. Score 0.99991. Same persona.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_030",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1912 vs tree birth: none stated. Residence check: Rio de Janeiro, 1982 vs none attested. Score 0.99991. Same persona.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_031",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1912 vs tree birth: none stated. Residence check: Rio de Janeiro, May 17 1982 vs none attested. Score 0.99991. Death date for Maria Gl\u00f3ria. Same persona.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_032",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Name 'Francisco Antonio Paris' in Maria Gl\u00f3ria's 1982 death: Paris=Pariz variant. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.9999727,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_033",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99999. Name 'Umbelina Maria de Azevedo' in Maria Gl\u00f3ria's 1982 death matches tree (de Azevedo variant). FamilySearch confirmed at confidence 5.",
+      "match_score": 0.999972,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null: I2 minted from this other_1 persona; circular. Name 'Jos\u00e9 Dias Ferreira' in Maria Gl\u00f3ria's 1982 death as her husband. Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_035",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1912 vs tree birth: none stated. Score 0.99991. Relationship: Maria Gl\u00f3ria named as child of Umbelina; assertion bears on Maria Gl\u00f3ria.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_035",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997 (scored via recordPersonaId=p_110260559100). Maria Gl\u00f3ria's record names 'Umbelina Maria de Azevedo' as mother. FamilySearch confirmed.",
+      "match_score": 0.999972,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_036",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1912 vs tree birth: none stated. Score 0.99991. Relationship: Maria Gl\u00f3ria named as child of Francisco; assertion bears on Maria Gl\u00f3ria.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_036",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997 (scored via recordPersonaId=p_110260559000). Maria Gl\u00f3ria's record names 'Francisco Antonio Paris' as father. FamilySearch confirmed.",
+      "match_score": 0.9999727,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_037",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Same Francisco/father persona as a_032. Relationship: Francisco states he is spouse of Umbelina; bears on Francisco.",
+      "match_score": 0.9999727,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_037",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997 (scored via recordPersonaId=p_110260559100). Francisco's assertion in src_003 names 'Umbelina Maria de Azevedo' as spouse. FamilySearch confirmed.",
+      "match_score": 0.999972,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_038",
+      "person_id": "PQHC-7Z2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1912 vs tree birth: none stated. Score 0.99991. Relationship: Maria Gl\u00f3ria named as spouse of Jos\u00e9 Dias Ferreira; assertion bears on Maria Gl\u00f3ria.",
+      "match_score": 0.99991333,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_038",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null (I2 minted from other_1; circular). Maria Gl\u00f3ria named as spouse of Jos\u00e9 Dias Ferreira (stub I2). Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_039",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: record birth ~1902 (age 88 at 1990 death) vs tree birth: none stated. Residence check: Rio de Janeiro, 1990 vs none attested. Score 0.9999958. Name 'Alice Umbelina dos Santos' in Alice's own 1990 death. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_040",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1902 vs tree birth: none stated. Score 0.9999958. Sex Female. Same persona as a_039.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_041",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: age 88 at 1990 \u2192 birth ~1902 vs tree birth: none stated. Score 0.9999958. Same persona.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_042",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: record birth 1902 (inferred) vs tree birth: none stated. Score 0.9999958. Same persona.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_043",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1902 vs tree birth: none stated. Residence check: Rio de Janeiro, Apr 7 1990 vs none attested. Score 0.9999958. Death date for Alice. Same persona.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_044",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1902 vs tree birth: none stated. Residence check: Rio de Janeiro, 1990 vs none attested. Score 0.9999958. Same persona.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_045",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Name 'Francisco Antonio Pariz' in Alice's 1990 death: exact match. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.9999747,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_046",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Score 0.99997. Sex Male. Same father persona as a_045.",
+      "match_score": 0.9999747,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_047",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Name 'Umbelina Maria de Azevedo' in Alice's 1990 death matches tree. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.99996674,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_048",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Score 0.99997. Sex Female. Same mother persona as a_047.",
+      "match_score": 0.99996674,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_049",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null: I3 minted from this other_1 persona; circular. Name 'Atanagildo Virgilio dos Santos' in Alice's 1990 death as her husband. Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_050",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1902 vs tree birth: none stated. Score 0.9999958. Relationship: Alice named as child of Umbelina; assertion bears on Alice.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_050",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00096 (thin-subject; a_047 scored 0.99997). Alice's record names 'Umbelina Maria de Azevedo' as mother; qualitative match confident.",
+      "match_score": 0.00096082693,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_051",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1902 vs tree birth: none stated. Score 0.9999958. Relationship: Alice named as child of Francisco; assertion bears on Alice.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_051",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00000091 (thin-subject; a_045 scored 0.99997). Alice's record names 'Francisco Antonio Pariz' as father; qualitative match confident.",
+      "match_score": 9.0365126e-07,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_052",
+      "person_id": "PQHC-CJV",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1902 vs tree birth: none stated. Score 0.9999958. Relationship: Alice named as spouse of Atanagildo; assertion bears on Alice.",
+      "match_score": 0.9999958,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_052",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null (I3 minted from other_1; circular). Alice named as spouse of Atanagildo (stub I3). Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_053",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99997. Same father persona as a_045. Relationship: Francisco states he is spouse of Umbelina; bears on Francisco.",
+      "match_score": 0.9999747,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_053",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00000035 (thin-subject; a_047 scored 0.99997). Francisco's assertion in src_004 names 'Umbelina Maria de Azevedo' as spouse; qualitative match confident.",
+      "match_score": 3.4565022e-07,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_054",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: record birth ~1909 (age 62 at 1971 death) vs tree birth: none stated. Residence check: Rio de Janeiro, 1971 vs none attested. Score 0.9999809. Name 'Antonio Francisco Pariz' in Ant\u00f4nio's own 1971 death. FamilySearch confirmed at confidence 5.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_055",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1909 vs tree birth: none stated. Score 0.9999809. Sex Male. Same deceased persona as a_054.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_056",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: age 62 at 1971 \u2192 birth ~1909 vs tree birth: none stated. Score 0.9999809. Same persona.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_057",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1909 vs tree birth: none stated. Residence check: Rio de Janeiro, 1971 vs none attested. Score 0.9999809. Same persona.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_058",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: record birth 1909 (inferred) vs tree birth: none stated. Score 0.9999809. Same persona.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_059",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1909 vs tree birth: none stated. Residence check: Rio de Janeiro, Sep 7 1971 vs none attested. Score 0.9999809. Death date for Ant\u00f4nio. Same persona.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_060",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99646. Name 'Francisco Antonio Azevedo' in Ant\u00f4nio's 1971 death: surname 'Azevedo' is an apparent informant error \u2014 both parents listed with Azevedo (mother: 'Umbelina Maria Azevedo'), suggesting informant applied mother's maiden name to father too. Score 0.99646 and family context confirm this is GXSQ-FYP. No core_identifier_conflict: discrepancy explained by informant confusion.",
+      "match_score": 0.99646336,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_061",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Score 0.99646. Sex Male. Same father persona as a_060.",
+      "match_score": 0.99646336,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_062",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99818. Name 'Umbelina Maria Azevedo' in Ant\u00f4nio's 1971 death: near-exact match with tree (no 'de' preposition). FamilySearch confirmed at confidence 5.",
+      "match_score": 0.99818134,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_063",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Score 0.99818. Sex Female. Same mother persona as a_062.",
+      "match_score": 0.99818134,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_064",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null: I4 minted from this other_1 persona; circular. Name 'Rosa Almeida Pariz Pariz' in Ant\u00f4nio's 1971 death as his wife. Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_065",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1909 vs tree birth: none stated. Score 0.9999809. Relationship: Ant\u00f4nio named as child of Umbelina; assertion bears on Ant\u00f4nio.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_065",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00000035 (thin-subject; a_062 scored 0.99818). Ant\u00f4nio's record names 'Umbelina Maria Azevedo' as mother; qualitative match confident.",
+      "match_score": 3.4597807e-07,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_066",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1909 vs tree birth: none stated. Score 0.9999809. Relationship: Ant\u00f4nio named as child of Francisco Antonio Azevedo (surname error explained in a_060 rationale).",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_066",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00503 (thin-subject; a_060 scored 0.99646). Ant\u00f4nio's record names 'Francisco Antonio Azevedo' (surname error explained in a_060) as father; qualitative match confident given family context and cross-record corroboration.",
+      "match_score": 0.005030848,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_067",
+      "person_id": "GXSQ-VV2",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1909 vs tree birth: none stated. Score 0.9999809. Relationship: Ant\u00f4nio named as spouse of Rosa Almeida Pariz Pariz; assertion bears on Ant\u00f4nio.",
+      "match_score": 0.9999809,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_067",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none stated. Residence check: none stated vs none attested. Match_score null (I4 minted from other_1; circular). Ant\u00f4nio named as spouse of Rosa (stub I4). Probable on single-record evidence.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_068",
+      "person_id": "GXSQ-FYP",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.99646. Same father persona as a_060. Relationship: Francisco states he is spouse of Umbelina in src_005; bears on Francisco.",
+      "match_score": 0.99646336,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_068",
+      "person_id": "GXSQ-V3L",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth: none stated. Residence check: none stated vs none attested. Score 0.00000604 (thin-subject; a_062 scored 0.99818). Francisco's assertion in src_005 names 'Umbelina Maria Azevedo' as spouse; qualitative match confident.",
+      "match_score": 6.035619e-06,
+      "created": "2026-10-23"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Rio de Janeiro, Brazil",
+      "for_place": "Rio de Janeiro, Brazil",
+      "time_period": "1900-1960",
+      "jurisdictions": [
+        {
+          "name": "Rio de Janeiro, Brazil",
+          "date_range": "1565-present"
+        },
+        {
+          "name": "Federal District (city of Rio de Janeiro), Brazil",
+          "date_range": "1834-1960"
+        },
+        {
+          "name": "Guanabara, Brazil",
+          "date_range": "1960-1975"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1582573",
+          "title": "Brazil, Rio de Janeiro, Civil Registration, 1804-2013",
+          "date_range": "1804-2013"
+        },
+        {
+          "id": "1719212",
+          "title": "Brazil, Rio de Janeiro, Catholic Church Records, 1616-2017",
+          "date_range": "1616-2017"
+        },
+        {
+          "id": "1932363",
+          "title": "Brazil, Rio de Janeiro, Immigration Cards, 1900-1980",
+          "date_range": "1900-1980"
+        },
+        {
+          "id": "2137269",
+          "title": "Brazil, Cemetery Records, 1799-2024",
+          "date_range": "1799-2024"
+        }
+      ],
+      "quirks": [
+        "Civil registration is recorded at the municipal (cart\u00f3rio) level \u2014 search municipality by municipality; for the city of Rio de Janeiro, separate offices (circunscri\u00e7\u00f5es) served different neighborhoods, so searching office by office is necessary when the home neighborhood is unknown.",
+        "The city of Rio de Janeiro was a separate Federal District from 1834 to 1960 and NOT part of the State of Rio de Janeiro; FamilySearch collection 1582573 covers both the city and state records together under one search interface.",
+        "From April 1960 to 1975, deaths in the city of Rio de Janeiro were recorded under the State of Guanabara, not the State of Rio de Janeiro \u2014 deaths in the city after April 1960 require searching Guanabara records.",
+        "Death records for women may be filed under the married name \u2014 the FamilySearch wiki for the Brazil, Rio de Janeiro, Civil Registration collection states this explicitly.",
+        "Civil registration compliance was uneven: the Brazil Civil Registration wiki page states that while the Catholic Church was required to keep records from 1850, justices of the peace took over from 1870, and some municipalities did not begin keeping records until as recently as the 1920s \u2014 if no civil death record is found before approximately 1920, search Catholic burial registers.",
+        "Records are in Portuguese: '\u00d3bitos' = deaths, 'Nascimentos' = births, 'Casamentos' or 'Matrim\u00f4nios' = marriages, '\u00cdndice' = index.",
+        "Volume_search returned 11,500 digitized death-record volumes for Rio de Janeiro 1900\u20131960; all 100 examined on the first page show recordSearchablePercent: 100 (fully name-indexed); the indexed collection-level search in collection 1582573 should be the first step before browsing individual volumes.",
+        "There is a neighborhood named 'Esp\u00edrito Santo' in the city of Rio de Janeiro \u2014 FamilySearch death-record volumes labeled 'Esp\u00edrito Santo, Rio de Janeiro, Rio de Janeiro, Brazil' are from that city district, not from the state of Esp\u00edrito Santo.",
+        "Women in Brazil historically retained their maiden surname; from the late 19th century it became common to adopt the husband's surname, but either form may appear in records \u2014 search both the maiden name (Azevedo) and the married name (Pariz or P\u00e1ris) when looking for Umbelina's death record.",
+        "Some civil registration books have indexes in the front or back organized by given name only \u2014 if searching a volume manually, check every entry under 'U' (Umbelina) rather than under the surname."
+      ],
+      "guide_markdown": "# Locality Guide: Rio de Janeiro State, Brazil (1900\u20131960)\n## Focus: Civil Registration Death Records\n\n## Jurisdiction overview\n- **Formed:** The captaincy and later province of Rio de Janeiro dates from 1565; became a state under the republic in 1889.\n- **Administrative center:** Niter\u00f3i was the state capital throughout this period; the city of Rio de Janeiro was a separate Federal District.\n- **Parent jurisdiction:** Federal Republic of Brazil\n- **Population during period:** Estimates for Rio de Janeiro state range from roughly 900,000\u20131,157,000 in 1900 to approximately 3.3\u20133.4 million by 1960 (populstat.info estimates via FamilySearch place population data). Brazil's national population grew from about 17.9 million (1900) to 72.4 million (1960).\n- **Economy:** Coffee cultivation (inland zones), sugar (Campos region), early industrialization (Petr\u00f3polis), commerce and port trade (capital city).\n- **Ethnic composition:** Mixed Portuguese-descended population, significant African-descended population, Italian and German immigrant communities, and internal migrants from Esp\u00edrito Santo, Minas Gerais, and the Northeast.\n- **Religious denominations:** Overwhelmingly Roman Catholic throughout the period; smaller Methodist, Presbyterian, Baptist, and Lutheran congregations also present.\n- **Key historical events:** Abolition of slavery (1888), proclamation of the Republic (1889), transfer of the national capital from the city of Rio de Janeiro to Bras\u00edlia (April 1960).\n\n## Boundary changes\n- **City / State split (1834\u20131975):** From 1834 the city of Rio de Janeiro was carved out as a separate Federal District and was NOT part of the State of Rio de Janeiro. This means deaths occurring within the city limits during 1900\u20131960 were registered under the city's own civil registration offices, not the state's.\n- **State of Guanabara (1960\u20131975):** When the federal capital moved to Bras\u00edlia in April 1960, the old Federal District became the new State of Guanabara. Deaths in the city of Rio de Janeiro from April 1960 onward are in Guanabara records, not State of Rio de Janeiro records.\n- **1975 merger:** Guanabara was merged back into the State of Rio de Janeiro; the combined FamilySearch collection 1582573 covers both entities and can be searched as one.\n- **State boundaries otherwise stable** throughout 1900\u20131960.\n- Many towns in Rio de Janeiro are relatively new; if no records are found for a specific municipality, determine when it was founded and which older municipality it was split from, then search the parent municipality's records.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date and level:** A national law passed in 1850 required registration of births and deaths; until 1870 the Catholic Church kept these records for the government; from 1870 justices of the peace took over at the **municipal level**. The [Brazil Civil Registration wiki](https://www.familysearch.org/en/wiki/Brazil_Civil_Registration) states that compliance was uneven and some municipalities did not begin keeping records until the 1920s.\n- **What exists for 1900\u20131960:** Births (nascimentos), marriages (casamentos), and deaths (\u00f3bitos) at the municipal cart\u00f3rio level across all municipalities of the state and the city of Rio de Janeiro. FamilySearch collection [Brazil, Rio de Janeiro, Civil Registration, 1804\u20132013](https://www.familysearch.org/search/collection/1582573) holds 6,328,974 indexed records representing 58,567,999 persons with 5,100,470 images \u2014 the principal searchable database for this period.\n- **Death record content:** Per the [FamilySearch collection wiki page](https://www.familysearch.org/en/wiki/Brazil,_Rio_de_Janeiro,_Civil_Registration_-_FamilySearch_Historical_Records): name of informant; date, place, and time of death; name, gender, and age of deceased; nationality, state of birth, and residence; cause of death; parents' names and residence; names of witnesses; burial place.\n- **Where held:** Originals held by the Corregedoria Geral da Justi\u00e7a do Estado do Rio de Janeiro and local cart\u00f3rios; the Arquivo Nacional do Brasil (Rio de Janeiro) holds some duplicate sets (1929\u20131962 in collection olib:1928224). FamilySearch has digitized and indexed most volumes.\n- **Gaps:** Some municipalities with very small populations may have sparse or late-starting records. The city of Rio de Janeiro's records before 1960 require searching under the Federal District designation, though collection 1582573 encompasses them.\n- **Pre-registration alternative:** Catholic burial registers (see Church records below).\n\n### Church records\n- **Denominations present:** Roman Catholic (overwhelmingly dominant); smaller Protestant congregations.\n- **Record types:** Baptisms (batismos), marriages (matrim\u00f4nios), burials (\u00f3bitos/sepultamentos), confirmations. The [Brazil Church Records wiki](https://www.familysearch.org/en/wiki/Brazil_Church_Records) notes that Catholic burial registers include the deceased's name, date and place of death or burial, age, residence, cause of death, survivors, and parents' names.\n- **Online collection:** [Brazil, Rio de Janeiro, Catholic Church Records, 1616\u20132017](https://www.familysearch.org/search/collection/1719212) \u2014 2,282,412 indexed records, 11,107,767 persons, 368,464 images. This collection covers the 1900\u20131960 period. The [Rio de Janeiro, Brazil Genealogy wiki page](https://www.familysearch.org/en/wiki/Rio_de_Janeiro,_Brazil_Genealogy) advises searching both civil and church records because each may contain information absent from the other: church records often list godparents where civil records list grandparents.\n- **Where held:** Earlier records may be at the diocese; more recent records at local parish offices. The Archdiocese of S\u00e3o Sebasti\u00e3o do Rio de Janeiro covers the capital city. Use [The Catholic Directory: Brazil](https://www.catholicdirectory.com/brazil) to locate parish contact information.\n- **Language:** Portuguese; Latin terms appear in older sacramental entries.\n\n### Census records\n- **Federal/national census:** Brazil took national censuses in 1900, 1920, 1940, 1950, and 1960. The [Brazil Census wiki](https://www.familysearch.org/en/wiki/Brazil_Census) states that after compiling statistical information, the original census returns in Brazil were often destroyed. No FamilySearch indexed census collection for Rio de Janeiro state from this period appeared in the survey results.\n- **Substitute enumerations:** The Brazil Census wiki notes that some ecclesiastical census records survive in diocesan archives. City directories for Rio de Janeiro city may substitute for census years to place a person at a specific address.\n- **Access:** The national census schedules that do survive are held at regional archives and require in-person visits or correspondence.\n\n### Probate and court records\n- **Types:** Wills (testamentos), administrations (invent\u00e1rios), guardianships, estate distributions.\n- **Where held:** The FamilySearch Catalog returned 349 hits for Rio de Janeiro, including notarial records, court records, and civil registration books held by the Corregedoria Geral da Justi\u00e7a. The [Brazil Online Genealogy Records wiki](https://www.familysearch.org/en/wiki/Brazil_Online_Genealogy_Records) lists [Invent\u00e1rios e Testamentos](https://www.familysearch.org/en/search/catalog/95936) at FamilySearch (images only).\n- **Practical value for this project:** Probate records could name Umbelina as a deceased parent if one of her children initiated an estate proceeding; however, civil death records are the primary target.\n\n### Land records\n- **Land-distribution jurisdiction:** The Brazil Wiki notes land and property records exist but these are not the primary record type for this project. The [Brazil Land and Property wiki](https://www.familysearch.org/en/wiki/Brazil_Land_and_Property) covers deeds and notarial records.\n- **Where held:** Cart\u00f3rios de registro de im\u00f3veis at the municipal level.\n\n### Military records\n- **Relevant conflicts:** Brazil participated in World War I (limited) and World War II (1942\u20131945). Brazilian military draft registration and service records exist.\n- **Where held:** The Arquivo Nacional (https://www.gov.br/arquivonacional/pt-br) holds federal military records. Not a primary target for this project.\n\n### Cemetery records\n- **Online coverage:** [Brazil, Cemetery Records, 1799\u20132024](https://www.familysearch.org/search/collection/2137269) \u2014 2,748,601 indexed records, 14,765,819 persons, 150,972 images. This is a national collection covering Rio de Janeiro cemeteries.\n- **Additional resources:** [BillionGraves](https://billiongraves.com/search/results?year_range=5&action=search_cemetery&exact=true&country=Brazil) and [FindAGrave](https://findagrave.com/cgi-bin/fg.cgi?page=csr&CScn=&CScntry=20&CSst=0) provide Brazil cemetery memorials.\n- **Physical records:** Sexton records and burial registers at local cemetery offices and associated churches.\n\n### Immigration/emigration records\n- **Context for this project:** Umbelina's family migrated internally from Esp\u00edrito Santo to Rio de Janeiro state; these are internal migrants, not international immigrants. However, immigration cards cover arrivals into the port of Rio de Janeiro.\n- **Online collection:** [Brazil, Rio de Janeiro, Immigration Cards, 1900\u20131980](https://www.familysearch.org/search/collection/1932363) \u2014 6,193,545 persons, 3,967,834 images. Also at [Ancestry](https://www.ancestry.com/search/collections/9800/) and [MyHeritage](https://www.myheritage.com/research/collection-30284/brazil-rio-de-janeiro-immigration-cards-1900-1965).\n- **Port records:** The Arquivo Nacional holds [Entrada de Estrangeiros no Brasil, Port of Rio de Janeiro](https://bases.an.gov.br/rv/menu_externo/menu_externo.php).\n- **Internal migration:** No dedicated FamilySearch collection for internal Brazilian migration records was found in this survey.\n\n### Naturalization records\n- Naturalization and foreigner registration records appear in: [Brazil, Rio de Janeiro, processos de naturaliza\u00e7\u00e3o e outros registros de imigra\u00e7\u00e3o, 1897\u20131980](https://www.familysearch.org/en/search/catalog/3277132) (FamilySearch Catalog \u2014 images). Also [Brazil, Foreigner Files, 1653\u20132022](https://www.familysearch.org/search/collection/5000160) \u2014 3,512,065 persons. Relevant only if Umbelina or her husband Francisco Ant\u00f4nio Pariz was foreign-born.\n\n### Newspaper records\n- **Local papers:** The city of Rio de Janeiro had multiple major newspapers throughout this period (Jornal do Brasil, O Globo, Correio da Manh\u00e3). Obituaries and death notices were commonly published.\n- **Online access:** [Acervo - Estad\u00e3o](http://acervo.estadao.com.br/) and [Acervo Folha de S\u00e3o Paulo](http://acervo.folha.com.br/) are digitized newspaper archives. The Biblioteca Nacional Digital Brasil holds historical Rio de Janeiro newspapers.\n- **Value:** Obituaries may name surviving children and parents, giving the date and municipality of death.\n\n### Tax records\n- No FamilySearch indexed tax collection specific to Rio de Janeiro 1900\u20131960 was found in this survey. Tax records are held at the state and municipal archive level.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Access |\n|---|---|---|\n| FamilySearch | Brazil, Rio de Janeiro, Civil Registration, 1804\u20132013 (6.3M records, 58.6M persons, 5.1M images); Brazil, Rio de Janeiro, Catholic Church Records, 1616\u20132017 (2.3M records); Brazil, Rio de Janeiro, Immigration Cards, 1900\u20131980 (6.2M persons); Brazil, Cemetery Records, 1799\u20132024 | Free |\n| Ancestry | Brazil, Civil Registration, 1870\u20132012 (index & images); Rio de Janeiro, Brazil, Immigration Cards, 1900\u20131965 | Subscription |\n| MyHeritage | Brazil, Rio de Janeiro, Civil Registration, 1829\u20132012 (index); Brazil, Rio de Janeiro, Immigration Cards, 1900\u20131965 | Subscription |\n| Arquivo Nacional (Brazil) | Distance Attendance Module; foreigner entry records for Port of Rio de Janeiro | Free |\n| Jusbrasil | Di\u00e1rios Oficiais (official judicial gazettes) | Free |\n\n**Coverage of this survey:** Volume_search returned 11,500 total digitized death-record volumes matching Rio de Janeiro state and 1900\u20131960; the 100 volumes detailed on the first page cover localities including the city of Rio de Janeiro (1937\u20131941+), Iraj\u00e1 (1921\u20131959), S\u00e3o Jo\u00e3o de Meriti (1941\u20131961), Itaperuna (1933\u20131951), Petr\u00f3polis (1902\u20131930), and others. All showed recordSearchablePercent: 100 (fully name-indexed). The remaining approximately 11,400 volumes were not examined \u2014 use the name-search in collection 1582573 first.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Corregedoria Geral da Justi\u00e7a do Estado do Rio de Janeiro | Original civil registration volumes (births, marriages, deaths) from all municipalities | In-person or by written request in Portuguese |\n| Arquivo Nacional do Brasil (Rio de Janeiro) | Duplicate civil registration sets 1929\u20131962; immigration records; court records | In-person; some digitized finding aids online at https://www.gov.br/arquivonacional/pt-br |\n| Arquivo P\u00fablico do Estado do Rio de Janeiro | State-level records, naturalization files 1897\u20131980 | In-person |\n| Diocesan archives (Archdiocese of S\u00e3o Sebasti\u00e3o do Rio de Janeiro) | Catholic parish records; contact via https://www.catholicdirectory.com/brazil | Write in Portuguese |\n| Local cart\u00f3rios | Most recent civil records; older volumes may have been sent to state or judicial archives | In-person or by written request |\n\n## Records NOT online\n- Brazilian national census original returns for 1900, 1920, 1940, 1950, 1960 \u2014 mostly destroyed or held only at regional archives, not digitized on FamilySearch.\n- Many Catholic parish burial registers not yet included in collection 1719212.\n- Cart\u00f3rio death records for some smaller municipalities that have not yet been digitized (check the FamilySearch Catalog for the specific municipality).\n- City directory (almanak / anu\u00e1rio) records for Rio de Janeiro city \u2014 useful to establish address before and after a death; held at the Biblioteca Nacional and accessible in-person.\n\n## Known record losses\n- The Brazil Census wiki states that most original census returns were destroyed after statistical compilation \u2014 this is a known, system-wide loss, not a localized disaster.\n- No courthouse fires or flood losses specific to Rio de Janeiro state civil registration for 1900\u20131960 were identified in the sources consulted in this survey; however, individual cart\u00f3rios may have suffered localized losses not captured here.\n\n## Research tips\n- **Start with the indexed collection.** The [Brazil, Rio de Janeiro, Civil Registration, 1804\u20132013](https://www.familysearch.org/search/collection/1582573) collection is searchable by name and covers the full 1900\u20131960 target period for both the city and the state. Search Umbelina's name in both her maiden form (Azevedo) and her married form (Pariz or P\u00e1ris), since the [FamilySearch collection wiki page](https://www.familysearch.org/en/wiki/Brazil,_Rio_de_Janeiro,_Civil_Registration_-_FamilySearch_Historical_Records) explicitly notes that a woman's death record may be filed under her married name.\n- **Search both civil and church records.** The [Rio de Janeiro, Brazil Genealogy wiki](https://www.familysearch.org/en/wiki/Rio_de_Janeiro,_Brazil_Genealogy) advises that church records may contain information absent from civil records and vice versa; search collection 1719212 (Catholic church records) alongside 1582573.\n- **Municipal-level geography matters.** Per the [Rio de Janeiro, Brazil Genealogy wiki](https://www.familysearch.org/en/wiki/Rio_de_Janeiro,_Brazil_Genealogy): civil registration is kept at the municipal level; if the exact municipality is unknown, search the collection by name first and use any resulting record to determine the municipality, then verify against the browsable images. In the city of Rio de Janeiro itself, multiple registration districts (circunscri\u00e7\u00f5es) existed \u2014 if the neighborhood is known, start with the nearest office's records.\n- **City vs. state records.** Deaths occurring within the city of Rio de Janeiro during 1900\u20131960 were registered in the Federal District's own records (not the State's), but FamilySearch collection 1582573 encompasses both, so one search covers both. After April 1960, city deaths fall under the State of Guanabara.\n- **Read record indexes carefully.** The [Rio de Janeiro, Brazil Genealogy wiki](https://www.familysearch.org/en/wiki/Rio_de_Janeiro,_Brazil_Genealogy) notes that some civil registration books have indexes organized by given name only \u2014 check every entry under 'U' (Umbelina) rather than relying solely on the surname index.\n- **Search the children's death records for parent information.** Rio de Janeiro death records include the parents' names and residence. The children who died in Rio de Janeiro state are the most direct source for Umbelina's whereabouts and possibly her own death record.\n- **Portuguese vocabulary.** '\u00d3bitos' = deaths, 'Nascimentos' = births, 'Casamentos'/'Matrim\u00f4nios' = marriages, '\u00cdndice' = index. The [Portugal Script Tutorial](https://script.byu.edu/portuguese-handwriting/introduction) and the [Portuguese Genealogical Word List](https://www.familysearch.org/en/wiki/Portuguese_Genealogical_Word_List) (from the [Brazil Naming Customs wiki](https://www.familysearch.org/en/wiki/Brazil_Naming_Customs)) assist with reading handwritten records.\n- **Neighborhood named 'Esp\u00edrito Santo' in the city.** Volume records labeled 'Esp\u00edrito Santo, Rio de Janeiro, Rio de Janeiro, Brazil' on FamilySearch are from a city district, not from the state of Esp\u00edrito Santo where the family was born.\n- **Cemetery records as a cross-check.** Search [Brazil, Cemetery Records, 1799\u20132024](https://www.familysearch.org/search/collection/2137269) and [FindAGrave Brazil](https://findagrave.com/cgi-bin/fg.cgi?page=csr&CScn=&CScntry=20&CSst=0) to corroborate a civil death date and identify burial location.\n- **Writing to the cart\u00f3rio.** If a record is not yet online, the [Rio de Janeiro, Brazil Genealogy wiki](https://www.familysearch.org/en/wiki/Rio_de_Janeiro,_Brazil_Genealogy) provides guidance on writing to the local Cart\u00f3rio de Registro Civil in Portuguese; it notes this method is not always reliable. Use the [Portuguese Letter-writing Guide](https://www.familysearch.org/en/wiki/Portuguese_Letter-writing_Guide) for drafting the request.\n- **Compliance timeline.** The [Brazil Civil Registration wiki](https://www.familysearch.org/en/wiki/Brazil_Civil_Registration) states that while the Catholic Church kept vital records from 1850, justices of the peace took over from 1870, and some municipalities did not begin until the 1920s \u2014 if the civil death record is not found, go to the Catholic burial register for the same municipality.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Rio_de_Janeiro,_Brazil_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Brazil_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-23"
+    }
+  ]
+}

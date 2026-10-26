@@ -332,6 +332,16 @@ describe("research_query", () => {
     expect(msg).toMatch(/you sent 'sections'/);
   });
 
+  it("points `plan_items` at the `plans` section", async () => {
+    await writeResearch({});
+    const result = await researchQuery({ projectPath: dir, section: "plan_items" } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    const msg = result.errors.join(" ");
+    expect(msg).toMatch(/not one of/);
+    expect(msg).toMatch(/Plan items live under section 'plans'/);
+  });
+
   it("reports a JSON-encoded string value rather than undefined", async () => {
     await writeResearch({});
     const result = await researchQuery({ projectPath: dir, section: '"log"' } as any);
