@@ -89,8 +89,8 @@ def test_person_warnings_runs_live_when_no_fixture_declared(tmp_path):
 
 
 def test_a_declared_fixture_beats_the_live_handler(tmp_path):
-    """`person_warnings` is the only tool in both LIVE_TOOLS and the fixture
-    corpus. The check-warnings suite drives it from fixtures tuned to specific
+    """`person_warnings` is in both LIVE_TOOLS and the fixture corpus, as
+    `project_list` is. The check-warnings suite drives it from fixtures tuned to specific
     tag combinations, so the test's own declaration must win — otherwise going
     live for everyone else would silently retune that suite. Registering both
     would define the name twice and the second would shadow the first, so the

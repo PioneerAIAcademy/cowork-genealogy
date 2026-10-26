@@ -8,7 +8,9 @@ fixture answers." It serves two purposes:
 - Grading: the LLM judge compares the actual args Claude passed against
   the matched fixture's `args` and scores the Tool Arguments base
   dimension. Every fixture must declare a non-empty `args` block — the
-  field is required so the dimension always has a target to grade.
+  field is required so the dimension always has a target to grade. A tool
+  in `NO_ARGUMENT_TOOLS` is the one exception: its only call is `{}`, so
+  `{}` is its complete predicate rather than a catch-all.
 """
 
 from __future__ import annotations
@@ -20,6 +22,10 @@ from typing import Any
 
 class InvalidFixtureError(Exception):
     """Raised when a fixture file is missing or malformed."""
+
+
+#: Tools whose input schema has no properties, so a fixture's `args` is `{}`.
+NO_ARGUMENT_TOOLS: frozenset[str] = frozenset({"project_list"})
 
 
 def load_fixtures(names: list[str], fixtures_dir: Path) -> list[dict[str, Any]]:
@@ -75,7 +81,7 @@ def build_manifest(fixtures: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
                 f"fixture missing 'response' field: {fixture.get('tool', '?')}"
             )
         args = fixture.get("args")
-        if not isinstance(args, dict) or not args:
+        if not isinstance(args, dict) or (not args and fixture["tool"] not in NO_ARGUMENT_TOOLS):
             raise InvalidFixtureError(
                 f"fixture missing required non-empty 'args' field: "
                 f"{fixture.get('_source_name') or fixture.get('tool', '?')}"
