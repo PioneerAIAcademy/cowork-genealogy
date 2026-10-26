@@ -1,0 +1,174 @@
+{
+  "run_log": "v29_2026-10-21_09-59-49.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Read state via project_context and seven research_query slices, then handed off to person-evidence (seven unlinked assertions), search-records (pli_006 probate), research-exhaustiveness and research-plan, every one a stub that 'changed no project state'. The reply still reports stub outcomes as done: 'Linked unextracted assertions ... to his tree person', 'Assessed exhaustiveness for q_001 — research is not yet exhaustive', and 'Extended the research plan to add the following priority searches' followed by five items that came from its own hand-off prompt. Its account of the father evidence and the resolved birthplace conflict matches the queried state."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Worked the routing loop through four hand-offs in one turn, treating the unidentified mother as the open gap, and ended with a clear account of where the father and the mother each stand. The closing offer to run the 1870 census search is in keeping with the stub's 'write your summary and stop'."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and nine research_query calls, all against the right projectPath. The section and questionId filters (questions, proof_summaries, log/assertions per question, person_evidence, conflicts, active plans) are correct, and no call hit fixture_not_found."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read project_context and the questions slice. It handed proof-conclusion the q_002 gap (resolved with no proof summary) and asked question-selection to close q_001 and register an Irish-origins question. The reply honestly says only that 'the hand-off was made' and claims no result from either stub."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "After the two hand-offs it yielded with 'To continue right now, reply with anything', so the investigation got no further than registering the question. The skill names exactly this announce-and-yield as a failure on a job. The locality, plan and search steps appear only as a list of what would come next."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two MCP calls, project_context and research_query section='questions', both with the correct projectPath and both well-formed."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Its state reading is accurate: pli_006 is in_progress with no log entry, ps_001 sits at probable, q_002 is resolved with no proof summary, and seven assertions (a_002/3/6/7/8/9/12) have no person link. It sent all seven to person-evidence, and the reply says only that the hand-off was made. A mid-turn slip naming a_005 as unlinked was corrected before the final summary."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It made one person-evidence hand-off without pausing to ask anything, then stopped as the stub instructed and set out the rest of the route (probate search, exhaustiveness, proof-conclusion for q_002). The summary is dense with internal ids (pli_006, ps_001, c_001, `exhaustive_declared`), but nothing that was required is missing."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context plus eight research_query calls with correct sections and filters (questionId for plans/log/assertions, personId I1/I2 for person_evidence). All are well-formed."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It made no tool calls and created no project. The reply asks for a FamilySearch person ID, describes what one looks like, and claims nothing about project state."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply ends in a request for the ID, plus optional name, birth year and place, which is the outcome the test requires. It neither starts research nor invokes init-project."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The run made zero MCP tool calls, so N/A is correct."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Called person_read on GJ72-9WD and reported the two attached death-related sources, the Quebec civil death registration (SD-DRIS-D, DRIS-004) and the parish burial (SD-DRIS-C, DRIS-003), with their ARKs. Its statement that the profile holds a burial place but no death date matches the fixture. It ran no search and handed off to nothing."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It answered the single bounded question ('Yes — there is already a death record attached'), offered to read the record for the date, and closed with research_delivered. Nothing more was asked."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "person_read was called with personId 'GJ72-9WD', an exact match to expected_args. The research_delivered summary is accurate."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "It treated the reported 1861 death as corroborating h_002 ('Why this advances h_002'), calling the dead man 'the same Robert Eastham Jr.' and pairing the death record with 'Robert's sworn 1870 marriage bond (a_159)'. A man who died in 1861 cannot have married Margaret Rucker in 1870, so the record contradicts h_002's identity, and the judge_context names presenting such a record as corroboration as the failure. The hypothesis-tracking prompt also told the callee in advance to treat the record as support for both hypotheses."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "It followed the new lead as the judge_context allows: it asked for the record's ID or ARK and offered to search the Kentucky Deaths and Burials collection for Robert Eastham, Pulaski County, 1861, without moving toward wrap-up. The judge's dock for having no plan for James and Elizabeth contradicts its own context, which says locating the record counts as following the lead. The missed contradiction is scored under Correctness."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two MCP calls, project_context and research_query section='hypotheses', both with the correct projectPath."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "It read project_context, the plans and the q_001 log, and correctly said no new plan item is needed because pli_006 came back negative and q_001 is resolved. It then recommended research-exhaustiveness and proof-conclusion 'to write the GPS-conformant narrative and encode the Thomas Flynn parentage link in the tree'. On this completed project ps_001 is already at tier proved and the I2 to I1 link is already in the tree, so that recommendation is false. The reply also ends with a leaked aside: 'No todos needed here — this was a single bounded question'."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "It declined to plan, wrote nothing to plans, cited the resolved status and closed with research_delivered. The judge_context explicitly accepts this ('otherwise decline to plan, citing that the question is resolved'). The judge's 1 treats reading state and answering as a failure, but that is the accepted outcome."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context, research_query for plans and for the q_001 log, and research_delivered, all with correct arguments. The Glob for research.json was a stray built-in call but did no harm."
+    }
+  ]
+}
