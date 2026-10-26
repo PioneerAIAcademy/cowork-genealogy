@@ -116,13 +116,14 @@ export interface GedcomXSourceDescription {
 }
 
 export interface GedcomXCoverage {
-  spatial?: { description?: string };
+  spatial?: { original?: string; description?: string };
   temporal?: { original?: string; formal?: string };
   recordType?: string;
 }
 
 export interface GedcomXPlaceDescription {
   id?: string;
+  identifiers?: Record<string, string[]>;
   names?: { value: string }[];
   latitude?: number;
   longitude?: number;

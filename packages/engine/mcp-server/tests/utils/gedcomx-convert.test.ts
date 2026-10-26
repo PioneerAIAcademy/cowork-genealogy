@@ -1770,6 +1770,27 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     expect(placeId).toBe("5775");
   });
 
+  it("passes the fact's formal date beside its place id, whatever language its original is in (6589-3NS5)", () => {
+    const place = {
+      original: "Bolívar, Colombia",
+      fields: [{ type: PLACE_FIELD, values: [interpretedValue("Bolívar, Colombia", "5775")] }],
+    };
+    const { doc, placeIds } = toSimplifiedRecordRead({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            { type: "http://gedcomx.org/Birth", date: { original: "7 de mayo de 1856", formal: "+1856-05-07" }, place },
+            { type: "http://gedcomx.org/BackgroundCheck", date: { original: "1 de febrero de 1873" }, place },
+          ],
+        },
+      ],
+    });
+    const [birth, check] = doc.persons![0].facts!;
+    expect(placeIds.get(birth)).toEqual({ placeId: "5775", original: "Bolívar, Colombia", formal: "+1856-05-07" });
+    expect(placeIds.get(check)).toEqual({ placeId: "5775", original: "Bolívar, Colombia" });
+  });
+
   it("prefers the candidate marked Preferred (QLGD-48KS)", () => {
     const { fact, placeId } = readOnePlace({
       original: "Boda, Kopparberg, Sweden",

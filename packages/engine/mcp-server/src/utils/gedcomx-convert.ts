@@ -158,11 +158,11 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
  * facts"): a fact with no `normalized` value takes the chosen `Interpreted`
  * value of its `Place` field as `standard_place`, and the as-written text from
  * the field's `Original` value as `place`. That text is in the record's
- * language, so `placeIds` maps each such fact to the place id the value names
- * and to `place.original`: `record_read` names the place in English by its id,
- * or else removes the `standard_place` and puts back `place.original`. The ids
- * ride beside the document, never on it: the simplified format has no field for
- * them.
+ * language, so `placeIds` maps each such fact to the place id the value names,
+ * to `place.original` and to `date.formal`: `record_read` names the place in
+ * English by its id for that date, or else removes the `standard_place` and
+ * puts back `place.original`. These ride beside the document, never on it: the
+ * simplified format has no field for them.
  */
 export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   doc: SimplifiedGedcomX;
@@ -172,11 +172,13 @@ export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   return { doc: convert(gedcomx, placeIds), placeIds };
 }
 
-/** A record-read fact's `Interpreted` standard: the place id it names, and
- *  `place.original` — the fact's `place` when it keeps no `standard_place`. */
+/** A record-read fact's `Interpreted` standard: the place id it names,
+ *  `place.original` — the fact's `place` when it keeps no `standard_place` — and
+ *  the fact's `date.formal`, the date its place is named for. */
 export interface RecordReadPlace {
   placeId: string;
   original?: string;
+  formal?: string;
 }
 
 /** Collects a record read's place ids; `null` for every other response. */
@@ -489,7 +491,12 @@ function simplifyFact(fact: GedcomXFact, recordRead: RecordReadPlaceIds): Simpli
     if (keepsStandard) {
       out.standard_place = standard;
       if (normalized === undefined && interpreted !== undefined) {
-        recordRead?.set(out, { placeId: interpreted.id, ...(original !== undefined ? { original } : {}) });
+        const formal = typeof fact.date?.formal === "string" ? fact.date.formal : undefined;
+        recordRead?.set(out, {
+          placeId: interpreted.id,
+          ...(original !== undefined ? { original } : {}),
+          ...(formal !== undefined ? { formal } : {}),
+        });
       }
     }
   }

@@ -958,75 +958,128 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   return info;
 }
 
-/** Inclusive years: a fact date's earliest and latest possible year, or a
- *  representation's validity. */
-interface YearSpan {
+/** Inclusive years: the earliest and latest year a date can fall in, or the
+ *  years a representation is valid. */
+export interface YearSpan {
   from: number;
   to: number;
 }
 
-const RANGE_BOUND = String.raw`([+-]\d+)(?:-\d{2}){0,2}`;
-const REP_RANGE = new RegExp(`^(?:${RANGE_BOUND})?/(?:${RANGE_BOUND})?$`);
+/** The years of a date nothing dates: only a representation valid at every
+ *  date covers them. */
+export const EVERY_YEAR: YearSpan = { from: -Infinity, to: Infinity };
 
-/** A representation's validity as years; every year when it has no range, null
- *  when the range cannot be read. */
-function repYears(dateRange: string | undefined): YearSpan | null {
-  if (dateRange === undefined || dateRange.trim() === "") return { from: -Infinity, to: Infinity };
-  const m = REP_RANGE.exec(dateRange.trim());
-  if (!m) return null;
-  return {
-    from: m[1] === undefined ? -Infinity : Number(m[1]),
-    to: m[2] === undefined ? Infinity : Number(m[2]),
-  };
+/** One GEDCOM X formal date: a year, then an optional month, day and time
+ *  ("+1874-04-03", "+1902-01-01T00:00:00Z"). FamilySearch sometimes drops the
+ *  sign ("1450/1900"). */
+const FORMAL_DATE = /^([+-]?\d+)(?:-\d{2}(?:-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}(?::?\d{2})?)?)?)?)?$/;
+
+/** A formal range bound's year; `open` for an empty bound, null when unreadable. */
+function formalYear(bound: string, open: number): number | null {
+  if (bound === "") return open;
+  const m = FORMAL_DATE.exec(bound);
+  return m ? Number(m[1]) : null;
 }
 
-function dateYears(date: string | undefined): YearSpan | null {
-  if (!date || !date.trim()) return null;
+/** The years a GEDCOM X formal date spans: "+1874-04-03", "+1910/+1920",
+ *  "/+1795" and "+1830/" (an open end is unbounded), "A+1874" (a year either
+ *  way, as "Abt 1874" is). Null when there is none or it cannot be read (a
+ *  duration, a recurrence). */
+function formalYears(formal: unknown): YearSpan | null {
+  const text = typeof formal === "string" ? formal.trim() : "";
+  const approximate = text.startsWith("A");
+  const bounds = (approximate ? text.slice(1) : text).split("/");
+  if (bounds.length > 2 || bounds.every((b) => b === "")) return null;
+  const from = formalYear(bounds[0], -Infinity);
+  const to = bounds.length === 1 ? from : formalYear(bounds[1], Infinity);
+  if (from === null || to === null) return null;
+  return approximate ? { from: from - 1, to: to + 1 } : { from, to };
+}
+
+/** The years a date `stdDate` reads spans ("Abt 1850" is 1849 to 1851), or null. */
+function dateYears(date: unknown): YearSpan | null {
+  if (typeof date !== "string" || !date.trim()) return null;
   const std = stdDate(date);
   const from = earliestYear(std);
   const to = latestYear(std);
   return from === null || to === null ? null : { from, to };
 }
 
+/**
+ * The years a GEDCOM X date or coverage spans: its formal date, which
+ * FamilySearch sends whatever language or form the original takes ("4 sierpnia
+ * 1794" is "+1794-08-04"), else the original as `stdDate` reads it. Null when
+ * neither can be read.
+ */
+export function gedcomxDateYears(
+  date: { original?: string; formal?: string } | undefined,
+): YearSpan | null {
+  return formalYears(date?.formal) ?? dateYears(date?.original);
+}
+
+/** A representation's validity as years; every year when it has no range, null
+ *  when the range cannot be read. */
+function repYears(dateRange: string | undefined): YearSpan | null {
+  if (dateRange === undefined || dateRange.trim() === "") return EVERY_YEAR;
+  return formalYears(dateRange);
+}
+
 function covers(range: YearSpan | null, years: YearSpan): boolean {
   return range !== null && range.from <= years.from && years.to <= range.to;
+}
+
+/** A representation's own name: the first part of its full name. */
+function ownName(info: RepInfo): string {
+  return placeSegments(info.standardPlace)[0] ?? "";
+}
+
+/** True when a comma-separated part of `text` is `name`, compared as
+ *  `checkFirstPlace` compares names. */
+function textNames(text: string, name: string): boolean {
+  const key = placeNameKey(name);
+  return placeSegments(text).some((part) => placeNameKeys(part).includes(key));
 }
 
 /** Concurrent description lookups for one place's representations. */
 const REP_LOOKUP_CONCURRENCY = 8;
 
 /**
- * The English name of the representation of `repId`'s place that is valid at
- * `date` (any date `stdDate` reads; an imprecise one must fall wholly inside the
- * range), or null.
+ * The English name of the representation of `repId`'s place that is valid in
+ * `years`, which must fall wholly inside its range; null when there is none.
  *
  * A FamilySearch place has a representation per era, each with its own name
  * and range: place 1959431 is "Olne, Prince-Bishopric of Liège, Holy Roman
  * Empire" to 1795 and "Olne, Liège, Belgium" from 1830. `repId` is named when
- * its range covers the date, else the place's representation whose range does.
- * With no readable date, `repId` is named only when its range runs to the
- * present. Null when no representation covers the date, when the ones that do
- * disagree on the name, or when any lookup fails.
+ * its range covers `years`, else the place's representation whose range does.
+ * Null when no representation covers them, when the ones that do disagree on
+ * the name, or when any lookup fails.
+ *
+ * Null too when the place was renamed and `placeText`, the record's own text,
+ * names `repId` by its own name: place 6283855 is "Bela Vista" 1938-1944 and
+ * "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista" and was given
+ * representation 10979131 doubts FamilySearch's choice of place.
  */
 export async function repIdToStandardPlaceAt(
   repId: string,
-  date: string | undefined,
+  years: YearSpan,
+  placeText?: string,
 ): Promise<string | null> {
   const chosen = await getRepInfo(repId);
   if (!chosen) return null;
-  const range = repYears(chosen.dateRange);
-  const years = dateYears(date);
-  if (years === null) return range?.to === Infinity ? chosen.standardPlace : null;
-  if (covers(range, years)) return chosen.standardPlace;
+  if (covers(repYears(chosen.dateRange), years)) return chosen.standardPlace;
   if (!chosen.placeId) return null;
   const others = (await placeIdToRepIds(chosen.placeId)).filter((id) => id !== repId);
   const infos = await mapWithConcurrency(others, REP_LOOKUP_CONCURRENCY, (id) => getRepInfo(id));
-  const names = new Set<string>();
+  const valid: RepInfo[] = [];
   for (const info of infos) {
     if (info === null) return null;
-    if (covers(repYears(info.dateRange), years)) names.add(info.standardPlace);
+    if (covers(repYears(info.dateRange), years)) valid.push(info);
   }
-  return names.size === 1 ? [...names][0] : null;
+  if (new Set(valid.map((info) => info.standardPlace)).size !== 1) return null;
+  const named = valid[0];
+  const renamed = placeNameKey(ownName(named)) !== placeNameKey(ownName(chosen));
+  if (renamed && placeText !== undefined && textNames(placeText, ownName(chosen))) return null;
+  return named.standardPlace;
 }
 
 /** Most place candidates an ambiguity result will name. Mirrors

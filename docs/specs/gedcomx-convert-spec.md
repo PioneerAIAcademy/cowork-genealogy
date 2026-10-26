@@ -26,7 +26,7 @@ foreign-key target, so the produced shape is part of an existing contract.
 export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX;
 export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   doc: SimplifiedGedcomX;
-  placeIds: Map<SimplifiedFact, RecordReadPlace>; // { placeId: string; original?: string }
+  placeIds: Map<SimplifiedFact, RecordReadPlace>; // { placeId: string; original?: string; formal?: string }
 };
 export function toGedcomX(simplified: SimplifiedGedcomX): GedcomX;
 ```
@@ -136,13 +136,20 @@ export type GedcomXQualifier = {
 
 export type GedcomXSourceDescription = {
   id?: string;
+  resourceType?: string;    // URI, e.g. "http://gedcomx.org/DigitalArtifact"
   titles?: { value: string }[];
   citations?: { value: string }[];
   about?: string;
+  coverage?: {
+    spatial?: { original?: string; description?: string };
+    temporal?: { original?: string; formal?: string };
+    recordType?: string;
+  }[];
 };
 
 export type GedcomXPlaceDescription = {
   id?: string;
+  identifiers?: Record<string, string[]>; // e.g. "http://gedcomx.org/Primary"
   names?: { value: string }[];
   latitude?: number;
   longitude?: number;
@@ -458,10 +465,12 @@ extractor decides a census's relationship column from `standard_place ?? place`
 Massachusetts") decides nothing.
 
 **Place ids.** `toSimplifiedRecordRead` returns `{ doc, placeIds }`. `placeIds`
-maps each fact whose `standard_place` came from step 2 to `{ placeId, original }`:
-the place id of the chosen value, and `place.original` (absent when the place
-has none), which is the fact's `place` when it keeps no `standard_place`. The
-ids ride beside the document, never on it: a fact has no field for them
+maps each fact whose `standard_place` came from step 2 to
+`{ placeId, original, formal }`: the place id of the chosen value,
+`place.original` (absent when the place has none), which is the fact's `place`
+when it keeps no `standard_place`, and the fact's `date.formal` (absent when
+the date has none), which dates the name. These ride beside the document, never
+on it: a fact has no field for them
 (`TREE_FACT_FIELDS` in `validation/tree-shape.ts` is a closed list).
 `record_read` uses them to name each place in English, or else to give the fact
 what `toSimplified` gives it (below).
@@ -496,32 +505,54 @@ run `standardizePlaces` over the flattened facts of a multi-result response
 callers that want no I/O. Exception — `record_read`'s live path never calls
 `toSimplifiedStandardized` and never falls back to the resolver. It calls
 `recordReadDocument` (`tools/record-read.ts`): `toSimplifiedRecordRead`, then
-each `placeIds` fact named by its id, then each coverage place named by its id
-with `repIdToStandardPlace`. The step-2 text is in the record's language, and
-the engine compares standard places as English text (`factsEquivalent` in
-`merge-gedcomx.ts`, `standardPlaceCountry` in `research-append.ts`), so each
-fact's `standard_place` is replaced by `repIdToStandardPlaceAt(placeId, date)`
+each `placeIds` fact named by its id, then each coverage place named by its id.
+The step-2 text is in the record's language, and the engine compares standard
+places as English text (`factsEquivalent` in `merge-gedcomx.ts`,
+`standardPlaceCountry` in `research-append.ts`), so each fact's
+`standard_place` is replaced by `repIdToStandardPlaceAt(placeId, years, place)`
 (`place-resolver.ts`): the English name of the representation of that
-FamilySearch place valid at the fact's date. A place has one representation
+FamilySearch place valid in the fact's years. A place has one representation
 per era, and the chosen id's own one can be from another ("Olne, Prince-Bishopric
 of Liège, Holy Roman Empire", valid to 1795, for an 1874 death; the 1874 one is
 "Olne, Liège, Belgium"):
 
-- The chosen representation is named when its range covers the date, else the
-  representation of the same place whose range does. An imprecise date (`Abt`,
-  `Bet … and …`) must fall wholly inside one range. Representations that cover
-  it but disagree on the name name nothing.
-- A fact with no date `stdDate` reads takes the chosen representation's name
-  only when its range runs to the present.
+- The fact's years are its `date.formal` (`gedcomxDateYears`), which
+  FamilySearch sends whatever language or form `date.original` takes ("4
+  sierpnia 1794" is `+1794-08-04`); else `date.original` as `stdDate` reads it;
+  else the span of every dated fact on the record (persons' and
+  relationships'); else every year. An approximate formal date (`A+1874`) spans
+  a year either way, as `Abt` does.
+- The chosen representation is named when its range covers the years, else the
+  representation of the same place whose range does. The years must fall
+  wholly inside one range, and a representation with no range covers every
+  year. When the chosen representation does not cover them and the others
+  that do disagree on the name, nothing is named.
+- Nothing is named when the place was renamed and the fact's `place` still
+  gives the chosen representation's name: the covering representation's own
+  name (the first part of its full name) differs from the chosen one's, and a
+  comma-separated part of `place` is the chosen one's own name, compared as
+  `checkFirstPlace` compares names. FamilySearch then matched the record's text
+  to a name the place did not have at the fact's date. A 1980 death written
+  "Bela Vista" was given representation 10979131, Bela Vista 1938–1944, whose
+  place has been Echaporã since 1944; the record more likely means another Bela
+  Vista. A new jurisdiction under the same name (Olne in Belgium) is no rename.
 
-When no representation covers the date, any lookup fails, or the name
-contradicts the fact's `place` (`countryConsistency`, the check
-`research_append` refuses a record on), the fact gets what `toSimplified`
-gives it: `place.original` and no `standard_place`. FamilySearch's own text is
-never kept. Coverage describes the volume rather than an event, so it keeps the
-id's own name. A lookup by id names the place FamilySearch chose and resolves
-no place name, so it is not the resolver fallback `record_read` stays without.
-See `docs/record-read-sidecar-scope.md` for the measurement and rationale.
+When nothing is named, any lookup fails, or the name contradicts the fact's
+`place` (`countryConsistency`, the check `research_append` refuses a record
+on), the fact gets what `toSimplified` gives it: `place.original` and no
+`standard_place`. FamilySearch's own text is never kept.
+
+A coverage place with a `date_range` is named the same way for the coverage's
+years (`temporal.formal`, else `temporal.original` as `stdDate` reads it, else
+every year) and its `spatial.original` text, so one response never names one
+id two ways; one with no `date_range` keeps the id's own name
+(`repIdToStandardPlace`). A coverage whose reference is a `places[]` entry
+citing an authorities place id (`#place_1927095`, whose `Primary` identifier is
+`…/authorities/v1/place/1927095`, Finland) is not named: read as a
+representation id, that number is another place (Mingary, South Australia). A
+lookup by id names the place FamilySearch chose and resolves no place name, so
+it is not the resolver fallback `record_read` stays without. See
+`docs/record-read-sidecar-scope.md` for the measurement and rationale.
 
 ### 7.5 `value` on facts
 
@@ -686,7 +717,9 @@ format as `resource_type` and `coverage`:
   via `repIdToStandardPlace`), `standard_place` (the name the response's own
   `places[]` gives that id, when it gives one — a search response names the
   places its record refers to, keyed by the bare id; a record read's `places[]`
-  carry no names, so `record_read` resolves the id with `repIdToStandardPlace`),
+  carry no names, so `record_read` names the id for the coverage's dates the way
+  it names a fact's place, or by the id's own name when it has none — "Places
+  on facts"),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the
@@ -905,7 +938,7 @@ New file in a new `src/utils/` directory.
 Exports:
 - `toSimplified(gedcomx: GedcomX): SimplifiedGedcomX`
 - `toSimplifiedRecordRead(gedcomx: GedcomX): { doc: SimplifiedGedcomX; placeIds: Map<SimplifiedFact, RecordReadPlace> }`
-- `RecordReadPlace` (type): `{ placeId: string; original?: string }`
+- `RecordReadPlace` (type): `{ placeId: string; original?: string; formal?: string }`
 - `toGedcomX(simplified: SimplifiedGedcomX): GedcomX`
 
 Internal helpers (not exported) for repeated logic — URI strip/restore, name

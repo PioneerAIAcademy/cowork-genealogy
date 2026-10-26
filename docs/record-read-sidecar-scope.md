@@ -141,8 +141,10 @@ England death/burial). For **the person you searched** (the matched persona):
   `toSimplifiedRecordRead` reads (`gedcomx-convert-spec.md`, "Places on facts").
   Its text is in the record's language, so `recordReadDocument` names each by
   its place id with `repIdToStandardPlaceAt` (English, the representation of
-  that place valid at the fact's date). When there is no such name, or it
-  contradicts the fact's place text, the fact keeps `place.original` and no
+  that place valid at the fact's date: FamilySearch's `date.formal`, else the
+  span of the record's own dated facts). When there is no such name, when the
+  place has been renamed since the name the fact's text gives it, or when the
+  name contradicts the fact's place text, the fact keeps `place.original` and no
   `standard_place`, as `toSimplified` gives it; FamilySearch's text is never
   kept. Staged records carry the search stage's standardized place regardless.
 
