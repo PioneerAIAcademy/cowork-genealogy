@@ -2,8 +2,9 @@
 
 search-hints reviews the FamilySearch hints on one tree person. Triage asks
 `person_record_matches` for the PENDING matches only, reads each hint, reads the
-record image before recommending against a hint, and writes nothing. Record mode
-logs one `research_log_append` entry per verdict the researcher stated.
+record image before recommending against a hint, and writes nothing but the
+status of its plan item (issue #3153). Record mode logs one `research_log_append`
+entry per verdict the researcher stated, then completes the item.
 
 These are the mechanical checks; whether a recommendation is genealogically
 sound lives in the rubric. Each check reads a deterministic artifact — the call
@@ -87,14 +88,30 @@ def test_hint_list_asks_for_pending_only(tool_calls, test):
 
 # --- Triage -------------------------------------------------------------
 
-def test_triage_writes_nothing(before_state, after_state, tool_calls, test):
-    """Triage recommends; the researcher decides. No log entry, no write."""
+def test_triage_writes_only_item_status(before_state, after_state, tool_calls, test):
+    """Triage recommends; the researcher decides. Its only writes are the plan
+    item's status, through `research_append` on `plan_items`, and — on no hints
+    — one `negative` log entry naming the item (issue #3153). No evidence write,
+    no tree edit, and no positive log entry (that would read as evidence awaiting
+    extraction)."""
     if "writes-nothing" not in test.get("tags", []):
         pytest.skip("not a triage test")
-    writes = _calls(tool_calls, "research_log_append") + _calls(tool_calls, "research_append")
-    assert not writes, f"triage wrote to the project ({len(writes)} call(s)); it must write nothing"
+    for c in _calls(tool_calls, "research_append"):
+        section = ((c.get("args") or {}).get("section")) or ""
+        assert section == "plan_items", (
+            f"triage called research_append on section '{section}'; triage writes only "
+            f"the plan item's status (plan_items)"
+        )
     if before_state.get("research_json") is not None:
-        assert not _new_log_entries(before_state, after_state), "triage added a log entry"
+        new_logs = _new_log_entries(before_state, after_state)
+        assert len(new_logs) <= 1, (
+            f"triage added {len(new_logs)} log entries; at most one (the no-hints negative entry)"
+        )
+        for e in new_logs:
+            assert e.get("outcome") == "negative", (
+                "triage's only log entry is the no-hints negative entry; a positive entry reads "
+                "as evidence awaiting extraction"
+            )
 
 
 def test_image_read_before_reject(tool_calls, agent_returns, text_response, test):

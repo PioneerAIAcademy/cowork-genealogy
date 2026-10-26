@@ -484,6 +484,8 @@ table and contextual factors checklist.
 
 ### 4. Sequence the plan items
 
+**On an identity or parentage question, make the first item a review of the subject's pending FamilySearch hints.** Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the subject's FamilySearch id in its `rationale`, phrased exactly "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question." (The router reads the PID back out of this line to pass `personId` to search-hints, so keep that wording.) The router sends this item to `search-hints`. It is one read that can save searches and never blocks them: once it is awaiting the researcher's verdicts the router skips it and runs the next item. Emit it only on identity and parentage questions — never on others.
+
 Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
@@ -713,15 +715,16 @@ re-issue it first. Then present the plan:
   like "...and start executing it," "...and continue with exhaustive
   research," or "...don't stop to check in with me" — hand execution back to
   your caller as already authorized instead of asking: search-records for
-  FamilySearch items, search-external-sites for others, naming the plan item
+  FamilySearch items, search-external-sites for others, search-hints for the
+  `fs_hints` hints-review item, naming the plan item
   and never the result you expect. You execute nothing yourself.
   If only some items can execute right now (e.g. one
   repository or tool is unavailable but another isn't), hand back those and
   report the block on the rest — don't let an item that's blocked for any
   reason hold up items that aren't.
 - Otherwise, suggest next step: "Would you like me to start executing this
-  plan?" (`search-records` / `search-external-sites`, depending on
-  the repositories)
+  plan?" (`search-records` / `search-external-sites` / `search-hints`, depending on
+  the item)
 - **A plan item that ends at an external archive the researcher must open
   themselves** (Archion, Matricula, a paid site): give the link — the parish or
   collection page, never just the site name — what the record would settle,
