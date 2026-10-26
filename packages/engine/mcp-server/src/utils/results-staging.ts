@@ -753,11 +753,15 @@ export async function readStagedResults(
 export async function readSidecarSearch(
   projectPath: string,
   rawRef: string,
-): Promise<{ results: unknown[]; subjectId: string | undefined } | undefined> {
+): Promise<{ results: unknown[]; subjectId: string | undefined; subjectTooThin: boolean | undefined } | undefined> {
   try {
-    const { results, query } = await readSidecarEnvelope(projectPath, rawRef);
+    const { results, query, subjectTooThin } = await readSidecarEnvelope(projectPath, rawRef);
     const sid = (query as { subjectId?: unknown } | undefined)?.subjectId;
-    return { results, subjectId: typeof sid === "string" && sid.trim() !== "" ? sid : undefined };
+    return {
+      results,
+      subjectId: typeof sid === "string" && sid.trim() !== "" ? sid : undefined,
+      subjectTooThin: typeof subjectTooThin === "boolean" ? subjectTooThin : undefined,
+    };
   } catch {
     return undefined;
   }
@@ -766,7 +770,7 @@ export async function readSidecarSearch(
 async function readSidecarEnvelope(
   projectPath: string,
   rawRef: string,
-): Promise<{ results: unknown[]; query: unknown }> {
+): Promise<{ results: unknown[]; query: unknown; subjectTooThin: unknown }> {
   // Read-only, so a near-copy is read through to the one staged file it names
   // (resolveStagedRef) with nothing persisted under the mis-copied name.
   const { ref: stagedResultsRef } = await resolveStagedRef(projectPath, rawRef);
@@ -781,7 +785,7 @@ async function readSidecarEnvelope(
         `${STAGING_SUBDIR}/ or a finalized results/<log_id>.json sidecar.`,
     );
   }
-  let envelope: { payload?: { results?: unknown[]; query?: unknown } };
+  let envelope: { payload?: { results?: unknown[]; query?: unknown; subjectTooThin?: unknown } };
   try {
     envelope = JSON.parse(
       await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
@@ -797,5 +801,5 @@ async function readSidecarEnvelope(
       `stagedResultsRef '${stagedResultsRef}' envelope has no payload.results array.`,
     );
   }
-  return { results, query: envelope.payload?.query };
+  return { results, query: envelope.payload?.query, subjectTooThin: envelope.payload?.subjectTooThin };
 }

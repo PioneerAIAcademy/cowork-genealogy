@@ -54,7 +54,7 @@ import {
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
-import { rankSearchMatches } from "./rank-search-matches.js";
+import { rankSearchMatches, subjectTooThinNow } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -1167,10 +1167,14 @@ export async function recordSearchTool(
         nilSearchNeedsLog: _nilNote,
         ...persistable
       } = out;
+      // The subject's thinness when this search ran, saved with it: the
+      // thin-subject gate in extraction_append reads it, so a tree edit made
+      // after the search cannot clear a record the search found.
+      const subjectTooThin = input.subjectId ? await subjectTooThinNow(input.projectPath, input.subjectId) : undefined;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "record_search",
-        response: persistable,
+        response: subjectTooThin === undefined ? persistable : { ...persistable, subjectTooThin },
       });
     } catch (error) {
       out.staged = null;

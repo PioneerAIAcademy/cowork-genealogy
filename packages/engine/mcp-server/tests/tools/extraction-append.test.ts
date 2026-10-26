@@ -1294,12 +1294,13 @@ describe("extraction_append: a thin subject's search hit is refused", () => {
     writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons, relationships, sources }), "utf8");
   /** A logged record_search and its finalized sidecar, which keeps the echoed
    *  query verbatim — `subjectId` included — as record_search stages it. */
-  const search = async (logId: string, rows: string[], subjectId?: string, raw?: string) => {
+  const search = async (logId: string, rows: string[], subjectId?: string, raw?: string, frozen?: boolean) => {
     await mkdir(join(dir, "results"), { recursive: true });
     const query = { surname: "Brown", ...(subjectId ? { subjectId } : {}) };
+    const flag = frozen === undefined ? {} : { subjectTooThin: frozen };
     await writeFile(
       join(dir, "results", `${logId}.json`),
-      raw ?? JSON.stringify({ tool: "record_search", retrieved: "2026-01-01T00:00:00Z", returned_count: rows.length, payload: { query, results: rows.map((recordId) => ({ recordId })) } }),
+      raw ?? JSON.stringify({ tool: "record_search", retrieved: "2026-01-01T00:00:00Z", returned_count: rows.length, payload: { query, ...flag, results: rows.map((recordId) => ({ recordId })) } }),
       "utf8",
     );
     return {
@@ -1399,6 +1400,37 @@ describe("extraction_append: a thin subject's search hit is refused", () => {
     );
     expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
     expect(reads).toEqual([]);
+  });
+
+  it("keeps refusing after the tree gains a date, when the search saved the subject as thin", async () => {
+    const death = element("death");
+    await seed([await search("log_001", [death.recordId], "I1", undefined, true)]);
+    await writeTree([person("I1", "Mar 1872")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+    expect(r.records[0].summary).toMatch(/never from this one; once the project records it, search again/);
+  });
+
+  it("extracts once a later search for the same person saved them as not thin", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "Mar 1872")]);
+    await seed([
+      await search("log_001", [death.recordId], "I1", undefined, true),
+      await search("log_002", [death.recordId], "I1", undefined, false),
+    ]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("does not let a not-thin search for another person lift a saved thin search", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "1872"), person("I3", "4 Jul 1850")]);
+    await seed([
+      await search("log_001", [death.recordId], "I1", undefined, true),
+      await search("log_002", [death.recordId], "I3", undefined, false),
+    ]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
   });
 
   it("extracts a record no logged search found", async () => {

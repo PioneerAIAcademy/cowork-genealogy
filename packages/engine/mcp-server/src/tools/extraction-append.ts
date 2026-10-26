@@ -459,9 +459,11 @@ interface RecordIdsOptions {
 /**
  * Record id -> refusal summary, for each record a search for a too-thin subject
  * found (`subjectTooThin`, rank-search-matches spec: no date narrower than a
- * year and no named spouse, parent or child). Thinness is recomputed on the
- * project as it stands, so the refusal lifts once the project records an anchor
- * for that subject. A listing search is a logged `record_search` sidecar or one
+ * year and no named spouse, parent or child). Thinness is the one the search
+ * saved when it ran, so a tree edit made afterwards — a date copied from the
+ * refused record itself — does not clear the record; a later search for the same
+ * person that saved `subjectTooThin: false` does. A search saved before the flag
+ * existed is judged on the project as it stands. A listing search is a logged `record_search` sidecar or one
  * still staged, so extracting before logging does not skip it. Only its own
  * subject decides it: a search with no readable subject counts for nothing, and
  * a search for another, anchored person does not lift it, so re-running the
@@ -481,7 +483,8 @@ function thinSubjectScan(
       verdict.set(arkToBareId(e.query.recordId), e.outcome);
     }
   }
-  let loaded: Promise<{ ids: Set<string>; subjectId: string }[]> | undefined;
+  type Listing = { ids: Set<string>; subjectId: string; frozen: boolean | undefined };
+  let loaded: Promise<Listing[]> | undefined;
   const load = async () => {
     const refs = new Set<string>(
       log.filter((e) => e?.tool === "record_search" && typeof e?.results_ref === "string").map((e) => e.results_ref),
@@ -493,9 +496,9 @@ function thinSubjectScan(
         if (!read?.subjectId) return null;
         const ids = new Set<string>();
         for (const r of read.results as any[]) if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
-        return { ids, subjectId: read.subjectId };
+        return { ids, subjectId: read.subjectId, frozen: read.subjectTooThin };
       })
-    ).filter((s): s is { ids: Set<string>; subjectId: string } => s !== null);
+    ).filter((s): s is Listing => s !== null);
   };
   const subjects = new Map<string, { thin: boolean; name: string } | null>();
   const subject = async (sid: string) => {
@@ -518,11 +521,14 @@ function thinSubjectScan(
     if (sidecars.length === 0) return out;
     for (const [recordId, ids] of idsByRecord) {
       if ([...ids].some((x) => verdict.get(x) === "positive")) continue;
+      const listing = sidecars.filter((s) => [...ids].some((x) => s.ids.has(x)));
       const thin = new Map<string, string>();
-      for (const s of sidecars) {
-        if (thin.has(s.subjectId) || ![...ids].some((x) => s.ids.has(x))) continue;
-        const subj = await subject(s.subjectId);
-        if (subj?.thin) thin.set(s.subjectId, `${subj.name} (${s.subjectId})`);
+      for (const sid of new Set(listing.map((s) => s.subjectId))) {
+        const mine = listing.filter((s) => s.subjectId === sid);
+        if (mine.some((s) => s.frozen === false)) continue;
+        const subj = await subject(sid);
+        const gates = mine.some((s) => s.frozen === true) || (subj?.thin === true && mine.some((s) => s.frozen === undefined));
+        if (gates) thin.set(sid, `${subj?.name ?? sid} (${sid})`);
       }
       if (thin.size === 0) continue;
       const who = [...thin.values()].join(", ");
@@ -531,8 +537,9 @@ function thinSubjectScan(
         `${recordId}: not extracted: a search for ${who} found this record, and the tree gives ` +
           `${thin.size === 1 ? "that person" : "each of them"} no date narrower than a year and no named spouse, ` +
           `parent or child, so the record cannot be told from a namesake's. Report it as needs-review and name ` +
-          `what would settle identity (a precise date, or a named spouse, parent or child); once the project ` +
-          `records one, the record can be extracted.`,
+          `what would settle identity (a precise date, or a named spouse, parent or child) from the researcher ` +
+          `or another record, never from this one; once the project records it, search again, and a ` +
+          `record the new search finds can be extracted.`,
       );
     }
     return out;

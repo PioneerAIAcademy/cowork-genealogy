@@ -812,6 +812,17 @@ def _stage_and_compact_search_results(
     else:
         hint = " const surnameHint = null;"
 
+    rank_js = _MCP_BUILD / "tools" / "rank-search-matches.js"
+    if tool_name == "record_search" and args and args.get("subjectId") and rank_js.exists():
+        compact_import += f"import {{ subjectTooThinNow }} from '{_url(rank_js)}';"
+        thin_stage = (
+            " const thin = await subjectTooThinNow(input.projectPath, input.args.subjectId);"
+            " const r = await stageSearchResults(thin === undefined ? input"
+            " : { ...input, response: { ...input.response, subjectTooThin: thin } });"
+        )
+    else:
+        thin_stage = " const r = await stageSearchResults(input);"
+
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
         "tool": tool_name,
@@ -827,7 +838,10 @@ def _stage_and_compact_search_results(
         # Counted BEFORE staging, exactly as the real tools order it: a count taken
         # after would include the call being answered and fire on every first search.
         " const unlogged = await unloggedStagedSearches(input.projectPath);"
-        " const r = await stageSearchResults(input);"
+        # Production saves the subject's thinness at search time into the staged
+        # payload (record-search.ts, `subjectTooThinNow`), never into the inline
+        # response; extraction_append's thin-subject gate reads it.
+        f"{thin_stage}"
         f"{compact_call}"
         # Production's own annotation, run on a throwaway copy carrying the
         # `ranked` this call will fold in. The ANNOTATED ROWS cross back, which

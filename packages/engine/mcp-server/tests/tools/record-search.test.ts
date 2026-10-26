@@ -1125,6 +1125,29 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(r.primaryId).toBe("p_1");
   });
 
+  it.each([
+    ["1900", true],
+    ["12 Mar 1900", false],
+  ])("saves the subject's thinness when the search ran into the staged payload (birth %j → %j)", async (date, thin) => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({ persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date, place: "X" }] }] }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
+    const envelope = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect(envelope.payload.subjectTooThin).toBe(thin);
+    expect((out as any).subjectTooThin).toBeUndefined();
+  });
+
+  it("saves no thinness for a search with no subjectId", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
+    const envelope = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect("subjectTooThin" in envelope.payload).toBe(false);
+  });
+
   it("ranks host-side when subjectId is supplied, and defaults count to 50", async () => {
     await writeFile(
       join(dir, "tree.gedcomx.json"),

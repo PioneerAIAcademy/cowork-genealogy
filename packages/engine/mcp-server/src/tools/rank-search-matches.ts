@@ -640,6 +640,20 @@ interface SubjectDoc {
   subjectTooThin: boolean;
 }
 
+/**
+ * The subject's `subjectTooThin` as the project stands now, or undefined when it
+ * cannot be computed (no tree, unknown person). `record_search` saves it into
+ * the staged search, so `extraction_append`'s gate judges a record by the subject
+ * as it was when the search found the record, not after a later tree edit.
+ */
+export async function subjectTooThinNow(projectPath: string, subjectId: string): Promise<boolean | undefined> {
+  try {
+    return (await buildSubjectDoc(projectPath, subjectId)).subjectTooThin;
+  } catch {
+    return undefined;
+  }
+}
+
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
 // against the bare tree person on live FamilySearch scores.
 export async function buildSubjectDoc(

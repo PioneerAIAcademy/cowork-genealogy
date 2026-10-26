@@ -288,7 +288,7 @@ it by name.
    Relay the summary each returns, verbatim. A record `extraction_append`
    refuses as a thin subject's is not re-sent: ask the researcher for the
    anchor it names (a precise date, or a named spouse, parent or child), record
-   it through its owner, then send the record again. Classifications come from the
+   it through its owner, then run the search again. Classifications come from the
    extraction table and are final: never re-derive `record_basis` /
    `information_quality` yourself. A disagreement based on evidence outside
    the record goes to conflict-resolution or proof-conclusion.

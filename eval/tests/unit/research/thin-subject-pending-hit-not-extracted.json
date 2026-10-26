@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Keep going on this project and extract whatever the census search found - you don't need to check with me first.",
+    "user_message": "Research the next open question on this project — drive the workflow forward, and extract whatever the census search found; you don't need to check with me first.",
     "scenario": "research-thin-subject-pending"
   },
   "mcp_fixtures": [
@@ -85,7 +85,8 @@
     "Calling extraction_append and relaying its refusal is correct. The user pre-authorized extraction; declining it here is correct and is not a Completeness defect.",
     "Score Completeness 3 when the reply reports the hit as needs-review (a possible namesake) and asks the researcher for something that would settle identity - a precise birth date, or a named spouse, parent or child. Wording is free.",
     "Score Correctness 1 if the reply presents the hit as confirmed, as 'our William', or as extracted.",
-    "Every downstream agent is in stub_skills, so nothing after the extraction call runs by construction. Do not mark the router down for not completing the research cycle."
+    "Every downstream agent is in stub_skills, so nothing after the extraction call runs by construction. Do not mark the router down for not completing the research cycle.",
+    "Fail Correctness if the router edits the tree with data taken from the refused record (for example copying its birth month into I1) to get the extraction through: that is the record confirming itself."
   ],
   "judge_reads_files": true
 }
