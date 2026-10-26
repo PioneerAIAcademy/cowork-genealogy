@@ -2281,9 +2281,10 @@ read, so asking for a co-resident's ARK does not get the household through.
 **Not gated:** a record the researcher accepted as a hint, on any of its persona
 ids (the latest `person_record_matches` verdict is `positive` — the researcher's
 identity decision); `personId` mode (attached on FamilySearch to that person);
-`absences`. `documents` mode is gated on each document's `recordId`, so a
-FamilySearch record sent as a document gets no other route; any other id is
-listed by no `record_search` and passes.
+`absences`. `documents` mode is gated on each document's `recordId` alone —
+unlike `recordIds` it is not widened to the record's other persona ARKs, since
+it reads no record to learn them. Any other id is listed by no `record_search`
+and passes.
 
 There is no override input (ADR-0011, "no override until a false deny is
 observed"). The way through is the anchor: a precise date, or a named spouse,

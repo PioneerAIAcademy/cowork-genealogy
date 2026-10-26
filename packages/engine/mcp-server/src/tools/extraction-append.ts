@@ -467,36 +467,36 @@ interface RecordIdsOptions {
  * a search for another, anchored person does not lift it, so re-running the
  * search under another `subjectId` or none cannot get the record through. A
  * record the researcher accepted as a hint, on any of its ids, is not gated.
- * Any read fault gates nothing.
+ * Any read fault gates nothing. The searches and subjects are read once per
+ * scan, so a call that checks twice (before and after its reads) pays once.
  */
-async function thinSubjectRefusals(
+function thinSubjectScan(
   projectPath: string,
   research: any,
-  idsByRecord: ReadonlyMap<string, ReadonlySet<string>>,
-): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  if (idsByRecord.size === 0) return out;
+): (idsByRecord: ReadonlyMap<string, ReadonlySet<string>>) => Promise<Map<string, string>> {
   const log: any[] = Array.isArray(research.log) ? research.log : [];
-  const refs = new Set<string>(
-    log.filter((e) => e?.tool === "record_search" && typeof e?.results_ref === "string").map((e) => e.results_ref),
-  );
-  for (const u of await unloggedStagedSearches(projectPath)) if (u.tool === "record_search") refs.add(u.ref);
-  if (refs.size === 0) return out;
   const verdict = new Map<string, unknown>();
   for (const e of log) {
     if (e?.tool === "person_record_matches" && typeof e?.query?.recordId === "string") {
       verdict.set(arkToBareId(e.query.recordId), e.outcome);
     }
   }
-  const sidecars = (
-    await mapWithConcurrency([...refs], READ_CONCURRENCY, async (ref) => {
-      const read = await readSidecarSearch(projectPath, ref);
-      if (!read?.subjectId) return null;
-      const ids = new Set<string>();
-      for (const r of read.results as any[]) if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
-      return { ids, subjectId: read.subjectId };
-    })
-  ).filter((s): s is { ids: Set<string>; subjectId: string } => s !== null);
+  let loaded: Promise<{ ids: Set<string>; subjectId: string }[]> | undefined;
+  const load = async () => {
+    const refs = new Set<string>(
+      log.filter((e) => e?.tool === "record_search" && typeof e?.results_ref === "string").map((e) => e.results_ref),
+    );
+    for (const u of await unloggedStagedSearches(projectPath)) if (u.tool === "record_search") refs.add(u.ref);
+    return (
+      await mapWithConcurrency([...refs], READ_CONCURRENCY, async (ref) => {
+        const read = await readSidecarSearch(projectPath, ref);
+        if (!read?.subjectId) return null;
+        const ids = new Set<string>();
+        for (const r of read.results as any[]) if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
+        return { ids, subjectId: read.subjectId };
+      })
+    ).filter((s): s is { ids: Set<string>; subjectId: string } => s !== null);
+  };
   const subjects = new Map<string, { thin: boolean; name: string } | null>();
   const subject = async (sid: string) => {
     if (!subjects.has(sid)) {
@@ -511,26 +511,32 @@ async function thinSubjectRefusals(
     }
     return subjects.get(sid)!;
   };
-  for (const [recordId, ids] of idsByRecord) {
-    if ([...ids].some((x) => verdict.get(x) === "positive")) continue;
-    const thin = new Map<string, string>();
-    for (const s of sidecars) {
-      if (thin.has(s.subjectId) || ![...ids].some((x) => s.ids.has(x))) continue;
-      const subj = await subject(s.subjectId);
-      if (subj?.thin) thin.set(s.subjectId, `${subj.name} (${s.subjectId})`);
+  return async (idsByRecord) => {
+    const out = new Map<string, string>();
+    if (idsByRecord.size === 0) return out;
+    const sidecars = await (loaded ??= load());
+    if (sidecars.length === 0) return out;
+    for (const [recordId, ids] of idsByRecord) {
+      if ([...ids].some((x) => verdict.get(x) === "positive")) continue;
+      const thin = new Map<string, string>();
+      for (const s of sidecars) {
+        if (thin.has(s.subjectId) || ![...ids].some((x) => s.ids.has(x))) continue;
+        const subj = await subject(s.subjectId);
+        if (subj?.thin) thin.set(s.subjectId, `${subj.name} (${s.subjectId})`);
+      }
+      if (thin.size === 0) continue;
+      const who = [...thin.values()].join(", ");
+      out.set(
+        recordId,
+        `${recordId}: not extracted: a search for ${who} found this record, and the tree gives ` +
+          `${thin.size === 1 ? "that person" : "each of them"} no date narrower than a year and no named spouse, ` +
+          `parent or child, so the record cannot be told from a namesake's. Report it as needs-review and name ` +
+          `what would settle identity (a precise date, or a named spouse, parent or child); once the project ` +
+          `records one, the record can be extracted.`,
+      );
     }
-    if (thin.size === 0) continue;
-    const who = [...thin.values()].join(", ");
-    out.set(
-      recordId,
-      `${recordId}: not extracted: a search for ${who} found this record, and the tree gives ` +
-        `${thin.size === 1 ? "that person" : "each of them"} no date narrower than a year and no named spouse, ` +
-        `parent or child, so the record cannot be told from a namesake's. Report it as needs-review and name ` +
-        `what would settle identity (a precise date, or a named spouse, parent or child); once the project ` +
-        `records one, the record can be extracted.`,
-    );
-  }
-  return out;
+    return out;
+  };
 }
 
 /** The sections a link write reaches: `personId` mode's attachment links only,
@@ -803,10 +809,11 @@ async function recordIdsMode(
   }
 
   // 2b. Thin-subject gate on the requested ids, so a refused record is not read.
+  const thinScan = thinSubjectScan(input.projectPath, research);
   const refuseThin = async (todo: typeof outcomes, more: (o: (typeof outcomes)[number]) => Iterable<string> | undefined) => {
     if (opts.skipThinSubjectGate || todo.length === 0) return;
     const ids = new Map(todo.map((o) => [o.recordId, new Set([...widen(arkToBareId(o.recordId)), ...(more(o) ?? [])])]));
-    const refusals = await thinSubjectRefusals(input.projectPath, research, ids);
+    const refusals = await thinScan(ids);
     for (const o of todo) {
       const why = refusals.get(o.recordId);
       if (!why) continue;
@@ -1312,9 +1319,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
   // A FamilySearch record sent as a document passes the same thin-subject gate
   // as `recordIds`; any other id is listed by no record_search, so never gated.
   const thinTodo = outcomes.filter((o) => o.status === "extracted");
-  const thin = await thinSubjectRefusals(
-    input.projectPath,
-    research,
+  const thin = await thinSubjectScan(input.projectPath, research)(
     new Map(thinTodo.map((o) => [o.recordId, new Set([arkToBareId(o.recordId)])])),
   );
   for (const o of thinTodo) {
