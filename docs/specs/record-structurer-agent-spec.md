@@ -124,10 +124,7 @@ is §11.7's code.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
   <place>" has a `residence` fact there. Trials missed it on a testator ("of
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
-  City", 1 of 3). A residence sent with that place only in `value` has the
-  value read as its `place` too, as written, when it reads as a place or an
-  address (research-append §3.7), so it is standardized and reaches the tree.
-  Prose ("with his daughter", "3 miles north of town") and a date stay a value.
+  City", 1 of 3).
 - **Gender for every person whose sex the text states**, not only the
   principal. A kin word states it: when a person is sent with no `gender` and
   a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,

@@ -5994,9 +5994,17 @@ function valuePlaceText(entry: Record<string, unknown>): string {
 
 /** `value` may be lifted into `place`: neither `place` nor `standard_place` is
  *  set, the value holds text, and the assertion is not an absence, whose value
- *  says what the record lacks rather than naming a place. */
+ *  says what the record lacks rather than naming a place, nor flagged as
+ *  suspicious text, which stays in `value`: as a place it would be looked up,
+ *  echoed and carried onto the tree. */
 function placeLiftable(entry: Record<string, unknown>): boolean {
-  return isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(valuePlaceText(entry)) && entry.record_basis !== "absent";
+  return (
+    isBlank(entry.place) &&
+    isBlank(entry.standard_place) &&
+    !isBlank(valuePlaceText(entry)) &&
+    entry.record_basis !== "absent" &&
+    !isSuspiciousText(entry.informant_bias_notes as string | undefined)
+  );
 }
 
 /** A folded place-of-event variant must keep its place machine-readable: lift
@@ -6007,88 +6015,6 @@ function placeLiftable(entry: Record<string, unknown>): boolean {
  *  value-derived place. */
 function liftVariantPlace(entry: Record<string, unknown>): boolean {
   if (typeof entry.fact_type !== "string" || !PLACE_VARIANT_KEYS.has(factTypeKey(entry.fact_type)) || !placeLiftable(entry)) {
-    return false;
-  }
-  entry.place = valuePlaceText(entry);
-  return true;
-}
-
-/** Words that mark prose about whom a person lived with ("with his daughter",
- *  "Home Of His Son"), in any case. */
-const RELATIONAL_WORDS = /\b(?:with|his|her|their|him|them)\b/i;
-
-/** The word that makes a house number's words a street, in English and in the
- *  corpus's record languages that put the number first: "412 Vine St", "12 rue
- *  de Rivoli", "25 Calle Imbert". Matched without case or a final period. */
-const STREET_WORDS = new Set([
-  "street", "st", "road", "rd", "avenue", "ave", "av", "lane", "ln", "drive", "dr", "boulevard", "blvd",
-  "place", "pl", "court", "ct", "way", "square", "sq", "terrace", "ter", "terr", "row", "alley", "walk",
-  "highway", "hwy", "parkway", "pkwy", "circle", "cir", "crescent", "close", "plaza", "pike", "turnpike",
-  "rue", "chemin", "allée", "impasse", "quai", "route",
-  "calle", "avenida", "paseo", "camino",
-  "via", "viale", "piazza", "corso",
-  "rua", "travessa", "praça", "estrada",
-]);
-
-/** The lowercase words that join the names in a place or a street, as the
- *  corpus's places spell them: "Borough of Shenandoah", "Rio Grande do Sul",
- *  "Krásno nad Kysucou", "Frankfurt am Main", "chemin des Vignes". English
- *  prepositions that also join a place ("Barrow in Furness") are left out: they
- *  are the words prose is made of. */
-const PLACE_JOINERS = new Set([
-  "of", "and", "&", "upon", "de", "del", "da", "do", "dos", "du", "des", "di", "le", "la", "las", "los", "y", "i", "og", "nad",
-  "am", "im",
-]);
-
-/** A word of a place's name: capitalized (after an opening bracket or quote),
- *  or a joining word. A number is not. */
-function nameWord(word: string): boolean {
-  return /^[("'“‘]*\p{Lu}/u.test(word) || PLACE_JOINERS.has(word);
-}
-
-function streetWord(word: string): boolean {
-  return STREET_WORDS.has(word.replace(/\.$/, "").toLowerCase());
-}
-
-/** A house number, then a street's name with its street word: "412 Vine St",
- *  "58-08 58th Ave.". A number with no street word is not an address: "26 Jan
- *  1958", "30 years a resident of Logan". */
-function streetAddress(part: string): boolean {
-  const [number, ...words] = part.split(/\s+/);
-  return (
-    /^\d+(?:-\d+)?[a-z]?$/i.test(number) &&
-    words.some(streetWord) &&
-    words.every((w) => streetWord(w) || nameWord(w) || /^\d+(?:st|nd|rd|th)\.?$/i.test(w))
-  );
-}
-
-/** A residence's value text that reads as a place or an address: a street
- *  address, or two or more comma parts that are each a street address or a
- *  place's name ("412 Vine St, Cincinnati", "Borough of Shenandoah, County of
- *  Schuylkill"). Everything else is prose and stays a value: a lowercase word
- *  that joins no names ("Moved to Salt Lake City, then to Logan"), a number
- *  other than a house number before its street ("January 26, 1958", "3 miles
- *  north of town"), one of RELATIONAL_WORDS, or text with no lowercase letter,
- *  whose case cannot tell a name from prose. */
-function readsAsPlace(text: string): boolean {
-  if (!/\p{Ll}/u.test(text) || RELATIONAL_WORDS.test(text)) return false;
-  const parts = placeSegments(text);
-  if (parts.length === 1) return streetAddress(parts[0]);
-  return parts.every((part) => streetAddress(part) || part.split(/\s+/).every(nameWord));
-}
-
-/** A residence given only in `value` ("412 Vine St, Cincinnati", from a
- *  record-structurer document) has its value text lifted into `place`, the
- *  attribute that is standardized and the one a Residence fact keeps on the
- *  tree, when `placeLiftable` and the text `readsAsPlace`. Appends only, from
- *  `prepareOps`. Returns whether it lifted. */
-function liftResidencePlace(entry: Record<string, unknown>): boolean {
-  if (
-    typeof entry.fact_type !== "string" ||
-    factTypeKey(entry.fact_type) !== "residence" ||
-    !placeLiftable(entry) ||
-    !readsAsPlace(valuePlaceText(entry))
-  ) {
     return false;
   }
   entry.place = valuePlaceText(entry);
@@ -8014,15 +7940,15 @@ async function prepareOps(
     return results;
   };
 
-  // A place given only in `value` is lifted into `place` here, before the
-  // lookups below: a place variant's ("birthplace"), which applyOne's fold would
-  // otherwise lift after them, and a residence's that reads as a place. Each is
-  // a value-derived place, whose lookup applyPlaceLevers must confirm.
+  // A place variant's place given only in `value` ("birthplace") is lifted into
+  // `place` here, before the lookups below, which applyOne's fold would
+  // otherwise do after them. It is a value-derived place, whose lookup
+  // applyPlaceLevers must confirm.
   const liftedFromValue = new Set<object>();
   for (const op of ops) {
     if (op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object") {
       const e = op.entry as Record<string, unknown>;
-      if (liftVariantPlace(e) || liftResidencePlace(e)) liftedFromValue.add(e);
+      if (liftVariantPlace(e)) liftedFromValue.add(e);
     }
   }
 

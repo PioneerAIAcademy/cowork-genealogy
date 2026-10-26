@@ -901,8 +901,9 @@ async function recordIdsMode(
 
 /** The summary line naming the places the write found no standard form for, or
  *  "" when there were none. The summary is all its caller relays (the
- *  record-structurer, search-records), and it is built before the write, so the
- *  write's place misses are added here. */
+ *  record-structurer, search-records), and `summarizeExtraction` reads only the
+ *  extraction, which cannot tell a lookup that missed from one never made, so
+ *  the write's place misses are added here. */
 function unresolvedPlacesLine(places: readonly string[] | undefined): string {
   const distinct = [...new Set(places ?? [])];
   return distinct.length === 0 ? "" : `\nPlaces kept as written, with no standard place found: ${distinct.join("; ")}.`;

@@ -450,6 +450,17 @@ describe("tree_edit", () => {
       expect(r.validation.warnings.join(" ")).not.toMatch(/could not resolve/);
     });
 
+    it("add_fact: a lookup that throws is a miss, with a warning, never a failed edit", async () => {
+      await writeProject(onePersonSourced());
+      vi.mocked(resolveStandardPlace).mockRejectedValueOnce(new Error("network down"));
+      const r = await addResidence("Schuylkill County, Pennsylvania");
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain("could not resolve standard_place for 'Schuylkill County, Pennsylvania' (left unset)");
+      const added = (await readTree()).persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
+      expect(added).not.toHaveProperty("standard_place");
+    });
+
     it("tree_correct update_fact: a corrected place clears the old standard_place, with a warning", async () => {
       const tree = onePersonSourced();
       (tree.persons[0].facts as any[]).push({

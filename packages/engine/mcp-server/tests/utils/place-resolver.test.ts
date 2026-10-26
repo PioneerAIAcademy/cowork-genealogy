@@ -223,6 +223,7 @@ describe("standardPlaceNamedInText", () => {
     ["Paxcroft, Wiltshire", "Trowbridge, Wiltshire, England, United Kingdom", false],
     ["412 Vine St, Cincinnati", "Hamilton, Ohio, United States", false],
     ["with his daughter", "Hawaii, United States", false],
+    ["Hilperton, Wiltshire", "", false],
   ])("%s names %s: %s", (place, standard, expected) => {
     expect(standardPlaceNamedInText(place as string, standard as string)).toBe(expected);
   });

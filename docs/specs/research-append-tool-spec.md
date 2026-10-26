@@ -665,17 +665,16 @@ the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place.
 
-A place lifted from `value` before the levers run (§3.7: a place-of-event
-variant's, and on an append a residence's that reads as a place or an address)
-is a **value-derived** place. It is resolved, echoed and warned about like any
-other, with two differences. A lookup naming a different country (Lever A) is
-dropped with a warning, not a refusal: the writer of a document cannot supply a
-`standard_place`, so a refusal would lose every assertion in it. A geocoded
-answer the country check cannot judge is kept only when its own name, its first
-segment, is one of the place text's comma parts (compared ignoring case,
-accents, periods, type words and an "X of" prefix): "412 Vine St, Cincinnati"
-keeps "Cincinnati, Hamilton, Ohio, United States", while "at the home of her
-daughter" drops "Of, Trabzon, Türkiye". A dropped answer leaves the place as
+A place-of-event variant's place lifted from `value` before the levers run
+(§3.7) is a **value-derived** place. It is resolved, echoed and warned about
+like any other, with two differences. A lookup naming a different country
+(Lever A) is dropped with a warning, not a refusal: the writer of a document
+cannot supply a `standard_place`, so a refusal would lose every assertion in it.
+A geocoded answer the country check cannot judge is kept only when its own name,
+its first segment, is one of the place text's comma parts (compared ignoring
+case, accents, periods, type words and an "X of" prefix): "Hilperton,
+Wiltshire" keeps "Hilperton, Wiltshire, England, United Kingdom", while "at the
+home of her daughter" drops "Of, Trabzon, Türkiye". A dropped answer leaves the place as
 written, with no `standard_place`. The lift holds on an append and on an update
 that leaves `place` alone, such as an `informant_bias_notes` note or
 `extraction_append`'s question tie. On such an update the lifted place and its
@@ -812,56 +811,14 @@ splintering into inconsistent labels, over a form the model added:
   that is only `[?]` lifts nothing. An assertion
   with `record_basis: "absent"` is never lifted: its `value` says what the record
   lacks ("Mary Schreiber, his wife, is not named among the survivors"), not where
-  anything happened. This keeps a birthplace-claim and a
+  anything happened. Nor is one whose `informant_bias_notes` carry the
+  `[suspicious text` marker: its text stays in `value`, which a tree event fact
+  never takes, so it is never looked up, echoed or carried onto the tree as a
+  place. This keeps a birthplace-claim and a
   birth-date claim independently classifiable as two `birth` assertions — the
   census case where a stated birthplace is `direct` while the computed birth year
   is `indirect` — distinguished by field population (`place` set = the
   place-claim, `date` set = the date-claim) rather than by the type name.
-- **A residence's place in `value` (assertion appends).** A `residence` with no
-  `place` or `standard_place` whose `value` reads as a place or an address gets
-  that text, as written, as its `place` too: the attribute §3.6 standardizes and
-  the one a Residence fact keeps on the tree. A record-structurer document gives
-  "412 Vine St, Cincinnati" this way. The `value` reads as a place or an address
-  when it is one of:
-  - a **street address**: a house number ("412", "58-08"), then words that
-    include a street word, in English or a record language that puts the number
-    first (`street`, `st`, `road`, `avenue`, `lane`, `drive`, `boulevard`,
-    `place`, `court`, `way`, `square`, `terrace` and their abbreviations, `rue`,
-    `calle`, `avenida`, `via`, `rua`, …), every other word a name word or an
-    ordinal: "412 Vine St", "58-08 58th Ave.", "12 rue de Rivoli";
-  - **two or more comma-separated parts, each a street address or a place's
-    name**, all of whose words are name words: "Borough of Shenandoah, County
-    of Schuylkill", "412 Vine St, Cincinnati", "Krásno nad Kysucou, Čadca,
-    Slovakia".
-
-  A name word starts with a capital letter (after any opening bracket or quote),
-  or is one of the lowercase words that join the names in a place or a street,
-  as the corpus's places spell them: `of`, `and`, `&`, `upon`, `de`, `del`,
-  `da`, `do`, `dos`, `du`, `des`, `di`, `le`, `la`, `las`, `los`, `y`, `i`,
-  `og`, `nad`, `am`, `im`.
-  Everything else is prose and stays a value with no place:
-  - a lowercase word that joins no names: "Moved to Salt Lake City, then to
-    Logan", "3 miles north of town";
-  - a number other than a house number before its street word, so **a date is
-    never a place**: "26 Jan 1958" (the date a FamilySearch Residence with no
-    place carries into its `value`), "January 26, 1958", "30 Years A Resident Of
-    Logan", and also "1560 Baymiller, Cincinnati", whose missing street word
-    leaves the number unexplained;
-  - one of the words `with`, `his`, `her`, `their`, `him`, `them`, in any case,
-    which mark prose about whom the person lived with: "with his daughter",
-    "Home Of His Son, Logan". The live resolver placed "with his daughter",
-    "made his home with his son" and "at the home of her daughter" in Hawaii,
-    Sonora and "Of, Trabzon, Türkiye" (2026-10-26);
-  - text with no lowercase letter ("412 VINE ST, CINCINNATI"), whose case cannot
-    tell a name from prose.
-
-  English prepositions that also join a place's names ("Barrow in Furness",
-  "Stoke on Trent") are not name words, because prose is made of them, so such a
-  place stays in `value`: a place missed stays as written, while prose read as a
-  place would be standardized. The `[?]` of a doubted reading stays in the
-  `value` and is not lifted, as for a place-of-event variant. The `value` is
-  kept, the place is a value-derived place (§3.6), and an absence is never
-  lifted. Other fact types keep their values out of `place`.
 
 ### 3.8 `transcription_truncated` — derived, never asserted
 
@@ -2677,7 +2634,6 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
 | `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
 | `date_certainty` | `computed` includes `date` | `approximate`. |
-| a residence's `place` | `value` | A `residence` fact with no `place` whose `value` reads as a place or an address ("412 Vine St, Cincinnati") gets that text, as written, as its `place` too, by §3.7's residence lift when the assertion is written; prose such as "with his daughter" stays a value, and so does a date: a residence sent with only a `date` carries that date into its `value`, and a date is never read as a place. The `value` is kept, with any `[?]`, which the `place` leaves off, and a computed `value` leaves the place in the same computed assertion. Other fact types keep their values out of `place`, because those values are not places. |
 | information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
 | `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as `image_transcribe`'s machine transcription, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined. Nothing on this path is `original`. |
@@ -2803,16 +2759,19 @@ agent returns it verbatim, and the caller relays it and decides what comes
 next without a follow-up read. On both paths a summary also ends with one line
 naming, once each, the places §3.6 could not standardize when the source was
 written (`Places kept as written, with no standard place found: …`). The rest
-of the summary is built before the write, and the summary is all the caller
-relays, so without this line a place miss would never reach the researcher.
+of the summary is read from the extraction, which cannot tell a lookup that
+missed from one never made, and the summary is all the caller relays, so
+without this line a place miss would never reach the researcher.
 Text from an assertion flagged with the `[suspicious text` marker is withheld
-from every line, printed as `[withheld: suspicious text]`: the fact lines, the
-event in the first line, a person's name and a relationship that names that
-person, the places line (§3.6), the calendar line (which reads a relationship
-with the flagged name withheld), the different-surname lead (which is not
-written when either the head's or the principal's name is flagged) and the note
-on a census whose jurisdiction the relationship-column table lacks (which
-withholds a flagged census fact's place). The summary is relayed character for
+from every line, printed as `[withheld: suspicious text]`: a flagged fact
+prints only that, without its type, which a document writes freely; the event
+in the first line; a person's name, and that name wherever a fact or the
+calendar line would print it ("son of …"); the places line (§3.6); the
+`Suspicious text:` line, which names the role of each flagged passage and
+nothing of its text; the different-surname lead (which is not written when
+either the head's or the principal's name is flagged) and the note on a census
+whose jurisdiction the relationship-column table lacks (which withholds the
+place of a flagged census fact). The summary is relayed character for
 character into the caller's context, where such text would read as an
 instruction.
 

@@ -1360,6 +1360,16 @@ describe("research_append (Phase 1)", () => {
       expect(p.fact_type).toBe("birth");
       expect(p.place).toBe("Ireland");
     }
+    // Case 3: model set only `standard_place` → nothing is lifted beside it.
+    {
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "birthplace", value: "Ireland", standard_place: "Ireland" };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ fact_type: "birth", standard_place: "Ireland" });
+      expect(p).not.toHaveProperty("place");
+    }
   });
 
   describe("a place variant's place in `value` is looked up like any other place", () => {
@@ -1546,6 +1556,24 @@ describe("research_append (Phase 1)", () => {
       expect(a.place).toBe("West Bromwich, England");
       expect(a).not.toHaveProperty("standard_place");
     });
+
+    it("on an update that leaves the place alone, whose lookup the country check cannot judge and the text does not name, which is dropped", async () => {
+      await writeProject(storedVariant("at the home of her daughter"));
+      const r = await researchAppendFromCaller({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_001",
+        fields: { informant_bias_notes: "faint" },
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.unresolvedPlaces).toEqual(["at the home of her daughter"]);
+      expect(r.resolvedPlaces).toBeUndefined();
+      const a = (await readResearch()).assertions[0];
+      expect(a.place).toBe("at the home of her daughter");
+      expect(a).not.toHaveProperty("standard_place");
+    });
   });
 
   describe("a place on an assertion flagged as suspicious text is never echoed", () => {
@@ -1605,6 +1633,21 @@ describe("research_append (Phase 1)", () => {
       if (!r.ok) return;
       expect(r.validation.warnings.join(" ")).toContain(`was corrected to '${WITHHELD}'`);
       expect(JSON.stringify(r)).not.toContain("IGNORE ALL");
+    });
+
+    it("nor lifted out of a place variant's value, where it would be looked up and reach the tree", async () => {
+      await writeProject();
+      const WB = "West Bromwich, Staffordshire, England";
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "birthplace", value: WB, informant_bias_notes: FLAG };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.resolvedPlaces).toBeUndefined();
+      expect(r.unresolvedPlaces).toBeUndefined();
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ fact_type: "birth", value: WB });
+      expect(p).not.toHaveProperty("place");
+      expect(p).not.toHaveProperty("standard_place");
     });
   });
 
@@ -9206,6 +9249,8 @@ describe("research_append (composite persist + enforcement)", () => {
       },
     ]);
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled(); // sidecar copy, no geocode
+    // The place names no country, but a sidecar copy is the record's own answer.
+    expect(r.validation.warnings.join(" ")).not.toMatch(/verify it is the right place/);
     expect((await readResearch()).assertions[1].standard_place).toBe(
       "Pottsville, Schuylkill, Pennsylvania, United States",
     );

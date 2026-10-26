@@ -1615,7 +1615,8 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
   // from every line below: this summary is relayed verbatim into the caller's
   // context, where it would read as an instruction rather than data.
   const flagged = (a: ExtractedAssertion | undefined) => a !== undefined && isSuspiciousText(a.informant_bias_notes);
-  // A relationship's value names the other person ("son of Thomas Flynn").
+  // A relationship's value names the other person ("son of Thomas Flynn"), and
+  // any other value may.
   const flaggedNames = result.assertions.filter((a) => a.fact_type === "name" && a.value && flagged(a)).map((a) => a.value);
   const withholdNames = (text: string) => flaggedNames.reduce((t, n) => t.split(n).join(WITHHELD_SUSPICIOUS), text);
   const event = result.assertions.find((a) => a.fact_type === result.recordType && (a.date || a.place));
@@ -1639,10 +1640,11 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
       .filter((a) => a.fact_type !== "name" && a.fact_type !== "sex")
       .filter((a) => !(result.recordType === "census" && a.fact_type === "census"))
       .map((a) => {
-        const label = a.fact_type.replace(/_/g, " ");
-        if (flagged(a)) return `${label} ${WITHHELD_SUSPICIOUS}`;
-        if (a.fact_type === "relationship") return withholdNames(a.value);
+        // Not even its type: a document's fact type is free text.
+        if (flagged(a)) return WITHHELD_SUSPICIOUS;
+        if (a.fact_type === "relationship") return a.value;
         if (a.fact_type === "age") return `age ${a.value}`;
+        const label = a.fact_type.replace(/_/g, " ");
         // A value that is just the date or place (with or without the marker
         // withDoubt added) is not printed again; that marker prints once, at the
         // end, unless the agent already typed one into the date or place.
@@ -1658,7 +1660,8 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
           body += ` (per ${a.informant_bias_notes!.match(/stated on (\d+)/)?.[1] ?? "other"} household line(s))`;
         }
         return body;
-      });
+      })
+      .map(withholdNames);
     lines.push(`- ${name} (${as[0].record_role})${facts.length ? ": " + facts.join("; ") : ""}.`);
   }
 
@@ -1690,7 +1693,7 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
   if (suspicious.length > 0) {
     lines.push(
       `Suspicious text: ${suspicious.length} passage(s) read like instructions and were captured as ` +
-        `record text only (${suspicious.map((a) => `${a.record_role} ${a.fact_type}`).join(", ")}).`,
+        `record text only (${suspicious.map((a) => a.record_role).join(", ")}).`,
     );
   }
   for (const n of result.notes) lines.push(`Note: ${n}.`);
