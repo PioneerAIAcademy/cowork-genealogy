@@ -1828,7 +1828,9 @@ runtime check, and `check_runlogs.py` rule 11 makes it: in the run log a PR
 adds, a `grade_on_invariant` test may not skip (on every run) a validator that
 is gated on a tag the test carried at the merge base and that passed in the
 merge base's newest log — unless that validator is gone or the PR edits the
-test's `negative.explanation`.
+test's `negative.explanation`. A PR that edits a validator file but adds no
+log for a suite is compared on the gate maps instead: a validator still gated,
+but on none of the test's tags, blocks the same way.
 
 ### Conventions
 

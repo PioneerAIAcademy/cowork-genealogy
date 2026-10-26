@@ -3800,3 +3800,143 @@ def test_git_ls_at_merge_base_lists_bare_names_and_an_absent_dir_as_empty(rule11
         "v2_2026-10-01_00-00-00.json",
     ]
     assert check_runlogs.git_ls_at_merge_base("eval/runlogs/unit/new-suite") == []
+
+
+# Rule 11 with no run log: a validator-only edit is compared on the gate maps.
+
+
+def _drift(head_gates, *, base_test=None, head_test=None):
+    return check_runlogs.rule11_gate_drift(
+        "research",
+        base_tests={"ut_research_rpn": base_test or _r11_test(_RPN_TAGS)},
+        head_tests={"ut_research_rpn": head_test or _r11_test(_RPN_TAGS)},
+        base_gates=_RPN_GATES,
+        head_gates=head_gates,
+    )
+
+
+def test_rule11_gate_drift_a_renamed_gate_fails(capsys):
+    head = {**_RPN_GATES, "test_no_new_plan": {"renamed-gate"}}
+    assert _drift(head) == 1
+    out = capsys.readouterr().out
+    assert "`test_no_new_plan`" in out and "renamed-gate" in out
+    assert out.count("(gated on") == 1
+
+
+@pytest.mark.parametrize(
+    "head",
+    [
+        _RPN_GATES,
+        {**_RPN_GATES, "test_no_new_plan": set()},
+        {k: v for k, v in _RPN_GATES.items() if k != "test_no_new_plan"},
+        {**_RPN_GATES, "test_no_new_plan": {"renamed-gate", "research-plan-no-new-plan"}},
+    ],
+    ids=["unchanged", "gate-removed", "validator-deleted", "gate-widened"],
+)
+def test_rule11_gate_drift_passes_what_still_runs_or_is_gone(head):
+    assert _drift(head) == 0
+
+
+def test_rule11_gate_drift_edited_explanation_is_exempt():
+    head = {**_RPN_GATES, "test_no_new_plan": {"renamed-gate"}}
+    assert _drift(head, head_test=_r11_test(_RPN_TAGS, explanation="retargeted")) == 0
+
+
+def test_rule11_gate_drift_a_test_new_at_head_is_still_checked():
+    head = {**_RPN_GATES, "test_no_new_plan": {"renamed-gate"}}
+    assert check_runlogs.rule11_gate_drift(
+        "research", base_tests={}, head_tests={"ut_research_rpn": _r11_test(_RPN_TAGS)},
+        base_gates=_RPN_GATES, head_gates=head,
+    ) == 1
+
+
+@pytest.mark.parametrize(
+    ("validator_file", "old", "new"),
+    [
+        ("test_research.py", '"research-plan-no-new-plan" not in', '"renamed-gate" not in'),
+        ("test_universal.py", '"hand-back" not in', '"hand-back-v2" not in'),
+        ("shared_validators.py", '"shared-gate" not in', '"shared-gate-v2" not in'),
+    ],
+    ids=["suite-file", "test_universal", "star-imported-sibling"],
+)
+def test_rule11_gates_for_skill_catches_a_validator_only_rename_against_a_real_merge_base(
+    rule11_git_repo, capsys, validator_file, old, new
+):
+    repo, _, write_head = rule11_git_repo
+    path = repo / "eval/harness/validators" / validator_file
+    source = path.read_text(encoding="utf-8")
+    assert old in source
+    validator = _R11_VALIDATOR
+    if validator_file == "test_research.py":
+        validator = source.replace(old, new)
+    else:
+        path.write_text(source.replace(old, new), encoding="utf-8")
+    write_head(_R11_BASE_TAGS, validator=validator)
+    assert check_runlogs.rule11_gates_for_skill("research") == 1
+    assert out_has_one_loss(capsys.readouterr().out)
+
+
+def out_has_one_loss(out):
+    return out.count("(gated on") == 1 and "::error::" in out
+
+
+def test_rule11_gates_for_skill_passes_an_unrelated_validator_edit(rule11_git_repo, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS, validator=_R11_VALIDATOR + "\n\ndef helper():\n    return 1\n")
+    assert check_runlogs.rule11_gates_for_skill("research") == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule11_gates_for_skill_warns_on_an_unreadable_base(rule11_git_repo, monkeypatch, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS + ["extra"])
+
+    def boom(path):
+        raise check_runlogs.BaseUnreadable("simulated")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
+    assert check_runlogs.rule11_gates_for_skill("research") == 0
+    assert "::warning::rule 11 did not run for `research`" in capsys.readouterr().out
+
+
+def test_main_runs_rule11_gate_drift_on_a_validator_edit_for_every_suite_rule11_did_not_grade(
+    tmp_path, monkeypatch, capsys
+):
+    runlogs, tests = tmp_path / "runlogs", tmp_path / "tests"
+    (runlogs / "research").mkdir(parents=True)
+    (runlogs / "research" / "v2_2026-10-26_00-00-00.json").write_text(
+        json.dumps({"tests": []}), encoding="utf-8"
+    )
+    for suite in ("citation", "research"):
+        (tests / suite).mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests)
+    for rule in ("rule2_active", "rule2b_judge_prompt", "rule2c_instrument", "rule3_completeness"):
+        monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
+    monkeypatch.setattr(check_runlogs, "rule11_for_skill", lambda *a: 0)
+    calls = []
+    monkeypatch.setattr(check_runlogs, "rule11_gates_for_skill", lambda s: calls.append(s) or 1)
+
+    _patch_diffs(monkeypatch, ["eval/harness/validators/test_universal.py"])
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    check_runlogs.main()
+    assert calls == []
+    assert "rule 11 did not compare the validator gate maps" in capsys.readouterr().out
+
+    monkeypatch.setenv("BASE_SHA", "a" * 40)
+    monkeypatch.setenv("HEAD_SHA", "b" * 40)
+    assert check_runlogs.main() == 1
+    assert calls == ["citation", "research"]
+
+    calls.clear()
+    _patch_diffs(monkeypatch, [
+        "eval/harness/validators/test_universal.py",
+        "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json",
+    ])
+    check_runlogs.main()
+    assert calls == ["citation"]
+
+    calls.clear()
+    _patch_diffs(monkeypatch, ["eval/tests/unit/research/rpn.json"])
+    check_runlogs.main()
+    assert calls == []
