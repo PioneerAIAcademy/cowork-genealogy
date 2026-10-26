@@ -16,6 +16,7 @@ description: >-
   research-plan, question-selection, etc.) or only asks where the project stands
   (answered from project_context, no skill).
 allowed-tools:
+  - project_list
   - validate_research_schema
   - research_query
   - extraction_append
@@ -25,6 +26,8 @@ allowed-tools:
 ---
 
 # /research — Full GPS Research Workflow
+
+**If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the user watches this as a live feed and it is their only view of a run that no longer stops to ask, so every phase boundary gets its line — always followed by the actual tool call in the same turn. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
@@ -94,6 +97,19 @@ defensible?" — is not a destination. Invoke `@plugin:gps-mentor` at once
 
 A request to review FamilySearch hints is an entry point, not a downstream
 destination: take it through "Hint review" below.
+
+## The project
+
+**Unless the conversation already names a `projectPath`, call `project_list` before any other genealogy tool.** Its answer gives the `projectPath` to pass from then on:
+
+- `mode: "folder"`: the working folder's absolute path.
+- `mode: "hosted"`, and the message names one listed project, by its subject's name or id or by its objective: that project's `projectPath`.
+- `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
+- Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
+
+**If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
+
+**When a tool gave you the project's `projectUrl`, make it the last line of the reply that ends your turn.**
 
 ## Bounded request or job
 
