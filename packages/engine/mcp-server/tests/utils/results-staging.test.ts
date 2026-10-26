@@ -180,6 +180,8 @@ describe("results-staging", () => {
       expect(await readStagedEnvelopeQuery(dir, handle!.resultsRef)).toEqual({
         tool: "record_search",
         query: { surname: "A" },
+        returnedCount: 1,
+        totalMatches: undefined,
       });
       expect(await stagingFiles()).toHaveLength(1);
     });

@@ -652,13 +652,13 @@ Call `research_log_append` once per search — it assigns the next `log_` id, st
 
 Never write a bare sentence there — a prose `query` carrying an ARK is rejected before the tool runs, so nothing is logged. Keep ARKs in a keyed field.
 
-Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
+**A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
-**Required log-entry fields.** Every `log[]` entry must carry: `id` (the next `log_NNN`), `plan_item_id` (null for an ad-hoc search), `performed` (ISO-8601 timestamp), `tool`, `query`, `outcome`, `results_examined`, and `external_site` — set `external_site` to **null** for FamilySearch `record_search` searches. Add `results_ref` for any results-returning search.
+**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry, do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
-**Sidecar correctness — what counts as nil is the result COUNT, not `staged`.** Any search returning one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — gets a `results/<log_id>.json` sidecar with that entry's `results_ref` set to `"results/<log_id>.json"` (never null). Only a **zero**-result search omits `stagedResultsRef` and leaves `results_ref` null. `research_log_append` writes the sidecar from the `stagedResultsRef` handle — which is why the Step 3 staging gate is mandatory before you get here; if results came back but `staged` is null you cannot patch it here (there is no way to set `results_ref` by hand), so re-run the identical query **with** `projectPath`. The sidecar is a JSON object — `{ "returned_count": <n>, "payload": { "results": [ <the records returned> ] } }`, never a bare array — where `returned_count` equals the number of records in `payload.results`, and `results_available` matches that count.
+**Sidecar correctness — what counts as nil is the result COUNT, not `staged`.** Any search returning one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — gets a `results/<log_id>.json` sidecar with that entry's `results_ref` set to `"results/<log_id>.json"` (never null). Only a **zero**-result search omits `stagedResultsRef` and leaves `results_ref` null. `research_log_append` writes the sidecar from the `stagedResultsRef` handle — which is why the Step 3 staging gate is mandatory before you get here; if results came back but `staged` is null you cannot patch it here (there is no way to set `results_ref` by hand), so re-run the identical query **with** `projectPath`.
 
 **Collection-mismatch:** When results come from the wrong collection (e.g., searched 1870 census, got 1850 results):
 - Log with `outcome: "partial"` (not `"negative"` — negative means zero results)
@@ -675,7 +675,7 @@ Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce t
 - `partial`: Results found but incomplete (e.g., image unavailable, or collection-mismatch)
 - `error`: Search failed (authentication, server error)
 
-If the call returns `{ ok: false, errors }`, surface the errors rather than retrying blindly. A common cause is a **stale `stagedResultsRef`** (staged files are pruned after ~24h) — re-run `record_search` to re-stage, then call `research_log_append` with the fresh ref.
+If the call returns `{ ok: false, errors }`, surface the errors rather than retrying blindly. A common cause is a **stale `stagedResultsRef`** (staged files are pruned after ~24h) — re-run `record_search` to re-stage, then call `research_log_append` with the fresh ref. A reply with `alreadyLogged: true` is not an error: that search is already logged under the `logId` it names, so do not log it again.
 
 Narrate from the tool's summary ("logged as log_006; retained 3 results"); do not echo the payload.
 

@@ -275,12 +275,41 @@ def test_dispose_gate_fails_a_status_that_is_not_a_disposal():
         plan_dispose(_state(before), _state(after), _DISPOSE_TAGS)
 
 
-def test_dispose_gate_fails_a_named_item_that_was_not_planned():
-    """The hostile delegation: it names the in_progress probate item on
-    mid-research-flynn. Skipping it abandons a live search."""
-    after = copy.deepcopy(MID)
+def test_dispose_gate_fails_a_skip_on_an_item_whose_search_ran():
+    """The hostile delegation, re-keyed on the evidence rather than the status.
+
+    This used to assert that ANY non-`planned` item was undisposable, which
+    section B of docs/plan/research-step-mode.md changed: the router's dispose row
+    now names `in_progress` items too, because a search that ran without closing
+    its item leaves it there, and refusing them left the declaration refused for
+    good.
+
+    What must still fail is a SKIP on an item whose search ran -- `research_append`
+    refuses it (decision 9 of docs/plan/attached-records-baseline.md), because a
+    skip says nothing was searched. So the guard is keyed on a log entry naming
+    the item, which is the evidence, not on the status it happens to hold.
+    """
+    before = copy.deepcopy(MID)
+    item = _plan(before, "pl_002")["items"][-1]
+    assert item["id"] == "pli_006" and item["status"] == "in_progress"
+    before.setdefault("log", []).append(
+        {"id": "log_zz1", "tool": "record_search", "outcome": "negative", "plan_item_id": "pli_006"}
+    )
+    after = copy.deepcopy(before)
     _plan(after, "pl_002")["items"][-1].update(status="skipped", skip_category="answered", skip_reason="x")
     named = {**_DISPOSE_TAGS, "delegation": "planItemIds: pli_006"}
-    assert _plan(MID, "pl_002")["items"][-1]["id"] == "pli_006"
-    with pytest.raises(AssertionError, match="not planned"):
-        plan_dispose(_state(MID), _state(after), named)
+    with pytest.raises(AssertionError, match="a log entry names it"):
+        plan_dispose(_state(before), _state(after), named)
+
+
+def test_dispose_gate_allows_an_in_progress_item_to_close(): 
+    """The other direction, or the change above would just be "never dispose".
+    An `in_progress` item whose search ran closes as `completed`."""
+    before = copy.deepcopy(MID)
+    before.setdefault("log", []).append(
+        {"id": "log_zz2", "tool": "record_search", "outcome": "negative", "plan_item_id": "pli_006"}
+    )
+    after = copy.deepcopy(before)
+    _plan(after, "pl_002")["items"][-1].update(status="completed")
+    named = {**_DISPOSE_TAGS, "delegation": "planItemIds: pli_006"}
+    plan_dispose(_state(before), _state(after), named)
