@@ -32,6 +32,8 @@ import {
   relationshipCategory,
   subjectRoleInValue,
 } from "../../src/tools/research-append.js";
+import { toSimplifiedRecordRead } from "../../src/utils/gedcomx-convert.js";
+import type { GedcomXPerson } from "../../src/types/gedcomx.js";
 
 const FIXTURES = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -159,6 +161,88 @@ describe("a census WITH a relationship column (US 1880)", () => {
     const wife = rels(out.assertions).find((a) => a.record_role === "wife")!;
     expect(wife.structured_value?.relationship_type).toBe("spouse");
     expect(wife.value).toBe("wife of Charles Miller");
+  });
+});
+
+describe("a census whose record read keeps the as-written place only in the Place field", () => {
+  // place.original holds FamilySearch's standardized text and the Place field's
+  // Original value the as-written text, which here lacks the country the
+  // relationship-column table reads.
+  const PLACE_FIELD = "http://gedcomx.org/Place";
+  const standardized = "Salem, Essex, Massachusetts, United States";
+  const asWritten = { type: "http://gedcomx.org/Original", labelId: "EVENT_PLACE_ORIG", text: "Salem, Massachusetts" };
+  const interpreted = (placeId?: string) => ({
+    type: "http://gedcomx.org/Interpreted",
+    labelId: "EVENT_PLACE",
+    text: standardized,
+    ...(placeId ? { resource: `https://www.familysearch.org/platform/places/description/${placeId}` } : {}),
+  });
+  type PlaceValue = typeof asWritten | ReturnType<typeof interpreted>;
+  const extractCensus = (values: PlaceValue[]) => {
+    const person = (id: string, given: string, gender: string): GedcomXPerson => ({
+      id,
+      gender: { type: `http://gedcomx.org/${gender}` },
+      names: [
+        {
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: given },
+                { type: "http://gedcomx.org/Surname", value: "Ward" },
+              ],
+            },
+          ],
+        },
+      ],
+      facts: [
+        {
+          type: "http://gedcomx.org/Census",
+          date: { original: "1880" },
+          place: { original: standardized, fields: [{ type: PLACE_FIELD, values }] },
+        },
+      ],
+    });
+    const { doc } = toSimplifiedRecordRead({
+      persons: [person("p1", "John", "Male"), person("p2", "Mary", "Female")],
+    });
+    const out = extractRecord(
+      {
+        recordId: "ark:/61903/1:1:TEST-SLM1",
+        gedcomx: doc,
+        indexFields: {
+          p1: { relationshipToHead: "Head", householdId: "1" },
+          p2: { relationshipToHead: "Wife", householdId: "1" },
+        },
+      },
+      { logEntryId: "l_001", questionIds: ["q_001"] },
+    );
+    return { fact: doc.persons![0].facts![0], out };
+  };
+
+  it("the as-written text alone would decide nothing", () => {
+    expect(censusStatedRelationships("Salem, Massachusetts", 1880)).toBeNull();
+  });
+
+  it("keeps the standardized text and its relationships when FamilySearch's value names no place", () => {
+    const { fact, out } = extractCensus([asWritten, interpreted()]);
+    expect(fact.place).toBe(standardized);
+    expect(fact.standard_place).toBeUndefined();
+    expect(out.censusStatesRelationships).toBe(true);
+    expect(rels(out.assertions).map((a) => a.value)).toEqual(["wife of John Ward"]);
+  });
+
+  it("keeps the standardized text and its relationships when the candidates are ambiguous", () => {
+    const { fact, out } = extractCensus([asWritten, interpreted("1234"), { ...interpreted("5678"), text: "Salem, Salem, Massachusetts, United States" }]);
+    expect(fact.place).toBe(standardized);
+    expect(fact.standard_place).toBeUndefined();
+    expect(rels(out.assertions).map((a) => a.value)).toEqual(["wife of John Ward"]);
+  });
+
+  it("decides from the standard_place when the as-written text takes its place", () => {
+    const { fact, out } = extractCensus([asWritten, interpreted("1234")]);
+    expect(fact.place).toBe("Salem, Massachusetts");
+    expect(fact.standard_place).toBe(standardized);
+    expect(rels(out.assertions).map((a) => a.value)).toEqual(["wife of John Ward"]);
   });
 });
 

@@ -23,7 +23,12 @@ vi.mock("../../src/utils/place-api.js");
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { recordReadTool, extractEntityId, extractImageArk } from "../../src/tools/record-read.js";
+import {
+  recordReadTool,
+  recordReadDocument,
+  extractEntityId,
+  extractImageArk,
+} from "../../src/tools/record-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { repIdToStandardPlace } from "../../src/utils/place-resolver.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
@@ -561,6 +566,84 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
     }, LOCAL);
     expect(out.persons).toHaveLength(2);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("record_read names FamilySearch's standards by place id", () => {
+  const mockedRepIdToStandardPlace = vi.mocked(repIdToStandardPlace);
+  const placeUrl = (id: string) => `https://www.familysearch.org/platform/places/description/${id}`;
+  const placeField = (asWritten: string, standard: string, placeId: string) => ({
+    original: standard,
+    description: `#place_${placeId}`,
+    fields: [
+      {
+        type: "http://gedcomx.org/Place",
+        values: [
+          { type: "http://gedcomx.org/Original", labelId: "EVENT_PLACE_ORIG", text: asWritten },
+          { type: "http://gedcomx.org/Interpreted", labelId: "EVENT_PLACE", text: standard, resource: placeUrl(placeId) },
+        ],
+      },
+    ],
+  });
+  // 6B9K-FXBZ: FamilySearch's standard names come in the record's language.
+  const brazilianDeath = {
+    persons: [
+      {
+        id: "p_304762108450",
+        principal: true,
+        facts: [
+          { type: "http://gedcomx.org/Death", place: placeField("Bela Vista", "Bela Vista, São Paulo, Brasil", "10979131") },
+          { type: "http://gedcomx.org/Birth", place: placeField("Liro, Piaui", "Piauí, Brasil", "5736") },
+        ],
+      },
+    ],
+    sourceDescriptions: [
+      {
+        id: "src_r_1",
+        resourceType: "http://gedcomx.org/Record",
+        coverage: [{ spatial: { description: placeUrl("10979131") }, recordType: "http://gedcomx.org/Death" }],
+      },
+    ],
+    places: [{ id: "place_10979131" }, { id: "place_5736" }],
+  } as unknown as GedcomX;
+  const english: Record<string, string> = {
+    "10979131": "Bela Vista, São Paulo, Brazil",
+    "5736": "Piauí, Brazil",
+  };
+
+  beforeEach(() => {
+    mockedRepIdToStandardPlace.mockReset();
+    mockedRepIdToStandardPlace.mockImplementation(async (id: string) => english[id] ?? null);
+  });
+
+  it("replaces each one with the English name for its id, the name its coverage gets (6B9K-FXBZ)", async () => {
+    const { resolveStandardPlace } = await import("../../src/utils/place-resolver.js");
+    mockOk(brazilianDeath);
+    const out = await recordReadTool({ recordId: "6B9K-FXBZ" }, LOCAL);
+    expect(out.persons?.[0].facts?.map((f) => [f.place, f.standard_place])).toEqual([
+      ["Bela Vista", "Bela Vista, São Paulo, Brazil"],
+      ["Liro, Piaui", "Piauí, Brazil"],
+    ]);
+    expect(out.sources?.[0].coverage?.standard_place).toBe("Bela Vista, São Paulo, Brazil");
+    expect(mockedRepIdToStandardPlace).toHaveBeenCalledWith("5736");
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
+
+  it("keeps FamilySearch's own text when the id lookup returns nothing (6B9K-FXBZ)", async () => {
+    mockedRepIdToStandardPlace.mockResolvedValue(null);
+    mockOk(brazilianDeath);
+    const out = await recordReadTool({ recordId: "6B9K-FXBZ" }, LOCAL);
+    expect(out.persons?.[0].facts?.map((f) => [f.place, f.standard_place])).toEqual([
+      ["Bela Vista", "Bela Vista, São Paulo, Brasil"],
+      ["Liro, Piaui", "Piauí, Brasil"],
+    ]);
+    expect(out.sources?.[0].coverage?.standard_place).toBeUndefined();
+  });
+
+  it("returns exactly recordReadDocument's document, plus imageArk/viewerUrl", async () => {
+    mockOk(brazilianDeath);
+    const { imageArk: _imageArk, viewerUrl: _viewerUrl, ...out } = await recordReadTool({ recordId: "6B9K-FXBZ" }, LOCAL);
+    expect(out).toEqual(await recordReadDocument(brazilianDeath));
   });
 });
 

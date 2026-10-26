@@ -5,13 +5,13 @@
  * Evidence for issue #1908 (phase 1). This probe calls the real `recordReadTool`
  * and reads its output with `collectFacts` — it measures what `record_read`
  * actually returns, it does not reconstruct it. `record_read`'s live path calls
- * `toSimplified` (not `toSimplifiedStandardized`), so a fact carries a
+ * `recordReadDocument` (never `toSimplifiedStandardized`), so a fact carries a
  * `standard_place` only when the record itself supplied one (a `normalized`
- * value, or the chosen `Interpreted` value of the place's `Place` field); the
- * resolver is never consulted. How often that happens is the `standard_place`
- * column / headline count below. The
- * justification (the "Use toSimplified, NOT toSimplifiedStandardized" block in
- * record-read.ts) cites two mis-resolutions observed 2026-07-08 — before two
+ * value, or the chosen `Interpreted` value of the place's `Place` field, named
+ * by its place id); the resolver is never consulted. How often that happens is
+ * the `standard_place` column / headline count below. The
+ * justification (the "Never toSimplifiedStandardized" paragraph on
+ * `recordReadDocument` in record-read.ts) cites two mis-resolutions observed 2026-07-08 — before two
  * resolver fixes landed (4823ffdf, 2026-07-22, phrase-quote the `name:` query;
  * 1af50fab, 2026-07-31, derive a `contextName` from the second comma-segment).
  * This probe re-measures, per place string, what `resolveStandardPlace` returns
@@ -211,7 +211,7 @@ async function main(): Promise<void> {
   );
   console.log(
     `record_read output carried standard_place: ${withStandardPlace}/${total} ` +
-      "(what toSimplified kept from the record's own standardized values)",
+      "(what record_read kept from the record's own standardized values)",
   );
   console.log(
     "countryConsistency: " +

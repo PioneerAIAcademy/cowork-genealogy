@@ -149,18 +149,44 @@ function addFragment(id: string | undefined): string | undefined {
 // ─── toSimplified ─────────────────────────────────────────────────────────
 
 export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
+  return convert(gedcomx, null);
+}
+
+/**
+ * `toSimplified` for a record read: the recapi persona body `record_read`
+ * fetches. Two place rules apply only here (gedcomx-convert-spec.md, "Places on
+ * facts"): a fact with no `normalized` value takes the chosen `Interpreted`
+ * value of its `Place` field as `standard_place`, and the as-written text from
+ * the field's `Original` value as `place`. `placeIds` maps each fact whose
+ * `standard_place` came from an `Interpreted` value to the FamilySearch place
+ * id that value names, so `record_read` can name the place by id. The ids ride
+ * beside the document, never on it: the simplified format has no field for
+ * them.
+ */
+export function toSimplifiedRecordRead(gedcomx: GedcomX): {
+  doc: SimplifiedGedcomX;
+  placeIds: Map<SimplifiedFact, string>;
+} {
+  const placeIds = new Map<SimplifiedFact, string>();
+  return { doc: convert(gedcomx, placeIds), placeIds };
+}
+
+/** Collects a record read's place ids; `null` for every other response. */
+type RecordReadPlaceIds = Map<SimplifiedFact, string> | null;
+
+function convert(gedcomx: GedcomX, recordRead: RecordReadPlaceIds): SimplifiedGedcomX {
   if (!gedcomx || typeof gedcomx !== "object") return {};
 
   const out: SimplifiedGedcomX = {};
 
   const persons = Array.isArray(gedcomx.persons) ? gedcomx.persons : [];
-  if (persons.length > 0) out.persons = persons.map(simplifyPerson);
+  if (persons.length > 0) out.persons = persons.map((p) => simplifyPerson(p, recordRead));
 
   const relationships = Array.isArray(gedcomx.relationships)
     ? gedcomx.relationships
     : [];
   if (relationships.length > 0) {
-    out.relationships = relationships.map(simplifyRelationship);
+    out.relationships = relationships.map((r) => simplifyRelationship(r, recordRead));
   }
 
   const places = (Array.isArray(gedcomx.places) ? gedcomx.places : []).map(
@@ -201,7 +227,7 @@ function placeNamesById(places: SimplifiedPlaceDescription[]): Map<string, strin
   return names;
 }
 
-function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
+function simplifyPerson(person: GedcomXPerson, recordRead: RecordReadPlaceIds): SimplifiedPerson {
   const out: SimplifiedPerson = {};
   if (person.id !== undefined) out.id = person.id;
 
@@ -235,7 +261,7 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
   }
 
   if (Array.isArray(person.facts) && person.facts.length > 0) {
-    out.facts = person.facts.map(simplifyFact);
+    out.facts = person.facts.map((f) => simplifyFact(f, recordRead));
   }
 
   if (Array.isArray(person.sources) && person.sources.length > 0) {
@@ -364,8 +390,9 @@ function placeIdOf(ref: unknown): string | undefined {
  * its text is often just the as-written text echoed back. Among several
  * candidates, the one marked Preferred wins, else the one `place.description`
  * names, else the only one; a choice that is still ambiguous yields nothing.
+ * The place id comes back with the name when the chosen candidates name one.
  */
-function pickInterpretedPlace(place: RawPlace): string | undefined {
+function pickInterpretedPlace(place: RawPlace): { name: string; id?: string } | undefined {
   const candidates: { name: string; id: string; preferred: boolean }[] = [];
   for (const value of placeFieldValues(place)) {
     if (value.type !== INTERPRETED_VALUE) continue;
@@ -386,7 +413,9 @@ function pickInterpretedPlace(place: RawPlace): string | undefined {
         ? candidates.filter((c) => c.id === describedId)
         : candidates;
   const names = new Set(chosen.map((c) => c.name));
-  return names.size === 1 ? chosen[0].name : undefined;
+  if (names.size !== 1) return undefined;
+  const ids = new Set(chosen.map((c) => c.id));
+  return { name: chosen[0].name, ...(ids.size === 1 ? { id: chosen[0].id } : {}) };
 }
 
 /**
@@ -411,7 +440,7 @@ function asWrittenPlace(place: RawPlace, original: string): string {
   return text.trim() === original.trim() ? original : text;
 }
 
-function simplifyFact(fact: GedcomXFact): SimplifiedFact {
+function simplifyFact(fact: GedcomXFact, recordRead: RecordReadPlaceIds): SimplifiedFact {
   const out: SimplifiedFact = {};
   if (fact.id !== undefined) out.id = fact.id;
 
@@ -430,19 +459,31 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   }
 
   if (fact.place) {
-    if (typeof fact.place.original === "string") {
-      out.place = asWrittenPlace(fact.place, fact.place.original);
-    }
+    const original = typeof fact.place.original === "string" ? fact.place.original : undefined;
     // Standardized-place sidecar (cf. standard_date): take FamilySearch's own
-    // standardized name from the raw response — `normalized` (search, tree) or
-    // the chosen `Interpreted` place value (record read) — pure, no network.
-    // Free-text places that carry neither are filled later by the
-    // document-level standardization pass (toSimplifiedStandardized). A
-    // non-place phrase ("Same House") keeps no standard form, even one
+    // standardized name from the raw response — `normalized` (search, tree),
+    // else on a record read the chosen `Interpreted` place value — pure, no
+    // network. Free-text places that carry neither are filled later by the
+    // document-level standardization pass (toSimplifiedStandardized).
+    const normalized = pickNormalizedPlace(fact.place.normalized);
+    const interpreted = recordRead ? pickInterpretedPlace(fact.place) : undefined;
+    const standard = normalized ?? interpreted?.name;
+    // A record read can keep the as-written text only in the Place field's
+    // `Original` value. It replaces `place` only when the fact keeps a
+    // standard_place, so the standardized text it displaces is never lost.
+    const written =
+      recordRead && original !== undefined ? asWrittenPlace(fact.place, original) : original;
+    // A non-place phrase ("Same House") keeps no standard form, even one
     // FamilySearch supplies.
-    const standard =
-      pickNormalizedPlace(fact.place.normalized) ?? pickInterpretedPlace(fact.place);
-    if (standard && !isNonPlacePhrase(out.place ?? "")) out.standard_place = standard;
+    const keepsStandard = standard !== undefined && !isNonPlacePhrase(written ?? "");
+    const place = keepsStandard ? written : original;
+    if (place !== undefined) out.place = place;
+    if (keepsStandard) {
+      out.standard_place = standard;
+      if (normalized === undefined && interpreted?.id !== undefined) {
+        recordRead?.set(out, interpreted.id);
+      }
+    }
   }
 
   // Preserve the fact-level value (the qualifier carrying the meaning of
@@ -460,6 +501,7 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
 
 function simplifyRelationship(
   rel: GedcomXRelationship,
+  recordRead: RecordReadPlaceIds,
 ): SimplifiedRelationship {
   const out: SimplifiedRelationship = {};
   if (rel.id !== undefined) out.id = rel.id;
@@ -493,7 +535,7 @@ function simplifyRelationship(
     }
   }
   if (remainingFacts.length > 0) {
-    out.facts = remainingFacts.map(simplifyFact);
+    out.facts = remainingFacts.map((f) => simplifyFact(f, recordRead));
   }
 
   const notes = simplifyNotes(rel.notes);
@@ -833,10 +875,10 @@ function expandPlaceDescription(
 
 // ─── Place standardization (network) ─────────────────────────────────────────
 // `toSimplified` populates `standard_place` from FamilySearch's own standardized
-// value — raw `place.normalized`, else the chosen `Interpreted` place value
-// (pure). Free-text places that carry neither are standardized here, by
-// resolving the place name through the shared place resolver. This is the only
-// part of the converter that touches the network; it is best-effort.
+// value — raw `place.normalized`, and on a record read the chosen `Interpreted`
+// place value (pure). Free-text places that carry neither are standardized
+// here, by resolving the place name through the shared place resolver. This is
+// the only part of the converter that touches the network; it is best-effort.
 
 const STANDARDIZE_CONCURRENCY = 8;
 const STANDARDIZE_SOFT_CAP = 100;

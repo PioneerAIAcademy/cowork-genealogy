@@ -34,12 +34,12 @@ round-trips for content it already has staged on disk.
   the search response supplied a `normalized` value, resolver-derived otherwise —
   a null resolve or soft-cap overflow leaves some empty), and `sources` **if** the
   FS search response carried `sourceDescriptions`.
-- `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
+- `record_read`'s live path uses **`recordReadDocument`** (it does **not** run
   `standardizePlaces` — see Findings), so it keeps only the places FamilySearch
   standardized on the record itself (an `Interpreted` value of the place's
-  `Place` field; a recapi record sends no `normalized`) and never adds
-  resolver-derived `standard_place`. Its output also carries the source
-  `citation`.
+  `Place` field; a recapi record sends no `normalized`), named in English by
+  their place ids, and never adds resolver-derived `standard_place`. Its output
+  also carries the source `citation`.
 
 Two deltas were identified; delta 1 is now **settled** (see Findings), delta 2
 remains **unverified**:
@@ -90,8 +90,9 @@ backward-compatible):
   loses nothing by sourcing it from the sidecar.
 - Place standardization: the staged result carries the search stage's standardized
   place (for the facts the resolve reached); the tool returns it as-is. A live read
-  performs **no** resolver standardization at all (pure `toSimplified` since #614),
-  so there is nothing to be less reliable — see Findings.
+  performs **no** resolver standardization at all (none since #614; it names only
+  the place ids FamilySearch chose), so there is nothing to be less reliable — see
+  Findings.
 - If the sidecar carries citations → the win is large (sidecar for nearly
   everything). If it doesn't → the skill still triages from the sidecar and only
   reads live for records it **keeps**, killing the duplicate re-reads regardless.
@@ -131,13 +132,16 @@ England death/burial). For **the person you searched** (the matched persona):
   reliable only for its FS-normalized share — its resolver-derived share came from
   the same resolver — and the sidecar tool returns the staged place **as-is** (no
   `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
-  now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
-  whatever `standard_place` the record itself carries and never falls back to the
+  no longer uses `toSimplifiedStandardized`, so it keeps whatever
+  `standard_place` the record itself carries and never falls back to the
   resolver, rather than resolving an unstandardized name to a wrong place. A
   recapi record never carries a `normalized` place (`dev/probe-record-read-places.ts`,
   2026-09-11: **0 of the 28 observations**); FamilySearch's standardized place is
   an `Interpreted` value of the place's `Place` field instead, which
-  `toSimplified` reads (`gedcomx-convert-spec.md`, "Places on facts"). Staged
+  `toSimplifiedRecordRead` reads (`gedcomx-convert-spec.md`, "Places on facts").
+  Its text is in the record's language, so `recordReadDocument` names each by
+  its place id with `repIdToStandardPlace` (English), as it names coverage
+  places, and keeps FamilySearch's text when that lookup returns nothing. Staged
   records carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
