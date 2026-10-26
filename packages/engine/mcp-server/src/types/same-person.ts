@@ -78,13 +78,63 @@ export interface SamePersonResult {
   apiTitle: string;
   /** ISO timestamp from the API response. */
   updated: string;
-  /** Project arm only: how the record side was assembled. Optional so the
-   *  explicit form's committed fixtures stay valid. */
+  /** Not set by either arm any more: the project arm returns
+   *  `SamePersonProjectResult`, which carries it as a required field. Kept
+   *  optional so a committed fixture of the older shape still parses. */
   recordSource?: "record_read" | "projection";
-  /** Project arm only: true when the score was recorded to the project's
-   *  attestation sidecar. The explicit form records nothing — it has no project
-   *  and no record identity. */
+  /** Not set by either arm any more, for the same reason as `recordSource`. The
+   *  explicit form records nothing — it has no project and no record identity. */
   recorded?: boolean;
+}
+
+/** The record persona a project-arm call scored. */
+export interface ScoredRecordPersona {
+  /** The persona's id: the fetched `persons[].id` on the record_read route, the
+   *  projected group's persona id on the projection route. Null when the record
+   *  names none. */
+  id: string | null;
+  /** As the record gives it, "" when it carries no name. */
+  name: string;
+  /** The `record_role` this persona holds on the record: taken from the
+   *  assertions that name it, since a fetched `persons[]` carries no role. Null
+   *  when no assertion does. */
+  role: string | null;
+}
+
+/** The tree person a project-arm call scored against. */
+export interface ScoredTreePerson {
+  id: string;
+  /** Preferred name, "" when the person has none. */
+  name: string;
+}
+
+/**
+ * What the project arm returns for a single pair: the score, and whom it
+ * scored.
+ *
+ * Its own type rather than `SamePersonResult`, because `scorePair` returns that
+ * one to `rank_search_matches` too. The echo fields on it (`queryArk`,
+ * `candidateArk`, `apiTitle`, `updated`) are the API's framing of the request:
+ * the ARKs are the ones the request carried, minted at random for a person
+ * whose ark is not a valid FamilySearch id, so they differ between two calls
+ * on the same pair and name no one a reader could look up. `recordPersona` and
+ * `treePerson` say who was scored instead.
+ */
+export interface SamePersonProjectResult {
+  /** True when the API returned a `confidence` field on the entry. */
+  matched: boolean;
+  /** Integer 1-5 bucket. Omitted when the API treats the pair as a non-match. */
+  confidence?: number;
+  /** Float 0-1, fine-grained match score from the API's algorithm. */
+  score: number;
+  /** How the record side was assembled. */
+  recordSource: "record_read" | "projection";
+  /** True when the score was recorded to the project's attestation sidecar. */
+  recorded: boolean;
+  /** The record persona that was scored. */
+  recordPersona: ScoredRecordPersona;
+  /** The tree person it was scored against. */
+  treePerson: ScoredTreePerson;
 }
 
 /** One scored relative pairing returned by `matchRelatives: true` mode. */

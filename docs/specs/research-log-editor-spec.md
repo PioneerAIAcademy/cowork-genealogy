@@ -83,16 +83,22 @@ research_log_append({
   query: object,                  // freeform — enough to reproduce the search; may not name a
                                   //   filter its staged search never sent (§8.3). Omit it with a
                                   //   stagedResultsRef and the tool fills it from the staged search
-  outcome: "positive" | "negative" | "partial" | "error",
-  resultsExamined: number,
+  outcome?: "positive" | "negative" | "partial" | "error",
+                                  //   required, except with a record_search stagedResultsRef, where an
+                                  //   omitted value logs "positive" (a staged search always has rows);
+                                  //   send "partial" for a collection mismatch
+  resultsExamined?: number,       //   required, except with a record_search stagedResultsRef, where it
+                                  //   defaults to the rows returned; send fewer only when fewer were
+                                  //   triaged
   planItemId: string | null,      // pli_ reference, or null for ad-hoc (see planItemId validation below)
-  resultsAvailable?: number | null,
+  resultsAvailable?: number | null, // filled from the staged search's totalMatches when omitted
+                                  //   with a record_search stagedResultsRef
   notes?: string | null,
   externalSite?: {                // REQUIRED when tool === "external_site"; else null/omit
     site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
           | "chronicling_america" | "digital_newspaper_archive" | "archives_gov" | "archive_org"
           | "billiongraves" | "digitalarkivet" | "antenati" | "library_archives_canada"
-          | "american_ancestors" | "italian_genealogy" | "archion" | "matricula",
+          | "american_ancestors" | "italian_genealogy" | "archion" | "matricula" | "openarch",
     urlGenerated: string,
     captureReceived: boolean,
     captureFilename?: string | null,
@@ -121,7 +127,21 @@ op is applied: the staged ref itself (it exists under `results/.staging/` and it
 `tool` matches), a staged ref named by two ops (`ops[j]: stagedResultsRef '…' is also
 ops[i]'s` — with removal deferred, both would finalize it), the §8.2 census check,
 and the §8.3 query check. So a bad ref in op[1] is refused before op[0] writes a
-sidecar.
+sidecar. These checks run over **every** op before the call refuses, and the
+refusal lists each failing op's `ops[i]: <msg>`, so one corrected re-send can fix
+them all; the batch still writes all or nothing.
+
+**A staged ref that was already logged.** Re-sending a `stagedResultsRef` whose
+staged file is gone because an earlier call finalized it (typically after a
+context compaction) is answered with that entry, not refused: the log entry records
+the staged file it came from (`staged_ref`, research-schema-spec log entry), so the
+lookup is a scan of the `research.json` already loaded, with no sidecar read. The
+call returns that entry's `logId` and `resultsRef` (`returnedCount` null) with
+`alreadyLogged: true` and a warning naming the id, and writes nothing for that op.
+A re-send that names a different `tool`, `planItemId` or `outcome` than the
+entry is refused instead, naming the entry and each difference.
+In a batch, every other op is logged as usual. A ref no log entry names keeps the
+"not in `results/.staging/`" refusal.
 
 **Success response.** `{ ok: true, logId, performed, resultsRef, returnedCount,
 filesWritten, validation: { valid: true, warnings } }` for a single call, or
@@ -204,8 +224,10 @@ no other `tool` value is touched.
 **The tool assigns (caller never supplies):** the log entry `id` (next `log_`
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`
 (`results/<log_id>.json` when a sidecar is written, else `null`), and the entire
-sidecar envelope — `log_id`, `retrieved`, and `returned_count` (counted from the
-payload, never trusted from the caller). Because `results_ref` is tool-constructed
+sidecar envelope — `log_id`, `retrieved`, `returned_count` (counted from the
+payload, never trusted from the caller). On the log entry it also writes
+`staged_ref`, the staged file the sidecar came from. For a record_search `stagedResultsRef`, it also fills `outcome`,
+`results_examined` and `results_available` when the caller omits them (§7). Because `results_ref` is tool-constructed
 as `results/<log_id>.json`, the validator's path-traversal guard is satisfied by
 construction.
 
@@ -324,10 +346,12 @@ rule is no longer needed (under Option B it never applied).
 | sidecar `log_id`, `retrieved`, `returned_count` | `results_available`, `notes`, `plan_item_id` |
 | camelCase→snake_case rename; append-only; atomic write + validate | `external_site` details; whether results were retained |
 | `query` and `tool` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
+| `outcome` (`positive`), `results_examined` (rows returned) and `results_available` (`totalMatches`) when omitted with a staged record_search handle | an override of any of them: `partial` for a collection mismatch, `error`, fewer rows triaged |
 | no explicit `query` names a filter its staged search never sent (§8.3) | which descriptive, non-filter context to record |
 
-The caller still makes every analytical call (was the outcome negative? is this
-absence meaningful? which plan item?). The tool removes only the error-prone
+The caller still makes every analytical call (is this absence meaningful? was
+the collection the right one? which plan item?), and overrides any default it
+disagrees with. The tool removes only the error-prone
 clerical work.
 
 **Why the tool owns "no never-sent filter" but not the values** (lead ruling,
@@ -385,7 +409,9 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
-| `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
+| `stagedResultsRef` names no staged file and no log entry records it — pruned after 24h, never staged, or logged before `staged_ref` existed | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
+| `stagedResultsRef` names no staged file, but a log entry records it as its `staged_ref` (already logged) | not an error: return that entry with `alreadyLogged: true` and a warning naming its id; write nothing for that op |
+| that already-logged re-send names a different `tool`, `planItemId` or `outcome` than the entry | input error naming the entry and each difference; write nothing. The log is append-only, so a correction is a new entry, without the staged ref, whose notes state it |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |

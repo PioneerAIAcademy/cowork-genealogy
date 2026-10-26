@@ -365,6 +365,31 @@ describe("Project Validator", () => {
       }
     });
 
+    it("reports a log entry staged_ref that is not a string, and allows a string or its absence", async () => {
+      const entry = (extra: Record<string, unknown>) => ({
+        id: "log_001",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00.000Z",
+        tool: "record_search",
+        query: {},
+        outcome: "negative",
+        results_examined: 0,
+        external_site: null,
+        results_ref: null,
+        ...extra,
+      });
+      for (const bad of [null, 7, { ref: "x" }]) {
+        await writeProject({ ...minimalResearch, log: [entry({ staged_ref: bad })] }, minimalTree);
+        const result = await validateProject(testDir);
+        expect(result.errors.some((e) => e.message.includes("staged_ref must be a string"))).toBe(true);
+      }
+      for (const good of [{ staged_ref: "results/.staging/a.json" }, {}]) {
+        await writeProject({ ...minimalResearch, log: [entry(good)] }, minimalTree);
+        const result = await validateProject(testDir);
+        expect(result.errors.some((e) => e.message.includes("staged_ref"))).toBe(false);
+      }
+    });
+
     it("reports a plan item fallback_for that is not a sibling pli_ id, and allows a sibling or null", async () => {
       const item = (id: string, fallback_for: unknown) => ({
         id,
@@ -2940,6 +2965,13 @@ describe("Research closed shapes", () => {
     research.log[1].external_site.site = "archion_de";
     const result = await validateParsed(research, maximalTree);
     expect(JSON.stringify(result.errors)).toMatch(/'archion_de' is not a valid site/);
+  });
+
+  it("accepts the openarch search site on external_site.site (#3185)", async () => {
+    const research = maximalResearch();
+    research.log[1].external_site.site = "openarch";
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
   });
 
   // #1270 — pages_read[].section is the `locality_page_section` closed enum.
