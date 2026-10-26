@@ -120,7 +120,7 @@ Skill evals include tool-usage rubric dimensions, so there is no separate MCP to
 
 ## Run log naming
 
-Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is **no model directory** — the model the run executed against is stored in the run-log JSON's `model` field and in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter. Activating a run log restores the `model:` frontmatter alongside the rest of the snapshot.
+Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is **no model directory**. The run log's envelope `model` field is the harness default (`DEFAULT_MODEL`), not necessarily what ran. What each thread actually ran is in `runs[].main_thread.models` and `runs[].subagents[].models` (see "Model Pinning"). The pinned model lives in the suite's own `model:` frontmatter, and activating a run log restores it alongside the rest of the snapshot.
 
 Filenames classify into three kinds:
 
@@ -366,7 +366,12 @@ Each e2e run also leaves a readable `reports/run-<ts>.txt` beside its log (gitig
 
 ## Model Pinning
 
-The skill harness pins a specific model per skill via `model:` in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
+Which model each thread of a unit run uses (`session_model_for` in `harness/orchestrator.py`, issue #3870):
+
+- **A `SKILL.md` suite** (`research`, the test-only `eval/skills/extraction-append`): the skill runs on the main thread, so the skill's `model:` frontmatter, when set, is the session model. These are Claude Code's turn-scoped skill-override semantics.
+- **An agent-keyed suite** (every `packages/engine/plugin/agents/<name>.md` suite): the main thread is only the dispatcher (direct tests) or the router, and runs the harness default (`DEFAULT_MODEL`), as production's lead does. The agent runs as a subagent on its own `model:` and `effort:` lines, which the CLI applies. Until 2026-10-26 the agent's `model:` was applied to the whole session, so a helper moved to Haiku got a Haiku dispatcher no production user has. Logs from that window show it in `main_thread.models`.
+
+Activating a run log restores the `model:` field along with the rest of the snapshot. The envelope `model` field is always the harness default. Read `runs[].main_thread.models` / `runs[].subagents[].models` for what ran: `make unit-compare` prints both per test and names a move in either as a differing setting.
 
 `judge_model` is stamped on each run log at the envelope (required by issue #2479). This reverses the earlier "project-global, not per-run-versioned" rule: a judge-model bump is now a dated field on the artifact rather than a date we have to look up elsewhere, so a regrade or a mixed-era comparison can tell which model graded which log. The field is optional on the schema — logs committed before the field was added simply omit it, and the writer emits the key only when non-empty so historical bytes don't gain a stray `null`.
 
