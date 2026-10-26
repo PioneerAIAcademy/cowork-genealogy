@@ -31,6 +31,7 @@ const PINNED = [
   "place_search",
   "place_search_all",
   "project_context",
+  "project_list",
   "rank_search_matches",
   "record_person_matches",
   "record_read",
