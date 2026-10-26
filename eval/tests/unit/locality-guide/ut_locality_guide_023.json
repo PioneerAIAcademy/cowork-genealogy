@@ -32,9 +32,7 @@
     "external-links-search-any",
     "wiki-search-any",
     "wikipedia-search-any",
-    "wiki-read-any",
-    "volume-search-any",
-    "catalog-search-empty"
+    "wiki-read-any"
   ],
   "judge_context": [
     "The skill MUST call wiki_place_page at least once with `standardPlace: 'Vermont, United States'` (or the leaf 'Vermont') — the request explicitly asks the skill to pull the Vermont place page. Returning a guide without invoking wiki_place_page is a failure regardless of how plausible the guide reads, because the migration target is the server-side fetch path.",
