@@ -32,6 +32,7 @@ from typing import Any
 from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
+    ClaudeSDKClient,
     HookMatcher,
     ResultMessage,
     SystemMessage,
@@ -42,6 +43,7 @@ from claude_agent_sdk import (
 )
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
+from e2e.turn_loop import Turn as TurnRecord, accumulate_usage, stream_turns
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
@@ -2285,6 +2287,14 @@ async def _run_agent(
     # at its first step. Section F turns it on for real, when the orchestrator replies
     # to each turn with `next_auto_reply` instead of running one long turn.
     _step_gate = None
+    _boundary = None
+    #: The run's turns, appended by `stream_turns` and read by the pretool hook
+    #: (to stamp `step`) and the ResultMessage branch (to stamp `usage`). Empty
+    #: on every non-step run, where the hook's stamp is a no-op.
+    _step_turns: list[TurnRecord] = []
+    #: `next_auto_reply`'s state, carried across the run's turns. The host owns
+    #: it in production (`sessions.auto_reply`); here it is one dict.
+    _reply_state: dict[str, Any] = {}
     if step_mode:
         _boundary = load_step_boundary()
         _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode)
@@ -2323,6 +2333,13 @@ async def _run_agent(
                     _out["continue_"] = False
                     _out["stopReason"] = _verdict[1]
                 return _out
+            # Allowed, so if it was a step this turn OPENED with, record which.
+            # `next_auto_reply` keys on the step a turn ran, and the gate is the
+            # only thing that knows: by the time the turn ends, the spawn is just
+            # another tool call among dozens.
+            _candidate = _boundary.step_candidate(tool_name, input_data.get("tool_input") or {})
+            if _candidate and _step_turns and _step_turns[-1].step is None:
+                _step_turns[-1].step = _boundary.bare_name(_candidate)
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
@@ -3000,10 +3017,69 @@ async def _run_agent(
 
         current_options = options
         current_prompt = user_message
+        # Section F: step mode drives turns on ONE persistent session. The client
+        # is built here rather than inside the loop because the loop's other
+        # entry is a stall resume, which a persistent session has no answer for
+        # (see the stall arm below).
+        step_client = None
+        if _step_gate is not None:
+            step_client = ClaudeSDKClient(options=options)
+            await step_client.connect(None)  # None = streaming input
+            live["client"] = step_client
+
+        def _last_text(turn) -> str | None:
+            """The turn's last assistant text — where the offer line lives."""
+            for message in reversed(turn.messages):
+                if isinstance(message, AssistantMessage):
+                    for block in reversed(message.content):
+                        if isinstance(block, TextBlock):
+                            return block.text
+            return None
+
+        def _decide_reply(turn):
+            """What the host replies after this turn, via production's own function.
+
+            Section F's whole point: `next_auto_reply` is the function the
+            prototype worker calls, so e2e exercises the mechanism rather than a
+            harness-shaped imitation. Everything here is just gathering its
+            arguments.
+            """
+            previous = next(
+                (t.step for t in reversed(_step_turns[: turn.index]) if t.step), None
+            )
+            outcome = "ok"
+            if (turn.usage or {}).get("is_error"):
+                outcome = str((turn.usage or {}).get("stop_reason") or "error")
+            decision = _boundary.next_auto_reply(
+                _reply_state,
+                step_mode,
+                previous,
+                turn.step,
+                _boundary.offered_step(_last_text(turn)),
+                outcome,
+            )
+            _reply_state.clear()
+            _reply_state.update(decision.get("state") or {})
+            reply = decision.get("reply")
+            if reply:
+                _emit(f"[host reply] turn {turn.index} ({turn.step or 'no step'}) -> {reply}")
+            return reply
+
         while True:  # session (re)start loop — re-entered only to resume a stall
-            iterator = live["it"] = open_query(
-                prompt=current_prompt, options=current_options
-            ).__aiter__()
+            if step_client is not None:
+                # Section F: one session, many turns. A one-shot query would end
+                # at the first step boundary and the run would read as finished.
+                iterator = live["it"] = stream_turns(
+                    client=step_client,
+                    first_message=current_prompt,
+                    decide_reply=_decide_reply,
+                    turns=_step_turns,
+                    max_replies=_boundary.MAX_AUTO_REPLIES,
+                ).__aiter__()
+            else:
+                iterator = live["it"] = open_query(
+                    prompt=current_prompt, options=current_options
+                ).__aiter__()
             _emit("agent started" if resumes["n"] == 0
                   else f"resumed session (attempt {resumes['n']}) after stall")
             restart = False
@@ -3035,6 +3111,23 @@ async def _run_agent(
                         error = (
                             f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
                             f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
+                    # Step mode ends the run on a stall rather than resuming
+                    # (lead, 2026-10-26: "if ending the run is a lot simpler,
+                    # build that first and see how often a stall really
+                    # happens"). It IS a lot simpler: resume re-opens a one-shot
+                    # query with `resume=<session_id>`, which a persistent
+                    # session has no answer for -- it needs a disconnect, a new
+                    # client, a reconnect and a ruling on the interrupted turn's
+                    # partial messages. The turn goes in the error text so the
+                    # frequency is measurable from the committed runs.
+                    if step_client is not None:
+                        aborted_reason = "sdk_stream_silence"
+                        error = (
+                            f"no SDK message within {fixture.caps.inactivity_seconds}s (inactivity)"
+                            f" on turn {len(_step_turns) - 1} "
+                            f"({(_step_turns[-1].step if _step_turns else None) or 'no step'})"
                         )
                         return
                     if _should_resume():
@@ -3325,6 +3418,21 @@ async def _run_agent(
                             None,
                         ]
                     )
+                    # Step mode: stamp the TURN, and accumulate at the end.
+                    # One ResultMessage arrives per turn on a persistent session
+                    # where a one-shot query had one per run, so assigning here
+                    # would record the LAST turn's figures as the run's (lead,
+                    # 2026-10-26; `accumulate_usage` carries the reasoning).
+                    if _step_turns:
+                        _step_turns[-1].usage = {
+                            "duration_ms": message.duration_ms,
+                            "duration_api_ms": message.duration_api_ms,
+                            "num_turns": message.num_turns,
+                            "is_error": message.is_error,
+                            "stop_reason": message.stop_reason,
+                            "total_cost_usd": message.total_cost_usd,
+                            "usage": message.usage,
+                        }
                     usage = {
                         "duration_ms": message.duration_ms,
                         "duration_api_ms": message.duration_api_ms,
@@ -3401,6 +3509,23 @@ async def _run_agent(
                         error = (
                             f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
                             f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
+                    # Step mode ends the run on a stall rather than resuming
+                    # (lead, 2026-10-26: "if ending the run is a lot simpler,
+                    # build that first and see how often a stall really
+                    # happens"). It IS a lot simpler: resume re-opens a one-shot
+                    # query with `resume=<session_id>`, which a persistent
+                    # session has no answer for -- it needs a disconnect, a new
+                    # client, a reconnect and a ruling on the interrupted turn's
+                    # partial messages. The turn goes in the error text so the
+                    # frequency is measurable from the committed runs.
+                    if step_client is not None:
+                        aborted_reason = "no_progress_stall"
+                        error = (
+                            f"no progress (assistant text / tool call) for {fixture.caps.progress_stall_seconds}s"
+                            f" on turn {len(_step_turns) - 1} "
+                            f"({(_step_turns[-1].step if _step_turns else None) or 'no step'})"
                         )
                         return
                     if _should_resume():
@@ -3495,6 +3620,18 @@ async def _run_agent(
     # `usage_source` marks which one you're reading: a fallback block has exact
     # token counts but a null cost, and must not be compared against a clean run's
     # `total_cost_usd`.
+    # Step mode: the run's figures are the SUM over its turns, not the last
+    # turn's ResultMessage (lead, 2026-10-26). This also sidesteps
+    # `result_message_covers_last_query_only`, which cannot see the problem here:
+    # it counts `system:init` rows, and a persistent session is ONE CLI process
+    # emitting ONE init however many turns it serves. So a multi-turn step run
+    # would read to every report as a clean single-query run carrying the last
+    # turn's cost.
+    if _step_turns:
+        _accumulated = accumulate_usage(_step_turns)
+        if _accumulated:
+            usage = {**usage, **_accumulated}
+
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
         # To the start of the teardown, not to now: waiting for the CLI to
