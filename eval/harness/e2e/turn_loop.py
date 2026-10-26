@@ -137,6 +137,57 @@ async def run_turns(
     return TurnLoopResult(turns=turns, stop=stop)
 
 
+async def stream_turns(
+    *,
+    client: Any,
+    first_message: str,
+    decide_reply: Callable[[Turn], Awaitable[str | None] | str | None],
+    turns: list[Turn],
+    max_replies: int,
+) -> Any:
+    """The same sequencing as `run_turns`, as ONE flat stream of messages.
+
+    This is the shape the e2e orchestrator needs. Its message loop is ~300 lines
+    of folding -- narration, tool calls, usage, timeline, the guardrail shadow --
+    plus a per-message inactivity timeout and a stall-resume path. Inverting that
+    into `run_turns`' `on_message` callback would move all of it; consuming a
+    generator instead leaves every line of it where it is, and the only thing
+    that changes is where `StopAsyncIteration` comes from: the end of the RUN
+    rather than the end of the first turn.
+
+    **No timeout here, deliberately.** The orchestrator already applies
+    `fixture.caps.inactivity_seconds` per message and relabels a Windows sleep
+    before treating silence as a stall. A second deadline inside this generator
+    would fire first on a long step and bypass that relabelling, so silence stays
+    the caller's to detect.
+
+    `turns` is appended in place rather than returned, because a generator's
+    return value is not reachable from `async for`. The caller reads it after the
+    stream ends -- and, for the current turn, during it: `turns[-1]` is the turn
+    each message belongs to, which is how the caller stamps `step` before
+    `decide_reply` asks for it.
+    """
+    pending: str | None = first_message
+    while pending is not None:
+        if len(turns) > max_replies:
+            return
+        turn = Turn(index=len(turns), sent=pending)
+        turns.append(turn)
+        started = time.monotonic()
+        await client.query(pending)
+        async for message in client.receive_response():
+            turn.messages.append(message)
+            yield message
+        turn.wall_ms = int((time.monotonic() - started) * 1000)
+
+        decided = decide_reply(turn)
+        if asyncio.iscoroutine(decided):
+            decided = await decided
+        decided = decided if (decided or "").strip() else None
+        turn.reply = decided
+        pending = decided
+
+
 async def _with_timeout(stream: Iterable[Any] | Any, timeout_s: float):
     """`stream`, with `timeout_s` applied to each message rather than to the turn.
 

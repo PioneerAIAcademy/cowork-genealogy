@@ -23,6 +23,7 @@ from e2e.turn_loop import (  # noqa: E402
     STOP_REPLY_CAP,
     STOP_SILENCE,
     run_turns,
+    stream_turns,
 )
 
 
@@ -183,3 +184,116 @@ def test_an_empty_reply_ends_the_run_rather_than_sending_a_blank_turn(reply):
     out = drive(client, [reply])
     assert out.stop == STOP_NO_REPLY
     assert client.sent == ["find his parents"]
+
+
+# ── stream_turns: the shape the orchestrator consumes ───────────────────────────
+
+
+def stream(client, replies, *, max_replies=30):
+    """Collect `stream_turns`' flat message stream plus the turns it recorded."""
+    turns: list = []
+    seen: list = []
+
+    async def go():
+        def decide(turn):
+            return replies[turn.index] if turn.index < len(replies) else None
+
+        agen = stream_turns(
+            client=client,
+            first_message="find his parents",
+            decide_reply=decide,
+            turns=turns,
+            max_replies=max_replies,
+        )
+        async for message in agen:
+            seen.append(message)
+
+    asyncio.run(go())
+    return seen, turns
+
+
+def test_the_stream_is_flat_across_turns_so_the_message_loop_is_untouched():
+    """The orchestrator's loop ends on StopAsyncIteration. Flattening means that
+    now arrives at the end of the RUN rather than the end of turn one -- which is
+    the entire reason this shape exists."""
+    client = FakeClient([["a1", "a2"], ["b1"], ["c1"]])
+    seen, turns = stream(client, ["Keep going.", "Keep going."])
+    assert seen == ["a1", "a2", "b1", "c1"]
+    assert len(turns) == 3
+    assert client.sent == ["find his parents", "Keep going.", "Keep going."]
+
+
+def test_turns_is_appended_in_place_so_the_caller_can_read_the_current_turn():
+    """`turns[-1]` is the turn each message belongs to while the stream runs --
+    how the caller stamps `step` before `decide_reply` asks for it. A generator's
+    return value is unreachable from `async for`, so in-place is not a style
+    choice."""
+    client = FakeClient([["a"], ["b"]])
+    turns: list = []
+    indices: list[int] = []
+
+    async def go():
+        agen = stream_turns(
+            client=client,
+            first_message="go",
+            decide_reply=lambda t: "Keep going." if t.index == 0 else None,
+            turns=turns,
+            max_replies=30,
+        )
+        async for _ in agen:
+            indices.append(turns[-1].index)
+
+    asyncio.run(go())
+    assert indices == [0, 1]
+
+
+def test_stream_turns_records_the_same_per_turn_fields_run_turns_does():
+    client = FakeClient([["a"], ["b"]])
+    _, turns = stream(client, ["Keep going."])
+    assert [t.sent for t in turns] == ["find his parents", "Keep going."]
+    assert [t.reply for t in turns] == ["Keep going.", None]
+    assert all(isinstance(t.wall_ms, int) for t in turns)
+    assert [t.messages for t in turns] == [["a"], ["b"]]
+
+
+def test_the_reply_cap_bounds_the_stream_too():
+    client = FakeClient([["a"], ["b"], ["c"], ["d"]])
+    seen, turns = stream(client, ["Keep going."] * 9, max_replies=1)
+    assert len(turns) == 2 and seen == ["a", "b"]
+    assert client.sent == ["find his parents", "Keep going."]
+
+
+def test_a_blank_reply_ends_the_stream_rather_than_sending_an_empty_turn():
+    client = FakeClient([["a"], ["b"]])
+    seen, turns = stream(client, ["   "])
+    assert seen == ["a"] and len(turns) == 1
+    assert client.sent == ["find his parents"]
+
+
+def test_stream_turns_waits_rather_than_timing_out_on_a_silent_turn():
+    """Silence is the CALLER's to detect: the orchestrator relabels a Windows
+    sleep before treating it as a stall, and a deadline inside this generator
+    would fire first on a long step and bypass that.
+
+    Behavioural, not a source grep: a stalled turn must still be waiting when a
+    window far longer than any sane internal deadline has passed, and the
+    TimeoutError must come from the wrapper here rather than from the generator.
+    """
+    client = FakeClient([["a"], []], stall_on=1)
+    turns: list = []
+
+    async def go():
+        agen = stream_turns(
+            client=client,
+            first_message="go",
+            decide_reply=lambda t: "Keep going." if t.index == 0 else None,
+            turns=turns,
+            max_replies=30,
+        )
+        async for _ in agen:
+            pass
+
+    with pytest.raises(asyncio.TimeoutError):
+        asyncio.run(asyncio.wait_for(go(), timeout=0.2))
+    # It reached the stalled second turn and was still waiting there.
+    assert len(turns) == 2 and turns[-1].sent == "Keep going."
