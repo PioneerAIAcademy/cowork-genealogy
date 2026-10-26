@@ -135,6 +135,19 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
+        "file": "eval/tests/unit/research-plan/negative-record-extraction-request.json",
+        "tool": "extraction_append",
+        "quotes": [
+            "The correct action is a hand-back naming extraction (`extraction_append`, or the record-structurer agent), with no plan item written and no tool called.",
+        ],
+        "reason": (
+            "cross-owner mention: a routing-negative test naming where the "
+            "work belongs, not a call research-plan is expected to make. The "
+            "same sentence says 'with no plan item written and no tool "
+            "called', so it grades the hand-back, not the call."
+        ),
+    },
+    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
