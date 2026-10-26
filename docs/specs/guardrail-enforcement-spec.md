@@ -1311,19 +1311,33 @@ the evidence, not of a bookkeeping field.
   reference-checks `extracted_for_question_ids`, so a dangling id is possible;
   none exists in the corpus, and blocking on one is the safer direction.
 
-**The satisfying shape, including the case that has no winner.** For a conflict
-that can be settled, `conflict-resolution` writes `status: "resolved"` with
-`independence_analysis`, `weighing_analysis` and `resolution_rationale`, or
-`moot` with a rationale. For a conflict the researcher weighed and honestly
-**could not** settle, neither reads true as usually stated — so the shape is
-`resolved` with all three analyses, `resolution_rationale` saying why it cannot
-be settled and what would settle it, and `preferred_assertion_id` left **null**,
-which `conflictInvariants` permits. That is a deferral recorded as a finding, per
-`gps-research-flow.md`'s "a conflict that can't be resolved yet is written down
-as a finding, with what would resolve it"; it is not `moot`, which asserts the
-conflict no longer matters. The gate's refusal message states this shape, because
-without it a deferring researcher has no writable route to `completed` and no
-override tier exists. Note that the corpus's 52 resolved conflicts are counted
+**The satisfying shape, and the case that has no winner — which no longer has
+one.** For a conflict that can be settled, `conflict-resolution` writes
+`status: "resolved"` with `independence_analysis`, `weighing_analysis` and
+`resolution_rationale`, or `moot` with a rationale.
+
+For a conflict the researcher weighed and honestly **could not** settle, this
+section used to prescribe `resolved` with all three analyses and
+`preferred_assertion_id` left null — the shape that cleared the gate, since
+otherwise a deferring researcher had no writable route to `completed` and no
+override tier exists. **Step mode's decision 12 (lead, 2026-10-18) removes that
+route rather than widening it:** such a conflict stays `unresolved`.
+
+The reason is that the old shape bought a green gate with a false statement. A
+`resolved` conflict carrying `resolution_kind: "tree"` asserts the tree's
+existing conclusion *won the weighing* — a finding about the evidence. "I
+weighed these and could not tell" is a different finding, and writing it as the
+first makes an open question read as settled to every later reader, which is the
+opposite of what `gps-research-flow.md`'s "a conflict that can't be resolved yet
+is written down as a finding, with what would resolve it" asks for. It is not
+`moot` either, which asserts the conflict no longer matters.
+
+So the gate keeps refusing, and **that refusal is now the designed end state, not
+a dead end**: the project does not reach `completed`, the question is concluded
+at the tier the evidence actually reaches (`not_proved` included), and the run
+ends on that open conclusion. The deferral is still recorded as a finding — on
+the conflict, in its three analyses and `resolution_rationale` — it just no
+longer claims to be a resolution. The gate's refusal message states this. Note that the corpus's 52 resolved conflicts are counted
 over resolved conflicts generally and are **not** evidence that any refused run
 could have satisfied the gate.
 

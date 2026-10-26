@@ -6438,10 +6438,14 @@ function applyOne(
             "'competitor' naming the winning assertion, 'tree' where the tree's existing conclusion " +
             "stands, or 'synthesis' with a resolved_value) or 'moot' (with a rationale for why it " +
             "no longer matters) — then retry completing the project. A conflict you weighed and " +
-            "could not settle is still recorded as 'resolved' with all three analyses and " +
-            "resolution_kind 'tree', saying in resolution_rationale why it cannot be settled and " +
-            "what would settle it — a deferral is a finding, not an omission, but it is not " +
-            "'moot', which means the conflict no longer matters. " +
+            "could not settle STAYS 'unresolved' (decision 12): write all three analyses on it " +
+            "and say in resolution_rationale what would settle it, but do NOT record it " +
+            "'resolved' with resolution_kind 'tree'. That kind means the tree's existing " +
+            "conclusion won the weighing, which is a finding about the evidence; \"I could not " +
+            "tell\" is not that finding, and recording it as one makes an open question read as " +
+            "a settled one. It is not 'moot' either, which means the conflict no longer matters. " +
+            "Such a project does not complete: conclude the question at the tier the evidence " +
+            "reaches, 'not_proved' included, and let the run end on that open conclusion. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
