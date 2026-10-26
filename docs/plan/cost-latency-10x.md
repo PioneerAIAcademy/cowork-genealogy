@@ -349,8 +349,10 @@ the first time it is pulled.
   `effort=`, and `_pretool_hook` writes the helper level onto each Agent call (CLI 2.1.294's
   per-spawn `effort`). Measured locally on 2.1.294 (`dev/probe_effort_capture.py`): main
   `medium` with the helper held at `high`; a per-agent `low` reaching `person-evidence`
-  under both its bare and namespaced names. Still owed: the fresh-E2B-sandbox check (a
-  resumed sandbox keeps its create-time env), and the lead's call on turning the alpha down.
+  under both its bare and namespaced names. The lead set the alpha's main thread to `low` on
+  2026-10-21 (`ORCHESTRATOR_EFFORT` in `deploy/fly.toml`), and fresh sandboxes picked it up:
+  the proxy logged 574 main-thread calls at `low` in the 14 days to 2026-10-25
+  (`make alpha-costs`). The helpers' level is still the lead's call.
 - **`EFFORT_LEVEL` is not wired into `eval/RunE2E.bat`** — it threads `DENY_SHELL`
   and `DENY_PROJECT_READS` only, so the Windows genealogists cannot run an arm.
   **Wire it with a paired CI guard** (`check_added_runlogs_effort_high`, modelled on
