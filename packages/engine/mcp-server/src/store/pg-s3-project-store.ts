@@ -87,6 +87,7 @@ import type {
   JsonWrite,
   ProjectDirState,
   ProjectEntry,
+  ProjectListing,
   ProjectPathClass,
   ProjectStore,
   WriteJsonBothOptions,
@@ -901,6 +902,11 @@ export class PgS3ProjectStore implements ProjectStore {
             );
       await this.releaseObjects(deleted.rows.map((r) => r.s3_key));
     });
+  }
+
+  /** The one project this store is bound to. */
+  async listProjects(): Promise<ProjectListing> {
+    return { mode: "hosted", projectPaths: [this.anchorPath] };
   }
 
   // ── internals ────────────────────────────────────────────────────────────

@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 12, hint-samples.csv row 391, flags adds_son, confidence 3). Draft transcribed from a 1679 Saint-Michel-de-la-Roë baptism entry naming the mother Jeanne Jourdan; unverified."
+  "image_basis": false,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:6ZQJ-FPG4",
+    "identity": "same"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 12, hint-samples.csv row 391, flags adds_son, confidence 3). Resolved 2026-10-25 as a TRUE MATCH on index evidence (image_basis false). The index establishes the father's indexed name as Michel Ferré (the subject's husband, distinct from sister Renée's husband René Ferré), the mother's given name as Jeanne, the parish Saint-Michel-de-la-Roë, and the chronology: the 1679 baptism (ark:/61903/1:1:6ZQJ-FPG4) falls between the couple's documented children Marguerite (1674, 6ZQJ-62ZH) and Marie (1682, 6ZQJ-RMQL). The mother's surname is rendered variably across the couple's entries (Houderon 1674, blank 1682, Jourdan 1679), which supports but does not independently prove the same woman. The researcher's direct reading of the original register gives the surname as 'Houdemoy', a variant of Houdemon — supporting context from direct examination, NOT a calibrated/licensed image finding: Step 1a same-page calibration could not be completed (the 19 Mar and 7 Apr page-mates are unindexed). The machine OCR was unstable and is not the source of that reading or cited as confirmation. A second genealogist, Isaac Boateng, concurs with the true-match assessment. See README 'Notes for reviewers'."
 }

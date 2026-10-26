@@ -137,7 +137,7 @@ function truncateQuestion(text: string): string {
 }
 
 /** Preferred names entry (first entry when none is flagged) as "given surname". */
-function preferredDisplayName(person: any): string | null {
+export function preferredDisplayName(person: any): string | null {
   const names = Array.isArray(person?.names) ? person.names.filter((n: any) => n && typeof n === "object") : [];
   const preferred = preferredName(names);
   if (preferred === undefined) return null;
