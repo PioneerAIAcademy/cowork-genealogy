@@ -1070,7 +1070,7 @@ describe("extraction_append: documents", () => {
         },
       ]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
-      expect(r.records[0].summary.split("\n")).toContain("Places kept as written, with no standard place found: Nowhereville.");
+      expect(r.records[0].summary.split("\n").at(-1)).toBe("Places kept as written, with no standard place found: Nowhereville.");
     });
 
     it("reads a doubted value's place without its [?], which stays in the value", async () => {
