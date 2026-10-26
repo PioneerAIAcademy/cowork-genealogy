@@ -1,7 +1,7 @@
 # Phase 5 — the remaining prose (detailed pass)
 
-**Status:** BUILT, 2026-09-30 — every step below carries what landed. Written 2026-09-30 on the `research-as-a-job-phase2` branch
-(unmerged), after phase 4 landed. **Revised the same day** after a plan review found
+**Status:** BUILT, 2026-09-30 — every step below carries what landed. Written 2026-09-30 on the `research-as-a-job-phase2` branch,
+closed 2026-10-23 (tag `phase2-final`), after phase 4 landed. **Revised the same day** after a plan review found
 three blocking defects in the first draft — including one in its central finding — and
 after the product owner answered the two questions it escalated. Parent:
 `docs/plan/research-as-a-job-later-REVISED.md`, "## Phase 5 — the remaining prose".

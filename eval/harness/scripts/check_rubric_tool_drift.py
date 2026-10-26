@@ -591,38 +591,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "packages/engine/plugin/agents/image-reader.md",
-        "tool": "record_read",
-        "quotes": [
-            "The pivot recommendation: read the **indexed** record for this image",
-            "Do NOT use for indexed records (use record_read / record_search)",
-        ],
-        "reason": (
-            "cross-owner: named as the pivot the agent RECOMMENDS to its "
-            "caller, never calls - 'The pivot recommendation: read the "
-            "**indexed** record for this image (`record_read` / "
-            "`record_search` / `search-full-text`)'; its description line "
-            "says 'Do NOT use for indexed records (use record_read / "
-            "record_search)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/image-reader.md",
-        "tool": "record_search",
-        "quotes": [
-            "The pivot recommendation: read the **indexed** record for this image",
-            "Do NOT use for indexed records (use record_read / record_search)",
-        ],
-        "reason": (
-            "cross-owner: named as the pivot the agent RECOMMENDS to its "
-            "caller, never calls - 'The pivot recommendation: read the "
-            "**indexed** record for this image (`record_read` / "
-            "`record_search` / `search-full-text`)'; its description line "
-            "says 'Do NOT use for indexed records (use record_read / "
-            "record_search)'"
-        ),
-    },
-    {
         "file": "packages/engine/plugin/agents/proof-conclusion.md",
         "tool": "collections_search",
         "quotes": [

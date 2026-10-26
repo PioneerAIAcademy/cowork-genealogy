@@ -47,6 +47,7 @@ import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
+import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -629,9 +630,10 @@ const SOURCE_NAMED =
  * bracketed list of names after the household name ("Thomas Flynn household
  * (Mary, Patrick, Bridget)", `bracketedRosters`). What neither reads passes: a
  * note with no head claim keeps the older arms' verdict, so "Thomas Flynn,
- * Household head; his son Patrick" passes as its 1850 twin does.
+ * Household head; his son Patrick" passes as its 1850 twin does. The years
+ * (`HEAD_ONLY_US_CENSUS_YEARS`) live in the census table, which timeline_build
+ * also reads.
  */
-const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810, 1820, 1830, 1840]);
 
 /**
  * A phrase read as stating household structure, as the note wrote it. `head`
