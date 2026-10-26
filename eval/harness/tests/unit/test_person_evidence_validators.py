@@ -45,6 +45,7 @@ from test_person_evidence import (  # noqa: E402
     test_naming_system_read_from_wiki as check_naming,
     test_unexplained_move_not_confident as check_unexplained,
     test_corridor_move_links_confident as check_corridor_link,
+    test_identity_links_follow_their_persona as check_identity,
 )
 
 
@@ -1537,3 +1538,126 @@ def test_unexplained_fires_on_an_existing_link_raised_to_confident():
     after = {"project": before["project"], "person_evidence": [_pe(1, "I1", "confident")]}
     with pytest.raises(AssertionError, match="probable"):
         check_unexplained(_state(before, _tree("I1")), _state(after, _tree("I1")), _CAP)
+
+
+
+# --- test_identity_links_follow_their_persona (#3713) -----------------------
+
+_ID_R1 = "ark:/61903/1:1:R1AB-CDE"
+
+
+def _idfact(aid, role, fact_type, persona=None, record=_ID_R1):
+    return {"id": aid, "record_id": record, "record_role": role, "fact_type": fact_type,
+            "record_persona_id": persona or f"P-{role}"}
+
+
+def _idlink(pid, aid, person):
+    return {"id": pid, "assertion_id": aid, "person_id": person}
+
+
+def _identity(assertions, links, calls=(), before_links=()):
+    before = {"assertions": assertions, "person_evidence": list(before_links)}
+    after = {"assertions": assertions, "person_evidence": list(before_links) + list(links)}
+    check_identity(_state(before), _state(after), list(calls))
+
+
+def _idmf(response, **args):
+    return {"tool": "mcp__genealogy__materialize_facts", "args": args, "response": response}
+
+
+def test_identity_fires_when_one_persona_is_split_between_two_people():
+    with pytest.raises(AssertionError) as exc:
+        _identity([_idfact("a_1", "head", "name"), _idfact("a_2", "head", "birth")],
+                  [_idlink("pe_1", "a_1", "I1"), _idlink("pe_2", "a_2", "I2")])
+    assert "linked to 2 different people" in str(exc.value)
+
+
+def test_identity_fires_when_links_name_someone_other_than_the_materialized_person():
+    """Single form: the response names the person; the request names none."""
+    with pytest.raises(AssertionError) as exc:
+        _identity([_idfact("a_1", "head", "name"), _idfact("a_2", "head", "birth")],
+                  [_idlink("pe_1", "a_1", "I2"), _idlink("pe_2", "a_2", "I2")],
+                  [_idmf({"ok": True, "personId": "I1", "created": False},
+                       recordId=_ID_R1, recordRole="head")])
+    assert "wrote it onto I1" in str(exc.value)
+
+
+def test_identity_fires_on_a_real_shape_batch_read_by_position():
+    """Batch results carry no record keys: the op at index i owns results[i].
+    The wife's PascalCase `Name` is her only new identity link, credited to I1 --
+    the person the batch wrote the HEAD onto."""
+    ops = json.dumps([{"recordId": _ID_R1, "recordRole": "head"},
+                      {"recordId": _ID_R1, "recordRole": "wife"}])
+    response = {"ok": True, "results": [
+        {"personId": "I1", "created": False, "factsAdded": 1, "factsEnriched": 0,
+         "namesAdded": 0, "refsAttached": 1, "conflicts_surfaced": []},
+        {"personId": "I2", "created": True, "factsAdded": 1, "factsEnriched": 0,
+         "namesAdded": 1, "refsAttached": 1, "conflicts_surfaced": []}]}
+    with pytest.raises(AssertionError) as exc:
+        _identity([_idfact("a_1", "head", "name"), _idfact("a_2", "wife", "Name")],
+                  [_idlink("pe_1", "a_1", "I1"), _idlink("pe_2", "a_2", "I1")],
+                  [_idmf(response, ops=ops)])
+    assert "persona R1AB-CDE/wife" in str(exc.value) and "wrote it onto I2" in str(exc.value)
+
+
+def test_identity_passes_a_correct_household_with_both_sided_links():
+    """Marriage and PascalCase `Relationship` links rightly go to two people."""
+    _identity(
+        [_idfact("a_1", "head", "name"), _idfact("a_2", "wife", "name"), _idfact("a_3", "son", "name"),
+         _idfact("a_4", "head", "marriage"), _idfact("a_5", "son", "Relationship")],
+        [_idlink("pe_1", "a_1", "I1"), _idlink("pe_2", "a_2", "I2"), _idlink("pe_3", "a_3", "I3"),
+         _idlink("pe_4", "a_4", "I1"), _idlink("pe_5", "a_4", "I2"),
+         _idlink("pe_6", "a_5", "I3"), _idlink("pe_7", "a_5", "I1")])
+
+
+def test_identity_passes_a_will_naming_a_child():
+    """`will_children` is an open-enum spelling that names a relative: only an
+    allow-list keeps this green."""
+    _identity(
+        [_idfact("a_1", "testator", "name"), _idfact("a_2", "testator", "will_children"),
+         _idfact("a_3", "testator", "relationship")],
+        [_idlink("pe_1", "a_1", "I1"), _idlink("pe_2", "a_2", "I1"), _idlink("pe_3", "a_2", "I3"),
+         _idlink("pe_4", "a_3", "I1"), _idlink("pe_5", "a_3", "I3")])
+
+
+def test_identity_passes_a_refused_write_then_a_correct_link():
+    """A refused call wrote nothing, even though its op names I1."""
+    _identity([_idfact("a_1", "head", "name"), _idfact("a_2", "head", "birth")],
+              [_idlink("pe_1", "a_1", "I2"), _idlink("pe_2", "a_2", "I2")],
+              [_idmf({"ok": False, "errors": ["warning gate"]},
+                   ops=[{"personId": "I1", "recordId": _ID_R1, "recordRole": "head"}])])
+
+
+def test_identity_ignores_a_pre_existing_link():
+    _identity([_idfact("a_1", "head", "name"), _idfact("a_2", "head", "birth")],
+              [_idlink("pe_2", "a_2", "I1")], before_links=[_idlink("pe_1", "a_1", "I9")])
+
+
+def test_identity_stands_down_when_one_role_covers_two_record_personas():
+    _identity([_idfact("a_1", "child", "name", persona="C1"), _idfact("a_2", "child", "name", persona="C2")],
+              [_idlink("pe_1", "a_1", "I3"), _idlink("pe_2", "a_2", "I4")])
+
+
+def test_identity_skips_a_named_party_op_without_shifting_positions():
+    """A named-party op in the middle of a batch is skipped in place, so the op
+    after it still owns its own result."""
+    ops = [{"recordId": _ID_R1, "recordRole": "head"},
+           {"assertionId": "a_9", "relatedRole": "father", "name": "Thomas"},
+           {"recordId": _ID_R1, "recordRole": "wife"}]
+    response = {"ok": True, "results": [{"personId": "I1"}, {"personId": "I7"},
+                                        {"personId": "I2"}]}
+    _identity([_idfact("a_1", "head", "name"), _idfact("a_2", "wife", "name")],
+              [_idlink("pe_1", "a_1", "I1"), _idlink("pe_2", "a_2", "I2")],
+              [_idmf(response, ops=ops)])
+
+
+def test_identity_matches_a_record_id_across_its_spellings():
+    _identity([_idfact("a_1", "head", "name", record="R1AB-CDE")],
+              [_idlink("pe_1", "a_1", "I1")],
+              [_idmf({"ok": True, "personId": "I1"},
+                   recordId="https://familysearch.org/ark:/61903/1:1:R1AB-CDE", recordRole="Head")])
+
+
+def test_identity_stands_down_without_research_json():
+    with pytest.raises(pytest.skip.Exception):
+        check_identity(_state(None), _state(None), [])

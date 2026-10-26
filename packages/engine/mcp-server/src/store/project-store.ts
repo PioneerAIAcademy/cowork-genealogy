@@ -58,6 +58,11 @@ export interface JsonWrite {
   data: unknown;
 }
 
+/** How this store keeps projects, for `project_list`. `folder`: the caller names
+ *  each project by its own path. `hosted`: these are the paths the caller may
+ *  use; one holding no `research.json` is where a new project goes. */
+export type ProjectListing = { mode: "folder" } | { mode: "hosted"; projectPaths: string[] };
+
 /**
  * One worker attempt's claim of one hosted turn (U6): the `turns` row and the
  * `claim_epoch` the attempt's claim minted. A store bound with one commits a
@@ -171,6 +176,9 @@ export interface ProjectStore {
 
   /** Remove `ref`, best-effort: an absent ref or a lost race is not an error. */
   remove(projectPath: string, ref: string): Promise<void>;
+
+  /** How this store keeps projects (`project_list`). */
+  listProjects(): Promise<ProjectListing>;
 }
 
 let active: ProjectStore | null = null;
@@ -252,6 +260,9 @@ class UnboundProjectStore implements ProjectStore {
     return this.reject();
   }
   remove(): Promise<void> {
+    return this.reject();
+  }
+  listProjects(): Promise<ProjectListing> {
     return this.reject();
   }
 }
