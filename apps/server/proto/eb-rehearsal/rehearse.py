@@ -103,6 +103,8 @@ HTTP_NS = "aws:elbv2:listener:default"
 CERT_DAYS = 30
 MANAGED_NS = "aws:elasticbeanstalk:managedactions"
 HEALTH_NS = "aws:elasticbeanstalk:healthreporting:system"
+# Set here, not in the bundles: under Blueprint StreamLogs fails the launch (handoff step 14).
+LOGS_NS = "aws:elasticbeanstalk:cloudwatch:logs"
 
 # The sqsd options whose values the worker also reads from its environment (U5).
 # ErrorVisibilityTimeout has none.
@@ -110,7 +112,7 @@ MIRRORS = {"MaxRetries": "SQSD_MAX_RETRIES", "VisibilityTimeout": "SQSD_VISIBILI
            "RetentionPeriod": "SQSD_RETENTION_PERIOD_S"}
 SQSD_CONFIG = PROTO / "eb-worker" / ".ebextensions" / "01-sqsd.config"
 # The predeploy hook whose TURN_USERS literal creates every slot user a worker may be told to run as.
-WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh"
+WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh"
 
 # test_proto_bundles.py's EB_VALUE and SECRET_NAME; the test pins these copies equal.
 EB_VALUE = re.compile(r"""^[A-Za-z0-9 _.:/=+\\\-@'"]*$""")
@@ -1133,6 +1135,7 @@ class Rehearsal:
             opt(EBENV_NS, "ServiceRole", self.role_arn("service")),
             opt(MANAGED_NS, "ManagedActionsEnabled", "false"),
             opt(HEALTH_NS, "SystemType", "enhanced"),
+            opt(LOGS_NS, "StreamLogs", "true"), opt(LOGS_NS, "DeleteOnTerminate", "false"),
         ]
         for var, key in TIER_SECRETS[tier].items():
             out.append(opt(SECRETS_NS, var, self.state.get("secrets", {}).get(key) or self.secret_arn(key)))

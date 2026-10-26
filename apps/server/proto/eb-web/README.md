@@ -8,7 +8,7 @@ web-server environment on the Python 3.12 AL2023 platform. Not deployed from her
 | File | Role |
 |---|---|
 | `Procfile` | `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 10` |
-| `.ebextensions/01-web.config` | `PORT`, `WEB_DIST_DIR`, the stream timings, the nudge cap, the `PGSSL*` pair, `HealthCheckPath` and log streaming |
+| `.ebextensions/01-web.config` | `PORT`, `WEB_DIST_DIR`, the stream timings, the nudge cap, the `PGSSL*` pair and `HealthCheckPath` |
 
 `apps/server/tests/test_proto_bundles.py` pins the values against the bundle layout.
 
@@ -25,7 +25,7 @@ web-server environment on the Python 3.12 AL2023 platform. Not deployed from her
 | `AUTONOMOUS_MAX_NUDGES` | `60` | The operator's nudge cap, stamped on every queue message. |
 | `PGSSLMODE` / `PGSSLROOTCERT` | `verify-full` / `/var/app/current/certs/rds-global-bundle.pem` | libpq reads both natively. A DSN query string (`?sslmode=…&sslrootcert=…`) needs `?` and `&`, outside the environment-value character set. Keep `sslmode` out of the DSN: a DSN value overrides the environment. The CA bundle ships at `certs/` in the bundle. |
 | `HealthCheckPath` | `/api/health` | Readiness: 503 until Postgres, the schema (the ledger at this build's level; `migrate.py` runs once per deploy, handoff step 6) and the allowlist are ok. |
-| Logs | `StreamLogs: true`, `DeleteOnTerminate: false` | Retention is FamilySearch's call. |
+| Logs | not set | Under Blueprint `StreamLogs: true` fails the launch (handoff step 14), so the deployer sets it; `rehearse.py` does. |
 
 Create the environment with `LoadBalancerType=application`
 (`aws:elasticbeanstalk:environment`) on `create-environment`: the API default is `classic`,
