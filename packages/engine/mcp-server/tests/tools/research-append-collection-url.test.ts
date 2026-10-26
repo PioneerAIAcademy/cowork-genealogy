@@ -227,3 +227,60 @@ describe("research_append: plan_item.collection_url must be a stored collection"
     expect(r.ok, JSON.stringify(r)).toBe(true);
   });
 });
+
+describe("research_append: an external item appended without collection_url lists the stored collections that fit", () => {
+  const ancestryItem = (over: Record<string, unknown> = {}) => ({
+    repository: "Ancestry",
+    record_type: "census",
+    jurisdiction: "Schuylkill County, Pennsylvania",
+    date_range: "1870",
+    ...over,
+  });
+  const warningsOf = (r: unknown) => {
+    const x = r as { warnings?: string[]; validation?: { warnings?: string[] } };
+    return [...(x.warnings ?? []), ...(x.validation?.warnings ?? [])].filter((w) => w.includes("collection_url"));
+  };
+
+  it("warns, naming the stored url, when an Ancestry census item is appended without one", async () => {
+    seed([item()]);
+    storeCollections([STORED]);
+    const r = await appendItem(ancestryItem());
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const w = warningsOf(r);
+    expect(w, JSON.stringify(r)).toHaveLength(1);
+    expect(w[0]).toContain(STORED);
+    expect(w[0]).toMatch(/leave it off for a site-wide search/);
+  });
+
+  it("warns for an inline item of a plans append too", async () => {
+    seed([item()]);
+    const research = JSON.parse(readFileSync(join(dir, "research.json"), "utf-8"));
+    research.questions.push({ ...research.questions[0], id: "q_002" });
+    writeFileSync(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+    storeCollections([STORED]);
+    const r = await run({ section: "plans", op: "append", entry: {
+      question_id: "q_002", status: "active", created: "2026-01-02",
+      items: [{ ...item(), id: "pli_010", ...ancestryItem() }],
+    } });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(warningsOf(r)).toHaveLength(1);
+  });
+
+  it("stays quiet with a collection_url, for FamilySearch, on an update, or when nothing stored fits", async () => {
+    seed([item()]);
+    storeCollections([STORED]);
+    expect(warningsOf(await appendItem(ancestryItem({ collection_url: STORED })))).toEqual([]);
+    expect(warningsOf(await appendItem(ancestryItem({ repository: "FamilySearch" })))).toEqual([]);
+    expect(warningsOf(await appendItem(ancestryItem({ record_type: "probate" })))).toEqual([]);
+    expect(warningsOf(await appendItem(ancestryItem({ jurisdiction: "Hordaland, Norway" })))).toEqual([]);
+    expect(warningsOf(await run({ section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { status: "in_progress" } }))).toEqual([]);
+  });
+
+  it("stays quiet when nothing is stored at all", async () => {
+    seed([item()]);
+    const r = await appendItem(ancestryItem());
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(warningsOf(r)).toEqual([]);
+  });
+});
