@@ -92,6 +92,8 @@ const NOT_RENDERED: Record<string, string> = {
     "Host-side path to the mentor's prose artifact. The viewer cannot read it, and it is the reason this section shows the verdict rather than the critique (#1223).",
   "log_entry.plan_item_id":
     "FK to the plan item that prompted the search. The plan renders in its own section; showing a raw pli_ id in the log row would be noise.",
+  "log_entry.staged_ref":
+    "Host bookkeeping: the deleted results/.staging/ file the entry was finalized from, kept so research_log_append can answer a re-sent ref. It names nothing a reader can open.",
 };
 
 /**
