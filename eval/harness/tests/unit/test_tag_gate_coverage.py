@@ -53,6 +53,11 @@ DORMANT: dict[str, str] = {
         "in search-wikipedia, its only test was ut_search_wikipedia_008, deleted by "
         "PR #3871; issue #3870 restores it"
     ),
+    "census": (
+        "in search-familysearch-wiki, its only test was ut_search_wiki_008, deleted "
+        "with that agent's move to Haiku: the bench's Haiku lead reworded the "
+        "delegation; issue #3870 restores it"
+    ),
 }
 
 
