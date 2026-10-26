@@ -41,11 +41,14 @@ DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
 JUDGE_TEMPERATURE = 0.0
 # The last API version that accepts sampling parameters; 2026-10-21 rejects them.
 LEGACY_SAMPLING_API_VERSION = "2023-06-01"
-# One judge call's ceiling. A grading call takes about 20 s, and 4096 output
-# tokens about 80 s; the SDK's default of 600 s let a hung call sit for ten
-# minutes before `_call_judge` could retry it. The SDK's own retries are off
-# (`max_retries=0`), so `_call_judge`'s loop, with its backoff, is the only one.
-JUDGE_TIMEOUT_SECONDS = 180.0
+# One judge call's ceiling. A grading call takes about 20 s; the largest
+# answer measured in the #2995 runs (about 2,200 output tokens) is under 50 s.
+# Stalls are frequent, and a stalled call finished on a quick retry, so a short
+# ceiling with more attempts recovers fastest: at 180 s, one call in fifteen ran
+# out all six attempts. The SDK's default of 600 s let a hung call sit for ten
+# minutes. The SDK's own retries are off (`max_retries=0`), so `_call_judge`'s
+# loop, with its backoff, is the only one.
+JUDGE_TIMEOUT_SECONDS = 90.0
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
@@ -613,7 +616,7 @@ def grade(
 
 
 def _create_message_with_retry(
-    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=6
+    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=10
 ):
     """Call Anthropic with retry-with-backoff on transient errors.
 
