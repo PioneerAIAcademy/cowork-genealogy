@@ -1260,8 +1260,8 @@ is reached.
 
 ### A plan item's `collection_url` is a stored curated collection
 
-`research_append` refuses a plan item whose `collection_url` is not the `url` of a
-row in `external-collections.json`, on both routes that write an item: a
+`research_append` refuses a plan item whose `collection_url` names no collection in
+`external-collections.json`, on both routes that write an item: a
 `plan_items` append or update, and the inline `items[]` of a `plans` op. The field
 exists so a plan names a collection FamilySearch curates for the place, not an id
 recalled from memory — the failure that produced Ancestry ids 9093, 7549 and 60207
@@ -1273,6 +1273,27 @@ was is not re-checked, so an item planned before a re-fetch dropped its row is n
 stranded by an unrelated edit. A missing file refuses every url and names the
 fetch that creates it; an unreadable file refuses with the read error rather than
 throwing. Omitting the field is always accepted: it means a site-wide search.
+
+**Compared by collection key, across every stored place** (lead ruling,
+2026-10-23). `ancestry:<id>` is one collection however its url is spelled
+(`/search/collections/<id>/`, `?dbid=<id>`), and checking the whole file means a
+plan item's free-text jurisdiction never has to be matched to a stored place. The
+ruling replaces the "measure first" call of 2026-09-24: that call rested on ids not
+being traceable from the project files, and the stored list makes it an exact
+lookup.
+
+**`build_external_search_url` holds the same line.** Given a `projectPath` that is
+a project, it refuses a `baseUrl` that names a collection (an Ancestry collection
+id, a MyHeritage collection page) the file does not hold, by the same key. A
+site's or an archive's own search url names no collection and is not checked, and
+outside a project nothing is: the link still serves a standalone search. Without
+it a recalled `baseUrl` would never pass through `research_append`.
+
+**An external item appended without a `collection_url` draws a warning, never a
+refusal**, listing the stored collections that fit it. The fit is a loose match of
+the item's free-text jurisdiction to the stored places, which a hint can afford and
+a refusal could not. The research-plan eval counts those misses
+(`report_external_items_missing_a_stored_collection`).
 `collectionUrlInvariants`.
 
 ### Blocking conflicts before completion

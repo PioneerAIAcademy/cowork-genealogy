@@ -612,6 +612,7 @@ nil.
 | Any relative-name field given with only given-name or only surname (e.g. `fatherGivenName` but no `fatherSurname`) | the joined value uses whichever half is present — not an error |
 | `archion`/`matricula` with `attributes: {}` | succeeds — a browse site appends nothing, so it is exempt from `no_attributes` (§3.11) |
 | `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` asks for the parish page |
+| MCP tool, `projectPath` is a project, and `baseUrl` names a collection (an Ancestry collection id, a MyHeritage collection page) that `external-collections.json` does not hold, compared by collection key (`ancestry:<id>`) | `{ ok: false, reason: "invalid_base_url" }`, and nothing is logged. The message offers both ways forward: omit `baseUrl` for a site-wide search, or use a stored url from `research_query({section: "external_collections"})`; with nothing stored, it names `external_links_search` first. A `baseUrl` that names no collection is not checked (§9.1) |
 | MCP tool, `projectPath` given, folder holds neither project file | succeeds with the URL and no `logId`; the log tool's no-project sentence rides in `notes` — a standalone search outside a project still gets its link |
 | MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
 | MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
@@ -910,9 +911,15 @@ list"), and a plan item's `collection_url` must be one of its rows
 `?dbid=<id>` — is a stored row for any place in that project. No stored list
 means nothing is backed.
 
-The check is `report_collection_scoped_url_with_no_backed_collection_id`
-(`eval/harness/validators/test_search_external_sites.py`) — **tier 2,
-reporting-only**, per the lead ruling of 2026-09-24 ("measure first"). It reads
+**Enforced since the lead ruling of 2026-10-23.** Given a `projectPath` that is
+a project, the tool refuses a `baseUrl` naming a collection whose key is not
+stored for any place (§5); `research_append` refuses the same on a plan item's
+`collection_url`. The ruling replaced "measure first" (2026-09-24): ids are now
+traceable from the project files, so the check is an exact lookup.
+
+The eval check `report_collection_scoped_url_with_no_backed_collection_id`
+(`eval/harness/validators/test_search_external_sites.py`) stays **tier 2,
+reporting-only**. It reads
 the run's `external-collections.json` from the after-state, judges only the
 entries the run appended, and gates nothing. Its both-direction cases live in
 `eval/harness/tests/unit/test_search_external_sites_validator.py`.
