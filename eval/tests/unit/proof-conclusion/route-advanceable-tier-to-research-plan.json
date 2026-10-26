@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_rt4",
+    "skill": "proof-conclusion",
+    "name": "A tier that could advance routes to research-plan, not question-selection (E)",
+    "type": "positive",
+    "description": "The richardson-parentage-not-exhaustive scenario concludes at probable with searches still outstanding, so the tier could advance. Section E moves that route: it used to read 'question-selection or research-plan' and now names research-plan alone. A tier that could advance is a SEARCH, and sending it to question-selection asks for a NEW question while the current one is unfinished — which under step mode starts the next step on the wrong agent.",
+    "tags": [
+      "proof",
+      "parentage",
+      "probable",
+      "routing",
+      "step-mode",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Write the proof conclusion for the parentage question q_001, then say what happens next.",
+    "scenario": "richardson-parentage-not-exhaustive"
+  },
+  "judge_context": [
+    "The next-step line must name **research-plan**. The tier is below proved and named searches remain, so the tier could advance, and the work that would advance it is searching.",
+    "Naming **question-selection** as the next step is the failure this test exists for. The current question is not finished, so asking for a new one is the wrong move — this is the routing section E changed.",
+    "Naming a record that would advance the tier is required either way, and it must be a reasonably obtainable one. A privacy-restricted or sealed record (a recent vital record under embargo) does not count as a next step.",
+    "Do not charge the agent on the TIER here. That `probable` is correct on this scenario is `ut_proof_conclusion_d7g`'s subject; this test is only about where it routes afterwards.",
+    "Naming BOTH research-plan and question-selection is not a pass. The point of the change is that one of them is wrong, so offering both leaves the caller to pick.",
+    "DATES — the 1832/1833 discrepancy is real fixture content, not an internal inconsistency to charge."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

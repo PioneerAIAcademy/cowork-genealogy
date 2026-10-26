@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_wz1",
+    "skill": "proof-conclusion",
+    "name": "Wrap-up resolves a question with no evidence at all, at not_proved (B2)",
+    "type": "positive",
+    "description": "Step mode's 'Wrap it up.' is offered at any boundary, including before any evidence exists (decision 15). The flynn-census-nil scenario is that state exactly: q_001 is in_progress, its plan has one item still planned, nothing has been searched, and there are no assertions and no summaries. The delegation passes wrapUp: yes. The agent must write a not_proved summary and RESOLVE the question, rather than declining because nothing supports a conclusion. Leaving it open would hand the researcher the same wrap-up offer again on the very next turn, which is the loop B2 exists to end.",
+    "tags": [
+      "proof",
+      "parentage",
+      "not-proved",
+      "wrap-up",
+      "step-mode",
+      "zero-assertion",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "wrapUp: yes. The researcher has asked to wrap up question q_001 (the parents of Patrick Flynn) and move on. Nothing has been searched for it yet. Write the proof conclusion for q_001 at whatever tier the evidence supports and resolve the question.",
+    "scenario": "flynn-census-nil"
+  },
+  "judge_context": [
+    "Must select `not_proved`: there are no assertions for q_001 at all, so no tier above it is available. Charging the agent for not reaching `possible` or higher would be wrong — the fixture supplies nothing to reach it with.",
+    "Must RESOLVE q_001 in the same batch as the summary: `status: \"resolved\"` with `resolved` and `resolution_assertion_ids` (an empty list is correct here, since no assertion supports it). Declining to resolve is the failure this test exists for — under `wrapUp: yes` the researcher's decision is the reason the question closes, not the evidence.",
+    "Must NOT decline, route to research-plan, or ask for more searching. The body's normal routing applies when the agent is choosing what to do next; here the researcher has already chosen.",
+    "The summary should say plainly what identifying the parents would take — the planned census search that was never run — so the researcher can see what they are setting aside. A summary that merely states there is no evidence is thinner than the rule asks for.",
+    "Do NOT charge the agent for leaving `project.status` alone. Resolving the only open question would normally complete the project, and completing it here is acceptable; neither choice is the point of this test.",
+    "`search_stop` is research-exhaustiveness's field. The agent must not write it, and must not be charged for leaving `stopped_because` null."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
