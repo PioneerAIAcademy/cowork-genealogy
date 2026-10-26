@@ -44,6 +44,18 @@ parish's 1678–1680 Ferré baptisms that were examined. The baptism falls in th
 gap between the couple's documented children, **Marguerite (18 Apr 1674,
 `6ZQJ-62ZH`)** and **Marie (29 Dec 1682, `6ZQJ-RMQL`)**, with the mother about 37.
 
+**The 1686 entry is the couple's own household, not a rival Michel Ferré.** A
+marriage record of 14 September 1686 at Saint-Michel-de-la-Roë
+(`ark:/61903/1:1:6ZQJ-K65C`) names the bride **Renée Fevre**'s parents as
+**Michel Fevre** and **Jeanne Houderoun**, and the starting tree attaches that
+record to the subject couple's existing daughter **Renée Fevre (`G6QP-2JS`)**. So
+the Michel Ferré/Fevre who appears beside a Renée in 1686 is the bride's
+*father* — the husband of the subject, Jeanne Houdemon — not a second Michel
+Ferré couple; "Houderoun" is a further variant rendering of the mother's
+surname. This rests on the **index and the tree linkage (the 1686 register image
+was not examined)**; it adds index-level support for the identification but does
+**not** replace the index-based rationale for the 1679 finding.
+
 **The maternal surname — supports, does not prove.** The one field that does not
 read "Houdemon" is the mother's surname, and it is rendered differently across
 the couple's own entries: **"Janne Houderon"** on the 1674 baptism, **blank** on
