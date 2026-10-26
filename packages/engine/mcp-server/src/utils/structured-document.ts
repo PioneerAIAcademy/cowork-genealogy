@@ -350,12 +350,12 @@ function validateDocumentRoles(doc: StructuredDocument, path: string): string[] 
   }
 
   if (doc.recordType === "probate") {
-    const id = probateDecedentId(doc);
+    const id = probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
     const rel = normRelation(doc.persons.find((p) => p.id === id)?.statedRelation);
     if (id !== undefined && PETITIONER_RELATION.test(rel)) {
       errs.push(
-        `${path}.persons: ${nameOf(id)} would be the decedent (the party carrying the probate, will or death fact) ` +
-          `but is stated as "${rel}". Put the probate, will or death fact on the decedent or testator, ` +
+        `${path}.persons: ${nameOf(id)} would be written as the decedent or testator but is stated as "${rel}". ` +
+          `Put the probate, will or death fact on the decedent or testator, ` +
           `even where the letters name the administrator or executor.`,
       );
     }

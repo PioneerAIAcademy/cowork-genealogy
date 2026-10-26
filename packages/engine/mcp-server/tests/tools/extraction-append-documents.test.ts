@@ -1149,13 +1149,19 @@ describe("extraction_append: documents", () => {
         person("p1", "Isaac", "Porter", "administrator", [{ type: "death" }]),
         person("p2", "Paul", "Meacham"),
       ];
-      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(/Isaac Porter\) would be the decedent .* stated as "administrator"/);
+      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(/Isaac Porter\) would be written as the decedent or testator but is stated as "administrator"/);
+    });
+
+    it("refuses an administrator written as decedent when no party carries a probate, will or death fact", () => {
+      const persons = [person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "residence", place: "Southwick" }])];
+      expect(validateStructuredDocument(probate(persons)).join(" ")).toMatch(/Isaac Porter\) would be written as the decedent or testator/);
+      expect(validateStructuredDocument(probate([{ ...persons[0], statedRelation: undefined }, persons[1]]))).toEqual([]);
     });
 
     it("still writes a probate couple when one party is the wife, and an obituary couple with no spouse word", async () => {
       const testator = person("p1", "Paul", "Meacham", undefined, [{ type: "will" }]);
       const wife = { ...person("p2", "Mary", "Meacham", "wife"), gender: "female" };
-      const r = await run([{ recordId: "capture:probate-wife", document: probate([testator, wife, ]) }]);
+      const r = await run([{ recordId: "capture:probate-wife", document: { ...probate([testator, wife]), relationships: [{ type: "couple", person1: "p1", person2: "p2" }] } }]);
       expect(r.ok).toBe(true);
       const couple = [{ type: "couple", person1: "p1", person2: "p2" }];
       expect(validateStructuredDocument({ ...probate([testator, wife]), relationships: couple })).toEqual([]);
