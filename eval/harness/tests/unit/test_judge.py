@@ -2324,18 +2324,18 @@ def test_create_message_rides_out_a_connection_drop_of_about_a_minute(monkeypatc
     assert slept == [2.0, 4.0, 8.0, 16.0, 30.0]
 
 
-def test_create_message_gives_up_after_ten_connection_errors(monkeypatch):
-    """Ten attempts at a 90 s ceiling: frequent stalls each cost one short wait
+def test_create_message_gives_up_after_fifteen_connection_errors(monkeypatch):
+    """Fifteen attempts at a 90 s ceiling: frequent stalls each cost one short wait
     rather than failing the test ungraded (#2995)."""
     import time
 
     monkeypatch.setattr(time, "sleep", lambda s: None)
-    client = _FlakyClient(fails=10)
-    with pytest.raises(judge.JudgeError, match="failed after 10 attempts"):
+    client = _FlakyClient(fails=15)
+    with pytest.raises(judge.JudgeError, match="failed after 15 attempts"):
         judge._create_message_with_retry(
             client=client, model="m", prefix="p", suffix="s", grading_tool=judge.GRADING_TOOL,
         )
-    assert client.calls == 10
+    assert client.calls == 15
 
 
 def test_compute_cost_counts_cached_tokens_alongside_input_not_inside_it():

@@ -45,7 +45,8 @@ LEGACY_SAMPLING_API_VERSION = "2023-06-01"
 # answer measured in the #2995 runs (about 2,200 output tokens) is under 50 s.
 # Stalls are frequent, and a stalled call finished on a quick retry, so a short
 # ceiling with more attempts recovers fastest: at 180 s, one call in fifteen ran
-# out all six attempts. The SDK's default of 600 s let a hung call sit for ten
+# out all six attempts, and in locality-guide one ran out ten. The SDK's default of
+# 600 s let a hung call sit for ten
 # minutes. The SDK's own retries are off (`max_retries=0`), so `_call_judge`'s
 # loop, with its backoff, is the only one.
 JUDGE_TIMEOUT_SECONDS = 90.0
@@ -616,7 +617,7 @@ def grade(
 
 
 def _create_message_with_retry(
-    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=10
+    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=15
 ):
     """Call Anthropic with retry-with-backoff on transient errors.
 
