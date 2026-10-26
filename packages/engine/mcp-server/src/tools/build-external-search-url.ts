@@ -9,6 +9,7 @@
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { researchLogAppend } from "./research-log-append.js";
+import { classifyProjectPath } from "../utils/project-io.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
@@ -1421,6 +1422,9 @@ export function handoffLineFor(url: string): string {
  *  search url names no collection and is not checked. */
 async function uncuratedBaseUrlError(projectPath: string, baseUrl: string): Promise<string | undefined> {
   if (!namesCollection(baseUrl)) return undefined;
+  // Outside a project there is no stored list to check against, and the URL
+  // still serves a standalone search (spec §5).
+  if ((await classifyProjectPath(projectPath)) !== "project") return undefined;
   const ways =
     "Omit baseUrl for a site-wide search, or use a stored collection's url from " +
     "research_query({section: \"external_collections\", place, recordType}).";

@@ -2052,7 +2052,7 @@ describe("build_external_search_url", () => {
         expect(await readLog()).toHaveLength(2);
       });
 
-      it("does not check a baseUrl that names no collection, or a call with no project", async () => {
+      it("does not check a baseUrl that names no collection, a folder that is not a project, or a call with no project", async () => {
         await writeProject();
         const site = await buildExternalSearchUrlTool({
           site: "digital_newspaper_archive",
@@ -2061,6 +2061,18 @@ describe("build_external_search_url", () => {
           projectPath: dir,
         });
         expect(site.ok, JSON.stringify(site)).toBe(true);
+        const outsideProject = await mkdtemp(join(tmpdir(), "build-url-no-project-"));
+        try {
+          const r = await buildExternalSearchUrlTool({
+            site: "ancestry",
+            attributes: { surname: "Flynn" },
+            baseUrl: "https://www.ancestry.com/search/collections/9093/",
+            projectPath: outsideProject,
+          });
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+        } finally {
+          await rm(outsideProject, { recursive: true, force: true });
+        }
         const standalone = await buildExternalSearchUrlTool({
           site: "ancestry",
           attributes: { surname: "Flynn" },
