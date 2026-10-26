@@ -671,7 +671,7 @@ export const RESEARCH_SHAPES = {
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site",
+    "external_site", "staged_ref",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -1151,6 +1151,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if (!isNonNegativeInteger(n)) {
         addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
       }
+    }
+    if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
+      addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
     }
 
     const ext = entry.external_site;

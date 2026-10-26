@@ -139,6 +139,8 @@ export interface LogEntry {
   results_examined: number
   results_ref?: string | null
   results_available?: number | null
+  /** The results/.staging/ file this entry's sidecar was finalized from. */
+  staged_ref?: string
   notes?: string | null
   external_site: ExternalSiteDetail | null
 }

@@ -67,6 +67,21 @@ def test_batch_log_append_ops_get_the_implied_section():
     assert r.unmodelled == {}
 
 
+def test_an_already_logged_re_send_is_not_a_second_append():
+    """A re-sent staged ref answers with the existing id and writes nothing."""
+    first = '[{"type": "text", "text": "{\\"ok\\": true, \\"logId\\": \\"log_001\\"}"}]'
+    again = '[{"type": "text", "text": "{\\"ok\\": true, \\"logId\\": \\"log_001\\", \\"alreadyLogged\\": true}"}]'
+    batch = '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": [{\\"logId\\": \\"log_001\\", \\"alreadyLogged\\": true}, {\\"logId\\": \\"log_002\\"}]}"}]'
+    ref = {"stagedResultsRef": "results/.staging/a.json"}
+    r = replay([
+        _call("research_log_append", dict(ref, notes="first"), first),
+        _call("research_log_append", dict(ref, notes="again"), again),
+        _call("research_log_append", {"ops": [ref, {"stagedResultsRef": "results/.staging/b.json"}]}, batch),
+    ])
+    assert [e["id"] for e in r.research["log"]] == ["log_001", "log_002"]
+    assert r.research["log"][0]["notes"] == "first"
+
+
 def test_log_entries_carry_their_body_not_just_an_id():
     """The whole point of replaying the log: a consumer joins on these fields.
 
