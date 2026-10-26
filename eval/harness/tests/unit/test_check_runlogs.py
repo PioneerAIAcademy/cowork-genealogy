@@ -3546,15 +3546,44 @@ def test_rule11_for_skill_warns_without_the_shas(monkeypatch, capsys):
     assert "rule 11 did not run" in capsys.readouterr().out
 
 
+def test_rule11_a_validator_that_passed_on_any_base_run_is_owed():
+    base_runs = (_ALL_PASS, {**_ALL_PASS, **{n: "failed" for n in _INVARIANTS}})
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(base_log=_r11_log(*base_runs), head_test=head, head_log=_r11_log(_SWAPPED)) == 1
+
+
+def test_rule11_aborted_head_runs_are_rule_6s_not_a_swap(capsys):
+    log = _r11_log({})
+    log["tests"][0]["runs"][0]["outcome"] = "aborted"
+    assert _rule11(head_log=log) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule11_aborted_runs_are_ignored_beside_a_completed_one():
+    log = _r11_log({}, _SWAPPED)
+    log["tests"][0]["runs"][0]["outcome"] = "aborted"
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(head_test=head, head_log=log) == 1
+
+
+def test_rule11_a_test_with_no_runs_is_left_to_rule_6():
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(head_test=head, head_log={"tests": [{"test_id": "ut_research_rpn", "runs": []}]}) == 0
+
+
 def test_newest_full_skill_name_prefers_a_newer_candidate_over_an_older_release():
     names = ["v1.json", "v1.ann.json", "v2_2026-10-01_00-00-00.json", "v2_2026-10-02_00-00-00.json",
              "v3_scratch_x.json"]
     assert check_runlogs.newest_full_skill_name(names) == "v2_2026-10-02_00-00-00.json"
     assert check_runlogs.newest_full_skill_name(["v2.json", "v1_2026-10-02_00-00-00.json"]) == "v2.json"
     assert check_runlogs.newest_full_skill_name(["README.md"]) is None
+    # At one version a candidate is the later run: releasing renames one, and
+    # a candidate beside its release was run after it.
+    assert check_runlogs.newest_full_skill_name(["v2.json", "v2_2026-10-03_00-00-00.json"]) == "v2_2026-10-03_00-00-00.json"
 
 
-_R11_VALIDATOR = '''import pytest
+_R11_VALIDATOR = """import pytest
+from shared_validators import *  # noqa: F401,F403
 
 
 def test_no_new_plan(test):
@@ -3565,13 +3594,39 @@ def test_no_new_plan(test):
 def test_stops_for_verdicts(test):
     if "stops-for-verdicts" not in test.get("tags", []):
         pytest.skip("x")
-'''
+"""
+
+# The suite file star-imports a sibling, and `test_universal.py` runs for every
+# suite: rule 11 has to read both, as the runtime does.
+_R11_SHARED = """import pytest
+
+
+def test_shared_gate(test):
+    if "shared-gate" not in test.get("tags", []):
+        pytest.skip("x")
+"""
+
+_R11_UNIVERSAL = """import pytest
+
+
+def test_hand_back_names_its_owner(test):
+    if "hand-back" not in test.get("tags", []):
+        pytest.skip("x")
+"""
+
+_R11_BASE_TAGS = ["research-plan-no-new-plan", "hand-back", "shared-gate"]
+_R11_BASE_PASSING = {
+    "test_no_new_plan": "passed",
+    "test_stops_for_verdicts": "skipped",
+    "test_shared_gate": "passed",
+    "test_hand_back_names_its_owner": "passed",
+}
 
 
 @pytest.fixture
 def rule11_git_repo(tmp_path, monkeypatch):
     """Main holds an older released log and a newer candidate, the test with
-    its gate tag, and the validator. Returns (repo, base sha, write_head)."""
+    its gate tags, and the validators. Returns (repo, base sha, write_head)."""
     repo = tmp_path / "git"
     runlogs = repo / "eval/runlogs/unit/research"
     tests = repo / "eval/tests/unit/research"
@@ -3580,34 +3635,59 @@ def rule11_git_repo(tmp_path, monkeypatch):
         d.mkdir(parents=True)
     _git(repo, "init", "-q", "-b", "main")
     (validators / "test_research.py").write_text(_R11_VALIDATOR, encoding="utf-8")
-    (tests / "rpn.json").write_text(json.dumps(_r11_test(["research-plan-no-new-plan"])), encoding="utf-8")
-    passing = {"test_no_new_plan": "passed", "test_stops_for_verdicts": "skipped"}
+    (validators / "shared_validators.py").write_text(_R11_SHARED, encoding="utf-8")
+    (validators / "test_universal.py").write_text(_R11_UNIVERSAL, encoding="utf-8")
+    (tests / "rpn.json").write_text(json.dumps(_r11_test(_R11_BASE_TAGS)), encoding="utf-8")
     # The released v1 predates the test; only the newer candidate carries it.
     (runlogs / "v1.json").write_text(json.dumps({"tests": []}), encoding="utf-8")
-    (runlogs / "v2_2026-10-01_00-00-00.json").write_text(json.dumps(_r11_log(passing)), encoding="utf-8")
+    (runlogs / "v2_2026-10-01_00-00-00.json").write_text(
+        json.dumps(_r11_log(_R11_BASE_PASSING)), encoding="utf-8"
+    )
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     base = _rev(repo)
     monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
     monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", repo / "eval/tests/unit")
 
-    def write_head(tags, validator=_R11_VALIDATOR):
+    def write_head(tags, validator=_R11_VALIDATOR, test_file="rpn.json"):
         _git(repo, "checkout", "-q", "-b", "pr")
-        (tests / "rpn.json").write_text(json.dumps(_r11_test(tags)), encoding="utf-8")
+        (tests / "rpn.json").unlink()
+        (tests / test_file).write_text(json.dumps(_r11_test(tags)), encoding="utf-8")
         (validators / "test_research.py").write_text(validator, encoding="utf-8")
-        _git(repo, "commit", "-q", "-am", "pr")
+        _git(repo, "add", "-A")
+        _git(repo, "commit", "-q", "-m", "pr")
         monkeypatch.setenv("BASE_SHA", base)
         monkeypatch.setenv("HEAD_SHA", _rev(repo))
 
     return repo, base, write_head
 
 
-def test_rule11_for_skill_catches_the_swap_against_a_real_merge_base(rule11_git_repo, capsys):
+def _r11_head_log(**skipped):
+    """The base run with the named validators flipped to skipped."""
+    return _r11_log({**_R11_BASE_PASSING, **{name: "skipped" for name in skipped}})
+
+
+_R11_HEAD_LOG = "v3_2026-10-26_00-00-00.json"
+
+
+@pytest.mark.parametrize(
+    ("dropped_tag", "lost"),
+    [
+        ("research-plan-no-new-plan", "test_no_new_plan"),
+        ("hand-back", "test_hand_back_names_its_owner"),
+        ("shared-gate", "test_shared_gate"),
+    ],
+    ids=["suite-file", "test_universal", "star-imported-sibling"],
+)
+def test_rule11_for_skill_catches_a_dropped_tag_against_a_real_merge_base(
+    rule11_git_repo, capsys, dropped_tag, lost
+):
     _, _, write_head = rule11_git_repo
-    write_head(["stops-for-verdicts"])
-    head_log = _r11_log({"test_no_new_plan": "skipped", "test_stops_for_verdicts": "passed"})
-    assert check_runlogs.rule11_for_skill("research", "v3_2026-10-26_00-00-00.json", head_log) == 1
-    assert "`test_no_new_plan`" in capsys.readouterr().out
+    write_head([t for t in _R11_BASE_TAGS if t != dropped_tag] + ["stops-for-verdicts"])
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(**{lost: 1})) == 1
+    out = capsys.readouterr().out
+    assert f"`{lost}`" in out
+    assert out.count("(gated on") == 1
 
 
 def test_rule11_for_skill_catches_a_gate_renamed_in_the_validator_only(rule11_git_repo):
@@ -3616,18 +3696,45 @@ def test_rule11_for_skill_catches_a_gate_renamed_in_the_validator_only(rule11_gi
     reach it."""
     _, _, write_head = rule11_git_repo
     write_head(
-        ["research-plan-no-new-plan"],
+        _R11_BASE_TAGS,
         validator=_R11_VALIDATOR.replace('"research-plan-no-new-plan" not in', '"renamed-gate" not in'),
     )
-    head_log = _r11_log({"test_no_new_plan": "skipped", "test_stops_for_verdicts": "skipped"})
-    assert check_runlogs.rule11_for_skill("research", "v3_2026-10-26_00-00-00.json", head_log) == 1
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(test_no_new_plan=1)) == 1
 
 
-def test_rule11_for_skill_passes_an_unchanged_test_against_a_real_merge_base(rule11_git_repo):
+def test_rule11_for_skill_passes_an_unchanged_test_against_a_real_merge_base(rule11_git_repo, capsys):
     _, _, write_head = rule11_git_repo
-    write_head(["research-plan-no-new-plan", "extra"])
-    head_log = _r11_log({"test_no_new_plan": "passed", "test_stops_for_verdicts": "skipped"})
-    assert check_runlogs.rule11_for_skill("research", "v3_2026-10-26_00-00-00.json", head_log) == 0
+    write_head(_R11_BASE_TAGS + ["extra"])
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log()) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule11_for_skill_exempts_a_validator_deleted_at_head(rule11_git_repo):
+    _, _, write_head = rule11_git_repo
+    gone = _R11_VALIDATOR.replace(
+        'def test_no_new_plan(test):\n    if "research-plan-no-new-plan" not in test.get("tags", []):\n        pytest.skip("x")\n',
+        "",
+    )
+    assert "test_no_new_plan" not in gone
+    write_head([t for t in _R11_BASE_TAGS if t != "research-plan-no-new-plan"], validator=gone)
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(test_no_new_plan=1)) == 0
+
+
+def test_rule11_for_skill_warns_on_a_moved_test_file(rule11_git_repo, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"], test_file="rpn-moved.json")
+    head_log = _r11_head_log(test_no_new_plan=1, test_shared_gate=1, test_hand_back_names_its_owner=1)
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, head_log) == 0
+    out = capsys.readouterr().out
+    assert "::warning::rule 11 did not check `ut_research_rpn`" in out and "rpn-moved.json" in out
+
+
+def test_rule11_for_skill_warns_on_an_unparseable_head_validator(rule11_git_repo, monkeypatch, capsys):
+    repo, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"], validator="def (:\n")
+    (repo / "eval/harness/validators/test_universal.py").write_text("def (:\n", encoding="utf-8")
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(test_no_new_plan=1)) == 0
+    assert "no validator could be read" in capsys.readouterr().out
 
 
 def test_rule11_for_skill_warns_on_an_unreadable_base(rule11_git_repo, monkeypatch, capsys):
@@ -3638,27 +3745,31 @@ def test_rule11_for_skill_warns_on_an_unreadable_base(rule11_git_repo, monkeypat
         raise check_runlogs.BaseUnreadable("simulated")
 
     monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
-    head_log = _r11_log({"test_no_new_plan": "skipped", "test_stops_for_verdicts": "passed"})
-    assert check_runlogs.rule11_for_skill("research", "v3.json", head_log) == 0
+    assert check_runlogs.rule11_for_skill("research", "v3.json", _r11_head_log(test_no_new_plan=1)) == 0
     out = capsys.readouterr().out
     assert "::warning::rule 11 did not run" in out and "eval/runlogs/unit/research/" in out
+
+
+def test_rule11_for_skill_warns_when_git_cannot_find_the_merge_base(rule11_git_repo, monkeypatch, capsys):
+    """A git failure while listing the base logs is not "no logs at the base"."""
+    _, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"])
+    monkeypatch.setenv("HEAD_SHA", "0" * 40)
+    assert check_runlogs.rule11_for_skill("research", "v3.json", _r11_head_log(test_no_new_plan=1)) == 0
+    assert "::warning::rule 11 did not run" in capsys.readouterr().out
 
 
 def test_check_runlogs_imports_on_a_bare_interpreter():
     """The workflow runs this script on a bare Python with no packages, and
     rule 11's gate map must come with no `jsonschema` behind it."""
-    import sys
+    from tests.unit.bare_python import bare
 
     script = Path(__file__).resolve().parents[2] / "scripts" / "check_runlogs.py"
-    proc = subprocess.run(
-        [sys.executable, "-S", "-E", "-c",
-         f"import runpy; runpy.run_path({str(script)!r}, run_name='not_main')"],
-        capture_output=True, text=True, encoding="utf-8",
-    )
+    proc = bare(f"import runpy; runpy.run_path({str(script)!r}, run_name='not_main')")
     assert proc.returncode == 0, proc.stderr
 
 
-def test_main_runs_rule11_only_on_the_log_a_pr_adds(tmp_path, monkeypatch):
+def test_main_runs_rule11_only_on_the_log_a_pr_adds_and_its_failure_fails(tmp_path, monkeypatch):
     skill_dir = tmp_path / "research"
     skill_dir.mkdir()
     for name in ("v1.json", "v2_2026-10-26_00-00-00.json"):
@@ -3667,13 +3778,25 @@ def test_main_runs_rule11_only_on_the_log_a_pr_adds(tmp_path, monkeypatch):
     for rule in ("rule2_active", "rule2b_judge_prompt", "rule2c_instrument", "rule3_completeness"):
         monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
     calls = []
-    monkeypatch.setattr(check_runlogs, "rule11_for_skill", lambda *a: calls.append(a[:2]) or 0)
+    monkeypatch.setattr(check_runlogs, "rule11_for_skill", lambda *a: calls.append(a[:2]) or 1)
 
     _patch_diffs(monkeypatch, ["eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json"])
-    assert check_runlogs.main() == 0
+    assert check_runlogs.main() == 1
     assert calls == [("research", "v2_2026-10-26_00-00-00.json")]
 
     calls.clear()
     _patch_diffs(monkeypatch, ["eval/tests/unit/research/handle-negative-probate-result.json"])
     check_runlogs.main()
     assert calls == []
+
+
+def test_git_ls_at_merge_base_lists_bare_names_and_an_absent_dir_as_empty(rule11_git_repo):
+    """A suite new in this PR has no log directory at the base: that is "nothing
+    to compare", not a failed read."""
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS + ["extra"])
+    assert check_runlogs.git_ls_at_merge_base("eval/runlogs/unit/research") == [
+        "v1.json",
+        "v2_2026-10-01_00-00-00.json",
+    ]
+    assert check_runlogs.git_ls_at_merge_base("eval/runlogs/unit/new-suite") == []

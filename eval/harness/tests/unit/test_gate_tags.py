@@ -31,6 +31,10 @@ def test_exclusion(test):
 def test_ungated(test):
     assert True
 
+def test_returns_instead_of_skipping(test):
+    if "not-a-gate" not in test.get("tags", []):
+        return
+
 def test_via_helper(test):
     _requires_trap(test)
 
@@ -46,6 +50,7 @@ def test_per_validator_map():
         "test_compound": {"compound"},
         "test_exclusion": set(),
         "test_ungated": set(),
+        "test_returns_instead_of_skipping": set(),
         "test_via_helper": {"trap"},
     }
 

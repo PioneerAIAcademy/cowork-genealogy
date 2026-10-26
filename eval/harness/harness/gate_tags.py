@@ -31,8 +31,9 @@ Two views, for two callers:
   `check_runlogs.py` rule 11 needs to match a run log's validator results. It
   follows a bare-name call to a module-level helper one level deep
   (source-evaluation's `_requires_index_discrepancy`) and a `from <sibling>
-  import *`. It leaves out `report_*` functions: their results never reach a
-  run log (`validator_runner.as_dicts` drops `reporting_only`).
+  import *`. It leaves out `report_*` functions: their passing and skipped
+  results never reach a run log (`validator_runner.as_dicts` drops
+  `reporting_only`), so a skip there is not visible to compare.
 
 Stdlib only: `check_runlogs.py` imports this on a bare interpreter.
 """

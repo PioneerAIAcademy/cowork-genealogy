@@ -68,6 +68,7 @@ PR (issue #2684).
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import re
@@ -308,19 +309,33 @@ class BaseUnreadable(RuntimeError):
     """A file's content at the merge base could not be read."""
 
 
+def _merge_base() -> str:
+    """The merge base of BASE_SHA and HEAD_SHA, computed once per pair. Raises
+    `BaseUnreadable` when the env is unset or git fails."""
+    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
+    if not base or not head:
+        raise BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+    return _merge_base_of(base, head, REPO_ROOT)
+
+
+@functools.lru_cache(maxsize=None)
+def _merge_base_of(base: str, head: str, repo: Path) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=repo
+        ).strip()
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
+        raise BaseUnreadable(str(e)) from e
+
+
 def git_show_at_merge_base(path: str) -> str | None:
     """`path` (repo-relative) as it stood at the merge base of BASE_SHA and
     HEAD_SHA -- the base `git_diff_touched_paths`' three-dot diff compares
     against -- or None when it did not exist there. Raises `BaseUnreadable`
     when the env is unset or git fails, so a caller never mistakes an unread
     base for an absent file."""
-    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
-    if not base or not head:
-        raise BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+    merge_base = _merge_base()
     try:
-        merge_base = subprocess.check_output(
-            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=REPO_ROOT
-        ).strip()
         exists = subprocess.run(
             ["git", "cat-file", "-e", f"{merge_base}:{path}"], capture_output=True, cwd=REPO_ROOT
         )
@@ -1368,7 +1383,9 @@ def rule10_no_xfail_markers(skill: str, tests_dir: Path) -> int:
 
 
 def _validator_outcomes(log_test: dict) -> list[dict[str, str]]:
-    """Per run, {validator name: outcome} from a run log's test entry."""
+    """Per run, {validator name: outcome} from a run log's test entry. An
+    aborted run is left out: it never reached its validators (the
+    `_aborted_entry` path writes none), and rule 6 already blocks it."""
     return [
         {
             r.get("name"): r.get("outcome")
@@ -1376,7 +1393,7 @@ def _validator_outcomes(log_test: dict) -> list[dict[str, str]]:
             if isinstance(r, dict)
         }
         for run in (log_test.get("runs") or [])
-        if isinstance(run, dict)
+        if isinstance(run, dict) and run.get("outcome") != "aborted"
     ]
 
 
@@ -1409,8 +1426,9 @@ def rule11_swapped_gate_tags(
     activated, and comparing it would block ordinary re-runs.
 
     "Every run", not "any run": a tag gate skips every run, and a validator
-    that skips one run of N skips for some other reason. A test with no runs
-    is rule 6's error. Pure — `rule11_for_skill` does the reads.
+    that skips one run of N skips for some other reason. A test with no
+    non-aborted runs is rule 6's error. Pure — `rule11_for_skill` does the
+    reads.
     """
     base_by_id = {
         t.get("test_id"): t for t in base_log.get("tests") or [] if isinstance(t, dict)
@@ -1479,31 +1497,31 @@ def git_ls_at_merge_base(rel_dir: str) -> list[str]:
     """Bare file names in `rel_dir` at the merge base; [] when the directory did
     not exist there. `<mb>:<dir>` rather than `<mb> -- <dir>/`, which prints
     full paths that `classify()` reads as `other`. Raises `BaseUnreadable` like
-    `git_show_at_merge_base`."""
-    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
-    if not base or not head:
-        raise BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+    `git_show_at_merge_base`, so a git failure is never read as "no logs"."""
+    merge_base = _merge_base()
     try:
-        merge_base = subprocess.check_output(
-            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=REPO_ROOT
-        ).strip()
-        listed = subprocess.run(
+        exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{merge_base}:{rel_dir}"], capture_output=True, cwd=REPO_ROOT
+        )
+        if exists.returncode != 0:
+            return []
+        listed = subprocess.check_output(
             ["git", "ls-tree", "--name-only", f"{merge_base}:{rel_dir}"],
-            capture_output=True,
             text=True,
             encoding="utf-8",
             cwd=REPO_ROOT,
         )
     except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
         raise BaseUnreadable(str(e)) from e
-    if listed.returncode != 0:
-        return []
-    return [line for line in listed.stdout.splitlines() if line]
+    return [line for line in listed.splitlines() if line]
 
 
 def _read_head(rel: str) -> str | None:
     path = REPO_ROOT / rel
-    return path.read_text(encoding="utf-8") if path.is_file() else None
+    try:
+        return path.read_text(encoding="utf-8") if path.is_file() else None
+    except (OSError, UnicodeDecodeError):
+        return None
 
 
 def suite_validator_gates(
@@ -1558,17 +1576,34 @@ def rule11_for_skill(skill: str, filename: str, head_log: dict) -> int:
         reading = f"eval/runlogs/unit/{skill}/{base_name}"
         base_log = json.loads(git_show_at_merge_base(reading) or "{}")
         base_tests: dict[str, dict] = {}
+        base_log_ids = {t.get("test_id") for t in base_log.get("tests") or [] if isinstance(t, dict)}
         for test_id in sorted(wanted):
             reading = rel_by_id[test_id]
             text = git_show_at_merge_base(reading)
             if text is not None:
                 base_tests[test_id] = json.loads(text)
+            elif test_id in base_log_ids:
+                # Not new — the base log ran it — so its file moved. Comparing
+                # needs the old path; say so rather than pass it unexamined.
+                gh_warning(
+                    f"rule 11 did not check `{test_id}` (`{skill}`): `{reading}` "
+                    f"did not exist at the merge base, so the test file was moved "
+                    f"or renamed. Confirm by hand that its gate tags are unchanged."
+                )
         reading = f"{VALIDATORS_REL}/test_{skill.replace('-', '_')}.py"
         base_gates = suite_validator_gates(skill, git_show_at_merge_base)
     except (BaseUnreadable, json.JSONDecodeError) as e:
         gh_warning(
             f"rule 11 did not run for `{skill}`: could not read `{reading}` at "
             f"the merge base ({e})."
+        )
+        return 0
+    head_validators = set(suite_validator_gates(skill, _read_head))
+    if base_gates and not head_validators:
+        gh_warning(
+            f"rule 11 did not run for `{skill}`: no validator could be read from "
+            f"`{VALIDATORS_REL}/test_{skill.replace('-', '_')}.py` or "
+            f"`test_universal.py` at head (absent, unreadable, or not valid Python)."
         )
         return 0
     return rule11_swapped_gate_tags(
@@ -1579,7 +1614,7 @@ def rule11_for_skill(skill: str, filename: str, head_log: dict) -> int:
         base_tests=base_tests,
         head_tests={test_id: head_tests[test_id] for test_id in wanted},
         base_gates=base_gates,
-        head_validators=set(suite_validator_gates(skill, _read_head)),
+        head_validators=head_validators,
     )
 
 
