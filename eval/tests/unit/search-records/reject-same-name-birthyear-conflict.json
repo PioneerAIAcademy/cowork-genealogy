@@ -14,8 +14,7 @@
       "birth-year-conflict",
       "rank-search-matches",
       "name-crowding",
-      "direct-arm",
-      "namesake-row"
+      "direct-arm"
     ]
   },
   "input": {
@@ -43,8 +42,7 @@
     "Completeness: the search should be logged honestly (a result WAS returned — outcome positive or partial), with notes recording the ~5-year birth-year conflict and that the candidate is flagged needs-review as a likely different Job Purnell. The skill should keep pli_001 'in_progress' (NOT 'completed') and recommend anchoring further or a narrower ~1826 baptism search, rather than treating the parentage question as answered.",
     "Do NOT require the skill to find the true baptism — it is not available in this scenario. Recognizing the decoy is the wrong person and declining to adopt it is a complete, correct response; do not penalize the skill for not producing parents.",
     "Log/Sidecar: do NOT require the skill to print raw log-entry or sidecar JSON. Score log quality 3 if the skill states it wrote results/<log_id>.json and appended a log entry capturing the conflict. This is NOT a nil search (one result was returned), so it should write a sidecar and set results_ref.",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
-    "Namesake row: having ruled the 1821 Job Purnell out on the birth-year conflict, the skill records him as a namesakes row on I1 (one research_append call, section namesakes, after the plan item status update), listing his recordId and the search log id, with the conflict as notes. Recording him does not adopt him and is not extraction; do not mark it down as either."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "judge_reads_files": true
 }
