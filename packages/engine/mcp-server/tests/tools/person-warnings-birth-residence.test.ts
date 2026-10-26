@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { personWarningsTool, PLACE_LOOKUP_BUDGET_MS } from "../../src/tools/person-warnings.js";
-import { lookupPlaceCoords, type PlaceCoordsResolver } from "../../src/utils/place-coords.js";
+import { lookupWithin, type PlaceCoordsResolver } from "../../src/utils/place-coords.js";
 
 // hasBirthFarFromParentsResidence (issue #1962 item 3). Places sit on the
 // equator, so `miles` east of the birthplace is miles / MILES_PER_DEGREE degrees
@@ -204,7 +204,7 @@ describe("hasBirthFarFromParentsResidence", () => {
       started.push(name);
       return new Promise((r) => setTimeout(() => r({ latitude: 0, longitude: 0 }), 100));
     };
-    const coords = await lookupPlaceCoords(["a", "b", "c", "d", "e", "f"], slow, 50);
+    const coords = await lookupWithin(["a", "b", "c", "d", "e", "f"], slow, 50);
     expect([...coords.values()].every((c) => c === null)).toBe(true);
     await new Promise((r) => setTimeout(r, 250));
     expect(started).toEqual(["a", "b", "c", "d"]);

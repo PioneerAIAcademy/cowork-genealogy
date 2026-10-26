@@ -1,0 +1,49 @@
+{
+  "project": {
+    "id": "rp_hugh_mclachlan_marriage",
+    "objective": "When and where did Hugh Mclachlan marry Catharine Muir, the parents of Neil (born 1850) and James (born 1852), both christened in Campbeltown, Argyll?",
+    "subject_person_ids": [
+      "KCWN-N2T"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Hugh Mclachlan marry Catharine Muir, whose children Neil (born 25 May 1850) and James (born 7 December 1852) were christened in Campbeltown, Argyll, Scotland?",
+      "rationale": "This is the objective restated as a single-fact research question. The children's baptism records in the Scotland Births and Baptisms collection confirm the couple and their presence in Campbeltown, Argyll by the early 1850s, placing the marriage before May 1850. Scottish Old Parochial Records (OPR) marriage registers and post-1855 statutory registers for Campbeltown and surrounding Argyll parishes are the primary record sets to search. No marriage fact is recorded on the tree and no questions have yet been opened against this objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-10-22"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

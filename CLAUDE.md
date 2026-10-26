@@ -297,7 +297,7 @@ because unrecognized entries are ignored so long as at least one resolves.
 Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
 2026-08-30, Claude Code 2.1.220 / SDK 0.2.128; re-run 2026-10-20 on 2.1.294 / SDK
-0.2.165, same result). Every deny we shipped named a
+0.2.165 and 2026-10-22 on 2.1.308 / SDK 0.2.172, same result). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
 restatements. What keeps `record-structurer` off the broad `research_append` is
 `research_append` not being in its `tools:`.
@@ -325,6 +325,12 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 `"default"` here, but the 2026-10-19 phase-0 sessions observed `"auto"`
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
+
+**Fork subagents are off on every path, two ways.** Claude Code offers
+`subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
+plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
+the prototype worker set `CLAUDE_CODE_FORK_SUBAGENT=0`; Cowork's environment is not
+ours, so the hook denies the call there. Change one, change both.
 
 **Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
 did on 2026-10-19 (startup and resume), so it has moved once already. Nothing

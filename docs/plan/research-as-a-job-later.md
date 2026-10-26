@@ -1,7 +1,7 @@
 # Research as a job — phases 2 to 5, at intent only
 
 > **Status:** PARTLY BUILT. *Before phase 2* and phases 2-5 are built on the
-> unmerged `research-as-a-job-phase2` branch; the `delivered` exit landed separately on
+> closed `research-as-a-job-phase2` branch (tag `phase2-final`); the `delivered` exit landed separately on
 > `main`. The rest is **deliberately not specified**. Phases 0 and 1 were built by
 > PR #2870, whose body lists each item (S2, 0a, 0b, 1a–1e); their plan is deleted. This file
 > records where that design goes next, at the level of what and why, with acceptance criteria
@@ -68,7 +68,8 @@ remains the switch (the alpha is not hardened, ruled 2026-09-25).
 **The default web path never enters the router.** The web client prefixes the first message
 so `init-project` runs; it hands to `question-selection` and `research-plan`, and nothing in
 that chain invokes `research`. The Stop hook still keeps the run going, but its nudge only
-asks for "the next GPS sub-skill", so the router's contracts — the second question,
+asks for "the next GPS sub-skill" — reworded to name the `research` skill, which exists —
+so the router's contracts — the second question,
 completion routing — hold only if the model happens to choose it. In issue #2864 it did not,
 and issue #2927 has it skipped about half the time on drive-forward messages. Phase 1's PASS
 entered as `/research --autonomous` on a seeded fixture, so this path is unmeasured.

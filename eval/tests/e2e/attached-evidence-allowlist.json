@@ -6,6 +6,9 @@
     "FNGV-JL3": "Grigory's 1843 marriage, one of his own sources (README: names him Григорий Захариев). f1 needs the 1846 hint death KX55-44K.",
     "KXPB-DG6": "Daughter Anna's 1844 baptism, his other source, naming him Григорий Захариев Кокоша, with the surname the 1843 marriage lacks. f1 needs the 1846 hint death KX55-44K."
   },
+  "james-gleason-spouse": {
+    "NWCJ-F72": "The subject's own already-attached 1896 death record (tree source ST97-ZP6), indexed Single — the baseline/disproving evidence for this false-match fixture, not a newly discovered record. f1 (avoid) and f2 turn on rejecting the 1893 hint F4NM-W8P."
+  },
   "joao-sousa-death": {
     "6NGD-BL9Q": "The subject's own 1852 baptism; the index names only his mother. f1 turns on the 1919 hint death 6YP6-D37M (copy 6B9P-F8GR).",
     "X911-WXWP": "The elder namesake brother's 1865 marriage: evidence for f1's competing candidate. f1 still turns on the 1919 hint death.",
@@ -19,6 +22,10 @@
   },
   "nicola-domenichelli-death": {
     "6ZYD-6L8N": "Nicola's 1946 Salta marriage, naming his parents. f1 needs the 1981 hint death 6ZB1-TVLX."
+  },
+  "owen-morris-parents": {
+    "45VS-5PZ": "The subject's own 1891 census, which records Owen Morris Senr as the head's father, so it answers f1; f1 is therefore not required. f2, rejecting the 1871 Cardiganshire hint V555-VPP, still needs research.",
+    "X7JG-Y45": "The subject's own 1911 census, giving his birthplace as Newtown, Montgomeryshire. It supports f1 and does not answer f2, which needs the hint V555-VPP rejected."
   },
   "thomas-hanrahan-marriage": {
     "F5GR-QBN": "The Irish Thomas's father persona in daughter Mary's 1871 Tipperary birth entry, attached to the Saratoga Thomas where the live tree merged two families. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q.",

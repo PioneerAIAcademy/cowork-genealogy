@@ -41,10 +41,11 @@ Lead's ordering, 2026-09-25/27. Everything in this plan hangs off it.
 5. **Record extraction** — not this plan's work. **Issue #2937, John.** Named here
    only so the waves below are read as the rest of the programme, not all of it.
 
-**Also outside the levers: issue #2951 takes `gps-mentor` off the default path**
-(lead, 2026-09-29). That removes the mentor spawn and the `proof-conclusion`
-re-invocation it forces, about 6–8% of wall clock per run. `proof-conclusion` and
-`research-exhaustiveness` stay. Wave 4 measures after issue #2951 lands.
+**Also outside the levers: `gps-mentor` is off the default path** (issue #2951,
+PR #3040, 2026-10-12). It now runs only when the user asks for a second opinion.
+That removed the mentor spawn and the `proof-conclusion` re-invocation it forced,
+about 6–8% of wall clock per run. `proof-conclusion` and `research-exhaustiveness`
+stay.
 
 **The framing that makes the order make sense:** input is **72%** of the bill
 (cache reads 42%, cache writes 30%; output is 27%), and **every token that enters
@@ -275,9 +276,7 @@ refusal, which moved to it from issue #2256 on 2026-09-27.
 > **BLOCKED until Waves 1, 2 and 3 are all complete.** Lead ruling: tool-output
 > reduction *and* skill→agent conversion both finish before the floor search begins.
 > Measuring a model floor against unreduced payloads or a partly-converted skill set
-> gives a number that expires the moment the other work lands. The same holds for issue
-> #2951: a floor taken while the mentor still spawns prices an agent that is leaving the
-> default path.
+> gives a number that expires the moment the other work lands.
 
 **Set everything to Haiku with no reasoning effort, see what fails loudly, and raise
 carefully.** *Everything* includes **the research orchestrator itself**, not just the
@@ -325,8 +324,10 @@ the first time it is pulled.
   `effort=`, and `_pretool_hook` writes the helper level onto each Agent call (CLI 2.1.294's
   per-spawn `effort`). Measured locally on 2.1.294 (`dev/probe_effort_capture.py`): main
   `medium` with the helper held at `high`; a per-agent `low` reaching `person-evidence`
-  under both its bare and namespaced names. Still owed: the fresh-E2B-sandbox check (a
-  resumed sandbox keeps its create-time env), and the lead's call on turning the alpha down.
+  under both its bare and namespaced names. The lead set the alpha's main thread to `low` on
+  2026-10-21 (`ORCHESTRATOR_EFFORT` in `deploy/fly.toml`), and fresh sandboxes picked it up:
+  the proxy logged 574 main-thread calls at `low` in the 14 days to 2026-10-25
+  (`make alpha-costs`). The helpers' level is still the lead's call.
 - **`EFFORT_LEVEL` is not wired into `eval/RunE2E.bat`** — it threads `DENY_SHELL`
   and `DENY_PROJECT_READS` only, so the Windows genealogists cannot run an arm.
   **Wire it with a paired CI guard** (`check_added_runlogs_effort_high`, modelled on
@@ -342,10 +343,10 @@ the first time it is pulled.
 - ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
   and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
 - **Not a gate: issue #3568 (option D, adopted 2026-10-20) sets what each rung costs in eval runs.**
-  Until it is built, a `model:` or `effort:` line on an agent stales every suite whose
-  SKILL.md names it (A3 item 10), so a rung on a research callee also buys a research run.
-  Once built, a callee no test runs live is fingerprinted by name, description and tools
-  only, and a rung stales just its own suite and the suites that run it live.
+  Built: a callee no test runs live is fingerprinted by `name`, `description`, `tools` and
+  `disallowedTools` only, so a `model:` or `effort:` rung stales just the agent's own suite
+  and the suites that run it live (`execution.run_agents`), not every suite whose SKILL.md
+  names it (A3 item 10). A rung on a research callee no longer buys a research run.
 
 **The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
 only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed

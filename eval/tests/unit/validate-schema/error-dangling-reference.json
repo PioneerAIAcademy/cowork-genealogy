@@ -16,7 +16,7 @@
     "Should report that validation FAILED — must not claim the files are valid",
     "Should surface the specific error: assertions[0] (a_001) references source 'src_999' which does not exist",
     "Should explain that every assertion's source_id must point to a source defined in the sources[] list, and suggest a fix (point it at an existing source id, or add the missing source)",
-    "Should NOT silently edit research.json",
+    "Should NOT silently edit research.json to fix an error; its one write is a validate_schema log entry",
     "Should NOT route to check-warnings or proof-conclusion — a broken cross-reference is a structural integrity error this skill owns"
   ]
 }

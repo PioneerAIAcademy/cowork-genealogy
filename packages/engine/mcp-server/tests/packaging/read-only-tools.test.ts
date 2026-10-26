@@ -58,6 +58,7 @@ const WRITERS = [
   "logout",
   "materialize_facts",
   "merge_tree_persons",
+  "timeline_build",
   "project_create",
   "research_append",
   "research_log_append",

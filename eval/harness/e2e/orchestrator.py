@@ -925,7 +925,8 @@ class FixtureCaps:
     # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
     # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
     wall_clock_seconds: int = 7200  # 120 min — the formal GPS apparatus
-    # (research-exhaustiveness + gps-mentor gates + proof-conclusion) pushes a
+    # (research-exhaustiveness + proof-conclusion, and the gps-mentor gates
+    # until issue #2951 took them off the default path) pushes a
     # real full-GPS run well past 60 min; kenneth/elizabeth/teitje all hit the
     # old 3600 cap mid-proof-conclusion (morris already overrode to 4800).
     inactivity_seconds: int = 600   # 10 min with NO SDK message at all (silence)
@@ -1298,6 +1299,8 @@ def _is_agent_tool(tool_name: str | None) -> bool:
 #
 # Shape follows the unit tier's `{(tool, response_key)}` convention (issue #2561).
 _RUNLOG_EXEMPT_KEYS: set[tuple[str, str]] = {
+    # Since #2490 the text is inline only when staging failed; a staged page is
+    # saved under STAGED_TRANSCRIPTION_KEY by `capture_staged_transcription`.
     ("image_transcribe", "transcription"),
     # The hand-off URL replay rebuilds the log entry from; a curated link can
     # run past the cut, and a cut URL would replay as a different hand-off.
@@ -1493,6 +1496,79 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     entry["result_chars"] = _raw_result_chars(block.content)
 
 
+#: The `tool_calls[]` key carrying the page an `image_transcribe` call STAGED
+#: (#2490): the response returns `staged.resultsRef`, not the text, so the
+#: `transcription` exemption above has nothing to save. Key-presence-detectable,
+#: so no `HARNESS_SCHEMA_VERSION` bump; a log without it carries the text, if at
+#: all, inline in `response_summary`.
+STAGED_TRANSCRIPTION_KEY = "staged_transcription"
+
+
+def _staged_transcription_text(workspace: Path, response: dict[str, Any]) -> str | None:
+    """The transcription a staged `image_transcribe` response points at, or None.
+
+    Reads `staged.resultsRef` under `workspace`; once `research_log_append` has
+    finalized that file into `results/<log_id>.json` the staged copy is gone, so
+    a finalized `image_transcribe` sidecar whose element matches the response's
+    `digest` (id and length) is accepted in its place.
+    """
+    staged = response.get("staged")
+    ref = staged.get("resultsRef") if isinstance(staged, dict) else None
+    if not isinstance(ref, str) or not ref:
+        return None
+    digest = response.get("digest") if isinstance(response.get("digest"), dict) else {}
+
+    def _element(path: Path) -> dict[str, Any] | None:
+        try:
+            envelope = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        if not isinstance(envelope, dict) or envelope.get("tool") != "image_transcribe":
+            return None
+        results = (envelope.get("payload") or {}).get("results")
+        if not isinstance(results, list) or len(results) != 1 or not isinstance(results[0], dict):
+            return None
+        text = results[0].get("transcription")
+        return results[0] if isinstance(text, str) else None
+
+    staged_el = _element(workspace / ref)
+    if staged_el is not None:
+        return staged_el["transcription"]
+    if not digest:
+        return None
+    for path in sorted((workspace / "results").glob("*.json")):
+        el = _element(path)
+        if (
+            el is not None
+            and el.get("id") == digest.get("id")
+            and len(el["transcription"]) == digest.get("chars")
+        ):
+            return el["transcription"]
+    return None
+
+
+def capture_staged_transcription(entry: dict[str, Any], content: Any, workspace: Path) -> None:
+    """Save the page a staged `image_transcribe` call returned only a ref to.
+
+    Called as the result arrives, before `research_log_append` can finalize the
+    staged file (the finalized sidecar is the fallback) and long before the 24h
+    staging prune. Best-effort — never raises; a call with no staged page, or one
+    whose text came back inline, gets no key.
+    """
+    try:
+        if not str(entry.get("tool") or "").endswith("image_transcribe"):
+            return
+        docs = _unwrap_mcp_text_blocks(content)
+        for doc in docs if isinstance(docs, list) else [docs]:
+            if isinstance(doc, dict):
+                text = _staged_transcription_text(workspace, doc)
+                if text is not None:
+                    entry[STAGED_TRANSCRIPTION_KEY] = text
+                    return
+    except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
+        return
+
+
 # The spawn announcement an `Agent`/`Task` result carries for a background
 # subagent: "Async agent launched … agentId: <id>". This is the canonical way to
 # identify a background agent — the same signal issue #3045's measurement recipe
@@ -1567,23 +1643,24 @@ def backfill_background_tool_calls(
                     agent_type = meta.get("agentType")
             for raw in pair_tool_calls(records):
                 content = raw.get("content")
-                tool_calls.append(
-                    {
-                        "tool": raw["tool"],
-                        "args": raw["args"],
-                        "response_summary": (
-                            _summarize_tool_response(content, tool_name=raw["tool"])
-                            if content is not None
-                            else None
-                        ),
-                        "is_error": raw["is_error"],
-                        "result_chars": (
-                            _raw_result_chars(content) if content is not None else 0
-                        ),
-                        "agent_id": agent_id,
-                        "agent_type": agent_type,
-                    }
-                )
+                backfilled: dict[str, Any] = {
+                    "tool": raw["tool"],
+                    "args": raw["args"],
+                    "response_summary": (
+                        _summarize_tool_response(content, tool_name=raw["tool"])
+                        if content is not None
+                        else None
+                    ),
+                    "is_error": raw["is_error"],
+                    "result_chars": (
+                        _raw_result_chars(content) if content is not None else 0
+                    ),
+                    "agent_id": agent_id,
+                    "agent_type": agent_type,
+                }
+                if content is not None:
+                    capture_staged_transcription(backfilled, content, workspace)
+                tool_calls.append(backfilled)
     except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
         return
 
@@ -2296,20 +2373,22 @@ async def _run_agent(
             # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
             # guidance), mirroring each `_DENIAL_REASONS` entry, which
             # `blocked_context_calls` does not store — so a runlog reader can act on
-            # this line alone. For image_read the recovery is the transcription
-            # plugin @plugin:image-reader, which is now also the only image reader
-            # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future second guarded tool.
+            # this line alone. For image_read the recovery is `image_transcribe`,
+            # which stages the page host-side (#2490; the image-reader agent that
+            # wrapped it is retired). The fallback covers a future second guarded tool.
             recovery = {
-                "image_read": "@plugin:image-reader",
-            }.get(bare, "the owning subagent")
+                "image_read": (
+                    "call `image_transcribe` with projectPath instead and read the "
+                    "staged page with `sidecar_read`"
+                ),
+            }.get(bare, "delegate to the owning subagent")
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
                         f"`{bare}` denied on the main thread — it is a subagent-only "
-                        f"tool; delegate to {recovery} rather than doing the work here."
+                        f"tool; {recovery} rather than doing the work here."
                     ),
                 }
             )
@@ -2697,8 +2776,8 @@ async def _run_agent(
             "reason": (
                 "You are mid-run in an autonomous /research session and the "
                 "project is not yet complete (project.status is not "
-                "'completed'). Re-read research.json and invoke the next GPS "
-                "sub-skill now; keep going until project.status is "
+                "'completed'). Re-read research.json and invoke the `research` "
+                "skill now; keep going until project.status is "
                 "'completed' or you hit a genuine, logged blocker."
             ),
         }
@@ -3006,6 +3085,7 @@ async def _run_agent(
                                 )
                                 if entry is not None:
                                     apply_tool_result(entry, block, summary)
+                                    capture_staged_transcription(entry, block.content, workspace)
                                     # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
@@ -3944,7 +4024,7 @@ async def run_e2e_test(
             "tool_search": tool_search,
         }
 
-        # Summarize any subagent transcripts (record-extractor, image-reader, …)
+        # Summarize any subagent transcripts (record-structurer, search-images, …)
         # from the SDK's ephemeral cache while `workspace` is still in scope (the
         # cache lives outside the tempdir; see sdk_cache_dir for how it is
         # located). Best-effort;

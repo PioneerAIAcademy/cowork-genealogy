@@ -47,7 +47,10 @@ export const treeCorrectSchema = {
     "a factId or a relationshipId and never deletes a person (use " +
     "merge_tree_persons to collapse duplicates). FamilySearch reuses fact ids " +
     "across persons, so a factId more than one holder carries is REFUSED unless " +
-    "personId or relationshipId says whose copy to remove.\n" +
+    "personId or relationshipId says whose copy to remove. " +
+    "On a person with a recorded namesake (research.json `namesakes`), a fact or " +
+    "name may cite a record only when that record's link to the person passes the " +
+    "namesake cap; otherwise nothing is written and the refusal names the route.\n" +
     "\n" +
     "Pick the `operation` and pass ONLY the fields to change (snake_case " +
     "simplified-GedcomX; ids are immutable). The tool swaps the " +
