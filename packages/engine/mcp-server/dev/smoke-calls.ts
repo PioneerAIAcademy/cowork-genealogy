@@ -203,6 +203,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // The stdio smoke runs the file store, which lists nothing; over HTTP the
+    // bound store lists the project the create above wrote.
+    tool: "project_list",
+    offline: true,
+    args: () => ({}),
+    expect: (res, ctx) => {
+      const listed =
+        Array.isArray(res.body?.projects) && res.body.projects.some((p: any) => p?.projectPath === ctx.projectPath);
+      return {
+        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed)),
+        detail: brief(res, 300),
+      };
+    },
+  },
+  {
     tool: "research_query",
     label: "research_query (log)",
     offline: true,

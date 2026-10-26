@@ -155,6 +155,24 @@ const CLAIM_NOT_A_RELATIONSHIP =
   "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
   "so it cannot rise above them.";
 
+// A parentage claim that left its relationship off is not a fact claim, and told
+// to "leave a claim of any other kind out" the agent dropped a not_proved
+// maternity claim in 2 of 4 tries of ut_proof_conclusion_022 (2026-10-25). So a
+// claim whose label names a parent relationship is told to add it instead.
+const PARENTAGE_CLAIM_LABEL = /patern|matern|parent|father|mother/i;
+
+function claimRelationshipMissing(claim: any): string {
+  if (typeof claim?.claim !== "string" || !PARENTAGE_CLAIM_LABEL.test(claim.claim)) {
+    return CLAIM_NOT_A_RELATIONSHIP;
+  }
+  return (
+    `claim '${claim.claim}' is a parentage claim, so it is a ParentChild relationship claim: add ` +
+    `relationship: { type: "ParentChild", parent: "<the parent's tree person id>", child: ` +
+    `"<the child's tree person id>" } and keep it in claims[] at its own proof_tier, not_proved ` +
+    `included. Do not drop it.`
+  );
+}
+
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
   "objective_decomposition", "new_evidence", "record_found_incidentally",
@@ -668,7 +686,7 @@ export const RESEARCH_SHAPES = {
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site",
+    "external_site", "staged_ref",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -1148,6 +1166,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if (!isNonNegativeInteger(n)) {
         addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
       }
+    }
+    if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
+      addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
     }
 
     const ext = entry.external_site;
@@ -1783,9 +1804,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         ], clp, report, NULLABLE_FIELDS);
         // Required like the three above, worded for what a missing one means.
         if (!("relationship" in claim)) {
-          addError(report, clp, `missing required field 'relationship' — ${CLAIM_NOT_A_RELATIONSHIP}`);
+          addError(report, clp, `missing required field 'relationship' — ${claimRelationshipMissing(claim)}`);
         } else if (claim.relationship === null) {
-          addError(report, clp, `required field 'relationship' is null — ${CLAIM_NOT_A_RELATIONSHIP}`);
+          addError(report, clp, `required field 'relationship' is null — ${claimRelationshipMissing(claim)}`);
         }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
         // Optional here (unlike the scalar above) but still closed: an

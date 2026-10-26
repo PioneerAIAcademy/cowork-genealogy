@@ -278,12 +278,17 @@ the user changed assertions/links since you last saw them — use
 **`research_query`, not a whole-file `Read`** of research.json (which
 grows all session):
 
-- `research_query({ section: "assertions", recordId, recordRole })` — the
-  personas you're about to link, one call per persona.
-- `research_query({ section: "person_evidence", assertionId })` — whether a
-  given `a_` is already linked (an empty result IS the answer: unlinked).
-- `research_query({ section: "person_evidence", personId })` — the existing
-  links for a candidate person, when checking for revisions.
+- `research_query({ section: "assertions", recordId: [ … ] })` — every persona
+  of every record you are about to link, in one call; group the items by
+  `record_id` + `record_role`.
+- `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
+  of those `a_` are already linked; `countById[id]` of 0 means unlinked.
+- `research_query({ section: "person_evidence", personId: [ … ] })` — the
+  existing links for every candidate person, when checking for revisions.
+
+A list takes at most 50 ids, and only one filter per call may be a list. While
+`truncated` is true, re-query with `offset` at 50, then 100, until you hold
+`count` items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
@@ -914,15 +919,16 @@ Present the materialized household plainly.
 
 ### 8. Check the persons you linked to, then present
 
-`person_warnings` takes one `personId` per call, so call it only where the
-writer tools cannot see: each person you linked to that **already existed in
-the tree before this invocation**. Not a stub you minted this run — its facts
+After your last link, call `person_warnings` once, with `personId` set to the
+list of every person you linked to that **already existed in the tree before
+this invocation**. Not a stub you minted this run — its facts
 went through `materialize_facts`, which refuses a write that introduces an
 unjustified warning. A `pe_` link does not go through a writer tool, so an
 imported relative's pre-existing impossibility is surfaced by nothing else.
 
-Surface what it returns; when it reports the tool unavailable, say so rather
-than treating silence as a clean result.
+Surface what it returns, per person in `results`; an entry's `error`, a
+`birthplaceCheck` of `not_checked`, or the tool reported unavailable is a check
+that did not run — say so rather than treating it as a clean result.
 
 Present the results:
 - Each link created, with the assertion, the person, and the

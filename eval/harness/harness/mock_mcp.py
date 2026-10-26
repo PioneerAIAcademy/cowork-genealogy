@@ -1577,10 +1577,11 @@ def create_mock_server(
     #
     # A tool the TEST declared a fixture for keeps its canned response and is
     # skipped here. Registering both would define the same tool name twice and
-    # the second would shadow the first. Only `person_warnings` is in both sets
-    # today: the check-warnings suite drives it from tuned fixtures covering
-    # specific tag combinations, while every other suite wants the real
-    # computation over its own workspace tree. Ordering matters and is the
+    # the second would shadow the first. Two tools are in both sets today:
+    # `person_warnings`, which the check-warnings suite drives from tuned
+    # fixtures covering specific tag combinations while every other suite wants
+    # the real computation over its own workspace tree, and `project_list`, whose
+    # hosted answers the research suite serves from fixtures. Ordering matters and is the
     # reason this is a skip rather than a precedence rule -- fixtures are
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
@@ -1647,6 +1648,8 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     # Takes only `{summary}`; the handler's injected `projectPath` is the inert
     # extra key convert_calendar already tolerates.
     "research_delivered": ("research-delivered.js", "researchDelivered"),
+    # Takes no input; the injected `projectPath` is ignored the same way.
+    "project_list": ("project-list.js", "projectList"),
 }
 
 #: Compiled tools whose `projectPath` is optional and changes what the call

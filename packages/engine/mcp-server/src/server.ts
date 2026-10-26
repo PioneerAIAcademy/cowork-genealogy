@@ -110,6 +110,7 @@ import {
   projectContext,
   type ProjectContextInput,
 } from "./tools/project-context.js";
+import { projectList } from "./tools/project-list.js";
 import { extractionAppend } from "./tools/extraction-append.js";
 import { evaluationAppend } from "./tools/evaluation-append.js";
 import { timelineBuild } from "./tools/timeline-build.js";
@@ -827,6 +828,15 @@ export function createServer(principal: Principal): Server {
         const args = request.params.arguments as unknown as ProjectContextInput;
         const result = await projectContext(args);
         return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "project_list") {
+      try {
+        const result = await projectList();
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };

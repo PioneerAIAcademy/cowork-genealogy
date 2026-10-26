@@ -99,6 +99,7 @@ way project state changes.
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
+| `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's projects (objective, subjects, status) and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
