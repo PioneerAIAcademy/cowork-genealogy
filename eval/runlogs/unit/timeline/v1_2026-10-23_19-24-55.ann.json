@@ -1,0 +1,326 @@
+{
+  "run_log": "v1_2026-10-23_19-24-55.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The saved death event reads \"1908\", approximate, with no place, citing only a_013 (the father's name, which has no date or place), though a_011 in the project says died 12 March 1908, Schuylkill County, exact. The reply also says the Ireland-vs-Pennsylvania birthplace conflict still needs to be registered with conflict-resolution, but c_001 already exists and is resolved in favour of Ireland; the agent never checked the conflicts section."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The test requires a birth event (Ireland, ~1845, from census ages), but the saved timeline has only 1850, 1860 and 1908. It dropped the birth because a_002/a_009 aren't linked to I1, yet a_002 is from the same 1850 census entry as the linked a_001/a_004, and the agent quoted that Ireland birthplace in its own 1850 description."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both fixture calls matched their expected arguments (place_search \"Schuylkill County, Pennsylvania\", wiki_read United_States_Census), and the project_context, research_query and research_append calls used the right sections and ids (t_001 update)."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Both census events carry the exact standardPlace from the single place_search call; 1850 is the first event (null is correct) and 1860 is 0 (same place). The death event has no place, so its null distance is correct under the rubric. The missing death place is a content error, already counted under Correctness."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The saved gap is 1860–1908, severity high, expecting marriage plus the 1870/1880/1900 censuses, all surviving records, after a wiki_read of the census page. 1890 appears only in the notes, as destroyed."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " No vital-limit problem here (1850, 1860, 1908 in order; ages 5 to 15), and the agent made no impossibility ruling. Note the judge's reason is off: the birthplace question is a source conflict (conflict-resolution's job, already resolved as c_001), not a check-warnings matter."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No pair is close in time but far apart; every saved event is in Schuylkill County or has no place."
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "h_001 is a parentage claim, not an identity question, and the reply gives no Pass/Fail verdict on it."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Every fact checks out: the English census nights given (6 June 1841, April 1861, April 1871) match the England_Census page, age 13 in 1851 is from a_002, and no US census year appears anywhere."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four documented events are present (birth ~1838, 1851 census, 1859 marriage, 1874 death, all Canterbury), the England census page was read, and the 1841/1861/1871 gaps were saved."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " place_search(\"Canterbury, Kent, England\") and the England_Census wiki_read matched their fixtures; research_append used \"append\", correct because the scenario had no timeline yet."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One place, resolved once; distances null/0/0/0 are correct with no place_distance needed."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Expects the 1841, 1861 and 1871 censuses, English years from the England census page, with no US years. Medium severity for the childhood census, high for the two adult censuses."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing to defer (four consistent events, nothing after death), and no impossibility ruling made."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "All four events are in Canterbury."
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The scenario has no hypotheses, and no verdict was given."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Facts match: baptism 25 May 1850 in County Mayo (a_014) and census 1 June 1850 in Schuylkill (a_004), 7 days apart, with 5,400 km from place_distance. The 10–14 day minimum crossing is general knowledge but historically sound, and gives the same conclusion."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both places resolved, the distance computed, the infeasibility flagged and the gap recorded. Since the rewrite shrank the timeline from 4 events to 3, it named the dropped birth and death events and why (those assertions aren't linked to Patrick), as the agent's instructions require."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " \"County Mayo, Ireland\" and \"Schuylkill County, Pennsylvania\" matched their place_search fixtures, and place_distance matched its fixture. No fixture misses."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " \"County Mayo, Ireland\" and \"Schuylkill County, Pennsylvania\" matched their place_search fixtures, and place_distance matched its fixture. No fixture misses."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " One high gap, 1860 → 1908, expecting the 1870/1880/1900 censuses, after reading the census wiki page; 1890 appears only in the reply, not in the field."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " No vital-limit contradiction in this scenario; the agent made no impossibility ruling and still recommends check-warnings once person-evidence is sorted out."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It compared 7 days and 5,400 km against the minimum Atlantic crossing and called the pair infeasible (\"No ship in 1850 could cross the Atlantic in a week\"), then handed the doubtful record to person-evidence. That is exactly the pass case."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " h_001 is a parentage claim; \"strong negative evidence against a_014 belonging to this Patrick Flynn — hand this to person-evidence\" is the required signal, not a verdict."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Facts match the scenario: death 1908-03-12 (a_011), deed recorded 1912-06-14 (a_014), ages 5 and 15 (a_002/a_009), informant son-in-law James Brown. Minor nit: the deed is typed \"other\" though \"land_transaction\" exists."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1912 deed is in the timeline, sorted after the death, the anomaly is flagged with a check-warnings recommendation, the 48-year gap is listed, and the return lists what changed from the old timeline (all 4 old events kept, deed added)."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " place_search for Ireland and Schuylkill County, wiki_read United_States_Census and place_distance each matched their fixture; research_append updated t_001 correctly."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Both standard places are exactly what place_search returned; 5400 km on the 1850 census is the place_distance value, and the following events are 0 for the same place. Each place was resolved once."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " One high gap, 1860 → 1908-03-12, expecting marriage, the 1870/1880/1900 censuses and a Civil War service record, all surviving records; 1890 correctly left out."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The return flags that the 1912 deed post-dates the 1908 death and recommends check-warnings \"to classify whether this reflects a pre-death deed recorded late, an estate action, or a misattribution\", without ruling on it, and keeps the deed in the timeline as the test requires."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " The only far-apart pair, the ~1845 Ireland birth and the 1850 census, is about five years apart."
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " h_001 is a parentage claim, and no verdict was given."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The saved timeline matches the scenario: birth ~1845 Ireland with c_001 and a Pennsylvania note, the 1850/1860 Schuylkill censuses, death 12 March 1908, and 5400 km from place_distance. Minor wording slip: the return says Patrick \"would have been 16–20 in 1861\" (he was about 16 in 1861; 16–20 is his age across 1861–1865, as the saved gap note says), but the point it supports, Civil War age with no service record found, still holds."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The birth event carries all three competing birthplace assertions (a_002, a_009, a_012) with c_001 and a note; the 1850 census carries c_002 naming both 1850 Patrick Flynns (households 84 and 197); and the 1860–1908 gap is filled in. The return also names the one change from the old timeline."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All five fixture calls matched their expected arguments (place_search for Ireland, Schuylkill County and Pennsylvania; wiki_read United_States_Census; place_distance Ireland → Schuylkill), and research_query/research_append used the correct sections and the t_001 id."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every saved standard_place (\"Ireland\", \"Schuylkill, Pennsylvania, United States\") is the exact value from its place_search fixture. 5400 km on the 1850 census is the one place_distance result, and 1860 and 1908 are 0 because they share the 1850 place. Each place was resolved once."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The gap runs 1860 to 1908-03-12, severity high, expecting the 1870/1880/1900 censuses, marriage and Civil War service, all records that survive. The 1890 census is only in the notes, as destroyed."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No vital-limit contradiction here (birth ~1845, censuses at ages 5 and 15, death 1908), and the agent made no impossibility ruling. It sent both open conflicts (c_001, c_002) to conflict-resolution, which owns them."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "h_001 is a parentage claim, not an identity question, and the agent gave no Pass/Fail/Inconclusive verdict on it. Putting c_002 on the 1850 event and leaving it open is what this test asked for."
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The only far-apart pair is the Ireland birth (~1845) and the 1850 Pennsylvania census, about five years apart, so no pair is close in time. N/A, as the test context says."
+    }
+  ]
+}

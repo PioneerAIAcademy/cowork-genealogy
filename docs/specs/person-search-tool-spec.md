@@ -4,7 +4,11 @@
 > `{ decisive, tiedAtTop, reason }` saying whether the results chose one person or
 > needed a human to. `init-project` was its only reader, and it no longer searches by
 > name — a project now always starts from a FamilySearch PID — so nothing branched on
-> it. The helper, its suite and its probe went with it.
+> it. The helper, its suite and its probe went with it. The probe scripts and their
+> recorded responses stay reachable at tag `phase2-final` (`1ced02ac4`,
+> `3551593027`) as the evidence behind the sizing
+> `docs/plan/research-as-a-job-phase4-cold-start.md` cites; they are deliberately
+> not on `main`.
 
 ## Overview
 

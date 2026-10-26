@@ -510,7 +510,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -526,7 +526,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -1056,7 +1056,7 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
-.PHONY: source-screen-snapshot source-screen-attachments source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+.PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-judge source-screen-score
 source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1] [TREE=<researcher tree id>]
 	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED)) $(if $(TREE),--tree $(TREE))
@@ -1064,6 +1064,10 @@ source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source s
 source-screen-attachments: $(ENGINE_DEPS) ## Re-read a snapshot's attachments from a researcher tree: make source-screen-attachments SNAPSHOT=<dir> TREE=<tree id>
 	@test -n "$(SNAPSHOT)" -a -n "$(TREE)" || { echo "ERROR: set SNAPSHOT and TREE" >&2; exit 1; }
 	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts attachments --snapshot "$(abspath $(SNAPSHOT))" --tree $(TREE)
+
+source-screen-tree-sources: $(ENGINE_DEPS) ## Reclassify a snapshot and fetch its 4:1: tree-person and 2:2:/2:3: compiled-tree sources: make source-screen-tree-sources SNAPSHOT=<dir>
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts tree-sources --snapshot "$(abspath $(SNAPSHOT))"
 
 source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
 	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }

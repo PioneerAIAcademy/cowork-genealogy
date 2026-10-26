@@ -136,7 +136,7 @@ research_log_append({
 })
 ```
 
-`outcome` is `"negative"` when no census year returned a household. Pass no `stagedResultsRef`. Do not return until this call has succeeded. Never claim the table was logged without actually making the call.
+`outcome` is `"negative"` when no census year returned a household, otherwise `"positive"` — even when a year was over threshold; log that year's `record_search` page `"partial"` instead. Pass no `stagedResultsRef`. Do not return until this call has succeeded. Never claim the table was logged without actually making the call.
 
 ## Out of scope
 
