@@ -321,8 +321,10 @@ qualify.
   link to person-evidence, which ties
   it (links another party of this record to a spouse, parent or child of
   '<id>' already in the tree; one made from this record alone does not count)
-  or lowers it to 'speculative' naming the namesake.", followed by
-  the arm's own suffix. When `personId` is omitted, a person the lookup would
+  or lowers it to 'speculative' naming the namesake. When the project holds no
+  such tie yet, person-evidence lowers it now: a party still to extract or a
+  record still to find is not a tie, and the link can be raised once the tie
+  is made.", followed by the arm's own suffix. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'

@@ -954,7 +954,9 @@ function namesakeCopyRefusal(
     `source '${verdict?.source ?? ""}' ties it to '${personId}' (${reason}).${others} Route that link ` +
     "to person-evidence, which ties it (links another party of this record to a spouse, parent or " +
     `child of '${personId}' already in the tree; one made from this record alone does not count) or ` +
-    "lowers it to 'speculative' naming the namesake."
+    "lowers it to 'speculative' naming the namesake. When the project holds no such tie yet, " +
+    "person-evidence lowers it now: a party still to extract or a record still to find is not a tie, " +
+    "and the link can be raised once the tie is made."
   );
 }
 

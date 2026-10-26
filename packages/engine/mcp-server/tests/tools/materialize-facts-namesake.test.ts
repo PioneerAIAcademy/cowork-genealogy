@@ -149,6 +149,10 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
       );
       expect(r.errors[0]).toContain("Route that link to person-evidence");
       expect(r.errors[0]).toContain("already in the tree; one made from this record alone does not count");
+      expect(r.errors[0]).toContain(
+        "When the project holds no such tie yet, person-evidence lowers it now: a party still to extract " +
+          "or a record still to find is not a tie, and the link can be raised once the tie is made. If this",
+      );
       expect(r.errors[0]).toContain("If this persona is someone else, omit personId");
     });
 
