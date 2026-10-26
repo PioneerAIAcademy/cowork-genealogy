@@ -68,6 +68,13 @@ const FIXTURES: FixtureSpec[] = [
       "BOTH sides -> father_of_groom / mother_of_bride etc., plus two further " +
       "persons that fall to witness_N",
   },
+  {
+    name: "obituary-residence-date-only",
+    recordId: "Q5SD-BW8V",
+    why:
+      "GenealogyBank obituary index: the principal's Residence carries only a date, " +
+      "which the extractor copies into value; that date is never the residence's place",
+  },
   // Discovered rather than pinned: a search picks the first hit in the named
   // collection and the id is recorded in the written fixture (`_capturedFrom`).
   // Pinning by hand meant reading a whole search response to copy one string.

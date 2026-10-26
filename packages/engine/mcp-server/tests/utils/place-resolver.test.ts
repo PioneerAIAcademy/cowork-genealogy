@@ -26,6 +26,7 @@ import {
   withRetry,
   mapWithConcurrency,
   countryConsistency,
+  standardPlaceNamedInText,
   deriveContextName,
   sharedJurisdiction,
   __clearPlaceResolverCachesForTests,
@@ -210,6 +211,20 @@ describe("countryConsistency", () => {
     ["Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States", "unverifiable"],
   ])("%s vs %s → %s", (place, standard, expected) => {
     expect(countryConsistency(place as string, standard as string)).toBe(expected);
+  });
+});
+
+describe("standardPlaceNamedInText", () => {
+  it.each([
+    ["412 Vine St, Cincinnati", "Cincinnati, Hamilton, Ohio, United States", true],
+    ["Borough of Shenandoah, County of Schuylkill", "Shenandoah, Schuylkill, Pennsylvania, United States", true],
+    ["Hilperton, Wiltshire", "Hilperton, Wiltshire, England, United Kingdom", true],
+    // Only the answer's own name counts: a containing place the text also names does not.
+    ["Paxcroft, Wiltshire", "Trowbridge, Wiltshire, England, United Kingdom", false],
+    ["412 Vine St, Cincinnati", "Hamilton, Ohio, United States", false],
+    ["with his daughter", "Hawaii, United States", false],
+  ])("%s names %s: %s", (place, standard, expected) => {
+    expect(standardPlaceNamedInText(place as string, standard as string)).toBe(expected);
   });
 });
 

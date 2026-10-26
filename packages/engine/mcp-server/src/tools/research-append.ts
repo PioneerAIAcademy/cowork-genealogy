@@ -63,7 +63,7 @@ import {
   standardPlaceNamedInText,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { isSuspiciousText, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
+import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -5985,11 +5985,18 @@ function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
 
+/** The place text `value` holds: the value without the `[?]` a doubted reading
+ *  ends with, which stays in `value`, so the lifted place is as clean as a
+ *  document's own `place`. "" for a non-string value. */
+function valuePlaceText(entry: Record<string, unknown>): string {
+  return typeof entry.value === "string" ? entry.value.replace(TRAILING_DOUBT, "") : "";
+}
+
 /** `value` may be lifted into `place`: neither `place` nor `standard_place` is
- *  set, there is a value, and the assertion is not an absence, whose value says
- *  what the record lacks rather than naming a place. */
+ *  set, the value holds text, and the assertion is not an absence, whose value
+ *  says what the record lacks rather than naming a place. */
 function placeLiftable(entry: Record<string, unknown>): boolean {
-  return isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(entry.value) && entry.record_basis !== "absent";
+  return isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(valuePlaceText(entry)) && entry.record_basis !== "absent";
 }
 
 /** A folded place-of-event variant must keep its place machine-readable: lift
@@ -6002,37 +6009,89 @@ function liftVariantPlace(entry: Record<string, unknown>): boolean {
   if (typeof entry.fact_type !== "string" || !PLACE_VARIANT_KEYS.has(factTypeKey(entry.fact_type)) || !placeLiftable(entry)) {
     return false;
   }
-  entry.place = entry.value;
+  entry.place = valuePlaceText(entry);
   return true;
 }
 
 /** Words that mark prose about whom a person lived with ("with his daughter",
- *  "at the home of her son"), not a place. */
+ *  "Home Of His Son"), in any case. */
 const RELATIONAL_WORDS = /\b(?:with|his|her|their|him|them)\b/i;
 
-/** A residence `value` that reads as a place or an address: two or more comma
- *  parts ("Borough of Shenandoah, County of Schuylkill") or a leading street
- *  number ("412 Vine St"), and none of RELATIONAL_WORDS. */
-function readsAsPlace(value: string): boolean {
-  if (RELATIONAL_WORDS.test(value)) return false;
-  return placeSegments(value).length >= 2 || /^\s*\d+[a-z]?\s+\S/i.test(value);
+/** The word that makes a house number's words a street, in English and in the
+ *  corpus's record languages that put the number first: "412 Vine St", "12 rue
+ *  de Rivoli", "25 Calle Imbert". Matched without case or a final period. */
+const STREET_WORDS = new Set([
+  "street", "st", "road", "rd", "avenue", "ave", "av", "lane", "ln", "drive", "dr", "boulevard", "blvd",
+  "place", "pl", "court", "ct", "way", "square", "sq", "terrace", "ter", "terr", "row", "alley", "walk",
+  "highway", "hwy", "parkway", "pkwy", "circle", "cir", "crescent", "close", "plaza", "pike", "turnpike",
+  "rue", "chemin", "allée", "impasse", "quai", "route",
+  "calle", "avenida", "paseo", "camino",
+  "via", "viale", "piazza", "corso",
+  "rua", "travessa", "praça", "estrada",
+]);
+
+/** The lowercase words that join the names in a place or a street, as the
+ *  corpus's places spell them: "Borough of Shenandoah", "Rio Grande do Sul",
+ *  "Krásno nad Kysucou", "Frankfurt am Main", "chemin des Vignes". English
+ *  prepositions that also join a place ("Barrow in Furness") are left out: they
+ *  are the words prose is made of. */
+const PLACE_JOINERS = new Set([
+  "of", "and", "&", "upon", "de", "del", "da", "do", "dos", "du", "des", "di", "le", "la", "las", "los", "y", "i", "og", "nad",
+  "am", "im",
+]);
+
+/** A word of a place's name: capitalized (after an opening bracket or quote),
+ *  or a joining word. A number is not. */
+function nameWord(word: string): boolean {
+  return /^[("'“‘]*\p{Lu}/u.test(word) || PLACE_JOINERS.has(word);
+}
+
+function streetWord(word: string): boolean {
+  return STREET_WORDS.has(word.replace(/\.$/, "").toLowerCase());
+}
+
+/** A house number, then a street's name with its street word: "412 Vine St",
+ *  "58-08 58th Ave.". A number with no street word is not an address: "26 Jan
+ *  1958", "30 years a resident of Logan". */
+function streetAddress(part: string): boolean {
+  const [number, ...words] = part.split(/\s+/);
+  return (
+    /^\d+(?:-\d+)?[a-z]?$/i.test(number) &&
+    words.some(streetWord) &&
+    words.every((w) => streetWord(w) || nameWord(w) || /^\d+(?:st|nd|rd|th)\.?$/i.test(w))
+  );
+}
+
+/** A residence's value text that reads as a place or an address: a street
+ *  address, or two or more comma parts that are each a street address or a
+ *  place's name ("412 Vine St, Cincinnati", "Borough of Shenandoah, County of
+ *  Schuylkill"). Everything else is prose and stays a value: a lowercase word
+ *  that joins no names ("Moved to Salt Lake City, then to Logan"), a number
+ *  other than a house number before its street ("January 26, 1958", "3 miles
+ *  north of town"), one of RELATIONAL_WORDS, or text with no lowercase letter,
+ *  whose case cannot tell a name from prose. */
+function readsAsPlace(text: string): boolean {
+  if (!/\p{Ll}/u.test(text) || RELATIONAL_WORDS.test(text)) return false;
+  const parts = placeSegments(text);
+  if (parts.length === 1) return streetAddress(parts[0]);
+  return parts.every((part) => streetAddress(part) || part.split(/\s+/).every(nameWord));
 }
 
 /** A residence given only in `value` ("412 Vine St, Cincinnati", from a
- *  record-structurer document) has its value lifted into `place`, the attribute
- *  that is standardized and the one a Residence fact keeps on the tree, when
- *  `placeLiftable` and the value `readsAsPlace`. Appends only, from
+ *  record-structurer document) has its value text lifted into `place`, the
+ *  attribute that is standardized and the one a Residence fact keeps on the
+ *  tree, when `placeLiftable` and the text `readsAsPlace`. Appends only, from
  *  `prepareOps`. Returns whether it lifted. */
 function liftResidencePlace(entry: Record<string, unknown>): boolean {
   if (
     typeof entry.fact_type !== "string" ||
     factTypeKey(entry.fact_type) !== "residence" ||
     !placeLiftable(entry) ||
-    !readsAsPlace(entry.value as string)
+    !readsAsPlace(valuePlaceText(entry))
   ) {
     return false;
   }
-  entry.place = entry.value;
+  entry.place = valuePlaceText(entry);
   return true;
 }
 

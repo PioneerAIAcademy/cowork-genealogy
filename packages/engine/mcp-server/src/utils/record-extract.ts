@@ -1017,9 +1017,10 @@ export function extractRecord(
 
   if (recordType === "census") {
     // Decide the column from the census fact's place and year, per household.
-    const censusFact = ps
-      .flatMap((p) => p.person.facts ?? [])
-      .find((f) => /census/i.test(String(f.type ?? "")));
+    const census = ps
+      .flatMap((p) => (p.person.facts ?? []).map((fact, i) => ({ fact, note: mode?.factMarks.get(`${p.id}#${i}`)?.note })))
+      .find(({ fact }) => /census/i.test(String(fact.type ?? "")));
+    const censusFact = census?.fact;
     const year = Number(String(censusFact?.date ?? "").match(/\d{4}/)?.[0]);
     const place = censusFact?.standard_place ?? censusFact?.place;
     const stated =
@@ -1034,9 +1035,11 @@ export function extractRecord(
       );
     }
     if (stated === null) {
+      // The note is relayed in the summary, so a flagged census fact's place is withheld.
+      const shown = isSuspiciousText(census?.note) ? WITHHELD_SUSPICIOUS : JSON.stringify(place ?? null);
       notes.push(
         `census jurisdiction not in the relationship-column table ` +
-          `(place ${JSON.stringify(place ?? null)}, year ${year || "unknown"}) — ` +
+          `(place ${shown}, year ${year || "unknown"}) — ` +
           `treated as stating no relationships, so no relationship assertion is written`,
       );
     }
@@ -1554,7 +1557,7 @@ const QUAKER_MONTH = /\b\d{1,2}(st|nd|rd|th)\s+(month|mo\.?)\b/i;
 const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
 
 /** The `[?]` a doubted reading carries at the end of its value. */
-const TRAILING_DOUBT = /\s*\[\?\]$/;
+export const TRAILING_DOUBT = /\s*\[\?\]$/;
 
 /** A value with the doubt marker, added once. */
 const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
@@ -1674,7 +1677,9 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
       );
     }
   }
-  const calendar = calendarFlags(result.assertions.filter((a) => !flagged(a)));
+  const calendar = calendarFlags(
+    result.assertions.filter((a) => !flagged(a)).map((a) => ({ date: a.date, value: withholdNames(a.value) })),
+  );
   if (calendar.length > 0) {
     lines.push(
       `Calendar: ${calendar.join("; ")} may fall under the Old Style calendar or a ` +

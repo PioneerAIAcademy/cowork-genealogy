@@ -127,7 +127,7 @@ is §11.7's code.
   City", 1 of 3). A residence sent with that place only in `value` has the
   value read as its `place` too, as written, when it reads as a place or an
   address (research-append §3.7), so it is standardized and reaches the tree.
-  Prose about whom the person lived with ("with his daughter") stays a value.
+  Prose ("with his daughter", "3 miles north of town") and a date stay a value.
 - **Gender for every person whose sex the text states**, not only the
   principal. A kin word states it: when a person is sent with no `gender` and
   a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,

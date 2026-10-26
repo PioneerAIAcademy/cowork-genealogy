@@ -607,6 +607,21 @@ describe("extraction_append: recordIds and absences", () => {
     );
   });
 
+  it("never reads a residence's date, copied into its value, as its place", async () => {
+    const obituary = element("obituary-residence-date-only");
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [obituary.recordId] }, readerFor([obituary]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const residences = (await research()).assertions.filter((a: any) => a.fact_type === "residence");
+    expect(residences.map((a: any) => [a.value, a.date, a.place])).toEqual([
+      ["26 Jan 1958", "26 Jan 1958", undefined],
+      ["26 Jan 1958", "26 Jan 1958", "Chicago, Illinois"],
+      ["26 Jan 1958", "26 Jan 1958", "Chicago, Illinois"],
+    ]);
+    expect(r.records[0].summary.split("\n")).toContain(
+      "Places kept as written, with no standard place found: Milwaukee, Wisconsin; Chicago, Illinois.",
+    );
+  });
+
   // ─── an accepted hint's log entry is the record's own (issue #3157) ───────────
 
   const hintEntry = (id: string, recordId: string, outcome = "positive") => ({

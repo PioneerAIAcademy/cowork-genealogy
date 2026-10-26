@@ -19,6 +19,10 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         return "West Bromwich, Staffordshire, England, United Kingdom";
       // What the live resolver returned for this phrase on 2026-10-26.
       if (text === "at the home of her daughter") return "Of, Trabzon, Türkiye";
+      // A place the text names only by its county: the answer is a neighbour.
+      if (text === "Paxcroft, Wiltshire") return "Trowbridge, Wiltshire, England, United Kingdom";
+      // An endonym whose standard place is spelled in English.
+      if (text === "Wien") return "Vienna, Austria";
       return null;
     }),
     // The birthplace cap's distance test (#3390). Unknown names resolve to null,
@@ -1483,6 +1487,43 @@ describe("research_append (Phase 1)", () => {
       expect(r.unresolvedPlaces).toBeUndefined();
       const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
       expect(p.standard_place).toBe("Schuylkill, Pennsylvania, United States");
+    });
+
+    it("on an append whose lookup names a place the text holds only as a later part, which is dropped", async () => {
+      await writeProject();
+      const r = await appendVariant("birthplace", "Paxcroft, Wiltshire");
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.unresolvedPlaces).toEqual(["Paxcroft, Wiltshire"]);
+      expect(r.resolvedPlaces).toBeUndefined();
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ fact_type: "birth", place: "Paxcroft, Wiltshire" });
+      expect(p).not.toHaveProperty("standard_place");
+    });
+
+    it("on an update that blanks the place, whose lookup the country check cannot judge and the text does not name, which is dropped", async () => {
+      await writeProject(storedVariant("at the home of her daughter"));
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "update", entryId: "a_001", fields: { place: null } });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.unresolvedPlaces).toEqual(["at the home of her daughter"]);
+      expect(r.resolvedPlaces).toBeUndefined();
+      const a = (await readResearch()).assertions[0];
+      expect(a.place).toBe("at the home of her daughter");
+      expect(a).not.toHaveProperty("standard_place");
+    });
+
+    it("while an ordinary place keeps a lookup the country check cannot judge, with a warning, though the text does not name it", async () => {
+      await writeProject();
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "death", value: "1921", place: "Wien" };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.resolvedPlaces).toEqual([{ place: "Wien", standardPlace: "Vienna, Austria", source: "geocoded" }]);
+      expect(r.unresolvedPlaces).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/resolved standard_place 'Vienna, Austria' for place 'Wien' — the country could not be cross-checked/);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p.standard_place).toBe("Vienna, Austria");
     });
 
     it("on an update that leaves the place alone, where a lookup naming another country is warned about and unresolved, not resolved", async () => {
