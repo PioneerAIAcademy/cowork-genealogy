@@ -43,6 +43,7 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readStagedResults, STAGING_SUBDIR } from "../utils/results-staging.js";
+import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -1184,6 +1185,21 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     }
     errors.push(...validateStructuredDocument(d?.document, `documents[${i}].document`));
   });
+  if (errors.length > 0) return { ok: false, records: [], errors };
+
+  // The page's own formula against the labels, still before anything is written.
+  // An unreadable transcription refuses nothing: the check stays silent.
+  for (const [i, d] of docs.entries()) {
+    if (!d.transcriptionRef || (d.document.recordType !== "land" && d.document.recordType !== "probate")) continue;
+    let text: string | undefined;
+    try {
+      const rows = await readStagedResults(input.projectPath, d.transcriptionRef);
+      text = (rows as any[]).find((r) => typeof r?.transcription === "string")?.transcription;
+    } catch {
+      continue;
+    }
+    if (text) errors.push(...deedFormulaErrors(d.document, text, `documents[${i}].document`));
+  }
   if (errors.length > 0) return { ok: false, records: [], errors };
 
   let research: any;
