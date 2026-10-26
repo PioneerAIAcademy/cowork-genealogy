@@ -32,10 +32,12 @@ match strength.
 The hint record — "Slovakia, Church and Synagogue Books, 1592-1935", the
 1853 Krásno nad Kysucou (Karásznó) Catholic baptism of Josephus Martassek,
 son of Joannes Martassek and Maria Tizsinyák (`ark:/61903/1:1:V171-T6D`) —
-is not the subject's baptism. The same parish's death register, entry
-No. 119 (`ark:/61903/1:1:6N98-SCLC`), records that Josephus Martassek, son
-of Joannes Martassek and Maria Tizsinyák, died aged five months on 9 October
-1853 and was buried on 11 October 1853.
+is not the subject's baptism. The same parish's death register
+(`ark:/61903/1:1:6N98-SCLC`) records Josephus, son of Joannes Martassek,
+died 9 October 1853 and buried 11 October 1853. Entry No. 119 and the age
+of five months come from the page; the index names only the father. The
+mother's name (Maria Tizsinyák) comes from the baptism entry, not the death
+register.
 A child dead in 1853 cannot be the Joseph Martassek (L8JK-KDK) who married
 Maria Szuchony and had children baptised at Krásno between 1878 and 1893.
 The decision rests on the two index entries above. Retrieval was by hand on
@@ -60,19 +62,17 @@ likely candidate class, but none has been identified as his.
 
 One plausible candidate in that class is the 1849 baptism of Josef Martassek,
 son of György Martassek and Anna Polacsek, at Krásno nad Kysucou
-(`ark:/61903/1:1:V185-6RZ`). The name, parish, and approximate age (born 1849,
-which would make him about 29 at the birth of his first known child in 1878)
-are consistent. However, FamilySearch's Possible Tree Match for that record is
-`L68M-CYV` — a separate tree person, not `L8JK-KDK`. `L68M-CYV` is a bare
-stub with no spouse, no children, and no sources, created by the Volunteer
-Project (Lifewood), and is itself flagged as a possible duplicate of `L683-KX4`;
-the 1849 record has spawned multiple unlinked stubs in the tree. `L68M-CYV`
-and `L8JK-KDK` are not connected to each other in the tree. Without a marriage
-record of Josef Martassek and Maria Szuchony that names his parents as György
-and Anna, equating the 1849 baptisand with the adult `L8JK-KDK` is
-circumstantial. `f2` is therefore written to require that the agent leave the
-parents unestablished: an agent that finds `V185-6RZ` and concludes "probable
-parents György Martassek and Anna Polacsek" has not met the GPS standard, and
-`f2` is designed to catch that error.
+(`ark:/61903/1:1:V185-6RZ`). The name, parish, and approximate age are
+consistent. But a search of the collection for baptisms from 1840 to 1860
+returns at least two further candidates with no indexed death: a second 1849
+Jósef naming only a mother, Anna Martassek (`ark:/61903/1:1:V1V3-81Z`), and an
+1856 Josephus Martassik, son of Adamus Martassik and Maria Sulgan
+(`ark:/61903/1:1:V1FD-4DJ`). The 1856 boy would have been 22 at the birth of
+the subject's first known child in 1878 and fits as well as the 1849 boy.
+Name, parish, and age cannot choose among them. `f2` is therefore written to
+require that the agent leave the parents unestablished: an agent that finds
+`V185-6RZ` and concludes "probable parents György Martassek and Anna Polacsek"
+has picked one of at least two live candidates and has not met the GPS
+standard; `f2` is designed to catch that error.
 
 CSV country "Czechoslovakia"; the record and the family are in Krásno nad Kysucou, present-day Slovakia, so the fixture is tagged `SK`.
