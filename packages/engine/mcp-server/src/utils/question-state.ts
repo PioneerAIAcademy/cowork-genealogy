@@ -34,6 +34,7 @@
 
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
 import { countsForLinkedRung } from "./tree-person.js";
+import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 
 export type QuestionState =
   | "framed"
@@ -397,6 +398,60 @@ export function whyConflictBlocksCompletion(conflict: any, research: any): strin
  * question with a proof summary is `concluded` even if its plan is thin,
  * because the artifact is what any downstream check joins on.
  */
+/** Whether a `resources_spent` stop carries an "Overturn risk:" justification,
+ *  which is what makes concluding the safer default rather than searching on.
+ *  An older stop wrote no such prefix, so it defaults to research-plan. */
+function overturnRisk(question: any): boolean {
+  const justification = question?.search_stop?.justification;
+  return typeof justification === "string" && /^\s*overturn risk:/i.test(justification);
+}
+
+/** Section B's choice: a question whose search stopped on RESOURCES, with
+ *  nothing left running and nothing unaccounted for.
+ *
+ *  All four halves have to hold, and each rules out a different wrong routing:
+ *  a stop for any other reason is a finding, not a budget; a summary means the
+ *  question is already concluded; an open plan item means the search has not
+ *  actually stopped; and a log entry the stop does not list means it stopped
+ *  before that search was weighed.
+ *
+ *  The fourth is why this cannot filter the log by `plan_item_id` alone, which
+ *  is what `questionStatus` does everywhere else. An external-site hand-off is
+ *  closed by a LATER entry that carries no `plan_item_id` — the researcher's
+ *  upload — so under a plain filter that upload would never undo the choice and
+ *  the question would sit at the choice forever. It is matched by URL with the
+ *  same `closesHandOff` rule `awaitingUserHandOffs` uses, from the one helper
+ *  section I moved into `src/utils`.
+ */
+function researcherChoice(research: any, question: any, plans: any[], itemIds: Set<any>): boolean {
+  const stop = question?.search_stop;
+  if (stop?.stopped_because !== "resources_spent") return false;
+  if (arr(research?.proof_summaries).some((s) => s?.question_id === question?.id)) return false;
+
+  const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const stillOpen = plans
+    .filter((p) => p?.status === "active")
+    .flatMap((p) => arr(p?.items))
+    .some(
+      (i) =>
+        (i?.status === "planned" || i?.status === "in_progress") && !waitingOnUpload.has(i?.id),
+    );
+  if (stillOpen) return false;
+
+  // Every entry the question owns must be named by the stop. "Owns" is its
+  // items' entries PLUS the later entries that close one of their hand-offs.
+  const listed = new Set(arr(stop?.log_entry_ids));
+  const handOffUrls = arr(research?.log)
+    .filter((e) => itemIds.has(e?.plan_item_id))
+    .map((e) => externalSiteOf(e)?.url_generated)
+    .filter((u): u is string => typeof u === "string");
+  const owned = arr(research?.log).filter(
+    (e) =>
+      itemIds.has(e?.plan_item_id) || handOffUrls.some((url) => closesHandOff(e, url)),
+  );
+  return owned.every((e) => listed.has(e?.id));
+}
+
 export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
   const qid = question?.id;
 
@@ -471,6 +526,14 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     nextStep =
       "hypothesis-tracking — competing parent sets: " +
       parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
+  } else if (researcherChoice(research, question, plans, itemIds)) {
+    // Section B: the "not exhaustive" choice. The search stopped on resources
+    // rather than on a finding, so neither searching more nor concluding is
+    // wrong — and only the researcher can say which. Above the concluded arm
+    // because it fires only when there is no summary, so the two never contend.
+    nextStep = `researcher's choice: research-plan or proof-conclusion (default ${
+      overturnRisk(question) ? "proof-conclusion" : "research-plan"
+    })`;
   } else if (summaries.length > 0 && !resolved) {
     // A summary on a question still open was written while the preconditions
     // gate blocked the conclusion: proof-conclusion resolves the question it
