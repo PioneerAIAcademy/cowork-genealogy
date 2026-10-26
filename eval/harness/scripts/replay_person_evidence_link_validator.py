@@ -15,8 +15,8 @@ modified). A run is JUDGED when it adds at least one identity link (a new `pe_` 
 of a fact the validator counts as a persona's own); the rest pass vacuously and are
 counted as skipped, so a zero failing over a population it never judged is visible.
 
-Exit 0 when nothing fails and at least MIN_JUDGED runs were judged; 1 otherwise, so a
-replay that judges nothing cannot pass.
+Exit 0 when nothing fails and at least MIN_JUDGED_SHARE of the runs were judged; 1
+otherwise, so a replay that judges nothing (or only a sliver) cannot pass.
 
 Usage (from the repo root):
     uv run --project eval/harness python eval/harness/scripts/replay_person_evidence_link_validator.py
@@ -40,15 +40,18 @@ import test_person_evidence as pe  # noqa: E402
 
 SKILL = "person-evidence"
 SCENARIOS = REPO / "eval" / "fixtures" / "scenarios"
-# 95 judged on 2026-10-22; the floor leaves room for the keep-newest-5 prune.
-MIN_JUDGED = 90
+# A share, not a count: the harness keeps only the newest five candidate logs, so one
+# prune took the count from 95 of 154 runs to 84 of 136 (2026-10-25) -- 62% both times.
+# A blind check drives the share to 0.
+MIN_JUDGED_SHARE = 0.5
 
 
 def committed(pattern: str) -> list[Path]:
-    """Tracked files only, so an uncommitted local run log cannot move the counts."""
+    """Tracked files only, so an uncommitted local run log cannot move the counts;
+    one a pending prune has deleted is skipped, not read."""
     out = subprocess.run(["git", "ls-files", pattern], cwd=REPO, capture_output=True,
                          text=True, encoding="utf-8", check=True)
-    return [REPO / line for line in out.stdout.splitlines() if line]
+    return [REPO / line for line in out.stdout.splitlines() if line and (REPO / line).exists()]
 
 
 def apply(section: list, diff: dict) -> list:
@@ -111,9 +114,10 @@ def main() -> int:
                 else:
                     skipped += 1
         print(f"{SKILL}/{log_path.name}: judged {log_judged}, failing {log_failing}")
-    print(f"total: {runs} runs, judged {judged}, skipped {skipped}, failing {failing}; "
-          f"{links} identity links checked (floor {MIN_JUDGED} judged)")
-    return 0 if failing == 0 and judged >= MIN_JUDGED else 1
+    share = judged / runs if runs else 0.0
+    print(f"total: {runs} runs, judged {judged} ({share:.0%}), skipped {skipped}, failing "
+          f"{failing}; {links} identity links checked (floor {MIN_JUDGED_SHARE:.0%} judged)")
+    return 0 if failing == 0 and share >= MIN_JUDGED_SHARE else 1
 
 
 if __name__ == "__main__":
