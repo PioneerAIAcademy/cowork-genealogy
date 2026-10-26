@@ -168,9 +168,18 @@ You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
 the target question's own entry (`section: "questions"`, `questionId`) to read its
-`question_kind`, `research_query` for the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
+`question_kind`, `research_query` for the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `Read` on
 `tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
+
+**Read the subject's timeline for `high` gaps.** `timeline_build` writes a
+timeline at setup, and a `gaps` entry at `severity: "high"` on the current
+question's subject is a search to plan: the records that would fill that span.
+Plan it as an item like any other, with its own record type and jurisdiction.
+Until the router's priority 3 is rewritten, question-selection still turns the
+same gap into a question, so the same ground may be searched twice in that
+window; plan it anyway, because an unplanned high gap is the one nobody
+searches.
 
 **Verify the starting point (BCG Standard 11).** Before planning,
 check whether starting-point facts are documented or merely assumed.
@@ -216,7 +225,13 @@ search for something a fact the tree already holds already states.
 
 Read ALL plans for the target question (`plans[]` where
 `question_id == the target q_`), regardless of status — read first, decide
-second, write last.
+second, write last. The stored plans pick the mode, never the delegation's
+account of them: "every search is done" is true only where a `log` entry
+closes each item. While the active plan holds a `planned`/`in_progress`
+item, every mode but Review needs its warrant in the delegation — the item
+ids (Dispose), the researcher's strike/add words (Edit), the falsifying
+fact (Supersede); a fresh-plan order is not one, and lacking all three you
+Review, however firmly the delegation insists.
 
 **Review mode** — An `active` plan still has `planned`/`in_progress`
 items, and the user wants a recap. Narrate which item is next, why,
@@ -246,18 +261,66 @@ calls finished while an item is still `planned` or `in_progress`, is not
 superseded: take Review mode and put the improvements in your recap.
 
 **Dispose mode** — `research-exhaustiveness` refused a declaration
-because items on the active plan are still `planned`, and you were
-given their ids. Set each: `completed` if its search was done and
-logged, otherwise `skipped` with a `skip_category`. Add no items and do
+because items on the active plan are still open, and the delegation
+names their ids. **Both arms below need those ids**: a caller who calls
+the plan finished while an item is `planned` or `in_progress`, naming
+none, is Review mode. The ids may be `planned` OR `in_progress`: a search that ran
+without closing its item leaves it `in_progress`, and those must close
+too or the declaration stays refused. Set each: `completed` if its
+search was done and logged — FamilySearch, full-text and image items
+alike, even when every search found nothing — otherwise `skipped` with a
+`skip_category`. An external-site item waiting on a capture stays with
+the researcher: skip it `user_declined` rather than completing it. Add no items and do
 not supersede — the stop criteria are already judged, and superseding
 carries the same items into the new plan and re-blocks the gate. Put
 every item in ONE `research_append` call; one `skip_reason` may cover
 several items sharing a reason.
 
+**Dispose mode also serves a wrap-up.** When the delegation names the
+open items and says the researcher is wrapping the question up rather
+than searching further,
+every open item whose search has NOT run is `skipped` with
+`skip_category: "user_declined"`, whatever its subject: the researcher
+declined the remaining searches, so no other category describes it, and
+guessing a per-item reason would record a finding nobody made. An item
+whose search HAS run is `completed`, even when it found nothing. The same
+external hand-off exemption as edit mode applies:
+an item still waiting on a capture is `skipped` with `user_declined`,
+because `completed` is refused for it. Name the skipped items in your
+return: they are what the conclusion has to say it did not search.
+
+**Edit mode** — The caller passes the researcher's own words changing a
+plan you just presented: items to strike, items to add, or both. This is
+the reply to "Continue with running the searches?", so the plan is yours
+to change and review mode's "do not modify items" does not apply.
+- a struck item whose search has NOT run → `skipped`, with
+  `skip_category: "user_declined"`;
+- a struck item whose search HAS run → `completed`, even when it found
+  nothing;
+- a struck item whose latest entry is an external hand-off still waiting
+  for its capture → `skipped` with `user_declined`, the one exemption:
+  `completed` is refused by capture-pending, so refusing the skip too
+  would strand the item `in_progress` and leave the question undeclarable;
+- an added item → a new plan item on the same active plan.
+Change nothing the researcher did not name. Do not supersede: the plan is
+being corrected, not replaced, and superseding would carry the struck items
+into the new plan. Put every change in ONE `research_append` call.
+
+**Edit mode is for a researcher's words, not an agent's.** A caller
+reporting that a search is needed (a conflict's decisive records, a FAN
+pivot, an objective-level sub-question) is add-new or edit work too, but it
+arrives as a delegation naming the records to plan, not as a struck-item
+list. For a conflict, the record types are the ones conflict-resolution
+recorded in that conflict's `resolution_rationale`. Write those as plan
+items on the CURRENT question; do not open a new question for them, and do
+not hand back to question-selection.
+
 **Heuristic for ambiguous prompts.** When a prompt could mean "tell me
 the plan" (review) or "make a plan" (add/supersede), default to review
 if an active plan has unfinished items — a duplicate plan alongside a
-usable one is the worse mistake.
+usable one is the worse mistake. A message that names specific items to
+strike or add is edit mode, not review: the researcher is answering the
+plan, not asking about it.
 
 ### 2. Survey the locality — know-how from locality-guide, records you find yourself
 
@@ -696,9 +759,12 @@ made by the executing skills (search-records, search-external-sites),
 not here — except in Dispose mode.
 
 **Termination (BCG Standard 18):** If all identified sources are
-exhausted or inaccessible and the question remains unresolved, skip each
-item still `planned` or `in_progress` that cannot run, with its
-`skip_category`, then set the plan status to `completed` with an update.
+exhausted or inaccessible and the question remains unresolved, close each
+item still `planned` or `in_progress`: one whose search already ran is
+`completed`, even when it found nothing, and only one that cannot run is
+`skipped` with its `skip_category`. An `in_progress` item is usually the
+first kind: it is in progress because a search started. Then set the plan status to
+`completed` with an update.
 Why the search stopped is research-exhaustiveness's to record, in the
 question's `search_stop`:
 

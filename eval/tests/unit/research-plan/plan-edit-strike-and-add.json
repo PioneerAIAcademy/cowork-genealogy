@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_research_plan_e4t",
+    "skill": "research-plan",
+    "name": "Apply a researcher's plan edit: strike one item, add another",
+    "type": "positive",
+    "description": "Step mode (docs/plan/research-step-mode.md, section G) ends the plan step by asking 'Continue with running the searches?'. A free-text reply naming items to drop or add is a PLAN EDIT, and research-plan gains an edit mode for it: a struck item becomes skipped with skip_category user_declined, an added item becomes a new item on the same active plan. Before this, review mode forbade modifying items and was the default whenever an active plan had open ones, so a researcher's own correction to a plan just presented had nowhere to go. The two halves are graded together because each fails differently: applying only the strike loses the researcher's addition silently, and applying only the add leaves a search running that they declined. Nothing else may move: the completed and already-skipped items are the record of what was done. Built on the same scenario and fixture set as ut_research_plan_d03, the dispose-mode direct-arm test, because edit and dispose are the two modes that write item statuses and the scenario's active plan pl_002 has exactly one open item to strike.",
+    "tags": [
+      "planning",
+      "control-flow",
+      "plan-edit",
+      "step-mode",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher reviewed the plan for q_001 and replied: \"Drop the remaining church-record search, I have already been through those registers myself and there is nothing there. But add a naturalization search for Schuylkill County instead.\"\n\nApply that to the active plan.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-planned-item-blocks"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "place-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: a researcher's free-text reply to a presented plan is an EDIT to that plan, not a request for a recap and not grounds for a new plan. research-plan must apply exactly what the researcher named and leave everything else alone.",
+    "COMPLIANT: pli_010, the one remaining open church-record item, ends at status 'skipped' with skip_category 'user_declined', AND a new naturalization item for Schuylkill County is added to the same active plan pl_002.",
+    "WHY 'skipped' IS RIGHT HERE, and when it would not be: section G's rule is three-way. A struck item whose search has NOT run is skipped/user_declined; one whose search HAS run is 'completed', because research_append REFUSES skipped there (planItemSearchedSkipInvariants, issue #3516) -- a skip says nothing was searched and research-exhaustiveness reads a disposed item as settled. pli_010 is 'planned' with zero log entries tied to it, so no search ran and skipped is correct. Do not treat this test as licence to skip a searched item.",
+    "NON-COMPLIANT: only one half is applied; the struck item is deleted rather than skipped; the struck item is skipped under a different skip_category; the plan is superseded or a second plan is created; or any item the researcher did not mention changes status.",
+    "skip_category 'user_declined' is the point, not a detail. Any other value records a finding about the records themselves that nobody made: the researcher declined the search, they did not report that it had no coverage or was inaccessible.",
+    "pli_004, pli_005, pli_006 and pli_008 are completed and pli_007 and pli_009 are already skipped. They are the audit trail of what was done and must not change. An edit never rewrites history.",
+    "A naturalization item already exists at pli_009 and is skipped. Adding a fresh naturalization item is correct here, because the researcher asked for one; reviving pli_009 in place is also acceptable. What is not acceptable is refusing the addition on the grounds that one was skipped before.",
+    "Do not grade the new item's record-type reasoning, sequencing or date range; Record type selection and Sequencing own those. Judge whether the edit was applied as asked.",
+    "The agent executes nothing itself and hands execution back to its caller, so do not grade whether any search ran."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30
+  }
+}
