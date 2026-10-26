@@ -23,7 +23,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having rejected the 24 August 1808 false hint, the agent should conclude that Simon Heydöcker (GZRZ-TNG) died on 6 April 1836 at Stötten (Nötten), house 14, Laakirchen, Gmunden, Upper Austria, aged approximately 68. Pass condition: (a) a Death fact dated 6 April 1836 (or 6. April 1836) is written onto GZRZ-TNG, and (b) the source cites the Laakirchen Catholic death register entry ark:/61903/1:1:6VYC-Q99N or its original image ark:/61903/3:1:S3HY-DBPS-JD. A death written without a source from that record, or with an incorrect date, fails. A death written with only a partial place (e.g. 'Austria' rather than Laakirchen or Stötten/Nötten) is partial. The calibration that licenses the image-derived details (house, age, status): Anna Maria Pomayr aged 63 ✓ (ark:/61903/1:1:6VYC-QM1Z) and Peter Lietmayr aged 35 ✓ (ark:/61903/1:1:6VYC-Q9SH) both agree with the index on the re-read of 2026-10-26 — see README.",
+      "description": "Having rejected the 24 August 1808 false hint, the agent should conclude that Simon Heydöcker (GZRZ-TNG) died on 6 April 1836 at Stötten (Nötten), house 14, Laakirchen, Gmunden, Upper Austria, aged approximately 68. Pass condition: (a) a Death fact dated 6 April 1836 (or 6. April 1836) is written onto GZRZ-TNG, and (b) the source cites the Laakirchen Catholic death register entry ark:/61903/1:1:6VYC-Q99N or its original image ark:/61903/3:1:S3HY-DBPS-JD. A death written without a source from that record, or with an incorrect date, fails. A death written with only a partial place (e.g. 'Austria' rather than Laakirchen or Stötten/Nötten) is partial. The calibration that licenses the image-derived age: Anna Maria Pomayr aged 63 ✓ (ark:/61903/1:1:6VYC-QM1Z) and Peter Lietmayr aged 35 ✓ (ark:/61903/1:1:6VYC-Q9SH) both agree with the index on the re-read of 2026-10-26 — see README.",
       "details": {
         "subject_person": "Simon Heydöcker (GZRZ-TNG)",
         "fact_type": "Death",
@@ -32,12 +32,11 @@
           "date": "6 April 1836",
           "place": "Stötten (Nötten), house 14, Laakirchen, Gmunden, Upper Austria",
           "age_at_death": 68,
-          "cause": "Gicht",
-          "status": "beschwerter Auszügler"
+          "cause": "Gicht"
         }
       },
       "supporting_sources": [
-        "Österreich, Katholische Kirchenbücher, 1565-2007 — Laakirchen death register entry for Simon Heydocker, 6 April 1836, Nötten house 14, aged 68, beschwerter Auszügler, cause Gicht (indexed: ark:/61903/1:1:6VYC-Q99N; original image: ark:/61903/3:1:S3HY-DBPS-JD image 64; calibration passed on re-read 2026-10-26: Pomayr aged 63 ✓, Lietmayr aged 35 ✓)",
+        "Österreich, Katholische Kirchenbücher, 1565-2007 — Laakirchen death register entry for Simon Heydocker, 6 April 1836, Nötten house 14, aged 68, cause Gicht (indexed: ark:/61903/1:1:6VYC-Q99N; original image: ark:/61903/3:1:S3HY-DBPS-JD image 64; calibration passed on re-read 2026-10-26: Pomayr aged 63 ✓, Lietmayr aged 35 ✓)",
         "Josef Heidegger's occupation as Bauer zu Hochegg, Ortschaft Stötten 14, Laakirchen (death 1 March 1880) establishes family continuity at house 14 across two generations, corroborating the identification"
       ],
       "required": true
