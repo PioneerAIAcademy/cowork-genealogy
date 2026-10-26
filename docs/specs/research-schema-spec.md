@@ -125,7 +125,7 @@ flagged. (One row below is the exception, and says so.)
 | `stopped_because` | `question_answered`, `record_exhausted`, `nothing_further_reachable`, `resources_spent`, `blocked_by_conflict` | questions' `search_stop.stopped_because` (Section 5.2). The first three are stop-gate values that permit `status: "exhaustive_declared"` and a proof tier; the last two (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Replaces `exhaustive_declaration.declared` (2026-10-07) |
 | `stopped_because_gate` | `question_answered`, `record_exhausted`, `nothing_further_reachable` | Strict subset of `stopped_because`; the gate condition in `search_stop.allOf` that permits `status: "exhaustive_declared"`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum (ADR-0008 policy: no inline enums in `research.schema.json`) |
 | `stopped_because_non_gate` | `resources_spent`, `blocked_by_conflict` | The two non-gate values of `stopped_because` that keep status `in_progress`. Complement of `stopped_because_gate` within `stopped_because`; the non-gate `if` condition in `search_stop.allOf` that sets `stop_criteria: null`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum |
-| `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
+| `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched`, `deferred` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
 
 **Where these live in the machine-readable schemas.** All of them are defined in
 `enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
@@ -631,6 +631,8 @@ Array of question objects.
 - A `research_append` precondition refusing a `search_stop` that omits an uncaptured hand-off: engine work for 1 agent-closed hand-off in 209 committed e2e runs. This is the escalation if an e2e run shows the agent missing entries.
 
 `paywalled` is for a paywalled hit that was never handed to the user. `wiki_named_untouched` entries come from the `guide_markdown` of a locality the project already holds. `wiki_title` is the page title from `pages_read[].url` (the segment after `/wiki/`), never the `pages_read[].section` enum, which the validator would also accept.
+
+`deferred` is the one kind that names a source the agent **chose** not to reach rather than one it could not, which is why this field reads "not reached" and not "unreachable". Step mode's "not exhaustive" choice (decision 21) writes one entry per source this question never planned, so the declaration states what it is leaving instead of omitting it, and the researcher being offered the choice can see what searching on would cover. The film, image or URL goes in `description`.
 
 ### 5.3 `plans`
 

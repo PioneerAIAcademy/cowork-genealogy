@@ -72,6 +72,11 @@ const CLOSED_ENUMS = {
   not_reached_kind: new Set([
     "nil_search", "browse_only", "over_transport_cap", "paywalled",
     "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
+    // Step mode, decision 21: a source this question never planned, recorded by
+    // the "not exhaustive" choice so the declaration says what it left rather
+    // than silently omitting it. The only kind naming a source the agent CHOSE
+    // not to reach rather than one it could not.
+    "deferred",
   ]),
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
