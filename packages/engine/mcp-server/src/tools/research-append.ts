@@ -78,7 +78,7 @@ export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
-import { collectionKey, readExternalCollections, EXTERNAL_COLLECTIONS_FILE } from "../utils/external-collections-store.js";
+import { collectionKey, readExternalCollections, storedCollectionKeys, EXTERNAL_COLLECTIONS_FILE } from "../utils/external-collections-store.js";
 import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
@@ -5092,14 +5092,7 @@ export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: stri
 
 async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
   try {
-    const doc = await readExternalCollections(projectPath);
-    const keys = new Set<string>();
-    for (const entry of Object.values(doc?.places ?? {})) {
-      for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
-        if (typeof row?.url === "string") keys.add(collectionKey(row.url));
-      }
-    }
-    return { keys };
+    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }

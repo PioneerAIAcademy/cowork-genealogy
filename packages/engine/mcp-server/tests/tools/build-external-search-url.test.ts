@@ -2011,6 +2011,65 @@ describe("build_external_search_url", () => {
     }
     const readLog = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
 
+    const STORED = "https://www.ancestry.com/search/collections/7163/";
+    async function storeCollections(urls: string[]) {
+      const rows = urls.map((url, i) => ({
+        key: `k${i}`, url, link_text: "x", record_types: ["Census"], place: "Pennsylvania, United States",
+        cost: "paid", content_type: "index", start_year: "", end_year: "",
+      }));
+      await writeFile(join(dir, "external-collections.json"), JSON.stringify({ places: { "Pennsylvania, United States": { rows } } }));
+    }
+    const ancestry = (baseUrl: string) =>
+      buildExternalSearchUrlTool({ site: "ancestry", attributes: { surname: "Flynn" }, baseUrl, projectPath: dir });
+
+    describe("a collection baseUrl must be a stored collection (lead ruling 2026-10-23)", () => {
+      it("refuses a collection the project has not stored, and logs nothing", async () => {
+        await writeProject();
+        await storeCollections([STORED]);
+        const r = await ancestry("https://www.ancestry.com/search/collections/9093/");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("invalid_base_url");
+        expect(r.errors.join(" ")).toMatch(/not in external-collections\.json.*Omit baseUrl.*external_collections/);
+        expect(await readLog()).toHaveLength(0);
+      });
+
+      it("refuses any collection when nothing is stored yet", async () => {
+        await writeProject();
+        const r = await ancestry(STORED);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toMatch(/nothing is stored.*external_links_search/);
+      });
+
+      it("accepts a stored collection, in another spelling too, and logs the hand-off", async () => {
+        await writeProject();
+        await storeCollections([STORED]);
+        for (const spelling of [STORED, "https://search.ancestry.com/search/db.aspx?dbid=7163"]) {
+          const r = await ancestry(spelling);
+          expect(r.ok, `${spelling}: ${JSON.stringify(r)}`).toBe(true);
+        }
+        expect(await readLog()).toHaveLength(2);
+      });
+
+      it("does not check a baseUrl that names no collection, or a call with no project", async () => {
+        await writeProject();
+        const site = await buildExternalSearchUrlTool({
+          site: "digital_newspaper_archive",
+          attributes: { keywords: "Flynn" },
+          baseUrl: "https://example-archive.org/search",
+          projectPath: dir,
+        });
+        expect(site.ok, JSON.stringify(site)).toBe(true);
+        const standalone = await buildExternalSearchUrlTool({
+          site: "ancestry",
+          attributes: { surname: "Flynn" },
+          baseUrl: "https://www.ancestry.com/search/collections/9093/",
+        });
+        expect(standalone.ok, JSON.stringify(standalone)).toBe(true);
+      });
+    });
+
     it("appends one partial external_site entry and returns its logId", async () => {
       await writeProject();
       const r = await buildExternalSearchUrlTool({
