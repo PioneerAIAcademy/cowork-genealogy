@@ -711,8 +711,9 @@ paragraphs of plain prose with **no label, heading or field name**:
    be recorded was searched. No identifiers, file names,
    tool names or field names; a person is a name, a record is what it is
    ("the 1885 county estate file"). Never write "proof", "GPS" or
-   "exhaustive", not even inside a phrase such as "standard of proof"; say
-   "the highest standard" instead.
+   "exhaustive", not even inside a phrase such as "standard of proof" or
+   "exhaustive search"; say "the highest standard" or "a thorough search"
+   instead.
 2. One sentence: what happens next, in plain language. When this invocation
    set `project.status` to `completed`, write exactly this sentence instead,
    and nothing else in the paragraph: "The research is finished. If you'd like
