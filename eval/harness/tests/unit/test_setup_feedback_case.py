@@ -11,6 +11,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -369,14 +370,14 @@ def test_nonexistent_zip_returns_error(tmp_path, monkeypatch):
     assert "not found" in result.stderr.lower()
 
 
-def _build_windows_separator_zip(zip_path: Path, slug: str) -> None:
-    r"""A feedback zip as the Windows viewer actually writes it.
+def _build_windows_separator_zip(zip_path: Path, slug: str, create_system: int = 0) -> None:
+    r"""A feedback zip as the Windows viewer wrote it before #3706.
 
-    The submitted bundle from a `win32` viewer stores member names with
+    The submitted bundle from a `win32` viewer stored member names with
     **backslash** separators (`results\log_006.json`), not the forward
-    slashes the zip format specifies. `unzip` extracts such an archive
-    correctly but exits 1 with "appears to use backslashes as path
-    separators" — a warning, not a failure.
+    slashes the zip format specifies, and bundles already submitted still do.
+    `create_system` is the "version made by" host byte, pinned so the zip is
+    the same on every OS (see `_add_members`); the viewer's JSZip writes 0.
     """
     feedback = {
         "schema_version": 1,
@@ -405,9 +406,11 @@ def _build_windows_separator_zip(zip_path: Path, slug: str) -> None:
         # bug comes from.
         back = zipfile.ZipInfo("placeholder")
         back.filename = "results\\log_006.json"
+        back.create_system = create_system
         z.writestr(back, json.dumps({"hits": []}))
         img = zipfile.ZipInfo("placeholder")
         img.filename = "images\\ark_61903_3_1_S3HY-6SHQ-BFK.jpg"
+        img.create_system = create_system
         z.writestr(img, "not-a-real-jpeg")
         # Mirrors the real bundle exactly: the viewer emits a mix — a forward
         # slash for the `_feedback/` directory entry, backslashes elsewhere.
@@ -416,27 +419,21 @@ def _build_windows_separator_zip(zip_path: Path, slug: str) -> None:
 
 
 @_needs_symlinks
-def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
-    """A win32-submitted zip must import fully, not abort mid-setup.
+@pytest.mark.parametrize("create_system", [0, 3])
+def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch, create_system):
+    r"""A win32-submitted zip must import fully, its `\` members in directories.
 
-    Regression: `unzip` exits 1 on the backslash-separator warning, and
-    `set -e` killed the script *after* extraction but *before* the
-    `.feedback-repo-root` marker, the git baseline and the skill symlinks —
-    with no output at all, so it looked like the script had done nothing.
-    Every Windows submission hit this.
-
-    HOW MUCH THIS GUARDS, AND WHERE. The failure needs an Info-ZIP build that
-    actually emits "appears to use backslashes as path separators" and exits 1
-    for it — observed on Git for Windows, which is where the genealogist team
-    and the bug both live. A runner whose unzip stays silent returns 0 either
-    way, so there this degrades to a smoke test that the script completes, not
-    a regression guard. Stated rather than left implied: it was verified to
-    fail against the pre-fix script on Windows, and CI is Linux, so a green
-    tick here is weaker evidence than it looks.
+    Under the old `unzip` this aborted mid-setup (exit 1 on the
+    backslash-separator warning, under `set -e`), and on POSIX the layout
+    depended on the zip's host byte: Info-ZIP splits `results\log_006.json`
+    only for host 0, and otherwise leaves one root-level file with a backslash
+    in its name. The extractor rewrites `\` whatever the byte, so the layout is
+    asserted exactly, for both bytes. On Windows `zipfile` splits the name
+    itself, so the rewrite is proven only on Linux and macOS.
     """
     slug = "feedback-2026-08-26T21-23-06-618Z"
     zip_path = tmp_path / f"{slug}.zip"
-    _build_windows_separator_zip(zip_path, slug)
+    _build_windows_separator_zip(zip_path, slug, create_system)
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
 
@@ -449,19 +446,11 @@ def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
     assert (dest / "research.json").is_file()
     assert (dest / "_feedback" / "feedback.json").is_file()
 
-    # A backslash member's LAYOUT is platform-dependent and deliberately not
-    # asserted: Info-ZIP on Git-for-Windows rewrites "results\log_006.json"
-    # into a real `results/` directory, while on Linux the backslash stays a
-    # literal character in a single root-level filename. Both are "extracted";
-    # pinning either one makes this test pass on one CI runner and fail on the
-    # other, which is how it first went red. Assert only that the member
-    # arrived, under whichever spelling this platform produced.
-    extracted = {q.name for q in dest.rglob("*") if q.is_file()}
-    assert any(n.endswith("log_006.json") for n in extracted), extracted
-    assert any(n.endswith("S3HY-6SHQ-BFK.jpg") for n in extracted), extracted
+    assert (dest / "results" / "log_006.json").is_file()
+    assert (dest / "images" / "ark_61903_3_1_S3HY-6SHQ-BFK.jpg").is_file()
+    assert not [p.name for p in dest.iterdir() if "\\" in p.name]
 
-    # The steps *after* unzip ran — this is what the bug actually skipped, and
-    # the only thing this test exists to guard.
+    # The steps *after* extraction ran — what the original bug skipped.
     assert (dest / ".feedback-repo-root").is_file()
     assert (dest / ".git").is_dir()
     assert (dest / ".claude" / "skills").is_dir()
@@ -473,7 +462,7 @@ def _build_incomplete_zip(zip_path: Path) -> None:
 
     `apps/electron/docs/feedback-json-spec.md` guarantees `research.json`,
     `tree.gedcomx.json` and `_feedback/feedback.json` in every submission. This
-    one omits `research.json`, so `unzip` succeeds and exits 0 while the case
+    one omits `research.json`, so extraction succeeds and exits 0 while the case
     directory is unusable — the exit code cannot tell you anything is wrong.
     """
     feedback = {
@@ -497,13 +486,8 @@ def _build_incomplete_zip(zip_path: Path) -> None:
 def test_incomplete_extraction_is_rejected_not_committed(tmp_path, monkeypatch):
     """An incomplete case must fail loudly, not be imported as if it were whole.
 
-    The exit code alone cannot carry this. Info-ZIP documents exit 1 as covering
-    both the backslash-separator warning this script deliberately tolerates and
-    members skipped for an unsupported compression method or unknown password.
-    (Measured 2026-09-02 on Info-ZIP 6.00 here, an unsupported method actually
-    exits 81, which the `>= 2` branch already rejects — but the exit code is the
-    wrong thing to reason from either way, and a bundle can be short a file with
-    no nonzero exit at all, which is what this exercises.)
+    The exit code alone cannot carry this: a well-formed bundle can be short a
+    file and still extract with exit 0, which is what this exercises.
 
     What must not happen is the script continuing on to write the marker, commit
     a git baseline and wire up skill symlinks over a case that cannot be worked.
@@ -773,3 +757,283 @@ def test_ln_copy_instead_of_symlink_detected(tmp_path, monkeypatch):
         "error message must mention the .bat alternative;\n"
         f"stderr:\n{result.stderr}"
     )
+
+
+# --- #3706: non-ASCII and backslash member names must extract ----------------
+
+EXTRACTOR = REPO_ROOT / "scripts" / "extract_feedback_zip.py"
+_REPORT = "2026-10-21 Historical context - Danish naming and the Kjøller name.md"
+
+
+def _add_members(zip_path: Path, members: dict, create_system: int = 0, mode: str = "w") -> None:
+    r"""Write `members` with their names exactly as given, backslashes included.
+
+    Through a ZipInfo whose filename is set after construction, for the reason
+    `_build_windows_separator_zip` gives. `create_system` (the "version made by"
+    host byte) is pinned so the zip is the same on every OS: Python defaults it
+    to 0 on Windows and 3 elsewhere, and JSZip, which builds the desktop bundle,
+    writes 0. Info-ZIP rewrites `\` only for host 0; `zipfile` ignores the byte.
+    """
+    with zipfile.ZipFile(zip_path, mode) as z:
+        for name, body in members.items():
+            info = zipfile.ZipInfo("placeholder")
+            info.filename = name
+            info.create_system = create_system
+            z.writestr(info, body)
+
+
+def _extract(zip_path: Path, dest: Path):
+    return subprocess.run(
+        [sys.executable, "-I", str(EXTRACTOR), str(zip_path), str(dest)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+
+def test_extractor_keeps_non_ascii_names(tmp_path):
+    """macOS `unzip` stops on a UTF-8 member name, and a report titled with a
+    Danish surname carries one (#3706). `zipfile` reads the UTF-8 flag."""
+    zip_path = tmp_path / "bundle.zip"
+    _add_members(zip_path, {f"reports/{_REPORT}": "report body"})
+
+    result = _extract(zip_path, tmp_path / "out")
+
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "out" / "reports" / _REPORT).read_text(encoding="utf-8") == "report body"
+
+
+@pytest.mark.parametrize("create_system", [0, 3])
+def test_extractor_splits_backslash_names(tmp_path, create_system):
+    r"""`reports\<name>` from the Windows viewer lands in `reports/`.
+
+    On POSIX `zipfile` keeps a backslash as a literal character in one
+    root-level name, so this fails there without the rewrite. On Windows
+    `zipfile` splits it when reading, so there it passes either way.
+    """
+    zip_path = tmp_path / "bundle.zip"
+    _add_members(
+        zip_path,
+        {f"reports\\{_REPORT}": "report body", "results\\log_006.json": "{}"},
+        create_system=create_system,
+    )
+
+    result = _extract(zip_path, tmp_path / "out")
+
+    assert result.returncode == 0, result.stderr
+    out = tmp_path / "out"
+    assert (out / "reports" / _REPORT).read_text(encoding="utf-8") == "report body"
+    assert (out / "results" / "log_006.json").is_file()
+    assert not [p.name for p in out.iterdir() if "\\" in p.name]
+
+
+def test_extractor_keeps_backslash_traversal_inside_dest(tmp_path):
+    r"""The rewrite turns a harmless literal `..\..\escape.txt` into
+    `../../escape.txt`; `extract` must still drop the `..` components."""
+    zip_path = tmp_path / "bundle.zip"
+    _add_members(zip_path, {"..\\..\\escape.txt": "x"})
+    dest = tmp_path / "a" / "b" / "out"
+
+    result = _extract(zip_path, dest)
+
+    assert result.returncode == 0, result.stderr
+    assert (dest / "escape.txt").is_file()
+    assert [p for p in tmp_path.rglob("escape.txt") if dest not in p.parents] == []
+
+
+def test_extractor_rejects_a_corrupt_zip(tmp_path):
+    zip_path = tmp_path / "x.zip"
+    zip_path.write_bytes(b"not a zip at all")
+
+    result = _extract(zip_path, tmp_path / "out")
+
+    assert result.returncode == 1
+    assert "error:" in result.stderr, result.stderr
+
+
+def test_no_usable_python_fails_before_force_removes_the_case(tmp_path, monkeypatch):
+    """With no interpreter the script must say so, and before `--force` deletes
+    the case it was asked to replace.
+
+    Under `set -e` a bare `PY="$(find_python)"` exits silently when no
+    interpreter runs, so the probe has to be an `if` condition. Shims rather
+    than an empty PATH, because the script still needs git and coreutils.
+    """
+    slug = "feedback-no-python"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    dest = tmp_path / "case"
+    dest.mkdir()
+    (dest / "keep-me").write_text("existing case", encoding="utf-8")
+
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    marker = tmp_path / "python-shim-ran"
+    for name in ("python3", "python"):
+        (shim_dir / name).write_text(
+            f'#!/bin/sh\necho x >> "{marker}"\nexit 1\n', encoding="utf-8"
+        )
+        (shim_dir / name).chmod(0o755)
+    overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
+
+    result = _run_script(str(zip_path), str(dest), "--force", env_overrides=overrides)
+
+    assert (dest / "keep-me").is_file(), "--force removed the case before the probe failed"
+    assert result.returncode != 0, result.stdout
+    assert "python" in result.stderr, result.stderr
+    assert marker.is_file(), "the python shims never ran, so a real interpreter was found"
+
+
+def test_corrupt_zip_is_rejected_before_anything_is_committed(tmp_path, monkeypatch):
+    slug = "feedback-corrupt"
+    zip_path = tmp_path / f"{slug}.zip"
+    zip_path.write_bytes(b"not a zip at all")
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+
+    result = _run_script(str(zip_path))
+
+    assert result.returncode != 0, result.stdout
+    assert "extraction failed" in result.stderr, result.stderr
+    assert not (home / "feedback" / slug / ".git").exists()
+
+
+def test_desktop_bundle_with_non_ascii_report_extracts(tmp_path, monkeypatch):
+    r"""The bundle #3706 reported: a Windows desktop submission with a
+    non-ASCII report title, stored as `reports\<name>`.
+
+    macOS `unzip` stops on the name (exit 50); Linux's handles it. So `unzip`
+    here is a shim that fails the way Apple's does, and the test asserts that
+    extraction never goes through it. The assertions stop at extraction, so
+    this also runs on Windows, where the script later exits at `ln -s`.
+    """
+    slug = "feedback-2026-10-21T08-00-00-000Z"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    _add_members(zip_path, {f"reports\\{_REPORT}": "report body"}, mode="a")
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    unzip_ran = tmp_path / "unzip-ran"
+    (shim_dir / "unzip").write_text(
+        f'#!/bin/sh\necho x >> "{unzip_ran}"\n'
+        'echo "checkdir error: cannot create reports: Illegal byte sequence" >&2\n'
+        "exit 50\n",
+        encoding="utf-8",
+    )
+    (shim_dir / "unzip").chmod(0o755)
+    overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    dest = tmp_path / "case"
+
+    result = _run_script(str(zip_path), str(dest), env_overrides=overrides)
+
+    assert not unzip_ran.exists(), "extraction went through unzip"
+    assert (dest / "reports" / _REPORT).read_text(encoding="utf-8") == "report body", result.stderr
+    assert "extraction failed" not in result.stderr, result.stderr
+
+
+def test_probe_skips_a_python3_stub_that_prints_on_stdout(tmp_path, monkeypatch):
+    """The Windows Store alias `python3` exists, fails, and on some builds
+    prints its advert on stdout. find_python must fall through to `python`
+    and must not capture that output as the interpreter's name. The assertions
+    stop at extraction, so this runs on every OS."""
+    slug = "feedback-stub-python3"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    stub_ran = tmp_path / "stub-ran"
+    (shim_dir / "python3").write_text(
+        f'#!/bin/sh\necho x >> "{stub_ran}"\n'
+        'echo "Python was not found; run without arguments to install from the Microsoft Store"\n'
+        "exit 49\n",
+        encoding="utf-8",
+    )
+    (shim_dir / "python").write_text(
+        f'#!/bin/sh\nexec "{Path(sys.executable).as_posix()}" "$@"\n', encoding="utf-8"
+    )
+    for name in ("python3", "python"):
+        (shim_dir / name).chmod(0o755)
+    overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    dest = tmp_path / "case"
+
+    result = _run_script(str(zip_path), str(dest), env_overrides=overrides)
+
+    assert (dest / "research.json").is_file(), result.stderr
+    assert "is required" not in result.stderr, result.stderr
+    assert "extraction failed" not in result.stderr, result.stderr
+    assert stub_ran.is_file(), "the python3 stub never ran, so the fallback was not exercised"
+
+
+def test_extractor_expands_a_leading_tilde(tmp_path):
+    """Step 8 of the guide passes `~/...` paths, and cmd and PowerShell do not
+    expand them. Without the expansion the zip is not found, or a destination
+    lands in a literal `~` folder under the cwd."""
+    home = tmp_path / "home"
+    home.mkdir()
+    _add_members(home / "bundle.zip", {"research.json": "{}"})
+    env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home)}
+
+    result = subprocess.run(
+        [sys.executable, "-I", str(EXTRACTOR), "~/bundle.zip", "~/out"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (home / "out" / "research.json").is_file()
+    assert not (tmp_path / "~").exists()
+
+
+@_needs_symlinks
+def test_relative_dest_still_prints_the_prompt(tmp_path, monkeypatch):
+    """With a relative <dest-dir>, the script cds into the case and then read
+    the prompt through the same relative path, resolving it a second time, so
+    the prompt was reported unreadable."""
+    slug = "feedback-relative-dest"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+
+    result = _run_script(str(zip_path), "cases/x", cwd=tmp_path)
+
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "cases" / "x" / "research.json").is_file()
+    assert "Find a marriage record for John Smith" in result.stdout, result.stdout
+
+
+@_needs_symlinks
+def test_bundle_python_files_are_never_imported(tmp_path, monkeypatch):
+    """The prompt reader runs `python -c "import json ..."` from inside the case
+    directory. Without `-I`, a `json.py` at the bundle root shadows the stdlib
+    module and runs on the triager's machine."""
+    slug = "feedback-planted-json"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    ran = tmp_path / "planted-json-ran"
+    _add_members(
+        zip_path,
+        {"json.py": f"open({str(ran)!r}, 'w', encoding='utf-8').close()\n"},
+        mode="a",
+    )
+    # jq fails, so the python reader is the one that reads the prompt.
+    shim_dir = tmp_path / "shim"
+    shim_dir.mkdir()
+    jq_ran = tmp_path / "jq-ran"
+    (shim_dir / "jq").write_text(f'#!/bin/sh\necho x >> "{jq_ran}"\nexit 127\n', encoding="utf-8")
+    (shim_dir / "jq").chmod(0o755)
+    overrides = {"PATH": f"{shim_dir}{os.pathsep}{os.environ['PATH']}"}
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+
+    result = _run_script(str(zip_path), env_overrides=overrides)
+
+    assert result.returncode == 0, result.stderr
+    assert jq_ran.is_file(), "the jq shim never ran, so the python reader was not exercised"
+    assert not ran.exists(), "a json.py from the bundle ran on import"
+    assert "Find a marriage record for John Smith" in result.stdout, result.stdout
