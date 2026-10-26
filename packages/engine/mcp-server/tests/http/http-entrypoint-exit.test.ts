@@ -16,6 +16,12 @@ const HTTP_JS = resolve(dirname(fileURLToPath(import.meta.url)), "../../build/ht
 
 const BASE = { GENEALOGY_PG_DSN: "postgresql://u:p@127.0.0.1:1/d", GENEALOGY_S3_BUCKET: "projects" };
 
+// How long a child may take to start, shared by both helpers. 15s, not 5s: under
+// make test-all's parallel load, start-up alone has run past 5s and been killed
+// before it could exit 2 — and startHttp, left at 5s after runHttp was raised,
+// failed the readiness case the same way at 5021ms inside the full engine suite.
+const START_TIMEOUT_MS = 15_000;
+
 /** The environment `build/http.js` sees: the inherited one minus every GENEALOGY_* variable, plus `storeEnv`. */
 function childEnv(storeEnv: Record<string, string>): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
@@ -42,9 +48,7 @@ function runHttp(
       if (until?.test(stderr)) child.kill("SIGKILL");
     });
     // A process that listens instead of exiting is killed, and reads as code null.
-    // 15s, not 5s: under make test-all's parallel load, start-up alone has run past
-    // 5s and been killed before it could exit 2.
-    const timer = setTimeout(() => child.kill("SIGKILL"), 15_000);
+    const timer = setTimeout(() => child.kill("SIGKILL"), START_TIMEOUT_MS);
     child.on("error", (e) => {
       clearTimeout(timer);
       reject(e);
@@ -66,8 +70,8 @@ function startHttp(storeEnv: Record<string, string>): Promise<{ child: ChildProc
     let stderr = "";
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
-      reject(new Error(`build/http.js did not listen within 5 s:\n${stderr}`));
-    }, 5000);
+      reject(new Error(`build/http.js did not listen within ${START_TIMEOUT_MS / 1000} s:\n${stderr}`));
+    }, START_TIMEOUT_MS);
     child.stderr!.setEncoding("utf8");
     child.stderr!.on("data", (chunk: string) => {
       stderr += chunk;
@@ -112,7 +116,7 @@ describe("build/http.js readiness", () => {
     } finally {
       child.kill("SIGKILL");
     }
-  }, 10_000);
+  }, 20_000);
 });
 
 describe("build/http.js store environment", () => {
