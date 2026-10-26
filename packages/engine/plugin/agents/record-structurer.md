@@ -67,7 +67,8 @@ classifications are not yours to send.
     names: [{ given?, surname?, uncertain?: true, note? }],
     gender?: male | female,
     statedRelation?: "son", "wife", "daughter-in-law", "executor", "heir",
-                     "witness", "consent signer", "neighbor", "late husband", …,
+                     "witness", "consent signer", "neighbor", "late husband",
+                     "grantor", "grantee", "justice of the peace", …,
     fatherBirthPlace?, motherBirthPlace?,      // a census's parent-birthplace columns
     facts?: [{ type, value?, date?, place?, computed?: [value|date|place],
               uncertain?: true, note? }],
@@ -118,6 +119,9 @@ classifications are not yours to send.
 - **Probate.** Record the will's execution as a `will` fact, and the court's
   acts (proof, letters granted) as `probate` facts, all on the testator, even
   where the letters name the executor.
+- **Land.** Every party's `statedRelation` is their part in the deed, the
+  principal's included: `grantor`, `grantee`, `witness`, `justice of the peace`;
+  a wife releasing dower is `wife` with a `couple` to the grantor.
 - **Newspaper notices.** A notice of a wedding, birth, engagement or
   anniversary is `newspaper_announcement`, never the event's own record type.
 - **What was examined.** A transcription of a page scan is `page_image`; a
