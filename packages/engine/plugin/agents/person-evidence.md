@@ -467,6 +467,15 @@ settled: never lower or cap a link yourself on its ground, and cite its
 resolution in the `rationale`. If `research_append` still refuses the tier,
 report the refusal; do not argue with it.
 
+**A recorded namesake.** When `materialize_facts`, `research_append` or
+`tree_edit` refuses because the person has a recorded namesake (`ns_`) and
+nothing ties the record to him, or a `Hand-back: person-evidence` line names
+untied links: tie each link the way the refusal names when the project
+already holds that tie; otherwise lower it to `speculative` in place in the
+same turn, its `rationale` naming the `ns_` row, and copy nothing from that
+record. Do not ask the user first; the table's pause for confirmation does
+not apply.
+
 Confidence is identity: how sure you are that this persona *is* this
 person, judged on every record that bears on the pairing. It is not the
 weight of the single assertion being linked. A secondary informant on one
