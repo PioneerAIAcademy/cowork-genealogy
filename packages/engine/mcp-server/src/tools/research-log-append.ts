@@ -2160,7 +2160,7 @@ export async function researchLogAppend(
     // compaction) is answered with that entry's id, never logged twice. A re-send
     // that names a different plan item, outcome or tool is a correction the
     // append-only log cannot take that way, so it is refused naming the entry
-    // instead of being dropped. The sidecar scan runs at most once per call.
+    // instead of being dropped. The log scan runs at most once per ref per call.
     let loggedRefs: Map<string, Awaited<ReturnType<typeof findLoggedStagedRef>>> | undefined;
     const alreadyLogged = async (op: ResearchLogAppendOp) => {
       const ref = asNull(op.stagedResultsRef);
