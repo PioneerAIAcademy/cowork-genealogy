@@ -157,22 +157,30 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
  * fetches. Two place rules apply only here (gedcomx-convert-spec.md, "Places on
  * facts"): a fact with no `normalized` value takes the chosen `Interpreted`
  * value of its `Place` field as `standard_place`, and the as-written text from
- * the field's `Original` value as `place`. `placeIds` maps each fact whose
- * `standard_place` came from an `Interpreted` value to the FamilySearch place
- * id that value names, so `record_read` can name the place by id. The ids ride
- * beside the document, never on it: the simplified format has no field for
+ * the field's `Original` value as `place`. That text is in the record's
+ * language, so `placeIds` maps each such fact to the place id the value names
+ * and to `place.original`: `record_read` names the place in English by its id,
+ * or else removes the `standard_place` and puts back `place.original`. The ids
+ * ride beside the document, never on it: the simplified format has no field for
  * them.
  */
 export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   doc: SimplifiedGedcomX;
-  placeIds: Map<SimplifiedFact, string>;
+  placeIds: Map<SimplifiedFact, RecordReadPlace>;
 } {
-  const placeIds = new Map<SimplifiedFact, string>();
+  const placeIds = new Map<SimplifiedFact, RecordReadPlace>();
   return { doc: convert(gedcomx, placeIds), placeIds };
 }
 
+/** A record-read fact's `Interpreted` standard: the place id it names, and
+ *  `place.original` — the fact's `place` when it keeps no `standard_place`. */
+export interface RecordReadPlace {
+  placeId: string;
+  original?: string;
+}
+
 /** Collects a record read's place ids; `null` for every other response. */
-type RecordReadPlaceIds = Map<SimplifiedFact, string> | null;
+type RecordReadPlaceIds = Map<SimplifiedFact, RecordReadPlace> | null;
 
 function convert(gedcomx: GedcomX, recordRead: RecordReadPlaceIds): SimplifiedGedcomX {
   if (!gedcomx || typeof gedcomx !== "object") return {};
@@ -389,10 +397,10 @@ function placeIdOf(ref: unknown): string | undefined {
  * (`…/places/description/<id>`). A value with no place id is not a standard:
  * its text is often just the as-written text echoed back. Among several
  * candidates, the one marked Preferred wins, else the one `place.description`
- * names, else the only one; a choice that is still ambiguous yields nothing.
- * The place id comes back with the name when the chosen candidates name one.
+ * names, else the only one; a choice that is still ambiguous — two names, or one
+ * name for two place ids — yields nothing.
  */
-function pickInterpretedPlace(place: RawPlace): { name: string; id?: string } | undefined {
+function pickInterpretedPlace(place: RawPlace): { name: string; id: string } | undefined {
   const candidates: { name: string; id: string; preferred: boolean }[] = [];
   for (const value of placeFieldValues(place)) {
     if (value.type !== INTERPRETED_VALUE) continue;
@@ -413,9 +421,9 @@ function pickInterpretedPlace(place: RawPlace): { name: string; id?: string } | 
         ? candidates.filter((c) => c.id === describedId)
         : candidates;
   const names = new Set(chosen.map((c) => c.name));
-  if (names.size !== 1) return undefined;
   const ids = new Set(chosen.map((c) => c.id));
-  return { name: chosen[0].name, ...(ids.size === 1 ? { id: chosen[0].id } : {}) };
+  if (names.size !== 1 || ids.size !== 1) return undefined;
+  return { name: chosen[0].name, id: chosen[0].id };
 }
 
 /**
@@ -480,8 +488,8 @@ function simplifyFact(fact: GedcomXFact, recordRead: RecordReadPlaceIds): Simpli
     if (place !== undefined) out.place = place;
     if (keepsStandard) {
       out.standard_place = standard;
-      if (normalized === undefined && interpreted?.id !== undefined) {
-        recordRead?.set(out, interpreted.id);
+      if (normalized === undefined && interpreted !== undefined) {
+        recordRead?.set(out, { placeId: interpreted.id, ...(original !== undefined ? { original } : {}) });
       }
     }
   }

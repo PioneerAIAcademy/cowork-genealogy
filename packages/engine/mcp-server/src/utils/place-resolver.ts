@@ -26,7 +26,7 @@ import {
   getPlaceCandidateNames,
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
-import { earliestYear } from "./date-helpers.js";
+import { earliestYear, latestYear } from "./date-helpers.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
@@ -37,6 +37,9 @@ interface RepInfo {
   placeId?: string;
   latitude?: number;
   longitude?: number;
+  /** When the representation is valid: FamilySearch's formal range
+   *  ("+1830/", "/+1795", "+1815/+1830"); absent when it is valid at every date. */
+  dateRange?: string;
 }
 
 export interface ResolveOpts {
@@ -948,10 +951,82 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
         placeId: place.placeId,
         latitude: place.latitude,
         longitude: place.longitude,
+        dateRange: place.dateRange,
       }
     : null;
   repInfoCache.set(repId, info);
   return info;
+}
+
+/** Inclusive years: a fact date's earliest and latest possible year, or a
+ *  representation's validity. */
+interface YearSpan {
+  from: number;
+  to: number;
+}
+
+const RANGE_BOUND = String.raw`([+-]\d+)(?:-\d{2}){0,2}`;
+const REP_RANGE = new RegExp(`^(?:${RANGE_BOUND})?/(?:${RANGE_BOUND})?$`);
+
+/** A representation's validity as years; every year when it has no range, null
+ *  when the range cannot be read. */
+function repYears(dateRange: string | undefined): YearSpan | null {
+  if (dateRange === undefined || dateRange.trim() === "") return { from: -Infinity, to: Infinity };
+  const m = REP_RANGE.exec(dateRange.trim());
+  if (!m) return null;
+  return {
+    from: m[1] === undefined ? -Infinity : Number(m[1]),
+    to: m[2] === undefined ? Infinity : Number(m[2]),
+  };
+}
+
+function dateYears(date: string | undefined): YearSpan | null {
+  if (!date || !date.trim()) return null;
+  const std = stdDate(date);
+  const from = earliestYear(std);
+  const to = latestYear(std);
+  return from === null || to === null ? null : { from, to };
+}
+
+function covers(range: YearSpan | null, years: YearSpan): boolean {
+  return range !== null && range.from <= years.from && years.to <= range.to;
+}
+
+/** Concurrent description lookups for one place's representations. */
+const REP_LOOKUP_CONCURRENCY = 8;
+
+/**
+ * The English name of the representation of `repId`'s place that is valid at
+ * `date` (any date `stdDate` reads; an imprecise one must fall wholly inside the
+ * range), or null.
+ *
+ * A FamilySearch place has a representation per era, each with its own name
+ * and range: place 1959431 is "Olne, Prince-Bishopric of Liège, Holy Roman
+ * Empire" to 1795 and "Olne, Liège, Belgium" from 1830. `repId` is named when
+ * its range covers the date, else the place's representation whose range does.
+ * With no readable date, `repId` is named only when its range runs to the
+ * present. Null when no representation covers the date, when the ones that do
+ * disagree on the name, or when any lookup fails.
+ */
+export async function repIdToStandardPlaceAt(
+  repId: string,
+  date: string | undefined,
+): Promise<string | null> {
+  const chosen = await getRepInfo(repId);
+  if (!chosen) return null;
+  const range = repYears(chosen.dateRange);
+  const years = dateYears(date);
+  if (years === null) return range?.to === Infinity ? chosen.standardPlace : null;
+  if (covers(range, years)) return chosen.standardPlace;
+  if (!chosen.placeId) return null;
+  const others = (await placeIdToRepIds(chosen.placeId)).filter((id) => id !== repId);
+  const infos = await mapWithConcurrency(others, REP_LOOKUP_CONCURRENCY, (id) => getRepInfo(id));
+  const names = new Set<string>();
+  for (const info of infos) {
+    if (info === null) return null;
+    if (covers(repYears(info.dateRange), years)) names.add(info.standardPlace);
+  }
+  return names.size === 1 ? [...names][0] : null;
 }
 
 /** Most place candidates an ambiguity result will name. Mirrors

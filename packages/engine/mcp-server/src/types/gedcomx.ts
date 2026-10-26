@@ -167,11 +167,12 @@ export interface SimplifiedFact {
   standard_date?: string;
   place?: string;
   // Standardized place name (the snake_case data-format spelling of
-  // `standardPlace`). Populated by `toSimplified` from FamilySearch's own
-  // standardized value (raw `place.normalized`, else the chosen `Interpreted`
-  // place value), or by the network standardization pass
-  // (`toSimplifiedStandardized`) for free-text places. Dropped on `toGedcomX`,
-  // like `standard_date`.
+  // `standardPlace`). Populated by the converter from raw `place.normalized`; on
+  // a record read with none, by `record_read` from the place id of the chosen
+  // `Interpreted` place value, named in English for the fact's date
+  // (`toSimplifiedRecordRead`, then `recordReadDocument`); or by the network
+  // standardization pass (`toSimplifiedStandardized`) for free-text places.
+  // Dropped on `toGedcomX`, like `standard_date`.
   standard_place?: string;
   value?: string;
   // The `research.json` assertion this fact was minted from — the backlink an

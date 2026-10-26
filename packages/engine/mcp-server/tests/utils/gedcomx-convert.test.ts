@@ -1738,11 +1738,14 @@ type RawPlace = NonNullable<GedcomXFact["place"]>;
 const oneFact = (place: RawPlace): GedcomX => ({
   persons: [{ id: "p1", facts: [{ type: "http://gedcomx.org/Birth", place }] }],
 });
-/** The fact as a record read converts it, and the place id exposed for it. */
-const readOnePlace = (place: RawPlace): { fact: SimplifiedFact; placeId: string | undefined } => {
+/** The fact as a record read converts it, the place id exposed for it, and the
+ *  place record_read puts back when it cannot name that id. */
+const readOnePlace = (
+  place: RawPlace,
+): { fact: SimplifiedFact; placeId: string | undefined; original: string | undefined } => {
   const { doc, placeIds } = toSimplifiedRecordRead(oneFact(place));
   const fact = doc.persons![0].facts![0];
-  return { fact, placeId: placeIds.get(fact) };
+  return { fact, placeId: placeIds.get(fact)?.placeId, original: placeIds.get(fact)?.original };
 };
 /** The fact as a search or tree response converts it. */
 const simplifyOnePlace = (place: RawPlace): SimplifiedFact =>
@@ -1888,7 +1891,7 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     const fact = doc.relationships![0].facts![0];
     expect(fact.place).toBe("Ramore, Ontario, Canada");
     expect(fact.standard_place).toBe("Ramore, Black River-Matheson Township, Cochrane, Ontario, Canada");
-    expect(placeIds.get(fact)).toBe("9159962");
+    expect(placeIds.get(fact)).toEqual({ placeId: "9159962", original: "Ramore, Ontario, Canada" });
   });
 
   it("yields nothing when the candidates disagree and nothing chooses between them (65TF-GJMJ without its description)", () => {
@@ -1924,7 +1927,9 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     expect(fact.standard_place).toBeUndefined();
   });
 
-  it("keeps a name the candidates agree on but exposes no place id when they name two places (SGZQ-Y3L's pair)", () => {
+  it("yields nothing when the candidates agree on the name but name two places (SGZQ-Y3L's pair)", () => {
+    // record_read names a standard only by its place id, so a name with two ids
+    // would keep FamilySearch's own text.
     const { fact, placeId } = readOnePlace({
       original: "Carmarthen",
       fields: [
@@ -1937,7 +1942,8 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
         },
       ],
     });
-    expect(fact.standard_place).toBe("Carmarthen, Carmarthenshire, Wales, United Kingdom");
+    expect(fact.place).toBe("Carmarthen");
+    expect(fact.standard_place).toBeUndefined();
     expect(placeId).toBeUndefined();
   });
 
@@ -1997,8 +2003,8 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
 });
 
 describe("gedcomx-convert — a record read's as-written place when place.original holds the standardized text", () => {
-  it("takes the Original value when place.original is the Interpreted text (6NG4-MVP3)", () => {
-    const { fact, placeId } = readOnePlace({
+  it("takes the Original value when place.original is the Interpreted text, and keeps place.original for record_read (6NG4-MVP3)", () => {
+    const { fact, placeId, original } = readOnePlace({
       original: "Faial, Santana, Madeira, Portugal",
       fields: [
         {
@@ -2016,6 +2022,7 @@ describe("gedcomx-convert — a record read's as-written place when place.origin
     expect(fact.place).toBe("dos Mainhos");
     expect(fact.standard_place).toBe("Faial, Santana, Madeira, Portugal");
     expect(placeId).toBe("1831208");
+    expect(original).toBe("Faial, Santana, Madeira, Portugal");
   });
 
   it("keeps place.original when no standard_place survives, so the standardized text is not lost (NQ2T-HP1)", () => {

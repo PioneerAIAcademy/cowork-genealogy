@@ -1,8 +1,12 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
-import { toSimplifiedRecordRead } from "../utils/gedcomx-convert.js";
-import { repIdToStandardPlace } from "../utils/place-resolver.js";
+import { toSimplifiedRecordRead, type RecordReadPlace } from "../utils/gedcomx-convert.js";
+import {
+  countryConsistency,
+  repIdToStandardPlace,
+  repIdToStandardPlaceAt,
+} from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
@@ -381,10 +385,14 @@ async function readFromSidecar(
  * "Places on facts"), whose text is in the record's language ("Piauí, Brasil").
  * The engine compares standard places as English text (materialize_facts'
  * factsEquivalent, research_append's standardPlaceCountry), so each is replaced
- * by repIdToStandardPlace's English name for its id, the same lookup the
- * coverage gets. A lookup that returns nothing keeps FamilySearch's own text.
- * Records reached via the search sidecar already carry the search stage's
- * standardized place.
+ * by repIdToStandardPlaceAt's English name for the representation of that place
+ * valid at the fact's date: the id's own name can belong to another era
+ * ("Olne, Prince-Bishopric of Liège, Holy Roman Empire" for an 1874 death). When
+ * there is no such name, or it contradicts the fact's place text
+ * (countryConsistency, which makes research_append refuse the record), the fact
+ * is left as toSimplified gives it: `place.original`, no standard_place. Records
+ * reached via the search sidecar already carry the search stage's standardized
+ * place.
  */
 export async function recordReadDocument(body: GedcomX): Promise<SimplifiedGedcomX> {
   const { doc, placeIds } = toSimplifiedRecordRead(body);
@@ -393,12 +401,18 @@ export async function recordReadDocument(body: GedcomX): Promise<SimplifiedGedco
   return doc;
 }
 
-async function nameFactPlaces(placeIds: Map<SimplifiedFact, string>): Promise<void> {
+async function nameFactPlaces(placeIds: Map<SimplifiedFact, RecordReadPlace>): Promise<void> {
   const names = new Map<string, string | null>();
-  for (const id of new Set(placeIds.values())) names.set(id, await repIdToStandardPlace(id));
-  for (const [fact, id] of placeIds) {
-    const name = names.get(id);
-    if (name) fact.standard_place = name;
+  for (const [fact, { placeId, original }] of placeIds) {
+    const key = `${placeId}|${fact.date ?? ""}`;
+    if (!names.has(key)) names.set(key, await repIdToStandardPlaceAt(placeId, fact.date));
+    const name = names.get(key);
+    if (name && countryConsistency(fact.place ?? "", name) !== "contradiction") {
+      fact.standard_place = name;
+    } else {
+      delete fact.standard_place;
+      if (original !== undefined) fact.place = original;
+    }
   }
 }
 

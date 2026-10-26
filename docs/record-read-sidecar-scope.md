@@ -140,9 +140,11 @@ England death/burial). For **the person you searched** (the matched persona):
   an `Interpreted` value of the place's `Place` field instead, which
   `toSimplifiedRecordRead` reads (`gedcomx-convert-spec.md`, "Places on facts").
   Its text is in the record's language, so `recordReadDocument` names each by
-  its place id with `repIdToStandardPlace` (English), as it names coverage
-  places, and keeps FamilySearch's text when that lookup returns nothing. Staged
-  records carry the search stage's standardized place regardless.
+  its place id with `repIdToStandardPlaceAt` (English, the representation of
+  that place valid at the fact's date). When there is no such name, or it
+  contradicts the fact's place text, the fact keeps `place.original` and no
+  `standard_place`, as `toSimplified` gives it; FamilySearch's text is never
+  kept. Staged records carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills

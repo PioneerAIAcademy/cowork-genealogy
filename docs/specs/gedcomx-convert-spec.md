@@ -26,7 +26,7 @@ foreign-key target, so the produced shape is part of an existing contract.
 export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX;
 export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   doc: SimplifiedGedcomX;
-  placeIds: Map<SimplifiedFact, string>;
+  placeIds: Map<SimplifiedFact, RecordReadPlace>; // { placeId: string; original?: string }
 };
 export function toGedcomX(simplified: SimplifiedGedcomX): GedcomX;
 ```
@@ -415,7 +415,8 @@ equivalent.
       "resource": "https://www.familysearch.org/platform/places/description/1831208",
       "qualifiers": [{ "name": "http://familysearch.org/types/qualifiers/Preferred", "value": "true" }] } ] }] }
                                                   →  place: "dos Mainhos", standard_place: "Faial, Santana, Madeira, Portugal"
-                                                     (toSimplifiedRecordRead; placeIds names 1831208 for this fact)
+                                                     (toSimplifiedRecordRead; placeIds gives this fact
+                                                      { placeId: "1831208", original: "Faial, Santana, Madeira, Portugal" })
 ```
 
 `place` is the place as the record wrote it: `place.original` verbatim, except
@@ -433,8 +434,9 @@ FamilySearch's own standardized name, read from the response with no lookup
    ("Kuopio, Kuopio, Suomi"). Among such values take the one whose
    `http://familysearch.org/types/qualifiers/Preferred` qualifier is `true`;
    else the one whose id `place.description` (`#place_<id>`) names; else the
-   only one. If the chosen values disagree on the name, or `description` names
-   an id none of them carries, there is no `standard_place`.
+   only one. If the chosen values disagree on the name, name two place ids, or
+   `description` names an id none of them carries, there is no
+   `standard_place`.
 
 An `Interpreted` value with no place id is never used, Preferred or not: its
 text is often the as-written text echoed back ("Yabebyry"). `toSimplified`
@@ -456,11 +458,13 @@ extractor decides a census's relationship column from `standard_place ?? place`
 Massachusetts") decides nothing.
 
 **Place ids.** `toSimplifiedRecordRead` returns `{ doc, placeIds }`. `placeIds`
-maps each fact whose `standard_place` came from step 2 to the place id of the
-chosen value; a fact whose chosen values agree on the name but name two ids has
-no entry. The ids ride beside the document, never on it: a fact has no field
-for them (`TREE_FACT_FIELDS` in `validation/tree-shape.ts` is a closed list).
-`record_read` uses them to name each place in English (below).
+maps each fact whose `standard_place` came from step 2 to `{ placeId, original }`:
+the place id of the chosen value, and `place.original` (absent when the place
+has none), which is the fact's `place` when it keeps no `standard_place`. The
+ids ride beside the document, never on it: a fact has no field for them
+(`TREE_FACT_FIELDS` in `validation/tree-shape.ts` is a closed list).
+`record_read` uses them to name each place in English, or else to give the fact
+what `toSimplified` gives it (below).
 
 The `description` reference is otherwise dropped; richer place data lives in
 the top-level `places[]` array (Rule 12).
@@ -492,15 +496,32 @@ run `standardizePlaces` over the flattened facts of a multi-result response
 callers that want no I/O. Exception — `record_read`'s live path never calls
 `toSimplifiedStandardized` and never falls back to the resolver. It calls
 `recordReadDocument` (`tools/record-read.ts`): `toSimplifiedRecordRead`, then
-each `placeIds` fact's `standard_place` replaced by `repIdToStandardPlace`'s
-English name for its id, then each coverage place named by its id the same way.
-The step-2 text is in the record's language, and the engine compares standard
-places as English text (`factsEquivalent` in `merge-gedcomx.ts`,
-`standardPlaceCountry` in `research-append.ts`). A lookup that returns nothing
-keeps FamilySearch's own text. A lookup by id names the place FamilySearch
-chose and resolves no place name, so it is not the resolver fallback
-`record_read` stays without. See `docs/record-read-sidecar-scope.md` for the
-measurement and rationale.
+each `placeIds` fact named by its id, then each coverage place named by its id
+with `repIdToStandardPlace`. The step-2 text is in the record's language, and
+the engine compares standard places as English text (`factsEquivalent` in
+`merge-gedcomx.ts`, `standardPlaceCountry` in `research-append.ts`), so each
+fact's `standard_place` is replaced by `repIdToStandardPlaceAt(placeId, date)`
+(`place-resolver.ts`): the English name of the representation of that
+FamilySearch place valid at the fact's date. A place has one representation
+per era, and the chosen id's own one can be from another ("Olne, Prince-Bishopric
+of Liège, Holy Roman Empire", valid to 1795, for an 1874 death; the 1874 one is
+"Olne, Liège, Belgium"):
+
+- The chosen representation is named when its range covers the date, else the
+  representation of the same place whose range does. An imprecise date (`Abt`,
+  `Bet … and …`) must fall wholly inside one range. Representations that cover
+  it but disagree on the name name nothing.
+- A fact with no date `stdDate` reads takes the chosen representation's name
+  only when its range runs to the present.
+
+When no representation covers the date, any lookup fails, or the name
+contradicts the fact's `place` (`countryConsistency`, the check
+`research_append` refuses a record on), the fact gets what `toSimplified`
+gives it: `place.original` and no `standard_place`. FamilySearch's own text is
+never kept. Coverage describes the volume rather than an event, so it keeps the
+id's own name. A lookup by id names the place FamilySearch chose and resolves
+no place name, so it is not the resolver fallback `record_read` stays without.
+See `docs/record-read-sidecar-scope.md` for the measurement and rationale.
 
 ### 7.5 `value` on facts
 
@@ -883,7 +904,8 @@ New file in a new `src/utils/` directory.
 
 Exports:
 - `toSimplified(gedcomx: GedcomX): SimplifiedGedcomX`
-- `toSimplifiedRecordRead(gedcomx: GedcomX): { doc: SimplifiedGedcomX; placeIds: Map<SimplifiedFact, string> }`
+- `toSimplifiedRecordRead(gedcomx: GedcomX): { doc: SimplifiedGedcomX; placeIds: Map<SimplifiedFact, RecordReadPlace> }`
+- `RecordReadPlace` (type): `{ placeId: string; original?: string }`
 - `toGedcomX(simplified: SimplifiedGedcomX): GedcomX`
 
 Internal helpers (not exported) for repeated logic — URI strip/restore, name
