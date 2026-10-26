@@ -86,7 +86,7 @@ Examples:
 | `totalForPlace` | number | Distinct curated resources for the fetch (after dedupe, below), **before** the date filter. The only non-derivable count. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory; serialized before `results`. Contract and rationale: `record-search-tool-spec-v2.md`. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the **pre-filter** link set was empty. Keyed on the pre-filter set deliberately: `results` below is host-filtered and capped, so a `host:` search whose links all sit on other hosts returns an empty `results` with a non-null `staged` — claiming a nil there would order a negative finding for a place that has records. |
-| `results` | `{ url, linkText }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
+| `results` | `{ url, linkText, startYear?, endYear? }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
 | `returned` | number | How many links `results` holds, after the year and host filters and the 200 cap. |
 | `inlineCapped` | `true` \| undefined | Present when the 200 cap cut `results`. The stored list and the staged sidecar hold the full set. |
 | `stored` | `{ file, places }` \| undefined | Present when `projectPath` names a project: `external-collections.json` and the places whose entries this fetch wrote. See "Stored list". |
@@ -98,6 +98,7 @@ Each `results[]` item:
 |-------|------|-------------|
 | `url` | string | Direct URL to the curated resource (Ancestry, MyHeritage, FindMyPast, archives, wiki page, etc.). |
 | `linkText` | string | Human-readable link text from the FS wiki. May be empty for malformed entries. |
+| `startYear`, `endYear` | integer \| undefined | The span the year filter tested, both present or both absent (absent = undated, which the filter always includes). A one-sided upstream range counts as that single year. Where duplicates merged (see "Dedupe"), the span is the **hull** of every copy's range while `linkText` is the first copy's, so the span can be wider than the text implies. The `where-else-to-search` agent cites the span as a suggestion's grounding. Output only: the tool's `description` and `inputSchema` are unchanged. |
 
 Example:
 
@@ -390,7 +391,7 @@ input type `ExternalLinksSearchInput`.
 - `externalLinksSearchToolSchema` — MCP tool schema (hand-rolled JSON Schema,
   matching the existing tools' style).
 - `externalLinksSearchTool(input)` — main handler: validate, fetch once, refuse a
-  partial list, dedupe, store, filter by overlap, map to `{ url, linkText }`.
+  partial list, dedupe, store, filter by overlap, map to `{ url, linkText, startYear?, endYear? }`.
 - `fetchAll(placeId)` — the one HTTP call (`offset=0&count=1000`) with
   model-actionable error mapping.
 - Internal helpers: `includeCollection` (the overlap rule), `includeRow`.

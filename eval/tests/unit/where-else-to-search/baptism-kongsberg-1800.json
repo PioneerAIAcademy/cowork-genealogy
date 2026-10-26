@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_where_else_to_search_003",
+    "skill": "where-else-to-search",
+    "name": "Non-US: Norwegian baptism, curated Digitalarkivet, Ancestry, FindMyPast and MyHeritage rows",
+    "type": "positive",
+    "description": "A FamilySearch baptism search in Kongsberg, Norway, 1800. The curated rows include Norway-specific collections on several sites and image-viewer pages (media.digitalarkivet.no) that are not buildable.",
+    "tags": [
+      "where-else",
+      "no-project",
+      "direct-arm",
+      "non-us",
+      "birth"
+    ]
+  },
+  "input": {
+    "delegation": "I looked on FamilySearch for Anne Olsdatter's baptism in Kongsberg, Norway around 1800. Where else might it be?\n\ngivenName: Anne\nsurname: Olsdatter\nevent: birth\nyear: 1800\nplace: Kongsberg, Norway",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "place-search-kongsberg",
+    "external-links-search-wets-kongsberg"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm with no project (scenario null, no projectPath). The agent holds only place_search, external_links_search and build_external_search_url; it must not look for research.json, create a project, or pass projectPath to any tool.",
+    "Grounding: each suggestion's reason may use only the row's linkText, its startYear-endYear (or 'undated'), and the access value build_external_search_url returned. A statement about a site, place or record set that no tool returned is unsupported. A startYear-endYear wider than the years in the linkText is correct: the tool reports the merged span of duplicate rows.",
+    "Every link in the reply must be a url a tool returned in this run, character for character. A hand-written or edited URL is a fail.",
+    "The return ends with the summary_for_user block: a `---` line, then one short plain paragraph per suggestion carrying its full link, then one closing sentence. Links are the deliverable and belong in that block; identifiers, tool names and field names do not.",
+    "Norway baptism collections (e.g. 'Norway Baptisms, 1634-1927' on FindMyPast or MyHeritage) should lead. A media.digitalarkivet.no row is not buildable and must not be passed to build_external_search_url."
+  ]
+}

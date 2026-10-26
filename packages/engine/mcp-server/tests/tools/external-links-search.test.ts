@@ -87,7 +87,7 @@ describe("externalLinksSearchTool — happy path", () => {
     mockFetch.mockReset();
   });
 
-  it("returns matching collections with url + linkText only", async () => {
+  it("returns matching collections with url, linkText and the collection's years", async () => {
     const collections = [
       {
         url: "https://example.com/census-1940",
@@ -121,7 +121,26 @@ describe("externalLinksSearchTool — happy path", () => {
     });
     expect(result.totalForPlace).toBe(2);
     expect(result.results).toEqual([
-      { url: "https://example.com/census-1940", linkText: "1940 Census" },
+      {
+        url: "https://example.com/census-1940",
+        linkText: "1940 Census",
+        startYear: 1940,
+        endYear: 1940,
+      },
+    ]);
+  });
+
+  it("carries no years on an undated collection", async () => {
+    mockFetch.mockResolvedValueOnce(
+      singlePage([
+        { url: "https://example.com/catalog", linkText: "Library Catalog", place: "France" },
+      ])
+    );
+
+    const result = await externalLinksSearchTool({ standardPlace: "France" });
+
+    expect(result.results).toEqual([
+      { url: "https://example.com/catalog", linkText: "Library Catalog" },
     ]);
   });
 

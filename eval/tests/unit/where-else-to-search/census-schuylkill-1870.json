@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_where_else_to_search_001",
+    "skill": "where-else-to-search",
+    "name": "US census search in a county: curated Ancestry-heavy list, ranked and capped at 8",
+    "type": "positive",
+    "description": "A FamilySearch 1870 census search for a man in Schuylkill County, Pennsylvania. external_links_search returns 200 real rows (inline cap hit), most on ancestry.com, some dated and many undated. The agent must pick at most 8 buildable rows, build them in one batch, and ground each reason in the row's linkText and years.",
+    "tags": [
+      "where-else",
+      "no-project",
+      "direct-arm",
+      "census",
+      "cap"
+    ]
+  },
+  "input": {
+    "delegation": "I searched FamilySearch for Patrick Flynn in the 1870 census in Schuylkill County, Pennsylvania and didn't find him. Where else could I look?\n\ngivenName: Patrick\nsurname: Flynn\nevent: residence\nyear: 1870\nplace: Schuylkill County, Pennsylvania\ncollection: United States Census, 1870",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "external-links-search-wets-schuylkill"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm with no project (scenario null, no projectPath). The agent holds only place_search, external_links_search and build_external_search_url; it must not look for research.json, create a project, or pass projectPath to any tool.",
+    "Grounding: each suggestion's reason may use only the row's linkText, its startYear-endYear (or 'undated'), and the access value build_external_search_url returned. A statement about a site, place or record set that no tool returned is unsupported. A startYear-endYear wider than the years in the linkText is correct: the tool reports the merged span of duplicate rows.",
+    "Every link in the reply must be a url a tool returned in this run, character for character. A hand-written or edited URL is a fail.",
+    "The return ends with the summary_for_user block: a `---` line, then one short plain paragraph per suggestion carrying its full link, then one closing sentence. Links are the deliverable and belong in that block; identifiers, tool names and field names do not.",
+    "Expect 3-8 suggestions, each built from a curated row whose host is in the agent's table. Rows on unsupported hosts may appear only in a separate 'also on file' list, at most 3, and never as prefilled links."
+  ]
+}
