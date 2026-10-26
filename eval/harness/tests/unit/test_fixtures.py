@@ -111,6 +111,30 @@ def test_build_manifest_rejects_fixture_with_empty_args():
         build_manifest([{"tool": "x", "args": {}, "response": {}}])
 
 
+def test_build_manifest_accepts_empty_args_only_for_a_tool_with_no_arguments():
+    m = build_manifest([{"tool": "project_list", "args": {}, "response": {"mode": "folder"}}])
+    assert m["project_list"]["predicated"][0][0] == {}
+    assert matches({}, {})
+    with pytest.raises(InvalidFixtureError):
+        build_manifest([{"tool": "record_search", "args": {}, "response": {}}])
+    with pytest.raises(InvalidFixtureError):
+        build_manifest([{"tool": "project_list", "response": {}}])
+
+
+def test_no_argument_tools_take_no_arguments():
+    """Every tool exempted from the non-empty rule advertises no input
+    properties, so its one call really is `{}`."""
+    from harness.fixtures import NO_ARGUMENT_TOOLS
+    from harness.mock_mcp import _load_build_tool_catalog
+
+    catalog = _load_build_tool_catalog()
+    for name in NO_ARGUMENT_TOOLS:
+        assert name in catalog, f"{name} is not in the compiled tool catalog"
+        assert not (catalog[name].get("inputSchema") or {}).get("properties"), (
+            f"{name} takes arguments, so an empty predicate would be a catch-all"
+        )
+
+
 # --- load_fixtures() ------------------------------------------------------
 
 
