@@ -22,6 +22,7 @@ import {
   mapEntry,
   findRepresentedPerson,
   parseUpstreamErrorBody,
+  recordSearchToolSchema,
 } from "../../src/tools/record-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -434,6 +435,34 @@ describe("buildSearchUrl param mapping", () => {
   it("19. recordType=marriage maps to f.recordType=1", () => {
     const url = buildSearchUrl({ surname: "Smith", recordType: "marriage" });
     expect(url).toContain("f.recordType=1");
+  });
+
+  // Issue #3547: a search built straight from a plan item is not refused.
+  // Issue #3547: a plan item's record_type searches where its records are
+  // indexed (dev/probe-record-type-aliases.ts), one f.recordType per type.
+  it.each([
+    ["land", [7]],
+    ["tax", [7, 3]],
+    ["court", [7, 6]],
+    ["vital_record", [0, 1, 2]],
+    ["church", [0, 1, 2]],
+    ["cemetery", [2]],
+  ])("19a. plan type %s sends f.recordType %j", (type, codes) => {
+    expect(() => validateInput({ surname: "Smith", recordType: type as never })).not.toThrow();
+    const url = buildSearchUrl({ surname: "Smith", recordType: type as never });
+    const sent = [...url.matchAll(/f\.recordType=(\d+)/g)].map((m) => Number(m[1]));
+    expect(sent).toEqual(codes);
+  });
+
+  it("19b. an upstream type still sends exactly one f.recordType", () => {
+    const url = buildSearchUrl({ surname: "Smith", recordType: "census" });
+    expect([...url.matchAll(/f\.recordType=/g)]).toHaveLength(1);
+    expect(url).toContain("f.recordType=3");
+  });
+
+  it("19c. the schema enum advertises the plan types it accepts", () => {
+    const values = (recordSearchToolSchema as any).inputSchema.properties.recordType.enum;
+    expect(values).toEqual(expect.arrayContaining(["vital_record", "church", "cemetery", "land", "court", "tax"]));
   });
 
   it("20. default flags m.queryRequireDefault=on and m.defaultFacets=off are sent", () => {

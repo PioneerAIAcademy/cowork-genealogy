@@ -4,7 +4,8 @@
 export interface PersonWarningsInput {
   /** Absolute path to the project directory holding `tree.gedcomx.json`. */
   projectPath: string;
-  personId: string;
+  /** One anchor id, or a list of up to 50 (a JSON-array string is accepted as one). */
+  personId: string | string[];
 }
 
 /**
@@ -60,9 +61,36 @@ export interface PersonWarningsFound {
   warnings: PersonWarning[];
 }
 
+/** Whether the online birthplace-distance check ran for one anchor of a list call:
+ *  `checked`; `not_checked` (a place it needed could not be looked up, or the
+ *  call's shared lookup budget ran out); `not_applicable` (no dated birthplace
+ *  with a parent residence near it in time). */
+export type BirthplaceCheck = "checked" | "not_checked" | "not_applicable";
+
+/** One anchor of a list call. `warnings` holds only warnings no earlier anchor in
+ *  the same call already reported (overlapping relative circles surface the same
+ *  warning twice); `alreadyReported` counts the ones left out. `error` replaces the
+ *  rest when the id could not be resolved, so one bad id never sinks the batch. */
+export interface PersonWarningsListEntry {
+  personId: string;
+  warningCount?: number;
+  warnings?: PersonWarning[];
+  alreadyReported?: number;
+  birthplaceCheck?: BirthplaceCheck;
+  error?: string;
+}
+
+/** A list call's answer: one entry per distinct requested id, in request order.
+ *  `warningCount` counts distinct warnings across every entry. */
+export interface PersonWarningsList {
+  warningCount: number;
+  results: PersonWarningsListEntry[];
+}
+
 /** Unlike every other tool here this one has no `ok` field on success, so the
  *  no-project answer is a genuine second arm rather than an optional field.
- *  Discriminate with `"ok" in result`. */
+ *  Discriminate with `"ok" in result`; a list call answers `results`. */
 export type PersonWarningsResult =
   | PersonWarningsFound
+  | PersonWarningsList
   | { ok: false; reason: "no_project"; errors: string[] };
