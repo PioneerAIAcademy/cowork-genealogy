@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { toSimplified, toSimplifiedRecordRead, toGedcomX } from "../../src/utils/gedcomx-convert.js";
+import { censusStatedRelationships, extractRecord } from "../../src/utils/record-extract.js";
 import type {
   GedcomX,
   GedcomXFact,
+  GedcomXPerson,
   SimplifiedFact,
   SimplifiedGedcomX,
 } from "../../src/types/gedcomx.js";
@@ -2081,6 +2083,86 @@ describe("gedcomx-convert — a record read's as-written place when place.origin
       ],
     });
     expect(fact.place).toBe("Salem, Essex, Massachusetts, United States");
+  });
+});
+
+describe("gedcomx-convert — a record read's as-written place keeps a census's relationship decision", () => {
+  // The code extractor decides the relationship column from
+  // `standard_place ?? place`. The as-written text here lacks the country the
+  // column table reads; the standardized text in place.original carries it.
+  const standardized = "Salem, Essex, Massachusetts, United States";
+  const asWritten = originalValue("Salem, Massachusetts");
+  type PlaceValue = ReturnType<typeof originalValue> | ReturnType<typeof interpretedValue>;
+  const census = (values: PlaceValue[]) => {
+    const person = (id: string, given: string, gender: string): GedcomXPerson => ({
+      id,
+      gender: { type: `http://gedcomx.org/${gender}` },
+      names: [
+        {
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: given },
+                { type: "http://gedcomx.org/Surname", value: "Ward" },
+              ],
+            },
+          ],
+        },
+      ],
+      facts: [
+        {
+          type: "http://gedcomx.org/Census",
+          date: { original: "1880" },
+          place: { original: standardized, fields: [{ type: PLACE_FIELD, values }] },
+        },
+      ],
+    });
+    const { doc } = toSimplifiedRecordRead({
+      persons: [person("p1", "John", "Male"), person("p2", "Mary", "Female")],
+    });
+    const out = extractRecord(
+      {
+        recordId: "ark:/61903/1:1:TEST-SLM1",
+        gedcomx: doc,
+        indexFields: {
+          p1: { relationshipToHead: "Head", householdId: "1" },
+          p2: { relationshipToHead: "Wife", householdId: "1" },
+        },
+      },
+      { logEntryId: "l_001", questionIds: ["q_001"] },
+    );
+    const relationships = out.assertions.filter((a) => a.fact_type === "relationship").map((a) => a.value);
+    return { fact: doc.persons![0].facts![0], stated: out.censusStatesRelationships, relationships };
+  };
+
+  it("the as-written text alone decides nothing", () => {
+    expect(censusStatedRelationships("Salem, Massachusetts", 1880)).toBeNull();
+  });
+
+  it("keeps the standardized text and its relationships when FamilySearch's value names no place", () => {
+    const { fact, stated, relationships } = census([asWritten, interpretedValue(standardized)]);
+    expect(fact.place).toBe(standardized);
+    expect(fact.standard_place).toBeUndefined();
+    expect(stated).toBe(true);
+    expect(relationships).toEqual(["wife of John Ward"]);
+  });
+
+  it("keeps the standardized text and its relationships when the candidates are ambiguous", () => {
+    const { fact, relationships } = census([
+      asWritten,
+      interpretedValue(standardized, "1234"),
+      interpretedValue("Salem, Salem, Massachusetts, United States", "5678"),
+    ]);
+    expect(fact.place).toBe(standardized);
+    expect(fact.standard_place).toBeUndefined();
+    expect(relationships).toEqual(["wife of John Ward"]);
+  });
+
+  it("decides from the standard_place when the as-written text takes its place", () => {
+    const { fact, relationships } = census([asWritten, interpretedValue(standardized, "1234")]);
+    expect(fact.place).toBe("Salem, Massachusetts");
+    expect(fact.standard_place).toBe(standardized);
+    expect(relationships).toEqual(["wife of John Ward"]);
   });
 });
 
