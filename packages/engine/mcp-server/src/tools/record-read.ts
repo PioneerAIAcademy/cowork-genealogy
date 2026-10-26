@@ -58,7 +58,7 @@ export const recordReadSchema = {
           "sidecar host-side, WITHOUT a live FamilySearch fetch. For the person " +
           "you searched, the sidecar carries the same facts, the source citation, " +
           "and standardized places from the search stage (a live read keeps only " +
-          "the record's own standardized places, never resolver-derived ones). It returns OTHER household members " +
+          "the record's own normalized places, never resolver-derived ones). It returns OTHER household members " +
           "(co-residents) with reduced facts — so omit this (live read) when you " +
           "need a co-resident's full facts, or for a record that was not part of a " +
           "staged search. Requires `projectPath`.",
