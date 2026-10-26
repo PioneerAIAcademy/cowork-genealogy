@@ -94,12 +94,27 @@ function pendingExtraction(research: any, logs: any[]): any[] {
   );
 }
 
-/** The lowest-sequence `planned`/`in_progress` item on a plan that is still active. */
-function nextUnexecutedItem(plans: any[]): any | null {
+/** The lowest-sequence `planned`/`in_progress` item on a plan that is still
+ *  active. A `fs_hints` item (issue #3153) that is `in_progress` with no `log[]`
+ *  entry naming it is *waiting* on the researcher's verdicts, not executable —
+ *  it is skipped so it never pins `nextStep` and the router moves to the next
+ *  search. (A `planned` `fs_hints` item is still returned: that is the one
+ *  search-hints executes.) */
+function nextUnexecutedItem(plans: any[], logs: any[]): any | null {
+  const itemsNamedByLog = new Set(
+    arr(logs)
+      .map((l) => l?.plan_item_id)
+      .filter((id): id is string => typeof id === "string"),
+  );
+  const isWaitingHints = (i: any) =>
+    i?.record_type === "fs_hints" &&
+    i?.status === "in_progress" &&
+    !itemsNamedByLog.has(i?.id);
   const items = plans
     .filter((p) => p?.status === undefined || p?.status === "active")
     .flatMap((p) => arr(p?.items))
     .filter((i) => i?.status === "planned" || i?.status === "in_progress")
+    .filter((i) => !isWaitingHints(i))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
 }
@@ -498,9 +513,10 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   } else {
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
-    const item = nextUnexecutedItem(plans);
+    const item = nextUnexecutedItem(plans, logs);
     const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
     if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
+    else if (item.record_type === "fs_hints") nextStep = `search-hints — ${item.id}`;
     else if (!repo || /familysearch/i.test(repo)) nextStep = "search-records";
     else nextStep = `search-external-sites — ${item.id} (${repo})`;
   }

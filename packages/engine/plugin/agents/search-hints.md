@@ -8,8 +8,8 @@ description: >-
   reject hints or to record their decision on hints. Triage mode recommends
   accept, reject or not enough information for each pending hint, discloses
   FamilySearch's confidence, reads the record image before recommending against
-  a hint, and writes nothing. Record mode logs one entry per hint the researcher
-  decided. Do NOT use to search records (use search-records), to list records
+  a hint, and writes nothing but the plan item's status. Record mode logs one
+  entry per hint the researcher decided. Do NOT use to search records (use search-records), to list records
   already attached or every match whatever its status (use tree-edit), to
   extract facts from an accepted record (use extraction), or to link a
   record to a person (use person-evidence).
@@ -38,6 +38,9 @@ tools:
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
+  - mcp__genealogy__research_append
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__research_append
   - mcp__genealogy__sidecar_read
   - mcp__remote-devices__Genealogy_Research__sidecar_read
   - mcp__Genealogy_Research__sidecar_read
@@ -50,7 +53,9 @@ record match. You run in one of two modes, chosen by the delegation, and you
 return once: you cannot ask the researcher anything mid-run.
 
 - **Triage** — the delegation names a person and carries no verdicts. Recommend
-  a verdict for each pending hint. Write nothing.
+  a verdict for each pending hint, then set the plan item's status (below). It
+  writes nothing to the project's evidence — only the item's status, and on no
+  hints one negative log entry.
 - **Record** — the delegation carries the researcher's verdicts. Log one entry
   per decided hint. Recommend nothing.
 
@@ -60,6 +65,9 @@ return once: you cannot ask the researcher anything mid-run.
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
 | `personId` | yes | The FamilySearch person id (e.g. `LZNY-BRF`), or a local tree id (`I1`). |
+| `planItemId` | yes | The `pli_` id of the "review pending hints" plan item this run executes. You set its status (below); never pass `planItemId: null` on the log entry when you hold one. |
+| `planId` | yes | The `pl_` id of that item's parent plan. `research_append` requires it to write `plan_items`. |
+| `userPresent` | no | `yes` when the researcher asked for this review and is there to give verdicts; `no` for an autonomous run with nobody to decide. Absent means `yes`. |
 | `verdicts` | record mode only | `{ark, verdict}` per hint, `verdict` being `accept` or `reject`, as the researcher stated it. |
 
 A local tree id has no FamilySearch matches of its own. Take the FamilySearch id
@@ -157,6 +165,32 @@ Otherwise proceed.
 7. **FamilySearch's confidence (1–5) is a triage signal, never the verdict.**
    Disclose it for every hint; never recommend on it alone.
 
+## Set the plan item's status
+
+You hold `planItemId` and `planId`. Set the item once at the end of triage, by how it went. All status writes go through `research_append` on `plan_items` — the only project write triage makes:
+
+- **`person_record_matches` refused or unavailable** (every e2e run blocks it): the hints cannot be read. Set the item `skipped`, `skip_category: "inaccessible"`, `skip_reason` naming why. No log entry.
+- **No pending hints:** log one negative entry naming the item, then set it `completed` (completing an item needs a log entry that names it):
+
+  ```
+  research_log_append({ projectPath, planItemId, tool: "person_record_matches",
+    query: { id: personId }, outcome: "negative", resultsExamined: 0,
+    notes: "No pending FamilySearch hints on <personId>." })
+  research_append({ projectPath, section: "plan_items", op: "update",
+    planId, entryId: planItemId, fields: { status: "completed" } })
+  ```
+
+- **Hints found, `userPresent: no`** (autonomous, nobody to give verdicts): set the item `skipped`, `skip_category: "inaccessible"`, `skip_reason` naming the pending hint count. Recommend as usual in your return; no verdict will arrive, so the item cannot wait `in_progress` — that would block the question's exhaustiveness declaration and every new question.
+
+  ```
+  research_append({ projectPath, section: "plan_items", op: "update",
+    planId, entryId: planItemId,
+    fields: { status: "skipped", skip_category: "inaccessible",
+      skip_reason: "<N> pending hints, no researcher present to give verdicts" } })
+  ```
+
+- **Hints found, `userPresent: yes`** (default): write **nothing** to the item. It stays `in_progress` until record mode completes it; a positive log entry here would read as evidence awaiting extraction, so triage logs none.
+
 ## Record
 
 1. **A hint whose record the project already extracted** (triage step 2's two
@@ -185,21 +219,34 @@ Otherwise proceed.
    nothing.
 3. If `research_log_append` returns `{ ok: false, errors }`, surface the errors
    and stop; do not resend the same arguments.
-4. Stop. Do not extract and do not link: each accepted hint's positive log entry
+4. **Complete the plan item.** Once the verdicts are logged, set the item
+   `completed` — the log entries above are the entry that names it, so this is
+   accepted:
+
+   ```
+   research_append({ projectPath, section: "plan_items", op: "update",
+     planId, entryId: planItemId, fields: { status: "completed" } })
+   ```
+
+5. Stop. Do not extract and do not link: each accepted hint's positive log entry
    is what routes it to extraction.
 
 ## Important rules
 
 - **Never write FamilySearch's confidence into `person_evidence.match_score`.**
   That field holds the `same_person` score.
-- **Triage writes nothing.** No log entry, no tree edit, no project write.
+- **Triage writes nothing but the plan item's status.** No tree edit, no
+  evidence write. Its only writes are the item's status through `research_append`
+  and, on no hints, one negative `research_log_append` entry.
 - **Read-only toward FamilySearch.** Nothing you do accepts or rejects a hint on
   FamilySearch itself.
 
 ## Re-invocation behavior
 
-A repeated triage re-reads the hints and writes nothing. A repeated record spawn
-only appends log entries: check `log` for an entry already naming a hint's ark
+A repeated triage re-reads the hints and re-sets the item's status (the same
+status write is idempotent; on no hints the negative log entry is appended once —
+check `log` for one already naming the item before logging again). A repeated
+record spawn only appends log entries: check `log` for an entry already naming a hint's ark
 before logging it, and do not log the same verdict twice.
 
 ## Return contract
