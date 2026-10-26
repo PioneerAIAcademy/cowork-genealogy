@@ -325,7 +325,7 @@ together in a record but doesn't know the formal relationship.
 | `batchNumber` | string | IGI batch number (e.g., `"M01048-5"`) — the extraction batch behind a legacy parish register. Sent as `q.batchNumber`. **Obtained from the `batchNumber` field on a previous result** (see the response section); before that field existed there was no way to get one, which is why the strategy was documented on five surfaces and executable on none. A very strong filter and the canonical way to enumerate one parish: send it ALONE and it returns that batch's records, and adding a name searches within the batch. It satisfies the anchor rule by itself — combining it with `recordCountry` or `recordSubdivision` is rejected by `validateInput`, because a country that does not match the batch silently returns 0 (shape carries no country information, so there is nothing to guess it from). A nonexistent batch returns 0 rather than being ignored, so a nil means the batch is wrong, not that the parish is empty. Paging stops at `offset + count = 4999`, so a batch bigger than that cannot be walked end to end — partition it with `surname`, not by paging deeper. Shape varies: a batch may lead with a digit or with a letter, and may carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5`, and the all-numeric `8317102`. `C050761` appears in older documentation as a letter + 6 digits example and is not attested here; the tool validates nothing, so this list bounds the evidence, not the input. Always pass it as a quoted string, keeping any leading zeros; pass it exactly as the source gives it, do not reject or reformat one on shape, and treat no shape rule here as exhaustive. |
 | `recordCountry` | string | Country where the record was created (e.g., `"United States"`, `"England"`). |
 | `recordSubdivision` | string | State or province within the country (e.g., `"Alabama"`). Requires `recordCountry`. |
-| `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"` | Type of record. |
+| `recordType` | `"birth"` \| `"marriage"` \| `"death"` \| `"census"` \| `"immigration"` \| `"military"` \| `"probate"` \| `"other"`, or a plan item's `"vital_record"` \| `"church"` \| `"cemetery"` \| `"land"` \| `"court"` \| `"tax"` | Type of record. The plan-item values let a search built from a plan item pass its `record_type` as is, and search the upstream types its records are indexed under: `land` sends `"other"`; `tax` `"other"` and `"census"`; `court` `"other"` and `"probate"`; `vital_record` and `church` `"birth"`, `"marriage"` and `"death"`; `cemetery` `"death"`. Measured by `dev/probe-record-type-aliases.ts`: a recordType facet over every collection whose title names the type puts land at 86% other, tax at 90% other and 9% census, court at 54% other and 9% probate, vital and church records in birth, marriage and death, and cemetery records in death. Land leaves out military: its bounty-land files are military-typed, but so are the draft cards. Several types send `f.recordType` once each, which FamilySearch ORs (the totals sum; `0,1`, `0 OR 1` and `0|1` are refused). |
 | `maritalStatus` | `"Married"` \| `"Single"` \| `"Divorced"` \| `"Widowed"` | Marital status. Case-sensitive. Many records leave this field blank, so filtering on it excludes records where the field is unfilled. |
 | `isPrincipal` | boolean | Filters by the searched person's role inside each record. `true` returns only records where the matched person is the **principal subject** of the record (e.g., the bride or groom on a marriage certificate, the deceased on a death certificate, the child on a birth certificate). `false` returns only records where the matched person is named but is **not** the principal (e.g., listed as a parent on a child's birth certificate, as a spouse on a death certificate, as a witness on a marriage). When the parameter is **omitted**, both principal and non-principal mentions are returned (the broadest set). |
 
@@ -1016,7 +1016,7 @@ Each `RecordSearchResult`:
 | `birthPlace` | string \| undefined | Birth place as written. |
 | `deathDate` | string \| undefined | Death date as written. |
 | `deathPlace` | string \| undefined | Death place as written. |
-| `events` | Event[] | All other extracted facts that aren't already surfaced as birth/death (residence, immigration, marriage, etc.). |
+| `events` | Event[] | All other extracted facts that aren't already surfaced as birth/death (residence, immigration, marriage, etc.), plus the facts of every Couple relationship the persona is an endpoint of — many marriage records put the Marriage there, not on either spouse. |
 | `collectionId` | string \| undefined | The ID of the collection this record belongs to. Undefined when the upstream record carries no Collection-typed `sourceDescriptions[]` entry. |
 | `collectionTitle` | string \| undefined | Human-readable collection name. Undefined under the same conditions as `collectionId`. |
 | `collectionUrl` | string \| undefined | Link to the collection page on FamilySearch (a web page, not an ARK). Undefined under the same conditions as `collectionId`. |
@@ -1507,7 +1507,7 @@ User-Agent: <browser-like user agent string>
 | `batchNumber` | `q.batchNumber` |
 | `recordCountry` | `q.recordCountry` |
 | `recordSubdivision` | `f.recordSubcountry=<recordCountry>,<recordSubdivision>` (joined with a comma, no space). The `f.` facet filter, not `q.`: `q.` returns 0 for a hyphenated subdivision such as `Aust-Agder` (see the strictness row) |
-| `recordType` | `f.recordType=N` (`"birth"`=0, `"marriage"`=1, `"death"`=2, `"census"`=3, `"immigration"`=4, `"military"`=5, `"probate"`=6, `"other"`=7) |
+| `recordType` | `f.recordType=N` (`"birth"`=0, `"marriage"`=1, `"death"`=2, `"census"`=3, `"immigration"`=4, `"military"`=5, `"probate"`=6, `"other"`=7; `"land"` sends 7; `"tax"` 7 and 3; `"court"` 7 and 6; `"vital_record"` and `"church"` 0, 1 and 2; `"cemetery"` 2, each as its own `f.recordType`) |
 | `maritalStatus` | `f.maritalStatus` |
 | `isPrincipal` | `q.isPrincipal=true` or `=false` |
 | `count` | `count` |
@@ -1751,6 +1751,21 @@ For each `entry` in `response.entries`:
    - `value` ← `fact.value`
    - Skip facts with none of date / place / value.
 
+   Then, when the persona has an `id`, append the facts of every
+   `gedcomx.relationships[]` entry whose `type` ends in `"/Couple"` and
+   whose `person1.resource` or `person2.resource` (leading `#` stripped)
+   equals that `id`, in document order, mapped the same way. Every fact
+   type on the Couple is taken (Marriage, MarriageRegistration, Divorce…);
+   ParentChild facts are not. A Couple-derived event whose `type` and
+   `date` match an event already in `events` is the person-level copy of
+   the same fact: it is not appended, but supplies the `place` or `value`
+   each matching copy lacks (FamilySearch repeats identical events, and
+   filling one copy would stop them collapsing as exact duplicates). Matching on `type` alone would hide a second,
+   different marriage. An undated event matches only an undated event
+   with the same `type`, `place` and `value`, so two undated marriages at
+   different places are both kept. The event carries no marker of where
+   it came from.
+
 8. (The persona ARK is surfaced as `recordId`; see step 2. There is no
    separate URL field.)
 
@@ -1822,7 +1837,7 @@ For each `entry` in `response.entries`:
 | `recordSubdivision` without `recordCountry` | Throw: `"recordSubdivision requires recordCountry."` |
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | `maritalStatus` not in the four allowed values (case-sensitive) | Throw: `"maritalStatus must be exactly one of: 'Married', 'Single', 'Divorced', 'Widowed' (case-sensitive)."` |
-| `recordType` not in the eight allowed values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."` |
+| `recordType` not in the eight allowed values or the six plan-item values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other (a plan item's vital_record, church, cemetery, land, court or tax is also accepted)."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |
@@ -1848,12 +1863,17 @@ records are added.
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 `FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`, `FSField`,
-`FSFieldValue`) and tool I/O types (`RecordSearchInput`,
+`FSFieldValue`, `FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
 `RecordSearchResult`, `RecordSearchEvent`, `TreeMatch`,
 `RecordSearchToolResponse`).
 
 `FSField` / `FSFieldValue` declare the entry-level `fields[]` array that
 `FSGedcomx` now carries — the batch number's home.
+
+`FSRecordRelationship` declares `FSGedcomx.relationships`, read for the
+facts of the persona's Couple rows (mapping rule 7). Endpoints are matched
+on `resource: "#<persona id>"`; the payload also carries `resourceId`,
+which is not read and so not declared.
 
 ### `packages/engine/mcp-server/src/types/relative-terms.ts`
 
@@ -1943,6 +1963,9 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 18 | `recordSubdivision` is composed into `f.recordSubcountry=<country>,<subdivision>`, and no `q.recordSubcountry` is sent | Subdivision composition |
 | 18b | A hyphenated `recordSubdivision` (`Aust-Agder`) is sent as `f.recordSubcountry=Norway%2CAust-Agder` | Hyphenated subdivision |
 | 19 | `recordType="marriage"` maps to `f.recordType=1` | Record-type enum mapping |
+| 19a | Each plan type sends its upstream types, one `f.recordType` each (land 7; tax 7, 3; court 7, 6; vital_record and church 0, 1, 2; cemetery 2) | Plan-item record types |
+| 19b | An upstream `recordType` still sends exactly one `f.recordType` | Plan-item record types |
+| 19c | The schema enum lists the six plan-item values | Plan-item record types |
 | 20 | Default flags `m.queryRequireDefault=on` and `m.defaultFacets=off` are sent on every request | Default flag enforcement |
 | 20a | The `.exact=on` **semantics** documented under "What `.exact=on` actually does" are NOT asserted here — the URL-shape rows above check the string the tool builds, never that FamilySearch honors it. Reproduced by `dev/probe-search-qualifiers.ts` against the live API | Live-behavior evidence trail (deliberately outside vitest) |
 | 21b | `imageGroupNumber` maps to `q.filmNumber` | Film-number param mapping |
@@ -1998,11 +2021,24 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 70 | Fires on rows + `subjectResolvable: false`, says "did not identify the subject", precedes `results`, and is absent from the staged sidecar | The one branch that stages, so the only place "never staged" can be shown |
 | 71 | Emitted on `surnameAlt`, the maiden-name union | The field a woman's patronymic most often travels in |
 | 72 | `searchFoundNobody` true on a nil and on rows with `subjectResolvable: false`, false otherwise | One test for both hints |
+| 73 | A Marriage only on the persona's Couple reaches `events` | The issue's case; persona on `person2` |
+| 74 | A Couple the persona is not an endpoint of (the parents') contributes nothing | Endpoint filter; the persona has no Couple of its own, so dedup cannot mask a missing filter |
+| 75 | A Marriage on both the persona and the Couple appears once, with the Couple's place | type + date dedup; the kept copy gains the place it lacked |
+| 76 | A Couple Marriage with a different date is kept beside the persona's | Rejects a type-only dedup |
+| 77 | A `projectPath` search keeps the Couple-derived event, inline and in the sidecar | Compaction deletes `gedcomx` from the inline rows, so the event must already be in `events` |
+| 78 | A persona with no `id` gets no Couple events, even from a Couple with no `resource` | A missing ref must not equal a missing id |
+| 79 | Undated Marriages on two Couples at different places are both kept | An absent date must not make two marriages equal |
+| 80 | An undated Marriage on both the persona and the Couple appears once | Undated dedup on the whole event |
+| 81 | A repeated persona fact gets the Couple's place on every copy, so compaction collapses it | Filling one copy would leave two non-identical events |
+| 82 | The persona on `person1` of its Couple is matched | Every other case puts it on `person2` |
+| 83 | A duplicate Couple fact fills the kept copy's missing `value` | The `value` half of the fill |
+| 84 | A fact on the persona's ParentChild row is not an event | The `/Couple` type filter |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
 cover `batchNumber`; 65–72 cover `surnameVariantHints`, whose rule is also
-unit-tested in `tests/utils/surname-variant-hints.test.ts`.
+unit-tested in `tests/utils/surname-variant-hints.test.ts`; 73–84 cover the
+Couple-relationship events.
 
 ### Smoke-test script
 

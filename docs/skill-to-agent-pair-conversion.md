@@ -94,11 +94,12 @@ change, and the paid `research` run is not split across two changes.
 If another open PR already carries a fresh `eval/runlogs/unit/research/` log,
 wait for it and rebase — the branch that has already paid lands first.
 
-The same ordering binds in the other direction once a cell names an agent:
-`check_runlogs.py` gates every skill whose `SKILL.md` references
-`@plugin:<name>` on any touched agent body, so a routing PR that adds the
-reference retroactively bills a paid `research` run to every open PR editing
-that agent. Check for one before landing.
+Adding the cell does not re-bill PRs that edit the agent. `research`'s snapshot
+already fingerprints every staged agent's `name`, `description`, `tools` and
+`disallowedTools`, whether or not a cell names it. So a frontmatter edit to any
+agent gates `research`, and a body-only edit gates it only for an agent a
+`research` test runs through `execution.run_agents` (`docs/specs/unit-test-spec.md`,
+"`run_agents`").
 
 ### Everything load-bearing goes in the agent
 
@@ -528,9 +529,9 @@ up while the body ran on the main thread, and each cost a run to find.
    pending list. Three agents are EXCLUDED from the contract rather than
    pending: `image-reader`, which by spec returns a transcription and nothing
    else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
-   `source-evaluation` (issue #2796), which writes nothing, so its id-bearing
-   report IS its whole output — conforming would push it below the caller's
-   print line, where a production relay drops it; and `record-structurer`,
+   `source-evaluation` (issue #2796), which logs its report verbatim and writes
+   nothing else, so its id-bearing report IS its whole output — conforming would
+   push it below the caller's print line, where a production relay drops it; and `record-structurer`,
    whose whole return is `extraction_append`'s code-written summary, verbatim
    (lead, 2026-09-29). (The former `project-status` agent carried the "PS
    return: A" exemption too; it was deleted outright by issue #3112.)
@@ -566,8 +567,8 @@ up while the body ran on the main thread, and each cost a run to find.
 ## What is still open
 
 - **`search-records` orientation share (baseline for the handed-state follow-up,
-  issue #3581).** Committed run `eval/runlogs/unit/search-records/v8_2026-10-20_18-41-45.json`
-  (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
+  issue #3581).** Run `v8_2026-10-20_18-41-45`, pruned from the tree and living in
+  commit ee85a63e5 (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
   the first one are a median of 2 and a mean of 1.77 (min 1, max 3): the
   `research_query` read of `plans`, plus, in 17 of the 26 tests, one or two
   `wiki_read`s of FamilySearch census pages. No question is read. Counting the
@@ -576,6 +577,15 @@ up while the body ran on the main thread, and each cost a run to find.
   was pruned from the tree and lives in commit b147b57fe; its MCP count was a
   median of 2 and a mean of 1.7. The follow-up that hands the plan item's state in
   the delegation (cost-latency plan §6) is measured against these.
+  Handed state (#3581, `v10_2026-10-23_05-59-03.json`, same counting): 28 tests reach
+  `record_search`; the MCP calls before it are a median of 1 and a mean of 1.04 (min 0,
+  max 4), and `research_query` precedes the search in 3 of 28 (the ids-only and
+  ad-hoc tests). Against the released `v8.json` (median 2, mean 1.58, 23 of 26) the
+  median halves and the mean falls by 0.54. Re-run with
+  `python eval/harness/scripts/pre_search_calls.py <run-log.json>...`. The `Read` of the
+  tree is not in `tool_calls`, so its saving is asserted by
+  `test_handed_subject_skips_tree_read`, not counted. Nothing checks that the
+  `project_context` grant binds in a live session or on the proto worker.
 
 - **Tier selection resisted every prose fix.** Three successive wordings each
   repaired one test and broke a neighbour, so the tier ladder was reverted to

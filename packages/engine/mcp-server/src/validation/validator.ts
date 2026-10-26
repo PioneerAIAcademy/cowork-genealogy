@@ -127,6 +127,52 @@ export const PROOF_TIER_RANK = new Map<string, number>([
   ["proved", 4],
 ]);
 
+/** How much of a non-string narrative an error message quotes. */
+const NARRATIVE_VALUE_PREFIX_CHARS = 60;
+
+/** `value` as JSON, cut to `max` characters, for an error message that has to
+ *  name a value without quoting all of it. */
+function clipJson(value: unknown, max: number): string {
+  let text: string;
+  try {
+    text = JSON.stringify(value) ?? String(value);
+  } catch {
+    text = String(value);
+  }
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+}
+
+// What a refused claim is told. `claims[]` holds ParentChild relationship claims
+// only, so a claim that cannot carry one (a fact claim in practice) is refused,
+// and the reported failure was the agent answering that refusal by dropping
+// `claims` altogether: a scalar-only summary has nothing to check `tier`
+// against. So the refusal says why, says what to keep, and states the rule that
+// is already enforced below (`tier` equals the strongest claim's tier, never
+// the weakest), which keeping the relationship claims keeps in force.
+const CLAIM_NOT_A_RELATIONSHIP =
+  "claims[] holds ParentChild relationship claims only. Fact claims are not supported yet " +
+  "(issues #3213 and #3032 own them): leave a claim of any other kind out and keep the ParentChild " +
+  "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
+  "so it cannot rise above them.";
+
+// A parentage claim that left its relationship off is not a fact claim, and told
+// to "leave a claim of any other kind out" the agent dropped a not_proved
+// maternity claim in 2 of 4 tries of ut_proof_conclusion_022 (2026-10-25). So a
+// claim whose label names a parent relationship is told to add it instead.
+const PARENTAGE_CLAIM_LABEL = /patern|matern|parent|father|mother/i;
+
+function claimRelationshipMissing(claim: any): string {
+  if (typeof claim?.claim !== "string" || !PARENTAGE_CLAIM_LABEL.test(claim.claim)) {
+    return CLAIM_NOT_A_RELATIONSHIP;
+  }
+  return (
+    `claim '${claim.claim}' is a parentage claim, so it is a ParentChild relationship claim: add ` +
+    `relationship: { type: "ParentChild", parent: "<the parent's tree person id>", child: ` +
+    `"<the child's tree person id>" } and keep it in claims[] at its own proof_tier, not_proved ` +
+    `included. Do not drop it.`
+  );
+}
+
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
   "objective_decomposition", "new_evidence", "record_found_incidentally",
@@ -158,6 +204,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // Browse sites (issue #2802): German church books, reached through the
   // parish page rather than a name search.
   "archion", "matricula",
+  // Open Archieven (issue #3185): the Dutch archives aggregator, searchable
+  // by name.
+  "openarch",
 ]);
 
 /**
@@ -637,7 +686,7 @@ export const RESEARCH_SHAPES = {
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site",
+    "external_site", "staged_ref",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -1118,6 +1167,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
       }
     }
+    if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
+      addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
+    }
 
     const ext = entry.external_site;
     if (entry.tool === "external_site" && ext === null) {
@@ -1583,6 +1635,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("updated" in ps && (typeof ps.updated !== "string" || !ISO_DATETIME_PATTERN.test(ps.updated))) {
       addError(report, psp, `'updated' must be an ISO 8601 date-time with a timezone, got '${ps.updated}'`);
     }
+    // The narrative is the one required field here that is TEXT, and `checkRequired`
+    // knows only that it is present and not null, so a number, a boolean, a list or an
+    // object validated clean. Both JSON Schemas declare it a string. The message names
+    // the type AND a short prefix of the value, the way `resolved_conflict_ids` names
+    // its value: `introduced-errors.ts` keys an error on its path plus its message, so
+    // a message that named only the type made an update replacing one non-string with
+    // another of the same type read as an error already in the project, and it was
+    // written. The prefix is bounded because a narrative can be long. Null is
+    // `checkRequired`'s, and an empty string is a string.
+    if (
+      "narrative_markdown" in ps &&
+      ps.narrative_markdown !== null &&
+      typeof ps.narrative_markdown !== "string"
+    ) {
+      const kind = Array.isArray(ps.narrative_markdown) ? "array" : typeof ps.narrative_markdown;
+      addError(
+        report,
+        psp,
+        `'narrative_markdown' must be a string, got ${kind} ${clipJson(ps.narrative_markdown, NARRATIVE_VALUE_PREFIX_CHARS)}`,
+      );
+    }
 
     // resolved_conflict_ids -> conflicts[].id, and that conflict must be
     // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
@@ -1727,8 +1800,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         // with a TypeError naming no field instead of a repairable error.
         if (!isObjectEntry(claim, clp, report)) continue;
         checkRequired(claim, [
-          "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+          "claim", "proof_tier", "supporting_assertion_ids",
         ], clp, report, NULLABLE_FIELDS);
+        // Required like the three above, worded for what a missing one means.
+        if (!("relationship" in claim)) {
+          addError(report, clp, `missing required field 'relationship' — ${claimRelationshipMissing(claim)}`);
+        } else if (claim.relationship === null) {
+          addError(report, clp, `required field 'relationship' is null — ${claimRelationshipMissing(claim)}`);
+        }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
         // Optional here (unlike the scalar above) but still closed: an
         // out-of-enum value is rejected wherever it is written.
@@ -1746,14 +1825,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           const rank = PROOF_TIER_RANK.get(claim.proof_tier);
           if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
         }
-        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
+        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship !== null) {
           const rel = claim.relationship;
           const relp = `${clp}/relationship`;
           if (!isObjectEntry(rel, relp, report)) continue;
           checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
           checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
           if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
-            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}'`);
+            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}' — ${CLAIM_NOT_A_RELATIONSHIP}`);
           }
         }
       }

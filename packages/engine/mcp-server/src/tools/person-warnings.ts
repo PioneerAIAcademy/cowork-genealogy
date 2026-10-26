@@ -61,7 +61,7 @@ import {
   standardPlaceToCoords,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { birthThresholdMiles, lookupPlaceCoords, type PlaceCoordsResolver } from "../utils/place-coords.js";
+import { birthThresholdMiles, lookupWithin, type PlaceCoordsResolver } from "../utils/place-coords.js";
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
 import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -75,8 +75,10 @@ import {
   sameYear,
 } from "../utils/date-comparison.js";
 import type {
+  BirthplaceCheck,
   PersonWarning,
   PersonWarningsInput,
+  PersonWarningsListEntry,
   PersonWarningsResult,
   WarningFact,
 } from "../types/person-warnings.js";
@@ -99,6 +101,11 @@ async function loadAnchor(
   projectPath: string,
   personId: string,
 ): Promise<LoadedAnchor> {
+  const tree = await loadTree(projectPath);
+  return { tree, anchor: findAnchor(tree.persons ?? [], personId) };
+}
+
+async function loadTree(projectPath: string): Promise<SimplifiedGedcomX> {
   let raw: string;
   try {
     raw = await getProjectStore().readText(projectPath, TREE_FILE);
@@ -120,7 +127,7 @@ async function loadAnchor(
     throw new Error(`No persons found in ${TREE_FILE}.`);
   }
 
-  return { tree, anchor: findAnchor(tree.persons, personId) };
+  return tree;
 }
 
 export const personWarningsToolSchema = {
@@ -141,9 +148,10 @@ export const personWarningsToolSchema = {
           "Absolute path to the directory containing tree.gedcomx.json.",
       },
       personId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description:
-          "The anchor person to check: a tree person id (e.g. I1), or a FamilySearch id (e.g. KWCJ-RN4) that a tree person's ark links to. Warnings are evaluated over this person and their one-hop relatives.",
+          "The anchor person to check: a tree person id (e.g. I1), or a FamilySearch id (e.g. KWCJ-RN4) that a tree person's ark links to. Warnings are evaluated over this person and their one-hop relatives. A list of up to 50 ids checks each in one call and answers `results`, one entry per id: its warnings (a warning an earlier id already reported is counted in `alreadyReported`, not repeated), `birthplaceCheck`, or an `error` for an id not in the tree.",
       },
     },
     required: ["personId", "projectPath"],
@@ -4408,13 +4416,68 @@ export function checkBirthFarFromParentsResidence(
 // Single-person mode: read tree.gedcomx.json, build a Mob anchored on the
 // requested person, then call calculateWarnings with `isFinalWarnings=true`.
 
+/** The most anchors one list call checks. */
+export const MAX_PERSONS = 50;
+
+/** `personId` as the ids to check, and whether the caller sent a list. A list, or
+ *  a string holding a JSON array, is a list call; any other string is one id.
+ *  Never coerces: an empty, mixed or oversized list is an error, as in
+ *  research_query's `filterValues`. */
+export function personIdsOf(value: unknown): { ids: string[]; isList: boolean } {
+  let list: unknown = value;
+  if (typeof value === "string") {
+    if (!value.trim().startsWith("[")) return { ids: [value], isList: false };
+    try {
+      list = JSON.parse(value);
+    } catch {
+      throw new Error(
+        `personId starts with '[' but is not a JSON array (got ${JSON.stringify(value)}). ` +
+          `Send one id as a string, or a list such as ["I1","I2"].`,
+      );
+    }
+  }
+  if (!Array.isArray(list)) {
+    throw new Error(`personId must be a string or a list of strings (got ${JSON.stringify(value)}).`);
+  }
+  if (list.length === 0) throw new Error("personId is an empty list. Send at least one id.");
+  if (!list.every((v) => typeof v === "string" && v.length > 0)) {
+    throw new Error(`personId must list non-empty id strings (got ${JSON.stringify(list)}).`);
+  }
+  const ids = [...new Set(list as string[])];
+  if (ids.length > MAX_PERSONS) {
+    throw new Error(`personId lists ${ids.length} ids; the limit is ${MAX_PERSONS} per call. Split the list.`);
+  }
+  return { ids, isList: true };
+}
+
+/** One PROBLEM's identity across overlapping relative circles. The same problem
+ *  reaches a list call twice under different tags: anchored on the son, a
+ *  father's too-early parenthood is `relativesEarliestChildBirthToBirth12`;
+ *  anchored on the father it is `earliestChildBirthToBirth12`, and the 14-year
+ *  pair even swaps `personId` and `relatedPersonId`
+ *  (`maleRelativesEarliestChildBirthToBirth14` vs `earliestChildBirthToBirthMale14`).
+ *  So the key is the tag with its relatives prefix and gender word dropped, the
+ *  two people in either order, and the facts -- all three must match. It is not
+ *  `warningId` (validation/introduced-warnings.ts), which keys the write gate on
+ *  the exact tag. */
+export function problemKey(w: PersonWarning): string {
+  const kind = w.issueType
+    .replace(/^(male|female)?relatives/i, "")
+    .replace(/(male|female)(?=\d)/i, "")
+    .toLowerCase();
+  const people = [w.personId, w.relatedPersonId ?? ""].sort().join("+");
+  const factIds = (w.facts ?? []).map((f) => f.id).sort();
+  return `${kind}|${people}|${factIds.join(",")}`;
+}
+
 export async function personWarningsTool(
   input: PersonWarningsInput,
   opts: PersonWarningsOptions = {},
 ): Promise<PersonWarningsResult> {
-  if (!input?.personId || typeof input.personId !== "string") {
+  if (!input?.personId || (typeof input.personId !== "string" && !Array.isArray(input.personId))) {
     throw new Error("personId is required");
   }
+  const { ids, isList } = personIdsOf(input.personId);
 
   if (!input.projectPath || typeof input.projectPath !== "string") {
     throw new Error("projectPath is required");
@@ -4433,7 +4496,9 @@ export async function personWarningsTool(
       throw new Error(missingProjectDirMessage(input.projectPath));
   }
 
-  const { tree, anchor } = await loadAnchor(input.projectPath, input.personId);
+  if (isList) return listWarnings(input.projectPath, ids, opts);
+
+  const { tree, anchor } = await loadAnchor(input.projectPath, ids[0]);
   if (!anchor.id) {
     throw new Error(`Person '${input.personId}' has no id field.`);
   }
@@ -4446,7 +4511,7 @@ export async function personWarningsTool(
 
   const pairs = birthResidencePairs(mob);
   if (pairs.length > 0) {
-    const coords = await lookupPlaceCoords(
+    const coords = await lookupWithin(
       pairs.flatMap((p) => [p.birth.place, p.residence.place]),
       opts.placeCoords ?? ((name) => standardPlaceToCoords(name)),
       opts.lookupBudgetMs ?? PLACE_LOOKUP_BUDGET_MS,
@@ -4455,4 +4520,78 @@ export async function personWarningsTool(
     if (far) warnings.push(far);
   }
   return { warningCount: warnings.length, warnings };
+}
+
+
+/**
+ * A list call: every anchor checked against one read of the tree, in request
+ * order. The four protections a list needs (person-warnings-tool-spec.md, "List
+ * form"): an id that cannot be resolved answers its own `error` and never sinks
+ * the batch; every anchor's place lookups share ONE budget, so a long list cannot
+ * run past the 60 s per-call cap, and an anchor whose check could not complete
+ * says `not_checked` rather than going silent; a warning an earlier anchor already
+ * reported is counted, not repeated; and the single-id call is untouched.
+ */
+async function listWarnings(
+  projectPath: string,
+  ids: string[],
+  opts: PersonWarningsOptions,
+): Promise<PersonWarningsResult> {
+  const tree = await loadTree(projectPath);
+  const anchors: Array<{ personId: string; mob?: Mob; warnings?: PersonWarning[]; pairs?: BirthResidencePair[]; error?: string }> = [];
+  for (const personId of ids) {
+    try {
+      const anchor = findAnchor(tree.persons ?? [], personId);
+      if (!anchor.id) throw new Error(`Person '${personId}' has no id field.`);
+      const mob = new Mob(tree, anchor.id);
+      anchors.push({
+        personId,
+        mob,
+        warnings: calculateWarnings(mob, mob, mob, /* isFinalWarnings */ true),
+        pairs: birthResidencePairs(mob),
+      });
+    } catch (err) {
+      anchors.push({ personId, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  const places = anchors.flatMap((a) => (a.pairs ?? []).flatMap((p) => [p.birth.place, p.residence.place]));
+  const coords = places.length
+    ? await lookupWithin(
+        places,
+        opts.placeCoords ?? ((name) => standardPlaceToCoords(name)),
+        opts.lookupBudgetMs ?? PLACE_LOOKUP_BUDGET_MS,
+      )
+    : new Map();
+
+  const seen = new Set<string>();
+  const results: PersonWarningsListEntry[] = [];
+  for (const a of anchors) {
+    if (a.error !== undefined || !a.mob || !a.warnings) {
+      results.push({ personId: a.personId, error: a.error });
+      continue;
+    }
+    const all = [...a.warnings];
+    let birthplaceCheck: BirthplaceCheck = "not_applicable";
+    if (a.pairs && a.pairs.length > 0) {
+      const far = checkBirthFarFromParentsResidence(a.mob, a.pairs, coords);
+      if (far) all.push(far);
+      const unresolved = a.pairs.some((p) => !coords.get(p.birth.place) || !coords.get(p.residence.place));
+      birthplaceCheck = far || !unresolved ? "checked" : "not_checked";
+    }
+    const fresh = all.filter((w) => {
+      const key = problemKey(w);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    results.push({
+      personId: a.personId,
+      warningCount: fresh.length,
+      warnings: fresh,
+      alreadyReported: all.length - fresh.length,
+      birthplaceCheck,
+    });
+  }
+  return { warningCount: seen.size, results };
 }

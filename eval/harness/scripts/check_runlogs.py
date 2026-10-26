@@ -52,32 +52,45 @@ docs/plan/eval-runlog-versioning.md §C6:
              whose ``<b>`` disagrees with the entry's own corrected_score.
     Rule 10  a touched skill's unit tests carry no `expected_outcome: xfail`
              marker (warn-only under that skill's cosmetic-skip label).
+    Rule 11  in the run log a touched skill's PR adds, no `grade_on_invariant`
+             test skips (every run) a tag-gated validator that passed on it in
+             the merge base's newest log, gated on a tag it carried at the merge
+             base — unless the validator is gone or `negative.explanation` was
+             edited. A PR that edits a validator file and adds no log for a suite
+             is compared on the gate maps instead.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
-`review_sample`, `outcomes`). Do NOT import `harness.runlog` here: it pulls in
-jsonschema/referencing, and the workflow runs this on a bare interpreter with no
-dependency step, so the import would red every PR (issue #2684).
+`review_sample`, `outcomes`, `instrument`, `gate_tags`). Do NOT import
+`harness.runlog` here: it pulls in jsonschema/referencing, and the workflow runs
+this on a bare interpreter with no dependency step, so the import would red every
+PR (issue #2684).
 """
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Callable
 
 HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
 from harness.snapshot import (  # noqa: E402
+    AGENT_FRONTMATTER_SUFFIX,
     agent_refs_in_text,
     collect_refs,
     diff_snapshot_vs_disk,
+    frontmatter_fingerprint_text,
     hash_file,
+    normalize,
+    router_suites,
 )
 from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
 from harness.versioning import (  # noqa: E402
@@ -87,11 +100,14 @@ from harness.versioning import (  # noqa: E402
     prunable_candidates,
 )
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
+from harness.gate_tags import validator_gate_tags  # noqa: E402
 from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
+    harness_import_closure,
     instrument_for,
     load_tool_catalog,
     suite_validator_file,
+    validator_harness_imports,
 )
 
 
@@ -109,11 +125,12 @@ TEST_ONLY_SKILLS_DIR = REPO_ROOT / "eval" / "skills"
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
-# An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
-# (the agent body is embedded in those skills' run-log snapshots), exactly
-# like an edit inside the skill dir itself — plus `eval/tests/unit/<name>/`
-# itself when that agent has its own agent-keyed suite (issue #1253), which
-# no SKILL.md scan can reach because there is no SKILL.md.
+# An agent edit can reach every suite whose snapshot embeds the agent
+# (`skills_gated_by_agent`): its own agent-keyed suite (issue #1253), a suite
+# whose tests run it live (`execution.run_agents`), and every routing suite,
+# which fingerprints every agent's frontmatter (#3568). Whether the edit gates
+# one of them is decided per suite by `agent_gates_suite`: a body-only edit to
+# an agent the suite fingerprints by frontmatter gates nothing.
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 # Match a shared fixture the run-log snapshot embeds:
@@ -289,6 +306,49 @@ def git_diff_touched_paths() -> list[str]:
     return paths
 
 
+class BaseUnreadable(RuntimeError):
+    """A file's content at the merge base could not be read."""
+
+
+def _merge_base() -> str:
+    """The merge base of BASE_SHA and HEAD_SHA, computed once per pair. Raises
+    `BaseUnreadable` when the env is unset or git fails."""
+    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
+    if not base or not head:
+        raise BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+    return _merge_base_of(base, head, REPO_ROOT)
+
+
+@functools.lru_cache(maxsize=None)
+def _merge_base_of(base: str, head: str, repo: Path) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=repo
+        ).strip()
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
+        raise BaseUnreadable(str(e)) from e
+
+
+def git_show_at_merge_base(path: str) -> str | None:
+    """`path` (repo-relative) as it stood at the merge base of BASE_SHA and
+    HEAD_SHA -- the base `git_diff_touched_paths`' three-dot diff compares
+    against -- or None when it did not exist there. Raises `BaseUnreadable`
+    when the env is unset or git fails, so a caller never mistakes an unread
+    base for an absent file."""
+    merge_base = _merge_base()
+    try:
+        exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{merge_base}:{path}"], capture_output=True, cwd=REPO_ROOT
+        )
+        if exists.returncode != 0:
+            return None
+        return subprocess.check_output(
+            ["git", "show", f"{merge_base}:{path}"], text=True, encoding="utf-8", cwd=REPO_ROOT
+        )
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
+        raise BaseUnreadable(str(e)) from e
+
+
 def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
     """Map each plugin-agent name to the skills whose SKILL.md references
     it via `@plugin:<name>`. One scan over the skill corpus."""
@@ -306,7 +366,10 @@ def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
 
 
 def skills_gated_by_agent(
-    agent: str, referencing: dict[str, set[str]], tests_root: Path | None = None
+    agent: str,
+    referencing: dict[str, set[str]],
+    tests_root: Path | None = None,
+    skills_dirs: tuple[Path, ...] | None = None,
 ) -> set[str]:
     """The skills whose run-log snapshot embeds `agents/<agent>.md`.
 
@@ -322,11 +385,158 @@ def skills_gated_by_agent(
     Keyed on directory existence rather than a name list, so a suite arms itself
     when it lands instead of waiting for someone to also remember to edit a
     constant here — the same discipline as the `exempt_suiteless` filter.
+
+    Since #3568 this is the SUPERSET of suites that may embed the agent, and two
+    more arms join: every suite whose tests name the agent in
+    `execution.run_agents` (it runs live there, so its full body is embedded),
+    and every routing suite (`snapshot.router_suites`), which fingerprints every
+    staged agent's frontmatter. Whether an edit actually gates one of these is
+    `agent_gates_suite`'s call; the issue-side slot warning, which has no diff
+    to look at, stays on this superset.
     """
     out = set(referencing.get(agent, set()))
     # Read at call time, not bound as a default: tests monkeypatch TESTS_UNIT_DIR.
-    if (Path(tests_root if tests_root is not None else TESTS_UNIT_DIR) / agent).is_dir():
+    root = Path(tests_root if tests_root is not None else TESTS_UNIT_DIR)
+    if (root / agent).is_dir():
         out.add(agent)
+    if root.is_dir():
+        for suite_dir in sorted(root.iterdir()):
+            if suite_dir.is_dir() and agent in collect_refs(suite_dir, None)["run_agents"]:
+                out.add(suite_dir.name)
+    # `skills_dirs` defaults to this module's globals, read at call time (tests
+    # monkeypatch them); a caller rooted elsewhere (slots.py) passes its own.
+    out |= router_suites(skills_dirs or (PLUGIN_SKILLS_DIR, TEST_ONLY_SKILLS_DIR), root)
+    return out
+
+
+def added_runlogs_by_skill(
+    changes: list[tuple[str, str | None]], touched_paths: list[str]
+) -> dict[str, list[str]]:
+    """The released and candidate run logs this PR adds, per skill.
+
+    Intersected with `touched_paths` because the two git views disagree:
+    `git_diff_changes` is a TWO-dot `A..B` and `git_diff_touched_paths` a
+    THREE-dot `A...B`. When a branch's base has moved past a prune commit the
+    branch has not rebased onto, the two-dot view reports that pruned run log as
+    ADDED while the three-dot view does not see it at all — so rule 6 would
+    grade, and block on, a log the PR never touched. Verified against commit
+    1f8a6001. Shared by `main()` and check_slot_queue.py's PR side.
+    """
+    added_runlog_paths = {p for _, p in changes if p is not None}
+    added_by_skill: dict[str, list[str]] = {}
+    for path in sorted(added_runlog_paths & set(touched_paths)):
+        m = RUNLOG_PATH_RE.match(path)
+        if not m or path.endswith(".ann.json"):
+            continue
+        if classify(m.group(2)).kind in ("released", "candidate"):
+            added_by_skill.setdefault(m.group(1), []).append(m.group(2))
+    return added_by_skill
+
+
+def graded_snapshot(suite: str, added_by_skill: dict[str, list[str]]) -> dict[str, str] | None:
+    """The snapshot of the run log rules 2, 2b and 3 grade for `suite`.
+
+    The log this PR adds (`pr_added_runlog`), else the latest committed one
+    (`resolve_latest_runlog`) — the same choice `main()` makes. None when there
+    is no such log, or it cannot be read.
+    """
+    skill_dir = RUNLOGS_DIR / suite
+    try:
+        added_name = pr_added_runlog(skill_dir, added_by_skill.get(suite, []))
+        if added_name is not None:
+            log = json.loads((skill_dir / added_name).read_text(encoding="utf-8"))
+        else:
+            _, target = resolve_latest_runlog(skill_dir)
+            if target is None:
+                return None
+            log = target[1]
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    snapshot = log.get("snapshot") if isinstance(log, dict) else None
+    return snapshot if isinstance(snapshot, dict) else None
+
+
+def _git_show(sha: str, rel: str, cwd: Path | None) -> bytes | None:
+    """`git show <sha>:<rel>` as bytes, or None when the blob is absent."""
+    proc = subprocess.run(["git", "show", f"{sha}:{rel}"], capture_output=True, cwd=cwd)
+    return proc.stdout if proc.returncode == 0 else None
+
+
+def agent_frontmatter_changed(agent: str, *, cwd: Path | None = None) -> bool:
+    """Whether this PR changed the part of `agents/<agent>.md` a router reads.
+
+    Compares `frontmatter_fingerprint_text` of the agent at the merge-base of
+    BASE_SHA and HEAD_SHA with the agent at HEAD_SHA — the three-dot convention
+    of `git_diff_touched_paths`, so a frontmatter change main made after the
+    branch forked is not counted as this PR's. Fails CLOSED (True, so the suite
+    is gated): either environment variable unset, the blob missing on either
+    side (an added, deleted or renamed agent), or any git error.
+    """
+    base = os.environ.get("BASE_SHA")
+    head = os.environ.get("HEAD_SHA")
+    if not base or not head:
+        return True
+    rel = f"packages/engine/plugin/agents/{agent}.md"
+    try:
+        merge_base = subprocess.check_output(
+            ["git", "merge-base", base, head], text=True, encoding="utf-8", cwd=cwd
+        ).strip()
+        before = _git_show(merge_base, rel, cwd)
+        after = _git_show(head, rel, cwd)
+    except (subprocess.CalledProcessError, OSError):
+        return True
+    if before is None or after is None:
+        return True
+    return frontmatter_fingerprint_text(normalize(rel, before)) != frontmatter_fingerprint_text(
+        normalize(rel, after)
+    )
+
+
+def agent_gates_suite(agent: str, snapshot: dict[str, str] | None) -> bool:
+    """Whether a touched agent gates a suite, decided by the suite's graded log.
+
+      - no graded log (or an unreadable one): gated, so rule 2's 'no run logs'
+        errors still fire for it;
+      - the log holds the agent's bare key (full body): gated on any change;
+      - the log holds the `#frontmatter` key: gated only if
+        `agent_frontmatter_changed` — a body-only edit to an agent the suite
+        never runs is not this suite's concern (#3568);
+      - the log holds no key for the agent: not gated. Rule 2 could not see the
+        edit either, since a snapshot never reports a path it does not list —
+        which is also why ADDING a new agent stales no routing suite until its
+        next run (an accepted gap, unit-test-spec.md).
+
+    Not consulted for the agent's OWN suite, which `suites_gated_by_touched_agents`
+    gates outright: its next run always embeds the agent in full, so a log with
+    no key for it (one written before a skill became that agent) is stale, not
+    unreachable.
+    """
+    if snapshot is None:
+        return True
+    key = f"packages/engine/plugin/agents/{agent}.md"
+    if key in snapshot:
+        return True
+    if key + AGENT_FRONTMATTER_SUFFIX in snapshot:
+        return agent_frontmatter_changed(agent)
+    return False
+
+
+def suites_gated_by_touched_agents(
+    touched_agents: set[str], added_by_skill: dict[str, list[str]]
+) -> set[str]:
+    """The suites a set of touched agent bodies gates: for each agent, its own
+    suite (always — issue #1253), plus the rest of the `skills_gated_by_agent`
+    superset narrowed by `agent_gates_suite` on each suite's graded log. Shared
+    by `main()` and check_slot_queue.py's PR side, so the slot warning and rule 2
+    cannot disagree about which suites an agent edit buys a run for."""
+    referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
+    out: set[str] = set()
+    for agent in sorted(touched_agents):
+        for suite in sorted(skills_gated_by_agent(agent, referencing)):
+            if suite in out:
+                continue
+            if suite == agent or agent_gates_suite(agent, graded_snapshot(suite, added_by_skill)):
+                out.add(suite)
     return out
 
 
@@ -655,14 +865,21 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
 # Paths whose change can move ANY suite's instrument fingerprint: the shared
 # validators and every non-`test_` module beside them (a suite file can import
 # one -- extraction_validators.py), the fingerprint's own definition and the mock
-# that advertises tools, and the engine's tool source and build inputs.
+# that advertises tools, and the engine's tool source and build inputs. The
+# harness modules the validators import join these through
+# `harness_import_closure`, computed on the checked-out tree in
+# `instrument_touched_suites`.
 INSTRUMENT_EVERY_SUITE_RE = re.compile(
     r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
     r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
     r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json))$"
 )
-# A per-skill validator file moves only its own suite's fingerprint.
+# A per-skill validator file moves its own suite's fingerprint, and every
+# suite's when its harness imports change.
 INSTRUMENT_SUITE_VALIDATOR_RE = re.compile(r"^eval/harness/validators/test_([a-z0-9_]+)\.py$")
+# A module that could have been in the base's closure: deleted, it is absent from
+# the closure computed on the checked-out tree.
+INSTRUMENT_DELETED_MODULE_RE = re.compile(r"^eval/harness/(?!tests/|validators/)[^\s]+\.py$")
 
 _tool_catalog_cache: dict | None = None
 
@@ -679,14 +896,43 @@ def _tool_catalog() -> dict:
     return _tool_catalog_cache
 
 
+def _harness_imports_moved(path: str, validators_dir: Path) -> bool:
+    """Whether a touched suite validator's direct harness imports differ between
+    the merge base and head. Every validator file seeds `harness_import_closure`,
+    so a changed import can move `validators.shared` for every suite. An
+    unreadable base counts as moved: the gate must not pass on a read it skipped."""
+    name = Path(path).name
+    head_file = REPO_ROOT / path
+    head = head_file.read_text(encoding="utf-8") if head_file.is_file() else ""
+    try:
+        base = git_show_at_merge_base(path) or ""
+    except BaseUnreadable as e:
+        gh_warning(f"rule 2c: could not read `{path}` at the merge base ({e}); opening every suite.")
+        return True
+    return validator_harness_imports(name, base, validators_dir) != validator_harness_imports(
+        name, head, validators_dir
+    )
+
+
 def instrument_touched_suites(touched_paths: set[str], all_suites: set[str]) -> set[str]:
-    """Suites whose instrument fingerprint a PR's paths could move."""
+    """Suites whose instrument fingerprint a PR's paths could move.
+
+    `validators.shared` covers every harness module the validators import,
+    transitively, so a touched module in that closure marks every suite; so does
+    a deleted harness module (it may have been in the base's closure), and a
+    suite validator whose own harness imports changed."""
+    validators_dir = REPO_ROOT / "eval" / "harness" / "validators"
+    closure = {f"eval/harness/{rel}" for rel in harness_import_closure(validators_dir)}
     out: set[str] = set()
     for path in touched_paths:
-        if INSTRUMENT_EVERY_SUITE_RE.match(path):
+        if INSTRUMENT_EVERY_SUITE_RE.match(path) or path in closure:
+            return set(all_suites)
+        if INSTRUMENT_DELETED_MODULE_RE.match(path) and not (REPO_ROOT / path).exists():
             return set(all_suites)
         m = INSTRUMENT_SUITE_VALIDATOR_RE.match(path)
         if m:
+            if _harness_imports_moved(path, validators_dir):
+                return set(all_suites)
             suite = m.group(1).replace("_", "-")
             if suite in all_suites and path.endswith(suite_validator_file(suite)):
                 out.add(suite)
@@ -747,7 +993,10 @@ def rule2c_instrument(
         blocking.append("tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)")
     warning = []
     if moved("validators", "shared"):
-        warning.append("validators.shared (`test_universal.py` / `validators_lib.py`)")
+        warning.append(
+            "validators.shared (`test_universal.py` / `validators_lib.py`, or a harness "
+            "module the validators import)"
+        )
     if moved("tools", "live"):
         warning.append("tools.live (a LIVE_TOOLS description/inputSchema)")
     stored_live = stored.get("live_modules") or {}
@@ -1132,6 +1381,325 @@ def rule10_no_xfail_markers(skill: str, tests_dir: Path) -> int:
         f"done-when.\n" + listing,
     )
     return 1
+
+
+def _validator_outcomes(log_test: dict) -> list[dict[str, str]]:
+    """Per run, {validator name: outcome} from a run log's test entry. An
+    aborted run is left out: it never reached its validators (the
+    `_aborted_entry` path writes none), and rule 6 already blocks it."""
+    return [
+        {
+            r.get("name"): r.get("outcome")
+            for r in ((run.get("validators") or {}).get("results") or [])
+            if isinstance(r, dict)
+        }
+        for run in (log_test.get("runs") or [])
+        if isinstance(run, dict) and run.get("outcome") != "aborted"
+    ]
+
+
+def rule11_swapped_gate_tags(
+    skill: str,
+    filename: str,
+    *,
+    base_log: dict,
+    head_log: dict,
+    base_tests: dict[str, dict],
+    head_tests: dict[str, dict],
+    base_gates: dict[str, set[str]],
+    head_validators: set[str],
+) -> int:
+    """Rule 11 (blocking): a `grade_on_invariant` test keeps the invariant it
+    had (issue #2281 criterion 2, #3691 item 2).
+
+    Such a test's verdict is its tag-gated validators. Swap or rename the tag
+    and the validator skips, the run passes, and nothing says so: the
+    runnability gate only asks that SOME tag reach SOME gate. So for each
+    `grade_on_invariant` test in the run log this PR adds: every validator that
+    is gated (in the merge-base validator source) on a tag the test carried at
+    the merge base, and that passed in the merge base's newest full-skill log,
+    must not be skipped in every run of `head_log`.
+
+    Two ways out, both visible to a reviewer: the validator no longer exists at
+    head, or the PR edits the test's `negative.explanation` (a deliberate
+    retarget). Only tag-gated validators are compared: an ungated one such as
+    `test_activated_run_produces_response` skips on whether the skill
+    activated, and comparing it would block ordinary re-runs.
+
+    "Every run", not "any run": a tag gate skips every run, and a validator
+    that skips one run of N skips for some other reason. A test with no
+    non-aborted runs is rule 6's error. Pure — `rule11_for_skill` does the
+    reads.
+    """
+    base_by_id = {
+        t.get("test_id"): t for t in base_log.get("tests") or [] if isinstance(t, dict)
+    }
+    fails = 0
+    for log_test in head_log.get("tests") or []:
+        test_id = log_test.get("test_id")
+        head_doc, base_doc = head_tests.get(test_id), base_tests.get(test_id)
+        if head_doc is None or base_doc is None:
+            continue
+        head_negative = head_doc.get("negative") or {}
+        if not head_negative.get("grade_on_invariant"):
+            continue
+        if head_negative.get("explanation") != (base_doc.get("negative") or {}).get(
+            "explanation"
+        ):
+            continue
+        base_tags = set((base_doc.get("test") or {}).get("tags") or [])
+        base_runs = _validator_outcomes(base_by_id.get(test_id) or {})
+        head_runs = _validator_outcomes(log_test)
+        if not head_runs:
+            continue
+        lost: list[str] = []
+        for name, gate in sorted(base_gates.items()):
+            matched = gate & base_tags
+            if not matched or name not in head_validators:
+                continue
+            if not any(run.get(name) == "passed" for run in base_runs):
+                continue
+            if all(run.get(name) in ("skipped", None) for run in head_runs):
+                lost.append(f"  - `{name}` (gated on {sorted(matched)})")
+        if lost:
+            head_tags = sorted((head_doc.get("test") or {}).get("tags") or [])
+            gh_error(
+                f"skill `{skill}`: `{filename}` test `{test_id}` is "
+                f"`grade_on_invariant`, and {len(lost)} validator(s) that passed "
+                f"on it at the merge base now skip — its verdict no longer "
+                f"checks what it did. Tags at the merge base: "
+                f"{sorted(base_tags)}; now: {head_tags}. Restore the tag(s), or, "
+                f"if the retarget is deliberate, say so in the test's "
+                f"`negative.explanation`.\n" + "\n".join(lost),
+            )
+            fails += 1
+    return fails
+
+
+VALIDATORS_REL = "eval/harness/validators"
+
+
+def newest_full_skill_name(names: list[str]) -> str | None:
+    """The newest full-skill run log among `names`, by (version, released before
+    candidate at equal version, timestamp). Not `latest_full_skill_runlog`'s
+    released-first order: that prefers an older released `v{N}.json` over a
+    newer candidate, and a test added since would have nothing to compare."""
+    ranked: list[tuple[int, int, str, str]] = []
+    for name in names:
+        c = classify(name)
+        if c.kind == "released" and c.version is not None:
+            ranked.append((c.version, 0, "", name))
+        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
+            ranked.append((c.version, 1, c.timestamp, name))
+    return max(ranked)[3] if ranked else None
+
+
+def git_ls_at_merge_base(rel_dir: str) -> list[str]:
+    """Bare file names in `rel_dir` at the merge base; [] when the directory did
+    not exist there. `<mb>:<dir>` rather than `<mb> -- <dir>/`, which prints
+    full paths that `classify()` reads as `other`. Raises `BaseUnreadable` like
+    `git_show_at_merge_base`, so a git failure is never read as "no logs"."""
+    merge_base = _merge_base()
+    try:
+        exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{merge_base}:{rel_dir}"], capture_output=True, cwd=REPO_ROOT
+        )
+        if exists.returncode != 0:
+            return []
+        listed = subprocess.check_output(
+            ["git", "ls-tree", "--name-only", f"{merge_base}:{rel_dir}"],
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+        )
+    except (subprocess.CalledProcessError, OSError, UnicodeDecodeError) as e:
+        raise BaseUnreadable(str(e)) from e
+    return [line for line in listed.splitlines() if line]
+
+
+def _read_head(rel: str) -> str | None:
+    path = REPO_ROOT / rel
+    try:
+        return path.read_text(encoding="utf-8") if path.is_file() else None
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def suite_validator_gates(
+    skill: str, read: Callable[[str], str | None]
+) -> dict[str, set[str]]:
+    """{validator: gate tags} over the suite's file and `test_universal.py`,
+    the two files `check_runnable` reads, each read through `read(repo-relative
+    path)`."""
+
+    def sibling(name: str) -> str | None:
+        return read(f"{VALIDATORS_REL}/{name}.py")
+
+    gates: dict[str, set[str]] = {}
+    for key in (skill, "universal"):
+        gates.update(
+            validator_gate_tags(sibling(f"test_{key.replace('-', '_')}"), sibling=sibling)
+        )
+    return gates
+
+
+def rule11_gate_drift(
+    skill: str,
+    *,
+    base_tests: dict[str, dict],
+    head_tests: dict[str, dict],
+    base_gates: dict[str, set[str]],
+    head_gates: dict[str, set[str]],
+) -> int:
+    """Rule 11, for a PR that edits a validator file but adds no run log for the
+    suite (blocking). With no run to compare, compare the gate maps: a validator
+    gated at the merge base on one of a `grade_on_invariant` test's tags that is
+    still gated at head, but on none of them, now skips that test.
+
+    A validator gone at head, or no longer gated at all (it runs on every test),
+    is not a loss. The `negative.explanation` exemption is rule 11's. Pure —
+    `rule11_gates_for_skill` does the reads."""
+    fails = 0
+    for test_id, head_doc in sorted(head_tests.items()):
+        base_doc = base_tests.get(test_id)
+        if base_doc is not None and (head_doc.get("negative") or {}).get("explanation") != (
+            base_doc.get("negative") or {}
+        ).get("explanation"):
+            continue
+        tags = set((head_doc.get("test") or {}).get("tags") or [])
+        lost = [
+            f"  - `{name}` (gated on {sorted(gate & tags)} at the merge base; now on "
+            f"{sorted(head_gates[name])})"
+            for name, gate in sorted(base_gates.items())
+            if gate & tags and head_gates.get(name) and not head_gates[name] & tags
+        ]
+        if lost:
+            gh_error(
+                f"skill `{skill}`: test `{test_id}` is `grade_on_invariant`, and this "
+                f"PR changed the gate on {len(lost)} validator(s) its tags reached "
+                f"at the merge base, so they now skip it and its verdict no longer "
+                f"checks what it did. Its tags: {sorted(tags)}. Restore the gate, add "
+                f"the new tag to the test, or, if the retarget is deliberate, say so "
+                f"in the test's `negative.explanation`.\n" + "\n".join(lost),
+            )
+            fails += 1
+    return fails
+
+
+def _head_invariant_tests(skill: str) -> tuple[dict[str, dict], dict[str, str]]:
+    """The suite's `grade_on_invariant` tests on disk: ({test id: doc}, {test id:
+    repo-relative path})."""
+    head_tests: dict[str, dict] = {}
+    rel_by_id: dict[str, str] = {}
+    tests_dir = TESTS_UNIT_DIR / skill
+    for path in sorted(tests_dir.glob("*.json")) if tests_dir.is_dir() else []:
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        test = doc.get("test") if isinstance(doc, dict) else None
+        test_id = test.get("id") if isinstance(test, dict) else None
+        if not test_id or not (doc.get("negative") or {}).get("grade_on_invariant"):
+            continue
+        head_tests[test_id] = doc
+        rel_by_id[test_id] = path.relative_to(REPO_ROOT).as_posix()
+    return head_tests, rel_by_id
+
+
+def rule11_gates_for_skill(skill: str) -> int:
+    """Read what `rule11_gate_drift` compares: the base side from git at the
+    merge base, the head side from disk. A failed base read warns."""
+    head_tests, rel_by_id = _head_invariant_tests(skill)
+    if not head_tests:
+        return 0
+    if not (os.environ.get("BASE_SHA") and os.environ.get("HEAD_SHA")):
+        gh_warning(f"rule 11 did not run for `{skill}`: BASE_SHA/HEAD_SHA unset.")
+        return 0
+    reading = f"{VALIDATORS_REL}/test_{skill.replace('-', '_')}.py"
+    try:
+        base_gates = suite_validator_gates(skill, git_show_at_merge_base)
+        base_tests: dict[str, dict] = {}
+        for test_id in sorted(head_tests):
+            reading = rel_by_id[test_id]
+            text = git_show_at_merge_base(reading)
+            if text is not None:
+                base_tests[test_id] = json.loads(text)
+    except (BaseUnreadable, json.JSONDecodeError) as e:
+        gh_warning(
+            f"rule 11 did not run for `{skill}`: could not read `{reading}` at "
+            f"the merge base ({e})."
+        )
+        return 0
+    return rule11_gate_drift(
+        skill,
+        base_tests=base_tests,
+        head_tests=head_tests,
+        base_gates=base_gates,
+        head_gates=suite_validator_gates(skill, _read_head),
+    )
+
+
+def rule11_for_skill(skill: str, filename: str, head_log: dict) -> int:
+    """Read what `rule11_swapped_gate_tags` compares. Every base-side read is
+    from git at the merge base, never disk: a base read from disk equals head,
+    so a swap would be invisible. A failed base read warns, naming the path."""
+    if not (os.environ.get("BASE_SHA") and os.environ.get("HEAD_SHA")):
+        gh_warning(f"rule 11 did not run for `{skill}`: BASE_SHA/HEAD_SHA unset.")
+        return 0
+
+    head_tests, rel_by_id = _head_invariant_tests(skill)
+    wanted = {t.get("test_id") for t in head_log.get("tests") or []} & head_tests.keys()
+    if not wanted:
+        return 0
+
+    reading = f"eval/runlogs/unit/{skill}"
+    try:
+        base_name = newest_full_skill_name(git_ls_at_merge_base(reading))
+        if base_name is None:
+            return 0
+        reading = f"eval/runlogs/unit/{skill}/{base_name}"
+        base_log = json.loads(git_show_at_merge_base(reading) or "{}")
+        base_tests: dict[str, dict] = {}
+        base_log_ids = {t.get("test_id") for t in base_log.get("tests") or [] if isinstance(t, dict)}
+        for test_id in sorted(wanted):
+            reading = rel_by_id[test_id]
+            text = git_show_at_merge_base(reading)
+            if text is not None:
+                base_tests[test_id] = json.loads(text)
+            elif test_id in base_log_ids:
+                # Not new — the base log ran it — so its file moved. Comparing
+                # needs the old path; say so rather than pass it unexamined.
+                gh_warning(
+                    f"rule 11 did not check `{test_id}` (`{skill}`): `{reading}` "
+                    f"did not exist at the merge base, so the test file was moved "
+                    f"or renamed. Confirm by hand that its gate tags are unchanged."
+                )
+        reading = f"{VALIDATORS_REL}/test_{skill.replace('-', '_')}.py"
+        base_gates = suite_validator_gates(skill, git_show_at_merge_base)
+    except (BaseUnreadable, json.JSONDecodeError) as e:
+        gh_warning(
+            f"rule 11 did not run for `{skill}`: could not read `{reading}` at "
+            f"the merge base ({e})."
+        )
+        return 0
+    head_validators = set(suite_validator_gates(skill, _read_head))
+    if base_gates and not head_validators:
+        gh_warning(
+            f"rule 11 did not run for `{skill}`: no validator could be read from "
+            f"`{VALIDATORS_REL}/test_{skill.replace('-', '_')}.py` or "
+            f"`test_universal.py` at head (absent, unreadable, or not valid Python)."
+        )
+        return 0
+    return rule11_swapped_gate_tags(
+        skill,
+        filename,
+        base_log=base_log,
+        head_log=head_log,
+        base_tests=base_tests,
+        head_tests={test_id: head_tests[test_id] for test_id in wanted},
+        base_gates=base_gates,
+        head_validators=head_validators,
+    )
 
 
 def rule5_annotations_parse(runlogs_dir: Path) -> int:
@@ -1651,20 +2219,9 @@ def main() -> int:
     deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
 
-    # Intersected with `touched_paths` because the two git views disagree:
-    # `git_diff_changes` is a TWO-dot `A..B` and `git_diff_touched_paths` a THREE-dot
-    # `A...B`. When a branch's base has moved past a prune commit the branch has not
-    # rebased onto, the two-dot view reports that pruned run log as ADDED while the
-    # three-dot view does not see it at all -- so rule 6 would grade, and block on, a
-    # log the PR never touched. Verified against commit 1f8a6001. Rule 1 is insulated
+    # Two-dot vs three-dot: see `added_runlogs_by_skill`. Rule 1 is insulated
     # because it counts released logs only and a pruned candidate is never released.
-    added_by_skill: dict[str, list[str]] = {}
-    for path in sorted(added_runlog_paths & set(touched_paths)):
-        m = RUNLOG_PATH_RE.match(path)
-        if not m or path.endswith(".ann.json"):
-            continue
-        if classify(m.group(2)).kind in ("released", "candidate"):
-            added_by_skill.setdefault(m.group(1), []).append(m.group(2))
+    added_by_skill = added_runlogs_by_skill(changes, touched_paths)
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
     touched_fixtures: set[tuple[str, str]] = set()
@@ -1703,13 +2260,12 @@ def main() -> int:
             touched_fixtures.add((m.group(1), m.group(2)))
             touched_fixture_paths.add(path)
 
-    # A touched plugin agent gates every skill whose snapshot embeds it — see
-    # skills_gated_by_agent, shared with check_slot_queue.py so the PR-time slot
-    # warning and this rule cannot disagree about which skills an agent reaches.
+    # A touched plugin agent gates the suites whose graded log can see the edit —
+    # see suites_gated_by_touched_agents (#3568), shared with check_slot_queue.py
+    # so the PR-time slot warning and this rule cannot disagree about which
+    # suites an agent edit reaches.
     if touched_agents:
-        referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
-        for agent in sorted(touched_agents):
-            touched_skills |= skills_gated_by_agent(agent, referencing)
+        touched_skills |= suites_gated_by_touched_agents(touched_agents, added_by_skill)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it
@@ -1816,6 +2372,7 @@ def main() -> int:
     )
 
     graded_logs = graded_tests = 0
+    rule11_graded: set[str] = set()
 
     # Rule 2b blocks when the PR itself edits the judge prompt (issue #2479 PR 1):
     # that is the only case where `make judge-regrade` is the satisfaction path.
@@ -1885,6 +2442,10 @@ def main() -> int:
             fails += rule3_completeness(
                 skill, log, filename, skill_dir, graded=graded
             )
+            if added_name is not None:
+                # Only a PR that adds a log has a run to compare with the base.
+                fails += rule11_for_skill(skill, filename, log)
+                rule11_graded.add(skill)
         # Rule 6 grades the log(s) this PR added. Rule 1 caps released logs at one
         # per skill but does not bound candidates, and it never short-circuits
         # main(), so N added logs are all graded -- any red in any of them blocks.
@@ -1963,6 +2524,20 @@ def main() -> int:
             continue
         filename, log = latest
         fails += rule2c_instrument(skill, log, filename)
+
+    # Rule 11 without a run log: a validator edit can rename a gate with no log
+    # to compare -- rule 2c only warns on `test_universal.py` and on a suite with
+    # no recorded instrument -- so compare the gate maps on every suite whose
+    # added log the main loop did not already grade.
+    if not any(p.startswith(f"{VALIDATORS_REL}/") for p in touched_paths):
+        pass
+    elif not (os.environ.get("BASE_SHA") and os.environ.get("HEAD_SHA")):
+        gh_warning("rule 11 did not compare the validator gate maps: BASE_SHA/HEAD_SHA unset.")
+    else:
+        suites = sorted(p.name for p in TESTS_UNIT_DIR.iterdir() if p.is_dir()) if TESTS_UNIT_DIR.is_dir() else []
+        for skill in suites:
+            if skill not in rule11_graded:
+                fails += rule11_gates_for_skill(skill)
 
     # Every way rule 6 can end up inert also prints a clean pass, so it reports its
     # denominator -- the same standard eval/CLAUDE.md sets for conflict_verdict_report.

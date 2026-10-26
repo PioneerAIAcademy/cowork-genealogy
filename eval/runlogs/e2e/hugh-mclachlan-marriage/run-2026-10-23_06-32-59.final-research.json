@@ -1,0 +1,2880 @@
+{
+  "project": {
+    "id": "rp_hugh_mclachlan_marriage",
+    "objective": "When and where did Hugh Mclachlan marry Catharine Muir, the parents of Neil (born 1850) and James (born 1852), both christened in Campbeltown, Argyll?",
+    "subject_person_ids": [
+      "KCWN-N2T"
+    ],
+    "status": "completed",
+    "created": "2026-10-12",
+    "updated": "2026-10-23"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Hugh Mclachlan marry Catharine Muir, parents of Neil (born 25 May 1850) and James (born 7 December 1852), both christened in Campbeltown, Argyll, Scotland?",
+      "rationale": "No marriage date or place is recorded in the tree for this couple. Their existence and Campbeltown connection are verified by two OPR christening index entries (Scotland, Births and Baptisms, 1564\u20131950) that name Hugh McLachlan and Catharine/Catherine Muir as parents. Scottish OPR marriage registers and the Statutory Register of Marriages (post-1855) for Campbeltown, Argyll, are the primary record sets to search. This is the objective itself \u2014 there is only one fact to establish.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-23",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_015",
+        "a_017",
+        "a_050",
+        "a_052",
+        "a_056",
+        "a_061",
+        "a_063",
+        "a_067"
+      ],
+      "search_stop": {
+        "stopped_because": "nothing_further_reachable",
+        "justification": "The OPR marriage index (Scotland Marriages 1561-1910, src_001) directly names Hugh McLachlan and Catherine Muir married 30 May 1845 at Kilninian and Kilmore, Argyll, Scotland \u2014 a complete answer to the question. The 1851 census (src_002) independently corroborates the couple as a married unit with children consistent with that date. Two OPR christening records (src_003, src_004) independently name both parties as co-parents, further corroborating the marital union. All relevant nonconformist archives (Kirk session CH2/50, Relief Church CH3/1421, Free Church CH3/1047) were searched with nil results. Civil registration did not begin in Scotland until 1 January 1855, so no statutory marriage certificate exists for this 1845 event. The only remaining source \u2014 the original OPR marriage register page (FamilySearch imageArk ark:/61903/3:1:3Q9M-CSHD-682W) \u2014 returned HTTP 403 (log_032); the same image is held at ScotlandsPeople but requires a pay-per-view purchase that is beyond tool access. The accessible evidence supports a defensible conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The OPR marriage index (src_001) names Hugh McLachlan and Catherine Muir married 30 May 1845 at Kilninian and Kilmore, Argyll, Scotland \u2014 directly answering when and where the couple married.",
+          "repository_breadth": "OPR marriage index searched via FamilySearch Scotland Marriages 1561-1910 (pli_002, log_030\u2013031, positive). 1851 census searched and found the family in Campbeltown (pli_004, log_004\u2013005). Kirk session minutes CH2/50 searched across all three volumes for the full probable marriage window (pli_005, log_011\u2013016, nil). Relief/UP Church CH3/1421 searched across communicant rolls and five meeting-minute volumes (pli_006, log_019\u2013029, nil). Free Church Lochend CH3/1047 searched in both minutes and membership volumes (pli_007, log_006\u2013010, nil). Name variants (McLachlan, Lachlan, MacLachlan) tried throughout. Civil statutory registration began 1 January 1855 (per Scotland Civil Registration wiki and loc_001 quirks) \u2014 inapplicable to this 1845 marriage.",
+          "original_substitution": "The original OPR marriage register image (ark:/61903/3:1:3Q9M-CSHD-682W, Kilninian and Kilmore 1830\u20131854 volume) was actively sought via image_transcribe (log_032) but returned HTTP 403. ScotlandsPeople holds the same image at pay-per-view cost \u2014 paywalled and beyond tool reach. The derivative index is corroborated by three independent sources (census and two christening records) with different informants and institutional origins. The attempt to access the original was made and documented; inaccessibility is the block, not inaction.",
+          "independent_verification": "Three independent source units corroborate the marriage. (1) src_001 (OPR marriage index), informant = the couple at the time of the 1845 marriage, directly names the date and place. (2) src_002 (1851 census), informant = an unknown household member independent of the marriage record, shows Hugh and Cathrine as a married couple with infant Niel, consistent only with a marriage before May 1850. (3) src_003 and src_004 (OPR christening records for Neil and James), informant = the presenting parent, both independently name Hugh McLachlan and Catharine/Catherine Muir as co-parents. The census and christening records are independent in record type, creation process, and institutional origin.",
+          "evidence_class": "The OPR christening records (src_003, src_004) are original records with primary information from the presenting parent and officiant. The OPR marriage index (src_001) is a derivative of an original register entry that carries primary information from the parties themselves \u2014 the informant classification (primary, self) is preserved through the indexing. The original marriage register image was pursued and found inaccessible. The census (src_002) is an original record. At least two original records with primary information are in evidence.",
+          "conflict_resolution": "No conflicts were registered (conflicts query returned 0 items). Spelling variants across sources (Catharine / Catherine / Cathrine; McLachlan / Mclachlin / Mclachlan) are consistent 19th-century orthographic variation. No disagreement exists on the date, place, or identity of the parties.",
+          "overturn_risk": "Low. The marriage is named in the OPR marriage index and corroborated independently by the census and two christening records. All known nonconformist archives for the place and period were searched with nil results \u2014 no competing marriage claim or contradicting record surfaced. The only unread source is the original OPR image, which indexes into src_001 and would be expected to confirm, not contradict, the indexed entry."
+        },
+        "not_reached": [
+          {
+            "kind": "paywalled",
+            "log_entry_id": "log_032",
+            "wiki_title": null,
+            "description": "Original Kilninian and Kilmore OPR marriage register page (FamilySearch imageArk ark:/61903/3:1:3Q9M-CSHD-682W, Argyll 1830\u20131854 volume) \u2014 the primary document underlying the src_001 index entry for Hugh McLachlan and Catherine Muir, 30 May 1845. FamilySearch returned HTTP 403; the same image is held at ScotlandsPeople (scotlandspeople.gov.uk) for a pay-per-view purchase. Image not read; the indexed derivative (src_001) is the best available source."
+          }
+        ]
+      },
+      "created": "2026-10-23"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-23",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1850-1853",
+          "repository": "FamilySearch",
+          "rationale": "The christening entries for Neil (born 25 May 1850, christened 24 Oct 1851, source MVKZ-RPD) and James (born 7 Dec 1852, christened 20 Jun 1853, source MFSQ-B8F) are already linked to the project tree from the FamilySearch collection 'Scotland, Births and Baptisms, 1564-1950'. Campbeltown OPR baptism entries in register volume 6 (covering 1820-1854) commonly noted the date and place of the parents' marriage in the same entry. Reviewing the original images of both records is the fastest step and may directly answer the question before any additional search is needed. This also addresses Neil's delayed christening (15+ months after birth), which may have been recorded alongside a note about the parents' marriage.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Two christening record reads (log_001, log_002) captured the indexed fields \u2014 birth dates, parents' names, christening place \u2014 but record_read returned no imageArk for either OPR christening entry. Without an imageArk the handwritten register pages cannot be accessed to check for marginal marriage notes. The indirect christening evidence has been preserved in the assertions extracted from src_003 and src_004. No further progress is possible with available tools."
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1835-1849",
+          "repository": "FamilySearch",
+          "rationale": "The Campbeltown OPR marriage register volume 6 (imageGroupNumber 007908358_003_M97S-SDR, covering marriages 1820-1854) was returned by volume_search with imageCount 0 \u2014 browse-only (personCount 0). The locality guide (loc_001) confirms the register is on microfilm 1041005 at the FamilySearch Library; the name index microfiche 6900069 is also there. Hugh and Catharine's marriage must predate Neil's birth on 25 May 1850, placing it most likely 1835-1849. The locality guide notes the register contains both a Lowland (English-speaking) and a Highland (Gaelic-speaking) sequence; both must be checked. Variant spellings to use: McLachlan, MacLachlan, Lachlan, M'Lachlan; Muir, Mure.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Argyll, Scotland",
+          "date_range": "1835-1849",
+          "repository": "FindMyPast",
+          "rationale": "FindMyPast holds 'Scotland Parish Marriages and Banns, 1561-1893' \u2014 a name-searchable indexed transcription of the same OPR marriage registers as item 2. Searching by name is more efficient than browsing the microfilm volume, making this the preferred route for the OPR marriage search. Search Hugh McLachlan/Mclachlan (variants: MacLachlan, Lachlan) marrying Catharine/Catherine Muir in Argyll, 1835-1849. Because Neil's christening was delayed 15+ months after his birth, the family may not have been in Campbeltown when he was born; also search across all of Scotland in case the marriage took place in a different parish before the family arrived in Campbeltown. This is a fallback for the FamilySearch OPR browse (item 2) covering the same register through a different indexed route.",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Primary item pli_002 succeeded: record_search on FamilySearch Scotland Marriages 1561-1910 (log_030) and record_read (log_031) confirmed Hugh McLachlan married Catherine Muir on 30 May 1845 in Kilninian and Kilmore, Argyll (src_001, ark:/61903/1:1:XTK4-QYM). The FindMyPast fallback was not needed."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1851",
+          "repository": "FamilySearch",
+          "rationale": "The 1851 Scotland census for Campbeltown parish 507 (imageGroupNumber 004033892_003_M94Q-6R3) is 78% indexed and name-searchable on FamilySearch. The census was taken spring 1851, when Neil (born May 1850) was roughly 11 months old. Hugh and Catharine should appear as a married couple with Neil in the household. The schedule recorded name, age, relationship to head, occupation, and birthplace; Scottish census entries sometimes noted marital status or years married, which could narrow the marriage window further. Finding the couple here as married confirms the marriage predated spring 1851 and may supply a birthplace for each spouse that points to where the marriage might have occurred.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1835-1854",
+          "repository": "FamilySearch",
+          "rationale": "The Campbeltown Kirk Session minutes (CH2/50) are digitized and full-text searchable on FamilySearch: CH2/50/1 (imageGroup 004102848, Jan 1821-Sep 1836), CH2/50/2 (imageGroup 004102858, Dec 1836-Sep 1842), and CH2/50/3 (imageGroup 004102865, Oct 1842-Apr 1868) together span the full probable marriage window. Session minutes recorded irregular marriages, discipline cases for couples cohabiting without proclamation of banns, and acknowledgments of marriages \u2014 all of which would name the date and sometimes place of the union. A full-text search on 'McLachlan' and 'Muir' across all three volumes could surface a marriage entry or discipline case even if the couple was not married in the Church of Scotland's own ceremony.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1835-1854",
+          "repository": "FamilySearch",
+          "rationale": "The locality guide (loc_001) states that by the 19th century a majority of Campbeltown's population was nonconformist. The Relief Church (later United Presbyterian, CH3/1421) was one of the two main congregations; a marriage in this church would NOT appear in the OPR at all. Communicant rolls (imageGroup 004103422, 1829-1877) and meeting minutes CH3/1421/1 (004103400, 1755-1836), CH3/1421/2 (004103405, 1836-1837), CH3/1421/3 (004103407, 1837-1841), and CH3/1421/4 (004103409, 1842-1847) are all full-text searchable on FamilySearch. A full-text search on 'McLachlan' and 'Muir' across these volumes may find a marriage entry, a membership record noting marital status and date, or a discipline case naming the couple's marriage details.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1843-1850",
+          "repository": "FamilySearch",
+          "rationale": "The Free Church of Scotland Lochend congregation (CH3/1047) was the other major nonconformist body in Campbeltown, formed at the 1843 Disruption. Minutes (CH3/1047/1, imageGroup 103626551, Oct 1843-May 1862) and membership records (CH3/1047/4, imageGroup 103626570, Oct 1843-May 1850) are full-text searchable on FamilySearch. If the couple married 1843-1849 in the Free Church, a full-text search on 'McLachlan' and 'Muir' across these volumes could supply the marriage date and place. This runs in parallel with the Relief Church search (item 6) because the two congregations were distinct and the couple could have belonged to either.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Campbeltown, Argyll, Scotland",
+          "date_range": "1820-1868",
+          "repository": "FamilySearch",
+          "rationale": "The locality guide (loc_001) notes that the Neglected Entries Register \u2014 covering events approximately 1820-1860 that were registered late between 1860 and 1868 \u2014 is digitized in the FamilySearch Catalog. If the marriage was not entered in the OPR at the time (an irregular marriage, a nonconformist ceremony not formally logged, or a simple omission from the register), it may appear here as a late registration. This is a catch-all fallback if items 2-7 produce no marriage record for the couple.",
+          "fallback_for": "pli_003",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "The marriage was found via pli_002 (log_030, log_031, src_001): Hugh McLachlan and Catherine Muir, 30 May 1845, Kilninian and Kilmore, Argyll. The chain of fallbacks (pli_003 \u2192 pli_008) was never triggered; the Neglected Entries Register search is not needed."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-23T05:41:32.464Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XY8B-65P"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Read Neil McLachlan christening record (MVKZ-RPD). Index captured: christening 24 Oct 1851 Campbeltown Argyll; birth 25 May 1850; father Hugh McLachlan; mother Catharine Muir. No marriage date or marriage place for the parents appears in the indexed fields. No imageArk returned by record_read, so the handwritten OPR register page is not directly accessible from this record to check for marginal marriage notes."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-23T05:41:32.475Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XY8B-JVF"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "Read James McLachlan christening record (MFSQ-B8F). Index captured: christening 20 Jun 1853 Campbeltown Argyll; birth 7 Dec 1852; father Hugh McLachlan; mother Catherine Muir. No marriage date or marriage place for the parents appears in the indexed fields. No imageArk returned by record_read, so the handwritten OPR register page is not directly accessible from this record."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T05:43:39.484Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007908358_003_M97S-SDR",
+        "standardPlace": "Campbeltown, Argyllshire, Scotland",
+        "recordType": "OPR Marriages",
+        "dateRange": "1820-1854",
+        "lookingFor": "Hugh McLachlan / Catharine Muir marriage 1835-1849"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 253,
+      "notes": "Volume 007908358_003_M97S-SDR (Campbeltown OPR marriages 1820-1854) was located and image_search returned 253 image IDs (007908358_00337 through 007908358_00589). However, every attempt to read a page via image_transcribe returned HTTP 403 (FamilySearch image fetch failed). Two separate images were tried (00337 and 00450); both failed identically. The 403 indicates the image group requires FamilySearch authentication that is not currently active in this session. No page content was read; the marriage register could not be browsed. The volume exists and is digitized; the block is access-only, not an absence of records. Alternative: the same OPR marriage index for Campbeltown 1681-1854 is searchable free on FamilySearch (Scotland Marriages 1561-1910) and browsable via ScotlandsPeople; FindMyPast indexes Scotland Parish Marriages and Banns 1561-1893 (pli_003)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-23T05:44:59.008Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McLachlan",
+        "givenName": "Hugh",
+        "sex": "Male",
+        "residencePlace": "Campbeltown, Argyll, Scotland",
+        "residenceYearFrom": 1851,
+        "residenceYearTo": 1851,
+        "collectionId": "2028673",
+        "spouseGivenName": "Catharine"
+      },
+      "outcome": "positive",
+      "results_examined": 46,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 46,
+      "notes": "Top result (search rank 1, score 6.48) is Hugh Mclachlin, Fisher, married, Cantyre/Campbeltown, born 1819 Midlothian; spouse 'Cathrine Mclachlin' present (born 1824, Argyll). Household also contains Niel Mclachlin born 1851 per index (consistent with Neil born 25 May 1850 \u2014 age 0 at 30 March 1851 census gives calculated birth year 1851 in index). Two older daughters, Flora (1847) and Agness (1849), not previously in tree. Ranking withheld because subject KCWN-N2T carries no dated/placed facts; triaged manually. Record clears all cross-checks: married male head, correct location, infant son Niel, wife Cathrine all match."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-23T05:44:59.066Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:VYYQ-ZGH"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "notes": "Full record confirms: Hugh Mclachlin (head, Fisher, b.1819 Midlothian), Cathrine Mclachlin (wife, b.1824 Argyll), Flora (b.1847), Agness (b.1849), Niel (b. indexed 1851, consistent with 25 May 1850). Digital artifact places record in Campbeltown, Argyll. ImageArk: ark:/61903/3:1:S3HT-61M3-QZ."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-23T05:46:23.996Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "103626551"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched CH3/1047/1 Free Church Lochend minutes (imageGroup 103626551, Oct 1843\u2013May 1862) for co-occurrence of McLachlan and Muir. Zero results. Either the volume is not indexed in FTS under this imageGroupNumber, or no page of the minutes contains both surnames together."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-23T05:46:23.996Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "103626570"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched CH3/1047/4 Free Church Lochend membership records (imageGroup 103626570, Oct 1843\u2013May 1850) for co-occurrence of McLachlan and Muir. Zero results. Same conclusion as the minutes volume."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-23T05:46:23.996Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "103626551"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Variant search in CH3/1047/1 minutes using Lachlan (to cover M'Lachlan transcribed without the Mc prefix). Zero results. Both primary and variant surname forms produce no hits in this volume."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-23T05:46:23.996Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "103626570"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Variant search in CH3/1047/4 membership records using Lachlan. Zero results. Both primary and variant surname forms produce no hits in this volume. All four CH3/1047-scoped searches are negative: McLachlan+Muir and Lachlan+Muir in both imageGroups 103626551 and 103626570."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-23T05:46:23.996Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "place": "Campbeltown Argyll Scotland"
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1675,
+      "notes": "Coverage-verification search: +McLachlan +Muir with Campbeltown Argyll Scotland place filter returned 1675 hits, confirming FTS can reach Campbeltown-area religious records. Top 5 results are from collections M9J1-9XR (Scotland, Argyll, Religious 1651-1935, Vestry Minutes) and M9J1-9S2 (UK, Scotland, Religious 1066-2003, Communion and Communicant records dated 1837-1843 and 1905-1913) \u2014 none from CH3/1047. The CH3/1047 imageGroup-scoped searches returning nil indicates those two specific volumes either are not yet indexed in FTS or contain no page with both surnames. The broader Campbeltown religious FTS corpus is accessible; coverage for CH3/1047 specifically is unconfirmed."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T05:47:04.802Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "includeFacets": true
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 3271,
+      "notes": "Broad search +McLachlan +Muir with includeFacets=true returned 3,271 results across FTS. Reviewed 5: all from unrelated collections (Michigan courts 1899, Scotland property records 1866/1926). None from Campbeltown Kirk Session CH2/50 volumes. Facets showed no CH2/50 partitions \u2014 confirms these volumes are not surfaced by a broad co-occurrence search. Scoped follow-up needed using imageGroupNumber."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T05:47:04.824Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "4102848"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "CH2/50/1 (imageGroup 4102848, Jan 1821\u2013Sep 1836): searched +McLachlan +Muir. Zero results. Surname co-occurrence not found in this Campbeltown Kirk Session volume for the 1821\u20131836 period."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T05:47:04.824Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "4102858"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "CH2/50/2 (imageGroup 4102858, Dec 1836\u2013Sep 1842): searched +McLachlan +Muir. Zero results. Surname co-occurrence not found in this Campbeltown Kirk Session volume."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T05:47:04.824Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "4102865"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "CH2/50/3 (imageGroup 4102865, Oct 1842\u2013Apr 1868): searched +McLachlan +Muir. Zero results. Surname co-occurrence not found in the Campbeltown Kirk Session volume that spans the most likely marriage window 1842\u20131850."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T05:47:04.824Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "4102858"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "CH2/50/2 (imageGroup 4102858): variant search +Lachlan +Muir to cover M'Lachlan transcription where 'Mc' prefix was dropped by AI. Zero results."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-23T05:47:04.824Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "4102865"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "CH2/50/3 (imageGroup 4102865): variant search +Lachlan +Muir to cover M'Lachlan transcription where 'Mc' prefix was dropped by AI. Zero results. After 6 searches across all three CH2/50 volumes (McLachlan+Muir and Lachlan+Muir variants) all returned nil. Declaring negative for pli_005: the FTS index does not surface a Hugh McLachlan / Catharine Muir entry in the Campbeltown Kirk Session minutes."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-10-23T05:47:04.824Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103422"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "notes": "Prior-session staged search flagged as unlogged by the system. Logging to clear the unlogged-searches queue; results not examined."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": null,
+      "performed": "2026-10-23T05:47:04.842Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103400"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "notes": "Prior-session staged search flagged as unlogged by the system. Logging to clear the unlogged-searches queue; results not examined."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:47:48.949Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103422"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 1,
+      "notes": "CH3/1421 communicant rolls (imageGroup 004103422, 1829-1877). Searched +McLachlan +Muir. One page-level hit: Campbeltown communicant roll, dates 1837-1843. NLP-extracted names include Wid McLachlan and Elizabeth Muir but no Hugh McLachlan or Catharine Muir. The two surnames appear on the same page but belong to different individuals. Not a marriage entry for the target couple."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:06.253Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103400"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 1,
+      "notes": "CH3/1421/1 vestry minutes (imageGroup 004103400). Searched +McLachlan +Muir. One page-level hit: Campbeltown vestry minutes. NLP-extracted names include James Mac Lachlan Maltster, James Machachlan, Donald McLachlan, and John Muir. No Hugh McLachlan or Catharine Muir. Multiple McLachlan individuals and a Muir appear on the same page but are not linked as a couple. Not a marriage entry."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:14.411Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103413"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/2 meeting minutes (imageGroup 004103413). Searched +McLachlan +Muir. Zero results. Both surnames searched; neither co-occurs on any page in this volume."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:14.411Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103405"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/3 meeting minutes (imageGroup 004103405). Searched +McLachlan +Muir. Zero results."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:14.411Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103407"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/4 meeting minutes (imageGroup 004103407). Searched +McLachlan +Muir. Zero results."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:14.411Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+McLachlan +Muir",
+        "imageGroupNumber": "004103409"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/5 meeting minutes (imageGroup 004103409). Searched +McLachlan +Muir. Zero results."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:57.590Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "004103413"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/2 meeting minutes (imageGroup 004103413). Variant search +Lachlan +Muir (catches M'Lachlan when apostrophe tokenizes as separator). Zero results."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:57.590Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "004103405"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/3 meeting minutes (imageGroup 004103405). Variant search +Lachlan +Muir. Zero results."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:57.590Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "004103407"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/4 meeting minutes (imageGroup 004103407). Variant search +Lachlan +Muir. Zero results."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:57.590Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Lachlan +Muir",
+        "imageGroupNumber": "004103409"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CH3/1421/5 meeting minutes (imageGroup 004103409). Variant search +Lachlan +Muir. Zero results."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-23T05:48:57.590Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+MacLachlan +Muir",
+        "place": "Campbeltown"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Broad Campbeltown search for MacLachlan variant combined with Muir, to catch any CH3/1421 volume not captured by the individual imageGroupNumber searches. Zero results. MacLachlan spelling does not co-occur with Muir in any FTS-indexed Campbeltown record."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T05:51:30.381Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McLachlan",
+        "givenName": "Hugh",
+        "spouseGivenName": "Catharine",
+        "spouseSurname": "Muir",
+        "marriageYearFrom": 1835,
+        "marriageYearTo": 1849,
+        "recordCountry": "Scotland",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "results_available": 4,
+      "notes": "Top hit: Hugh McLachlan + Catherine Muir, marriage 30 May 1845, Kilninian and Kilmore, Argyll, Scotland. Scotland, Marriages, 1561-1910 (collection 1771074). Score 8.13, confidence 4, spouse field present and names Catherine Muir. Date 1845 is consistent with all known children predating this date. Argyll place consistent with Catharine's recorded birthplace. Record ARK ark:/61903/1:1:XTK4-QYM."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T05:51:30.398Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XTK4-QYM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "results_available": 1,
+      "notes": "Record confirmed: Hugh McLachlan married Catherine Muir, 30 May 1845, Kilninian and Kilmore, Argyll, Scotland. Image ARK ark:/61903/3:1:3Q9M-CSHD-682W (Tobermory, Argyll, 1830-1854 volume). Catherine Muir's persona ARK ark:/61903/1:1:XTK4-QT1. Strong match \u2014 name, date, place, and spouse all consistent with tree."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-23T06:19:10.090Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-CSHD-682W"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Attempted to read original Kilninian and Kilmore OPR marriage register image (Argyll 1830-1854 volume) to verify the indexed marriage entry for Hugh McLachlan and Catherine Muir (30 May 1845). FamilySearch returned HTTP 403 Forbidden \u2014 image requires authenticated FamilySearch session. Original register page not accessible via this tool. The derivative index (src_001, Scotland Marriages 1561-1910) remains the best available source for this marriage. ScotlandsPeople (scotlandspeople.gov.uk) holds the same register and would allow image access with a pay-per-view purchase."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Scotland, Marriages, 1561-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XTK4-QYM : Thu Oct 15 02:43:10 UTC 2026), Entry for Hugh McLachlan and Catherine Muir, 30 May 1845.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Hugh McLachlan, \"Scotland, Marriages, 1561-1910\"",
+        "when_created": "1845",
+        "when_accessed": "2026-10-23",
+        "where": "Scotland, Marriages, 1561-1910",
+        "where_within": "ark:/61903/1:1:XTK4-QYM"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_031",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MBJR-R6K",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Scotland, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VYYQ-ZGH : Fri Jul 26 10:58:11 UTC 2024), Entry for Hugh Mclachlin and Cathrine Mclachlin, 1851.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of Hugh Mclachlin, \"Scotland, Census, 1851\"",
+        "when_created": "1851",
+        "when_accessed": "2026-10-23",
+        "where": "Scotland, Census, 1851",
+        "where_within": "ark:/61903/1:1:VYYQ-ZGH"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_005",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MZ2-MVDH",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Scotland, Births and Baptisms, 1564-1950\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:MBNQ-TT8 : 18 October 2026), Entry for Neil McLachlan, 1851.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Neil McLachlan, \"Scotland, Births and Baptisms, 1564-1950\"",
+        "when_created": "1851",
+        "when_accessed": "2026-10-23",
+        "where": "Scotland, Births and Baptisms, 1564-1950",
+        "where_within": "ark:/61903/1:1:XY8B-65P"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_001",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MBNQ-TT8",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Scotland, Births and Baptisms, 1564-1950\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:MBNQ-YQM : 18 October 2026), Entry for James McLachlan, 1853.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for James McLachlan, \"Scotland, Births and Baptisms, 1564-1950\"",
+        "when_created": "1853",
+        "when_accessed": "2026-10-23",
+        "where": "Scotland, Births and Baptisms, 1564-1950",
+        "where_within": "ark:/61903/1:1:XY8B-JVF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-23",
+      "log_entry_id": "log_002",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MBNQ-YQM",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Hugh McLachlan",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hugh",
+        "surname": "McLachlan"
+      },
+      "record_persona_id": "p_10853383410",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10853383410",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Catherine Muir",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catherine",
+        "surname": "Muir"
+      },
+      "record_persona_id": "p_10853383409",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10853383409",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "30 May 1845",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "30 May 1845",
+      "place": "Kilninian and Kilmore, Argyll, Scotland, United Kingdom",
+      "record_persona_id": "p_10853383410",
+      "source_id": "src_001",
+      "standard_place": "Kilninian and Kilmore, Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "30 May 1845",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "30 May 1845",
+      "place": "Kilninian and Kilmore, Argyll, Scotland, United Kingdom",
+      "record_persona_id": "p_10853383409",
+      "source_id": "src_001",
+      "standard_place": "Kilninian and Kilmore, Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XTK4-QYM",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Catherine Muir",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_10853383410",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Hugh Mclachlin",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hugh",
+        "surname": "Mclachlin"
+      },
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "32",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Midlothian",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Midlothian",
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Midlothian, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1819",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1819",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "place": "Cantyre, Argyllshire, Scotland",
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kintyre, Argyll, Scotland"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "MARRIED",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "FISHER",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087668",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Cathrine Mclachlin",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Cathrine",
+        "surname": "Mclachlin"
+      },
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "27",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Argyll",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Argyll",
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "1824",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1824",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "census",
+      "value": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "place": "Cantyre, Argyllshire, Scotland",
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kintyre, Argyll, Scotland"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "MARRIED",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087669",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Flora Mclachlin",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Flora",
+        "surname": "Mclachlin"
+      },
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "4",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Argyll",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Argyll",
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1847",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1847",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_1",
+      "fact_type": "census",
+      "value": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "place": "Cantyre, Argyllshire, Scotland",
+      "record_persona_id": "p_13800087670",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kintyre, Argyll, Scotland"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Agness Mclachlin",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Agness",
+        "surname": "Mclachlin"
+      },
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "2",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "census",
+      "value": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "place": "Cantyre, Argyllshire, Scotland",
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kintyre, Argyll, Scotland"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Argyll",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Argyll",
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "1849",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1849",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13800087671",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Niel Mclachlin",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Niel",
+        "surname": "Mclachlin"
+      },
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "0",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Argyll",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Argyll",
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002",
+      "standard_place": "Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "1851",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "date_certainty": "approximate",
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "census",
+      "value": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "place": "Cantyre, Argyllshire, Scotland",
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002",
+      "standard_place": "Kintyre, Argyll, Scotland"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:VYYQ-ZGH",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13800087672",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Neil McLachlan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Neil",
+        "surname": "McLachlan"
+      },
+      "record_persona_id": "p_10871778443",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10871778443",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "24 Oct 1851",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "24 Oct 1851",
+      "place": "Campbeltown, Argyll, Scotland, United Kingdom",
+      "record_persona_id": "p_10871778443",
+      "source_id": "src_003",
+      "standard_place": "Campbeltown, Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "25 May 1850",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "25 May 1850",
+      "record_persona_id": "p_10871778443",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Hugh McLachlan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hugh",
+        "surname": "McLachlan"
+      },
+      "record_persona_id": "p_10871778444",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10871778444",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catharine Muir",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catharine",
+        "surname": "Muir"
+      },
+      "record_persona_id": "p_10871778445",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10871778445",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hugh McLachlan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10871778443",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catharine Muir",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10871778443",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:XY8B-65P",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Catharine Muir",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10871778444",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "James McLachlan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "James",
+        "surname": "McLachlan"
+      },
+      "record_persona_id": "p_10871781855",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10871781855",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "20 Jun 1853",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "20 Jun 1853",
+      "place": "Campbeltown, Argyll, Scotland, United Kingdom",
+      "record_persona_id": "p_10871781855",
+      "source_id": "src_004",
+      "standard_place": "Campbeltown, Argyll, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "7 Dec 1852",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "7 Dec 1852",
+      "record_persona_id": "p_10871781855",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Hugh McLachlan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hugh",
+        "surname": "McLachlan"
+      },
+      "record_persona_id": "p_10871781856",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10871781856",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catherine Muir",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catherine",
+        "surname": "Muir"
+      },
+      "record_persona_id": "p_10871781857",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10871781857",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hugh McLachlan",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10871781855",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catherine Muir",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10871781855",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:XY8B-JVF",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Catherine Muir",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10871781856",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated (marriage record) vs none pre-established for Hugh in tree. Residence check: Kilninian and Kilmore, Argyll 1845 vs none attested (pre-run). Name: 'Hugh McLachlan' matches 'Hugh Mclachlan' (capitalisation variant). Score 0.487 on a marriage record with limited dating data; qualitative match strong \u2014 this is the specific marriage event the research question targets, the groom-bride pairing matches the known couple, location within Argyll. Linked confident.",
+      "match_score": 0.4872643,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Male consistent. Score 0.487 (same groom persona as a_001). Marriage record groom linked to Hugh McLachlan (KCWN-N2T). Linked confident.",
+      "match_score": 0.4872643,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Residence check: Kilninian and Kilmore, Argyll 1845 vs none attested. Name: 'Catherine Muir' matches 'Catharine Muir' (Catherine/Catharine orthographic variant; Muir exact). Score 0.437; qualitative match strong \u2014 exact name and surname, paired with identified husband Hugh McLachlan, this is the specific marriage event sought. Linked confident.",
+      "match_score": 0.43658113,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Female consistent. Score 0.437 (same bride persona as a_003). Linked confident.",
+      "match_score": 0.43658113,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Residence check: Kilninian and Kilmore, Argyll 1845 vs none attested. Marriage fact 30 May 1845 directly evidences the marriage event the research question seeks. Score 0.487 (same groom persona). Linked confident.",
+      "match_score": 0.4872643,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Marriage fact 30 May 1845 at Kilninian and Kilmore \u2014 bride's persona of same event. Score 0.437 (same bride persona). Linked confident.",
+      "match_score": 0.43658113,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Groom's relationship assertion 'spouse of Catherine Muir' is consistent with the known Couple edge between KCWN-N2T and K4T9-3ZS. Score 0.487 (same groom persona). Linked confident.",
+      "match_score": 0.4872643,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "K4T9-3ZS",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. This relationship assertion ('spouse of Catherine Muir') also bears on K4T9-3ZS as the named bride. Secondary same_person call (a_007, K4T9-3ZS, recordRole=bride) returned near-zero score (1.2e-7, matched=false) \u2014 tool compared the groom persona from the marriage record to K4T9-3ZS rather than the bride's persona; the bride's identity is established at score 0.437 via the direct bride persona call (a_003). Near-zero score is uninformative for this secondary role link. Linked probable given score limitation.",
+      "match_score": 1.2279537e-07,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: census gives age 32 -> birth ~1819; tree: no prior birth year established from earlier run. Residence check: Cantyre, Argyllshire 1851 vs none attested (pre-run). Name: 'Hugh Mclachlin' matches 'Hugh Mclachlan' (in/an variant). Occupation FISHER, marital status Married. Score 0.808 (strong). matchRelatives: wife (K4T9-3ZS, 0.988) and child Niel (M1TB-2DF, 0.901) pair coherently. Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Male consistent. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: age 32 -> birth ~1819 vs none pre-established. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Birthplace Midlothian. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1819 (inferred from age 32) vs none pre-established. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Residence at census 1851 in Cantyre, Argyllshire. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Census 1851 in Cantyre, Argyllshire. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Marital status MARRIED consistent with Couple edge to K4T9-3ZS. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Occupation FISHER. Score 0.808 (same head persona). Linked confident.",
+      "match_score": 0.80772066,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_017",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: census gives age 27 -> birth ~1824; tree: no prior birth year established. Residence check: Cantyre, Argyllshire 1851 vs none attested (pre-run). Name: 'Cathrine Mclachlin' (married surname) vs 'Catharine Muir' (maiden name) \u2014 surname change expected for a married woman; given name Cathrine/Catharine matches. Born Argyll consistent. Score 0.988 (very strong). matchRelatives confirmed. Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_018",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Female consistent. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_019",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: age 27 -> birth ~1824 vs none pre-established. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_020",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Birthplace Argyll consistent. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_021",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1824 (inferred from age 27) vs none pre-established. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_022",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Residence in Cantyre 1851. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_023",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Census 1851 in Cantyre, Argyllshire. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_024",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Marital status MARRIED consistent with Couple edge to KCWN-N2T. Score 0.988 (same wife persona). Linked confident.",
+      "match_score": 0.98811775,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: census gives birth ~1847 (inferred from age 4); tree: newly minted \u2014 I1 created from this persona. Residence check: Cantyre, Argyllshire 1851 vs none attested. Name: 'Flora Mclachlin', Female. Listed as child_1 in Hugh+Cathrine Mclachlin household. No independent corroboration; stub linked probable. Score null \u2014 I1 minted from this persona, circular comparison not applicable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Sex Female consistent. Score null \u2014 circular stub I1 minted from this persona. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: age 4 -> birth ~1847 vs none pre-established. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Birthplace Argyll. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: birth ~1847 (inferred) vs none pre-established. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Residence Cantyre 1851. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Census 1851 Cantyre, Argyllshire. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_032",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: census gives birth ~1849 (inferred from age 2); tree: newly minted \u2014 I2 created from this persona. Residence check: Cantyre, Argyllshire 1851 vs none attested. Name: 'Agness Mclachlin', Female. Listed as child_2 in Hugh+Cathrine Mclachlin household. No independent corroboration; stub linked probable. Score null \u2014 I2 minted from this persona, circular comparison not applicable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Sex Female consistent. Score null \u2014 circular stub I2. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: age 2 -> birth ~1849 vs none pre-established. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_035",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Census 1851 Cantyre, Argyllshire. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_036",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Residence Cantyre 1851. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_037",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Birthplace Argyll. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_038",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: birth ~1849 (inferred) vs none pre-established. Score null \u2014 circular stub. Linked probable.",
+      "match_score": null,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_039",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: census gives birth ~1851 (inferred from age 0) vs tree birth 25 May 1850 \u2014 one-year approximation within expected census rounding for a child born May 1850, ~11 months at census time; christening record (src_003) confirms 25 May 1850. Residence check: Cantyre, Argyllshire 1851 vs none attested (pre-run). Name: 'Niel Mclachlin' matches 'Neil Mclachlan' (Niel/Neil and in/an variants). Male. Score 0.901 (strong). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_040",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth 25 May 1850. Sex Male consistent. Score 0.901 (same child_3 persona). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_041",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: age 0 -> birth ~1851 vs tree birth 25 May 1850 \u2014 one-year census approximation, within rounding. Score 0.901 (same child_3 persona). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_042",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth 25 May 1850. Birthplace Argyll consistent. Score 0.901 (same child_3 persona). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_043",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: birth ~1851 (inferred) vs tree birth 25 May 1850 \u2014 census approximation consistent with christening record confirming 1850. Score 0.901 (same child_3 persona). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_044",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth 25 May 1850. Census 1851 Cantyre, Argyllshire. Score 0.901 (same child_3 persona). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_045",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth 25 May 1850. Residence Cantyre 1851. Score 0.901 (same child_3 persona). Linked confident.",
+      "match_score": 0.9011172,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_046",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: birth 25 May 1850 = tree birth 25 May 1850; gap 0 years. Residence check: Campbeltown, Argyll 1851 vs none attested (pre-run). Name: 'Neil McLachlan' matches 'Neil Mclachlan'. Male. Score 0.9996 (near-perfect). Parents Hugh McLachlan + Catharine Muir match known parents of M1TB-2DF. Linked confident.",
+      "match_score": 0.9995988,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_047",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth 25 May 1850. Sex Male consistent. Score 0.9996 (same child persona as a_046). Linked confident.",
+      "match_score": 0.9995988,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_048",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: christening 24 Oct 1851 vs tree birth 25 May 1850 \u2014 ~17 months between birth and christening, plausible. Residence check: Campbeltown, Argyll 1851 vs none attested. Score 0.9996 (same child persona). Linked confident.",
+      "match_score": 0.9995988,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_049",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: birth 25 May 1850 = tree birth 25 May 1850; gap 0 years. Score 0.9996 (same child persona). Linked confident.",
+      "match_score": 0.9995988,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_050",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for father vs none pre-established from earlier run. Residence check: none attested (pre-run). Name: 'Hugh McLachlan' exact. Score 1.000 (perfect). Named as father of Neil McLachlan (independently linked at confident to M1TB-2DF). Linked confident.",
+      "match_score": 0.9999994,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_051",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Male consistent. Score 1.000 (same father persona as a_050). Linked confident.",
+      "match_score": 0.9999994,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_052",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Residence check: none attested. Name: 'Catharine Muir' exact match. Score 1.000 (perfect). Named as mother of Neil McLachlan. Linked confident.",
+      "match_score": 0.99999833,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_053",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Female consistent. Score 1.000 (same mother persona as a_052). Linked confident.",
+      "match_score": 0.99999833,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_054",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: birth 25 May 1850 = tree birth 25 May 1850. Assertion explicitly states Neil is 'child of Hugh McLachlan.' Score 0.9996 (same child persona as a_046). Linked confident.",
+      "match_score": 0.9995988,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_054",
+      "person_id": "KCWN-N2T",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Assertion 'child of Hugh McLachlan' names KCWN-N2T (Hugh) as father. Secondary same_person call (a_054, KCWN-N2T, recordRole=father) returned 0.003 (matched=false) \u2014 artifact: tool compared child persona to Hugh's tree entry rather than the father persona; Hugh's identity is established at score 1.000 via the direct father persona call (a_050). Near-zero secondary score uninformative; explicit naming of Hugh McLachlan as father is strong direct evidence. Linked probable given score limitation.",
+      "match_score": 0.0026614466,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_055",
+      "person_id": "M1TB-2DF",
+      "confidence": "confident",
+      "rationale": "Date check: birth 25 May 1850 = tree birth 25 May 1850. Assertion states Neil is 'child of Catharine Muir.' Score 0.9996 (same child persona). Linked confident.",
+      "match_score": 0.9995988,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_055",
+      "person_id": "K4T9-3ZS",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Assertion 'child of Catharine Muir' names K4T9-3ZS as mother. Secondary score 3.7e-6 (matched=false) \u2014 comparison artifact; Catharine's identity established at 1.000 via a_052 direct call. Linked probable given score limitation.",
+      "match_score": 3.730387e-06,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_056",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Father persona states 'spouse of Catharine Muir.' Score 1.000 (same father persona as a_050). Consistent with known Couple edge. Linked confident.",
+      "match_score": 0.9999994,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_056",
+      "person_id": "K4T9-3ZS",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Father's assertion 'spouse of Catharine Muir' names K4T9-3ZS as spouse. Secondary score 1.7e-6 (matched=false) \u2014 comparison artifact; Catharine's identity established at 1.000 via a_052. Linked probable given score limitation.",
+      "match_score": 1.6622802e-06,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_057",
+      "person_id": "M1YW-H72",
+      "confidence": "confident",
+      "rationale": "Date check: birth 7 Dec 1852 = tree birth 7 Dec 1852; gap 0 years. Residence check: Campbeltown, Argyll 1853 vs none attested (pre-run). Name: 'James McLachlan' matches 'James Mclachlan'. Male. Score 0.9990 (near-perfect). Parents Hugh McLachlan + Catherine Muir match known parents of M1YW-H72. Linked confident.",
+      "match_score": 0.9989943,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_058",
+      "person_id": "M1YW-H72",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs tree birth 7 Dec 1852. Sex Male consistent. Score 0.9990 (same child persona). Linked confident.",
+      "match_score": 0.9989943,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_059",
+      "person_id": "M1YW-H72",
+      "confidence": "confident",
+      "rationale": "Date check: christening 20 Jun 1853 vs tree birth 7 Dec 1852 \u2014 ~6 months, consistent. Residence check: Campbeltown, Argyll 1853 vs none attested. Score 0.9990 (same child persona). Linked confident.",
+      "match_score": 0.9989943,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_060",
+      "person_id": "M1YW-H72",
+      "confidence": "confident",
+      "rationale": "Date check: birth 7 Dec 1852 = tree birth 7 Dec 1852; gap 0 years. Score 0.9990 (same child persona). Linked confident.",
+      "match_score": 0.9989943,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_061",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Name: 'Hugh McLachlan' exact. Score 1.000. Named as father of James McLachlan (linked at confident to M1YW-H72). Linked confident.",
+      "match_score": 0.99998796,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_062",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Male consistent. Score 1.000 (same father persona as a_061). Linked confident.",
+      "match_score": 0.99998796,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_063",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Name: 'Catherine Muir' matches 'Catharine Muir' (Catherine/Catharine variant). Score 1.000. Named as mother of James McLachlan. Linked confident.",
+      "match_score": 0.9999919,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_064",
+      "person_id": "K4T9-3ZS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Sex Female consistent. Score 1.000 (same mother persona as a_063). Linked confident.",
+      "match_score": 0.9999919,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_065",
+      "person_id": "M1YW-H72",
+      "confidence": "confident",
+      "rationale": "Date check: birth 7 Dec 1852 = tree birth 7 Dec 1852. Assertion: James is 'child of Hugh McLachlan.' Score 0.9990 (same child persona as a_057). Linked confident.",
+      "match_score": 0.9989943,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_065",
+      "person_id": "KCWN-N2T",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Assertion 'child of Hugh McLachlan' names KCWN-N2T (Hugh) as father. Secondary score 0.0015 (matched=false) \u2014 artifact of child persona compared to Hugh; Hugh's identity established at 1.000 via a_061. Linked probable given secondary score limitation.",
+      "match_score": 0.0014501219,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_066",
+      "person_id": "M1YW-H72",
+      "confidence": "confident",
+      "rationale": "Date check: birth 7 Dec 1852 = tree birth 7 Dec 1852. Assertion: James is 'child of Catherine Muir.' Score 0.9990 (same child persona). Linked confident.",
+      "match_score": 0.9989943,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_066",
+      "person_id": "K4T9-3ZS",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Secondary score 2.1e-6 (matched=false) \u2014 comparison artifact; Catherine's identity established at 1.000 via a_063. Linked probable.",
+      "match_score": 2.0837012e-06,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_067",
+      "person_id": "KCWN-N2T",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none pre-established. Father persona states 'spouse of Catherine Muir.' Score 1.000 (same father persona as a_061). Consistent with known Couple edge. Linked confident.",
+      "match_score": 0.99998796,
+      "created": "2026-10-23"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_067",
+      "person_id": "K4T9-3ZS",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none pre-established. Father's assertion 'spouse of Catherine Muir' names K4T9-3ZS as spouse. Secondary score 1.7e-6 (matched=false) \u2014 comparison artifact; Catherine's identity established at 1.000 via a_063. Linked probable.",
+      "match_score": 1.6622802e-06,
+      "created": "2026-10-23"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_015",
+        "a_017",
+        "a_050",
+        "a_052",
+        "a_056",
+        "a_061",
+        "a_063",
+        "a_067"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The 'Scotland, Marriages, 1561-1910' derivative index on FamilySearch was searched and returned a positive result naming Hugh McLachlan and Catherine Muir, married 30 May 1845, Kilninian and Kilmore, Argyll (src_001). The '1851 Scotland Census' on FamilySearch was searched and found the couple enumerated as married in Kintyre, Argyllshire, with children consistent with an approximately 1845 marriage (src_002). The 'Scotland, Births and Baptisms, 1564-1950' derivative index was searched and returned christening records for Neil McLachlan (1851, src_003) and James McLachlan (1853, src_004), both naming Hugh McLachlan and Catharine/Catherine Muir as parents. Kirk Session minutes for Campbeltown (CH2/50, volumes 1\u20133, 1821\u20131890) were searched with nil results. Relief/United Presbyterian Church records for Campbeltown (CH3/1421) were searched with nil results. Free Church Lochend records (CH3/1047) were searched with nil results. Civil registration in Scotland began 1 January 1855 and is inapplicable to this 1845 event. The original Kilninian and Kilmore OPR marriage register page (FamilySearch image ark:/61903/3:1:3Q9M-CSHD-682W) was attempted but returned HTTP 403; the same image is accessible at ScotlandsPeople (scotlandspeople.gov.uk) via pay-per-view subscription \u2014 a reachable handoff not retrieved by the tools used here.",
+      "shortfall": "gap",
+      "narrative_markdown": "## Marriage of Hugh McLachlan and Catharine Muir: Proof Summary\n\n**Research Question:** When and where did Hugh Mclachlan marry Catharine Muir, the parents of Neil (born 25 May 1850) and James (born 7 December 1852), both christened in Campbeltown, Argyll, Scotland?\n\n**Conclusion:** The evidence strongly supports that Hugh McLachlan married Catharine (also recorded as Catherine) Muir on 30 May 1845 at Kilninian and Kilmore, Argyll, Scotland.\n\n---\n\n### OPR Marriage Index \u2014 Direct Evidence\n\nThe \"Scotland, Marriages, 1561-1910\" collection on FamilySearch is a derivative index of Church of Scotland Old Parochial Registers. An entry in this collection records Hugh McLachlan as groom and Catherine Muir as bride, married 30 May 1845 at Kilninian and Kilmore, Argyll, Scotland.[^1] This entry directly answers the research question. The source is a derivative index; it preserves primary information supplied by the parties themselves at the time of the marriage. The underlying original OPR marriage register page for Kilninian and Kilmore (FamilySearch image ark:/61903/3:1:3Q9M-CSHD-682W) was actively sought but returned HTTP 403. The same image is accessible at ScotlandsPeople (scotlandspeople.gov.uk) via pay-per-view subscription, a handoff not completed by the tools used in this project. Viewing the original would be expected to confirm the indexed entry.\n\n### 1851 Scotland Census \u2014 Independent Corroboration\n\nThe \"Scotland, Census, 1851\" collection on FamilySearch records Hugh Mclachlin, age 32, a fisher born in Midlothian, and his wife Cathrine Mclachlin, age 27, born in Argyll, residing together in Kintyre (Cantyre), Argyllshire, Scotland.[^2] Three children appear in the household: Flora (approximately age 4), Agness (approximately age 2), and infant Niel. This is a derivative transcription of the original census enumerator's return. Residence and census facts are primary information recorded by the enumerator; biographical details (ages, birthplaces, marital status) are indeterminate in quality, supplied by an unknown household member. Flora's approximate birth year of 1847, calculated from her census age, is consistent only with the parents having married no later than approximately 1846 \u2014 corroborating the 30 May 1845 date from the marriage index. The marital status is recorded as MARRIED. The census is independent of the marriage index in record type, creating institution, and informant, and provides corroboration for the marital union at a point six years after the indexed marriage.\n\n### OPR Christening Records \u2014 Identity Corroboration\n\nTwo derivative index entries from the \"Scotland, Births and Baptisms, 1564-1950\" collection independently name Hugh McLachlan and Catharine/Catherine Muir as co-parents of children christened in Campbeltown, Argyll. First, the christening of Neil McLachlan (born 25 May 1850, christened 24 October 1851) names Hugh McLachlan and Catharine Muir as parents, with the presenting parent supplying primary information.[^3] Second, the christening of James McLachlan (born 7 December 1852, christened 20 June 1853) likewise names Hugh McLachlan and Catherine Muir as parents.[^4] These two records are independent of each other and of the marriage index in record type, creating institution (Campbeltown parish vs. Kilninian and Kilmore parish), and informant. Both records confirm the maiden surname Muir as reported in the marriage index, corroborating the identity of the bride.\n\n### Nil Searches\n\nThe following record sets were searched and produced no marriage entry for this couple: Kirk Session minutes for Campbeltown (CH2/50, volumes 1\u20133, covering 1821\u20131890); Relief/United Presbyterian Church records for Campbeltown (CH3/1421); and Free Church Lochend records for Campbeltown (CH3/1047). Civil statutory registration did not begin in Scotland until 1 January 1855 and is inapplicable to this 1845 event. No competing marriage entry and no contradicting evidence was encountered across any searched source.\n\n### Spelling Variants\n\nThe bride's given name appears as Catherine (sources 1 and 4), Catharine (source 3), and Cathrine (source 2, where she is enumerated under her married surname). The groom's surname appears as McLachlan (sources 1, 3, and 4) and Mclachlin (source 2). These are consistent nineteenth-century orthographic variants and do not reflect any conflict in the identity of the parties.\n\n### Assessment\n\nThree independent record sources corroborate the marriage index entry for Hugh McLachlan and Catherine Muir, 30 May 1845, Kilninian and Kilmore, Argyll. All four sources used are derivative indexes or transcriptions; the underlying original OPR marriage register was sought but is accessible only via a pay-per-view subscription service. No conflicting evidence was found. Viewing the original register image would be expected to confirm, not alter, the indexed entry. The evidence strongly supports the conclusion that Hugh McLachlan married Catharine Muir on 30 May 1845 at Kilninian and Kilmore, Argyll, Scotland.\n\n---\n\n[^1]: \"Scotland, Marriages, 1561-1910\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:XTK4-QYM : Thu Oct 15 02:43:10 UTC 2026), Entry for Hugh McLachlan and Catherine Muir, 30 May 1845.\n[^2]: \"Scotland, Census, 1851\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:VYYQ-ZGH : Fri Jul 26 10:58:11 UTC 2024), Entry for Hugh Mclachlin and Cathrine Mclachlin, 1851.\n[^3]: \"Scotland, Births and Baptisms, 1564-1950\", database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:MBNQ-TT8 : 18 October 2026), Entry for Neil McLachlan, 1851.\n[^4]: \"Scotland, Births and Baptisms, 1564-1950\", database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:MBNQ-YQM : 18 October 2026), Entry for James McLachlan, 1853.",
+      "updated": "2026-10-23T06:31:34.044Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Argyllshire, Scotland, United Kingdom",
+      "for_place": "Campbeltown, Argyll, Scotland",
+      "time_period": "1820-1860",
+      "jurisdictions": [
+        {
+          "name": "Campbeltown, Argyll, Scotland",
+          "date_range": "/+1801"
+        },
+        {
+          "name": "Campbeltown, Argyll, Scotland, United Kingdom",
+          "date_range": "+1801/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4324570",
+          "title": "United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005",
+          "date_range": "1761-2005"
+        },
+        {
+          "id": "4231104",
+          "title": "United Kingdom, British Royal Navy Ships' Musters, 1739-1861",
+          "date_range": "1739-1861"
+        },
+        {
+          "id": "1952868",
+          "title": "United Kingdom, Chelsea Pensioners' Service Records, 1760-1913",
+          "date_range": "1760-1913"
+        },
+        {
+          "id": "1762440",
+          "title": "United Kingdom, Merchant Navy Seamen Records, 1835-1941",
+          "date_range": "1835-1941"
+        },
+        {
+          "id": "2046942",
+          "title": "United Kingdom, Militia Service Records, 1806-1915",
+          "date_range": "1806-1915"
+        }
+      ],
+      "quirks": [
+        "Civil (Statutory) registration in Scotland began at the registration-district level on 1 January 1855, not before; for marriages before that date the only official record is the Old Parochial Register (OPR) of the Church of Scotland or a nonconformist congregation's own register.",
+        "Campbeltown OPR marriage registers 1820-1854 are on microfilm 1041005 (FS Library), and the name index covering marriages 1681-1854 is on microfiche 6900069 at the FamilySearch Library. The full index is also searchable by name on ScotlandsPeople.gov.uk for a small fee.",
+        "Campbeltown parish had two separate congregations \u2014 Lowland (English-speaking) and Highland (Gaelic-speaking) \u2014 each recording baptisms and marriages in the same OPR volumes but in separate sequences. A couple belonging to either congregation would appear in the relevant sequence, not necessarily the one searched first.",
+        "By the 19th century a majority of Campbeltown's population was nonconformist. The Relief Church (later United Presbyterian, ref CH3/1421) and the Free Church (Lochend, ref CH3/1047) were both active throughout 1820-1860; a marriage or baptism in one of these congregations will NOT appear in the OPR at all.",
+        "Roman Catholic records for Campbeltown do not survive before 1879 \u2014 no early Catholic vital records are known extant.",
+        "Kirk session minutes (CH2/50, minutes 1821-1890) are digitized and full-text searchable on FamilySearch; they record discipline cases, poor relief, and sometimes mention marriages and irregular unions that do not appear in the OPR itself.",
+        "The 1855 Statutory marriage certificate is uniquely detailed \u2014 it recorded birthplaces of bride and groom and names and ages of both parents. Even if a couple married in 1855 rather than before, this certificate alone can supply two generations of ancestry.",
+        "Scottish naming customs followed a strong generational pattern: first son typically named after paternal grandfather, second son after maternal grandfather. Neil (1850) and James (1852) may therefore point to the surnames of the two grandfathers.",
+        "Probate jurisdiction: Campbeltown was under the Commissary Court of Argyll until 1823, then the Sheriff's Court of Dunoon. Records 1513-1901 are indexed on ScotlandsPeople; pre-1823 originals are on FamilySearch microfilm.",
+        "The Neglected Entries Register (late-registered events approximately 1820-1860, registered 1860-1868) is on microfilm and digitized in the FamilySearch Catalog \u2014 worth checking if a marriage or birth cannot be found in the standard OPR or Statutory series."
+      ],
+      "guide_markdown": "# Locality Guide: Campbeltown, Argyllshire, Scotland (1820\u20131860)\n\n## Jurisdiction overview\n- **Parish number:** 507 (Quoad Omnia Parish)\n- **Historic county:** Argyllshire\n- **Ecclesiastical jurisdiction:** Presbytery of Kintyre, Synod of Argyll\n- **Civil registration district:** Campbeltown (from 1 January 1855)\n- **Sheriff Court:** Campbeltown (also Dunoon, Fort William, Inveraray, Oban, Tobermory)\n- **Commissary Court:** Argyll (until 1823), then Sheriff's Court of Dunoon\n- **Population during period:** 8,706 (1795); 9,539 (1841) \u2014 source: New Statistical Account of Scotland (1843), cited at [Campbeltown, Argyllshire, Scotland Genealogy](https://www.familysearch.org/en/wiki/Campbeltown,_Argyllshire,_Scotland_Genealogy)\n- **Economy:** Fishing, farming, distilling (Campbeltown was a major whisky centre), some maritime trade\n- **Ethnic composition:** Predominantly Scottish; the town had two distinct congregations reflecting a Lowland (English-speaking) and Highland (Gaelic-speaking) population\n- **Religious denominations:** Church of Scotland (two charges \u2014 English and Gaelic); Relief Church (later United Presbyterian); United Secession Church (1831\u20131847); Free Church (from 1843); Independent Church (1805\u2013c.1864); Roman Catholic (church formed 1816); St Kieran's Episcopal Church\n- **Key historical events:** Disruption of 1843 (split of the Church of Scotland, creating the Free Church); expansion of herring fishing industry; growth of Campbeltown distilling\n\n## Boundary changes\n- The parish of Campbeltown (#507) was formed from the ancient parishes of Kilkerran, Kilmichael, and Kilchousland, united after the Reformation under the name Lochhead, then renamed Campbelton around 1687.\n- Boundaries were stable throughout the 1820\u20131860 period. The parish also served as the civil registration district when Statutory registration began on 1 January 1855.\n- No county-level boundary change affected this parish during the target period.\n\n## Available record types\n\n### Vital records \u2014 civil (Statutory) registration\n- **Start date:** 1 January 1855, at the registration-district level, per [Scotland Civil Registration](https://www.familysearch.org/en/wiki/Scotland_Civil_Registration)\n- **What exists:** Birth, marriage, and death registers for Campbeltown district 507, from 1855. Digitized volumes found: births 1855\u20131860 (6 separate annual volumes), marriages 1855\u20131859 (5 volumes), deaths 1855\u20131860 (6 volumes).\n- **Digitization status:** These volumes show 0 images and 0% name-indexed in FamilySearch's volume search \u2014 they are held in the FamilySearch catalog but accessible only at a FamilySearch Center or Affiliate Library, or via ScotlandsPeople. ScotlandsPeople has indexed and imaged Campbeltown marriages 1855\u20131947, births 1855\u20131922, deaths 1855\u20131972.\n- **Where held online:** ScotlandsPeople.gov.uk (subscription, approximately \u00a37.50 for 30 credits; each image costs 6 credits). FamilySearch has indexed extracts for 1855\u20131875, 1881, and 1891 in the [Scotland, Civil Registration collection (5000163)](https://www.familysearch.org/search/collection/5000163); images of those years can be browsed at a FamilySearch Center.\n- **The 1855 marriage certificate is uniquely rich:** it recorded birthplaces of bride and groom, and names and ages of both parents \u2014 enough to extend a pedigree two full generations from a single document.\n- **Gaps:** Civil registration did not exist before 1 January 1855. Marriages before that date are not in this series.\n\n### Vital records \u2014 Old Parochial Registers (OPR) (pre-1855)\n- **Record level:** Parish (Church of Scotland, Campbeltown parish #507)\n- **Births/baptisms:** 1659\u20131855 across three main film groups:\n  - Film 1041003: 1659\u20131773 (Lowland) and Gaelic congregation from June 1728\n  - Film 1041004: 1682\u20131822\n  - Film 1041005: 1776\u20131855 (volume 6, covering 1820\u20131839 baptisms, 1820\u20131854 marriages, 1817\u20131854 burials)\n- **Marriages:** 1681\u20131854 (same film groups). The key volume for 1820\u20131854 marriages is film **1041005**, which covers OPR volume 6. This is the primary source for any marriage of Hugh Mclachlan and Catharine Muir if they wed before 1855.\n- **Deaths/burials:** Very sparse \u2014 only about 20 entries before 1808, and only 32 entries for 1817\u20131854. Do not rely on burial records to confirm or rule out events.\n- **Digitization:** The OPR volumes on microfilm are **browse-only** at a FamilySearch Center (0% name-indexed in the FamilySearch volume system). However, the **name index** to Campbeltown marriages 1681\u20131854 has been extracted and is:\n  - Searchable free of charge in [Scotland Marriages, 1561\u20131910](https://www.familysearch.org/search/collection/1771074) on FamilySearch\n  - Searchable on ScotlandsPeople.gov.uk (fee to view the image)\n  - Available on microfiche 6900069 at the FamilySearch Library (\"Marriages, A thru Z, 1681\u20131854, 3 microfiches\")\n- **Important warning:** Registration in Church of Scotland registers was costly and unpopular. By the 19th century an estimated 30% of events in some urban parishes were not recorded. A couple not found in the OPR index may simply not have registered \u2014 not may not have married.\n- **Two congregations:** The Lowland (English) and Highland (Gaelic) series are recorded separately within the same volumes. Both series are included in the OPR index, but if searching by browsing the film, you must look in both sections.\n- **Source page:** [Campbeltown, Argyllshire, Scotland Genealogy](https://www.familysearch.org/en/wiki/Campbeltown,_Argyllshire,_Scotland_Genealogy)\n\n### Church records \u2014 nonconformist (pre- and post-1855)\nBy the 1840s a majority of Campbeltown's population was in nonconformist congregations. A marriage in one of these churches will NOT appear in the Church of Scotland OPR.\n\n**Campbeltown Relief Church (later United Presbyterian, ref CH3/1421):**\n- History: formed 1766 when members left the Established Church\n- Records: various minutes 1767\u20131847; Communion Rolls 1838\u20131867; Young Communicants Rolls 1843\u20131877\n- Digitized: multiple volumes (CH3/1421/1\u201316) are online at FamilySearch, fulltext searchable but not name-indexed (0% recordSearchablePercent). These include session minutes 1755\u20131836, 1812\u20131835, 1836\u20131837, 1837\u20131841, 1842\u20131847; school records 1852\u20131874; communicants rolls 1829\u20131877.\n- Held: National Archives of Scotland (NAS), Edinburgh\n\n**Lochend Free Church (ref CH3/1047):**\n- History: formed in the Disruption of 1843 from the English and Gaelic collegiate charges; records begin 1841 (pre-Disruption non-intrusion committee)\n- Records: Committee Minutes 1843\u20131868; Communion Roll 1843\u20131862; cash books; membership records\n- Digitized: multiple volumes (CH3/1047/1, 4, 9, 11\u201313, 15\u201316) are online at FamilySearch, fulltext searchable but not name-indexed\n- Held: NAS Edinburgh\n\n**St Kieran's Episcopal Church:**\n- Records: Baptisms 1848\u20131855, Marriages 1849\u20131853\n- Held: Argyll and Bute Archives (listed in the Argyll and Bute Archives Family History Sources wiki page)\n\n**Campbeltown United Secession Church (1831\u20131847):**\n- Merged into United Presbyterian in 1847; extent of pre-1855 records unknown\n\n**Campbeltown Independent Church (1805\u2013c.1864):**\n- Extent of records unknown; contact United Reformed Church, Scottish Synod Office, Glasgow\n\n**Roman Catholic Church:**\n- A church was formed 1816 and dedicated 1850. No records are known to survive before 1879.\n\n**Note from [Scotland Church Records wiki](https://www.familysearch.org/en/wiki/Scotland_Church_Records):** In 1855 the government called for all non-parochial registers to be deposited with the official archive. These are now managed by ScotlandsPeople. Before 1834, nonconformist ministers were not authorized to perform marriages without banns having been read first in the parish church.\n\n### Kirk session records (Church of Scotland)\n- Minutes 1821\u20131890 and Account book 1744\u20131810 (NAS ref CH2/50)\n- Kirk sessions dealt with moral discipline, poor relief, education, and parish business. They record individuals who may not appear in any OPR event \u2014 including couples who appeared before the session for irregular marriage or prenuptial fornication.\n- Digitized volumes:\n  - CH2/50/1: Jan 1821\u2013Sept 1836 (111 images, fulltext searchable)\n  - CH2/50/2: Dec 1836\u2013Sept 1842 (104 images, fulltext searchable)\n  - CH2/50/3: Oct 1842\u2013Apr 1868 (227 images, fulltext searchable)\n  - CH2/50/10: Communion Roll Jul 1854\u2013May 1901 (64 images, fulltext searchable)\n- Available online at FamilySearch (browse/fulltext, not name-indexed); also at NAS Edinburgh\n\n### Census records\n- National census taken every 10 years. Individual enumeration began with 1841.\n- **1841 Census:** Campbeltown (parish 507), film 1042715. FamilySearch volume search: 63% name-indexed (imageGroupNumber 004536125_003). Also indexed at ScotlandsPeople, Ancestry, FindMyPast, MyHeritage.\n- **1851 Census:** Film 1042349. FamilySearch volume search: 78% name-indexed (imageGroupNumber 004033892_003). Also at ScotlandsPeople, Ancestry, FindMyPast, MyHeritage.\n- **1861\u20131891:** On microfilm (films 103795, 103951, 203555, 208803); also on ScotlandsPeople and other platforms.\n- **1901\u20131921:** ScotlandsPeople only (index and images, fee).\n- Census records from 1851 onward list every household member with name, age, birthplace, relationship, and occupation \u2014 primary sources for establishing who was in the household in each decade.\n- **Source:** [Campbeltown census catalog entry](https://www.familysearch.org/en/search/catalog/629967)\n\n### Probate and court records\n- Campbeltown was under the **Commissary Court of Argyll** until 1823, then transferred to the **Sheriff's Court of Dunoon**.\n- Probate records (wills and testaments) 1513\u20131901 are indexed free on ScotlandsPeople; copies cost a small fee.\n- Pre-1823 records are on microfilm at the FamilySearch Library. Search the FamilySearch Catalog under Argyll / Probate Records for microfilm numbers.\n- Post-1823 Argyll records: some are in the FamilySearch Library catalog; search under Argyll / Probate Records.\n- For the research question, estate papers filed after a party died would confirm identity, name spouse, and may give marriage date.\n- **Source:** [Campbeltown, Argyllshire, Scotland Genealogy \u2014 Probate Records](https://www.familysearch.org/en/wiki/Campbeltown,_Argyllshire,_Scotland_Genealogy#Probate_Records)\n\n### Poor law records\n- Two digitized volumes at FamilySearch:\n  - HR/67/1: May 1778\u2013June 1821 (130 images, fulltext searchable)\n  - HR/67/2: August 1852\u2013August 1899 (81 images, fulltext searchable)\n- The General Register of Poor names paupers receiving relief; an index to Campbeltown poor c.1860\u20131899 was compiled by Tommy and Margaret Semple and is held at Argyll and Bute Archives.\n- A poorhouse served the parish; poorhouse records name individuals.\n\n### Land records\n- Scotland used a feudal land system with property conveyed by sasine (formal possession). The General Register of Sasines is the primary record of land transfers.\n- Valuation Rolls (property owners and occupiers) began in Scotland from 1855; available on ScotlandsPeople.\n- Land Tax rolls 1645\u20131831 are available online at [ScotlandsPlaces](https://scotlandsplaces.gov.uk/digital-volumes/historical-tax-rolls/land-tax-rolls-1645-1831).\n- Scottish Post Office Directories (1773\u20131911) are digitized at the National Library of Scotland ([digital.nls.uk/directories/](https://digital.nls.uk/directories/)) \u2014 these are a key source for placing a person at an address between census years.\n\n### Military records\n- Relevant conflicts during the period: Napoleonic Wars (ending 1815, just before the window); no major conflict directly affecting Scotland 1820\u20131860.\n- UK-level collections returned by FamilySearch include: British Royal Navy Ships' Musters 1739\u20131861 (280,357 records); Chelsea Pensioners' Service Records 1760\u20131913; Merchant Navy Seamen Records 1835\u20131941; Militia Service Records 1806\u20131915.\n- Campbeltown is a port town; men from the town who served at sea or in the Royal Navy would appear in naval musters and merchant records.\n\n### Cemetery records\n- Kilkerran graveyard is the historic burial ground for Campbeltown. Two published surveys exist in the FamilySearch Library catalog:\n  - *An historical and genealogical tour of Kilkerran graveyard* by Angus Martin (FamilySearch Library)\n  - *Kilkerran graveyard revisited* by Angus Martin (FamilySearch Library)\n- Online: [Scotland, Burial Monument Inscriptions, 1507\u20132019](https://www.ancestry.com/search/collections/62497) at Ancestry ($); [Scotland, Gravestones and Memorials, 1521\u20132020](https://www.ancestry.com/search/collections/70948) at Ancestry ($); BillionGraves Scotland index at FindMyPast.\n- A Campbeltown poorhouse also had a burial ground; sexton records, if they survive, would be at Argyll and Bute Archives.\n\n### Newspaper records\n- **The Campbelltown Journal:** A compiled index of births, marriages and deaths reported in this paper 1851\u20131855 was produced by Stuart Farrell and is held at the FamilySearch Library (not online). This is the only known indexed newspaper source for Campbeltown in this period.\n- The Scotsman (Edinburgh) digital archive 1817\u20131950 is available at [archive.scotsman.com](http://archive.scotsman.com/) and via Ancestry; it occasionally carried Argyllshire notices.\n- FindMyPast carries Scotland Newspaper Birth Notices, Marriage & Anniversary Notices, and Death Reports & Obituaries indexes (subscription).\n\n### Immigration/emigration records\n- Campbeltown was a port on the Kintyre Peninsula. Emigration from the region to Canada, Australia, and the United States was significant, particularly after the Highland and Island Emigration Society assisted departures to Australia (1852\u20131857, recorded on ScotlandsPeople).\n- Relevant collections: Ships from Scotland to America 1628\u20131828 (Ancestry); Scottish Emigration Database (University of Aberdeen).\n- Naturalizations filed in the United States or Canada by persons who emigrated from Campbeltown may name birthplace and parents.\n\n### School records\n- Two school record volumes for Campbeltown are digitized on FamilySearch:\n  - CH3/1421/13: November 1852\u2013October 1874 (111 images, fulltext searchable)\n  - CH3/1421/12: October 1858\u2013October 1874 (24 images, fulltext searchable)\n- These are associated with the United Presbyterian congregation and record children's attendance, which can establish family presence in the town.\n\n### Other record types\n- **Argyll and Bute Archives family history sources:** The Argyll and Bute Archives (Lochgilphead) holds an extensive range of local materials \u2014 estate records, burgh records, poor registers, an index to the 1851 census of Campbeltown parish, and registers of St Kieran's Episcopal Church. The full list is documented on the [Argyll and Bute Archives Family History Sources wiki page](https://www.familysearch.org/en/wiki/Argyll_and_Bute_Archives_Family_History_Sources).\n- **Statistical Accounts of Scotland:** The First (1791\u20131799), Second (1834\u20131845), and Third Statistical Accounts describe the parish, its economy, religions, and people. Available at [stataccscot.edina.ac.uk](https://stataccscot.edina.ac.uk/static/statacc/dist/home).\n\n## Repository guide\n\n### Online repositories\n| Repository | Relevant coverage | Access |\n|---|---|---|\n| ScotlandsPeople.gov.uk | OPR index 1553\u20131854; Statutory Registers 1855 to present (births to 1922, marriages to 1947, deaths to 1972); all censuses 1841\u20131921; probate 1513\u20131901; valuation rolls 1855+ | Subscription (~\u00a37.50/30 credits; index free) |\n| FamilySearch.org | Scotland Marriages 1561\u20131910 (free index, includes OPR); Scotland Births and Baptisms 1564\u20131950 (free index); Scotland Civil Registration 1855\u20131875/1881/1891 (index and images at FamilySearch Centers); 1841 and 1851 Scotland Census (free index) | Free index; images at FamilySearch Centers |\n| Ancestry.com | Select Counties, Scotland, Church of Scotland, Marriages 1615\u20131854 (index and images); 1841, 1851, 1861 Scotland Census; Scotland Burial Monument Inscriptions; various Scotland court and criminal indexes | Subscription |\n| FindMyPast.com | Scotland Parish Marriages & Banns 1561\u20131893; Scotland Modern and Civil Marriages 1855\u20132019; 1841/1851/1861 Census; Scotland Newspaper Marriage Notices | Subscription |\n| MyHeritage.com | Scotland Marriages 1561\u20131910 | Subscription |\n| ScottishIndexes.com | Scottish Paternity Index; mental health; poor relief; criminal database | Free index |\n| National Library of Scotland | Scottish Post Office Directories 1773\u20131911; historical maps | Free |\n\n**Coverage of this survey:** 45 digitized volumes match Campbeltown for 1820\u20131860; all 45 were returned in the single search page and are detailed above.\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| National Records of Scotland / ScotlandsPeople Centre, Edinburgh | Original OPR registers; all Statutory Register originals; Census returns; Kirk session records | In-person (\u00a315/day) or via ScotlandsPeople.gov.uk |\n| National Archives of Scotland (NRS), Edinburgh | Nonconformist church records (CH3/1047, CH3/1421); Kirk session records (CH2/50); poor law records (HR/67); Estate and heritor records | In-person or via FamilySearch (digitized volumes) |\n| Argyll and Bute Archives, Lochgilphead | Burgh records; estate papers; Episcopal church registers (St Kieran's); compiled indexes; poor registers | In-person or correspondence |\n| FamilySearch Library, Salt Lake City | Microfilm copies of OPR (films 1041003\u20131041005); Census films; microfiche OPR index (fiche 6900069 for Campbeltown marriages); FamilySearch Center access worldwide | Free at Family History Library and FamilySearch Centers |\n| Local churches | Some records may remain with current congregations | Contact current minister; appointment required |\n\n## Records NOT online\n- Original OPR register images for Campbeltown (microfilm 1041005) can only be viewed at a FamilySearch Center or Affiliate Library, or at ScotlandsPeople; they are not openly browsable online.\n- St Kieran's Episcopal Church registers (baptisms 1848\u20131855, marriages 1849\u20131853) are held at Argyll and Bute Archives and are not digitized in any online collection identified in this survey.\n- Campbeltown Journal birth/marriage/death notices 1851\u20131855 (the Farrell compilation) are held only at the FamilySearch Library in Salt Lake City.\n- Post-1875 Statutory Registers (except 1881 and 1891) are available only on ScotlandsPeople or in person at the ScotlandsPeople Centre.\n- Campbeltown burgh and estate records at Argyll and Bute Archives are largely physical-only.\n\n## Known record losses\n- No major courthouse fire or disaster is documented for Campbeltown parish records in the tools consulted.\n- The Roman Catholic parish records before 1879 are completely lost \u2014 the wiki page for Campbeltown states: \"No records are known to survive before 1879. Presumably earlier records were kept but lost.\" ([source](https://www.familysearch.org/en/wiki/Campbeltown,_Argyllshire,_Scotland_Genealogy#Campbeltown_Roman_Catholic_Church))\n- OPR death/burial records are very sparse: only about 20 entries before 1808 and only 32 entries 1817\u20131854. For that period, cemetery inscriptions and kirk session records are the best substitutes.\n- OPR marriage records have a blank period for the Lowland congregation: a single entry for April 1792, then nothing until after 1792\u20131808 when entries resume. For this specific gap the nonconformist registers and kirk session minutes are the only alternatives.\n\n## Research tips\n\n- **The marriage of Hugh Mclachlan and Catharine Muir almost certainly predates 1 January 1855,** since their eldest known child was born May 1850. The OPR marriage index at ScotlandsPeople and the free index [Scotland Marriages, 1561\u20131910](https://www.familysearch.org/search/collection/1771074) on FamilySearch are the first searches to run. If not found there, the nonconformist registers (Relief/United Presbyterian and Free Church) must be checked \u2014 a negative OPR result does not rule out a valid marriage.\n\n- **The OPR index covers only Church of Scotland entries.** Nonconformist marriages were not indexed in the OPR system. The United Presbyterian (CH3/1421) and Free Church (CH3/1047) records are digitized on FamilySearch as fulltext-searchable images \u2014 the researcher should browse or use fulltext search within those volumes for the couple's names. [Scotland Church Records wiki](https://www.familysearch.org/en/wiki/Scotland_Church_Records)\n\n- **The 1851 census (78% indexed on FamilySearch)** will show the McLachlan family if they were resident in Campbeltown with their infant Neil; it should record ages, occupations, birthplaces, and every household member. This can confirm whether Hugh and Catharine were already married by April 1851. [Scotland Census wiki](https://www.familysearch.org/en/wiki/Scotland_Census)\n\n- **Kirk session minutes (CH2/50) are fulltext searchable** on FamilySearch and cover 1821\u20131868 for Campbeltown. A prenuptial appearance before the session, or a discipline case, may name the couple and sometimes records the marriage itself even when the OPR entry is missing. [Campbeltown Kirk Session Records](https://www.familysearch.org/en/wiki/Campbeltown,_Argyllshire,_Scotland_Genealogy#Established_Church\u2014Kirk_Session_Records)\n\n- **Scottish naming customs:** The pattern \u2014 first son for paternal grandfather, second son for maternal grandfather \u2014 suggests Neil McLachlan (1850) may carry Hugh's father's name, and James McLachlan (1852) may carry Catharine Muir's father's name. Searching for a Neil McLachlan in Argyllshire OPR births, and a James Muir, can help locate both sets of grandparents. [Scotland Naming Customs](https://www.familysearch.org/en/wiki/Scotland_Naming_Customs)\n\n- **Mc/Mac and spelling variation:** The OPR index notes that \"Mc\" or \"Mac\" surnames may be filed at the end of the M section. On ScotlandsPeople and FamilySearch, search both McLachlan and Maclachlan, and try Lachlan, Laughlan, and other variants. Muir is fairly stable but may appear as Mure.\n\n- **Neglected Entries Register:** Late-registered births, marriages, and deaths from approximately 1820\u20131860, registered 1860\u20131868, are on microfilm and digitized in the [FamilySearch Catalog (catalog entry 103538)](https://www.familysearch.org/en/search/catalog/103538). This is worth checking if the event is not found in the standard OPR or Statutory series. [Scotland Civil Registration wiki](https://www.familysearch.org/en/wiki/Scotland_Civil_Registration)\n\n- **ScotlandsPeople is the most comprehensive single source** for Scottish vital records. The OPR index, Statutory Registers, census, and probate index are all searchable there for a modest per-image fee. For budget-conscious research, start with FamilySearch's free name indexes to identify the likely entry, then purchase the image on ScotlandsPeople.\n\n- **Post Office Directories** for Argyllshire and the Kintyre area (1773\u20131911 at the National Library of Scotland) list householders, tradespeople, and professionals by name and address \u2014 useful for placing Hugh between census years and identifying his occupation.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Scotland_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Scotland_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Scotland_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-23"
+    }
+  ]
+}

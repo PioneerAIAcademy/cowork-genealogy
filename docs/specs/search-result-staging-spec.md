@@ -71,13 +71,14 @@ Family Tree. It is never consumed, and is TTL-pruned. The eval mock
 stages a canned `person_read` through the tool's own compiled `stagePersonRead`, so the envelope
 has one definition.
 
-**The inline-strip rule below has one exemption:** `image_transcribe` keeps returning its
-`transcription` inline. The shipped `image-reader` agent and `person_read`'s memories leg read it
-today, and the consumer that reads the sidecar instead is the `document-capture` agent; the
-strip belongs to the PR that lands that consumer.
+`image_transcribe` follows the inline-strip rule below (since 2026-10-16): once staged it drops
+`transcription` and returns `staged`, `digest` and `found`, and its readers use `sidecar_read`.
+person_read's memories leg calls the function in-process, below the MCP boundary where the strip
+is applied, and keeps the text (`image-transcribe-tool-spec.md` §5.5).
 
-The change is **purely additive and back-compatible**: no `projectPath` → the tools
-behave exactly as today.
+For the search tools the change is **purely additive and back-compatible**: no
+`projectPath` → they behave exactly as before. `image_transcribe` is the exception: it
+requires `projectPath` and refuses a call without one.
 
 **Inline-payload strip (overflow protection).** Once a producer has staged its
 full payload, it drops the heavy per-result field from the *inline* copy so a
@@ -238,7 +239,11 @@ When the log editor is called with `stagedResultsRef`, it (host-side):
    per `research-log-editor-spec.md` §4 ("never trusted from the caller"); the
    staged file's count is advisory.
 4. Wraps it as the full sidecar `{ log_id, tool, retrieved, returned_count,
-   payload }` and writes `results/<log_id>.json`.
+   payload }` and writes `results/<log_id>.json`. The log entry, not the sidecar,
+   records the staged file's project-relative path as `staged_ref`, so a later
+   re-send of the same ref (after a context compaction) is answered with that
+   entry's id instead of a refusal, from `research.json` alone
+   (`research-log-editor-spec.md`, "A staged ref that was already logged").
 5. **After `research.json` commits**, removes the staged file
    (`consumeStagedResults`). Never before: finalize itself only writes, so a call
    refused after finalizing — a later op in a batch, the `query`-required check, or
@@ -297,9 +302,11 @@ same ground truth production does.
 - **A successful log consumes it; a refused one never does.** `research_log_append`
   removes the staged file only after its `research.json` write commits (§6 step 5).
   Every refusal — whatever stage it comes from — leaves the file, so a corrected
-  re-send finds it. A ref that is missing gets a message saying each staged ref can
-  be logged once, and whether to re-run the search or leave it: already logged,
-  pruned, or never staged.
+  re-send finds it. A missing ref that a log entry records as its `staged_ref` was
+  already logged, and is answered with that entry (`research-log-editor-spec.md`,
+  "A staged ref that was already logged"). Any other missing ref, pruned or never
+  staged, gets a message saying each staged ref can be logged once, and whether to
+  re-run the search or leave it.
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally

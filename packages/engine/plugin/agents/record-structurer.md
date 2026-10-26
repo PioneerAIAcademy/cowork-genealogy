@@ -8,7 +8,8 @@ description: >-
   sends one extraction_append call carrying a document per source, and returns
   the tool's summary verbatim. Roles and classifications are decided in code,
   not here. Do NOT use for FamilySearch-indexed records (call extraction_append
-  with recordIds), to read a page scan (use image-reader first), to search for
+  with recordIds), to read a page scan (call image_transcribe first and pass its
+  staged.resultsRef), to search for
   records, or to format citations.
 model: claude-sonnet-5
 tools:

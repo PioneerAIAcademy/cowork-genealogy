@@ -54,6 +54,7 @@ function loadHooks(): Record<string, Matcher[]> {
 function guardToolNames(): {
   fileWriteTools: string[];
   deviceWriteTools: string[];
+  delegationTools: string[];
   ownerRoutedTools: string[];
   ownedSections: string[];
 } {
@@ -73,6 +74,7 @@ function guardToolNames(): {
   return {
     fileWriteTools: tuple("FILE_WRITE_TOOLS"),
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
+    delegationTools: tuple("DELEGATION_TOOLS"),
     ownedSections: ownedSections(src),
     // The caller-routed sections live in a dict, not a tuple, and the tool they
     // gate is always `research_append` — so what the matcher must cover is that
@@ -432,12 +434,14 @@ describe("plugin hooks are packaged and wired", () => {
     // That shipped the device-bridge route open while the predicate, its three
     // copies, and their parity vectors all said it was closed.
     const matcher = loadHooks().PreToolUse[0].matcher ?? "";
-    const { fileWriteTools, deviceWriteTools, ownerRoutedTools } = guardToolNames();
+    const { fileWriteTools, deviceWriteTools, delegationTools, ownerRoutedTools } =
+      guardToolNames();
 
     // The extraction is load-bearing: an empty list makes every assertion below
     // vacuously true, which is the same false green in a new costume.
     expect(fileWriteTools.length).toBeGreaterThan(0);
     expect(deviceWriteTools.length).toBeGreaterThan(0);
+    expect(delegationTools.length).toBeGreaterThan(0);
     expect(ownerRoutedTools.length).toBeGreaterThan(0);
 
     // Anchored full match — the strictest reading of how a matcher is applied.
@@ -446,6 +450,10 @@ describe("plugin hooks are packaged and wired", () => {
     const matches = (tool: string) => new RegExp(`^(${matcher})$`).test(tool);
 
     for (const tool of fileWriteTools) {
+      expect(matches(tool), `matcher does not cover ${tool}`).toBe(true);
+    }
+    for (const tool of delegationTools) {
+      // Built-in tools, so bare: no server prefix to vary.
       expect(matches(tool), `matcher does not cover ${tool}`).toBe(true);
     }
     for (const tool of deviceWriteTools) {
@@ -472,6 +480,29 @@ describe("plugin hooks are packaged and wired", () => {
 });
 
 describe("the guard script's decisions", () => {
+  it.each(["Agent", "Task"])("denies a fork through %s and names the way out", (tool_name) => {
+    const out = runGuard({
+      tool_name,
+      tool_input: { subagent_type: "fork", description: "d", prompt: "p" },
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("named plugin agent");
+    // No stopReason: the model can delegate to a named agent instead.
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["Agent", { subagent_type: "record-extractor", prompt: "p" }],
+    ["Agent", { subagent_type: "genealogy-research:record-extractor", prompt: "p" }],
+    ["Task", { subagent_type: "general-purpose", prompt: "p" }],
+    ["Agent", { prompt: "p" }],
+    ["Agent", { subagent_type: null, prompt: "p" }],
+    ["Agent", { subagent_type: ["fork"], prompt: "p" }],
+    ["mcp__genealogy__record_read", { subagent_type: "fork" }],
+  ])("has no opinion on %s %j", (tool_name, tool_input) => {
+    expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
   it.each([
     ["Write", "/project/research.json"],
     ["Edit", "/project/tree.gedcomx.json"],

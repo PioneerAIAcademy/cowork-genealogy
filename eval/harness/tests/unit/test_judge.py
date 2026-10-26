@@ -2131,11 +2131,25 @@ def _grade_with(monkeypatch, rubric, responses):
     return client, out
 
 
+def _assert_pinned(call):
+    """SDK 2.x has no `temperature` kwarg and its default API version 400s on one."""
+    assert "temperature" not in call
+    assert call["extra_body"] == {"temperature": 0.0}
+    assert call["extra_headers"] == {"anthropic-version": "2023-06-01"}
+
+
+def _assert_unpinned(call):
+    """Default sampling goes out on the SDK's own API version, with nothing added."""
+    assert "temperature" not in call
+    assert "extra_body" not in call
+    assert "extra_headers" not in call
+
+
 def test_judge_first_sample_is_temperature_pinned(sample_rubric, monkeypatch):
     """One transcript should grade the same way run to run."""
     client, _ = _grade_with(monkeypatch, sample_rubric, [_parseable_response()])
     assert len(client.calls) == 1
-    assert client.calls[0]["temperature"] == 0.0
+    _assert_pinned(client.calls[0])
     assert judge.JUDGE_TEMPERATURE == 0.0
 
 
@@ -2162,8 +2176,8 @@ def test_judge_resample_drops_back_to_default_sampling(sample_rubric, monkeypatc
         monkeypatch, sample_rubric, [_malformed_response(), _parseable_response()]
     )
     assert len(client.calls) == 2
-    assert client.calls[0]["temperature"] == 0.0
-    assert "temperature" not in client.calls[1]
+    _assert_pinned(client.calls[0])
+    _assert_unpinned(client.calls[1])
     assert [d["name"] for d in out.dimensions] == [
         "Correctness",
         "Completeness",
@@ -2221,7 +2235,105 @@ def test_create_message_omits_temperature_when_none():
         client=client, model="m", prefix="p", suffix="s",
         grading_tool=judge.GRADING_TOOL, temperature=None,
     )
-    assert "temperature" not in client.calls[0]
+    _assert_unpinned(client.calls[0])
+
+
+def _wire_requests(temperature):
+    """Send one judge call through the real SDK and return what reached the wire."""
+    import json
+
+    import anthropic
+    import httpx2
+
+    seen = []
+
+    def handler(request):
+        seen.append((request.headers.get("anthropic-version"), json.loads(request.content)))
+        return httpx2.Response(200, json={
+            "id": "msg_1", "type": "message", "role": "assistant", "model": "m",
+            "content": [{"type": "tool_use", "id": "t1", "name": "submit_grading",
+                         "input": {"dimensions": []}}],
+            "stop_reason": "tool_use", "stop_sequence": None,
+            "usage": {"input_tokens": 1, "output_tokens": 1},
+        })
+
+    client = anthropic.Anthropic(
+        api_key="k", http_client=httpx2.Client(transport=httpx2.MockTransport(handler))
+    )
+    judge._create_message_with_retry(
+        client=client, model="m", prefix="p", suffix="s",
+        grading_tool=judge.GRADING_TOOL, temperature=temperature,
+    )
+    return seen
+
+
+def test_pinned_call_reaches_the_wire_on_the_legacy_api_version():
+    """The fake-client tests above cannot see an SDK signature change; this runs the
+    installed SDK, whose 2.x drops `temperature` from create() and defaults to an API
+    version that 400s on it."""
+    [(version, body)] = _wire_requests(0.0)
+    assert version == "2023-06-01"
+    assert body["temperature"] == 0.0
+
+
+def test_unpinned_call_keeps_the_sdk_default_api_version():
+    [(version, body)] = _wire_requests(None)
+    assert version != "2023-06-01"
+    assert "temperature" not in body
+
+
+def _connection_error():
+    import anthropic
+    import httpx
+
+    return anthropic.APIConnectionError(
+        request=httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    )
+
+
+class _FlakyClient:
+    """Raises a connection error `fails` times, then answers."""
+
+    def __init__(self, fails):
+        self.fails = fails
+        self.calls = 0
+        outer = self
+
+        class _Messages:
+            def create(self, **kwargs):
+                outer.calls += 1
+                if outer.calls <= outer.fails:
+                    raise _connection_error()
+                return _parseable_response()
+
+        self.messages = _Messages()
+
+
+def test_create_message_rides_out_a_connection_drop_of_about_a_minute(monkeypatch):
+    """Five connection errors in a row, the waits a dropped network needs, still
+    grade the test instead of failing it ungraded."""
+    import time
+
+    slept = []
+    monkeypatch.setattr(time, "sleep", slept.append)
+    client = _FlakyClient(fails=5)
+    judge._create_message_with_retry(
+        client=client, model="m", prefix="p", suffix="s", grading_tool=judge.GRADING_TOOL,
+    )
+    assert client.calls == 6
+    assert slept == [2.0, 4.0, 8.0, 16.0, 30.0]
+
+
+def test_create_message_gives_up_after_six_connection_errors(monkeypatch):
+    import time
+
+    monkeypatch.setattr(time, "sleep", lambda s: None)
+    client = _FlakyClient(fails=6)
+    with pytest.raises(judge.JudgeError, match="failed after 6 attempts"):
+        judge._create_message_with_retry(
+            client=client, model="m", prefix="p", suffix="s", grading_tool=judge.GRADING_TOOL,
+        )
+    assert client.calls == 6
 
 
 def test_compute_cost_counts_cached_tokens_alongside_input_not_inside_it():
@@ -2367,3 +2479,142 @@ def test_state_and_response_observations_coexist():
     )
     assert "response mentions a volume" in out
     assert "field X missing" in out
+
+
+# --- refused writer calls (issue #3839) --------------------------------------
+# Rationale, the writer set and every measured figure live in `judge.py` beside
+# `_WRITER_TOOLS` / `_REFUSED_ARGS_MARKER`. Deliberately not restated here: a
+# duplicated measurement goes stale on one side silently, and `measured-figures`
+# reads TypeScript only, so nothing would catch it.
+
+
+def _refused(tool: str, args: dict, kind: str = "live") -> dict:
+    return {
+        "tool": f"mcp__genealogy__{tool}",
+        "args": args,
+        "matched": {"kind": kind, "index": None},
+        "response": {"ok": False, "errors": ["refused for a reason"]},
+    }
+
+
+def _ok(tool: str, args: dict) -> dict:
+    return {
+        "tool": f"mcp__genealogy__{tool}",
+        "args": args,
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"ok": True},
+    }
+
+
+def test_refused_writer_args_are_replaced_by_a_marker():
+    calls = [_refused("research_append", {"entry": {"narrative_markdown": "SECRET-DRAFT"}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "SECRET-DRAFT" not in rendered, "the refused draft reached the judge"
+    assert judge._REFUSED_ARGS_MARKER in rendered
+
+
+def test_refused_writer_keeps_its_response_summary():
+    """The refusal itself must stay legible — only the args go."""
+    calls = [_refused("research_append", {"entry": {"narrative_markdown": "D"}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "refused for a reason" in rendered
+    assert '"ok": false' in rendered
+
+
+def test_refused_writer_is_marked_even_when_not_a_live_call():
+    """Gating the blank inside the live branch passes every other row — 444 of
+    the corpus's 445 refusals are live — while missing the one that is not."""
+    calls = [_refused("research_append", {"entry": {"narrative_markdown": "SECRET"}}, kind="none")]
+    assert "SECRET" not in judge._render_tool_calls_with_size_guard(calls)
+
+
+def test_refused_reader_args_are_kept():
+    calls = [_refused("convert_calendar", {"date": {"year": 1582}, "jurisdiction": "Spain"})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "Spain" in rendered, "a refused read's args are the question asked, not a claim"
+    assert judge._REFUSED_ARGS_MARKER not in rendered
+
+
+def test_successful_writer_args_are_untouched():
+    calls = [_ok("research_append", {"entry": {"narrative_markdown": "KEEP-ME"}})]
+    rendered = judge._render_tool_calls_with_size_guard(calls)
+    assert "KEEP-ME" in rendered
+    assert judge._REFUSED_ARGS_MARKER not in rendered
+
+
+def test_a_response_with_no_ok_key_is_untouched():
+    """2,518 dict responses in the corpus carry no `ok` key, and 8,502 calls
+    carry `response: None`. Neither may be read as a refusal."""
+    for response in ({"note": "no ok key"}, None):
+        calls = [{
+            "tool": "mcp__genealogy__research_append",
+            "args": {"entry": {"narrative_markdown": "KEEP"}},
+            "matched": {"kind": "live", "index": None},
+            "response": response,
+        }]
+        rendered = judge._render_tool_calls_with_size_guard(calls)
+        assert "KEEP" in rendered
+        assert judge._REFUSED_ARGS_MARKER not in rendered
+
+
+def test_rendering_does_not_mutate_the_caller_s_tool_calls():
+    """`_run_judge` runs BEFORE `output.tool_calls` is built from these same
+    dicts, so mutating `args` in place would write a fabricated value into the
+    committed run log, permanently and silently."""
+    args = {"entry": {"narrative_markdown": "ORIGINAL"}}
+    calls = [_refused("research_append", args)]
+    judge._render_tool_calls_with_size_guard(calls)
+    assert calls[0]["args"] is args
+    assert args == {"entry": {"narrative_markdown": "ORIGINAL"}}
+
+
+def test_refusal_marker_is_shorter_than_the_omission_marker_it_replaces():
+    """The easy half: against a long-args call the measured view already renders
+    `_live_args_omitted`'s own marker, so ours must not exceed it."""
+    assert len(judge._REFUSED_ARGS_MARKER) <= len(judge._live_args_omitted({"x": "y" * 500}))
+
+
+def test_refusal_marker_growth_against_raw_args_is_bounded_and_measured():
+    """The half the previous version of this test did NOT pin.
+
+    `_live_args_omitted` returns the RAW args when they are shorter than its own
+    marker, so for a short-args refused writer the measured view grows by
+    (marker - raw args). Asserting only against the omission marker let a call
+    like `{"projectPath": "/p"}` grow the budget while the test passed.
+
+    Bound it, and pin the corpus measurement that says the growth is harmless:
+    0 of 270 runs carrying a refused writer call change their drop count.
+    """
+    short = {"projectPath": "/p"}
+    rendered_today = judge._live_args_omitted(short)
+    growth = len(judge._REFUSED_ARGS_MARKER) - len(json.dumps(rendered_today))
+    # It may grow -- that is the honest statement -- but by a bounded amount.
+    assert growth <= 40, f"refusal marker grows the measured view by {growth} chars"
+
+
+def test_refused_research_log_append_keeps_its_args():
+    """`search-full-text/rubric.md` grades a log entry's executed args."""
+    calls = [_refused("research_log_append", {"query": {"surname": "KEEP-QUERY"}})]
+    assert "KEEP-QUERY" in judge._render_tool_calls_with_size_guard(calls)
+
+
+def test_writer_tools_classifies_every_ownership_writer():
+    """A new writer tool must not silently leak its refused draft to the judge.
+
+    `docs/specs/schemas/ownership.json` is the repo's own register of which tool
+    may perform a write. Every tool it authorizes must be classified here —
+    blanked, or named in `_WRITER_ARGS_ALWAYS_KEPT` with the rule that keeps it.
+    A blind sync would be wrong (some writers' args are themselves graded), so
+    this asserts the classification exists, not that the sets are equal.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    repo = _Path(__file__).resolve().parents[4]
+    rows = _json.loads((repo / "docs/specs/schemas/ownership.json").read_text(encoding="utf-8"))
+    authorized = {t for row in rows.get("rows", []) for t in (row.get("writerTools") or [])}
+    unclassified = authorized - judge._WRITER_TOOLS - set(judge._WRITER_ARGS_ALWAYS_KEPT)
+    assert not unclassified, (
+        f"ownership.json authorizes {sorted(unclassified)} to write, but judge.py "
+        f"neither blanks their refused args nor records why it keeps them"
+    )

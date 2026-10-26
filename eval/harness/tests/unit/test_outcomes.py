@@ -14,8 +14,6 @@ Two things are pinned here, and the first is the reason the module exists.
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -27,6 +25,7 @@ from harness.outcomes import (
     _OUTCOME_RANK,
     aggregate_per_run_outcome,
 )
+from tests.unit.bare_python import bare
 
 HARNESS_DIR = Path(__file__).resolve().parents[2]
 
@@ -38,21 +37,8 @@ def test_runlog_reexports_the_same_objects_not_copies():
     assert runlog._OUTCOME_RANK is _OUTCOME_RANK
 
 
-def _bare(code: str) -> subprocess.CompletedProcess:
-    """Run `code` on an interpreter with no site-packages and no environment.
-
-    `sys.executable` is the uv venv, so `-S -E` is what strips it back to roughly
-    the dependency-free runner CI gives us. Verified: `-S -E -c "import jsonschema"`
-    raises ModuleNotFoundError.
-    """
-    return subprocess.run(
-        [sys.executable, "-S", "-E", "-c", code],
-        capture_output=True, text=True, encoding="utf-8",
-    )
-
-
 def test_outcomes_imports_on_a_bare_interpreter():
-    proc = _bare(
+    proc = bare(
         "import sys; sys.path.insert(0, %r);"
         "from harness.outcomes import aggregate_per_run_outcome as a;"
         "print(a(['pass', 'pass', 'fail']))" % str(HARNESS_DIR)
@@ -74,7 +60,7 @@ def test_check_runlogs_itself_imports_on_a_bare_interpreter():
     versioning) regressing the same way.
     """
     script = HARNESS_DIR / "scripts" / "check_runlogs.py"
-    proc = _bare(
+    proc = bare(
         "import importlib.util, sys;"
         "sys.path.insert(0, %r);"
         "spec = importlib.util.spec_from_file_location('cr', %r);"

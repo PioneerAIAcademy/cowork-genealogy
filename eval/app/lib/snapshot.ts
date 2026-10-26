@@ -23,15 +23,22 @@ const MCP_SRC_PREFIX = 'packages/engine/mcp-server/src/';
 
 // Plugin-agent delegation references in a SKILL.md body: `@plugin:<name>`.
 // Mirrors _AGENT_REF_RE / agent_refs_in_text in eval/harness/harness/snapshot.py
-// — build_snapshot embeds `packages/engine/plugin/agents/<name>.md` for each
-// match, so the two scanners must agree (shared test vectors in
-// tests/unit/snapshot.test.ts + tests/unit/test_snapshot.py).
+// (shared test vectors in tests/unit/snapshot.test.ts + tests/unit/test_snapshot.py).
 //
-// `build_snapshot` ALSO embeds `packages/engine/plugin/agents/<skill>.md` when
-// one exists, for an agent-keyed suite with no SKILL.md to scan (issue #1253).
-// That rule needs no mirror here: this file only diffs a snapshot it is handed,
-// never builds one — only the scanner contract above is shared.
+// Which agents a snapshot embeds, and in which form (`agent_embed_forms`, #3568),
+// needs no mirror here: this file only diffs a snapshot it is handed, never builds
+// one. What it must mirror is how a `#frontmatter` key is compared.
 const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
+
+// The key suffix of an agent fingerprinted by its frontmatter only (#3568).
+// Mirrors AGENT_FRONTMATTER_SUFFIX in eval/harness/harness/snapshot.py.
+export const AGENT_FRONTMATTER_SUFFIX = '#frontmatter';
+
+// Mirrors _FRONTMATTER_KEYS / _FRONTMATTER_KEY_LINE_RE /
+// _FRONTMATTER_CONTINUATION_STARTS in snapshot.py.
+const FRONTMATTER_KEYS = ['name', 'description', 'tools', 'disallowedTools'] as const;
+const FRONTMATTER_KEY_LINE_RE = /^([A-Za-z][A-Za-z0-9_-]*):/;
+const FRONTMATTER_CONTINUATION_STARTS = [' ', '\t', '#', '-'];
 
 // A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
 // `_HASH_RE` in eval/harness/harness/snapshot.py.
@@ -110,6 +117,30 @@ function normalizeText(content: string | Buffer): string {
   text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   if (text && !text.endsWith('\n')) text += '\n';
   return text;
+}
+
+/**
+ * The part of an agent file a router reads, as canonical text. Mirrors
+ * `frontmatter_fingerprint_text` in eval/harness/harness/snapshot.py — see its
+ * docstring for the rule. Input is already-normalized text. Splits on '\n'
+ * only (as Python's `split("\n")`, never `splitlines()`). Shared vectors:
+ * docs/specs/schemas/agent-frontmatter-vectors.json.
+ */
+export function frontmatterFingerprintText(normalized: string): string {
+  const lines = normalized.split('\n');
+  if (lines.length === 0 || lines[0] !== '---') return normalized;
+  const end = lines.indexOf('---', 1);
+  if (end < 0) return normalized;
+  const blocks = new Map<string, string[]>(FRONTMATTER_KEYS.map((k) => [k, []]));
+  let current: string | null = null;
+  for (const line of lines.slice(1, end)) {
+    const match = FRONTMATTER_KEY_LINE_RE.exec(line);
+    if (match) current = match[1];
+    else if (line.length > 0 && !FRONTMATTER_CONTINUATION_STARTS.includes(line[0])) return normalized;
+    if (current !== null && blocks.has(current)) blocks.get(current)!.push(line);
+  }
+  const kept = FRONTMATTER_KEYS.flatMap((k) => blocks.get(k)!);
+  return kept.join('\n') + '\n';
 }
 
 /**
@@ -244,9 +275,13 @@ export async function diffSnapshotVsDisk(
     // another — they agree today, but nothing makes them agree, and that gap is
     // the whole bug class this PR closes. `readSnapshotFiles` already does it
     // this way.
+    // A `#frontmatter` key names the file without the suffix and compares only
+    // its frontmatter fingerprint, so a body-only edit reports nothing (#3568).
+    const reduced = rel.endsWith(AGENT_FRONTMATTER_SUFFIX);
+    const fileRel = reduced ? rel.slice(0, -AGENT_FRONTMATTER_SUFFIX.length) : rel;
     let absPath: string;
     try {
-      absPath = resolveWithin(repoRoot, rel);
+      absPath = resolveWithin(repoRoot, fileRel);
     } catch {
       out[rel] = 'missing-on-disk';
       continue;
@@ -258,7 +293,8 @@ export async function diffSnapshotVsDisk(
       out[rel] = 'missing-on-disk';
       continue;
     }
-    const normalized = normalize(rel, bytes);
+    let normalized = normalize(fileRel, bytes);
+    if (reduced) normalized = frontmatterFingerprintText(normalized);
     const actual = hashed ? hashContent(normalized) : normalized;
     if (actual !== expected) {
       out[rel] = 'content-differs';

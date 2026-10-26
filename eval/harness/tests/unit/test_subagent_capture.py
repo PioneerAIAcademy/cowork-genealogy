@@ -24,6 +24,7 @@ from e2e.subagent_capture import (
     pair_tool_calls,
     parse_jsonl,
     summarize_transcript,
+    subagent_tool_messages,
     summarize_turn,
     transcript_agent_id,
 )
@@ -1135,3 +1136,91 @@ def test_duration_is_none_not_zero_without_two_timestamps(records):
     from e2e.subagent_capture import subagent_duration_seconds
 
     assert subagent_duration_seconds(records) is None
+
+
+def test_backfill_captures_a_background_agents_staged_transcription(shortspace: Path, monkeypatch):
+    """A background agent's `image_transcribe` returns a ref (#2490); the
+    backfill saves the staged page under the same key a synchronous call gets."""
+    from e2e.orchestrator import STAGED_TRANSCRIPTION_KEY, backfill_background_tool_calls
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc123"
+    ref = "results/.staging/p.json"
+    (workspace / "results" / ".staging").mkdir(parents=True)
+    (workspace / ref).write_text(
+        json.dumps({"tool": "image_transcribe", "payload": {"results": [{"id": "X", "transcription": "the page"}]}}),
+        encoding="utf-8",
+    )
+    response = json.dumps({"staged": {"resultsRef": ref, "returnedCount": 1}, "digest": {"id": "X", "chars": 8}})
+    records = [
+        _assistant_rec([_tool_use_block("tu0", "mcp__genealogy__image_transcribe", {"imageId": "X"})]),
+        _user_rec([_tool_result_block("tu0", response)]),
+    ]
+    _seed_transcript(home, workspace, "bg778", records, meta={"agentType": "search-images"})
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    tool_calls: list[dict] = [_async_launch_entry("bg778")]
+    backfill_background_tool_calls(workspace, tool_calls)
+    [entry] = [tc for tc in tool_calls if tc.get("agent_id") == "bg778"]
+    assert entry[STAGED_TRANSCRIPTION_KEY] == "the page"
+
+
+# --- subagent_tool_messages (#3713): which calls shared one API message ------
+
+def _msg(mid, *blocks):
+    """One record of an API message: Claude Code writes one record per block."""
+    rec = _assistant("tool_use", 10, list(blocks))
+    if mid is not None:
+        rec["message"]["id"] = mid
+    return rec
+
+
+def test_two_tool_calls_in_one_message_are_one_entry():
+    records = [_msg("msg_1", _tool_use("mcp__genealogy__person_warnings")),
+               _msg("msg_1", _tool_use("mcp__genealogy__person_warnings"))]
+    assert subagent_tool_messages(records) == [["person_warnings", "person_warnings"]]
+
+
+def test_two_messages_are_two_entries_in_order():
+    records = [_msg("msg_1", _tool_use("mcp__genealogy__research_query")),
+               {"type": "user", "message": {"role": "user", "content": []}},
+               _msg("msg_2", _tool_use("mcp__genealogy__person_warnings"))]
+    assert subagent_tool_messages(records) == [["research_query"], ["person_warnings"]]
+
+
+def test_a_message_with_no_tool_call_is_absent():
+    records = [_msg("msg_1", _thinking()),
+               _msg("msg_2", _tool_use("Read"))]
+    assert subagent_tool_messages(records) == [["Read"]]
+
+
+def test_a_record_with_no_message_id_stays_alone():
+    """Never merged with its neighbour: reads as not batched, never as batched."""
+    records = [_msg(None, _tool_use("mcp__genealogy__person_warnings")),
+               _msg(None, _tool_use("mcp__genealogy__person_warnings"))]
+    assert subagent_tool_messages(records) == [["person_warnings"], ["person_warnings"]]
+
+
+def test_the_summary_carries_tool_messages():
+    records = [_msg("msg_1", _tool_use("mcp__genealogy__person_warnings"),
+                    _tool_use("mcp__genealogy__person_warnings"))]
+    assert summarize_transcript(records)["tool_messages"] == [["person_warnings", "person_warnings"]]
+
+
+def _blob(*blocks):
+    """The id-less `api-request-blob` copy newer Claude Code writes after a message."""
+    return {"type": "api-request-blob", "agentId": "a", "hash": "h", "sessionId": "s",
+            "message": {"role": "assistant", "content": list(blocks)}}
+
+
+def test_a_request_blob_copy_is_not_a_second_message():
+    pw = _tool_use("mcp__genealogy__person_warnings")
+    records = [_msg("msg_1", pw), _msg("msg_1", pw), _blob(pw, pw),
+               _msg("msg_2", _tool_use("Read")), _blob(_tool_use("Read"))]
+    assert subagent_tool_messages(records) == [["person_warnings", "person_warnings"], ["Read"]]
+
+
+def test_a_request_blob_is_not_counted_as_a_turn():
+    records = [_msg("msg_1", _tool_use("Read")), _blob(_tool_use("Read"))]
+    assert summarize_transcript(records)["num_assistant_turns"] == 1

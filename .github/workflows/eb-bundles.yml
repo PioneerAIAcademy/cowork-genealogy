@@ -122,10 +122,14 @@ jobs:
           cache-dependency-glob: 'apps/server/uv.lock'
 
       # `--filter web...` is apps/web plus the workspace packages it depends
-      # on, which skips apps/electron and its binary download.
+      # on. The root .npmrc's node-linker=hoisted would still fetch the whole
+      # lockfile, apps/electron's tree included, so this install is isolated:
+      # it fetches only the web scope. FamilySearch's build runner resolves
+      # npm through Artifactory, whose curation refuses electron 39 and undici
+      # 6.28, so the bundle build there must install exactly this way.
       - name: Install the web workspace
         if: steps.scope.outputs.relevant == 'true'
-        run: pnpm install --frozen-lockfile --filter web...
+        run: pnpm install --frozen-lockfile --filter 'web...' --config.node-linker=isolated
 
       - name: Install the engine
         if: steps.scope.outputs.relevant == 'true'

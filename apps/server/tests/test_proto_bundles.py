@@ -11,10 +11,12 @@ to each zip's root. Plan: docs/plan/familysearch-handoff.md, U12; the interface 
   ``?``, ``&`` or ``,`` -- and no secret, API-level or dev-only variable is in any template;
 - U11: no file under a template directory but its README, and no tier ``Dockerfile``,
   names one of ``layout.py``'s dev-only variables outside a comment;
-- the logs block, the health paths, nginx at 1800 s for tools, one instance for worker
+- no logs block (the deployer sets it; under Blueprint it fails the launch), the health paths, nginx at 1800 s for tools, one instance for worker
   and tools until U18 chooses the scaling metric (U6's fencing is built);
 - the worker's ``ENGINE_PLUGIN_DIR`` is where its predeploy hook puts the plugin, and the
   hook is executable in git and runs under ``set -euo pipefail``;
+- every ``.platform`` hook is named ``1XX_<name>``, outside the FamilySearch provisioner's
+  reserved ``000``-``099``;
 - the CA variable names ``/var/app/current/`` plus the bundle's CA path.
 
 Values are compared as strings, so re-quoting a YAML value is not an offence.
@@ -34,7 +36,7 @@ import yaml
 REPO = Path(__file__).resolve().parents[3]
 PROTO = REPO / "apps" / "server" / "proto"
 LAYOUT_PY = REPO / "scripts" / "eb_bundles" / "layout.py"
-WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh"
+WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh"
 TOOLS_NGINX = PROTO / "eb-tools" / ".platform" / "nginx" / "conf.d" / "01-tools-timeouts.conf"
 
 
@@ -265,10 +267,9 @@ def test_the_scan_sees_each_shape(tier, text, dev):
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
-def test_logs_stream_and_survive_terminate(tier):
-    logs = _settings(tier, LOGS_NS)
-    assert logs.get("StreamLogs", "").lower() == "true", (tier, logs)
-    assert logs.get("DeleteOnTerminate", "").lower() == "false", (tier, logs)
+def test_bundles_leave_logs_to_the_deployer(tier):
+    # Under Blueprint StreamLogs fails the launch (handoff step 14); rehearse.py sets it at API level.
+    assert not _settings(tier, LOGS_NS), (tier, _settings(tier, LOGS_NS))
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
@@ -288,6 +289,15 @@ def test_tools_alb_idle_timeout_is_alone_in_its_file():
     assert int(entries[0][0]) >= TOOLS_MIN_TIMEOUT_S
     data = _load_config(_template("tools") / ".ebextensions" / "02-tools-alb.config")
     assert list(data["option_settings"]) == ["aws:elbv2:loadbalancer"]
+
+
+def test_tools_classic_elb_idle_timeout_is_alone_in_its_file():
+    # Blueprint creates a Classic load balancer, where the ALB option above is ignored (F12).
+    entries = _options("tools")[("aws:elb:policies", "ConnectionSettingIdleTimeout")]
+    assert [f for _, f in entries] == ["03-tools-classic-elb.config"]
+    assert int(entries[0][0]) >= TOOLS_MIN_TIMEOUT_S
+    data = _load_config(_template("tools") / ".ebextensions" / "03-tools-classic-elb.config")
+    assert list(data["option_settings"]) == ["aws:elb:policies"]
 
 
 @pytest.mark.parametrize("tier", ["worker", "tools"])
@@ -346,6 +356,18 @@ def test_worker_hook_is_executable_in_git_and_strict():
     lines = WORKER_HOOK.read_text(encoding="utf-8").splitlines()
     assert lines[0] in ("#!/bin/bash", "#!/usr/bin/env bash"), lines[0]
     assert "set -euo pipefail" in [line.strip() for line in lines], "the hook must run under set -euo pipefail"
+
+
+# FamilySearch's Beanstalk provisioner reserves hook prefixes 000-099 for the hooks it adds
+# to the bundle, and documents 1XX_<name> for ours (F12).
+HOOK_NAME = re.compile(r"^1\d\d_[^/]+$")
+
+
+def test_every_platform_hook_uses_the_provisioners_1xx_prefix():
+    hooks = [p for p in PROTO.glob("eb-*/.platform/*hooks/*/*") if p.is_file()]
+    assert WORKER_HOOK in hooks, "the glob no longer reaches the worker hook"
+    bad = [p.relative_to(PROTO).as_posix() for p in hooks if not HOOK_NAME.match(p.name)]
+    assert not bad, f"rename to 1XX_<name> (the provisioner owns 000-099): {bad}"
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
