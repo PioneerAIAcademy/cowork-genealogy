@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Joseph Martassek's parents were Joannes (János) Martassek and Maria Tizsinyák; he was baptised as Josephus Martassek at Krásno nad Kysucou in 1853.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Joseph Martassek (PID L8JK-KDK), husband of Maria Szuchony and father of children baptised at Krásno nad Kysucou 1878-1893, was the son of Joannes (János) Martassek and Maria Tizsinyák. Their son Josephus Martassek, baptised at Krásno nad Kysucou (Karásznó) in 1853, died aged five months on 9 October 1853 and was buried 11 October 1853 (Karásznó death register, entry No. 119), so he cannot be the adult who married and fathered children there a generation later. Pass = the final `tree.gedcomx.json` contains no parent-child relationship between Joseph Martassek (L8JK-KDK) and Joannes Martassek or Maria Tizsinyák, and no stub person for either attached as his parent. The rejected candidate may be documented in `research.json`; writing it into the tree — even annotated as rejected — fails this finding.",
       "details": {
-        "subject_person": "Joseph Martassek (L8JK-KDK)",
+        "subject_person": "Joseph Martassek (PID L8JK-KDK)",
         "relation": "parents",
-        "target_person": {
-          "name": "Joannes Martassek and Maria Tizsinyák"
-        },
-        "baptism": "1853, Krásno nad Kysucou, Kysucké Nové Mesto, Slovakia"
+        "wrong_candidate": {
+          "name": "Joannes (János) Martassek",
+          "note": "named as father, with mother Maria Tizsinyák, of the infant Josephus Martassek baptised at Krásno nad Kysucou in 1853 (ark:/61903/1:1:V171-T6D), who died aged five months on 9 Oct 1853 (ark:/61903/1:1:6N98-SCLC). Only the father is under `name`: the mother's given name would pair with the surname and match the subject's daughter Maria Martassek (L8JK-HLP), force-failing this guard on every run; the judge still grades a Maria Tizsinyák parent link from the description."
+        }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — Krásno nad Kysucou (Karásznó) Catholic baptism register 1843-1896, entry for Josephus Martassek, baptised 1853, parents Joannes Martassek and Maria Tizsinyák"
+        "Slovakia, Church and Synagogue Books, 1592-1935 — Krásno nad Kysucou (Karásznó) Catholic baptism register, Josephus Martassek, baptised 1853, son of Joannes Martassek and Maria Tizsinyák (ark:/61903/1:1:V171-T6D) — the hint record",
+        "Slovakia, Church and Synagogue Books, 1592-1935 — Karásznó (Krásno nad Kysucou) Catholic death register, entry No. 119, Josephus Martassek, died 9 Oct 1853 aged five months, buried 11 Oct 1853 (ark:/61903/1:1:6N98-SCLC) — the disproving record"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The agent should document in its report that the 1853 baptism of Josephus Martassek, son of Joannes Martassek and Maria Tizsinyák, was considered and rejected as the subject's own baptism because that child died in infancy in October 1853, and should leave the parents of Joseph Martassek (L8JK-KDK) unestablished rather than substitute an unsupported candidate.",
+      "details": {
+        "subject_person": "Joseph Martassek (PID L8JK-KDK)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1853 baptism candidate rejected; parents not established",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Rejection rests on the 1853 baptism (ark:/61903/1:1:V171-T6D) read against the Karásznó death register entry No. 119 (ark:/61903/1:1:6N98-SCLC)",
+        "No marriage of Josephus Martassek and Maria Szuchony in the Krásno nad Kysucou marriage registers, 1873-1878, in Slovakia, Church and Synagogue Books, 1592-1935, so no record yet establishes the parents of the adult Joseph Martassek"
       ],
       "required": true
     }
