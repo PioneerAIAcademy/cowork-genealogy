@@ -297,6 +297,25 @@ describe("circular corroboration (issue #2943)", () => {
       expect(res.ok, errs(res)).toBe(true);
     });
 
+    it("accepts when the parent relationships are sourced to a death record that repeats the baptism day and place", async () => {
+      const death = "ark:/61903/1:1:DTH9-009";
+      const r = research({
+        sources: [...research().sources, source("src_005", "S7")],
+        assertions: [
+          ...research().assertions,
+          assertion("a_050", "src_005", death, "deceased", "name", "William Latham"),
+          assertion("a_051", "src_005", death, "deceased", "birth", "born", { date: BAPTISM, place: LONGTON }),
+          assertion("a_052", "src_005", death, "deceased", "death", "died", { date: "2 May 1901", place: LONGTON }),
+        ],
+      });
+      const baseline = startingTree({ father: ["S7"], mother: ["S7"] });
+      baseline.sources.push({ id: "S7", title: "England, Deaths", url: `https://www.familysearch.org/${death}` });
+      await setup(r, baseline);
+      await attest(r, ["a_001", W]);
+      const res = await call(link("a_001", W));
+      expect(res.ok, errs(res)).toBe(true);
+    });
+
     it("accepts when the relationships carry no source: provenance unknown", async () => {
       const r = research();
       await setup(r, startingTree({ father: [], mother: [] }));
@@ -473,6 +492,18 @@ describe("circular corroboration (issue #2943)", () => {
         ],
       });
       expect(sameEntryOf(names, names.assertions[0])!.records.size).toBe(1);
+    });
+
+    it("does not join a record that carries a death fact, though it repeats the baptism day and place", () => {
+      const r = research({
+        assertions: [
+          ...christening("a_00", "src_001", REC.staff),
+          assertion("a_10", "src_002", REC.births, "deceased", "name", "William Latham"),
+          assertion("a_11", "src_002", REC.births, "deceased", "birth", "born", { date: BAPTISM, place: LONGTON }),
+          assertion("a_12", "src_002", REC.births, "deceased", "death", "died", { date: "2 May 1901", place: LONGTON }),
+        ],
+      });
+      expect(sameEntryOf(r, r.assertions[0])!.records.size).toBe(1);
     });
 
     it("joins records that share a research source", () => {

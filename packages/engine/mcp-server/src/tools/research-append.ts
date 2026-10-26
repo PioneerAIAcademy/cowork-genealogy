@@ -2452,6 +2452,9 @@ export function coPartyRelation(
 }
 
 const ENTRY_EVENTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism"]);
+/** Facts a register-entry index carries. A record with any other fact (a death, a
+ *  residence, an occupation) is another kind of record, not a copy of the entry. */
+const ENTRY_FACTS: ReadonlySet<string> = new Set(["name", "gender", "relationship", ...ENTRY_EVENTS]);
 const FULL_DATE = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2} [A-Za-z]{3,9} \d{4})$/;
 
 /** One record or its copies: the bare record ids, research sources and source
@@ -2459,7 +2462,9 @@ const FULL_DATE = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2} [A-Za-z]{3,9} \d{4})$/;
  *  Joined when they share a record id, a research source, a source description,
  *  or a party's birth, christening or baptism with the same full date, the same
  *  place and the same given name (two indexes of one entry share no identifier;
- *  lead, 2026-10-18). A year-only date matches nothing. */
+ *  lead, 2026-10-18), on records that carry only names, genders, relationships and
+ *  those events. A year-only date matches nothing, and a record with any other
+ *  fact (a death certificate repeating the birth date) is another record. */
 export function sameEntryOf(
   research: any,
   seed: any,
@@ -2499,6 +2504,11 @@ export function sameEntryOf(
     const first = nameKey(a.value)?.split(" ")[0];
     if (first && !given.has(partyOf(a))) given.set(partyOf(a), first);
   }
+  const otherKinds = new Set(
+    assertions
+      .filter((a) => !ENTRY_FACTS.has(String(a.fact_type ?? "").toLowerCase()))
+      .map((a) => arkToBareId(a.record_id)),
+  );
   for (const a of assertions) {
     const record = arkToBareId(a.record_id);
     add(record);
@@ -2511,7 +2521,7 @@ export function sameEntryOf(
     const date = typeof a.date === "string" ? stdDate(a.date) : "";
     const place = capNorm(a.standard_place ?? a.place);
     const first = given.get(partyOf(a));
-    if (FULL_DATE.test(date) && place !== "" && first) joinOn(byEvent, `${date}\u0000${place}\u0000${first}`, record);
+    if (FULL_DATE.test(date) && place !== "" && first && !otherKinds.has(record)) joinOn(byEvent, `${date}\u0000${place}\u0000${first}`, record);
   }
   const root = find(arkToBareId(seed.record_id));
   const records = new Set<string>();
