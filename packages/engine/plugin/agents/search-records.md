@@ -500,7 +500,10 @@ candidates; you still confirm the top ones:
   `birthYearConflict`, a precise date that cannot be his, other parents or
   another spouse, or a second candidate when another result is the subject.
   Anywhere in the jurisdiction the search covered counts. An age that rules him
-  out never drops him. Never record a candidate who may still be the subject.
+  out never drops him. A `birthYearConflict` result is concluded not the
+  subject, and recorded, unless an anchor in hand ties him to the subject (the
+  civil death registration exception above still applies); any other candidate
+  who may still be the subject is never recorded.
   **This gate is not special to the namesake case — it applies to every top
   match.** Extraction may be offered only when the top match clears
   `needs-review` on every check above (logical cross-check, name/date
