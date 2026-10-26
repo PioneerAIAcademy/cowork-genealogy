@@ -16,7 +16,7 @@ Did the agent pick the right curated rows, and only curated rows?
 
 Is each reason drawn from what the tools returned? This dimension needs a genealogist's annotation.
 
-- **pass:** Each reason gives the row's `linkText`, its years (or says it is undated) and how they cover the searched years, and whether the site is free or needs a subscription, as `access` reported it. Nothing else is asserted about the site, the place or the record set. With fewer than 3 suggestions, the reply says that is all FamilySearch lists for that place and period.
+- **pass:** Each reason gives the row's `linkText`, its years (the row's `startYear`-`endYear` or years its `linkText` names; "Undated collection." when neither has any) and how they cover the searched years, and whether the site is free or needs a subscription, as `access` reported it. Nothing else is asserted about the site, the place or the record set. With fewer than 3 suggestions, the reply says that is all FamilySearch lists for that place and period.
 - **partial:** A reason omits the years or the access, or calls a dated row's coverage wrong (e.g. says it covers a year outside its span).
 - **fail:** A reason states a fact about a site, place or collection that no tool returned, or a generic line ("Ancestry has many records") stands in for the grounded one.
 

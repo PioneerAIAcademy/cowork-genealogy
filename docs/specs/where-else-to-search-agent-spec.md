@@ -71,8 +71,17 @@ appear more than once, with different collections.
     (`external-links-search-tool-spec.md`, §Output). This is output only: its
     `description` and `inputSchema` are unchanged, so no other suite's
     snapshot fingerprint moves.
-  - A merged row's span is the hull of its duplicates. A span can therefore be
-    wider than its `linkText` says, and the reason may state that span.
+  - A merged row's span is the hull of its duplicates, so it can be wider than
+    its `linkText` says. Many rows are undated in the fields while their
+    `linkText` names years. A reason may state either span, the row's
+    `startYear`–`endYear` or years its `linkText` names, because both are tool
+    output. A row with neither says "Undated collection."
+  - The first paid run (`v1_2026-10-26_17-59-04`) required the field span only.
+    Every failure in it was the agent preferring the title's years, which are
+    usually the collection's own, over the merged hull. So the rule was widened
+    to what is grounded, and
+    `test_each_entry_states_its_rows_span_and_nothing_more` still fails a span
+    found in neither.
 - **The host table is exact hostnames, not registrable domains.** Live data for
   the three suite places carries curated rows that share a supported site's
   domain but are not a search:

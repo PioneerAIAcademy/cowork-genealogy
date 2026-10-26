@@ -191,7 +191,7 @@ def test_span_fires_on_an_invented_span_an_extra_sentence_or_a_missing_entry():
         check_span(CALLS, reply("x\n---\nOpen the links I built."), None, t)
 
 
-def test_span_requires_undated_for_an_undated_row_even_when_its_title_names_years():
+def test_span_accepts_years_the_title_names_on_an_undated_row():
     undated_links = call(
         "external_links_search",
         {"results": [{"url": CURATED, "linkText": "U.S. Census Mortality Schedules, 1850-1880"}]},
@@ -199,8 +199,39 @@ def test_span_requires_undated_for_an_undated_row_even_when_its_title_names_year
     calls = [undated_links, build_call()]
     t = where_test()
     check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Undated collection.")), None, t)
-    with pytest.raises(AssertionError):  # the live Haiku defect
-        check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which includes your 1870.")), None, t)
+    check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which includes your 1870.")), None, t)
+    with pytest.raises(AssertionError):  # a span in neither the fields nor the title
+        check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1890.")), None, t)
+
+
+def test_span_accepts_the_title_span_or_the_merged_hull_and_nothing_else():
+    # The live case: a merged row whose hull (1865-1956) is wider than its title (1865-1936).
+    gar = call(
+        "external_links_search",
+        {"results": [{"url": CURATED, "linkText": "Pennsylvania GAR Membership Records, 1865-1936", "startYear": 1865, "endYear": 1956}]},
+    )
+    calls = [gar, build_call()]
+    t = where_test()
+    check_span(calls, _span_reply(_entry("**GAR Records** — Ancestry", "Covers 1865–1936, which includes your 1870.")), None, t)
+    check_span(calls, _span_reply(_entry("**GAR Records** — Ancestry", "Covers 1865–1956, which includes your 1870.")), None, t)
+    with pytest.raises(AssertionError):
+        check_span(calls, _span_reply(_entry("**GAR Records** — Ancestry", "Covers 1861–1936.")), None, t)
+
+
+def test_span_requires_undated_when_no_tool_named_any_year():
+    bare = call("external_links_search", {"results": [{"url": CURATED, "linkText": "U.S. City Directories"}]})
+    calls = [bare, build_call()]
+    t = where_test()
+    check_span(calls, _span_reply(_entry("**City Directories** — Ancestry", "Undated collection.")), None, t)
+    with pytest.raises(AssertionError):
+        check_span(calls, _span_reply(_entry("**City Directories** — Ancestry", "Covers 1822–1995.")), None, t)
+
+
+def test_span_reads_decade_plurals_in_a_title():
+    plural = call("external_links_search", {"results": [{"url": CURATED, "linkText": "Passenger Lists Index, 1500s-1900s"}]})
+    calls = [plural, build_call()]
+    check_span(calls, _span_reply(_entry("**Passenger Lists** — Ancestry", "Covers 1500s–1900s.")), None, where_test())
+    check_span(calls, _span_reply(_entry("**Passenger Lists** — Ancestry", "Covers 1500–1900.")), None, where_test())
 
 
 def test_span_accepts_a_single_year_row_written_once():

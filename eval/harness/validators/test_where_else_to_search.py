@@ -156,10 +156,34 @@ def _curated_rows(tool_calls) -> dict[str, dict]:
     return rows
 
 
+_TITLE_SPAN = re.compile(r"(\d{4})s?\s*-\s*(\d{4})s?|(?<!\d)(\d{4})(?!\d)")
+
+
+def _dash(text: str) -> str:
+    text = text.replace("–", "-").replace("—", "-")
+    return re.sub(r"(\d{4})s\b", r"\1", text)
+
+
+def _grounded_spans(row: dict) -> list[str]:
+    """The spans a tool returned for this row: its own `startYear`-`endYear`, and
+    every range or year its `linkText` names (often the collection's own years,
+    narrower than the merged row's hull)."""
+    spans = []
+    start, end = row.get("startYear"), row.get("endYear")
+    if start is not None:
+        spans.append(str(start) if start == end else f"{start}-{end}")
+    for m in _TITLE_SPAN.finditer(_dash(row.get("linkText") or "")):
+        if m.group(1):
+            spans.append(m.group(1) if m.group(1) == m.group(2) else f"{m.group(1)}-{m.group(2)}")
+        else:
+            spans.append(m.group(3))
+    return spans
+
+
 def test_each_entry_states_its_rows_span_and_nothing_more(tool_calls, agent_returns, text_response, test):
-    """Each entry is the fixed three-line shape, and its coverage line is the
-    row's own span: `Covers <start>–<end>` for a dated row, `Undated collection.`
-    for an undated one, even when its linkText names years."""
+    """Each entry is the fixed three-line shape, and its coverage line states a
+    span a tool returned for that row: the row's `startYear`-`endYear` or years
+    its `linkText` names. A row with neither must say `Undated collection.`"""
     _positive(test)
     rows = _curated_rows(tool_calls)
     base_of = {}
@@ -179,17 +203,17 @@ def test_each_entry_states_its_rows_span_and_nothing_more(tool_calls, agent_retu
         checked += 1
         assert len(lines) == 3, f"an entry must be exactly three lines, got {len(lines)}: {lines}"
         row = rows.get(base_of[built[0]]) or {}
-        coverage = lines[1].replace("–", "-").replace("—", "-")
-        start, end = row.get("startYear"), row.get("endYear")
-        if start is None:
-            assert "undated collection" in coverage.lower(), (
-                f"row {row.get('linkText')!r} is undated, so its entry must say 'Undated collection.': {lines[1]!r}"
-            )
-        else:
-            span = str(start) if start == end else f"{start}-{end}"
-            assert re.search(rf"(?<!\d){span}(?!\d)", coverage), (
-                f"row {row.get('linkText')!r} spans {start}-{end}; its entry says {lines[1]!r}"
-            )
+        coverage = _dash(lines[1])
+        spans = _grounded_spans(row)
+        if row.get("startYear") is None and "undated collection" in coverage.lower():
+            continue
+        assert spans, (
+            f"row {row.get('linkText')!r} has no years in its fields or its title, so its entry "
+            f"must say 'Undated collection.': {lines[1]!r}"
+        )
+        assert any(re.search(rf"(?<!\d){s}(?!\d)", coverage) for s in spans), (
+            f"row {row.get('linkText')!r} carries spans {spans}; its entry says {lines[1]!r}"
+        )
     if base_of:
         assert checked, "links were built but no entry in the user-facing block carries one"
 

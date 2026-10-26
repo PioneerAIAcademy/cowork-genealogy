@@ -115,8 +115,9 @@ Otherwise → proceed.
 
 - An **entry** is one link `build_external_search_url` returned. One site may
   appear twice with different collections.
-- Each entry's reason is the row's `linkText`, its `startYear`–`endYear` and
-  how that span covers the searched years (or "undated"), and the call's
+- Each entry's reason is the row's `linkText`, its span (`startYear`–`endYear`
+  or the years `linkText` names) and how that span covers the searched years
+  (or "undated"), and the call's
   `access` (free or subscription). Nothing else: no fact about a site, a place,
   a record set, the person's name or origin, or the history of the period.
 - Every link you write is a `url` a tool returned in this run, character for
@@ -148,9 +149,9 @@ label, heading or field name**:
    <url>
    ```
 
-   Use the row's own `startYear`/`endYear`. A row without them is "Undated
-   collection." even when its `linkText` names years. For a dated row that only
-   partly overlaps, say which years overlap. Add no
+   The span is the row's `startYear`–`endYear`, or the years its `linkText`
+   names. A row with neither is "Undated collection." Never write a span that
+   is in neither. For a span that only partly overlaps, say which years overlap. Add no
    sentence about what the collection holds, who is in it, or why the person
    might be there: anything not in that shape is a fact no tool returned.
 3. If there are "also on file" rows: one line, "Also listed, without a filled-in
