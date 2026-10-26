@@ -1075,6 +1075,9 @@ pre-translates the one relevant fact into the plan item's `rationale` (see §4).
 projects seed `localities: []`. One entry per place-jurisdiction the project
 researches; it accumulates across the project's questions (reused, not per-question).
 
+`for_place` is checked at write time: `research_append` refuses an entry whose
+first place FamilySearch's place standard does not have (`research-append-tool-spec.md` §5.8).
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | `loc_` prefix |
