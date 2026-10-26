@@ -1,0 +1,30 @@
+﻿{
+  "test": {
+    "id": "ut_locality_guide_r8f",
+    "skill": "locality-guide",
+    "name": "Original-register custodian named correctly when tool result distinguishes originals from transcription copies",
+    "type": "positive",
+    "description": "Mined from a live eval session (Oct 2026). The skill produced a guide that suggested HSP as a possible co-custodian of the Christ Church Philadelphia original registers, even though the wiki_read fixture clearly assigns original custody solely to Christ Church Preservation Trust and names HSP only as the holder of a published transcription. Tests that when tool results distinguish original custody from derivative holdings, the skill reports the original-holder accurately without speculative alternatives.",
+    "tags": ["repositories","sourced-claims","original-custody","philadelphia","from-eval","re-invoke-safe"]
+  },
+  "input": {
+    "delegation": "I want to see the original marriage register from Christ Church in Philadelphia from 1734, not a transcription. Where is it held and can I access it?\n\nprojectPath: <workspace>",
+    "scenario": null,
+    "scenario_notes": null
+  },
+  "execution": { "max_wall_clock_seconds": 900 },
+  "mcp_fixtures": [
+    "wiki-search-christ-church-philadelphia","wiki-read-christ-church-philadelphia",
+    "place-search-philadelphia","wiki-place-page-pennsylvania-online-records",
+    "wiki-place-page-pennsylvania-research-tips","place-search-any","place-search-all-any",
+    "place-population-any","collections-search-pennsylvania","collections-search-any",
+    "volume-search-pennsylvania","volume-search-any","external-links-search-pennsylvania",
+    "external-links-search-any","wiki-read-any","wiki-place-page-any","wiki-search-any","wikipedia-search-any"
+  ],
+  "judge_context": [
+    "The wiki_read fixture for Christ Church Philadelphia clearly assigns original custody of the registers to Christ Church Preservation Trust, 20 N. American Street, Philadelphia — and states explicitly that HSP holds only the published transcription volume, not the originals. The skill must identify Christ Church Preservation Trust as the repository for the original registers.",
+    "The skill must not suggest that HSP (or any other institution) co-holds the original registers, or hedge that the originals might also be found elsewhere. The fixture draws a sharp line between the original holder and the transcription holder; the skill must preserve that distinction.",
+    "General class: when tool results attribute original custody to one institution and name a second institution only as the holder of a derivative (transcription, microfilm, index), the skill must not flatten that distinction into originals may be at A or B. Repository custodianship must be grounded in what the tools returned, not speculative additions from general knowledge.",
+    "The skill may surface the FHL microfilm copies (DGS numbers in the fixture) and the HSP transcription volume as research aids, provided it makes clear these are copies and that the originals remain at Christ Church Preservation Trust."
+  ]
+}

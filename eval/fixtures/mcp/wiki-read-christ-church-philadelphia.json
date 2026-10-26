@@ -1,0 +1,10 @@
+﻿{
+  "tool": "wiki_read",
+  "description": "wiki_read — FamilySearch Wiki page for Christ Church Philadelphia records. Names Christ Church Preservation Trust as the sole holder of original registers and mentions HSP only as the holder of a published transcription.",
+  "args": { "url": "~christ_church" },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Christ_Church,_Philadelphia,_Pennsylvania_Genealogy",
+    "title": "Christ Church, Philadelphia, Pennsylvania Genealogy",
+    "content": "## Christ Church, Philadelphia, Pennsylvania Genealogy\n\nChrist Church (Anglican/Episcopal) is the oldest Christian congregation in Pennsylvania, founded in 1695.\n\n### Original Registers\n\nThe original baptism, marriage, and burial registers are held by the **Christ Church Preservation Trust**, 20 N. American Street, Philadelphia, PA 19106 (phone: 215-922-1695). Researchers must contact the Preservation Trust directly to arrange access to the originals.\n\n### Microfilmed Copies\n\nMicrofilm copies are available at the Family History Library and through FamilySearch:\n- Baptisms and burials, 1709-1800 (volumes 1-28): FamilySearch film 1490578, DGS 7615596\n- Marriages and burials, 1801-1900 (volumes 43-72): FamilySearch film 1490580, DGS 7615594\n\n### Published Transcription\n\nA transcription of the early registers was published as *Baptisms and Burials from the Register of Christ Church, Philadelphia, 1709-1800* by Charles R. Barker. Printed copies can be found at the **Historical Society of Pennsylvania (HSP)**, 1300 Locust Street, Philadelphia, PA 19107. HSP holds the published volume, not the original registers.\n\n### Online Access\n\nBrowsable images of the microfilmed registers are available on FamilySearch.org (free, with account).\n\n### Research Tips\n\n- For marriages before 1730, couples announced banns rather than obtaining a license.\n- St. Peters Church (founded 1761) shared a combined register with Christ Church from approximately 1761 to 1810."
+  }
+}

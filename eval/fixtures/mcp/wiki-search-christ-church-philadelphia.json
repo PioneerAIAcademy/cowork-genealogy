@@ -1,0 +1,12 @@
+﻿{
+  "tool": "wiki_search",
+  "description": "wiki_search — FamilySearch Wiki search for Christ Church Philadelphia records",
+  "args": { "query": "~christ church philadelphia" },
+  "response": {
+    "results": [{
+      "title": "Christ Church, Philadelphia, Pennsylvania Genealogy",
+      "url": "https://www.familysearch.org/en/wiki/Christ_Church,_Philadelphia,_Pennsylvania_Genealogy",
+      "snippet": "Christ Church (Anglican/Episcopal), founded 1695, is the oldest Christian congregation in Pennsylvania. Original registers are held by the Christ Church Preservation Trust, 20 N. American Street, Philadelphia. Microfilm copies are available through the Family History Library."
+    }]
+  }
+}
