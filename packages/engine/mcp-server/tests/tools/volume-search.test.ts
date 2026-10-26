@@ -1076,3 +1076,58 @@ describe("pageSize", () => {
     ).rejects.toThrow(/recordTypeGroups and pageSize/);
   });
 });
+
+describe("volumeSearchTool — summary", () => {
+  // The page call and the rollup's own 1,000-a-page call run together, so the
+  // fetch mock answers by request body rather than by call order.
+  function routeFetch(rollupSearch: () => unknown) {
+    mockFetch.mockImplementation(async (url: string, init?: { body?: string }) => {
+      if (url.includes("/fulltext/")) return makeFulltextResponse([]);
+      const body = JSON.parse(init?.body ?? "{}");
+      if (body.pageSize === 1000) return rollupSearch();
+      return makeOkResponse(makeSearchResponse([makeGroup()]));
+    });
+  }
+
+  it("refuses summary alongside pageToken, before any call", async () => {
+    await expect(
+      volumeSearchTool({ standardPlace: "Edensor", summary: true, pageToken: "abc" }, LOCAL)
+    ).rejects.toThrow(/first page only/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("adds the rollup when asked", async () => {
+    routeFetch(() =>
+      makeOkResponse(
+        makeSearchResponse([
+          makeGroup({ coverages: [{ recordTypeConceptId: 123363, recordTypeConceptIdHierarchy: [123363] }] }),
+        ])
+      )
+    );
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true }, LOCAL);
+    expect(result.results).toHaveLength(1);
+    expect(result.summary).toMatchObject({
+      totalVolumes: 1,
+      complete: true,
+      byRecordType: [{ group: "Census", volumes: 1, browseOnly: 0 }],
+    });
+    expect(result.summaryError).toBeUndefined();
+  });
+
+  it("still returns the page, with summaryError, when the rollup fails", async () => {
+    routeFetch(() => makeErrorResponse(400, "Bad Request", "pageSize too large"));
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true }, LOCAL);
+    expect(result.results).toHaveLength(1);
+    expect(result.summary).toBeUndefined();
+    expect(result.summaryError).toMatch(/400.*pageSize too large/);
+  });
+
+  it("makes no rollup call when summary is not asked for", async () => {
+    routeFetch(() => {
+      throw new Error("rollup must not run");
+    });
+    const result = await volumeSearchTool({ standardPlace: "Edensor" }, LOCAL);
+    expect(result.summary).toBeUndefined();
+    expect(result.summaryError).toBeUndefined();
+  });
+});

@@ -806,7 +806,13 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
     // That is how an `image_search` fixture with `input`/`output` instead of
     // `args`/`response` survived in the corpus. This assertion is slightly wider
     // than the loader: a `tool` that is present but empty or not a string fails
-    // here and does not there.
+    // here and does not there. An empty `args` is allowed only for a tool that
+    // advertises no input properties, whose one call is `{}`.
+    const takesNoArguments = new Set(
+      allToolSchemas
+        .filter((s) => Object.keys((s.inputSchema as { properties?: object }).properties ?? {}).length === 0)
+        .map((s) => s.name),
+    );
     const bad = fixtures
       .filter(
         (f) =>
@@ -815,7 +821,7 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
           typeof f.args !== "object" ||
           f.args === null ||
           Array.isArray(f.args) ||
-          Object.keys(f.args as object).length === 0 ||
+          (Object.keys(f.args as object).length === 0 && !takesNoArguments.has(f.tool)) ||
           !f.hasResponse,
       )
       .map((f) => f.name);

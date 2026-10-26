@@ -27,6 +27,29 @@
           }
         ]
       }
-    ]
+    ],
+    "summary": {
+      "totalVolumes": 1,
+      "complete": true,
+      "byRecordType": [
+        {
+          "group": "Migration",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Emigration",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        }
+      ],
+      "untyped": {
+        "volumes": 0,
+        "browseOnly": 0,
+        "fulltextOnly": 0
+      }
+    }
   }
 }

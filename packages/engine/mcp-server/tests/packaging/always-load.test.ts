@@ -6,6 +6,10 @@ import { listTools } from "../helpers/list-tools.js";
 // cost decision: re-measure against the e2e corpus and update this list with it.
 const PINNED = [
   "project_context",
+  // Added for reachability: the research router calls it first in every
+  // conversation that names no projectPath, so deferring it would put a
+  // ToolSearch round trip in front of every new conversation.
+  "project_list",
   "record_read",
   "research_append",
   // 802 B, under a third of record_read (2,363 B). Added for reachability, not

@@ -5,6 +5,7 @@
  *   cd mcp-server
  *   npx tsx dev/try-volume-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --startYear 1730 --endYear 1810
  *   npx tsx dev/try-volume-search.ts --standardPlace "Harjager, Malmöhus, Sweden" --startYear 1650 --endYear 1720 --recordTypeGroups Tax,Census
+ *   npx tsx dev/try-volume-search.ts --standardPlace "Kings, New York, United States" --startYear 1890 --endYear 1910 --summary
  *
  * Requires a valid FamilySearch session (run the login tool first).
  * Edensor, Derbyshire is a known small result set.
@@ -29,9 +30,10 @@ const endYear = endYearArg != null ? Number(endYearArg) : undefined;
 const pageToken = getArg("--pageToken");
 const pageSizeArg = getArg("--pageSize");
 const pageSize = pageSizeArg != null ? Number(pageSizeArg) : undefined;
-// --summary skips the indented dump and prints only the counts and the size of the
+const summary = args.includes("--summary");
+// --sizeOnly skips the dump and prints only the counts and the size of the
 // compact answer the server sends — the form the 50k tool-result limit applies to.
-const summaryOnly = args.includes("--summary");
+const sizeOnly = args.includes("--sizeOnly");
 // Comma-separated so a filtered search is expressible from the shell, e.g.
 // --recordTypeGroups Tax  or  --recordTypeGroups "Legal,Census"
 const recordTypeGroups = getArg("--recordTypeGroups")
@@ -51,9 +53,11 @@ try {
     ...(recordTypeGroups?.length ? { recordTypeGroups } : {}),
     ...(pageSize != null ? { pageSize } : {}),
     ...(pageToken ? { pageToken } : {}),
+    ...(summary ? { summary } : {}),
   }, LOCAL);
   const serialized = JSON.stringify(result);
-  if (!summaryOnly) console.log(JSON.stringify(result, null, 2));
+  // With --summary the page itself is noise; print the rollup.
+  if (!sizeOnly) console.log(JSON.stringify(summary ? result.summary : result, null, 2));
   console.log("---");
   console.log(`Total results: ${result.totalResults}, returned: ${result.results.length}`);
   const capped = result.results.filter((g) => g.coverageCount != null).length;
