@@ -2396,6 +2396,337 @@ export function mintedFromThisSource(
   return typeof own === "string" && [...sourceIds].every((s) => description.get(s) === own);
 }
 
+// ─── Circular corroboration (issue #2943) ───────────────────────────────────
+//
+// A doubted record "proved" by tree facts that were added because of that same
+// record. A starting-tree person linked at `probable` or `confident` to a record
+// is refused when the only corroboration the tree can offer is the record's own:
+// every source on the baseline relationship between the person and each parent
+// or spouse the record names reaches this record, or a copy of it. Specified in
+// docs/specs/research-append-tool-spec.md, "Circular corroboration".
+
+/** Tree-as-source: a description of the FamilySearch tree itself is the tree
+ *  vouching for itself, so it counts as no source at all. */
+function isTreeAsSource(description: any): boolean {
+  return (
+    /family\s*search\s+family\s+tree/i.test(String(description?.title ?? "")) ||
+    /familysearch\.org\/tree\//i.test(String(description?.url ?? ""))
+  );
+}
+
+const CIRCULAR_CHILD_LIKE: ReadonlySet<string> = new Set([
+  "child", "baptized", "baptised", "baptized_child", "deceased", "principal", "subject", "registrant", "son",
+  "daughter", "born", "newborn", "infant",
+]);
+const CIRCULAR_SPOUSAL: ReadonlyMap<string, "male" | "female" | null> = new Map([
+  ["husband", "male"], ["wife", "female"], ["spouse", null], ["groom", "male"], ["bride", "female"], ["partner", null],
+]);
+const PARENT_ROLE = /^(father|mother|parent)(?:_of_(.+))?$/;
+
+const normalizedRole = (role: unknown): string =>
+  String(role ?? "").toLowerCase().trim().replace(/_\d+$/, "");
+
+/** What a record party's role makes it to a party in role `subject`: the tree
+ *  relation (parent or spouse only) and the gender the role states, or null when
+ *  the roles name no such relation. `father_of_groom` is the parent of a groom
+ *  only; the other parent named beside a father or mother is the spouse. */
+export function coPartyRelation(
+  subject: string,
+  co: string,
+): { relation: "parent" | "spouse"; gender: "male" | "female" | null } | null {
+  const m = PARENT_ROLE.exec(co);
+  if (m) {
+    const gender = m[1] === "father" ? "male" : m[1] === "mother" ? "female" : null;
+    if (PARENT_ROLE.test(subject)) return m[2] === undefined ? { relation: "spouse", gender } : null;
+    if (m[2] !== undefined && m[2] !== subject && !(CIRCULAR_CHILD_LIKE.has(m[2]) && CIRCULAR_CHILD_LIKE.has(subject))) {
+      return null;
+    }
+    return { relation: "parent", gender };
+  }
+  if (co === subject) return null;
+  if (CIRCULAR_SPOUSAL.has(co) && (CIRCULAR_SPOUSAL.has(subject) || HOUSEHOLD_HEADS.has(subject))) {
+    return { relation: "spouse", gender: CIRCULAR_SPOUSAL.get(co) ?? null };
+  }
+  if (HOUSEHOLD_HEADS.has(co) && CIRCULAR_SPOUSAL.has(subject)) return { relation: "spouse", gender: null };
+  return null;
+}
+
+const ENTRY_EVENTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism"]);
+/** Facts a register-entry index carries. A record with any other fact (a death, a
+ *  residence, an occupation) is another kind of record, not a copy of the entry. */
+const ENTRY_FACTS: ReadonlySet<string> = new Set(["name", "gender", "relationship", ...ENTRY_EVENTS]);
+const FULL_DATE = /^(?:\d{4}-\d{2}-\d{2}|\d{1,2} [A-Za-z]{3,9} \d{4})$/;
+
+/** One record or its copies: the bare record ids, research sources and source
+ *  descriptions that are the same register entry as an assertion's record.
+ *  Joined when they share a record id, a research source, a source description,
+ *  or a party's birth, christening or baptism with the same full date, the same
+ *  place and the same given name (two indexes of one entry share no identifier;
+ *  lead, 2026-10-18), on records that carry only names, genders, relationships and
+ *  those events. A year-only date matches nothing, and a record with any other
+ *  fact (a death certificate repeating the birth date) is another record. */
+export function sameEntryOf(
+  research: any,
+  seed: any,
+): { records: Set<string>; sources: Set<string>; descriptions: Set<string> } | null {
+  if (typeof seed?.record_id !== "string" || seed.record_id === "") return null;
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(
+    (a) => a && typeof a.record_id === "string" && a.record_id !== "",
+  );
+  const descriptionOf = new Map<string, string>();
+  for (const s of (Array.isArray(research?.sources) ? research.sources : []) as any[]) {
+    if (typeof s?.id === "string" && typeof s.gedcomx_source_description_id === "string") {
+      descriptionOf.set(s.id, s.gedcomx_source_description_id);
+    }
+  }
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    let root = x;
+    while (parent.get(root) !== root) root = parent.get(root)!;
+    parent.set(x, root);
+    return root;
+  };
+  const add = (x: string) => {
+    if (!parent.has(x)) parent.set(x, x);
+  };
+  const joinOn = (firsts: Map<string, string>, key: string, record: string) => {
+    const first = firsts.get(key);
+    if (first === undefined) firsts.set(key, record);
+    else parent.set(find(record), find(first));
+  };
+  const bySource = new Map<string, string>();
+  const byDescription = new Map<string, string>();
+  const byEvent = new Map<string, string>();
+  const partyOf = capPartyKeyer(assertions);
+  const given = new Map<string, string>();
+  for (const a of assertions) {
+    if (String(a.fact_type ?? "").toLowerCase() !== "name") continue;
+    const first = nameKey(a.value)?.split(" ")[0];
+    if (first && !given.has(partyOf(a))) given.set(partyOf(a), first);
+  }
+  const otherKinds = new Set(
+    assertions
+      .filter((a) => !ENTRY_FACTS.has(String(a.fact_type ?? "").toLowerCase()))
+      .map((a) => arkToBareId(a.record_id)),
+  );
+  for (const a of assertions) {
+    const record = arkToBareId(a.record_id);
+    add(record);
+    if (typeof a.source_id === "string" && a.source_id !== "") {
+      joinOn(bySource, a.source_id, record);
+      const d = descriptionOf.get(a.source_id);
+      if (d !== undefined) joinOn(byDescription, d, record);
+    }
+    if (!ENTRY_EVENTS.has(String(a.fact_type ?? "").toLowerCase())) continue;
+    const date = typeof a.date === "string" ? stdDate(a.date) : "";
+    const place = capNorm(a.standard_place ?? a.place);
+    const first = given.get(partyOf(a));
+    if (FULL_DATE.test(date) && place !== "" && first && !otherKinds.has(record)) joinOn(byEvent, `${date}\u0000${place}\u0000${first}`, record);
+  }
+  const root = find(arkToBareId(seed.record_id));
+  const records = new Set<string>();
+  const sources = new Set<string>();
+  const descriptions = new Set<string>();
+  for (const a of assertions) {
+    const record = arkToBareId(a.record_id);
+    if (find(record) !== root) continue;
+    records.add(record);
+    if (typeof a.source_id === "string" && a.source_id !== "") {
+      sources.add(a.source_id);
+      const d = descriptionOf.get(a.source_id);
+      if (d !== undefined) descriptions.add(d);
+    }
+  }
+  return { records, sources, descriptions };
+}
+
+type TreeSourceRef = { ref: string; description: any };
+
+/** The sources, bar tree-as-source, on every relationship in a tree between two
+ *  persons: parent-child either way, or a couple. A duplicate relationship with
+ *  no source adds nothing. */
+function edgeSources(tree: any, a: string, b: string): TreeSourceRef[] {
+  const descriptions = new Map<string, any>(
+    ((Array.isArray(tree?.sources) ? tree.sources : []) as any[])
+      .filter((s) => s && typeof s.id === "string")
+      .map((s) => [s.id, s]),
+  );
+  const out: TreeSourceRef[] = [];
+  for (const r of (Array.isArray(tree?.relationships) ? tree.relationships : []) as any[]) {
+    const ends = r?.type === "ParentChild" ? [r.parent, r.child] : r?.type === "Couple" ? [r.person1, r.person2] : [];
+    if (!(ends.includes(a) && ends.includes(b))) continue;
+    for (const ref of sourceRefsOf(r)) {
+      const bare = ref.startsWith("#") ? ref.slice(1) : ref;
+      const description = descriptions.get(bare);
+      if (description !== undefined && isTreeAsSource(description)) continue;
+      out.push({ ref: bare, description });
+    }
+  }
+  return out;
+}
+
+/** Whether a tree source is this entry: its url names one of the entry's record
+ *  ids, or a research source of the entry cites its description. A source it
+ *  cannot place reads as another record. */
+function treeSourceIsEntry(
+  s: TreeSourceRef,
+  entry: { records: Set<string>; sources: Set<string> },
+  research: any,
+): boolean {
+  const url = typeof s.description?.url === "string" ? arkToBareId(s.description.url) : "";
+  if (url !== "" && entry.records.has(url)) return true;
+  const { sourceIds, recordIds } = refsReach([s.ref], research);
+  return (
+    [...sourceIds].some((x) => entry.sources.has(x)) || [...recordIds].some((r) => entry.records.has(arkToBareId(r)))
+  );
+}
+
+export interface CircularVerdict {
+  refused: boolean;
+  kind: "relationship" | "subject";
+  /** The linked assertion's record. */
+  record: string;
+  /** Each role-matched parent or spouse the baseline holds, and whether the
+   *  sources on that relationship are all this entry (`circular`) or a new source
+   *  or record clears it (`cleared`). Empty for the subject-alone arm. */
+  relatives: Array<{ id: string; relation: "parent" | "spouse"; circular: boolean; cleared: boolean }>;
+}
+
+/** The verdict on one live probable or confident link, or null when the gate
+ *  does not apply: no baseline, a person the baseline does not hold, an
+ *  assertion with no record, negative evidence, or a two-party assertion. `tree` is the live tree,
+ *  which can only clear a refusal; `baseline` decides circularity. */
+export function circularCorroborationVerdict(entry: any, research: any, tree: any, baseline: any): CircularVerdict | null {
+  if (!baseline || !isStrongConfidence(entry?.confidence) || entry.superseded_by) return null;
+  const personId = entry.person_id;
+  const subject = ((Array.isArray(baseline.persons) ? baseline.persons : []) as any[]).find((p) => p?.id === personId);
+  if (!subject) return null;
+  const assertions = (Array.isArray(research?.assertions) ? research.assertions : []) as any[];
+  const linked = assertions.find((a) => a?.id === entry.assertion_id);
+  // A two-party assertion (a relationship or a marriage) names the person it is
+  // linked to, not its own party, so its role says nothing about who that person
+  // is on the record.
+  if (!linked || recordBasisOf(linked) === "absent" || isTwoParty(linked.fact_type)) return null;
+  const here = sameEntryOf(research, linked);
+  if (!here) return null;
+  const record = arkToBareId(linked.record_id);
+
+  const partyOf = capPartyKeyer(assertions);
+  const own = partyOf(linked);
+  const subjectRole = normalizedRole(linked.record_role);
+  const coRoles = new Set<string>();
+  for (const a of assertions) {
+    if (typeof a?.record_id === "string" && here.records.has(arkToBareId(a.record_id)) && partyOf(a) !== own) {
+      coRoles.add(normalizedRole(a.record_role));
+    }
+  }
+
+  // Records outside this entry that a live strong link ties to a person.
+  const recordsLinked = (id: string): Set<string> => {
+    const out = new Set<string>();
+    for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+      if (!isLiveStrong(e) || e.person_id !== id) continue;
+      const a = assertions.find((x) => x?.id === e.assertion_id);
+      if (typeof a?.record_id !== "string" || a.record_id === "") continue;
+      const r = arkToBareId(a.record_id);
+      if (!here.records.has(r)) out.add(r);
+    }
+    return out;
+  };
+
+  const relatives: CircularVerdict["relatives"] = [];
+  for (const [id, { relation, person }] of relativesById(baseline, personId)) {
+    if (relation === "child") continue;
+    const gender = String(person?.gender ?? "").toLowerCase();
+    const named = [...coRoles].some((co) => {
+      const m = coPartyRelation(subjectRole, co);
+      return m !== null && m.relation === relation && (m.gender === null || gender === "" || gender === m.gender);
+    });
+    if (!named) continue;
+    const base = edgeSources(baseline, personId, id);
+    if (base.length === 0) {
+      relatives.push({ id, relation, circular: false, cleared: false });
+      continue;
+    }
+    const circular = base.every((s) => treeSourceIsEntry(s, here, research));
+    const cleared =
+      circular &&
+      (edgeSources(tree, personId, id).some((s) => !treeSourceIsEntry(s, here, research)) ||
+        [...recordsLinked(personId)].some((r) => recordsLinked(id).has(r)));
+    relatives.push({ id, relation, circular, cleared });
+  }
+  if (relatives.length > 0) {
+    return { refused: relatives.every((r) => r.circular && !r.cleared), kind: "relationship", record, relatives };
+  }
+  // Nothing in the record names a relative the baseline holds: the subject
+  // alone. Only `confident` rests on more than the record's own attachment.
+  const descriptions = new Map<string, any>(
+    ((Array.isArray(baseline.sources) ? baseline.sources : []) as any[]).filter((s) => s && typeof s.id === "string").map((s) => [s.id, s]),
+  );
+  const refs: TreeSourceRef[] = [...personSourceRefs(subject)]
+    .map((ref) => (ref.startsWith("#") ? ref.slice(1) : ref))
+    .map((ref) => ({ ref, description: descriptions.get(ref) }))
+    .filter((s) => s.description === undefined || !isTreeAsSource(s.description));
+  const circular = refs.length > 0 && refs.every((s) => treeSourceIsEntry(s, here, research));
+  return { refused: circular && entry.confidence === "confident", kind: "subject", record, relatives };
+}
+
+function circularCorroborationRefusal(entry: any, verdict: CircularVerdict): string {
+  const p = entry.person_id;
+  const settle = `Find a record independent of '${verdict.record}' that corroborates it, or lower confidence to 'speculative'.`;
+  if (verdict.kind === "subject") {
+    return (
+      `confidence 'confident' is not available on link '${entry.id}' to '${p}': every source on '${p}' in the ` +
+      `starting tree is record '${verdict.record}' or a copy of it, so nothing but its own attachment supports ` +
+      `the link. 'probable' is available. ${settle}`
+    );
+  }
+  const who = verdict.relatives.map((r) => `'${r.id}' (${r.relation})`).join(", ");
+  return (
+    `confidence '${entry.confidence}' is not available on link '${entry.id}' to '${p}': the starting tree's ` +
+    `only sources for '${p}''s relationship to ${who}, named by this record, are record '${verdict.record}' ` +
+    `or a copy of it, so those tree facts came from the record and cannot confirm it. ${settle} A record naming ` +
+    `'${p}' together with the relative, linked at 'probable' or 'confident' to both, or a source on that ` +
+    `relationship from another record, settles it.`
+  );
+}
+
+/** The gate on one research_append call, judged on its end state: one finding per
+ *  link the call asserts (a live probable or confident pairing not standing
+ *  before, or raised above the strongest standing link of its pairing), keyed to
+ *  the last op that wrote it. */
+export function circularCorroborationCallCheck(
+  before: { research: any },
+  after: { research: any; tree: any },
+  applied: ReadonlyArray<{ section: string; entryId: string }>,
+  baseline: any,
+): Array<{ index: number | null; message: string }> {
+  if (!baseline) return [];
+  const strongBefore = new Map<string, any>();
+  for (const e of (Array.isArray(before.research?.person_evidence) ? before.research.person_evidence : []) as any[]) {
+    if (!isLiveStrong(e)) continue;
+    const prev = strongBefore.get(pairingKey(e));
+    if (!prev || CONFIDENCE_RANK[e.confidence] > CONFIDENCE_RANK[prev.confidence]) strongBefore.set(pairingKey(e), e);
+  }
+  const findings: Array<{ index: number | null; message: string }> = [];
+  for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
+    if (!isLiveStrong(e) || typeof e.id !== "string" || typeof e.person_id !== "string") continue;
+    const prev = strongBefore.get(pairingKey(e));
+    if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
+    const verdict = circularCorroborationVerdict(e, after.research, after.tree, baseline);
+    if (!verdict?.refused) continue;
+    let index: number | null = null;
+    for (let i = applied.length - 1; i >= 0; i--) {
+      if (applied[i].section === "person_evidence" && applied[i].entryId === e.id) {
+        index = i;
+        break;
+      }
+    }
+    findings.push({ index, message: circularCorroborationRefusal(e, verdict) });
+  }
+  return findings;
+}
+
 // ─── The namesake cap (issue #3363) ─────────────────────────────────────────
 //
 // A recorded namesake (`namesakes[]`) is a different person who shares a tree
@@ -7268,6 +7599,9 @@ interface PreparedOps {
   /** Person ids in the write-once starting-tree baseline. Empty when the
    *  project predates it, which the circular test treats as "unknown". */
   startingPersonIds: ReadonlySet<string>;
+  /** The write-once starting tree itself (null for a legacy project): the
+   *  baseline relationships the circular-corroboration gate reads. */
+  startingTree: SimplifiedGedcomX | null;
   /** Assertion ids this call creates; they cannot already carry a score. */
   createdAssertions: ReadonlySet<string>;
   /** Live person_evidence plus this batch's appends, for the contradiction
@@ -7677,7 +8011,8 @@ async function prepareOps(
   const personLinks = batchPersonLinks(research, ops);
   // Read once here: `applyOne` is synchronous. Fail-open (an absent baseline
   // yields an empty set) matches `readStartingTree`'s own contract.
-  const startingPersonIds = startingPersonIdsOf(await readStartingTree(projectPath));
+  const startingTree = await readStartingTree(projectPath);
+  const startingPersonIds = startingPersonIdsOf(startingTree);
   for (const recordId of recordIdsForPersonEvidence(research, ops)) {
     const file = await readMatchScores(projectPath, recordId);
     if (file !== null) matchScores.set(recordId, file);
@@ -8346,7 +8681,7 @@ async function prepareOps(
   if (errors.length > 0) throw new ResearchAppendError(errors);
   // Last, so this batch's assertions carry the standard_place resolved above.
   const birthPlaceCoords = await prefetchBirthPlaceCoords(research, ops, tree, personLinks, batchAssertions);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile, birthPlaceCoords };
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, startingTree, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile, birthPlaceCoords };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -8648,6 +8983,7 @@ export async function researchAppend(
           tree,
           projectPath,
           startingPersonIds: prep.startingPersonIds,
+          startingTree: prep.startingTree,
           applyOp,
           fmt,
         });
@@ -8669,7 +9005,7 @@ export async function researchAppend(
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
-    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt);
+    const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -8989,8 +9325,12 @@ function namesakeMessages(
   applied: readonly AppliedOp[],
   startingPersonIds: ReadonlySet<string>,
   fmt: (i: number, msg: string) => string,
+  startingTree: SimplifiedGedcomX | null,
 ): string[] {
-  return namesakeCallCheck(before, after, applied, startingPersonIds).map((f) =>
+  return [
+    ...namesakeCallCheck(before, after, applied, startingPersonIds),
+    ...circularCorroborationCallCheck(before, after, applied, startingTree),
+  ].map((f) =>
     f.index === null ? f.message : fmt(applied[f.index].opIndex, f.message),
   );
 }
@@ -9123,6 +9463,7 @@ async function everyOpFailure(c: {
   tree: any;
   projectPath: string;
   startingPersonIds: ReadonlySet<string>;
+  startingTree: SimplifiedGedcomX | null;
   applyOp: ApplyOp;
   fmt: (i: number, msg: string) => string;
 }): Promise<{ errors: string[]; hints: ExampleHint[] }> {
@@ -9168,7 +9509,7 @@ async function everyOpFailure(c: {
     );
     const found = documentFailure({
       validation,
-      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt),
+      namesake: namesakeMessages({ research: before.research }, { research: doc, tree: c.tree }, applied, c.startingPersonIds, fmt, c.startingTree),
       doc,
       ops: applied.map((a) => ops[a.opIndex]),
       applied,

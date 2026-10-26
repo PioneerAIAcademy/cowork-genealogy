@@ -1,0 +1,25 @@
+{
+  "tool": "project_list",
+  "description": "Hosted listing for a signed-in user with one project, on the parents of Patrick Flynn (the empty-project-just-created scenario's objective and subject), plus a fresh path for a new project.",
+  "args": {},
+  "response": {
+    "mode": "hosted",
+    "projects": [
+      {
+        "projectPath": "/proj_3f9a1c2e7b4d6a80",
+        "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+        "subjects": [
+          {
+            "id": "I1",
+            "name": "Patrick Flynn"
+          }
+        ],
+        "status": "active",
+        "updated": "2026-05-13",
+        "projectUrl": "https://genealogy.example.org/projects/proj_3f9a1c2e7b4d6a80"
+      }
+    ],
+    "newProjectPath": "/proj_8c21d0e94fa7b315",
+    "message": "Pass a listed project's projectPath to continue it. To start a project for a person none of them is about, pass newProjectPath as projectPath."
+  }
+}

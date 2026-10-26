@@ -32,6 +32,7 @@ const METHODS = {
   writeBytes: true,
   appendText: true,
   remove: true,
+  listProjects: true,
 } satisfies Record<keyof Omit<ProjectStore, "projectId" | "anchorPath">, true>;
 
 const tick = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
