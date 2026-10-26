@@ -91,7 +91,11 @@ export const CONNECT_LOST_NOTE =
   'lost — reload the page to start a new one.'
 
 export const TURN_OUTCOME_LABELS: Record<string, string> = {
-  completed: 'Research complete.',
+  // Step mode (section C): a project can now complete with sources nobody
+  // reached, because the researcher may choose to conclude at the "not
+  // exhaustive" choice. A flat "Research complete." would contradict the
+  // summary sitting directly above it, which names what was left.
+  completed: 'Research finished for now — see the summary for anything left unsearched. Send a message to research further.',
   stopped: 'Stopped — send a message to carry on.',
   queued: 'Picking up your message…',
   budget: 'Paused: this run reached its step budget. Send a message to carry on.',
