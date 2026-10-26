@@ -637,6 +637,10 @@
             "null"
           ]
         },
+        "staged_ref": {
+          "type": "string",
+          "description": "The results/.staging/ file this entry's sidecar was finalized from. Lets research_log_append answer a re-sent, already-logged staged ref with this entry."
+        },
         "results_available": {
           "anyOf": [
             {
