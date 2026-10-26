@@ -335,6 +335,13 @@ class ReplayResult:
 def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) -> None:
     section = op.get("section")
     verb = op.get("op") or "append"
+    # An `edits` op changes text the replay does not hold the engine's rule for
+    # (research_append expands it into `fields`); report it rather than replay
+    # the field as unchanged. With no `fields` beside it there is nothing applied.
+    if op.get("edits"):
+        out.note_unmodelled(f"{section}:edits")
+        if not isinstance(op.get("fields"), dict):
+            return
     entry = op.get("entry")
     if not isinstance(entry, dict):
         entry = op.get("fields") if isinstance(op.get("fields"), dict) else {}

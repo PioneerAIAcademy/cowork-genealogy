@@ -517,3 +517,42 @@ def test_a_record_extracted_twice_back_fills_the_second_entry():
     r = replay([_call("extraction_append", {"projectPath": "/p", "recordIds": ["ark:/61903/1:1:BBB"]}, first),
                 _call("extraction_append", TRUNC_ARGS, second)], final_research=TRUNC_FINAL)
     assert [e["id"] for e in r.research["log"]] == ["log_005", "log_004", "log_009"]
+
+
+OK_PS1 = '[{"type": "text", "text": "{\\n  \\"ok\\": true,\\n  \\"entryId\\": \\"ps_001\\"\\n}"}]'
+
+
+def test_a_proof_summary_edits_update_is_reported_unmodelled():
+    """#3542 lead 2c: `edits` changes a narrative by an exact-match rule the
+    replay does not restate, so the call must report the gap rather than replay
+    the narrative as unchanged. A `fields` part on the same op still applies."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1850", "tier": "probable"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "fields": {"tier": "possible"},
+                       "edits": [{"field": "narrative_markdown", "old": "1850", "new": "1851"}]},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {"proof_summaries:edits": 1}
+    assert r.research["proof_summaries"][0]["tier"] == "possible"
+
+
+def test_a_proof_summary_fields_update_reports_nothing():
+    """The other direction: an ordinary update is modelled, so no gap is claimed."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1850"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "fields": {"narrative_markdown": "born in 1851"}},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {}
+    assert r.research["proof_summaries"][0]["narrative_markdown"] == "born in 1851"
+
+
+def test_an_edits_only_update_is_not_counted_applied():
+    """An op that is all `edits` changed nothing the replay modelled, so it is a gap, not an apply."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1850"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "edits": [{"field": "narrative_markdown", "old": "1850", "new": "1851"}]},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {"proof_summaries:edits": 1}
+    assert r.applied == 0
