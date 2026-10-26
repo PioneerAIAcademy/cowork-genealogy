@@ -2592,6 +2592,12 @@ def test_refusal_marker_growth_against_raw_args_is_bounded_and_measured():
     assert growth <= 40, f"refusal marker grows the measured view by {growth} chars"
 
 
+def test_refused_research_log_append_keeps_its_args():
+    """`search-full-text/rubric.md` grades a log entry's executed args."""
+    calls = [_refused("research_log_append", {"query": {"surname": "KEEP-QUERY"}})]
+    assert "KEEP-QUERY" in judge._render_tool_calls_with_size_guard(calls)
+
+
 def test_writer_tools_classifies_every_ownership_writer():
     """A new writer tool must not silently leak its refused draft to the judge.
 
@@ -2606,7 +2612,7 @@ def test_writer_tools_classifies_every_ownership_writer():
 
     repo = _Path(__file__).resolve().parents[4]
     rows = _json.loads((repo / "docs/specs/schemas/ownership.json").read_text(encoding="utf-8"))
-    authorized = {t for row in rows.get("rows", []) for t in (row.get("toolAuthorized") or [])}
+    authorized = {t for row in rows.get("rows", []) for t in (row.get("writerTools") or [])}
     unclassified = authorized - judge._WRITER_TOOLS - set(judge._WRITER_ARGS_ALWAYS_KEPT)
     assert not unclassified, (
         f"ownership.json authorizes {sorted(unclassified)} to write, but judge.py "

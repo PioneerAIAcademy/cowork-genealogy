@@ -432,7 +432,7 @@ def _live_args_omitted(args: Any) -> Any:
 # Arguments` is a base dimension graded on every run — blanking a read would
 # erase evidence the judge is still required to score. A refused reader's args
 # are the question asked; a refused writer's are a conclusion it did not reach.
-# Kept in step with `docs/specs/schemas/ownership.json`'s `toolAuthorized` union
+# Kept in step with `docs/specs/schemas/ownership.json`'s `writerTools` union
 # by `test_writer_tools_classifies_every_ownership_writer`, which fails when a
 # new writer tool ships unclassified. A blind sync would be wrong, so every
 # divergence is named here with its reason.
@@ -460,6 +460,8 @@ _WRITER_ARGS_ALWAYS_KEPT = {
     # entry's args are the record of the search that ran, not a conclusion.
     # 69 refused calls in the corpus, 14 never retried.
     "research_log_append": "search rubrics grade its executed args",
+    # `search-external-sites/rubric.md` fails a call "with fabricated arguments".
+    "build_external_search_url": "search-external-sites grades its args",
 }
 
 # Says only what is always true. "it wrote nothing" would be FALSE for
