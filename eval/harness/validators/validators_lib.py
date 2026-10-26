@@ -485,6 +485,37 @@ def as_mapping(value: Any) -> dict:
     return value if isinstance(value, dict) else {}
 
 
+def assert_nothing_extracted(
+    before_state: dict | None,
+    after_state: dict | None,
+    builtin_tool_calls: list[dict] | None,
+    why: str,
+) -> None:
+    """No assertion was added to research.json, and no record-structurer spawn
+    could have carried a record there by another route.
+
+    For a scenario whose only extractable record is the one under test. Counting
+    every new assertion rather than matching one record id catches the household
+    extracted under a co-resident persona's ARK. Grades the outcome, not the
+    call: a writer tool that refuses the record in code (`extraction_append`'s
+    thin-subject gate) makes calling it harmless.
+    """
+    from harness.skill_runner import SPAWN_TOOL_NAMES
+
+    def ids(state):
+        research = (state or {}).get("research_json") or {}
+        return {a.get("id") for a in research.get("assertions") or [] if isinstance(a, dict)}
+
+    added = sorted(str(x) for x in ids(after_state) - ids(before_state))
+    assert not added, f"{why}, so nothing may be extracted; new assertions: {added}"
+    structurer = [
+        c for c in (builtin_tool_calls or [])
+        if c.get("tool") in SPAWN_TOOL_NAMES
+        and "record-structurer" in str(as_mapping(c.get("args")).get("subagent_type") or "")
+    ]
+    assert not structurer, f"{why}, so nothing may be handed to record-structurer either"
+
+
 def tool_input_keys(tool: str, nested: str | None = None) -> frozenset[str] | None:
     """Input property names of `tool` from the compiled MCP build, the schema
     production advertises, or of its object property `nested` (e.g.

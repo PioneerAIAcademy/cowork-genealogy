@@ -20,6 +20,7 @@ import re
 import pytest
 
 from validators_lib import as_mapping as _as_mapping
+from validators_lib import assert_nothing_extracted as _assert_nothing_extracted
 from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import hashable_key as _hashable_key
@@ -942,4 +943,17 @@ def test_mismatched_handed_plan_item_is_queried(tool_calls, test):
     assert first_search is None or first_query < first_search, (
         "research_query came after the first record_search: the agent searched "
         "on the mismatched handed item before reading the item it was asked to run."
+    )
+
+
+def test_thin_subject_hit_not_extracted(before_state, after_state, builtin_tool_calls, test):
+    """Tag-gated (subject-too-thin): issue #2213 d29. A record found only by a
+    search for a subject too thin to tell from a namesake is not extracted,
+    although the delegation pre-authorizes extraction. `extraction_append`
+    refuses it in code, so calling it is allowed.
+    """
+    if "subject-too-thin" not in test.get("tags", []):
+        pytest.skip("not a subject-too-thin scenario")
+    _assert_nothing_extracted(
+        before_state, after_state, builtin_tool_calls, "the subject is too thin to tell from a namesake",
     )

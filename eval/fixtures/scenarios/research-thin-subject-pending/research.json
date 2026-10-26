@@ -1,0 +1,84 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Locate William Brown (b. 1872, Virginia) in the 1900 census",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-19",
+    "updated": "2026-10-19"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was William Brown (b. 1872, Virginia) living in 1900?",
+      "rationale": "Selected as the next question; a plan already exists for it.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "created": "2026-10-19",
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-19",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Bedford County, Virginia",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 census is the first enumeration after William reached adulthood; the family story places him in Bedford County.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-19T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Brown",
+        "givenName": "William",
+        "residencePlace": "Bedford, Virginia, United States",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "search-records ran the 1900 census search for William Brown; one hit, William Brown b. Mar 1872 Virginia, in Bedford County. Ranked 0.94; the ranker flagged the subject too thin to tell from a namesake.",
+      "external_site": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

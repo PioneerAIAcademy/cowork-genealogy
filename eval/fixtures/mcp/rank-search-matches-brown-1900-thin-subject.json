@@ -1,0 +1,34 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranking of the single William Brown 1900 hit against I1 for ut_search_records_d29, with subjectTooThin: true -- the subject has no date narrower than a year and no named spouse, parent or child (rank-search-matches-tool-spec.md, subjectTooThin). The score is high because nothing in the thin subject disagrees with the record, which is exactly why it cannot clear identity. Folded into record_search's `ranked` by the mock when the call names subjectId.",
+  "args": {
+    "subjectId": "~I1"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "subjectTooThin": true,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "M9TB-7QX",
+        "primaryId": "P1",
+        "personName": "William Brown",
+        "sex": "Male",
+        "birthDate": "Mar 1872",
+        "birthPlace": "Virginia, United States",
+        "collectionTitle": "United States Census, 1900",
+        "candidateFactCount": 2,
+        "recordArk": "https://www.familysearch.org/ark:/61903/1:1:M9TB-7QX",
+        "matchScore": 0.9381,
+        "matchConfidence": 6,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

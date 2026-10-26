@@ -11,6 +11,7 @@ import {
   readStagedEnvelopeQuery,
   resolveStagedRef,
   readStagedResults,
+  readSidecarSearch,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -563,5 +564,41 @@ describe("resolveStagedRef", () => {
     await writeFile(join(dir, STAGING_SUBDIR, `${good}.json`), JSON.stringify({ payload: { results: [{ id: "R1" }] } }));
     expect(await readStagedResults(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual([{ id: "R1" }]);
     await expect(readStagedResults(dir, at("00000000-0000-4000-8000-000000000000"))).rejects.toThrow("does not exist");
+  });
+});
+
+describe("readSidecarSearch", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-search-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("returns the searched subjectId and results from a staged handle and from its finalized sidecar", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname: "Brown", subjectId: "I1", projectPath: dir }, results: [{ recordId: "R1" }] },
+    });
+    expect(await readSidecarSearch(dir, staged!.resultsRef)).toEqual({ subjectId: "I1", results: [{ recordId: "R1" }] });
+    await finalizeStagedResults({ projectPath: dir, stagedResultsRef: staged!.resultsRef, logId: "log_001", expectedTool: "record_search" });
+    expect(await readSidecarSearch(dir, "results/log_001.json")).toEqual({ subjectId: "I1", results: [{ recordId: "R1" }] });
+  });
+
+  it("reports no subjectId for a search made without one", async () => {
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({ tool: "record_search", payload: { query: { surname: "Brown" }, results: [] } }), "utf8");
+    expect(await readSidecarSearch(dir, "results/log_001.json")).toEqual({ subjectId: undefined, results: [] });
+  });
+
+  it("returns undefined for a missing file, invalid JSON, or no results array", async () => {
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(join(dir, "results", "log_002.json"), "{not json", "utf8");
+    await writeFile(join(dir, "results", "log_003.json"), JSON.stringify({ payload: { query: { subjectId: "I1" } } }), "utf8");
+    expect(await readSidecarSearch(dir, "results/log_001.json")).toBeUndefined();
+    expect(await readSidecarSearch(dir, "results/log_002.json")).toBeUndefined();
+    expect(await readSidecarSearch(dir, "results/log_003.json")).toBeUndefined();
   });
 });

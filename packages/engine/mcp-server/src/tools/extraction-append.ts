@@ -42,7 +42,8 @@ import {
   type ExtractResult,
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
-import { readStagedResults, STAGING_SUBDIR } from "../utils/results-staging.js";
+import { readSidecarSearch, readStagedResults, unloggedStagedSearches, STAGING_SUBDIR } from "../utils/results-staging.js";
+import { buildSubjectDoc } from "./rank-search-matches.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -450,6 +451,86 @@ async function personaGroups(projectPath: string, research: any): Promise<Map<st
 interface RecordIdsOptions {
   /** Bare record id -> the tree S the import already made for it. */
   sourceDescriptionIdByBare?: ReadonlyMap<string, string>;
+  /** `personId` mode: a record attached to the person on FamilySearch is not a
+   *  namesake candidate, whatever the searched subject holds. */
+  skipThinSubjectGate?: boolean;
+}
+
+/**
+ * Record id -> refusal summary, for each record a search for a too-thin subject
+ * found (`subjectTooThin`, rank-search-matches spec: no date narrower than a
+ * year and no named spouse, parent or child). Thinness is recomputed on the
+ * project as it stands, so the refusal lifts once the project records an anchor
+ * for that subject. A listing search is a logged `record_search` sidecar or one
+ * still staged, so extracting before logging does not skip it. Only its own
+ * subject decides it: a search with no readable subject counts for nothing, and
+ * a search for another, anchored person does not lift it, so re-running the
+ * search under another `subjectId` or none cannot get the record through. A
+ * record the researcher accepted as a hint, on any of its ids, is not gated.
+ * Any read fault gates nothing.
+ */
+async function thinSubjectRefusals(
+  projectPath: string,
+  research: any,
+  idsByRecord: ReadonlyMap<string, ReadonlySet<string>>,
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (idsByRecord.size === 0) return out;
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const refs = new Set<string>(
+    log.filter((e) => e?.tool === "record_search" && typeof e?.results_ref === "string").map((e) => e.results_ref),
+  );
+  for (const u of await unloggedStagedSearches(projectPath)) if (u.tool === "record_search") refs.add(u.ref);
+  if (refs.size === 0) return out;
+  const verdict = new Map<string, unknown>();
+  for (const e of log) {
+    if (e?.tool === "person_record_matches" && typeof e?.query?.recordId === "string") {
+      verdict.set(arkToBareId(e.query.recordId), e.outcome);
+    }
+  }
+  const sidecars = (
+    await mapWithConcurrency([...refs], READ_CONCURRENCY, async (ref) => {
+      const read = await readSidecarSearch(projectPath, ref);
+      if (!read?.subjectId) return null;
+      const ids = new Set<string>();
+      for (const r of read.results as any[]) if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
+      return { ids, subjectId: read.subjectId };
+    })
+  ).filter((s): s is { ids: Set<string>; subjectId: string } => s !== null);
+  const subjects = new Map<string, { thin: boolean; name: string } | null>();
+  const subject = async (sid: string) => {
+    if (!subjects.has(sid)) {
+      try {
+        const doc = await buildSubjectDoc(projectPath, sid);
+        const n = (doc.doc.persons?.[0] as any)?.names?.[0];
+        const name = [n?.given, n?.surname].filter((x) => typeof x === "string" && x.trim()).join(" ") || sid;
+        subjects.set(sid, { thin: doc.subjectTooThin, name });
+      } catch {
+        subjects.set(sid, null);
+      }
+    }
+    return subjects.get(sid)!;
+  };
+  for (const [recordId, ids] of idsByRecord) {
+    if ([...ids].some((x) => verdict.get(x) === "positive")) continue;
+    const thin = new Map<string, string>();
+    for (const s of sidecars) {
+      if (thin.has(s.subjectId) || ![...ids].some((x) => s.ids.has(x))) continue;
+      const subj = await subject(s.subjectId);
+      if (subj?.thin) thin.set(s.subjectId, `${subj.name} (${s.subjectId})`);
+    }
+    if (thin.size === 0) continue;
+    const who = [...thin.values()].join(", ");
+    out.set(
+      recordId,
+      `${recordId}: not extracted: a search for ${who} found this record, and the tree gives ` +
+        `${thin.size === 1 ? "that person" : "each of them"} no date narrower than a year and no named spouse, ` +
+        `parent or child, so the record cannot be told from a namesake's. Report it as needs-review and name ` +
+        `what would settle identity (a precise date, or a named spouse, parent or child); once the project ` +
+        `records one, the record can be extracted.`,
+    );
+  }
+  return out;
 }
 
 /** The sections a link write reaches: `personId` mode's attachment links only,
@@ -533,7 +614,7 @@ async function personIdMode(
     { projectPath: input.projectPath, recordIds: [...sourceIdByBare.keys()].map((b) => `ark:/61903/1:1:${b}`) },
     deps,
     principal,
-    { sourceDescriptionIdByBare: sourceIdByBare },
+    { sourceDescriptionIdByBare: sourceIdByBare, skipThinSubjectGate: true },
   );
 
   // Link, against the project as it now stands.
@@ -721,6 +802,20 @@ async function recordIdsMode(
     }
   }
 
+  // 2b. Thin-subject gate on the requested ids, so a refused record is not read.
+  const refuseThin = async (todo: typeof outcomes, more: (o: (typeof outcomes)[number]) => Iterable<string> | undefined) => {
+    if (opts.skipThinSubjectGate || todo.length === 0) return;
+    const ids = new Map(todo.map((o) => [o.recordId, new Set([...widen(arkToBareId(o.recordId)), ...(more(o) ?? [])])]));
+    const refusals = await thinSubjectRefusals(input.projectPath, research, ids);
+    for (const o of todo) {
+      const why = refusals.get(o.recordId);
+      if (!why) continue;
+      o.status = "refused";
+      o.summary = why;
+    }
+  };
+  await refuseThin(outcomes.filter((o) => o.status === "extracted"), () => undefined);
+
   // 3. Reads, in parallel. An error or an unstaged read is reported and skipped.
   const toRead = outcomes.filter((o) => o.status === "extracted" && !o.logId);
   await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
@@ -790,6 +885,10 @@ async function recordIdsMode(
     }
     leads.push(o);
   }
+
+  // 3c. Thin-subject gate, again with every persona the reads named, before
+  //     anything is logged or written.
+  await refuseThin(outcomes.filter((o) => o.status === "extracted"), (o) => households.get(o.recordId));
 
   const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
   if (staged.length > 0) {
@@ -1210,6 +1309,21 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     }
   }
 
+  // A FamilySearch record sent as a document passes the same thin-subject gate
+  // as `recordIds`; any other id is listed by no record_search, so never gated.
+  const thinTodo = outcomes.filter((o) => o.status === "extracted");
+  const thin = await thinSubjectRefusals(
+    input.projectPath,
+    research,
+    new Map(thinTodo.map((o) => [o.recordId, new Set([arkToBareId(o.recordId)])])),
+  );
+  for (const o of thinTodo) {
+    const why = thin.get(o.recordId);
+    if (!why) continue;
+    o.status = "refused";
+    o.summary = why;
+  }
+
   // A transcription already finalized under its own log entry (a
   // `results/<log_id>.json`) is cited, not logged a second time as a
   // `user_provided` entry, which would drop the scan's text from the source.
@@ -1553,7 +1667,9 @@ export const extractionAppendSchema = {
         description:
           "FAMILYSEARCH RECORDS. The records to extract, any ARK form. Send with " +
           "`questionIds` and, for a person expected on one of these records and not " +
-          "found, `absentPersons` with that record's `recordId`.",
+          "found, `absentPersons` with that record's `recordId`. A record found only " +
+          "by searches for a person with no precise date and no named spouse, parent " +
+          "or child is refused until the project records one.",
       },
       questionIds: QUESTION_IDS,
       absentPersons: {

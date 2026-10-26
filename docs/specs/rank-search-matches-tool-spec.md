@@ -436,9 +436,14 @@ Independent of the withholding branch (`subjectResolvable: false` +
 `matches: []`), which fires on zero dated/placed facts. A subject with a
 city-only residence has a placed fact (withholding does not fire) but may still
 be `subjectTooThin` (no narrow date, no relative). Both can be true
-simultaneously — the desired semantics for the namesake gate in search-records,
-which will read the flag regardless of whether matches were returned. That gate
-is not built yet, so nothing reads the flag today.
+simultaneously.
+
+The flag is advisory to the caller; the namesake gate does not read it. That
+gate is `extraction_append`'s thin-subject refusal
+(`research-append-tool-spec.md` §11.6, "The thin-subject gate"), and it
+recomputes the same test from `buildSubjectDoc` on the project as it stands at
+extraction time. It cannot read the flag back: `record_search` stages its
+response before ranking attaches `ranked`, so no sidecar records it.
 
 The **stricter form** — ignore facts the query already filtered on, since every
 result shares those by construction — is not built: the base rule shipped alone

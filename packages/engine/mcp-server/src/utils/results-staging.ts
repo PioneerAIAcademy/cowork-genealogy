@@ -697,6 +697,34 @@ export async function readStagedResults(
   projectPath: string,
   rawRef: string,
 ): Promise<unknown[]> {
+  return (await readSidecarEnvelope(projectPath, rawRef)).results;
+}
+
+/**
+ * The `subjectId` a ranked `record_search` was called with, read off its staged
+ * or finalized sidecar's echoed query, together with the sidecar's results.
+ * `stripQueryPlumbing` keeps `subjectId` out of the log entry's `query`, but the
+ * payload is persisted verbatim, so the sidecar still names the tree person the
+ * search was for. Undefined on any fault: a reader of this is a gate that fails
+ * open.
+ */
+export async function readSidecarSearch(
+  projectPath: string,
+  rawRef: string,
+): Promise<{ results: unknown[]; subjectId: string | undefined } | undefined> {
+  try {
+    const { results, query } = await readSidecarEnvelope(projectPath, rawRef);
+    const sid = (query as { subjectId?: unknown } | undefined)?.subjectId;
+    return { results, subjectId: typeof sid === "string" && sid.trim() !== "" ? sid : undefined };
+  } catch {
+    return undefined;
+  }
+}
+
+async function readSidecarEnvelope(
+  projectPath: string,
+  rawRef: string,
+): Promise<{ results: unknown[]; query: unknown }> {
   // Read-only, so a near-copy is read through to the one staged file it names
   // (resolveStagedRef) with nothing persisted under the mis-copied name.
   const { ref: stagedResultsRef } = await resolveStagedRef(projectPath, rawRef);
@@ -711,7 +739,7 @@ export async function readStagedResults(
         `${STAGING_SUBDIR}/ or a finalized results/<log_id>.json sidecar.`,
     );
   }
-  let envelope: { payload?: { results?: unknown[] } };
+  let envelope: { payload?: { results?: unknown[]; query?: unknown } };
   try {
     envelope = JSON.parse(
       await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
@@ -727,5 +755,5 @@ export async function readStagedResults(
       `stagedResultsRef '${stagedResultsRef}' envelope has no payload.results array.`,
     );
   }
-  return results;
+  return { results, query: envelope.payload?.query };
 }
