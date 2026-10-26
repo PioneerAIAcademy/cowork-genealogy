@@ -22,6 +22,8 @@ from e2e.turn_loop import (  # noqa: E402
     STOP_NO_REPLY,
     STOP_REPLY_CAP,
     STOP_SILENCE,
+    Turn,
+    accumulate_usage,
     run_turns,
     stream_turns,
 )
@@ -297,3 +299,137 @@ def test_stream_turns_waits_rather_than_timing_out_on_a_silent_turn():
         asyncio.run(asyncio.wait_for(go(), timeout=0.2))
     # It reached the stalled second turn and was still waiting there.
     assert len(turns) == 2 and turns[-1].sent == "Keep going."
+
+
+# ── accumulate_usage: the run total, plus decision 28's per-turn breakdown ───────
+
+
+def _turn(index, *, step=None, wall_ms=0, sent="go", reply=None, **usage):
+    t = Turn(index=index, sent=sent)
+    t.step, t.wall_ms, t.reply = step, wall_ms, reply
+    t.usage = usage or None
+    return t
+
+
+def test_the_top_level_figures_are_the_whole_run_not_the_last_turn():
+    """The defect this exists for. The orchestrator ASSIGNS usage from each
+    `ResultMessage`, and a persistent session delivers one per turn, so a 12 turn
+    run would have recorded the 12th turn's cost as the run's. Four readers take
+    these as the run's figures and the spend cap was sized from them."""
+    turns = [
+        _turn(0, duration_ms=1000, duration_api_ms=800, num_turns=3, total_cost_usd=1.5),
+        _turn(1, duration_ms=2000, duration_api_ms=1500, num_turns=4, total_cost_usd=2.5),
+        _turn(2, duration_ms=500, duration_api_ms=400, num_turns=1, total_cost_usd=0.25),
+    ]
+    out = accumulate_usage(turns)
+    assert out["total_cost_usd"] == 4.25
+    assert out["duration_ms"] == 3500
+    assert out["duration_api_ms"] == 2700
+    assert out["num_turns"] == 8
+
+
+def test_the_ending_fields_come_from_the_last_turn_not_the_sum():
+    """`is_error` and `stop_reason` describe how the run ENDED. Summing them is
+    not defined, and an early turn's clean stop must not stand as the run's."""
+    turns = [
+        _turn(0, total_cost_usd=1.0, is_error=False, stop_reason="end_turn"),
+        _turn(1, total_cost_usd=1.0, is_error=True, stop_reason="max_turns"),
+    ]
+    out = accumulate_usage(turns)
+    assert out["is_error"] is True and out["stop_reason"] == "max_turns"
+
+
+def test_token_counts_are_summed_field_by_field():
+    turns = [
+        _turn(0, usage={"input_tokens": 100, "output_tokens": 10, "cache_read_input_tokens": 5}),
+        _turn(1, usage={"input_tokens": 200, "output_tokens": 20}),
+    ]
+    out = accumulate_usage(turns)
+    assert out["usage"] == {"input_tokens": 300, "output_tokens": 30, "cache_read_input_tokens": 5}
+
+
+def test_a_non_numeric_token_field_is_carried_rather_than_added_or_dropped():
+    """The SDK has carried nested per-server dicts here. Adding one is undefined;
+    dropping it loses a field readers have."""
+    turns = [
+        _turn(0, usage={"input_tokens": 100, "server_tool_use": {"web_search_requests": 1}}),
+        _turn(1, usage={"input_tokens": 200, "server_tool_use": {"web_search_requests": 4}}),
+    ]
+    out = accumulate_usage(turns)
+    assert out["usage"]["input_tokens"] == 300
+    assert out["usage"]["server_tool_use"] == {"web_search_requests": 4}
+
+
+def test_the_per_turn_breakdown_carries_step_and_wall_time():
+    """Decision 28 wants cost per step and the wait per step. `step` and
+    `wall_ms` come from the turn, not the ResultMessage."""
+    turns = [
+        _turn(0, step="search-records", wall_ms=1000, sent="go", reply="Keep going.",
+              total_cost_usd=1.5, num_turns=3),
+        _turn(1, step="person-evidence", wall_ms=2000, sent="Keep going.",
+              total_cost_usd=2.5, num_turns=4),
+    ]
+    out = accumulate_usage(turns)
+    assert [(p["step"], p["wall_ms"], p["total_cost_usd"]) for p in out["per_turn"]] == [
+        ("search-records", 1000, 1.5),
+        ("person-evidence", 2000, 2.5),
+    ]
+    assert out["per_turn"][0]["reply"] == "Keep going."
+
+
+def test_a_turn_that_recorded_no_usage_still_appears_in_the_breakdown():
+    """A turn killed before its ResultMessage still happened, and still cost the
+    researcher the wait. Leaving it out would make the breakdown disagree with
+    the turn count."""
+    turns = [_turn(0, step="search-records", wall_ms=900, total_cost_usd=1.0),
+             _turn(1, step="person-evidence", wall_ms=120000)]
+    out = accumulate_usage(turns)
+    assert len(out["per_turn"]) == 2
+    assert out["per_turn"][1]["wall_ms"] == 120000
+    assert "total_cost_usd" not in out["per_turn"][1]
+    assert out["total_cost_usd"] == 1.0
+
+
+def test_a_run_with_no_usage_at_all_returns_empty_rather_than_zeroes():
+    """A skeleton of zeroes is indistinguishable from a real run that cost
+    nothing, and `inventory` counts a run as costed on a non-null
+    `total_cost_usd`."""
+    assert accumulate_usage([_turn(0), _turn(1)]) == {}
+    assert accumulate_usage([]) == {}
+
+
+def test_a_single_turn_run_reads_exactly_as_it_did_before():
+    """Every committed run has one turn's worth of usage. The totals must equal
+    that turn's figures, or new runs stop being comparable with the corpus."""
+    only = _turn(0, duration_ms=900, num_turns=7, total_cost_usd=8.25,
+                 is_error=False, stop_reason="end_turn",
+                 usage={"input_tokens": 1000, "output_tokens": 100})
+    out = accumulate_usage([only])
+    for key in ("duration_ms", "num_turns", "total_cost_usd", "is_error", "stop_reason"):
+        assert out[key] == only.usage[key], key
+    assert out["usage"] == only.usage["usage"]
+
+
+def test_a_boolean_is_never_summed_as_a_number():
+    """`True` is an `int` in Python, so an unguarded `isinstance(v, (int, float))`
+    adds it. The guard has to be tested where it APPLIES -- on a SUMMED key and
+    on a token field -- not on `is_error`, which is never summed whatever its
+    type. An earlier version of this test used `is_error` and passed with the
+    guard deleted.
+    """
+    malformed = Turn(index=0, sent="go")
+    malformed.usage = {
+        "num_turns": True,          # a summed key carrying a bool
+        "total_cost_usd": 2.0,
+        "usage": {"input_tokens": 100, "cache_hit": True},  # a token field carrying one
+    }
+    sane = Turn(index=1, sent="Keep going.")
+    sane.usage = {"num_turns": 3, "total_cost_usd": 1.0, "usage": {"input_tokens": 50}}
+
+    out = accumulate_usage([malformed, sane])
+    # The bool is not counted as 1: the sum is the one real figure.
+    assert out["num_turns"] == 3, out
+    assert out["total_cost_usd"] == 3.0
+    assert out["usage"]["input_tokens"] == 150
+    # And it is carried rather than added or dropped.
+    assert out["usage"]["cache_hit"] is True
