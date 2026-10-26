@@ -8,6 +8,6 @@
     "f2": "Primary Death fact (id F1) has correct date, full place (Stötten/Nötten, Laakirchen), and source S1 (6VYC-Q99N) — pass. A duplicate Death fact (id 079db9de) with place 'Austria' also present on GZRZ-TNG; likely the raw indexed record written before the image read, not removed by the agent. Proof quality 2: identification reasoning solid and conclusion correct, but the proof summary does not document the calibration check — 'original image confirmed' stated without naming the calibration neighbours that license it. Fixture was re-resolved to outcome 2 during this grading session after human re-read of image 64 (ark:/61903/3:1:S3HY-DBPS-JD) found both neighbours passing: Pomayr aged 63 and Lietmayr aged 35."
   },
   "annotator": "mercyokum",
-  "findings_hash": "ccbb24d8e0197458f7f35b80ed427e50005f0fa4b6c485bc6798cc7671be387b",
+  "findings_hash": "747477437ac7108d9e3d5a419aeaa6fd4f5c5507bd084f45f40f9877f01a6c1e",
   "blind_bundle_digest": "76a1748f02df81b20da52941829d59ed0132d5d8e3d6f7610590a3db881bc932"
 }
