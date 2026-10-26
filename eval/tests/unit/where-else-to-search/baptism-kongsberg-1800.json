@@ -28,7 +28,7 @@
     "This is the direct-agent arm with no project (scenario null, no projectPath). The agent holds only place_search, external_links_search and build_external_search_url; it must not look for research.json, create a project, or pass projectPath to any tool.",
     "Grounding: each suggestion's reason may use only the row's linkText, its startYear-endYear (or 'undated'), and the access value build_external_search_url returned. A statement about a site, place or record set that no tool returned is unsupported. A startYear-endYear wider than the years in the linkText is correct: the tool reports the merged span of duplicate rows.",
     "Every link in the reply must be a url a tool returned in this run, character for character. A hand-written or edited URL is a fail.",
-    "The return ends with the summary_for_user block: a `---` line, then one short plain paragraph per suggestion carrying its full link, then one closing sentence. Links are the deliverable and belong in that block; identifiers, tool names and field names do not.",
+    "The return ends with the summary_for_user block: a `---` line, an opening sentence, then each suggestion in the agent's fixed three-line shape (bold linkText with site and free/subscription; its years and how they cover the search, or 'Undated collection.'; the full link), then one closing sentence. Any extra sentence about a collection, the person's name or origin, or the period's history is a fact no tool returned: score it as ungrounded.",
     "Norway baptism collections (e.g. 'Norway Baptisms, 1634-1927' on FindMyPast or MyHeritage) should lead. A media.digitalarkivet.no row is not buildable and must not be passed to build_external_search_url."
   ]
 }

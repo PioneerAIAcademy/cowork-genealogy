@@ -72,7 +72,8 @@ Otherwise → proceed.
    Never pass `projectPath` or `host`.
 3. **Select at most 8 rows, then build.** Read each row's host from its `url`.
    A row is buildable only when its host is exactly one of these; any other
-   host, including another subdomain of the same site, is not:
+   host, including another subdomain of the same site (`chroniclingamerica.loc.gov`,
+   `web.archive.org`, `media.digitalarkivet.no`), is not:
 
    | host | `site` |
    |------|--------|
@@ -101,9 +102,12 @@ Otherwise → proceed.
    year and place (`birthYear`/`birthPlace`, `deathYear`/`deathPlace`,
    `marriageYear`/`marriagePlace`, `residenceYear`/`residencePlace`; the year is
    the middle of the range, the place is `standardPlace`). Never pass
-   `projectPath`. Drop a call that returns `ok: false`; do not rebuild its link
-   by hand.
-5. **Note unbuildable rows.** Up to 3 rows whose host is not in the table,
+   `projectPath`. Every call carries a `baseUrl` that is a returned row's `url`;
+   never call it without one.
+5. **A failed call is dropped.** When a call returns `ok: false`, that row is
+   gone: do not retry it, call the site without `baseUrl`, or write its link by
+   hand. Never make a second batch.
+6. **Note unbuildable rows.** Up to 3 rows whose host is not in the table,
    ranked the same way, go in a separate "also on file" list with their `url`
    exactly as returned. They never count as entries.
 
@@ -113,8 +117,8 @@ Otherwise → proceed.
   appear twice with different collections.
 - Each entry's reason is the row's `linkText`, its `startYear`–`endYear` and
   how that span covers the searched years (or "undated"), and the call's
-  `access` (free or subscription). Nothing else: no fact about a site, a place
-  or a record set that a tool did not return.
+  `access` (free or subscription). Nothing else: no fact about a site, a place,
+  a record set, the person's name or origin, or the history of the period.
 - Every link you write is a `url` a tool returned in this run, character for
   character.
 - Fewer than 3 entries: give what you have and say that is all FamilySearch
@@ -134,13 +138,24 @@ Return, in this order:
 After those lines, write a line containing only `---`, then plain prose with **no
 label, heading or field name**:
 
-1. One short paragraph per entry, for a beginner: the site name, the link, and
-   in plain words what the collection holds and why it fits this person's place
-   and years, and whether it is free or needs a subscription. The links are the
-   deliverable; write each in full. No ids, file names, tool names or field names.
-2. If there are "also on file" rows: one sentence naming them, each with its
-   link, saying they open the collection without a prefilled search.
-3. One sentence: open a link, and bring back anything found to keep researching.
+1. One opening sentence: these are collections FamilySearch lists for that
+   place and period on other sites, each opening with the search filled in.
+2. One entry per link, exactly this shape and nothing more:
+
+   ```
+   **<linkText>** — <site name>, <free | needs a subscription>
+   Covers <startYear>–<endYear>, which includes your <years searched>. | Undated collection.
+   <url>
+   ```
+
+   Use the row's own `startYear`/`endYear`. A row without them is "Undated
+   collection." even when its `linkText` names years. For a dated row that only
+   partly overlaps, say which years overlap. Add no
+   sentence about what the collection holds, who is in it, or why the person
+   might be there: anything not in that shape is a fact no tool returned.
+3. If there are "also on file" rows: one line, "Also listed, without a filled-in
+   search:", then each `linkText` and its `url`.
+4. One sentence: open a link, and bring back anything found to keep researching.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
 closing essay.

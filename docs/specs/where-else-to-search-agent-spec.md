@@ -34,9 +34,16 @@ minute of wall-clock time.
    parallel batch. Each call is Case A, with the row's `url` as `baseUrl`
    (`build-external-search-url-tool-spec.md` §3.2).
 5. **Return.** A two-line caller header, then `---`, then `summary_for_user`:
-   one short paragraph per entry, each carrying its link in full, then one
-   closing sentence. Up to 3 curated rows on unsupported hosts are listed
-   separately, described as opening the collection with no prefilled search.
+   an opening sentence, then each entry in a fixed three-line shape (bold
+   `linkText` with the site and free/subscription; the span and how it covers
+   the search, or "Undated collection."; the link in full), then one closing
+   sentence. Up to 3 curated rows on unsupported hosts are listed separately,
+   described as opening the collection with no prefilled search.
+
+   The shape is fixed because free prose failed grounding. On the first scratch
+   run (2026-10-26) the "plain paragraph per entry" form produced lines no tool
+   returned: transcription vendors, the surname's origin, and enlistment
+   history. Most of the run's 8.6k output tokens went into that prose.
 
 An **entry** is one link that `build_external_search_url` returned. One site may
 appear more than once, with different collections.
@@ -85,11 +92,16 @@ appear more than once, with different collections.
     requires every holder of a writer tool to be named).
 - **No `**Narration:**` line.** Narration is a `research.json` read, and there
   is no project.
-- **Model `claude-sonnet-4-6`**, the pin most agents carry. A cheaper model is
-  worth trying only if the measured p50 misses one minute.
+- **Model `claude-sonnet-4-6`**, the pin most agents carry. `claude-haiku-4-5` was
+  tried on scratch runs (2026-10-26) and rejected: it altered a curated `baseUrl`
+  (a trailing `/`), gave undated rows a span read from their title, and was not
+  reliably faster (80 s and 154 s on the same test). Neither model meets one
+  minute: the time is model generation, not tool round-trips, so the batch form
+  of `build_external_search_url` below would not close it.
 - **Batch `build_external_search_url` is out of scope.** A new tool parameter is
-  a contract change. If the measured p50 misses, the batch form is the fix, and
-  it gets filed with the measurement.
+  a contract change. The scratch runs already show the agent issuing all its
+  builds in one parallel turn, so a batch call would save one tool round-trip,
+  not the model's generation time, which dominates.
 
 ## 3. What nothing checks
 

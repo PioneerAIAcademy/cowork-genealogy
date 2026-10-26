@@ -32,6 +32,6 @@ Is every link one a tool returned, and does the user get it?
 
 Is the user-facing block readable by a beginner?
 
-- **pass:** Below the `---`, one short plain paragraph per suggestion, then one closing sentence. No ids, file names, tool names or field names. Above it, only the place searched, the years used and the counts.
-- **partial:** The block names a tool or field, or runs to an essay.
+- **pass:** Below the `---`, one opening sentence, then each suggestion in the fixed three-line shape (bold `linkText` with the site and free/subscription; its years and how they cover the search, or "Undated collection."; the link), then one closing sentence. No ids, file names, tool names or field names. Above it, only the place searched, the years used and the counts.
+- **partial:** The block names a tool or field, or a suggestion carries extra sentences beyond the fixed shape (score any fact in them under Grounding).
 - **fail:** There is no `---` block, or the agent created a project, read `research.json`, or called a writer.
