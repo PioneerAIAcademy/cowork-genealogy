@@ -1,4 +1,4 @@
-﻿{
+{
   "tool": "wiki_read",
   "description": "wiki_read — FamilySearch Wiki page for Christ Church Philadelphia records. Names Christ Church Preservation Trust as the sole holder of original registers and mentions HSP only as the holder of a published transcription.",
   "args": { "url": "~christ_church" },

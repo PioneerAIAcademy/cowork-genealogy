@@ -1,4 +1,4 @@
-﻿{
+{
   "tool": "wiki_search",
   "description": "wiki_search — FamilySearch Wiki search for Christ Church Philadelphia records",
   "args": { "query": "~christ church philadelphia" },
