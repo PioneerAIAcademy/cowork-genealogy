@@ -17,3 +17,6 @@ coverage/
 # Misc
 .DS_Store
 *.log
+
+# tsx compiler cache
+tsx-0/

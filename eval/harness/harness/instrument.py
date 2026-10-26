@@ -134,6 +134,11 @@ LIVE_TOOLS: set[str] = {
     # Places lookups are answered from the test's place_search fixtures
     # (`_make_timeline_build_handler`), so it stays offline.
     "timeline_build",
+    # The research router's first call. Production advertises it everywhere and
+    # the harness workspace is a folder, so the real tool's folder answer is what
+    # every test should see. A test that declares a project_list fixture gets
+    # that response instead: the hosted routes are served that way.
+    "project_list",
 }
 
 # The compiled entry module each live handler loads, relative to the build dir.
@@ -160,6 +165,7 @@ LIVE_MODULES: dict[str, str] = {
     "build_external_search_url": "tools/build-external-search-url.js",
     "get_name_variants": "tools/name-variants.js",
     "timeline_build": "tools/timeline-build.js",
+    "project_list": "tools/project-list.js",
 }
 
 SHARED_VALIDATOR_FILES: tuple[str, ...] = ("test_universal.py", "validators_lib.py")

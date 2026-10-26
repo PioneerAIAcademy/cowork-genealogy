@@ -464,11 +464,16 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       // near-miss key too: `sections` is the mistake the model actually makes,
       // and the bare `section 'undefined'` message gave it no way to learn the
       // parameter is singular.
+      // `plan_items` is research_append's section name for a plan's items; the
+      // read side keeps them under `plans`, and a model that writes with one name
+      // queries with it too.
       const near =
-        section === undefined &&
-        (input as unknown as Record<string, unknown>).sections !== undefined
-          ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
-          : "";
+        (section as string) === "plan_items"
+          ? " Plan items live under section 'plans'."
+          : section === undefined &&
+              (input as unknown as Record<string, unknown>).sections !== undefined
+            ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+            : "";
       throw new ResearchQueryError(
         `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +
           `${near} Send one section name as a string.`,
