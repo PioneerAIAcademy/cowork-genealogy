@@ -598,6 +598,15 @@ describe("extraction_append: recordIds and absences", () => {
     expect(r.records[1].summary).toMatch(/William Miller \(deceased\)/);
   });
 
+  it("names in the summary the places the write gave no standard form", async () => {
+    const death = element("death");
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records[0].summary.split("\n")).toContain(
+      "Places kept as written, with no standard place found: Jackson Co., O.; Jackson, Ohio, United States; Scioto T.P., Jackson, Ohio.",
+    );
+  });
+
   // ─── an accepted hint's log entry is the record's own (issue #3157) ───────────
 
   const hintEntry = (id: string, recordId: string, outcome = "positive") => ({

@@ -11,7 +11,12 @@ import { tmpdir } from "os";
 
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
-  return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
+  // Two places resolve; every other place finds nothing.
+  const resolved: Record<string, string> = {
+    "412 Vine St, Cincinnati": "Cincinnati, Hamilton, Ohio, United States",
+    "Hilperton, Wiltshire": "Hilperton, Wiltshire, England, United Kingdom",
+  };
+  return { ...actual, resolveStandardPlace: vi.fn(async (text: string) => resolved[text] ?? null) };
 });
 
 import { runExtractionAppend, type ExtractionBatchResult } from "../../src/tools/extraction-append.js";
@@ -1033,6 +1038,68 @@ describe("extraction_append: documents", () => {
       expect(r.ok).toBe(false);
       expect((r.errors ?? []).join(" ")).toMatch(/computed: '[^']+' is not an attribute/);
       expect((await read()).sources).toHaveLength(0);
+    });
+  });
+
+  describe("places are looked up", () => {
+    const obit = (facts: any[]) => ({
+      recordType: "obituary",
+      documentForm: "verbatim_transcript",
+      source: src("Obituary of Albert Schreiber, Cincinnati Enquirer, 16 Mar 1921"),
+      persons: [{ id: "p1", principal: true, gender: "male", names: [{ given: "Albert", surname: "Schreiber" }], facts }],
+    });
+
+    it("standardizes the place a place variant carries in `value`", async () => {
+      const r = await run([{ recordId: "capture:obit-birthplace", document: obit([{ type: "birthplace", value: "Hilperton, Wiltshire" }]) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const birth = (await assertionsFor("capture:obit-birthplace")).find((a: any) => a.fact_type === "birth");
+      expect(birth).toMatchObject({ place: "Hilperton, Wiltshire", standard_place: "Hilperton, Wiltshire, England, United Kingdom" });
+    });
+
+    it("reads a residence given only as a value as its place, as written, and standardizes it", async () => {
+      const r = await run([
+        {
+          recordId: "capture:obit-residence",
+          document: obit([
+            { type: "residence", value: "412 Vine St, Cincinnati" },
+            { type: "immigration", value: "came to this country in 1862", date: "1862" },
+          ]),
+        },
+      ]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const as = await assertionsFor("capture:obit-residence");
+      expect(as.find((a: any) => a.fact_type === "residence")).toMatchObject({
+        value: "412 Vine St, Cincinnati",
+        place: "412 Vine St, Cincinnati",
+        standard_place: "Cincinnati, Hamilton, Ohio, United States",
+      });
+      // Only a residence's value is its place.
+      expect(as.find((a: any) => a.fact_type === "immigration").place).toBeUndefined();
+    });
+
+    it("keeps a computed residence value and the place read from it in one assertion", async () => {
+      const r = await run([
+        { recordId: "capture:obit-residence-computed", document: obit([{ type: "residence", value: "412 Vine St, Cincinnati", computed: ["value"] }]) },
+      ]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const residences = (await assertionsFor("capture:obit-residence-computed")).filter((a: any) => a.fact_type === "residence");
+      expect(residences).toHaveLength(1);
+      expect(residences[0]).toMatchObject({ place: "412 Vine St, Cincinnati", record_basis: "inferred" });
+    });
+
+    it("names in the summary, once each, the places given no standard form", async () => {
+      const r = await run([
+        {
+          recordId: "capture:obit-unresolved",
+          document: obit([
+            { type: "death", date: "14 March 1921", place: "Nowhereville" },
+            { type: "burial", date: "17 March 1921", place: "Nowhereville" },
+            { type: "residence", value: "412 Vine St, Cincinnati" },
+          ]),
+        },
+      ]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(r.records[0].summary.split("\n")).toContain("Places kept as written, with no standard place found: Nowhereville.");
     });
   });
 });

@@ -874,7 +874,7 @@ async function recordIdsMode(
         continue;
       }
       o.srcId = srcIdOf(written);
-      o.summary = summarizeExtraction(doc, extraction);
+      o.summary = summarizeExtraction(doc, extraction) + unresolvedPlacesLine(written.unresolvedPlaces);
       o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
@@ -897,6 +897,15 @@ async function recordIdsMode(
     records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
+}
+
+/** The summary line naming the places the write found no standard form for, or
+ *  "" when there were none. The summary is all its caller relays (the
+ *  record-structurer, search-records), and it is built before the write, so the
+ *  write's place misses are added here. */
+function unresolvedPlacesLine(places: readonly string[] | undefined): string {
+  const distinct = [...new Set(places ?? [])];
+  return distinct.length === 0 ? "" : `\nPlaces kept as written, with no standard place found: ${distinct.join("; ")}.`;
 }
 
 /** The staged sidecar row for `recordId`, matched on its bare ARK id. */
@@ -1322,7 +1331,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
           continue;
         }
         o.srcId = srcIdOf(written);
-        o.summary = summarizeExtraction(extract, extraction);
+        o.summary = summarizeExtraction(extract, extraction) + unresolvedPlacesLine(written.unresolvedPlaces);
         o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
       }
     }

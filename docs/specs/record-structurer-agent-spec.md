@@ -80,7 +80,8 @@ Aim for three turns per batch: read all, write all, return.
    `errors` and resends the whole batch.
 3. **Return** `extraction_append`'s code-written summary **verbatim**, and
    nothing else. There is no two-paragraph relay and no `---` separator, so the
-   spawner relays exactly what the tool wrote.
+   spawner relays exactly what the tool wrote. The summary names every place
+   the write could not standardize (§11.7).
 
 ## 4. Reading doctrine the body carries
 
@@ -123,7 +124,9 @@ is §11.7's code.
 - **Residence (genealogist, 2026-10-04).** A person described as "of
   <place>" has a `residence` fact there. Trials missed it on a testator ("of
   the Borough of Shenandoah", 2 of 3 runs) and a bride's father ("of Mahanoy
-  City", 1 of 3).
+  City", 1 of 3). A residence sent with that place only in `value` has the
+  value read as its `place` too, as written (§11.7), so it is standardized and
+  reaches the tree.
 - **Gender for every person whose sex the text states**, not only the
   principal. A kin word states it: when a person is sent with no `gender` and
   a `statedRelation` of `father`, `son`, `husband`, `brother`, `mother`,

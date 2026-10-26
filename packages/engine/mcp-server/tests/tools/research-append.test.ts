@@ -55,6 +55,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import {
   researchAppend,
+  researchAppendFromCaller,
   countryConsistency,
   mintedFromThisRecord,
   personaReachable,
@@ -1350,6 +1351,84 @@ describe("research_append (Phase 1)", () => {
       expect(p.fact_type).toBe("birth");
       expect(p.place).toBe("Ireland");
     }
+  });
+
+  describe("a place variant's place in `value` is looked up like any other place", () => {
+    const WB = "West Bromwich, Staffordshire, England";
+    const WB_STD = "West Bromwich, Staffordshire, England, United Kingdom";
+    /** An assertion stored before the fold, its place still only in `value`. */
+    const storedVariant = (value: string) => {
+      const research = baseResearch();
+      research.assertions = [{ ...validAssertion("a_001"), fact_type: "birthplace", value }];
+      return research;
+    };
+
+    it("on an append", async () => {
+      await writeProject();
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "birthplace", value: WB };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.resolvedPlaces).toEqual([{ place: WB, standardPlace: WB_STD, source: "geocoded" }]);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ fact_type: "birth", place: WB, standard_place: WB_STD });
+    });
+
+    it("on an append whose place resolves to nothing, which is warned about and echoed", async () => {
+      await writeProject();
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "deathplace", value: "Hilperton" };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
+      expect(r.unresolvedPlaces).toEqual(["Hilperton"]);
+    });
+
+    it("on a research_append informant_bias_notes update, which leaves the linked tree fact alone", async () => {
+      const tree = structuredClone(baseTree) as any;
+      tree.persons[0].facts = [{ id: "F4", type: "Birthplace", value: WB, assertion_id: "a_001", sources: [{ ref: "SD-001" }] }];
+      await writeProject(storedVariant(WB), tree);
+      const r = await researchAppendFromCaller({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_001",
+        fields: { informant_bias_notes: "re-read: the entry is faint" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.filesWritten).toEqual(["research.json"]);
+      expect((await readResearch()).assertions[0]).toMatchObject({
+        fact_type: "birth",
+        place: WB,
+        standard_place: WB_STD,
+        informant_bias_notes: "re-read: the entry is faint",
+      });
+    });
+
+    it("on an update whose place resolves to nothing, which is warned about", async () => {
+      await writeProject(storedVariant("Hilperton"));
+      const r = await researchAppendFromCaller({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_001",
+        fields: { informant_bias_notes: "faint" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
+      const a = (await readResearch()).assertions[0];
+      expect(a.place).toBe("Hilperton");
+      expect(a.standard_place).toBeUndefined();
+    });
+
+    it("on an update that blanks the place, which the fold fills from `value` again", async () => {
+      await writeProject(storedVariant(WB));
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "update", entryId: "a_001", fields: { place: null } });
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).assertions[0]).toMatchObject({ place: WB, standard_place: WB_STD });
+    });
   });
 
   it("canonicalizes assertion fact_type on an update too", async () => {
@@ -9079,6 +9158,7 @@ describe("research_append (composite persist + enforcement)", () => {
     if (!r.ok || !("results" in r)) return;
     expect(r.validation.warnings.join(" ")).toMatch(/could not resolve standard_place for 'Nowhere Particular'/);
     expect(r.resolvedPlaces).toBeUndefined();
+    expect(r.unresolvedPlaces).toEqual(["Nowhere Particular"]);
     expect((await readResearch()).assertions[1].standard_place).toBeUndefined();
   });
 

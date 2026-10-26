@@ -56,7 +56,7 @@ import {
   noProjectResult,
 } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
-import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency, isNonPlacePhrase } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
@@ -498,12 +498,17 @@ async function applyOperation(
       const contextPlaces = siblings
         .map((f) => f.place)
         .filter((p): p is string => typeof p === "string" && p !== fact.place);
-      try {
-        fact.standard_place = (await resolveStandardPlace(fact.place, { contextPlaces })) ?? undefined;
-        if (fact.standard_place === undefined) delete fact.standard_place;
-      } catch {
+      // resolveStandardPlace returns null for a miss and for a network failure
+      // alike, so both warn. A non-place phrase ("Same House") has no standard
+      // form to miss, so it is left unset silently, as research_append does.
+      const sp = await resolveStandardPlace(fact.place, { contextPlaces }).catch(() => null);
+      if (sp) {
+        fact.standard_place = sp;
+      } else {
         delete fact.standard_place;
-        warnings.push(`could not resolve standard_place for '${fact.place}' (left unset)`);
+        if (!isNonPlacePhrase(fact.place)) {
+          warnings.push(`could not resolve standard_place for '${fact.place}' (left unset)`);
+        }
       }
     }
 

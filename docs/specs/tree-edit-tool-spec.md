@@ -187,8 +187,10 @@ tree_edit({
   before the write and any existing primary of the type is left alone. Any
   other spelling (`"false"`, `null`, `0`) is an input error. If
   `fact.place` is set and `resolveStandardPlace !== false` and no
-  `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
-  when nothing resolves), passing the places of the holder's other facts as
+  `fact.standard_place` was supplied, resolve it via `resolveStandardPlace`. When
+  nothing resolves, the field is left unset and a warning is added, unless the
+  place is a non-place phrase such as "Same House" (`isNonPlacePhrase`), which
+  has no standard form to miss. Pass the places of the holder's other facts as
   context for a bare single-segment place (see research-append-tool-spec
   §3.6, lever B). A `personId` target whose `fact.type` is a couple event
   (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
@@ -686,7 +688,7 @@ Sequence (validate-before-persist, tree-only):
 | `update_relationship` on a `relationshipId` not in the tree | staleness error; write nothing |
 | `update_relationship` on a Couple | input error — only a ParentChild edge carries a subtype |
 | `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
-| `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
+| `standard_place` lookup finds nothing, or its network call fails | best-effort: leave `standard_place` unset and add a warning (none for a non-place phrase such as "Same House"); never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
 | Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |

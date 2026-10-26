@@ -246,6 +246,7 @@ camelCase convenience fields the same way `research_log_append` does.
     sId: string | null,            // the tree S entry the source cites
   },
   resolvedPlaces?: [{ place, standardPlace, source: "sidecar" | "geocoded" }], // §3.6
+  unresolvedPlaces?: string[],     // §3.6 — each place looked up and left with no standard_place
   filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S
                                    //   entry or §3.1's assertion-update rewrote a fact
   validation: { valid: true, warnings: string[] },
@@ -662,7 +663,15 @@ new place without setting `standard_place`. On that update the existing assertio
 the base, no sidecar is consulted (geocoding only), a resolved value is written into
 the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
-with a warning rather than kept for the new place:
+with a warning rather than kept for the new place.
+
+A place-of-event variant that carries its place in `value` (§3.7) has it lifted
+into `place` before the levers run, so the lifted place is resolved, echoed and
+warned about like any other. That holds on an append and on an update that leaves
+`place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
+question tie. On such an update the lifted place and its `standard_place` go onto
+the stored entry, not into the op, so §3.1 does not treat them as a correction to
+carry onto a linked tree fact. The levers:
 
 - **Lever B — sidecar copy first, never re-geocode what the record resolved.**
   When the op carries a `place` but omits `standard_place` (**strictly absent**;
@@ -699,7 +708,9 @@ with a warning rather than kept for the new place:
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
-  so the caller can sanity-check geocoding without re-reading files.
+  so the caller can sanity-check geocoding without re-reading files. Every place
+  it looked up and could not resolve is listed in `unresolvedPlaces: string[]`,
+  as well as warned about.
 - **Lever A — country-contradiction guard.** On the op's final
   `place`/`standard_place` pair (supplied or resolved): when the place TEXT's
   trailing comma-token names a recognized country (a small alias table:
@@ -778,7 +789,8 @@ splintering into inconsistent labels, over a form the model added:
   the event type (`birthplace` → `birth`, `deathplace` → `death`), **and** the
   tool lifts the place value into the machine-readable `place` field when neither
   `place` nor `standard_place` is already set (the human `value` of a place-claim
-  *is* the place string, e.g. `"Ireland"`). This keeps a birthplace-claim and a
+  *is* the place string, e.g. `"Ireland"`). The lift comes before §3.6's lookups,
+  so the lifted place is standardized. This keeps a birthplace-claim and a
   birth-date claim independently classifiable as two `birth` assertions — the
   census case where a stated birthplace is `direct` while the computed birth year
   is `indirect` — distinguished by field population (`place` set = the
@@ -2598,6 +2610,7 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
 | `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
 | `date_certainty` | `computed` includes `date` | `approximate`. |
+| a residence's `place` | `value` | A `residence` fact with no `place` that gives its address in `value` ("412 Vine St, Cincinnati") gets that text, as written, as its `place` too. That is the attribute §3.6 standardizes and the one a Residence fact keeps on the tree. The `value` is kept, and a computed `value` makes the place computed too. Other fact types keep their values out of `place`, because those values are not places. |
 | information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
 | `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as `image_transcribe`'s machine transcription, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined. Nothing on this path is `original`. |
@@ -2720,7 +2733,11 @@ classification warnings, every `[suspicious text …]` marker a document
 carried, and a household head whose surname differs from the principal's. That
 last is a lead for hypothesis-tracking, never a relationship. It is not every assertion and not bare counts. The
 agent returns it verbatim, and the caller relays it and decides what comes
-next without a follow-up read.
+next without a follow-up read. On both paths a summary also ends with one line
+naming, once each, the places §3.6 could not standardize when the source was
+written (`Places kept as written, with no standard place found: …`). The rest
+of the summary is built before the write, and the summary is all the caller
+relays, so without this line a place miss would never reach the researcher.
 
 ### 11.8 Person mode — a person's attached records, extracted and linked
 

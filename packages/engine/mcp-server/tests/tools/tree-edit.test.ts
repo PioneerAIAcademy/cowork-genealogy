@@ -422,6 +422,61 @@ describe("tree_edit", () => {
     });
   });
 
+  describe("a place that resolves to nothing", () => {
+    const addResidence = (place: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Residence", date: "1850", place, sources: [{ ref: "S1" }] },
+      });
+
+    it("add_fact: is left without a standard_place, with a warning", async () => {
+      await writeProject(onePersonSourced());
+      const r = await addResidence("Nowhereville");
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain("could not resolve standard_place for 'Nowhereville' (left unset)");
+      const added = (await readTree()).persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
+      expect(added.place).toBe("Nowhereville");
+      expect(added).not.toHaveProperty("standard_place");
+    });
+
+    it("add_fact: a non-place phrase has no standard form to miss, so it is not warned about", async () => {
+      await writeProject(onePersonSourced());
+      const r = await addResidence("Same House");
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).not.toMatch(/could not resolve/);
+    });
+
+    it("tree_correct update_fact: a corrected place clears the old standard_place, with a warning", async () => {
+      const tree = onePersonSourced();
+      (tree.persons[0].facts as any[]).push({
+        id: "F2",
+        type: "Residence",
+        date: "1850",
+        place: "Schuylkill County, Pennsylvania",
+        standard_place: "Schuylkill, Pennsylvania, United States",
+        sources: [{ ref: "S1" }],
+      });
+      await writeProject(tree);
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_fact",
+        personId: "I1",
+        factId: "F2",
+        fact: { place: "Nowhereville" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain("could not resolve standard_place for 'Nowhereville' (left unset)");
+      const f2 = (await readTree()).persons[0].facts.find((f: any) => f.id === "F2");
+      expect(f2.place).toBe("Nowhereville");
+      expect(f2).not.toHaveProperty("standard_place");
+    });
+  });
+
   it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
     // Regression test for the "West Bromwich" -> "West, Cameroon" incident
     // (hannah-earnest-children e2e rerun, 2026-07-22): resolveStandardPlace

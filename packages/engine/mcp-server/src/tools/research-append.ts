@@ -5255,6 +5255,8 @@ interface SingleSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  /** Places looked up and left with no standard_place (§3.6). */
+  unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
 }
@@ -5264,6 +5266,7 @@ interface BatchSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
   /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
@@ -5980,6 +5983,26 @@ function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
 
+/** A folded place-of-event variant must keep its place machine-readable: when
+ *  neither `place` nor `standard_place` is set, lift the human `value` (which
+ *  for a place-claim IS the place string, e.g. "Ireland") into `place`. Reads
+ *  `fact_type` as given, so it runs before the fold renames it. Returns whether
+ *  it lifted. `prepareOps` calls it before its place lookups, so a lifted place
+ *  is standardized like any other. */
+function liftVariantPlace(entry: Record<string, unknown>): boolean {
+  if (
+    typeof entry.fact_type !== "string" ||
+    !PLACE_VARIANT_KEYS.has(factTypeKey(entry.fact_type)) ||
+    !isBlank(entry.place) ||
+    !isBlank(entry.standard_place) ||
+    isBlank(entry.value)
+  ) {
+    return false;
+  }
+  entry.place = entry.value;
+  return true;
+}
+
 /** Best-effort canonicalization of an assertion's `fact_type` in place. Maps a
  *  known alias (by normalized key) to its canonical spelling, and folds a
  *  place-of-event variant into the event type while lifting its place value into
@@ -5989,6 +6012,7 @@ function isBlank(v: unknown): boolean {
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
+  liftVariantPlace(entry);
   const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
@@ -5997,12 +6021,6 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
     ? FACT_TYPE_ALIASES[key]
     : undefined;
   if (canonical) entry.fact_type = canonical;
-  // A folded place-of-event variant must keep its place machine-readable: if
-  // neither `place` nor `standard_place` is set, lift the human `value` (which
-  // for a place-claim IS the place string, e.g. "Ireland") into `place`.
-  if (PLACE_VARIANT_KEYS.has(key) && isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(entry.value)) {
-    entry.place = entry.value;
-  }
 }
 
 /** TWO DIFFERENT FIELDS SHARE THE VALUE `"absent"` IN THIS FUNCTION.
@@ -7242,6 +7260,8 @@ interface PreparedOps {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
+  /** Places looked up and given no standard form, each also a warning. */
+  unresolvedPlaces: string[];
   warnings: string[];
   /** Verdict sidecar to write iff the whole call validates. */
   verdictFile?: { relPath: string; body: unknown };
@@ -7633,6 +7653,7 @@ async function prepareOps(
   const errors: string[] = [];
   const warnings: string[] = [];
   const resolvedPlaces: ResolvedPlaceEcho[] = [];
+  const unresolvedPlaces: string[] = [];
   let treeMutated = false;
   // Read the attestations this batch's person_evidence ops will be checked
   // against. Here rather than in `applyOne`, which is synchronous and holds no
@@ -7901,6 +7922,15 @@ async function prepareOps(
     return results;
   };
 
+  // A place variant ("birthplace") carrying its place in `value` has it lifted
+  // into `place` here, before the lookups below, rather than by applyOne's fold
+  // after them.
+  for (const op of ops) {
+    if (op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object") {
+      liftVariantPlace(op.entry as Record<string, unknown>);
+    }
+  }
+
   // The other places each record's assertions name in this batch: a bare place
   // ("Shenandoah") is resolved against them, not against the whole world.
   const placesByRecord = new Map<string, string[]>();
@@ -7954,6 +7984,7 @@ async function prepareOps(
           geocoded = true;
         } else {
           warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
+          unresolvedPlaces.push(entry.place);
         }
       }
       if (sp && source) {
@@ -8175,10 +8206,28 @@ async function prepareOps(
     if (op.section !== "assertions" || op.op !== "update" || typeof op.entryId !== "string") continue;
     const fields = (op as any).fields;
     if (!fields || typeof fields !== "object") continue;
-    if (!Object.prototype.hasOwnProperty.call(fields, "place") || Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
+    if (Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
     const cur = ((research.assertions ?? []) as any[]).find((a: any) => a?.id === op.entryId);
+    if (!cur) continue;
+    const setsPlace = Object.prototype.hasOwnProperty.call(fields, "place");
+    // A stored place variant still holding its place in `value` gets it lifted by
+    // applyOne's fold, after these lookups, so it is lifted here. Onto the stored
+    // entry when the op leaves `place` alone: a note or a question tie is not a
+    // place correction for rewriteLinkedFacts to carry onto the tree.
+    const merged = { ...cur, ...fields };
+    if (liftVariantPlace(merged)) {
+      if (!setsPlace) {
+        cur.place = merged.place;
+        const view: any = { ...merged, standard_place: undefined };
+        await applyPlaceLevers(view, i, null, true);
+        if (typeof view.standard_place === "string") cur.standard_place = view.standard_place;
+        continue;
+      }
+      fields.place = merged.place;
+    }
+    if (!setsPlace) continue;
     const place = factText(fields.place);
-    if (!cur || place === undefined || place === factText(cur.place)) continue;
+    if (place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
     await applyPlaceLevers(view, i, null, true);
     if (typeof view.standard_place === "string") {
@@ -8312,7 +8361,7 @@ async function prepareOps(
   if (errors.length > 0) throw new ResearchAppendError(errors);
   // Last, so this batch's assertions carry the standard_place resolved above.
   const birthPlaceCoords = await prefetchBirthPlaceCoords(research, ops, tree, personLinks, batchAssertions);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile, birthPlaceCoords };
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, unresolvedPlaces, warnings, verdictFile, birthPlaceCoords };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -8761,10 +8810,11 @@ export async function researchAppend(
       valid: true as const,
       warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
-    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
+    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
+    if (prep.unresolvedPlaces.length > 0) extras.unresolvedPlaces = prep.unresolvedPlaces;
 
     if (isBatch) {
       return {
