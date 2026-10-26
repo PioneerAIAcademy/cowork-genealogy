@@ -23,7 +23,7 @@ from test_search_hints import (  # noqa: E402
     test_image_read_before_reject as check_image,
     test_record_mode_logs_each_verdict as check_record,
     test_thin_hint_is_not_enough_information as check_thin,
-    test_triage_writes_nothing as check_writes,
+    test_triage_writes_only_item_status as check_writes,
 )
 
 TRIAGE = {"type": "positive", "tags": ["triage", "pending-only", "writes-nothing"], "delegation": "x"}
@@ -77,20 +77,33 @@ def test_pending_ignores_a_record_mode_run_with_no_listing():
     check_pending([], RECORD)
 
 
-# --- triage writes nothing ----------------------------------------------
+# --- triage writes only its item's status -------------------------------
 
 def test_writes_passes_a_read_only_triage():
     check_writes(_state([]), _state([]), [_call("record_read", recordId="MABC")], TRIAGE)
 
 
-def test_writes_fails_a_log_call():
-    with pytest.raises(AssertionError, match="must write nothing"):
-        check_writes(_state([]), _state([]), [_call("research_log_append", tool="person_record_matches")], TRIAGE)
+def test_writes_passes_a_plan_items_status_update():
+    check_writes(_state([]), _state([]), [_call("research_append", section="plan_items", op="update")], TRIAGE)
 
 
-def test_writes_fails_a_new_log_entry():
-    with pytest.raises(AssertionError, match="added a log entry"):
-        check_writes(_state([]), _state([{"id": "log_006"}]), [], TRIAGE)
+def test_writes_passes_a_single_negative_log_entry():
+    check_writes(_state([]), _state([{"id": "log_006", "outcome": "negative"}]), [], TRIAGE)
+
+
+def test_writes_fails_an_evidence_write():
+    with pytest.raises(AssertionError, match="plan_items"):
+        check_writes(_state([]), _state([]), [_call("research_append", section="evidence")], TRIAGE)
+
+
+def test_writes_fails_two_log_entries():
+    with pytest.raises(AssertionError, match="at most one"):
+        check_writes(_state([]), _state([{"id": "log_006"}, {"id": "log_007"}]), [], TRIAGE)
+
+
+def test_writes_fails_a_positive_log_entry():
+    with pytest.raises(AssertionError, match="negative"):
+        check_writes(_state([]), _state([{"id": "log_006", "outcome": "positive"}]), [], TRIAGE)
 
 
 # --- image before reject ------------------------------------------------

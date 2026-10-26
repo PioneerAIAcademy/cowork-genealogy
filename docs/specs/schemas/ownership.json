@@ -174,7 +174,8 @@
         "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
-        "agent:search-images"
+        "agent:search-images",
+        "agent:search-hints"
       ],
       "agentCallers": [
         {
@@ -197,6 +198,12 @@
         },
         {
           "agent": "agent:search-records",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
+          "agent": "agent:search-hints",
           "tools": [
             "research_append"
           ]
