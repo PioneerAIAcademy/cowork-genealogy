@@ -1,0 +1,486 @@
+{
+  "run_log": "v4_2026-10-23_14-10-56.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide is broadly accurate on Irish genealogy fundamentals, but it misses a critical Ballylinny/Ballyclare versus Billy Presbyterian-register conflict that should have been explicitly surfaced and reconciled. Listing First Bushmills without addressing whether the Ballylinny-labeled registers actually belong to Billy leaves a significant factual ambiguity unresolved."
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide covers most required elements, but it does not adequately disambiguate the Presbyterian congregations serving Billy parish from those belonging to adjacent parishes. Naming First Bushmills, Dunluce, and Ballywillan without establishing their specific relationship to Billy leaves an important church-record attribution gap."
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls used well-formed, semantically appropriate arguments, matched the expected search patterns, and successfully resolved without fixture_not_found errors."
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide accurately identifies Billy’s civil, county, provincial, and post-1921 jurisdictional context, distinguishes civil from ecclesiastical structures, and contains no material jurisdictional errors for the 1780–1870 period."
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide provides a useful and specific search strategy with appropriate repositories and pitfalls, but the unresolved Presbyterian-congregation conflict makes the locality-specific strategy incomplete. It does not clearly distinguish Billy’s own congregational registers from those of adjacent parishes."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response correctly distinguishes town-level recording from statewide registration in the detailed section, but the opening framing is potentially misleading. More importantly, it fails to provide the required actionable guidance for searching across the New York and Vermont borders, only recommending a historical atlas, which leaves a meaningful research-strategy gap."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response covers the major record classes, but it does not satisfy the critical requirement for actionable cross-border research. Merely saying to search across the New York and Vermont borders, without identifying specific neighboring jurisdictions, repositories, or record types to check, leaves an important strategy gap."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP tool calls used well-formed, semantically appropriate arguments that matched the fixture expectations, and none resulted in fixture_not_found errors."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately identifies Berkshire County’s formation, geographic location, stable boundaries during 1820–1850, and the appropriate county- and town-level administrative structure for the target period."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response comprehensively identifies the relevant record classes, dates, repositories, and access/indexing status, including the important distinction between indexed and browse-only collections."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response provides a strong, specific research sequence with collection IDs and access details, but it does not meet the required cross-border strategy because it fails to identify the adjoining New York and Vermont counties/towns and provide actionable instructions for researching them."
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide is largely accurate and transparent, but it contains a concrete source-fidelity error by reversing the FamilySearch naming convention for the first daughter. Since this directly contradicts the consulted source, it prevents full credit despite the otherwise accurate content."
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide comprehensively addresses the requested elements, transparently reports the tool limitations and verification gaps, and appropriately directs researchers to authoritative repositories for follow-up. Given the fixture's intentionally empty results, this meets the expected completion standard."
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP tool calls used semantically correct, well-formed arguments matching the fixture expectations, with no fixture_not_found errors. The skill also appropriately recognized and avoided treating generic fallback results as substantive Ireland-specific evidence."
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The required tool-supplied jurisdiction detail was never available because place resolution failed, so this dimension does not apply."
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The tool-supplied record-availability detail required by this dimension was never obtained because place resolution failed, so this dimension does not apply."
+    },
+    {
+      "test_id": "ut_locality_guide_m4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The required tool-supplied collection IDs, Wiki references, and specific search-order details were never obtained because place and collection searches returned no results, so this dimension does not apply."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide is broadly accurate, but it makes an unsupported inference that Billy’s Church of Ireland registers had a “materially better survival prospect” based on general 1922 fire information and an empty search result. That overstates what the tools established and violates the requirement not to infer record survival from null results."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide comprehensively covers the required jurisdiction, record types, repositories, losses, and locality-specific research guidance, and it directly addresses the Church of Ireland register question with an actionable PRONI verification step."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP tool calls used semantically appropriate, well-formed arguments matching the fixture expectations, with no critical identifier errors or fixture_not_found results. The empty search results reflect tool behavior rather than argument problems."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide accurately identifies Billy’s jurisdiction, boundary stability, historical political context, and civil-registration dates, while correctly distinguishing the post-1921 repository implications from the pre-1921 records themselves."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide comprehensively identifies the relevant record classes, dates, repositories, and access routes, while clearly distinguishing online/indexed resources from records requiring in-person or reproduction access."
+    },
+    {
+      "test_id": "ut_locality_guide_k9d",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide provides a detailed and actionable research strategy with a clear search order, specific repositories and collections, practical pitfalls, locality-specific guidance, and direct access routes to relevant records and newspapers."
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide is substantially accurate and grounded in the tool results, including the correctly supported ancestryireland.com URL and the key Irish genealogy claims. The minor unsupported Famine statement does not materially undermine the otherwise strong source fidelity."
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide comprehensively covers the required jurisdiction, boundary history, record classes, repositories, online indexes, record losses, and practical research tips, including extensive resources specifically intended to address church-register coverage gaps."
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All visible MCP tool calls used semantically appropriate, well-formed arguments matching the fixture expectations, with no fixture_not_found or validation errors. The successful predicate/index matches confirm the calls were appropriately targeted."
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide accurately presents Billy’s jurisdictional structure, ecclesiastical context, boundary stability, and post-1921 custody implications, with no material historical or anachronistic errors."
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide accurately covers the major record types, start dates, repositories, and access methods. It clearly distinguishes online records from those requiring onsite research and provides appropriate alternatives where records were destroyed or are unavailable. No significant errors or omissions were identified."
+    },
+    {
+      "test_id": "ut_locality_guide_v7h",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide gives clear search steps, specific repositories, collection IDs, and practical research pitfalls. It also provides useful alternatives and strategies, such as checking adjoining parishes and using the Ordnance Survey Memoirs."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response is largely accurate and identifies useful records, but it contains a significant overstatement about the 1850 census and adds some unsupported details about indexing and repositories. These factual and sourcing issues prevent it from receiving a 3."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response covers all major record types, repositories, and search strategies requested. It provides actionable guidance, correctly notes the 14 digitized volumes without implying the results are exhaustive, and appropriately connects the California research to the existing Patrick Flynn research."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls matched the expected arguments and patterns, including the correct Gold Rush date range. The research entry was also appended correctly, with no fixture errors."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately explains California’s statehood, county formation and boundary changes, and the jurisdictional context of the Gold Rush period. It also correctly distinguishes pre-statehood records from later California records without introducing significant historical errors."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response identifies the major record classes, dates, collections, repositories, and access methods accurately. However, it is vague about civil registration start dates and does not clarify the coverage or mandatory nature of county vital registration in the early period"
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response provides specific, actionable Gold Rush research strategies, identifies key records and repositories, and highlights important historical pitfalls. The collection IDs and image groups are also clearly provided and grounded in the research results."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide contains accurate historical information, but it makes some unsupported claims about digitization, indexing, and FamilySearch Vermont pages. These claims go beyond what the tools actually confirmed."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide fully addresses the request, covers the major record types and jurisdictions, and identifies the key 1771 Grant Survey Schedule. It also provides useful research strategies and was correctly saved to research.json as loc_001."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All MCP tool calls matched the expected arguments and returned successfully. The Vermont locality research entry was also correctly structured and appended with all required fields."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide accurately explains Vermont’s changing jurisdictions, key dates, competing land authorities, and the implications for locating records. It provides clear historical context without introducing significant errors."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide correctly identifies the main record types, dates, and repositories, but it includes unsupported claims about digitization and indexing. It also goes beyond the tool evidence when describing the coverage of FamilySearch topical pages."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide provides clear, actionable research steps, identifies key sources and repositories, and highlights important jurisdictional and record-availability pitfalls. The strategy is well grounded in the available evidence and directly supports pre-statehood Vermont research."
+    },
+    {
+      "test_id": "ut_locality_guide_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The guide comprehensively identifies record types, dates, repositories, and access methods. It clearly distinguishes online/indexed records from physical holdings and provides specific sources for genealogical research in the area."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response is factually accurate, well supported by the tool results, and provides useful record types and repositories. It also includes important research cautions and correctly explains the limitations of key records for the 1830s–1840s."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response covers all required elements, provides accurate record sources and repositories, explains key gaps and record losses, and gives practical research guidance without introducing inappropriate American-style records. No major omissions were identified."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls matched the expected arguments, with no fixture errors or incorrect identifiers. The additional date parameters were also appropriate for the research context."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately describes Cork’s historical jurisdiction, riding divisions, and stable boundaries during the 1830s–1840s. It also correctly explains how these divisions could affect record organization."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response clearly identifies the major record types, start dates, repositories, and access methods. It also effectively distinguishes online/indexed records from physical holdings, providing comprehensive coverage for the research period."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response provides a clear search order, specific repositories and collections, and practical pitfalls to watch for. It also includes useful strategies for landless residents, neighboring counties, Poor Law records, and emigration research."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response gives a clear search order, specific collection IDs and image groups, and practical guidance for browse-only and poorly indexed records. It also identifies key research pitfalls and provides concrete next steps."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response clearly identifies the major record types, date ranges, repositories, and access methods. It accurately distinguishes indexed, imaged, and browse-only records and explains where researchers must rely on physical repositories."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately identifies Schuylkill County’s formation in 1811, confirms stable jurisdiction during the target period, and correctly identifies Pennsylvania as the parent jurisdiction. No significant historical errors were found."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls matched the expected arguments, with no fixture errors. The correct place identifiers, collection IDs, image groups, and 1840–1869 date range were used appropriately."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response covers all required record types, repositories, indexing levels, and access methods. It accurately distinguishes indexed and browse-only records and addresses the key Pennsylvania vital-record gap for the 1840s–1860s."
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately reflects the tool results, correctly distinguishes indexed and browse-only records, identifies the appropriate repositories, and includes no fabricated or unsupported claims. The citations and collection details are also handled correctly."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately explains Alabama’s overlapping jurisdictions, identifies the correct repositories and territorial censuses, and provides accurate FamilySearch collection details. The guidance is well supported by the tool results with no fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response covers the key jurisdictions, repositories, collections, digitized records, and historical pitfalls for Alabama around 1800. It is comprehensive and appropriately recommends narrowing the county and date for more focused research."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All tool calls used appropriate arguments and matched the expected patterns. No fixture errors occurred, and the research entry was correctly structured and appended."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response accurately identifies the relevant jurisdictions, dates, and boundary implications. It correctly directs researchers to Mississippi Territory records for pre-1817 events and avoids anachronistic Alabama state records."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response identifies the key record classes, dates, repositories, and digitized collections, while clearly distinguishing indexed, imaged, browse-only, and onsite records. It provides comprehensive coverage for Alabama research around 1800."
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response provides a clear search order, specific collection IDs and image groups, and practical pitfalls to avoid. The guidance is well grounded in the tool results and gives researchers concrete, actionable next steps."
+    }
+  ]
+}
