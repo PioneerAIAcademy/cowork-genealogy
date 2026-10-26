@@ -87,9 +87,16 @@ export function getStoppedBecause(
  * values (`question_answered`, `record_exhausted`, `nothing_further_reachable`)
  * or a legacy `declared: true`.
  *
- * Only a satisfied stop gate permits `status: "exhaustive_declared"` and a
- * proof tier. The two non-gate values (`resources_spent`, `blocked_by_conflict`)
- * keep the question `in_progress`.
+ * Only a satisfied stop gate permits `status: "exhaustive_declared"` and the
+ * two CONCLUSIVE tiers, `proved` and `disproved` (`CONCLUSIVE_TIERS` in
+ * `research-append.ts`). It has never gated the other three: `probable`,
+ * `possible` and `not_proved` are writable on a non-gate stop, which is what
+ * lets step mode's "not exhaustive" choice offer concluding at all (section B)
+ * — the researcher who declines to search on still gets a conclusion at the
+ * tier the evidence actually supports.
+ *
+ * The two non-gate values (`resources_spent`, `blocked_by_conflict`) keep the
+ * question `in_progress` (ruling, 2026-09-30).
  */
 export function isStopGateSatisfied(question: unknown): boolean {
   const sb = getStoppedBecause(question);

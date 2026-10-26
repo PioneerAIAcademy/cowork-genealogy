@@ -124,7 +124,7 @@
       ]
     },
     "stopped_because": {
-      "description": "Why searching stopped on a question. The three stop-gate values (`question_answered`, `record_exhausted`, `nothing_further_reachable`) permit status `exhaustive_declared` and a proof tier. The two non-gate values (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Distinct from `proof_shortfall`, which is per-conclusion (why a conclusion is not stronger); `stopped_because` is per-question (why searching stopped). A question with three conclusions has three shortfalls and one stop reason. Added 2026-10-07 (issue #2539); replaces the retired `exhaustive_declaration.declared` boolean.",
+      "description": "Why searching stopped on a question. The three stop-gate values (`question_answered`, `record_exhausted`, `nothing_further_reachable`) permit status `exhaustive_declared` and the two CONCLUSIVE tiers, `proved` and `disproved`. The other three tiers (`probable`, `possible`, `not_proved`) are writable on a non-gate stop too, which is what lets the \"not exhaustive\" choice offer concluding at all. The two non-gate values (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Distinct from `proof_shortfall`, which is per-conclusion (why a conclusion is not stronger); `stopped_because` is per-question (why searching stopped). A question with three conclusions has three shortfalls and one stop reason. Added 2026-10-07 (issue #2539); replaces the retired `exhaustive_declaration.declared` boolean.",
       "enum": [
         "question_answered",
         "record_exhausted",
