@@ -58,4 +58,21 @@ which would normally give his age and parents; no entry was found. A
 different Josephus Martassek baptised at Krásno around 1845-1858 is the
 likely candidate class, but none has been identified as his.
 
+One plausible candidate in that class is the 1849 baptism of Josef Martassek,
+son of György Martassek and Anna Polacsek, at Krásno nad Kysucou
+(`ark:/61903/1:1:V185-6RZ`). The name, parish, and approximate age (born 1849,
+which would make him about 29 at the birth of his first known child in 1878)
+are consistent. However, FamilySearch's Possible Tree Match for that record is
+`L68M-CYV` — a separate tree person, not `L8JK-KDK`. `L68M-CYV` is a bare
+stub with no spouse, no children, and no sources, created by the Volunteer
+Project (Lifewood), and is itself flagged as a possible duplicate of `L683-KX4`;
+the 1849 record has spawned multiple unlinked stubs in the tree. `L68M-CYV`
+and `L8JK-KDK` are not connected to each other in the tree. Without a marriage
+record of Josef Martassek and Maria Szuchony that names his parents as György
+and Anna, equating the 1849 baptisand with the adult `L8JK-KDK` is
+circumstantial. `f2` is therefore written to require that the agent leave the
+parents unestablished: an agent that finds `V185-6RZ` and concludes "probable
+parents György Martassek and Anna Polacsek" has not met the GPS standard, and
+`f2` is designed to catch that error.
+
 CSV country "Czechoslovakia"; the record and the family are in Krásno nad Kysucou, present-day Slovakia, so the fixture is tagged `SK`.
