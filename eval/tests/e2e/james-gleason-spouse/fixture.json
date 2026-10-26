@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 3, hint-samples.csv row 126, flags adds_spouse/adds_son, confidence 3). Draft transcribed from an 1893 Boston birth register entry naming James F. Gleason and Norah as parents of Robert F. Gleason; unverified. The subject's own 1896 death record, already a tree source, calls him single."
+  "image_basis": false,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:F4NM-W8P",
+    "identity": "different"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 3, hint-samples.csv row 126, flags adds_spouse/adds_son, confidence 3). Resolved 2026-10-23 as a FALSE MATCH (index-based; the death-register image was not examined): the hinted 1893 Boston birth of Robert F. Gleason names the parents as James F. Gleason and Norah, but the father persona (ark:/61903/1:1:F4NM-W8P) carries no identifying facts, and the subject's own 1896 death record (ark:/61903/1:1:NWCJ-F72) indexes him Single with parents John Gleason and Delia A. Fitzgerald. A distinct New-York-born James (Frank) Gleason married Nora Teresa Carey in 1892 (ark:/61903/1:1:N47V-Z57) with a James-and-Norah household in the 1900 census (ark:/61903/1:1:M9TJ-BLT) — a plausible different family, but Robert's parentage was not established. See README 'Notes for reviewers'."
 }

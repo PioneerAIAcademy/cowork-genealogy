@@ -318,3 +318,52 @@ def test_relationship_level_sources_are_counted_not_audited(tmp_path):
     snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"], relationship_personas=["EDGE-111", "EDGE-222"])
     _names, facts = judge.generate_fixtures(snap, "KWCB-QZ3", tmp_path / "fx")
     assert facts["not_audited"] == 2
+
+
+def _with_compiled_tree(snap: Path, copy: str, tree_id: str = "TEST-2A2") -> str:
+    ark = f"ark:/61903/2:2:{tree_id}"
+    audit_path = snap / "persons" / copy / "audit.json"
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    audit["entries"].append({"key": ark, "ark": ark, "source_ids": ["s_ct"], "level": "subject", "class": "compiled_tree"})
+    _w(audit_path, audit)
+    _w(snap / "trees" / f"2-2-{tree_id}.json", {"persons": [{"id": f"2:2:{tree_id}", "display": {"name": "Francis John /Brealey/"}}]})
+    return ark
+
+
+def test_tree_sources_serves_a_compiled_tree_through_record_read_and_only_with_the_flag(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
+    ark = _with_compiled_tree(snap, "KWCB-QZ3")
+    off, _ = judge.generate_fixtures(snap, "KWCB-QZ3", tmp_path / "off")
+    on, _ = judge.generate_fixtures(snap, "KWCB-QZ3", tmp_path / "on", tree_sources=True)
+    assert not any("compiled-tree" in n for n in off)
+    assert any("compiled-tree-TEST-2A2" in n for n in on)
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    _server, call_log, tools = create_mock_server(on, tmp_path / "on", workspace=ws)
+    for spelling in (ark, f"https://familysearch.org/{ark}"):
+        assert "Brealey" in json.dumps(_call(tools, "record_read", {"recordId": spelling}))
+
+
+def test_tree_sources_reads_the_cache_path_source_screen_writes():
+    assert judge.compiled_tree_path(Path("/s"), "ark:/61903/2:3:TEST-2B3") == Path("/s/trees/2-3-TEST-2B3.json")
+
+
+def test_tree_sources_adds_the_rule_to_the_delegation_only_with_the_flag(tmp_path):
+    assert judge.TREE_SOURCES_INSTRUCTION not in judge.delegation_for("KWCB-QZ3", tmp_path)
+    on = judge.delegation_for("KWCB-QZ3", tmp_path, tree_sources=True)
+    assert judge.TREE_SOURCES_INSTRUCTION in on and on.endswith(judge.FINDINGS_INSTRUCTION)
+
+
+def test_the_judge_passes_its_own_silence_window_to_run_skill(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
+    runner = FakeRunner([], FINDINGS)
+    _judge(snap, "KWCB-QZ3", runner)
+    assert runner.seen["sdk_message_silence_seconds"] == judge.DEFAULT_SILENCE_SECONDS
+    assert judge.DEFAULT_SILENCE_SECONDS > 438  # the longest subagent report gap measured on the truth-set run
+
+
+def test_refuses_a_silence_window_outside_the_wall_clock_cap(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
+    for bad in ("0", "1201"):
+        with pytest.raises(judge.JudgeError, match="silence-seconds"):
+            judge.main(["--snapshot", str(snap), "--silence-seconds", bad])

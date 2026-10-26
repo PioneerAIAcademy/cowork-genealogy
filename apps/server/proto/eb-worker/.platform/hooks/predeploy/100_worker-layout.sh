@@ -23,7 +23,7 @@ PLUGIN_DEST=/opt/genealogy/plugin
 PROJECT_DIR=/project
 
 fail() {
-  echo "01-worker-layout: $*" >&2
+  echo "100_worker-layout: $*" >&2
   exit 1
 }
 
