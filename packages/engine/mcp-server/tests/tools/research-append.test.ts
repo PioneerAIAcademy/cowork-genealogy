@@ -3116,6 +3116,24 @@ describe("research_append (Phase 3)", () => {
       carriesTheReason(line!);
     });
 
+    // The other way the text failed: a parentage claim tiered below `probable`
+    // went out with no `relationship`, and the refusal, which names only fact
+    // claims as the ones to leave out, was answered by dropping the claim and its
+    // tier with it (ut_proof_conclusion_022, 2026-10-26).
+    it.each([
+      ["missing", {}, "missing required field 'relationship'"],
+      ["null", { relationship: null }, "required field 'relationship' is null"],
+    ])("a parentage claim below probable whose relationship is %s is told to add it and keep the claim", async (_label, extra, opening) => {
+      const maternity = { claim: "maternity", proof_tier: "not_proved", supporting_assertion_ids: ["a_001"], ...extra };
+      const errors = await refusal([relationshipClaim(), maternity]);
+      const line = errors.find((e) => e.includes("claims[1]"));
+      expect(line, errors.join("\n")).toBeDefined();
+      expect(line).toContain(opening);
+      expect(line).toContain("at every proof_tier, possible and not_proved included");
+      expect(line).toContain("Add it and keep the claim");
+      carriesTheReason(line!);
+    });
+
     it("a relationship of another type: keeps the old opening words and adds the reason", async () => {
       const errors = await refusal([
         factClaim({ relationship: { type: "Fact", parent: "I2", child: "I1" } }),
@@ -3128,6 +3146,8 @@ describe("research_append (Phase 3)", () => {
       expect(fact).toContain("relationship.type must be 'ParentChild'");
       carriesTheReason(fact!);
       carriesTheReason(couple!);
+      // A claim of another type is left out, so it is never told to keep itself.
+      expect(couple).not.toContain("Add it and keep the claim");
     });
 
     it.each([["an empty string", ""], ["false", false], ["zero", 0]])(

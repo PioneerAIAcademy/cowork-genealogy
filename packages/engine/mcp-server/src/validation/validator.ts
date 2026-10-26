@@ -155,6 +155,16 @@ const CLAIM_NOT_A_RELATIONSHIP =
   "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
   "so it cannot rise above them.";
 
+// The same refusal answered the other way: a parentage claim tiered below
+// `probable` went out with no `relationship`, and since the text above names
+// only fact claims as the ones to leave out, the agent left the parentage claim
+// out, tier and all. So a missing or null relationship is told first that a
+// parentage claim keeps one at every tier.
+const CLAIM_RELATIONSHIP_AT_EVERY_TIER =
+  "A parentage claim names its pair as relationship { type: 'ParentChild', parent, child } at every " +
+  "proof_tier, possible and not_proved included: the field records what the claim concludes, not what " +
+  "goes in the tree. Add it and keep the claim.";
+
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
   "objective_decomposition", "new_evidence", "record_found_incidentally",
@@ -1783,9 +1793,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         ], clp, report, NULLABLE_FIELDS);
         // Required like the three above, worded for what a missing one means.
         if (!("relationship" in claim)) {
-          addError(report, clp, `missing required field 'relationship' — ${CLAIM_NOT_A_RELATIONSHIP}`);
+          addError(report, clp, `missing required field 'relationship' — ${CLAIM_RELATIONSHIP_AT_EVERY_TIER} ${CLAIM_NOT_A_RELATIONSHIP}`);
         } else if (claim.relationship === null) {
-          addError(report, clp, `required field 'relationship' is null — ${CLAIM_NOT_A_RELATIONSHIP}`);
+          addError(report, clp, `required field 'relationship' is null — ${CLAIM_RELATIONSHIP_AT_EVERY_TIER} ${CLAIM_NOT_A_RELATIONSHIP}`);
         }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
         // Optional here (unlike the scalar above) but still closed: an
