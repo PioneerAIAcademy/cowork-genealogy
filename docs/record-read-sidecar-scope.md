@@ -137,8 +137,8 @@ England death/burial). For **the person you searched** (the matched persona):
   recapi record never carries a `normalized` place (`dev/probe-record-read-places.ts`,
   2026-09-11: **0 of the 28 observations**); FamilySearch's standardized place is
   an `Interpreted` value of the place's `Place` field instead, which
-  `toSimplified` reads (`gedcomx-convert-spec.md`, Rule 7). Staged records carry
-  the search stage's standardized place regardless.
+  `toSimplified` reads (`gedcomx-convert-spec.md`, "Places on facts"). Staged
+  records carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills

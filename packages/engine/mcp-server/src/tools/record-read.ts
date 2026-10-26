@@ -161,9 +161,9 @@ export async function recordReadTool(
   // same record's fully-qualified fact reads Northamptonshire. A recapi record
   // never sends `normalized` (0 of the 28); it carries FamilySearch's standard
   // name as an `Interpreted` value of the place's `Place` field, which
-  // toSimplified reads (gedcomx-convert-spec.md, Rule 7). Measurement and
-  // rationale: docs/record-read-sidecar-scope.md; re-measure with
-  // dev/probe-record-read-places.ts. Records reached via the search sidecar
+  // toSimplified reads (gedcomx-convert-spec.md, "Places on facts").
+  // Measurement and rationale: docs/record-read-sidecar-scope.md; re-measure
+  // with dev/probe-record-read-places.ts. Records reached via the search sidecar
   // already carry the search stage's standardized place.
   const simplified = toSimplified(body);
 
