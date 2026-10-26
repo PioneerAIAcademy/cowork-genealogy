@@ -641,10 +641,12 @@ research_append({
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
   or null. The fallback is searched if the primary yields nothing.
 - `status`: the item's progress — exactly one of `planned`,
-  `in_progress`, `completed`, or `skipped`. New items are `planned`,
-  except an event type an `enumerative` question's plan does not cover,
-  which is `skipped` with its `skip_category` and `skip_reason` (Step 4
-  self-check 1). Never use any other value (e.g. not `not_started`, not `pending`).
+  `in_progress`, `completed`, or `skipped`. New items are `planned`. The
+  one exception: on a question whose `question_kind` is `enumerative`, an
+  event type the plan does not cover is written `skipped` with its
+  `skip_category` and `skip_reason` (Step 4 self-check 1). On any other
+  question, never write a new item `skipped`: leave out what you would not
+  search. Never use any other value (e.g. not `not_started`, not `pending`).
 - `skip_category`: required whenever `status` is `skipped` — exactly
   one of `answered`, `inaccessible`, `no_coverage`,
   `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`,
