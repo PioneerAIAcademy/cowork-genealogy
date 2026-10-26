@@ -207,13 +207,14 @@ function convert(gedcomx: GedcomX, recordRead: RecordReadPlaceIds): SimplifiedGe
     ? gedcomx.sourceDescriptions
     : [];
   if (sourceDescriptions.length > 0) {
-    // A search response's `places[]` names the places its record refers to,
-    // often the coverage place among them. Copy that name onto the coverage;
-    // no lookup, only what the response already says.
-    const placeNames = placeNamesById(places);
+    // A search response's `places[]` names the places its record refers to, by
+    // the bare place id, often the coverage place among them. Copy that name
+    // onto the coverage; no lookup, only what the response already says. A
+    // record read's entries are `place_<id>`, so none is copied: record_read
+    // names its coverage by the id.
     out.sources = sourceDescriptions.map((desc) => {
       const source = simplifySourceDescription(desc);
-      const name = placeNames.get(source.coverage?.place_rep_id ?? "");
+      const name = places.find((place) => place.id === source.coverage?.place_rep_id)?.name;
       if (name !== undefined && source.coverage) source.coverage.standard_place = name;
       return source;
     });
@@ -222,19 +223,6 @@ function convert(gedcomx: GedcomX, recordRead: RecordReadPlaceIds): SimplifiedGe
   if (places.length > 0) out.places = places;
 
   return out;
-}
-
-/** Place id → name for each simplified place that carries a name. A search
- *  response's entries are keyed by the bare id (`"10593184"`); a record read's
- *  are `"place_<id>"` and carry no names. */
-function placeNamesById(places: SimplifiedPlaceDescription[]): Map<string, string> {
-  const names = new Map<string, string>();
-  for (const place of places) {
-    const id = /^(?:place_)?(\d+)$/.exec(place.id ?? "")?.[1];
-    if (id === undefined || names.has(id)) continue;
-    if (typeof place.name === "string" && place.name.trim() !== "") names.set(id, place.name);
-  }
-  return names;
 }
 
 function simplifyPerson(person: GedcomXPerson, recordRead: RecordReadPlaceIds): SimplifiedPerson {
@@ -385,13 +373,6 @@ function placeFieldValues(place: RawPlace): (GedcomXFieldValue & { text: string 
   return values;
 }
 
-/** The FamilySearch place id a `place.description` names: `#place_<id>` (record
- *  read), `#<id>` (search) or `…/places/description/<id>`. */
-function placeIdOf(ref: unknown): string | undefined {
-  if (typeof ref !== "string") return undefined;
-  return /(?:\/places\/description\/|^#(?:place_)?)(\d+)$/.exec(ref)?.[1];
-}
-
 /**
  * The standardized place a record read carries in its `Place` field. A record
  * read (recapi) sends no `normalized` value; FamilySearch's standard full name
@@ -400,9 +381,11 @@ function placeIdOf(ref: unknown): string | undefined {
  * standard: one with no place id often just echoes the as-written text, and a
  * `#…` reference can cite an authorities place id, which read as a
  * representation id is another place. Among several candidates, the one marked
- * Preferred wins, else the one `place.description` names, else the only one; a
- * choice that is still ambiguous — two names, or one name for two place ids —
- * yields nothing.
+ * Preferred wins, else the one `place.description` (`#place_<id>`) names, else
+ * the only one. Nothing when that choice is still in doubt: two names, one name
+ * for two place ids, or `place.original`, FamilySearch's own text for the fact,
+ * is another candidate's text (FVFW-Y6P's is Tobel's, while `place.description`
+ * names Braunau).
  */
 function pickInterpretedPlace(place: RawPlace): { name: string; id: string } | undefined {
   const candidates: { name: string; id: string; preferred: boolean }[] = [];
@@ -411,45 +394,37 @@ function pickInterpretedPlace(place: RawPlace): { name: string; id: string } | u
     const id = /\/places\/description\/(\d+)$/.exec(value.resource)?.[1];
     if (id === undefined) continue;
     const preferred = (Array.isArray(value.qualifiers) ? value.qualifiers : []).some(
-      (q) => q?.name === PREFERRED_QUALIFIER && String(q.value).trim().toLowerCase() === "true",
+      (q) => q?.name === PREFERRED_QUALIFIER,
     );
     candidates.push({ name: value.text.trim(), id, preferred });
   }
-  if (candidates.length === 0) return undefined;
   const preferred = candidates.filter((c) => c.preferred);
-  const describedId = placeIdOf(place.description);
   const chosen =
     preferred.length > 0
       ? preferred
-      : describedId !== undefined
-        ? candidates.filter((c) => c.id === describedId)
+      : place.description !== undefined
+        ? candidates.filter((c) => place.description === `#place_${c.id}`)
         : candidates;
   const names = new Set(chosen.map((c) => c.name));
   const ids = new Set(chosen.map((c) => c.id));
   if (names.size !== 1 || ids.size !== 1) return undefined;
-  return { name: chosen[0].name, id: chosen[0].id };
+  const [{ name, id }] = chosen;
+  if (candidates.some((c) => c.id !== id && c.name === place.original?.trim())) return undefined;
+  return { name, id };
 }
 
 /**
  * The place as the record wrote it. Some record reads put FamilySearch's
  * standardized text in `place.original` and keep the as-written text only in
  * the `Original` value of the same `Place` field. When `place.original` equals
- * an `Interpreted` text and the field holds one different `Original` text,
- * that text is the as-written place.
+ * an `Interpreted` text and the field holds one `Original` text, that text is
+ * the as-written place.
  */
 function asWrittenPlace(place: RawPlace, original: string): string {
-  let originalIsInterpreted = false;
-  const written = new Set<string>();
-  for (const value of placeFieldValues(place)) {
-    if (value.type === INTERPRETED_VALUE && value.text.trim() === original.trim()) {
-      originalIsInterpreted = true;
-    } else if (value.type === ORIGINAL_VALUE) {
-      written.add(value.text);
-    }
-  }
-  if (!originalIsInterpreted || written.size !== 1) return original;
-  const [text] = written;
-  return text.trim() === original.trim() ? original : text;
+  const values = placeFieldValues(place);
+  if (!values.some((v) => v.type === INTERPRETED_VALUE && v.text.trim() === original.trim())) return original;
+  const written = new Set(values.filter((v) => v.type === ORIGINAL_VALUE).map((v) => v.text));
+  return written.size === 1 ? [...written][0] : original;
 }
 
 function simplifyFact(fact: GedcomXFact, recordRead: RecordReadPlaceIds): SimplifiedFact {

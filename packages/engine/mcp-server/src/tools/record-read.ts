@@ -392,10 +392,12 @@ async function readFromSidecar(
  * Holy Roman Empire" for an 1874 death). The date is FamilySearch's formal date
  * for the fact, which it sends whatever language the date is written in, else
  * the date as stdDate reads it. Any doubt leaves the fact as toSimplified gives
- * it — `place.original`, no standard_place: a date neither can read, no such
- * name, two names, a failed lookup, a place renamed since the name the fact's
- * text gives it ("Bela Vista" in 1980, when that place was Echaporã), or a name
- * that contradicts the fact's place text (countryConsistency, which makes
+ * it — `place.original`, no standard_place: a fact whose own text names none of
+ * the place's names in any language (Q2W9-1GVF's "Llanbadarn-Tref-Eglwys,
+ * Cardiganshire, Wales", given the town of Aberayron), a date neither can read,
+ * no such name, two names, a failed lookup, a place renamed since the name the
+ * fact's text gives it ("Bela Vista" in 1980, when that place was Echaporã), or
+ * a name that contradicts the fact's place text (countryConsistency, which makes
  * research_append refuse the record). Records reached via the search sidecar
  * already carry the search stage's standardized place.
  *
@@ -413,7 +415,7 @@ export async function recordReadDocument(body: GedcomX): Promise<SimplifiedGedco
 async function nameFactPlaces(placeIds: Map<SimplifiedFact, RecordReadPlace>): Promise<void> {
   for (const [fact, { placeId, original, formal }] of placeIds) {
     const years = gedcomxDateYears({ original: fact.date, formal });
-    const name = years === null ? null : await repIdToStandardPlaceAt(placeId, years, fact.place);
+    const name = years === null ? null : await repIdToStandardPlaceAt(placeId, years, fact.place ?? "");
     if (name && countryConsistency(fact.place ?? "", name) !== "contradiction") {
       fact.standard_place = name;
     } else {

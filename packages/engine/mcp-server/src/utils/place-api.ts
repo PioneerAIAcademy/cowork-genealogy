@@ -31,6 +31,7 @@ interface FSPlaceLookupEntry {
   identifiers?: Record<string, string[]>;
   display?: { name: string; fullName: string; type: string };
   temporalDescription?: { formal?: string };
+  names?: { lang?: string; value?: string }[];
 }
 
 interface FSPlaceLookupResponse {
@@ -457,13 +458,17 @@ export interface PlaceRep {
   /** When the representation is valid: FamilySearch's formal range ("+1830/",
    *  "/+1795"); absent when it is valid at every date. */
   dateRange?: string;
+  /** Its own name in every language the listing gives (Florence's "Firenze",
+   *  "Florenz", "Florence"). */
+  names: string[];
 }
 
 /**
- * Get every representation of a Primary place ID, with its English full name
- * and date range, via the Place_resource endpoint (GET /platform/places/{pid}).
- * The response lists the bare place entry (id === pid, no `display`) followed by
- * its representation entries, each with `place.resourceId === pid`.
+ * Get every representation of a Primary place ID, with its English full name,
+ * date range and names, via the Place_resource endpoint (GET
+ * /platform/places/{pid}). The response lists the bare place entry (id === pid,
+ * no `display`) followed by its representation entries, each with
+ * `place.resourceId === pid`.
  *
  * Public (no auth) — the places endpoints accept anonymous requests.
  */
@@ -495,6 +500,7 @@ export async function getPlaceReps(
       placeRepId: entry.id,
       ...(fullName ? { fullName } : {}),
       ...(dateRange ? { dateRange } : {}),
+      names: (entry.names ?? []).map((n) => n.value).filter((value) => typeof value === "string"),
     });
   }
   return reps;

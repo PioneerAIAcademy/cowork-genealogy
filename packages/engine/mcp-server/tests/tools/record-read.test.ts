@@ -829,6 +829,7 @@ describe("record_read names FamilySearch's standards in English for each fact's 
         covering("sd_c_5", "#place_1927178-1930189-1942949"),
         covering("sd_c_6", "#12345"),
         covering("sd_c_7", "#place_8"),
+        covering("sd_c_8", "#place_1927096"),
       ],
       places: [
         { place: { resource: placeUrl("436389"), resourceId: "place_436389" } },
@@ -839,6 +840,13 @@ describe("record_read names FamilySearch's standards in English for each fact's 
           identifiers: { "http://gedcomx.org/Primary": ["https://api.familysearch.org/authorities/v1/place/1942949?context=1927178-1930189"] },
         },
         { id: "place_8", identifiers: { "http://gedcomx.org/Primary": [placeUrl("9")] } },
+        // Constructed: an entry whose own identifier is an authorities place is
+        // not named for a place description it also references.
+        {
+          id: "place_1927096",
+          identifiers: { "http://gedcomx.org/Primary": ["https://api.familysearch.org/authorities/v1/place/1927096"] },
+          place: { resource: placeUrl("1927096"), resourceId: "place_1927096" },
+        },
       ],
     } as unknown as GedcomX);
     const out = await recordReadTool({ recordId: "X1SW-6LB" }, LOCAL);
@@ -851,6 +859,7 @@ describe("record_read names FamilySearch's standards in English for each fact's 
       ["1942949", undefined],
       ["12345", undefined],
       ["8", undefined],
+      ["1927096", undefined],
     ]);
     expect(mockedRepIdToStandardPlace.mock.calls).toEqual([["436389"], ["7344713"], ["422758"]]);
   });
@@ -874,11 +883,14 @@ describe("record_read names FamilySearch's standards in English for each fact's 
       "12441859": { fullName: "Olne, L'Ourthe, France", placeId: "1959431", dateRange: "+1795/+1815" },
       "12441860": { fullName: "Olne, Liège, Netherlands", placeId: "1959431", dateRange: "+1815/+1830" },
       "12441861": { fullName: "Olne, Liège, Belgium", placeId: "1959431", dateRange: "+1830/" },
+      "10579232": { fullName: "Aberayron, Cardiganshire, Wales, United Kingdom", placeId: "6256682", dateRange: "+1801/" },
+      "3040252": { fullName: "Aberayron, Cardiganshire, Wales", placeId: "6256682", dateRange: "/+1801" },
     };
     const placeReps: Record<string, string[]> = {
       "6283855": ["3052592", "10979131", "11818622", "11261236"],
       "1929896": ["5736"],
       "1959431": ["12441861", "12441860", "12441859", "418460"],
+      "6256682": ["10579232", "3040252"],
     };
 
     beforeEach(async () => {
@@ -894,8 +906,14 @@ describe("record_read names FamilySearch's standards in English for each fact's 
           ? ({ placeRepId: id, name: rep.fullName.split(",")[0], type: "City", ...rep } as Awaited<ReturnType<typeof getPlaceById>>)
           : null;
       });
+      // Each representation's names in the listing are its own name.
       vi.mocked(getPlaceReps).mockImplementation(async (pid: string) =>
-        (placeReps[pid] ?? []).map((id) => ({ placeRepId: id, fullName: reps[id].fullName, dateRange: reps[id].dateRange })),
+        (placeReps[pid] ?? []).map((id) => ({
+          placeRepId: id,
+          fullName: reps[id].fullName,
+          dateRange: reps[id].dateRange,
+          names: [reps[id].fullName.split(",")[0]],
+        })),
       );
     });
 
@@ -912,6 +930,33 @@ describe("record_read names FamilySearch's standards in English for each fact's 
         ["Liro, Piaui", "Piauí, Brazil"],
       ]);
       expect(out.sources?.[0].coverage?.standard_place).toBe("Bela Vista, São Paulo, Brazil");
+    });
+
+    it("keeps no standard where the record's own text names none of the place's names (Q2W9-1GVF's census, given the town of Aberayron)", async () => {
+      const census = (written?: string) =>
+        fact("Census", { original: "1881", formal: "+1881" }, {
+          ...(written !== undefined ? { original: written } : {}),
+          description: "#place_10579232",
+          fields: [
+            { type: "http://gedcomx.org/District", values: [{ type: "http://gedcomx.org/Original", labelId: "EVENT_DISTRICT_ORIG", text: "Aberayron" }] },
+            {
+              type: "http://gedcomx.org/Place",
+              values: [
+                ...(written !== undefined ? [{ type: "http://gedcomx.org/Original", labelId: "EVENT_PLACE_ORIG", text: written }] : []),
+                { type: "http://gedcomx.org/Interpreted", labelId: "EVENT_PLACE", text: "Aberayron, Cardiganshire, Wales, United Kingdom", resource: placeUrl("10579232") },
+              ],
+            },
+          ],
+        });
+      const body = onePerson(census("Llanbadarn-Tref-Eglwys, Cardiganshire, Wales"), census("Aberayron, Cardiganshire, Wales"), census());
+      mockOk(body);
+      const out = await recordReadTool({ recordId: "Q2W9-1GVF" }, LOCAL);
+      expect(out.persons?.[0].facts?.map((f) => [f.place, f.standard_place])).toEqual([
+        ["Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", undefined],
+        ["Aberayron, Cardiganshire, Wales", "Aberayron, Cardiganshire, Wales, United Kingdom"],
+        // A fact with no place text of its own names none either.
+        [undefined, undefined],
+      ]);
     });
 
     it("names a fact for its date and its coverages by the id's own name (6J8F-6678)", async () => {

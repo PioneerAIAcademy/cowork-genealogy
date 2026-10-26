@@ -538,9 +538,10 @@ describe("gedcomxDateYears — the years a GEDCOM X date spans", () => {
 
 describe("repIdToStandardPlaceAt — the one name a place's representations valid at a date share", () => {
   // Live Places API data, fetched 2026-10-26 (Accept-Language: en). The place's
-  // listing gives every representation's name and range; the chosen
-  // representation's description gives its place.
-  type Rep = { fullName: string; placeId: string; dateRange?: string; placeRepId?: string };
+  // listing gives every representation's name, range and own names in every
+  // language; the chosen representation's description gives its place. A
+  // representation's names are its own name unless listed.
+  type Rep = { fullName: string; placeId: string; dateRange?: string; placeRepId?: string; names?: string[] };
   const reps: Record<string, Rep> = {
     // Olne, place 1959431 (6J8F-6678 chose 418460 for an 1874 death).
     "418460": { fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire", placeId: "1959431", dateRange: "/+1795" },
@@ -562,7 +563,8 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "11818622": { fullName: "Bela Vista, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1937/+1938" },
     "10979131": { fullName: "Bela Vista, São Paulo, Brazil", placeId: "6283855", dateRange: "+1938/+1944" },
     "3052592": { fullName: "Echaporã, São Paulo, Brazil", placeId: "6283855", dateRange: "+1944/" },
-    // Kuopio (QLVZ-74MS, census "from 1854 to 1863") and Boda (no range at all).
+    // Kuopio (QLVZ-74MS, census "from 1854 to 1863", written "Kuopio, Kuopio")
+    // and Boda (no range at all).
     "422411": { fullName: "Kuopion kaupunki, Kuopio, Finland", placeId: "1962838", dateRange: "+1775/+1998" },
     "10909387": { fullName: "Kuopio, Pohjois-Savo, Finland", placeId: "1962838", dateRange: "+1998/" },
     "3461825": { fullName: "Boda, Kopparberg, Sweden", placeId: "6373646" },
@@ -582,6 +584,22 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "7806009": { fullName: "Kreis Simmern, Rhineland, Prussia", placeId: "6162326", dateRange: "+1814/+1871" },
     "13838056": { fullName: "Arrondissement Simmern, Rhin-et-Moselle, France", placeId: "6162326", dateRange: "+1794/+1814" },
     "13838055": { fullName: "Oberamt Simmern, Palatinate, Holy Roman Empire", placeId: "6162326", dateRange: "+1673/+1794" },
+    // Aberayron, place 6256682: Q2W9-1GVF's 1881 census, written
+    // "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was given the town.
+    "10579232": { fullName: "Aberayron, Cardiganshire, Wales, United Kingdom", placeId: "6256682", dateRange: "+1801/" },
+    "3040252": { fullName: "Aberayron, Cardiganshire, Wales", placeId: "6256682", dateRange: "/+1801" },
+    // Carmarthen, place 5059906: SGZQ-Y3L's 1851 census, written "Saint Peter,
+    // Carmarthenshire, Wales", was given the town. Named in Welsh and English.
+    "2242535": { fullName: "Carmarthen, Carmarthenshire, Wales, United Kingdom", placeId: "5059906", dateRange: "+1996/", names: ["Caerfyrddin", "Carmarthen"] },
+    "2242536": { fullName: "Carmarthen, Dyfed, Wales, United Kingdom", placeId: "5059906", dateRange: "+1974/+1996", names: ["Caerfyrddin", "Carmarthen"] },
+    "10579589": { fullName: "Carmarthen, Carmarthenshire, Wales, United Kingdom", placeId: "5059906", dateRange: "+1801/+1974", names: ["Caerfyrddin", "Carmarthen"] },
+    "10278967": { fullName: "Carmarthen, Carmarthenshire, Wales", placeId: "5059906", dateRange: "/+1801", names: ["Caerfyrddin", "Carmarthen"] },
+    // Florence, place 5061195 (X7S5-8J2Z's 1813 baptism, written "Firenze,
+    // Firenze, Toscana, Italia"): named in German, English and Italian.
+    "7344713": { fullName: "Florence, Florence, Tuscany, Italy", placeId: "5061195", dateRange: "+1861/", names: ["Florenz", "Florence", "Firenze"] },
+    "12114895": { fullName: "Florence, Florence, Tuscany", placeId: "5061195", dateRange: "+1569/+1860", names: ["Florenz", "Florence", "Firenze"] },
+    // Piauí, place 1929896 (6B9K-FXBZ's 1905 birth, written "Liro, Piaui").
+    "5736": { fullName: "Piauí, Brazil", placeId: "1929896", dateRange: "+1889/", names: ["Piauí", "Piauí"] },
   };
   const placeReps: Record<string, string[]> = {
     "1959431": ["12441861", "12441860", "12441859", "418460"],
@@ -594,6 +612,10 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "1357800": ["5407391", "5407392"],
     "3901588": ["9724551", "8933333", "6721274", "8933334", "13833387", "8933335"],
     "6162326": ["11973621", "7806009", "13838056", "13838055"],
+    "6256682": ["10579232", "3040252"],
+    "5059906": ["2242535", "2242536", "10579589", "10278967"],
+    "5061195": ["7344713", "12114895"],
+    "1929896": ["5736"],
   };
   const description = (table: Record<string, Partial<Rep> & { fullName: string }>) => async (id: string) => {
     const rep = table[id];
@@ -603,7 +625,12 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     >;
   };
   const listing = (table: Record<string, Rep>, places: Record<string, string[]>) => async (pid: string) =>
-    (places[pid] ?? []).map((id) => ({ placeRepId: id, fullName: table[id].fullName, dateRange: table[id].dateRange }));
+    (places[pid] ?? []).map((id) => ({
+      placeRepId: id,
+      fullName: table[id].fullName,
+      dateRange: table[id].dateRange,
+      names: table[id].names ?? [table[id].fullName.split(",")[0]],
+    }));
   const year = (from: number, to = from) => ({ from, to });
 
   beforeEach(() => {
@@ -612,64 +639,85 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
   });
 
   it("names the one name every representation valid at the date shares (Olne, Caracas, Braunau, Kuopio, Boda)", async () => {
-    expect(await repIdToStandardPlaceAt("418460", year(1790))).toBe("Olne, Prince-Bishopric of Liège, Holy Roman Empire");
-    expect(await repIdToStandardPlaceAt("418460", year(1820))).toBe("Olne, Liège, Netherlands");
-    expect(await repIdToStandardPlaceAt("418460", year(1874))).toBe("Olne, Liège, Belgium");
-    expect(await repIdToStandardPlaceAt("12441861", year(1874))).toBe("Olne, Liège, Belgium");
-    expect(await repIdToStandardPlaceAt("2241910", year(1794))).toBe("Caracas, Distrito Federal, Venezuela");
-    expect(await repIdToStandardPlaceAt("11861494", year(1793))).toBe("Braunau, Thurgau, Switzerland");
-    expect(await repIdToStandardPlaceAt("422411", year(1854, 1863))).toBe("Kuopion kaupunki, Kuopio, Finland");
-    expect(await repIdToStandardPlaceAt("3461825", year(1845))).toBe("Boda, Kopparberg, Sweden");
+    expect(await repIdToStandardPlaceAt("418460", year(1790), "Olne")).toBe("Olne, Prince-Bishopric of Liège, Holy Roman Empire");
+    expect(await repIdToStandardPlaceAt("418460", year(1820), "Olne")).toBe("Olne, Liège, Netherlands");
+    expect(await repIdToStandardPlaceAt("418460", year(1874), "Olne")).toBe("Olne, Liège, Belgium");
+    expect(await repIdToStandardPlaceAt("12441861", year(1874), "Olne")).toBe("Olne, Liège, Belgium");
+    expect(await repIdToStandardPlaceAt("2241910", year(1794), "Caracas")).toBe("Caracas, Distrito Federal, Venezuela");
+    expect(await repIdToStandardPlaceAt("11861494", year(1793), "Braunau")).toBe("Braunau, Thurgau, Switzerland");
+    expect(await repIdToStandardPlaceAt("422411", year(1854, 1863), "Kuopion kaupunki")).toBe("Kuopion kaupunki, Kuopio, Finland");
+    expect(await repIdToStandardPlaceAt("3461825", year(1845), "Boda")).toBe("Boda, Kopparberg, Sweden");
   });
 
   it("looks up the chosen representation's description and its place's listing once each, and no other description", async () => {
-    expect(await repIdToStandardPlaceAt("418460", year(1874))).toBe("Olne, Liège, Belgium");
-    expect(await repIdToStandardPlaceAt("418460", year(1820))).toBe("Olne, Liège, Netherlands");
+    expect(await repIdToStandardPlaceAt("418460", year(1874), "Olne")).toBe("Olne, Liège, Belgium");
+    expect(await repIdToStandardPlaceAt("418460", year(1820), "Olne")).toBe("Olne, Liège, Netherlands");
     expect(mockGetPlaceById.mock.calls).toEqual([["418460"]]);
     expect(mockGetPlaceReps.mock.calls).toEqual([["1959431"]]);
   });
 
+  it("names nothing when no part of the record's own text is one of the place's names (Q2W9-1GVF's Aberayron, SGZQ-Y3L's Carmarthen)", async () => {
+    expect(await repIdToStandardPlaceAt("10579232", year(1881), "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales")).toBeNull();
+    expect(await repIdToStandardPlaceAt("10579589", year(1851), "Saint Peter, Carmarthenshire, Wales")).toBeNull();
+    expect(await repIdToStandardPlaceAt("10579589", year(1851), "")).toBeNull();
+    expect(await repIdToStandardPlaceAt("10579232", year(1881), "Aberayron, Cardiganshire, Wales")).toBe(
+      "Aberayron, Cardiganshire, Wales, United Kingdom",
+    );
+    expect(await repIdToStandardPlaceAt("10579589", year(1851), "Carmarthen")).toBe("Carmarthen, Carmarthenshire, Wales, United Kingdom");
+  });
+
+  it("reads every part of the text against every representation's names in every language, as checkFirstPlace compares names", async () => {
+    // A name in another language (X7S5-8J2Z's Firenze; Caerfyrddin is Carmarthen in Welsh).
+    expect(await repIdToStandardPlaceAt("7344713", year(1813), "Firenze, Firenze, Toscana, Italia")).toBe("Florence, Florence, Tuscany");
+    expect(await repIdToStandardPlaceAt("10579589", year(1851), "Caerfyrddin")).toBe("Carmarthen, Carmarthenshire, Wales, United Kingdom");
+    // The name in a later part, without its accent (6B9K-FXBZ's "Liro, Piaui").
+    expect(await repIdToStandardPlaceAt("5736", year(1905), "Liro, Piaui")).toBe("Piauí, Brazil");
+    // Another representation's name (QLVZ-74MS: 422411 is "Kuopion kaupunki", the place is also "Kuopio").
+    expect(await repIdToStandardPlaceAt("422411", year(1854, 1863), "Kuopio, Kuopio")).toBe("Kuopion kaupunki, Kuopio, Finland");
+    // Type words ignored: "Simmern" is "Kreis Simmern".
+    expect(await repIdToStandardPlaceAt("11973621", year(1850), "Simmern")).toBe("Kreis Simmern, Rhineland, Prussia");
+  });
+
   it("names nothing when no representation is valid at the date (6589-3NS5 Bolívar, born 1856)", async () => {
-    expect(await repIdToStandardPlaceAt("5775", year(1856))).toBeNull();
-    expect(await repIdToStandardPlaceAt("5775", year(1880, 1890))).toBeNull();
-    expect(await repIdToStandardPlaceAt("5775", { from: -Infinity, to: 1900 })).toBeNull();
-    expect(await repIdToStandardPlaceAt("5775", year(1900))).toBe("Bolívar, Colombia");
+    expect(await repIdToStandardPlaceAt("5775", year(1856), "Bolívar, Colombia")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5775", year(1880, 1890), "Bolívar, Colombia")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5775", { from: -Infinity, to: 1900 }, "Bolívar, Colombia")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5775", year(1900), "Bolívar, Colombia")).toBe("Bolívar, Colombia");
   });
 
   it("names nothing when two names are valid at the date, the chosen one's among them (Olne 1830, Braunau 1803, 4M3P-3SZM's Christ Church, Kälbertshausen)", async () => {
-    expect(await repIdToStandardPlaceAt("418460", year(1830))).toBeNull();
-    expect(await repIdToStandardPlaceAt("12441861", year(1830))).toBeNull();
-    expect(await repIdToStandardPlaceAt("12441860", year(1830))).toBeNull();
-    expect(await repIdToStandardPlaceAt("11861494", year(1803))).toBeNull();
-    expect(await repIdToStandardPlaceAt("5407392", year(1732))).toBeNull();
-    expect(await repIdToStandardPlaceAt("5407391", year(1732))).toBeNull();
-    expect(await repIdToStandardPlaceAt("8933335", year(1845))).toBeNull();
-    expect(await repIdToStandardPlaceAt("8933335", year(1960))).toBeNull();
-    expect(await repIdToStandardPlaceAt("8933335", year(1990))).toBe(
+    expect(await repIdToStandardPlaceAt("418460", year(1830), "Olne")).toBeNull();
+    expect(await repIdToStandardPlaceAt("12441861", year(1830), "Olne")).toBeNull();
+    expect(await repIdToStandardPlaceAt("12441860", year(1830), "Olne")).toBeNull();
+    expect(await repIdToStandardPlaceAt("11861494", year(1803), "Braunau")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5407392", year(1732), "Christ Church, Middlesex, Virginia")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5407391", year(1732), "Christ Church, Middlesex, Virginia")).toBeNull();
+    expect(await repIdToStandardPlaceAt("8933335", year(1845), "Kälbertshausen")).toBeNull();
+    expect(await repIdToStandardPlaceAt("8933335", year(1960), "Kälbertshausen")).toBeNull();
+    expect(await repIdToStandardPlaceAt("8933335", year(1990), "Kälbertshausen")).toBe(
       "Kälbertshausen, Hüffenhardt, Neckar-Odenwald-Kreis, Baden-Württemberg, Germany",
     );
   });
 
   it("needs the date to fall wholly inside a range, so a before or after date that crosses one names nothing", async () => {
-    expect(await repIdToStandardPlaceAt("422411", year(1990, 2000))).toBeNull();
-    expect(await repIdToStandardPlaceAt("418460", year(1829, 1831))).toBeNull();
-    expect(await repIdToStandardPlaceAt("418460", year(1873, 1875))).toBe("Olne, Liège, Belgium");
-    expect(await repIdToStandardPlaceAt("418460", { from: -Infinity, to: 1800 })).toBeNull();
-    expect(await repIdToStandardPlaceAt("418460", { from: -Infinity, to: 1790 })).toBe(
+    expect(await repIdToStandardPlaceAt("422411", year(1990, 2000), "Kuopio")).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", year(1829, 1831), "Olne")).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", year(1873, 1875), "Olne")).toBe("Olne, Liège, Belgium");
+    expect(await repIdToStandardPlaceAt("418460", { from: -Infinity, to: 1800 }, "Olne")).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", { from: -Infinity, to: 1790 }, "Olne")).toBe(
       "Olne, Prince-Bishopric of Liège, Holy Roman Empire",
     );
-    expect(await repIdToStandardPlaceAt("418460", { from: 1820, to: Infinity })).toBeNull();
-    expect(await repIdToStandardPlaceAt("418460", { from: 1850, to: Infinity })).toBe("Olne, Liège, Belgium");
+    expect(await repIdToStandardPlaceAt("418460", { from: 1820, to: Infinity }, "Olne")).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", { from: 1850, to: Infinity }, "Olne")).toBe("Olne, Liège, Belgium");
   });
 
   it("names nothing when the place was renamed and the record's text names the chosen representation (6B9K-FXBZ Bela Vista 1980)", async () => {
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista")).toBeNull();
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista, São Paulo, Brasil")).toBeNull();
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Brasil, São Paulo, BELA VISTA")).toBeNull();
-    // The record's text names the place as it was named in 1980, or names neither.
+    // The record's text names the place as it was named in 1980, or by an older name.
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Echaporã")).toBe("Echaporã, São Paulo, Brazil");
-    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Fazenda Santa Rita")).toBe("Echaporã, São Paulo, Brazil");
-    expect(await repIdToStandardPlaceAt("10979131", year(1980))).toBe("Echaporã, São Paulo, Brazil");
+    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Catequese")).toBe("Echaporã, São Paulo, Brazil");
     expect(await repIdToStandardPlaceAt("10979131", year(1940), "Bela Vista")).toBe("Bela Vista, São Paulo, Brazil");
   });
 
@@ -685,7 +733,9 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     // "Simmern" is the chosen "Kreis Simmern", which in 1800 was "Arrondissement Simmern".
     expect(await repIdToStandardPlaceAt("11973621", year(1800), "Simmern")).toBeNull();
     expect(await repIdToStandardPlaceAt("11973621", year(1800), "Kreis Simmern")).toBeNull();
-    expect(await repIdToStandardPlaceAt("11973621", year(1800), "Boppard")).toBe("Arrondissement Simmern, Rhin-et-Moselle, France");
+    expect(await repIdToStandardPlaceAt("11973621", year(1800), "Arrondissement Simmern")).toBe(
+      "Arrondissement Simmern, Rhin-et-Moselle, France",
+    );
     expect(await repIdToStandardPlaceAt("11973621", year(1850), "Simmern")).toBe("Kreis Simmern, Rhineland, Prussia");
 
     // Constructed: own names that differ only by a type word are one name.
@@ -702,15 +752,15 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
 
   it("names nothing when a lookup fails", async () => {
     mockGetPlaceById.mockRejectedValueOnce(new Error("boom"));
-    expect(await repIdToStandardPlaceAt("418460", year(1790))).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", year(1790), "Olne")).toBeNull();
 
     __clearPlaceResolverCachesForTests();
     mockGetPlaceReps.mockRejectedValueOnce(new Error("boom"));
-    expect(await repIdToStandardPlaceAt("418460", year(1790))).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", year(1790), "Olne")).toBeNull();
 
     __clearPlaceResolverCachesForTests();
     mockGetPlaceReps.mockResolvedValueOnce([]);
-    expect(await repIdToStandardPlaceAt("418460", year(1790))).toBeNull();
+    expect(await repIdToStandardPlaceAt("418460", year(1790), "Olne")).toBeNull();
   });
 
   it("names an old representation id from its place's listing, which holds only the current one (QLNH-QVQB's 1829107)", async () => {
@@ -722,13 +772,13 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     };
     mockGetPlaceById.mockImplementation(description(vorden));
     mockGetPlaceReps.mockImplementation(listing(vorden, { "1935460": ["11132478", "439844"] }));
-    expect(await repIdToStandardPlaceAt("1829107", year(1893), "Vorden (Bronckhorst)")).toBe("Vorden, Gelderland, Netherlands");
-    expect(await repIdToStandardPlaceAt("1829107", year(2010))).toBe("Vorden, Bronckhorst, Gelderland, Netherlands");
+    expect(await repIdToStandardPlaceAt("1829107", year(1893), "Vorden, Gelderland, Nederland")).toBe("Vorden, Gelderland, Netherlands");
+    expect(await repIdToStandardPlaceAt("1829107", year(2010), "Vorden")).toBe("Vorden, Bronckhorst, Gelderland, Netherlands");
   });
 
   it("looks up no listing for a representation that names no place", async () => {
     mockGetPlaceById.mockImplementation(description({ "902": { fullName: "Unplaced, Somewhere" } }));
-    expect(await repIdToStandardPlaceAt("902", year(1850))).toBeNull();
+    expect(await repIdToStandardPlaceAt("902", year(1850), "Unplaced")).toBeNull();
     expect(mockGetPlaceReps).not.toHaveBeenCalled();
   });
 
@@ -742,21 +792,21 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     };
     mockGetPlaceById.mockImplementation(description(dated));
     mockGetPlaceReps.mockImplementation(listing(dated, { "9": ["900"], "8": ["901", "902"], "7": ["903"] }));
-    expect(await repIdToStandardPlaceAt("900", year(1800))).toBe("Dated, Somewhere");
-    expect(await repIdToStandardPlaceAt("900", year(1820))).toBeNull();
-    expect(await repIdToStandardPlaceAt("902", year(1720))).toBeNull();
-    expect(await repIdToStandardPlaceAt("903", year(1800))).toBeNull();
+    expect(await repIdToStandardPlaceAt("900", year(1800), "Dated")).toBe("Dated, Somewhere");
+    expect(await repIdToStandardPlaceAt("900", year(1820), "Dated")).toBeNull();
+    expect(await repIdToStandardPlaceAt("902", year(1720), "Dated")).toBeNull();
+    expect(await repIdToStandardPlaceAt("903", year(1800), "Unreadable")).toBeNull();
 
     __clearPlaceResolverCachesForTests();
-    mockGetPlaceReps.mockResolvedValueOnce([{ placeRepId: "900", dateRange: "+1795/+1815" }]);
-    expect(await repIdToStandardPlaceAt("900", year(1800))).toBeNull();
+    mockGetPlaceReps.mockResolvedValueOnce([{ placeRepId: "900", dateRange: "+1795/+1815", names: ["Dated"] }]);
+    expect(await repIdToStandardPlaceAt("900", year(1800), "Dated")).toBeNull();
 
     __clearPlaceResolverCachesForTests();
     mockGetPlaceReps.mockResolvedValueOnce([
-      { placeRepId: "900", fullName: "Dated, Somewhere", dateRange: "+1795/+1815" },
-      { placeRepId: "905", dateRange: "+1790/+1810" },
+      { placeRepId: "900", fullName: "Dated, Somewhere", dateRange: "+1795/+1815", names: ["Dated"] },
+      { placeRepId: "905", dateRange: "+1790/+1810", names: [] },
     ]);
-    expect(await repIdToStandardPlaceAt("900", year(1800))).toBeNull();
+    expect(await repIdToStandardPlaceAt("900", year(1800), "Dated")).toBeNull();
   });
 });
 
@@ -796,7 +846,11 @@ describe("standardPlaceToCoords", () => {
 
 describe("placeIdToRepIds", () => {
   it("returns and caches the rep ids for a placeId", async () => {
-    mockGetPlaceReps.mockResolvedValue([{ placeRepId: "10" }, { placeRepId: "20", fullName: "B" }, { placeRepId: "30" }]);
+    mockGetPlaceReps.mockResolvedValue([
+      { placeRepId: "10", names: [] },
+      { placeRepId: "20", fullName: "B", names: ["B"] },
+      { placeRepId: "30", names: [] },
+    ]);
     expect(await placeIdToRepIds("P")).toEqual(["10", "20", "30"]);
     expect(await placeIdToRepIds("P")).toEqual(["10", "20", "30"]);
     expect(mockGetPlaceReps).toHaveBeenCalledTimes(1);
@@ -809,7 +863,7 @@ describe("placeIdToRepIds", () => {
     await vi.runAllTimersAsync();
     expect(await p).toEqual([]);
 
-    mockGetPlaceReps.mockResolvedValueOnce([{ placeRepId: "1" }]);
+    mockGetPlaceReps.mockResolvedValueOnce([{ placeRepId: "1", names: [] }]);
     const p2 = placeIdToRepIds("P");
     await vi.runAllTimersAsync();
     expect(await p2).toEqual(["1"]);

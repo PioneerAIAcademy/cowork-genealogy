@@ -670,9 +670,18 @@ with a warning rather than kept for the new place:
   and the guard; a non-place phrase such as "Same House" or "Do", tested by
   `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
   unset with no warning):
-  1. if the op's sidecar-matched record (§3.5) has a fact whose `place` equals the
-     op's place string (trimmed, case-insensitive), its converter-resolved
-     `standard_place` is **copied** — no geocoding call;
+  1. if the op's sidecar-matched record (§3.5) gives the op's own fact a
+     converter-resolved `standard_place`, it is **copied** — no geocoding call.
+     The op's own fact is a fact of its `record_persona_id` (the persona's own,
+     or one of a relationship the persona is a party to) whose type is the op's
+     `fact_type` once both are folded as "Boundary shape normalization" folds
+     labels ("Baptism" is `christening`, "BirthRegistration" is
+     `birth_registration`) and whose `place` equals the op's place string
+     (trimmed, case-insensitive). It is copied only when every such fact
+     carries the same `standard_place`: one person's name never lands on
+     another's fact (a census household where FamilySearch standardized only
+     the head's place), and one fact's name never lands on another fact of the
+     same person (one place named for two eras);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with

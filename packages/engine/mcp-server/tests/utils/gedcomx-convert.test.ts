@@ -1812,26 +1812,44 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     expect(placeId).toBe("3461825");
   });
 
-  it("takes the candidate place.description names when none is Preferred (FVFW-Y6P)", () => {
-    const { fact, placeId } = readOnePlace({
-      original: "Tobel, Tobel-Tägerschen, Thurgau, Switzerland",
-      description: "#place_11861494",
-      fields: [
-        {
-          type: PLACE_FIELD,
-          values: [
-            originalValue("Tobel-Braunau, Thurgau, Switzerland"),
-            interpretedValue("Braunau, Thurgau, Switzerland", "11861494"),
-            interpretedValue("Braunau, Tobel, Thurgau, Switzerland", "11912912"),
-            interpretedValue("Tobel, Thurgau, Switzerland", "3059454"),
-            interpretedValue("Tobel, Tobel-Tägerschen, Thurgau, Switzerland", "11861493"),
-          ],
-        },
-      ],
-    });
+  // FVFW-Y6P's Place field: place.description names Braunau (11861494), and
+  // place.original is the text of the Tobel candidate (11861493).
+  const tobelBraunau = (original: string): RawPlace => ({
+    original,
+    description: "#place_11861494",
+    fields: [
+      {
+        type: PLACE_FIELD,
+        values: [
+          originalValue("Tobel-Braunau, Thurgau, Switzerland"),
+          interpretedValue("Braunau, Thurgau, Switzerland", "11861494"),
+          interpretedValue("Braunau, Tobel, Thurgau, Switzerland", "11912912"),
+          interpretedValue("Tobel, Thurgau, Switzerland", "3059454"),
+          interpretedValue("Braunau, Thurgau, Switzerland", "3057466"),
+          interpretedValue("Tobel, Tobel-Tägerschen, Thurgau, Switzerland", "11861493"),
+        ],
+      },
+    ],
+  });
+
+  it("takes the candidate place.description names when none is Preferred (FVFW-Y6P's candidates)", () => {
+    const { fact, placeId } = readOnePlace(tobelBraunau("Tobel-Braunau, Thurgau, Switzerland"));
     expect(fact.place).toBe("Tobel-Braunau, Thurgau, Switzerland");
     expect(fact.standard_place).toBe("Braunau, Thurgau, Switzerland");
     expect(placeId).toBe("11861494");
+  });
+
+  it("yields nothing when place.original is the text of another candidate than the one chosen (FVFW-Y6P)", () => {
+    // FamilySearch's own text names Tobel while place.description names Braunau.
+    for (const original of [
+      "Tobel, Tobel-Tägerschen, Thurgau, Switzerland",
+      "Tobel, Tobel-Tägerschen, Thurgau, Switzerland ",
+      // Braunau's text, but under two ids: 11861494 and 3057466.
+      "Braunau, Thurgau, Switzerland",
+    ]) {
+      const { fact, placeId } = readOnePlace(tobelBraunau(original));
+      expect([fact.place, fact.standard_place, placeId]).toEqual([original, undefined, undefined]);
+    }
   });
 
   it("ignores an Interpreted value that names no place (6CY2-PL2S)", () => {
@@ -1992,7 +2010,7 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
   it("yields nothing when place.description names a place no candidate carries (71LN-7LN2's shape)", () => {
     const { fact, placeId } = readOnePlace({
       original: "Київ, Київська, Российская империя",
-      description: "#11692585",
+      description: "#place_11692585",
       fields: [
         {
           type: PLACE_FIELD,
@@ -2008,7 +2026,7 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     const place: RawPlace = {
       original: "Київ, Київська, Российская империя",
       normalized: [{ lang: "en", value: "Kyiv, Kiev Governorate, Russian Empire" }],
-      description: "#11692585",
+      description: "#place_11692585",
       fields: [
         {
           type: PLACE_FIELD,
@@ -2297,5 +2315,27 @@ describe("gedcomx-convert — coverage.standard_place from the response's places
     } as GedcomX);
     expect(out.sources?.[0]?.coverage).toEqual({ place_rep_id: "10579589", record_type: "Census" });
     expect(out.sources?.[1]?.coverage).toEqual({ place_rep_id: "0", record_type: "Census" });
+  });
+
+  it("copies no name from a record read's places[], whose entries are place_<id>: record_read names its coverage by id", () => {
+    // Constructed: no record read in the sample names its places[] entries. A
+    // name copied here would survive record_read, which clears no coverage name
+    // it declines to give (X1SW-6LB's authorities reference).
+    const body = {
+      sourceDescriptions: [
+        coverageSource("src_r_1433233710", placeUrl("10579589")),
+        coverageSource("sd_c_1778464", "#place_1927095"),
+      ],
+      places: [
+        { id: "place_10579589", names: [{ value: "Carmarthen, Carmarthenshire, Wales, United Kingdom" }] },
+        { id: "place_1927095", names: [{ value: "Finland" }] },
+      ],
+    } as GedcomX;
+    for (const out of [toSimplified(body), toSimplifiedRecordRead(body).doc]) {
+      expect(out.sources?.map((s) => s.coverage)).toEqual([
+        { place_rep_id: "10579589", record_type: "Census" },
+        { place_rep_id: "1927095", record_type: "Census" },
+      ]);
+    }
   });
 });

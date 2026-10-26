@@ -439,12 +439,15 @@ FamilySearch's own standardized name, read from the response with no lookup
    `resource` that is a place description URL (`…/places/description/<id>`). A
    record read (the recapi persona endpoint) never sends `normalized`; this
    value's text is FamilySearch's standard full name, in the record's language
-   as sent ("Kuopio, Kuopio, Suomi"). Among such values take the one whose
-   `http://familysearch.org/types/qualifiers/Preferred` qualifier is `true`;
-   else the one whose id `place.description` (`#place_<id>`) names; else the
+   as sent ("Kuopio, Kuopio, Suomi"). Among such values take the one marked
+   with the `http://familysearch.org/types/qualifiers/Preferred` qualifier;
+   else the one whose id `place.description` names as `#place_<id>`; else the
    only one. If the chosen values disagree on the name, name two place ids, or
    `description` names an id none of them carries, there is no
-   `standard_place`.
+   `standard_place`. Nor is there when `place.original`, FamilySearch's own
+   text for the fact, is the text of another candidate than the chosen one:
+   FVFW-Y6P's `place.original` is the text of Tobel (11861493), while
+   `place.description` names Braunau (11861494).
 
 An `Interpreted` value with no place description URL is never used, Preferred
 or not. One with no `resource` often echoes the as-written text ("Yabebyry"),
@@ -461,8 +464,8 @@ fact. Search responses carry `normalized`, which is the standard there.
 standardized text in `place.original` and keep what the record says only in the
 `Original` value of the same `Place` field (`labelId` like `EVENT_PLACE_ORIG`).
 When `place.original` equals an `Interpreted` text of that field, the field
-holds exactly one `Original` text, different from it, and the fact keeps a
-`standard_place`, `place` is that `Original` text. A fact that keeps no
+holds exactly one `Original` text, and the fact keeps a `standard_place`,
+`place` is that `Original` text. A fact that keeps no
 `standard_place` (an id-less value, an ambiguous choice, a non-place phrase)
 keeps `place.original`, so the standardized text is never lost: the code
 extractor decides a census's relationship column from `standard_place ?? place`
@@ -519,9 +522,22 @@ places as English text (`factsEquivalent` in `merge-gedcomx.ts`,
 fact's date. A place has one representation per era, and the chosen id's own
 one can be from another ("Olne, Prince-Bishopric of Liège, Holy Roman Empire",
 valid to 1795, for an 1874 death; the 1874 one is "Olne, Liège, Belgium").
-One rule: **the fact is named only when exactly one name is valid at its date
-across all representations of the chosen place.** Any doubt names nothing:
+One rule: **the fact is named only when its own text names the chosen place,
+and exactly one name is valid at its date across all representations of that
+place.** Any doubt names nothing:
 
+- The fact's own text is its `place`: the `Original` text where **As-written
+  text** above takes it, else `place.original`. Some comma-separated part of it
+  must be one of the chosen place's names, in any language, as the place's
+  listing gives them for every representation (`names[]`), compared as
+  `checkFirstPlace` compares names (case, accents, "St"/"Saint" and type words
+  ignored). Otherwise FamilySearch's choice of place is in doubt: Q2W9-1GVF's
+  1881 census, written "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was
+  given the town of Aberayron, its registration district, and SGZQ-Y3L's
+  "Saint Peter, Carmarthenshire, Wales" the town of Carmarthen. "Kuopio,
+  Kuopio" names place 1962838, whose 1854 representation is "Kuopion
+  kaupunki", and "Firenze" names Florence. A fact with no place text is named
+  nothing.
 - The fact's years are its `date.formal` (`gedcomxDateYears`), which
   FamilySearch sends whatever language or form `date.original` takes ("4
   sierpnia 1794" is `+1794-08-04`); else `date.original` as `stdDate` reads
@@ -532,11 +548,11 @@ across all representations of the chosen place.** Any doubt names nothing:
   range; one with no range is valid at every date. A date that crosses a range
   boundary is valid in no representation, and so is named nothing.
 - The representations are the place's listing (`getPlaceReps`, one call per
-  place, which gives each one's English full name and range); the chosen one's
-  description gives its place. Both lookups are cached. The description answers
-  an old representation id with the current one (1829107 is 439844, "Vorden,
-  Gelderland, Netherlands"), so the listing need not hold the id the record
-  cites. Nothing is named when either lookup fails or a range in the listing
+  place, which gives each one's English full name, range and names in every
+  language); the chosen one's description gives its place. Both lookups are
+  cached. The description answers an old representation id with the current
+  one (1829107 is 439844, "Vorden, Gelderland, Netherlands"), so the listing
+  need not hold the id the record cites. Nothing is named when either lookup fails or a range in the listing
   cannot be read.
 - Two names valid at once name nothing: Olne in 1830 is "Olne, Liège,
   Netherlands" (to 1830) and "Olne, Liège, Belgium" (from 1830), and
@@ -565,13 +581,17 @@ volume the record sits in ("Source descriptions"), which often spans eras, not
 the record's event, and no engine code copies it into an assertion or the
 tree. So one place id can be named one way on a fact and another on a
 coverage. Only a coverage whose `spatial.description` resolves to a place
-description is named:
+description whose id is the coverage's `place_rep_id` is named:
 a `…/places/description/<id>` URL, or a `#…` reference to a `places[]` entry
-that cites one (its `Primary` identifier, or its `place.resource`). Any other
+that cites one (its `Primary` identifier, else its `place.resource`). Any other
 reference names nothing: an older record cites an authorities place id
 (`#place_1927095`, whose entry's `Primary` identifier is
 `…/authorities/v1/place/1927095`, Finland), and read as a representation id
-that number is another place (Mingary, South Australia). A lookup by id names
+that number is another place (Mingary, South Australia). Nor does a `#place_8`
+reference whose entry cites description 9: the `place_rep_id` read from the
+reference is 8. The converter copies no name from a record read's `places[]`
+(its entries are `place_<id>`, never the bare id a coverage carries), so a
+coverage `record_read` does not name has none. A lookup by id names
 the place FamilySearch chose and resolves no place name, so it is not the
 resolver fallback `record_read` stays without. See
 `docs/record-read-sidecar-scope.md` for the measurement and rationale.
@@ -736,12 +756,12 @@ format as `resource_type` and `coverage`:
 
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
   `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
-  via `repIdToStandardPlace`), `standard_place` (the name the response's own
-  `places[]` gives that id, when it gives one — a search response names the
-  places its record refers to, keyed by the bare id; a record read's `places[]`
-  carry no names, so `record_read` names the id by its own name, whatever the
-  coverage's dates, when `spatial.description` resolves to a place description
-  — "Places on facts"),
+  via `repIdToStandardPlace`), `standard_place` (the name of the response's own
+  `places[]` entry whose `id` is that id, when it gives one — a search response
+  names the places its record refers to, keyed by the bare id; a record read's
+  entries are keyed `place_<id>` and carry no names, so `record_read` names the
+  id by its own name, whatever the coverage's dates, when `spatial.description`
+  resolves to that place description — "Places on facts"),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the

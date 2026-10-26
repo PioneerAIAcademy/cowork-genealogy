@@ -1040,27 +1040,35 @@ function ownName(fullName: string): string {
  * Belgium" from 1830. `years` must fall wholly inside a range, and a
  * representation with no range is valid in every year. Two lookups, both cached:
  * `repId`'s description, for its place, and the place's listing, which gives
- * every representation's name and range. The listing need not hold `repId`: the
- * description answers an old id with its current representation (1829107 is
- * 439844, "Vorden, Gelderland, Netherlands").
+ * every representation's name, range and names in every language. The listing
+ * need not hold `repId`: the description answers an old id with its current
+ * representation (1829107 is 439844, "Vorden, Gelderland, Netherlands").
  *
- * Null whenever that is in doubt: no representation is valid in `years`, two
- * names are (Olne in 1830 is "Olne, Liège, Netherlands" and "Olne, Liège,
- * Belgium"), a range cannot be read, or a lookup fails. Null too when the place
- * was renamed and `placeText`, the record's own text, gives `repId`'s own name,
- * compared as `checkFirstPlace` compares names: place 6283855 is "Bela Vista"
- * 1938-1944 and "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista"
- * and was given representation 10979131 doubts FamilySearch's choice of place.
+ * Null whenever that is in doubt. First, FamilySearch's choice of place: no
+ * comma-separated part of `placeText`, the record's own text, is one of the
+ * place's names in any language, compared as `checkFirstPlace` compares names
+ * (case, accents, "St"/"Saint" and type words ignored). FamilySearch gave
+ * Q2W9-1GVF's "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales" the town of
+ * Aberayron, its registration district. Then the date: no representation is
+ * valid in `years`, two names are (Olne in 1830 is "Olne, Liège, Netherlands"
+ * and "Olne, Liège, Belgium"), a range cannot be read, or a lookup fails. Null
+ * too when the place was renamed and `placeText` gives `repId`'s own name: place
+ * 6283855 is "Bela Vista" 1938-1944 and "Echaporã" from 1944, so a 1980 record
+ * that wrote "Bela Vista" and was given representation 10979131 doubts
+ * FamilySearch's choice of place.
  */
 export async function repIdToStandardPlaceAt(
   repId: string,
   years: YearSpan,
-  placeText?: string,
+  placeText: string,
 ): Promise<string | null> {
   const chosen = await getRepInfo(repId);
   if (!chosen?.placeId) return null;
+  const reps = await placeReps(chosen.placeId);
+  const parts = placeSegments(placeText);
+  if (!reps.some((rep) => rep.names.some((n) => parts.some((part) => sameName(part, n))))) return null;
   const names = new Set<string | undefined>();
-  for (const rep of await placeReps(chosen.placeId)) {
+  for (const rep of reps) {
     const range = repYears(rep.dateRange);
     if (range === null) return null;
     if (range.from <= years.from && years.to <= range.to) names.add(rep.fullName);
@@ -1069,9 +1077,7 @@ export async function repIdToStandardPlaceAt(
   if (name === undefined || others.length > 0) return null;
   const chosenName = ownName(chosen.standardPlace);
   const renamed = !sameName(ownName(name), chosenName);
-  if (renamed && placeText !== undefined && placeSegments(placeText).some((part) => sameName(part, chosenName))) {
-    return null;
-  }
+  if (renamed && parts.some((part) => sameName(part, chosenName))) return null;
   return name;
 }
 

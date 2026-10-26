@@ -143,10 +143,12 @@ England death/burial). For **the person you searched** (the matched persona):
   its place id with `repIdToStandardPlaceAt`: the English name, when exactly one
   name is valid across all of that place's representations at the fact's date
   (FamilySearch's `date.formal`, else `date.original` as `stdDate` reads it).
-  Any doubt — no date, no such name, two names, a failed lookup, a place renamed
-  since the name the fact's text gives it, or a name that contradicts the fact's
-  place text — leaves the fact with `place.original` and no `standard_place`, as
-  `toSimplified` gives it; FamilySearch's text is never kept. Staged records
+  Any doubt — a fact whose own text names none of the chosen place's names,
+  FamilySearch's own text naming another candidate place, no date, no such
+  name, two names, a failed lookup, a place renamed since the name the fact's
+  text gives it, or a name that contradicts the fact's place text — leaves the
+  fact with `place.original` and no `standard_place`, as `toSimplified` gives
+  it; FamilySearch's text is never kept. Staged records
   carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
