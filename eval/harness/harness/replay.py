@@ -449,7 +449,7 @@ def _is_staged_extraction(name: str, args: dict) -> bool:
     so nothing the replay needs is in the arguments."""
     return (
         name == "extraction_append"
-        and "recordIds" in args
+        and ("recordIds" in args or "documents" in args)
         and not args.get("ops")
         and not args.get("section")
     )
@@ -471,6 +471,8 @@ def _apply_staged_extraction(
     summary = entry.get("response_summary")
     text = summary if isinstance(summary, str) else json.dumps(summary, default=str)
     log_ids = list(dict.fromkeys(_LOG_ID_RE.findall(text.replace('\\"', '"'))))
+    if final_research and "_summary_truncated" in text:
+        log_ids += _log_ids_cut_from_summary(entry, text, final_research, out.research, log_ids)
     if not final_research or not log_ids:
         out.note_unmodelled("tool:extraction_append:record-ids")
         return
@@ -488,6 +490,61 @@ def _apply_staged_extraction(
                         out.applied += 1
         if not found:
             out.note_unmodelled("extraction_append:not-in-final")
+
+
+def _record_key(record_id) -> str:
+    return str(record_id or "").split("1:1:")[-1].split("?")[0].strip().strip("/").upper()
+
+
+def _log_ids_cut_from_summary(
+    entry: dict, text: str, final_research: dict, state: dict, seen: list[str]
+) -> list[str]:
+    """Log ids for the records a truncated summary cut off.
+
+    The capture keeps only the first few records of a long `extraction_append`
+    answer (`_summary_truncated`), so their `logId`s never reach the replay and
+    everything those records wrote is missing from the replayed notes. The call's
+    own `recordIds` are never cut: each one not visible in the summary is matched
+    to the earliest log entry in the final notes whose `query.recordId` names it
+    and that neither the summary nor the replay already accounts for -- the entry
+    this call wrote, since the replay applies calls in order. The cut can fall
+    inside a record, after its `recordId` and before its `logId`, so being named in
+    the summary is not enough; a record the summary shows with a status other than
+    `extracted` wrote nothing and is never back-filled.
+    """
+    args = entry.get("args") or {}
+    asked = args.get("recordIds")
+    if isinstance(asked, str):
+        try:
+            asked = json.loads(asked)
+        except ValueError:
+            asked = [asked]
+    if not isinstance(asked, list):
+        return []
+    seen_entries = {e.get("id"): e for e in final_research.get("log") or [] if isinstance(e, dict)}
+    accounted = {_record_key((seen_entries.get(i) or {}).get("query", {}).get("recordId")) for i in seen}
+    # A record the summary shows as not extracted wrote no log entry; any entry
+    # for it in the final notes belongs to a later call.
+    unwritten = {
+        _record_key(rid)
+        for rid, status in re.findall(
+            r'recordId\\?"\s*:\s*\\?"([^"\\]+)\\?"\s*,\s*\\?"status\\?"\s*:\s*\\?"([^"\\]+)', text)
+        if status != "extracted"
+    }
+    applied = {e.get("id") for e in state.get("log") or [] if isinstance(e, dict)} | set(seen)
+    out: list[str] = []
+    for record in asked:
+        key = _record_key(record)
+        if not key or key in unwritten or key in accounted:
+            continue
+        for e in final_research.get("log") or []:
+            if not isinstance(e, dict) or e.get("id") in applied or e.get("id") in out:
+                continue
+            query = e.get("query") or {}
+            if _record_key(query.get("recordId")) == key:
+                out.append(e["id"])
+                break
+    return out
 
 
 def replay(
