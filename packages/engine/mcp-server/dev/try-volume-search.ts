@@ -5,6 +5,7 @@
  *   cd mcp-server
  *   npx tsx dev/try-volume-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --startYear 1730 --endYear 1810
  *   npx tsx dev/try-volume-search.ts --standardPlace "Harjager, Malmöhus, Sweden" --startYear 1650 --endYear 1720 --recordTypeGroups Tax,Census
+ *   npx tsx dev/try-volume-search.ts --standardPlace "Kings, New York, United States" --startYear 1890 --endYear 1910 --summary
  *
  * Requires a valid FamilySearch session (run the login tool first).
  * Edensor, Derbyshire is a known small result set.
@@ -27,6 +28,7 @@ const endYearArg = getArg("--endYear");
 const startYear = startYearArg != null ? Number(startYearArg) : undefined;
 const endYear = endYearArg != null ? Number(endYearArg) : undefined;
 const pageToken = getArg("--pageToken");
+const summary = args.includes("--summary");
 // Comma-separated so a filtered search is expressible from the shell, e.g.
 // --recordTypeGroups Tax  or  --recordTypeGroups "Legal,Census"
 const recordTypeGroups = getArg("--recordTypeGroups")
@@ -45,8 +47,10 @@ try {
     ...(endYear != null ? { endYear } : {}),
     ...(recordTypeGroups?.length ? { recordTypeGroups } : {}),
     ...(pageToken ? { pageToken } : {}),
+    ...(summary ? { summary } : {}),
   }, LOCAL);
-  console.log(JSON.stringify(result, null, 2));
+  // With --summary the page itself is noise; print the rollup.
+  console.log(JSON.stringify(summary ? result.summary : result, null, 2));
   console.log("---");
   console.log(`Total results: ${result.totalResults}, returned: ${result.results.length}`);
   if (result.nextPageToken) {

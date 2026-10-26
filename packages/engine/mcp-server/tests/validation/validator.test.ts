@@ -2924,7 +2924,19 @@ describe("Research closed shapes", () => {
           pages_read: [
             { section: "home", url: "https://x/Norway_Genealogy", found: true },
             { section: "research_tips", url: null, found: false },
+            { section: "online_records", url: null, found: false, outcome: "unreachable" },
           ],
+          registration_start: [
+            { event: "birth", level: "national", year: 1876, source_url: "https://x/Norway_Vital_Records" },
+          ],
+          volume_summary: {
+            start_year: 1800,
+            end_year: 1900,
+            total_volumes: 3,
+            complete: true,
+            by_record_type: [{ group: "Census", volumes: 2, browse_only: null, fulltext_only: null }],
+            untyped: { volumes: 1, browse_only: 1, fulltext_only: 0 },
+          },
           source: "locality-guide",
           created: "2026-01-02",
           updated: "2026-01-02",
@@ -3016,6 +3028,51 @@ describe("Research closed shapes", () => {
       expect(
         result.errors.filter((e) => e.message.includes("locality_page_section"))
       ).toEqual([]);
+    });
+
+    it("rejects a registration_start entry with a bad event, level or year, or no source_url", async () => {
+      const research = maximalResearch();
+      research.localities[0].registration_start = [
+        { event: "baptism", level: "province", year: "1876" },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      const msgs = result.errors
+        .filter((e) => e.path === "research.json/localities[0]/registration_start[0]")
+        .map((e) => e.message)
+        .join(" | ");
+      expect(msgs).toMatch(/'baptism' is not a valid registration_event/);
+      expect(msgs).toMatch(/'province' is not a valid registration_level/);
+      expect(msgs).toMatch(/year must be an integer/);
+      expect(msgs).toMatch(/source_url/);
+    });
+
+    it("rejects non-integer counts in collections and volume_summary, but accepts null where the schema does", async () => {
+      const research = maximalResearch();
+      research.localities[0].collections = [{ id: "1", title: "t", person_count: 1.5, record_count: null }];
+      research.localities[0].volume_summary.total_volumes = -1;
+      research.localities[0].volume_summary.by_record_type[0].volumes = null;
+      research.localities[0].volume_summary.untyped.browse_only = "3";
+      const result = await validateParsed(research, maximalTree);
+      const msgs = result.errors.map((e) => `${e.path}: ${e.message}`).join(" | ");
+      expect(msgs).toMatch(/collections\[0\]: person_count must be a non-negative integer or null/);
+      expect(msgs).not.toMatch(/record_count/);
+      expect(msgs).toMatch(/volume_summary: total_volumes must be a non-negative integer/);
+      expect(msgs).toMatch(/by_record_type\[0\]: volumes must be a non-negative integer; got null/);
+      expect(msgs).toMatch(/untyped: browse_only must be a non-negative integer or null/);
+    });
+
+    it("rejects an out-of-set pages_read[].outcome (locality_page_outcome)", async () => {
+      const research = maximalResearch();
+      research.localities[0].pages_read[2].outcome = "timeout";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/pages_read[2]" &&
+            e.message.includes("'timeout' is not a valid locality_page_outcome")
+        )
+      ).toBe(true);
     });
   });
 

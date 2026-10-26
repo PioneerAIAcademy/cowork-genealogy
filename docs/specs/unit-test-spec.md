@@ -267,7 +267,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "name": "string (short human-readable name)",
     "type": "positive",
     "description": "string (1-2 sentences: what this test verifies and why it matters)",
-    "tags": ["string (freeform tags for filtering and grouping)"],
+    "tags": ["string (filtering, grouping, and validator gates — a tag is a grading input)"],
     "expected_outcome": "pass | xfail (default: pass)",
     "xfail_reason": "string (required when expected_outcome is xfail)"
   },
@@ -306,7 +306,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "name": "string (short human-readable name)",
     "type": "negative",
     "description": "string (1-2 sentences: what this test verifies and why it matters)",
-    "tags": ["string (freeform tags for filtering and grouping)"],
+    "tags": ["string (filtering, grouping, and validator gates — a tag is a grading input)"],
     "expected_outcome": "pass | xfail (default: pass)",
     "xfail_reason": "string (required when expected_outcome is xfail)"
   },
@@ -944,7 +944,7 @@ Only present when `test.type` is `"negative"`.
 |-------|------|----------|-------------|
 | `correct_skill` | string[] | yes | Skills that should handle this request instead. Each entry must be a valid skill directory name. `[]` = no skill should fire (out-of-scope user message). `["x"]` = exactly skill x is expected. `["x", "y"]` = any one of these is acceptable |
 | `explanation` | string | yes | Why the tested skill should not activate. Documents the boundary between the two skills so reviewers (and the description optimizer) understand the discrimination |
-| `grade_on_invariant` | boolean | no | `false` (default). When `true`, this negative test is graded **solely** on its deterministic invariant validator(s) in `eval/harness/validators/test_<skill>.py`, gated on one of the test's tags — routing and activation are NOT gated. Use it for a routing-flaky negative where every plausible route is state-safe. Requires a tag-gated validator that actually runs; the runnability gate enforces that much. **It does not enforce enough:** every tool the gated validator asserts about must also be **reachable in this test** — present in the test's own `mcp_fixtures`, or in `mock_mcp.LIVE_TOOLS`. The mock server advertises only those (`mock_mcp.create_mock_server`, `for tool_name, bucket in manifest.items()`), so a "tool X was not called" assertion against a tool this test registers nowhere is offered to no model and can never fire — the test passes green forever while asserting nothing about X. Declare the fixture even when you expect it to go unused, and say so in the test `description` so it is not later removed as dead weight |
+| `grade_on_invariant` | boolean | no | `false` (default). When `true`, this negative test is graded **solely** on its deterministic invariant validator(s) in `eval/harness/validators/test_<skill>.py`, gated on one of the test's tags — routing and activation are NOT gated. Use it for a routing-flaky negative where every plausible route is state-safe. Requires a tag-gated validator that actually runs; the runnability gate enforces that much, and `check_runlogs.py` rule 11 blocks a PR whose added run log skips a validator that gated on a tag the test carried at the merge base and passed there (a swapped or renamed tag). **It does not enforce enough:** every tool the gated validator asserts about must also be **reachable in this test** — present in the test's own `mcp_fixtures`, or in `mock_mcp.LIVE_TOOLS`. The mock server advertises only those (`mock_mcp.create_mock_server`, `for tool_name, bucket in manifest.items()`), so a "tool X was not called" assertion against a tool this test registers nowhere is offered to no model and can never fire — the test passes green forever while asserting nothing about X. Declare the fixture even when you expect it to go unused, and say so in the test `description` so it is not later removed as dead weight |
 
 ### 5.6 `runs_per_test`
 
@@ -1819,7 +1819,18 @@ validators skipped). That run predates `test_no_wiki_no_write`, the tag-gated
 validator added 2026-07-29; nothing has been vacuous since. The load-time gate
 proves a validator *gates on* the test's tags, never that it *executes*, so a
 tag-gated validator carrying a second, state-dependent skip could still go
-vacuous — none does today, and nothing checks for one.
+vacuous — none does today, and nothing checks for one at run time.
+
+What the load-time gate cannot see is a **swap**: a tag that still reaches
+*some* gate, just not the one it used to, so the invariant the test was written
+for stops running and the test stays green. That is a PR-time comparison, not a
+runtime check, and `check_runlogs.py` rule 11 makes it: in the run log a PR
+adds, a `grade_on_invariant` test may not skip (on every run) a validator that
+is gated on a tag the test carried at the merge base and that passed in the
+merge base's newest log — unless that validator is gone or the PR edits the
+test's `negative.explanation`. A PR that edits a validator file but adds no
+log for a suite is compared on the gate maps instead: a validator still gated,
+but on none of the test's tags, blocks the same way.
 
 ### Conventions
 
