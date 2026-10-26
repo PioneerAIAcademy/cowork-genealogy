@@ -116,7 +116,7 @@ export interface GedcomXSourceDescription {
 }
 
 export interface GedcomXCoverage {
-  spatial?: { original?: string; description?: string };
+  spatial?: { description?: string };
   temporal?: { original?: string; formal?: string };
   recordType?: string;
 }
@@ -124,6 +124,9 @@ export interface GedcomXCoverage {
 export interface GedcomXPlaceDescription {
   id?: string;
   identifiers?: Record<string, string[]>;
+  /** Some record reads cite the place here instead, with no `id`:
+   *  `{ resource: "…/places/description/7344713", resourceId: "place_7344713" }`. */
+  place?: { resource?: string; resourceId?: string };
   names?: { value: string }[];
   latitude?: number;
   longitude?: number;

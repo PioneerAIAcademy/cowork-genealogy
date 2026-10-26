@@ -1852,6 +1852,27 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     expect(placeId).toBeUndefined();
   });
 
+  it("counts only a value whose resource is a place description (an authorities place id read as one is another place)", () => {
+    // Finland's authorities place id 1927095 is, as a representation id, Mingary, South Australia.
+    for (const resource of [
+      "#place_1927095",
+      "#1927095",
+      "https://api.familysearch.org/authorities/v1/place/1927095",
+      `${placeUrl("1927095")}?flag=fsh`,
+    ]) {
+      const { fact, placeId } = readOnePlace({
+        original: "Porvoo, Uusimaa, Finland",
+        fields: [{ type: PLACE_FIELD, values: [{ type: "http://gedcomx.org/Interpreted", text: "Finland", resource }] }],
+      });
+      expect([resource, fact.standard_place, placeId]).toEqual([resource, undefined, undefined]);
+    }
+    const { fact, placeId } = readOnePlace({
+      original: "Porvoo, Uusimaa, Finland",
+      fields: [{ type: PLACE_FIELD, values: [interpretedValue("Porvoo, Uusimaa, Finland", "436389")] }],
+    });
+    expect([fact.standard_place, placeId]).toEqual(["Porvoo, Uusimaa, Finland", "436389"]);
+  });
+
   it("passes over a Preferred value that names no place and lets place.description decide (SGZQ-Y3L)", () => {
     const { fact, placeId } = readOnePlace({
       original: "Saint Peter, Carmarthenshire, Wales",

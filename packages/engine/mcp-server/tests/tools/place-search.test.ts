@@ -9,6 +9,7 @@ import {
   placeSearchAllTool,
   __clearPlaceSearchCacheForTests,
 } from "../../src/tools/place-search.js";
+import { getPlaceReps } from "../../src/utils/place-api.js";
 import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
@@ -576,6 +577,37 @@ describe("getPlaceRepIds", () => {
   it("returns empty array on 404", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: "Not Found" });
     expect(await getPlaceRepIds("0000")).toEqual([]);
+  });
+
+  it("getPlaceReps gives each representation's English name and date range from the same listing (Olne, live 2026-10-26)", async () => {
+    const rep = (id: string, fullName: string | undefined, formal: string | undefined, pid = "1959431") => ({
+      id,
+      ...(fullName ? { display: { fullName, name: "Olne", type: "Municipality" } } : {}),
+      ...(formal ? { temporalDescription: { formal } } : {}),
+      place: { resource: `https://api.familysearch.org/platform/places/${pid}`, resourceId: pid },
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "1959431", names: [{ lang: "fr", value: "Olne" }] },
+          rep("12441861", "Olne, Liège, Belgium", "+1830/"),
+          rep("418460", "Olne, Prince-Bishopric of Liège, Holy Roman Empire", "/+1795"),
+          rep("418460", "Olne, Duplicate", "+1900/"),
+          rep("7", undefined, undefined),
+          rep("999", "Elsewhere", "+1800/", "9999"),
+        ],
+      }),
+    });
+    expect(await getPlaceReps("1959431")).toEqual([
+      { placeRepId: "12441861", fullName: "Olne, Liège, Belgium", dateRange: "+1830/" },
+      { placeRepId: "418460", fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire", dateRange: "/+1795" },
+      { placeRepId: "7" },
+    ]);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.familysearch.org/platform/places/1959431",
+      expect.objectContaining({ headers: expect.objectContaining({ "Accept-Language": "en" }) }),
+    );
   });
 
   it("retries a server error, then throws once the retries are spent", async () => {

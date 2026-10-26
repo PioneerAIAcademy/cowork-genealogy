@@ -13,7 +13,7 @@
  * the SimplifiedGedcomX / research.json data formats.
  *
  * This module builds on the low-level FamilySearch places fetchers in
- * `./place-api.ts` (`searchPlace`, `getPlaceById`, `getPlaceRepIds`) — a
+ * `./place-api.ts` (`searchPlace`, `getPlaceById`, `getPlaceReps`) — a
  * dedicated low-level layer that both this resolver and `tools/place-search.ts`
  * import from, so the raw HTTP lives below the tool layer (no util→tool
  * dependency). All of those endpoints are anonymous (no auth), so the
@@ -22,11 +22,12 @@
 import {
   searchPlace,
   getPlaceById,
-  getPlaceRepIds,
+  getPlaceReps,
   getPlaceCandidateNames,
+  type PlaceRep,
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
-import { earliestYear, latestYear } from "./date-helpers.js";
+import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "./date-helpers.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
@@ -37,9 +38,6 @@ interface RepInfo {
   placeId?: string;
   latitude?: number;
   longitude?: number;
-  /** When the representation is valid: FamilySearch's formal range
-   *  ("+1830/", "/+1795", "+1815/+1830"); absent when it is valid at every date. */
-  dateRange?: string;
 }
 
 export interface ResolveOpts {
@@ -85,8 +83,8 @@ const standardizeCache = new Map<string, string | null>();
 const nameToRepIdCache = new Map<string, string | null>();
 /** placeRepId -> resolved info (standardPlace, placeId, coords). */
 const repInfoCache = new Map<string, RepInfo | null>();
-/** placeId -> all placeRepIds for that spot over time. */
-const placeIdRepsCache = new Map<string, string[]>();
+/** placeId -> every representation of that spot over time. */
+const placeRepsCache = new Map<string, PlaceRep[]>();
 /** Internal memo of raw search results, so the resolver fns above don't
  *  re-issue the same search. Key: `${name}|${contextName}|${year ?? ""}`
  *  (normalized) — a dated and an undated search of one place are different
@@ -110,7 +108,7 @@ export function __clearPlaceResolverCachesForTests(): void {
   standardizeCache.clear();
   nameToRepIdCache.clear();
   repInfoCache.clear();
-  placeIdRepsCache.clear();
+  placeRepsCache.clear();
   searchEntriesCache.clear();
 }
 
@@ -157,6 +155,13 @@ function placeNameKey(s: string): string {
  *  words (which also splits a word at a period or hyphen). */
 function placeNameKeys(name: string): string[] {
   return [placeNameKey(name), placeNameKey(withoutTypeWords(name))];
+}
+
+/** True when two names are one name as `checkFirstPlace` compares them: case,
+ *  accents, "St"/"Saint" and type words ignored on both sides. */
+function sameName(a: string, b: string): boolean {
+  const keys = placeNameKeys(a);
+  return placeNameKeys(b).some((key) => keys.includes(key));
 }
 
 /** Words that name a jurisdiction's TYPE, not the place: "Stagstrup Sogn" is
@@ -725,8 +730,7 @@ export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> 
 const MAX_NAME_FETCHES = 5;
 
 async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPlaceVerdict> {
-  const wanted = new Set(placeNameKeys(first));
-  const matches = (name: string) => placeNameKeys(name).some((k) => wanted.has(k));
+  const matches = (name: string) => sameName(name, first);
   let all: SearchEntry[];
   try {
     all = await getSearchEntries(text, "");
@@ -951,7 +955,6 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
         placeId: place.placeId,
         latitude: place.latitude,
         longitude: place.longitude,
-        dateRange: place.dateRange,
       }
     : null;
   repInfoCache.set(repId, info);
@@ -965,14 +968,9 @@ export interface YearSpan {
   to: number;
 }
 
-/** The years of a date nothing dates: only a representation valid at every
- *  date covers them. */
-export const EVERY_YEAR: YearSpan = { from: -Infinity, to: Infinity };
-
-/** One GEDCOM X formal date: a year, then an optional month, day and time
- *  ("+1874-04-03", "+1902-01-01T00:00:00Z"). FamilySearch sometimes drops the
- *  sign ("1450/1900"). */
-const FORMAL_DATE = /^([+-]?\d+)(?:-\d{2}(?:-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}(?::?\d{2})?)?)?)?)?$/;
+/** One GEDCOM X formal date: a year, then an optional month and day
+ *  ("+1874-04-03"). */
+const FORMAL_DATE = /^([+-]\d+)(?:-\d{2}(?:-\d{2})?)?$/;
 
 /** A formal range bound's year; `open` for an empty bound, null when unreadable. */
 function formalYear(bound: string, open: number): number | null {
@@ -981,10 +979,10 @@ function formalYear(bound: string, open: number): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** The years a GEDCOM X formal date spans: "+1874-04-03", "+1910/+1920",
- *  "/+1795" and "+1830/" (an open end is unbounded), "A+1874" (a year either
- *  way, as "Abt 1874" is). Null when there is none or it cannot be read (a
- *  duration, a recurrence). */
+/** The years a GEDCOM X formal date or range spans: "+1874-04-03",
+ *  "+1910/+1920", "/+1795" and "+1830/" (an open end is unbounded), "A+1874" (a
+ *  year either way, as "Abt 1874" is). Null when there is none or it cannot be
+ *  read (a duration, a recurrence). */
 function formalYears(formal: unknown): YearSpan | null {
   const text = typeof formal === "string" ? formal.trim() : "";
   const approximate = text.startsWith("A");
@@ -996,20 +994,26 @@ function formalYears(formal: unknown): YearSpan | null {
   return approximate ? { from: from - 1, to: to + 1 } : { from, to };
 }
 
-/** The years a date `stdDate` reads spans ("Abt 1850" is 1849 to 1851), or null. */
+/** The years a date `stdDate` reads spans: "Abt 1850" is 1849 to 1851, "Bef
+ *  1900" has no earliest year and "Aft 1850" no latest. Null when it cannot be
+ *  read. */
 function dateYears(date: unknown): YearSpan | null {
   if (typeof date !== "string" || !date.trim()) return null;
   const std = stdDate(date);
   const from = earliestYear(std);
   const to = latestYear(std);
-  return from === null || to === null ? null : { from, to };
+  if (from === null || to === null) return null;
+  return {
+    from: earliestIsUnbounded(std) ? -Infinity : from,
+    to: latestIsUnbounded(std) ? Infinity : to,
+  };
 }
 
 /**
- * The years a GEDCOM X date or coverage spans: its formal date, which
- * FamilySearch sends whatever language or form the original takes ("4 sierpnia
- * 1794" is "+1794-08-04"), else the original as `stdDate` reads it. Null when
- * neither can be read.
+ * The years a GEDCOM X date spans: its formal date, which FamilySearch sends
+ * whatever language or form the original takes ("4 sierpnia 1794" is
+ * "+1794-08-04"), else the original as `stdDate` reads it. Null when neither
+ * can be read.
  */
 export function gedcomxDateYears(
   date: { original?: string; formal?: string } | undefined,
@@ -1017,47 +1021,36 @@ export function gedcomxDateYears(
   return formalYears(date?.formal) ?? dateYears(date?.original);
 }
 
-/** A representation's validity as years; every year when it has no range, null
- *  when the range cannot be read. */
+/** The years a representation is valid: every year when it has no range, null
+ *  when its range cannot be read. */
 function repYears(dateRange: string | undefined): YearSpan | null {
-  if (dateRange === undefined || dateRange.trim() === "") return EVERY_YEAR;
-  return formalYears(dateRange);
+  return dateRange === undefined ? { from: -Infinity, to: Infinity } : formalYears(dateRange);
 }
 
-function covers(range: YearSpan | null, years: YearSpan): boolean {
-  return range !== null && range.from <= years.from && years.to <= range.to;
+/** A full name's own name: its first part. */
+function ownName(fullName: string): string {
+  return placeSegments(fullName)[0] ?? "";
 }
-
-/** A representation's own name: the first part of its full name. */
-function ownName(info: RepInfo): string {
-  return placeSegments(info.standardPlace)[0] ?? "";
-}
-
-/** True when a comma-separated part of `text` is `name`, compared as
- *  `checkFirstPlace` compares names. */
-function textNames(text: string, name: string): boolean {
-  const key = placeNameKey(name);
-  return placeSegments(text).some((part) => placeNameKeys(part).includes(key));
-}
-
-/** Concurrent description lookups for one place's representations. */
-const REP_LOOKUP_CONCURRENCY = 8;
 
 /**
- * The English name of the representation of `repId`'s place that is valid in
- * `years`, which must fall wholly inside its range; null when there is none.
+ * The English name of `repId`'s place in `years`: the one full name its
+ * representations valid in those years share. A FamilySearch place has a
+ * representation per era, each with its own name and range: place 1959431 is
+ * "Olne, Prince-Bishopric of Liège, Holy Roman Empire" to 1795 and "Olne, Liège,
+ * Belgium" from 1830. `years` must fall wholly inside a range, and a
+ * representation with no range is valid in every year. Two lookups, both cached:
+ * `repId`'s description, for its place, and the place's listing, which gives
+ * every representation's name and range. The listing need not hold `repId`: the
+ * description answers an old id with its current representation (1829107 is
+ * 439844, "Vorden, Gelderland, Netherlands").
  *
- * A FamilySearch place has a representation per era, each with its own name
- * and range: place 1959431 is "Olne, Prince-Bishopric of Liège, Holy Roman
- * Empire" to 1795 and "Olne, Liège, Belgium" from 1830. `repId` is named when
- * its range covers `years`, else the place's representation whose range does.
- * Null when no representation covers them, when the ones that do disagree on
- * the name, or when any lookup fails.
- *
- * Null too when the place was renamed and `placeText`, the record's own text,
- * names `repId` by its own name: place 6283855 is "Bela Vista" 1938-1944 and
- * "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista" and was given
- * representation 10979131 doubts FamilySearch's choice of place.
+ * Null whenever that is in doubt: no representation is valid in `years`, two
+ * names are (Olne in 1830 is "Olne, Liège, Netherlands" and "Olne, Liège,
+ * Belgium"), a range cannot be read, or a lookup fails. Null too when the place
+ * was renamed and `placeText`, the record's own text, gives `repId`'s own name,
+ * compared as `checkFirstPlace` compares names: place 6283855 is "Bela Vista"
+ * 1938-1944 and "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista"
+ * and was given representation 10979131 doubts FamilySearch's choice of place.
  */
 export async function repIdToStandardPlaceAt(
   repId: string,
@@ -1065,21 +1058,21 @@ export async function repIdToStandardPlaceAt(
   placeText?: string,
 ): Promise<string | null> {
   const chosen = await getRepInfo(repId);
-  if (!chosen) return null;
-  if (covers(repYears(chosen.dateRange), years)) return chosen.standardPlace;
-  if (!chosen.placeId) return null;
-  const others = (await placeIdToRepIds(chosen.placeId)).filter((id) => id !== repId);
-  const infos = await mapWithConcurrency(others, REP_LOOKUP_CONCURRENCY, (id) => getRepInfo(id));
-  const valid: RepInfo[] = [];
-  for (const info of infos) {
-    if (info === null) return null;
-    if (covers(repYears(info.dateRange), years)) valid.push(info);
+  if (!chosen?.placeId) return null;
+  const names = new Set<string | undefined>();
+  for (const rep of await placeReps(chosen.placeId)) {
+    const range = repYears(rep.dateRange);
+    if (range === null) return null;
+    if (range.from <= years.from && years.to <= range.to) names.add(rep.fullName);
   }
-  if (new Set(valid.map((info) => info.standardPlace)).size !== 1) return null;
-  const named = valid[0];
-  const renamed = placeNameKey(ownName(named)) !== placeNameKey(ownName(chosen));
-  if (renamed && placeText !== undefined && textNames(placeText, ownName(chosen))) return null;
-  return named.standardPlace;
+  const [name, ...others] = names;
+  if (name === undefined || others.length > 0) return null;
+  const chosenName = ownName(chosen.standardPlace);
+  const renamed = !sameName(ownName(name), chosenName);
+  if (renamed && placeText !== undefined && placeSegments(placeText).some((part) => sameName(part, chosenName))) {
+    return null;
+  }
+  return name;
 }
 
 /** Most place candidates an ambiguity result will name. Mirrors
@@ -1222,15 +1215,21 @@ export async function standardPlaceToPlaceId(
  * volume_search fan-out. Empty array on failure (not cached).
  */
 export async function placeIdToRepIds(placeId: string): Promise<string[]> {
-  const cached = placeIdRepsCache.get(placeId);
+  return (await placeReps(placeId)).map((rep) => rep.placeRepId);
+}
+
+/** Every representation a placeId has had, with its name and range; empty on
+ *  failure (not cached). */
+async function placeReps(placeId: string): Promise<PlaceRep[]> {
+  const cached = placeRepsCache.get(placeId);
   if (cached) return cached;
-  let reps: string[];
+  let reps: PlaceRep[];
   try {
-    reps = await getPlaceRepIds(placeId);
+    reps = await getPlaceReps(placeId);
   } catch {
     return [];
   }
-  placeIdRepsCache.set(placeId, reps);
+  placeRepsCache.set(placeId, reps);
   return reps;
 }
 

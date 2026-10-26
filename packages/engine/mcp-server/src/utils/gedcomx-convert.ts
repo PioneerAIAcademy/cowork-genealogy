@@ -385,8 +385,8 @@ function placeFieldValues(place: RawPlace): (GedcomXFieldValue & { text: string 
   return values;
 }
 
-/** The FamilySearch place id a reference names: `…/places/description/<id>`,
- *  `#place_<id>` (record read) or `#<id>` (search). */
+/** The FamilySearch place id a `place.description` names: `#place_<id>` (record
+ *  read), `#<id>` (search) or `…/places/description/<id>`. */
 function placeIdOf(ref: unknown): string | undefined {
   if (typeof ref !== "string") return undefined;
   return /(?:\/places\/description\/|^#(?:place_)?)(\d+)$/.exec(ref)?.[1];
@@ -395,18 +395,20 @@ function placeIdOf(ref: unknown): string | undefined {
 /**
  * The standardized place a record read carries in its `Place` field. A record
  * read (recapi) sends no `normalized` value; FamilySearch's standard full name
- * is the text of an `Interpreted` value whose `resource` names the place
- * (`…/places/description/<id>`). A value with no place id is not a standard:
- * its text is often just the as-written text echoed back. Among several
- * candidates, the one marked Preferred wins, else the one `place.description`
- * names, else the only one; a choice that is still ambiguous — two names, or one
- * name for two place ids — yields nothing.
+ * is the text of an `Interpreted` value whose `resource` is the place's
+ * description (`…/places/description/<id>`). Any other value is not a
+ * standard: one with no place id often just echoes the as-written text, and a
+ * `#…` reference can cite an authorities place id, which read as a
+ * representation id is another place. Among several candidates, the one marked
+ * Preferred wins, else the one `place.description` names, else the only one; a
+ * choice that is still ambiguous — two names, or one name for two place ids —
+ * yields nothing.
  */
 function pickInterpretedPlace(place: RawPlace): { name: string; id: string } | undefined {
   const candidates: { name: string; id: string; preferred: boolean }[] = [];
   for (const value of placeFieldValues(place)) {
-    if (value.type !== INTERPRETED_VALUE) continue;
-    const id = placeIdOf(value.resource);
+    if (value.type !== INTERPRETED_VALUE || typeof value.resource !== "string") continue;
+    const id = /\/places\/description\/(\d+)$/.exec(value.resource)?.[1];
     if (id === undefined) continue;
     const preferred = (Array.isArray(value.qualifiers) ? value.qualifiers : []).some(
       (q) => q?.name === PREFERRED_QUALIFIER && String(q.value).trim().toLowerCase() === "true",

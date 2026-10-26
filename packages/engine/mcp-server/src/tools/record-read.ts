@@ -3,12 +3,10 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { toSimplifiedRecordRead, type RecordReadPlace } from "../utils/gedcomx-convert.js";
 import {
-  EVERY_YEAR,
   countryConsistency,
   gedcomxDateYears,
   repIdToStandardPlace,
   repIdToStandardPlaceAt,
-  type YearSpan,
 } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
@@ -388,55 +386,34 @@ async function readFromSidecar(
  * "Places on facts"), whose text is in the record's language ("Piauí, Brasil").
  * The engine compares standard places as English text (materialize_facts'
  * factsEquivalent, research_append's standardPlaceCountry), so each is replaced
- * by repIdToStandardPlaceAt's English name for the representation of that place
- * valid in the fact's years: the id's own name can belong to another era
- * ("Olne, Prince-Bishopric of Liège, Holy Roman Empire" for an 1874 death). The
- * years are FamilySearch's formal date for the fact, which it sends whatever
- * language the date is written in, else the date as stdDate reads it; a fact
- * with neither takes the span of the record's own dated facts. The fact is left
- * as toSimplified gives it — `place.original`, no standard_place — when there is
- * no such name, when the place was renamed and the fact's text still names the
- * representation FamilySearch chose ("Bela Vista" in 1980, when that place was
- * Echaporã), or when the name contradicts the fact's place text
- * (countryConsistency, which makes research_append refuse the record). A
- * coverage place with a date range is named the same way for that range, so one
- * response never names one id two ways. Records reached via the search sidecar
+ * by repIdToStandardPlaceAt's English name for that place at the fact's date:
+ * the one name every representation of the place valid at that date shares. The
+ * id's own name can belong to another era ("Olne, Prince-Bishopric of Liège,
+ * Holy Roman Empire" for an 1874 death). The date is FamilySearch's formal date
+ * for the fact, which it sends whatever language the date is written in, else
+ * the date as stdDate reads it. Any doubt leaves the fact as toSimplified gives
+ * it — `place.original`, no standard_place: a date neither can read, no such
+ * name, two names, a failed lookup, a place renamed since the name the fact's
+ * text gives it ("Bela Vista" in 1980, when that place was Echaporã), or a name
+ * that contradicts the fact's place text (countryConsistency, which makes
+ * research_append refuse the record). Records reached via the search sidecar
  * already carry the search stage's standardized place.
+ *
+ * A coverage place is named by its id's own name, whatever its dates: coverage
+ * describes the volume the record sits in, which often spans eras, not the
+ * record's event, and nothing copies it into an assertion or the tree.
  */
 export async function recordReadDocument(body: GedcomX): Promise<SimplifiedGedcomX> {
   const { doc, placeIds } = toSimplifiedRecordRead(body);
-  await nameFactPlaces(placeIds, recordYears(body));
+  await nameFactPlaces(placeIds);
   await resolveCoveragePlaces(doc, body);
   return doc;
 }
 
-/** The span of the record's own dated facts, or null when none is dated. */
-function recordYears(body: GedcomX): YearSpan | null {
-  const owners = [
-    ...(Array.isArray(body.persons) ? body.persons : []),
-    ...(Array.isArray(body.relationships) ? body.relationships : []),
-  ];
-  let span: YearSpan | null = null;
-  for (const owner of owners) {
-    for (const fact of Array.isArray(owner?.facts) ? owner.facts : []) {
-      const years = gedcomxDateYears(fact?.date);
-      if (years === null) continue;
-      span = span === null ? years : { from: Math.min(span.from, years.from), to: Math.max(span.to, years.to) };
-    }
-  }
-  return span;
-}
-
-async function nameFactPlaces(
-  placeIds: Map<SimplifiedFact, RecordReadPlace>,
-  recordSpan: YearSpan | null,
-): Promise<void> {
-  const names = new Map<string, string | null>();
+async function nameFactPlaces(placeIds: Map<SimplifiedFact, RecordReadPlace>): Promise<void> {
   for (const [fact, { placeId, original, formal }] of placeIds) {
-    const years = gedcomxDateYears({ original: fact.date, formal }) ?? recordSpan ?? EVERY_YEAR;
-    const key = `${placeId}|${years.from}|${years.to}|${fact.place ?? ""}`;
-    if (!names.has(key)) names.set(key, await repIdToStandardPlaceAt(placeId, years, fact.place));
-    const name = names.get(key);
+    const years = gedcomxDateYears({ original: fact.date, formal });
+    const name = years === null ? null : await repIdToStandardPlaceAt(placeId, years, fact.place);
     if (name && countryConsistency(fact.place ?? "", name) !== "contradiction") {
       fact.standard_place = name;
     } else {
@@ -446,39 +423,33 @@ async function nameFactPlaces(
   }
 }
 
-/** `#place_1927095`-style references to a `places[]` entry that cites its place
- *  by something other than a place description. An older record cites an
- *  authorities place id (`…/authorities/v1/place/1927095`, Finland), and as a
+/** The place description id a place reference resolves to: a
+ *  `…/places/description/<id>` URL, or a `#…` reference to the `places[]` entry
+ *  that cites one. Undefined for any other: an older record cites an authorities
+ *  place id (`…/authorities/v1/place/1927095`, Finland), and read as a
  *  representation id that number is another place (Mingary, South Australia). */
-function nonDescriptionRefs(body: GedcomX): Set<string> {
-  const refs = new Set<string>();
-  for (const place of Array.isArray(body.places) ? body.places : []) {
-    const primary = place?.identifiers?.["http://gedcomx.org/Primary"]?.[0];
-    if (typeof place?.id === "string" && typeof primary === "string" && !primary.includes("/places/description/")) {
-      refs.add(`#${place.id}`);
-    }
+function descriptionId(ref: unknown, body: GedcomX): string | undefined {
+  let url = ref;
+  if (typeof ref === "string" && ref.startsWith("#")) {
+    const id = ref.slice(1);
+    const entry = (Array.isArray(body.places) ? body.places : []).find(
+      (place) => place?.id === id || place?.place?.resourceId === id,
+    );
+    url = entry?.identifiers?.["http://gedcomx.org/Primary"]?.[0] ?? entry?.place?.resource;
   }
-  return refs;
+  return typeof url === "string" ? /\/places\/description\/(\d+)$/.exec(url)?.[1] : undefined;
 }
 
-/** Names each coverage place by its id: one with a date range for that range,
- *  as a fact is named; one without, by the id's own name. */
+/** Names each coverage place whose reference resolves to a place description by
+ *  that id's own name (see recordReadDocument). */
 async function resolveCoveragePlaces(doc: SimplifiedGedcomX, body: GedcomX): Promise<void> {
   // toSimplified keeps every source description, in order.
   const raw = Array.isArray(body.sourceDescriptions) ? body.sourceDescriptions : [];
-  const unnamed = nonDescriptionRefs(body);
   for (const [i, sd] of (doc.sources ?? []).entries()) {
     const coverage = sd.coverage;
-    const covered = raw[i]?.coverage?.[0];
-    if (!coverage?.place_rep_id || unnamed.has(covered?.spatial?.description ?? "")) continue;
-    const name =
-      coverage.date_range === undefined
-        ? await repIdToStandardPlace(coverage.place_rep_id)
-        : await repIdToStandardPlaceAt(
-            coverage.place_rep_id,
-            gedcomxDateYears(covered?.temporal) ?? EVERY_YEAR,
-            covered?.spatial?.original,
-          );
+    if (!coverage?.place_rep_id) continue;
+    if (descriptionId(raw[i]?.coverage?.[0]?.spatial?.description, body) !== coverage.place_rep_id) continue;
+    const name = await repIdToStandardPlace(coverage.place_rep_id);
     if (name) coverage.standard_place = name;
   }
 }
