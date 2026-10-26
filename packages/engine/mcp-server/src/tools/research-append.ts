@@ -9034,7 +9034,7 @@ export async function researchAppend(
       const refused = ops.flatMap((op, i) => (op && Object.prototype.hasOwnProperty.call(op, "edits") ? [i] : []));
       return fail(
         [...(refused.length > 1 ? [checkedWithoutLine(refused[0])] : []), ...boundErrors(editErrors)],
-        refused.map((i) => ({ ...failedOpHint(ops[i]), fields: ["edits"] })),
+        refused.map((i) => ({ ...failedOpHint(ops[i], []), fields: ["edits"] })),
       );
     }
 
@@ -9085,7 +9085,7 @@ export async function researchAppend(
     if (firstFailure !== undefined) {
       const { index, errors } = firstFailure;
       /** What this call said before it looked past the first failure. */
-      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index])]);
+      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index], errors)]);
       if (ops.length === 1 || options.firstFailureOnly === true) return firstOnly();
       try {
         const every = await everyOpFailure({
@@ -9332,15 +9332,22 @@ interface OpFailure {
 
 type ExampleHint = { section: string; op: "append" | "update"; fields?: readonly string[] };
 
-/** The worked-example hint for an op that failed. */
-function failedOpHint(op: ResearchAppendOp): ExampleHint {
+/** The worked-example hint for an op that failed with `errors`. */
+function failedOpHint(op: ResearchAppendOp, errors: readonly string[]): ExampleHint {
+  let fields = Object.keys(op.fields ?? op.entry ?? {});
+  // A proof summary's narrative fields select the `edits` example, so they are
+  // dropped unless a refusal names one: a tier refusal on an op that also edits
+  // the narrative is not taught a narrative edit.
+  if (op.section === "proof_summaries" && !errors.some((m) => [...EDITABLE_NARRATIVE_FIELDS].some((f) => m.includes(f)))) {
+    fields = fields.filter((f) => !EDITABLE_NARRATIVE_FIELDS.has(f));
+  }
   return {
     section: String(op.section),
     op: op.op === "update" ? "update" : "append",
     // The field names the failing op actually set. The worked example
     // is keyed on these so a caller refused on one field is not handed
     // a payload for another — see exampleFor.
-    fields: Object.keys(op.fields ?? op.entry ?? {}),
+    fields,
   };
 }
 
@@ -9611,7 +9618,7 @@ async function everyOpFailure(c: {
   }
 
   const lines = failures.flatMap((f) => f.errors.map((m) => fmt(f.index, m)));
-  const hints = failures.map((f) => failedOpHint(ops[f.index]));
+  const hints = failures.map((f) => failedOpHint(ops[f.index], f.errors));
   let documentLines: string[] = [];
   if (applied.some((a) => !a.noop)) {
     const validation = await validateIntroduced(

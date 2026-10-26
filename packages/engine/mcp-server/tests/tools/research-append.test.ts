@@ -5069,6 +5069,24 @@ describe("research_append (Phase 3)", () => {
         expect(r.errors.join("\n").length).toBeLessThan(20_000);
       });
 
+      it.each([
+        ["alone", false],
+        ["in a batch", true],
+      ])("a refusal not about the narrative, on an op that edits it, is shown the plain example (%s)", async (_label, batch) => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const op = { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { id: "ps_002" },
+          edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }] };
+        const r = batch
+          ? await researchAppend({ projectPath: dir, ops: [op, { section: "questions", op: "update", entryId: "q_001", fields: { status: "open" } }] } as never)
+          : await researchAppend({ projectPath: dir, ops: [op] } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const text = r.errors.join("\n");
+        expect(text).toContain("must not change the entry id");
+        expect(text).toContain("worked example for 'proof_summaries'");
+        expect(text).not.toContain("edits: [");
+      });
+
       it("a refused edit teaches the edit form, not a re-sent field", async () => {
         await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
         const r = await editPs001([{ field: "narrative_markdown", old: "absent text", new: "x" }]);
