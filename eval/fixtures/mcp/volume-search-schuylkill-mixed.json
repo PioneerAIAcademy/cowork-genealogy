@@ -57,6 +57,47 @@
           }
         ]
       }
-    ]
+    ],
+    "summary": {
+      "totalVolumes": 3,
+      "complete": true,
+      "byRecordType": [
+        {
+          "group": "Religious",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Census",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Legal",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Court",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Probate",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        }
+      ],
+      "untyped": {
+        "volumes": 0,
+        "browseOnly": 0,
+        "fulltextOnly": 0
+      }
+    }
   }
 }
