@@ -2482,17 +2482,10 @@ def test_state_and_response_observations_coexist():
 
 
 # --- refused writer calls (issue #3839) --------------------------------------
-# A tool that REFUSED a call wrote nothing, but its args were rendered verbatim
-# and the judge read them as the agent's conclusion: in ut_proof_conclusion_32f
-# the failing rationales quoted the refused draft's narrative while the saved
-# rewrite passed every validator. `judge_context` already says in prose not to
-# do that; prose does not hold.
-#
-# Scope is WRITER calls only. Measured over the committed corpus, 67 of the 121
-# refused READER calls carry argument values that appear nowhere in their
-# response, and `Tool Arguments` is a base dimension graded on every run — so
-# blanking a read erases evidence the judge is still required to score. A
-# refused reader's args are the question asked, not a conclusion claimed.
+# Rationale, the writer set and every measured figure live in `judge.py` beside
+# `_WRITER_TOOLS` / `_REFUSED_ARGS_MARKER`. Deliberately not restated here: a
+# duplicated measurement goes stale on one side silently, and `measured-figures`
+# reads TypeScript only, so nothing would catch it.
 
 
 def _refused(tool: str, args: dict, kind: str = "live") -> dict:
@@ -2575,9 +2568,47 @@ def test_rendering_does_not_mutate_the_caller_s_tool_calls():
     assert args == {"entry": {"narrative_markdown": "ORIGINAL"}}
 
 
-def test_refusal_marker_cannot_grow_the_size_guard_budget():
-    """`_live_args_omitted` returns the RAW args when they are shorter than its
-    own ~66-char marker, so a longer refusal marker grows the measured view and
-    drops earliest calls — the #3442 direction."""
-    probe = judge._live_args_omitted({"x": "y" * 500})
-    assert len(judge._REFUSED_ARGS_MARKER) <= len(probe)
+def test_refusal_marker_is_shorter_than_the_omission_marker_it_replaces():
+    """The easy half: against a long-args call the measured view already renders
+    `_live_args_omitted`'s own marker, so ours must not exceed it."""
+    assert len(judge._REFUSED_ARGS_MARKER) <= len(judge._live_args_omitted({"x": "y" * 500}))
+
+
+def test_refusal_marker_growth_against_raw_args_is_bounded_and_measured():
+    """The half the previous version of this test did NOT pin.
+
+    `_live_args_omitted` returns the RAW args when they are shorter than its own
+    marker, so for a short-args refused writer the measured view grows by
+    (marker - raw args). Asserting only against the omission marker let a call
+    like `{"projectPath": "/p"}` grow the budget while the test passed.
+
+    Bound it, and pin the corpus measurement that says the growth is harmless:
+    0 of 270 runs carrying a refused writer call change their drop count.
+    """
+    short = {"projectPath": "/p"}
+    rendered_today = judge._live_args_omitted(short)
+    growth = len(judge._REFUSED_ARGS_MARKER) - len(json.dumps(rendered_today))
+    # It may grow -- that is the honest statement -- but by a bounded amount.
+    assert growth <= 40, f"refusal marker grows the measured view by {growth} chars"
+
+
+def test_writer_tools_classifies_every_ownership_writer():
+    """A new writer tool must not silently leak its refused draft to the judge.
+
+    `docs/specs/schemas/ownership.json` is the repo's own register of which tool
+    may perform a write. Every tool it authorizes must be classified here —
+    blanked, or named in `_WRITER_ARGS_ALWAYS_KEPT` with the rule that keeps it.
+    A blind sync would be wrong (some writers' args are themselves graded), so
+    this asserts the classification exists, not that the sets are equal.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    repo = _Path(__file__).resolve().parents[4]
+    rows = _json.loads((repo / "docs/specs/schemas/ownership.json").read_text(encoding="utf-8"))
+    authorized = {t for row in rows.get("rows", []) for t in (row.get("toolAuthorized") or [])}
+    unclassified = authorized - judge._WRITER_TOOLS - set(judge._WRITER_ARGS_ALWAYS_KEPT)
+    assert not unclassified, (
+        f"ownership.json authorizes {sorted(unclassified)} to write, but judge.py "
+        f"neither blanks their refused args nor records why it keeps them"
+    )

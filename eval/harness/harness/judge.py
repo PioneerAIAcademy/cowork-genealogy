@@ -432,26 +432,50 @@ def _live_args_omitted(args: Any) -> Any:
 # Arguments` is a base dimension graded on every run — blanking a read would
 # erase evidence the judge is still required to score. A refused reader's args
 # are the question asked; a refused writer's are a conclusion it did not reach.
+# Kept in step with `docs/specs/schemas/ownership.json`'s `toolAuthorized` union
+# by `test_writer_tools_classifies_every_ownership_writer`, which fails when a
+# new writer tool ships unclassified. A blind sync would be wrong, so every
+# divergence is named here with its reason.
 _WRITER_TOOLS = frozenset(
     {
         "research_append",
-        "research_log_append",
         "extraction_append",
         "tree_edit",
         "tree_correct",
-        "project_create",
         "materialize_facts",
         "merge_tree_persons",
+        "timeline_build",
+        "project_create",
         "tree_forget",
     }
 )
 
+# Writer tools whose refused args stay, with the rule that keeps them. Blanking
+# these would delete evidence a rubric or the judge prompt directs the judge to
+# read -- the same mistake as blanking a reader.
+_WRITER_ARGS_ALWAYS_KEPT = {
+    # `search-full-text/rubric.md`: "the research-log entry's `query` object
+    # records a filter that the `fulltext_search` tool call never actually
+    # sent -- check the executed args, not just the narrated summary". A log
+    # entry's args are the record of the search that ran, not a conclusion.
+    # 69 refused calls in the corpus, 14 never retried.
+    "research_log_append": "search rubrics grade its executed args",
+}
+
+# Says only what is always true. "it wrote nothing" would be FALSE for
+# `extraction_append`'s recordIds mode, which persists its research_log_append
+# batch BEFORE the per-record writes and returns ok: false when every record is
+# refused -- its own summary then reads "read and logged as <logId>, but the
+# write was refused" (extraction-append.ts). Asserting "wrote nothing" beside
+# that response_summary would hand the judge a fabricated conclusion: the
+# defect this change exists to remove, inverted.
+#
 # Must stay <= the ~66 chars `_live_args_omitted` renders a live call's args at
 # in the MEASURED view, or the refusal marker grows the drop budget and pushes
 # out the earliest calls -- the regression #3442 records, where a dropped call
 # made the judge score a correct citation as fabricated.
 # `test_refusal_marker_cannot_grow_the_size_guard_budget` pins it.
-_REFUSED_ARGS_MARKER = "[tool refused this call; it wrote nothing - args omitted]"
+_REFUSED_ARGS_MARKER = "[args omitted: the tool refused this call]"
 
 
 def _is_refused_writer(call: dict[str, Any]) -> bool:
@@ -465,7 +489,8 @@ def _is_refused_writer(call: dict[str, Any]) -> bool:
     resp = call.get("response")
     if not (isinstance(resp, dict) and resp.get("ok") is False):
         return False
-    return str(call.get("tool", "")).rsplit("__", 1)[-1] in _WRITER_TOOLS
+    bare = str(call.get("tool", "")).rsplit("__", 1)[-1]
+    return bare in _WRITER_TOOLS and bare not in _WRITER_ARGS_ALWAYS_KEPT
 
 
 def _args_for_render(call: dict[str, Any], live_args: Callable[[Any], Any]) -> Any:
@@ -523,7 +548,8 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
             return (
                 f"(_dropped_for_size: {dropped} earliest tool calls "
                 f"dropped to keep tool calls under {_TOOL_CALLS_MAX_CHARS} chars, "
-                f"not counting live calls' args)\n"
+                f"not counting live calls' args or a refused writer's "
+                f"omitted args)\n"
                 + body
             )
         return body
