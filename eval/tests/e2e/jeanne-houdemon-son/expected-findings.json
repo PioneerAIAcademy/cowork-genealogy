@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Michel Ferré and Jeanne Houdemon had a son François Ferré, baptised 14 April 1679 at Saint-Michel-de-la-Roë; the baptism entry indexes the mother as Jeanne Jourdan.",
+      "description": "Michel Ferré and Jeanne Houdemon had a son François Ferré, baptised 14 April 1679 at Saint-Michel-de-la-Roë, between their daughters Marguerite (1674) and Marie (1682); the baptism entry indexes the mother as Jeanne Jourdan.",
       "details": {
         "subject_person": "Jeanne Houdemon (GDD7-55R)",
         "relation": "child",
@@ -14,7 +14,7 @@
         "father": "Michel Ferré"
       },
       "supporting_sources": [
-        "France, Mayenne, Parish and Civil Registration, 1427-1897 — baptism of François Ferré, Saint-Michel-de-la-Roë, 14 Apr 1679, son of Michel Ferré and Jeanne Jourdan"
+        "France, Mayenne, Parish and Civil Registration, 1427-1897 — baptism of François Ferré, Saint-Michel-de-la-Roë, 14 Apr 1679, son of Michel Ferré and Jeanne, the mother's surname indexed \"Jeanne Jourdan\" — ark:/61903/1:1:6ZQJ-FPG4"
       ],
       "required": true
     }

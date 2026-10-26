@@ -71,6 +71,21 @@ WINDOW_FIELDS = (
 )
 
 
+#: A record type newer Claude Code writes beside each assistant message: the
+#: whole message as it is resent in the next request, with no `message.id`, no
+#: `uuid` and no usage. It is a copy, not a turn -- counted, it doubles every
+#: message (seen on 2.1.30x, issue #3713).
+_REQUEST_BLOB = "api-request-blob"
+
+
+def _is_assistant_record(rec: Any) -> bool:
+    """An assistant message record, not a request-blob copy of one."""
+    if not isinstance(rec, dict) or rec.get("type") == _REQUEST_BLOB:
+        return False
+    message = rec.get("message")
+    return isinstance(message, dict) and message.get("role") == "assistant"
+
+
 def _bare_tool_name(name: str) -> str:
     """`mcp__genealogy__project_context` -> `project_context`; leave others as-is."""
     return name.split("__")[-1] if name.startswith("mcp__") else name
@@ -346,6 +361,36 @@ def _per_message_usage(records: list[dict[str, Any]]) -> dict[str, dict[str, int
     return per_message
 
 
+def subagent_tool_messages(records: list[dict[str, Any]]) -> list[list[str]]:
+    """The tools each assistant API message called, in order: one list of bare tool
+    names per message that carried at least one `tool_use`.
+
+    Claude Code writes one record per content block, so the blocks of one API
+    message share its `message.id`; that is what groups them (keyed as
+    `_per_message_usage` keys usage, so a record with no id is its own message).
+    Calls in one message run side by side and come back together -- one round
+    trip -- which is what the T2.3 batching check reads (issue #3713): the
+    run log's `tool_calls` carry no message id, and the transcript is deleted
+    after capture.
+    """
+    by_message: dict[str, list[str]] = {}
+    anon = 0
+    for rec in records:
+        if not _is_assistant_record(rec):
+            continue
+        message = rec["message"]
+        key = message.get("id")
+        if not isinstance(key, str) or not key:
+            key = f"__anon_{anon}"
+            anon += 1
+        content = message.get("content")
+        for block in content if isinstance(content, list) else []:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                by_message.setdefault(key, []).append(
+                    _bare_tool_name(str(block.get("name") or "")))
+    return list(by_message.values())
+
+
 def subagent_peak_window(records: list[dict[str, Any]]) -> int:
     """The tallest single window this subagent read: a MAX, never a sum.
 
@@ -458,10 +503,9 @@ def summarize_transcript(
     """Roll a subagent's raw records up into the compact runlog summary."""
     turns: list[dict[str, Any]] = []
     for rec in records:
-        message = rec.get("message")
-        if not isinstance(message, dict) or message.get("role") != "assistant":
+        if not _is_assistant_record(rec):
             continue
-        turns.append(summarize_turn(message))
+        turns.append(summarize_turn(rec["message"]))
 
     out_tokens = [t["output_tokens"] for t in turns if isinstance(t.get("output_tokens"), int)]
     summary: dict[str, Any] = {
@@ -485,6 +529,8 @@ def summarize_transcript(
         "compactions": subagent_compactions(records),
         "models": subagent_models(records),
         "duration_seconds": subagent_duration_seconds(records),
+        # Which calls shared an API message (one round trip) -- see the function.
+        "tool_messages": subagent_tool_messages(records),
         "turns": turns,
     }
     if transcript_name:
