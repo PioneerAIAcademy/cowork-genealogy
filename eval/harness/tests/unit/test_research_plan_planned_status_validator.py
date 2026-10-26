@@ -59,6 +59,14 @@ def _skipped(n, category="no_coverage", reason="No probate exists for this famil
 
 # --- the exception: enumerative question, skipped with category and reason --
 
+def test_fails_an_enumerative_skip_that_names_none_of_the_five_events():
+    item = {"id": "pli_002", "record_type": "land", "status": "skipped",
+            "skip_category": "out_of_scope", "skip_reason": "Later."}
+    before, after = _states("enumerative", [_planned(1), item])
+    with pytest.raises(AssertionError):
+        check_planned(before, after, TAGGED)
+
+
 def test_passes_an_enumerative_skip_with_category_and_reason():
     before, after = _states("enumerative", [_planned(1), _skipped(2)])
     check_planned(before, after, TAGGED)

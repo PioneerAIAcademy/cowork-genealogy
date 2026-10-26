@@ -323,8 +323,9 @@ research_append({
 ```
 
 Set `question_kind` on every question you write: `enumerative` when it asks
-for every member of a set of people ("Who were the children of X?"),
-`targeted` otherwise.
+for every member of an open-ended set of people, such as children or siblings
+("Who were the children of X?"); `targeted` otherwise, a question about a
+person's parents included.
 
 The tool validates the whole project before writing and writes nothing on
 failure; on `{ ok: false, errors }`, surface the errors and fix the entry —

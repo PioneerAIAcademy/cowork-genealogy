@@ -90,9 +90,34 @@ def test_a_birth_item_mentioning_marriage_and_death_covers_only_birth():
         _check(*_states(items))
 
 
+def test_a_skip_reason_counts_for_one_event_only():
+    items = _without(4) + [_item(9, "other", "", status="skipped", skip_category="no_coverage",
+                                 skip_reason="No probate: Thomas died intestate.")]
+    with pytest.raises(AssertionError, match="reason for: death"):
+        _check(*_states(items))
+
+
+@pytest.mark.parametrize("record_type", ["land_and_real_estate", "real estate deeds"])
+def test_a_real_estate_item_is_not_probate(record_type):
+    items = _without(5) + [_item(9, record_type, "Deeds name heirs when land passes.")]
+    with pytest.raises(AssertionError, match="reason for: probate"):
+        _check(*_states(items))
+
+
+def test_a_draft_registration_is_not_a_birth_record():
+    items = _without(2) + [_item(9, "military_draft_registration", "Gives the date each son was born.")]
+    with pytest.raises(AssertionError, match="reason for: birth"):
+        _check(*_states(items))
+
+
+@pytest.mark.parametrize("record_type", ["estate_files", "Wills"])
+def test_probate_recognised_under_other_spellings(record_type):
+    _check(*_states(_without(5) + [_item(9, record_type, "The father's estate.")]))
+
+
 @pytest.mark.parametrize("n,reason", [
     (5, "No probate file survives for Greene County before 1870."),
-    (1, "Thomas died before the first census to name children, 1850."),
+    (1, "No census before 1850 names the children."),
     (3, "The county's marriage registers before 1820 are lost."),
 ])
 def test_a_skip_filed_as_other_is_credited_from_its_reason(n, reason):

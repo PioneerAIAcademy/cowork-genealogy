@@ -286,12 +286,14 @@ def _enumerative_skip(item: dict, question: dict | None) -> bool:
     """The one non-`planned` status a new item may carry: on an `enumerative`
     question (#1830 item 1, the lead's 2026-08-31 ruling on #1917), each of
     the five event types the plan does not cover is written as a `skipped`
-    item stating why — a category and a reason, both non-empty."""
+    item stating why — a category and a reason, both non-empty, for one of
+    the five events (`_covered_events`)."""
     return (
         (question or {}).get("question_kind") == "enumerative"
         and item.get("status") == "skipped"
         and bool(str(item.get("skip_category") or "").strip())
         and bool(str(item.get("skip_reason") or "").strip())
+        and bool(_covered_events(item))
     )
 
 
@@ -454,12 +456,6 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
             f"item — the requested record must not be gated behind an "
             f"indirect source"
         )
-# ===========================================================================
-# Deterministic checks over newly written plans (issue #1866, research-plan
-# deep dive #1650). Unlike the tag-gated validators above these run on EVERY
-# research-plan test and skip only when the run added no new plan: a tag
-# nobody sets is how a validator runs, passes, and cannot fail (#1755, #1788).
-# ===========================================================================
 
 
 # --- Tag-gated: a pension item reaches past the question's window -----------
@@ -478,15 +474,17 @@ _PENSION_REACH_BY_TEST_ID = {
 # plan whose every military item stopped at 1865 would pass on it, the same
 # hole as any-item-reaches-past (mechanism 3 on the issue).
 _PENSION_RECORD_TYPE_RE = re.compile(r"military|pension", re.IGNORECASE)
-_DATE_RANGE_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})\b")
+# A decade ("1870s") reaches its last year. "later"/"after" open a range only as
+# its last word: "1862-1865 (after enlistment)" stops at 1865.
+_DATE_RANGE_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})(s?)\b")
 _OPEN_ENDED_RE = re.compile(
-    r"[-–—]\s*$|\b(?:present|onwards?|later|after|forward)\b|\+\s*$", re.IGNORECASE
+    r"[-–—]\s*$|\b(?:present|onwards?|forward)\b|\b(?:later|after)\s*$|\+\s*$", re.IGNORECASE
 )
 
 
 def _date_range_reaches(date_range: object, threshold: int) -> bool:
     text = str(date_range or "").strip()
-    years = [int(y) for y in _DATE_RANGE_YEAR_RE.findall(text)]
+    years = [int(y) + (9 if decade else 0) for y, decade in _DATE_RANGE_YEAR_RE.findall(text)]
     if not years:
         return False
     if max(years) >= threshold:
@@ -552,7 +550,10 @@ def test_pension_item_reaches_past_window(before_state, after_state, test):
 # cemetery item's rationale mentioned children "born", and no item searched for
 # a birth. Death is not matched on a probate rationale that merely says the
 # subject died.
-_VITAL_RECORD_TYPES = re.compile(r"vital|church|parish|civil|registr|birth|marriage|death|cemetery|burial", re.IGNORECASE)
+_VITAL_RECORD_TYPES = re.compile(r"vital|church|parish|civil|birth|marriage|death|cemetery|burial", re.IGNORECASE)
+_CENSUS_RE = re.compile(r"\bcensus", re.IGNORECASE)
+_PROBATE_RECORD_TYPE_RE = re.compile(r"probate|(?<!real[_ ])estate|\bwills?\b", re.IGNORECASE)
+_PROBATE_TEXT_RE = re.compile(r"\bprobate|\bestates?\b|\bwills\b|\btestament", re.IGNORECASE)
 _FIVE_EVENTS = {
     "birth": re.compile(r"\b(?:births?|born|baptisms?|baptized|baptised|christenings?|christened)\b", re.IGNORECASE),
     "marriage": re.compile(r"\b(?:marriages?|married|marry|banns|wedding)\b", re.IGNORECASE),
@@ -574,22 +575,23 @@ def _vital_events(record_type: str, rationale: str) -> set[str]:
 
 
 def _covered_events(item: dict) -> set[str]:
-    """A `skipped` item is credited from its `skip_reason` too, whatever its
-    `record_type`: the agent is told to write the reason, not which type to
-    file the skip under."""
+    """The one event an item searches, or skips. A `skipped` item filed under a
+    `record_type` that names no event counts for the first of the five its
+    `skip_reason` names: the agent is told to write the reason, not which type
+    to file the skip under."""
     record_type = str(item.get("record_type") or "")
-    skip_reason = str(item.get("skip_reason") or "")
-    events: set[str] = set()
-    if re.search(r"census", record_type, re.IGNORECASE) or re.search(r"\bcensus", skip_reason, re.IGNORECASE):
-        events.add("census")
-    if re.search(r"probate|estate|will", record_type, re.IGNORECASE) or re.search(
-        r"\bprobate|\bestates?\b|\bwills?\b", skip_reason, re.IGNORECASE
-    ):
-        events.add("probate")
+    if _CENSUS_RE.search(record_type):
+        return {"census"}
+    if _PROBATE_RECORD_TYPE_RE.search(record_type):
+        return {"probate"}
     if _VITAL_RECORD_TYPES.search(record_type):
-        events |= _vital_events(record_type, str(item.get("rationale") or ""))
-    events |= {name for name, pattern in _FIVE_EVENTS.items() if pattern.search(skip_reason)}
-    return events
+        return _vital_events(record_type, str(item.get("rationale") or ""))
+    if item.get("status") != "skipped":
+        return set()
+    reason = str(item.get("skip_reason") or "")
+    patterns = {**_FIVE_EVENTS, "census": _CENSUS_RE, "probate": _PROBATE_TEXT_RE}
+    hits = [(m.start(), name) for name, pattern in patterns.items() if (m := pattern.search(reason))]
+    return {min(hits)[1]} if hits else set()
 
 
 def test_enumerative_plan_accounts_for_five_events(before_state, after_state, test):

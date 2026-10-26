@@ -128,9 +128,17 @@ def test_record_type_spellings(rtype):
     check_reach(BEFORE, _after(CENSUSES + [_item(3, rtype, "1861-1900")]), TAGGED)
 
 
-@pytest.mark.parametrize("date_range", ["1861-", "1861 – present", "1861 onward", "1861+"])
+@pytest.mark.parametrize("date_range", ["1861-", "1861 – present", "1861 onward", "1861+",
+                                        "1861 and later", "1860s-1870s"])
 def test_open_ended_range(date_range):
     check_reach(BEFORE, _after(CENSUSES + [_item(3, "military", date_range)]), TAGGED)
+
+
+@pytest.mark.parametrize("date_range", ["1862-1865 (after enlistment)", "1862-1865, later service",
+                                        "1860s"])
+def test_a_range_stopping_at_the_window_fails_whatever_words_follow(date_range):
+    with pytest.raises(AssertionError, match="reaches 1879"):
+        check_reach(BEFORE, _after(CENSUSES + [_item(3, "military", date_range)]), TAGGED)
 
 
 def test_the_fold3_run():
