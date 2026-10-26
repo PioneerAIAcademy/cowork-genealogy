@@ -6816,6 +6816,8 @@ function applyOne(
   let arrayIndex: number | undefined;
   // The entry's own timestamp as it stood before this op restamped it.
   let priorStamp: unknown;
+  // A proof summary's narrative before this op's fields merge.
+  let priorNarrative: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
@@ -6922,6 +6924,7 @@ function applyOne(
     }
 
     priorStamp = config.stampTimestamp ? existing[config.stampTimestamp.field] : undefined;
+    priorNarrative = existing.narrative_markdown;
 
     // A completed plan item stays completed. search-records writes
     // `in_progress` after every search it logs, and extraction_append completes
@@ -7509,12 +7512,17 @@ function applyOne(
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
-    // a summary already over budget is not told again.
-    if (
+    // a summary already over budget is not told again, and neither is an `edits`
+    // change unless it is what took the narrative over.
+    const setsBudgetInput =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
-      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle")
-    ) {
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle");
+    const overBudgetBeforeEdit =
+      EDIT_EXPANDED_OPS.has(op) &&
+      !Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle") &&
+      narrativeLengthWarnings({ ...resultEntry, narrative_markdown: priorNarrative }).length > 0;
+    if (setsBudgetInput && !overBudgetBeforeEdit) {
       opWarnings.push(...narrativeLengthWarnings(resultEntry));
     }
   }
@@ -8725,10 +8733,13 @@ function decodeArg(value: unknown): unknown {
   return coerceJsonArg(value);
 }
 
-/** The fields an `edits` op may change. Only these two: the plugin hook routes
- *  ownership on `fields` and `entry` keys, so an edit on a claim field elsewhere
- *  would reach a field without passing its route. */
+/** The fields an `edits` op may change: the two long prose fields of a proof
+ *  summary. Every other field is short enough to re-send in `fields`. */
 const EDITABLE_NARRATIVE_FIELDS = new Set(["narrative_markdown", "exhaustive_search_summary"]);
+
+/** Ops whose `fields` an `edits` expansion wrote, so the length budget can tell a
+ *  sentence edit from a narrative write. */
+const EDIT_EXPANDED_OPS = new WeakSet<object>();
 
 /** Every start index of `needle` in `text`, overlapping ("--" is twice in "---"). */
 function occurrences(text: string, needle: string): number[] {
@@ -8759,6 +8770,8 @@ function expandNarrativeEdits(
     (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).find((ps: any) => ps?.id === id);
   ops.forEach((op, i) => {
     if (!op || typeof op !== "object") return;
+    // A null or empty `edits` is absent, as a null `entry` or `planId` is.
+    if (op.edits == null || (Array.isArray(op.edits) && op.edits.length === 0)) delete op.edits;
     const fields = op.fields && typeof op.fields === "object" && !Array.isArray(op.fields) ? op.fields : undefined;
     if (!Object.prototype.hasOwnProperty.call(op, "edits")) {
       if (op.section === "proof_summaries" && op.op === "update" && typeof op.entryId === "string" && fields) {
@@ -8778,8 +8791,8 @@ function expandNarrativeEdits(
       return;
     }
     const edits = op.edits;
-    if (!Array.isArray(edits) || edits.length === 0) {
-      refuse("`edits` must be a non-empty array of { field, old, new }.");
+    if (!Array.isArray(edits)) {
+      refuse("`edits` must be an array of { field, old, new }.");
       return;
     }
     const entry = typeof op.entryId === "string" ? stored(op.entryId) : undefined;
@@ -8839,6 +8852,7 @@ function expandNarrativeEdits(
     // A caller that re-sends the same op object must not meet its own expansion
     // as a `fields` collision.
     delete op.edits;
+    EDIT_EXPANDED_OPS.add(op);
   });
   return errors;
 }
@@ -8974,7 +8988,7 @@ export async function researchAppend(
           entry: input.entry,
           entryId: input.entryId,
           fields: input.fields,
-          ...(input.edits !== undefined ? { edits: input.edits } : {}),
+          ...(input.edits != null ? { edits: input.edits } : {}),
           planId: input.planId,
         },
       ];
@@ -9016,9 +9030,11 @@ export async function researchAppend(
     // and every guard after this sees an ordinary `fields` update.
     const editErrors = expandNarrativeEdits(ops, research, fmt);
     if (editErrors.length > 0) {
+      // A refused op keeps its `edits`; one that expanded cleanly does not.
+      const refused = ops.flatMap((op, i) => (op && Object.prototype.hasOwnProperty.call(op, "edits") ? [i] : []));
       return fail(
-        editErrors,
-        ops.filter((op) => op && Object.prototype.hasOwnProperty.call(op, "edits")).map((op) => ({ ...failedOpHint(op), fields: ["edits"] })),
+        [...(refused.length > 1 ? [checkedWithoutLine(refused[0])] : []), ...boundErrors(editErrors)],
+        refused.map((i) => ({ ...failedOpHint(ops[i]), fields: ["edits"] })),
       );
     }
 

@@ -4829,6 +4829,17 @@ describe("research_append (Phase 3)", () => {
 
     // A tier-only update does not check either text against the log, so moving
     // the stamp on it would hide the later search from the next one-field update.
+    it("keeps the stamp on a tier-only update, so a later one-field update is still refused", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({ tier: "not_proved", updated: "2026-10-10T00:00:00Z" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries[0].updated).toBe(SUMMARY_WRITTEN);
+      const r2 = await updatePs001({ narrative_markdown: "## Not proved\nreworded" });
+      expect(r2.ok).toBe(false);
+      if (r2.ok) return;
+      expect(r2.errors.join(" ")).toContain("log_001");
+    });
+
     // ── the edit form: `edits: [{ field, old, new }]` (issue #3542, lead 2c) ──
     describe("edits: an exact-match change without re-sending the field", () => {
       const NARRATIVE =
@@ -4908,7 +4919,6 @@ describe("research_append (Phase 3)", () => {
         ["an empty old", { edits: [{ field: "narrative_markdown", old: "", new: "x" }] }, /non-empty string/],
         ["the same field also in fields", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], fields: { narrative_markdown: "z" } }, /also set in `fields`/],
         ["an unknown entryId", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], entryId: "ps_999" }, /naming an existing proof summary/],
-        ["an empty edits list", { edits: [] }, /non-empty array/],
         ["no entryId", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], entryId: undefined }, /'\(none\)' is not one/],
         ["a new equal to its old", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1850" }] }, /must change the text/],
         ["a fields that is not an object", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], fields: "tier: possible" }, /must be an object/],
@@ -4937,6 +4947,16 @@ describe("research_append (Phase 3)", () => {
         // The worked example is the refused op's own section and op, not a proof summary edit.
         expect(r.errors.join("\n")).toContain(`worked example for '${op.section}'`);
         expect(r.errors.join("\n")).not.toContain("edits: [");
+      });
+
+      it.each([["null", null], ["empty", []]])("treats a %s edits beside an ordinary update as absent", async (_label, edits) => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001(edits, { fields: { tier: "possible" } });
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        const r2 = await researchAppend({
+          projectPath: dir, ops: [{ section: "questions", op: "update", entryId: "q_001", fields: { status: "open" }, edits }],
+        } as never);
+        expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
       });
 
       it("recovers edits sent as a JSON string", async () => {
@@ -5021,12 +5041,71 @@ describe("research_append (Phase 3)", () => {
         expect(r.errors.join(" ")).toMatch(/ops\[1\]: edits\[0\]: ps_001 has no `narrative_markdown` text/);
       });
 
+      it("says a later op's refusal may follow from an earlier one", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "born in 1805", new: "born in 1851" }] },
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "1851 in Cork", new: "1851 in Cork, Ireland" }] },
+          ],
+        } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors[0]).toMatch(/^Fix the earliest failure first \(ops\[0\]\)/);
+        // One refused op has nothing to follow from.
+        const one = await editPs001([{ field: "narrative_markdown", old: "born in 1805", new: "x" }]);
+        expect(one.ok).toBe(false);
+        if (one.ok) return;
+        expect(one.errors.join(" ")).not.toContain("Fix the earliest failure first");
+      });
+
+      it("bounds the refusal text when every edit fails", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const edits = Array.from({ length: 2000 }, (_, k) => ({ field: "narrative_markdown", old: `absent ${k}`, new: "x" }));
+        const r = await editPs001(edits);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join("\n").length).toBeLessThan(20_000);
+      });
+
       it("a refused edit teaches the edit form, not a re-sent field", async () => {
         await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
         const r = await editPs001([{ field: "narrative_markdown", old: "absent text", new: "x" }]);
         expect(r.ok).toBe(false);
         if (r.ok) return;
         expect(r.errors.join("\n")).toContain("edits: [");
+      });
+
+      describe("the word budget", () => {
+        const words = (n: number) => "## C\nborn in 1850 " + Array(n - 5).fill("w").join(" ");
+        const atWords = async (n: number) => {
+          const state = withText(withSearchedSince("2026-10-09T09:00:00Z"));
+          state.proof_summaries[0].narrative_markdown = words(n);
+          await writeProject(state);
+        };
+        const budgetWarning = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "").match(/over the 500-word budget/);
+
+        it("does not warn on an edit to a narrative already over it", async () => {
+          await atWords(505);
+          const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in about 1850" }]);
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).toBeNull();
+        });
+
+        it("warns on an edit that takes the narrative over it", async () => {
+          await atWords(500);
+          const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in about 1850" }]);
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).not.toBeNull();
+        });
+
+        it("still warns on a whole narrative re-sent in fields over it", async () => {
+          await atWords(505);
+          const r = await updatePs001({ narrative_markdown: words(506) });
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).not.toBeNull();
+        });
       });
 
       it("refuses before any network lookup: a batch with a checkable locality makes no place call", async () => {
@@ -5047,17 +5126,6 @@ describe("research_append (Phase 3)", () => {
         expect(r.ok).toBe(false);
         expect(checkFirstPlace).not.toHaveBeenCalled();
       });
-    });
-
-    it("keeps the stamp on a tier-only update, so a later one-field update is still refused", async () => {
-      await writeProject(withSearchedSince());
-      const r = await updatePs001({ tier: "not_proved", updated: "2026-10-10T00:00:00Z" });
-      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
-      expect((await readResearch()).proof_summaries[0].updated).toBe(SUMMARY_WRITTEN);
-      const r2 = await updatePs001({ narrative_markdown: "## Not proved\nreworded" });
-      expect(r2.ok).toBe(false);
-      if (r2.ok) return;
-      expect(r2.errors.join(" ")).toContain("log_001");
     });
 
     it("refuses the same tier-only then one-field sequence inside a single batch", async () => {

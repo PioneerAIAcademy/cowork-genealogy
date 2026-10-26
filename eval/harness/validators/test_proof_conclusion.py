@@ -878,9 +878,9 @@ def test_stale_proof_refreshed(before_state, after_state, test):
 # ut_proof_conclusion_e1k asks for one parenthetical in ps_001's narrative to
 # change. The deterministic half of the lead's before/after: the update must go
 # through `edits` and never re-send `narrative_markdown` in `fields`, and the
-# saved narrative must be the original with exactly that one change. The phrase
-# also appears in the tier-justification paragraph, so the run must give `old`
-# enough context to match once.
+# saved narrative must be the original with exactly that one change. The edits
+# together must also be well short of the narrative: a whole narrative sent as one
+# edit's `old` and `new` is a re-send under another key.
 
 _EDIT_FORM_ID = "ps_001"
 _EDIT_FORM_FROM = (
@@ -905,8 +905,7 @@ def _decoded_dict(value):
 
 def _proof_summary_update_ops(tool_calls, entry_id):
     """Every proof_summaries update op naming `entry_id`, single-op or batched,
-    from research_append calls (any MCP prefix). A stringified `ops` or `edits`
-    is decoded once, as the tool does."""
+    from research_append calls (any MCP prefix). A stringified `ops` is decoded."""
     found = []
     for tc in tool_calls:
         if "research_append" not in tc.get("tool", ""):
@@ -948,6 +947,17 @@ def test_narrative_edit_form_used(before_state, after_state, tool_calls, test):
         f"no update of {_EDIT_FORM_ID} carried `edits`"
     )
     original = before.get("narrative_markdown") or ""
+    sent = sum(
+        len(e.get("old") or "") + len(e.get("new") or "")
+        for op in ops
+        if isinstance(op.get("edits"), list)
+        for e in op["edits"]
+        if isinstance(e, dict)
+    )
+    assert sent * 2 < len(original), (
+        f"the edits to {_EDIT_FORM_ID} sent {sent} characters against a {len(original)}-character "
+        "narrative; an edit names the sentence it changes, not the whole field"
+    )
     assert original.count(_EDIT_FORM_FROM) == 1, "fixture error: the target sentence must occur once"
     expected = original.replace(_EDIT_FORM_FROM, _EDIT_FORM_TO)
     after = next(

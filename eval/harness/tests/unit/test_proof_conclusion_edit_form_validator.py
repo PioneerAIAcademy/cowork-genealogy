@@ -25,7 +25,11 @@ from test_proof_conclusion import (  # noqa: E402
 from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
 
 TAGGED = {"tags": ["narrative-edit-form"]}
-ORIGINAL = "## C\nLike the 1850 census, " + _EDIT_FORM_FROM + ". Tail; relationships not stated."
+# As long as ps_001's real narrative (3,542 characters), so an edit is the small part of it.
+ORIGINAL = (
+    "## C\nLike the 1850 census, " + _EDIT_FORM_FROM + ". Tail; relationships not stated.\n"
+    + "The household is placed by name, age and birthplace. " * 60
+)
 EXPECTED = ORIGINAL.replace(_EDIT_FORM_FROM, _EDIT_FORM_TO)
 EDIT = {"field": "narrative_markdown", "old": _EDIT_FORM_FROM, "new": _EDIT_FORM_TO}
 
@@ -73,6 +77,11 @@ def test_fires_when_the_narrative_is_re_sent_in_a_stringified_fields():
 def test_fires_when_a_retry_re_sends_after_an_edit():
     calls = [_call(_single(edits=[EDIT])), _call(_single(fields={"narrative_markdown": EXPECTED}))]
     expect_fires(lambda: check(_state(ORIGINAL), _state(EXPECTED), calls, TAGGED), "re-sent the whole narrative")
+
+
+def test_fires_when_the_whole_narrative_is_sent_as_one_edit():
+    whole = [{"field": "narrative_markdown", "old": ORIGINAL, "new": EXPECTED}]
+    expect_fires(lambda: check(_state(ORIGINAL), _state(EXPECTED), [_call(_single(edits=whole))], TAGGED), "an edit names the sentence")
 
 
 def test_fires_when_no_update_was_made():
