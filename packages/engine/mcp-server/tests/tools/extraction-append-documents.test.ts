@@ -1103,6 +1103,13 @@ describe("extraction_append: documents", () => {
       expect(errs.join(" ")).toMatch(/couple p1 \(Paul Meacham\) and p2 \(John Dewey\) is not stated/);
     });
 
+    it("reads 'widow of the deceased' and 'wife of Paul' as spouse words", () => {
+      for (const rel of ["widow of the deceased", "wife of Paul Meacham"]) {
+        const persons = [...meacham(), person("p5", "Mary", "Meacham", rel)];
+        expect(validateStructuredDocument(deed(persons, [{ type: "couple", person1: "p1", person2: "p5" }]))).toEqual([]);
+      }
+    });
+
     it("does not read 'wife's mother' or 'daughter-in-law' as a spouse word", () => {
       for (const rel of ["wife's mother", "daughter-in-law"]) {
         const persons = [...meacham(), person("p5", "Ann", "Lee", rel)];

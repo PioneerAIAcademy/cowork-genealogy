@@ -269,7 +269,7 @@ const normRelation = (s: string | undefined) => (s ?? "").trim().toLowerCase().r
  *  mother", "daughter-in-law" and "wife of the deceased's son" name someone else. */
 export function isSpouseRelation(rel: string | undefined): boolean {
   const r = normRelation(rel);
-  if (/'s\b|-in-law|\bof\b/.test(r)) return false;
+  if (/'s\b|-in-law/.test(r)) return false;
   return /\b(wife|husband|widow|widower|spouse|consort|relict)\b/.test(r);
 }
 
