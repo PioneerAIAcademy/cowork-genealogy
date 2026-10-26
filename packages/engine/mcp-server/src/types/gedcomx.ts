@@ -47,9 +47,26 @@ export interface GedcomXFact {
     original?: string;
     normalized?: { value: string; lang?: string }[];
     description?: string;
+    fields?: GedcomXField[];
   };
   value?: string;
   sources?: GedcomXSourceReference[];
+}
+
+/** A FamilySearch index field. On a fact's place, the `http://gedcomx.org/Place`
+ *  field holds the as-written `Original` value and FamilySearch's `Interpreted`
+ *  (standardized) values. */
+export interface GedcomXField {
+  type?: string;
+  values?: GedcomXFieldValue[];
+}
+
+export interface GedcomXFieldValue {
+  type?: string;
+  labelId?: string;
+  text?: string;
+  resource?: string;
+  qualifiers?: GedcomXQualifier[];
 }
 
 export interface GedcomXRelationship {
@@ -150,9 +167,11 @@ export interface SimplifiedFact {
   standard_date?: string;
   place?: string;
   // Standardized place name (the snake_case data-format spelling of
-  // `standardPlace`). Populated from raw `place.normalized` by `toSimplified`,
-  // or by the network standardization pass (`toSimplifiedStandardized`) for
-  // free-text places. Dropped on `toGedcomX`, like `standard_date`.
+  // `standardPlace`). Populated by `toSimplified` from FamilySearch's own
+  // standardized value (raw `place.normalized`, else the chosen `Interpreted`
+  // place value), or by the network standardization pass
+  // (`toSimplifiedStandardized`) for free-text places. Dropped on `toGedcomX`,
+  // like `standard_date`.
   standard_place?: string;
   value?: string;
   // The `research.json` assertion this fact was minted from — the backlink an

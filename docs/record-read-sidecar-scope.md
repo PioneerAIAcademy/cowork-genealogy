@@ -35,9 +35,11 @@ round-trips for content it already has staged on disk.
   a null resolve or soft-cap overflow leaves some empty), and `sources` **if** the
   FS search response carried `sourceDescriptions`.
 - `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
-  `standardizePlaces` — see Findings), so it keeps only the record's own
-  `normalized` places and never adds resolver-derived `standard_place`. Its
-  output also carries the source `citation`.
+  `standardizePlaces` — see Findings), so it keeps only the places FamilySearch
+  standardized on the record itself (an `Interpreted` value of the place's
+  `Place` field; a recapi record sends no `normalized`) and never adds
+  resolver-derived `standard_place`. Its output also carries the source
+  `citation`.
 
 Two deltas were identified; delta 1 is now **settled** (see Findings), delta 2
 remains **unverified**:
@@ -130,13 +132,13 @@ England death/burial). For **the person you searched** (the matched persona):
   the same resolver — and the sidecar tool returns the staged place **as-is** (no
   `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
   now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
-  whatever `standard_place` the record's own `normalized` value supplies and never
-  falls back to the resolver, rather than resolving an un-normalized name to a
-  wrong place. (How often a recapi record response carries a `normalized` place
-  was measured by `dev/probe-record-read-places.ts` on 2026-09-11: **0 of the 28
-  observations** carried one, so the live path produced no `standard_place` at all
-  for the probed records.) Staged records carry the search stage's standardized
-  place regardless.
+  whatever `standard_place` the record itself carries and never falls back to the
+  resolver, rather than resolving an unstandardized name to a wrong place. A
+  recapi record never carries a `normalized` place (`dev/probe-record-read-places.ts`,
+  2026-09-11: **0 of the 28 observations**); FamilySearch's standardized place is
+  an `Interpreted` value of the place's `Place` field instead, which
+  `toSimplified` reads (`gedcomx-convert-spec.md`, Rule 7). Staged records carry
+  the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills

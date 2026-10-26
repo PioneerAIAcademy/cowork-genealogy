@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { toSimplified, toGedcomX } from "../../src/utils/gedcomx-convert.js";
 import type {
   GedcomX,
+  GedcomXFact,
+  SimplifiedFact,
   SimplifiedGedcomX,
 } from "../../src/types/gedcomx.js";
 
@@ -1704,5 +1706,366 @@ describe("gedcomx-convert — non-place phrases keep no standard_place (#1962)",
     expect(facts[0].place).toBe("Same House");
     expect(facts[0].standard_place).toBeUndefined();
     expect(facts[1].standard_place).toBe("Wayne, Ohio, United States");
+  });
+});
+
+// Record reads (recapi) carry no `place.normalized`. FamilySearch's standardized
+// place is an `Interpreted` value of the place's `Place` field. Fixtures are cut
+// from raw recapi persona bodies; the record id is in each test name.
+const PLACE_FIELD = "http://gedcomx.org/Place";
+const placeUrl = (id: string) => `https://www.familysearch.org/platform/places/description/${id}`;
+const originalValue = (text: string, labelId = "EVENT_PLACE_ORIG") => ({
+  type: "http://gedcomx.org/Original",
+  labelId,
+  text,
+});
+const interpretedValue = (
+  text: string,
+  placeId?: string,
+  { preferred = false, labelId = "EVENT_PLACE" } = {},
+) => ({
+  type: "http://gedcomx.org/Interpreted",
+  labelId,
+  text,
+  ...(placeId ? { resource: placeUrl(placeId) } : {}),
+  ...(preferred
+    ? { qualifiers: [{ name: "http://familysearch.org/types/qualifiers/Preferred", value: "true" }] }
+    : {}),
+});
+type RawPlace = NonNullable<GedcomXFact["place"]>;
+const simplifyOnePlace = (place: RawPlace): SimplifiedFact =>
+  toSimplified({ persons: [{ id: "p1", facts: [{ type: "http://gedcomx.org/Birth", place }] }] })
+    .persons![0].facts![0];
+
+describe("gedcomx-convert — FamilySearch's standardized place from a record read's Place field", () => {
+  it("takes the only Interpreted value that names a place (6589-3NS5)", () => {
+    const fact = simplifyOnePlace({
+      original: "Bolívar, Colombia",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Bolívar, Colombia", "PR_BIR_PLACE_ORIG"),
+            interpretedValue("Bolívar, Colombia", "5775", { labelId: "PR_BIR_PLACE" }),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Bolívar, Colombia");
+    expect(fact.standard_place).toBe("Bolívar, Colombia");
+  });
+
+  it("prefers the candidate marked Preferred (QLGD-48KS)", () => {
+    const fact = simplifyOnePlace({
+      original: "Boda, Kopparberg, Sweden",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Boda, Kopparbergs, Sweden"),
+            interpretedValue("Boda, Kopparberg, Sweden", "3461825", { preferred: true }),
+            interpretedValue("Boda, Rättvik, Dalarna, Sweden", "6666548"),
+            interpretedValue("Boda, Kopparberg, Sweden", "3461825"),
+            interpretedValue("Boda, Svärdsjö, Dalarna, Sweden", "6666551"),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Boda, Kopparbergs, Sweden");
+    expect(fact.standard_place).toBe("Boda, Kopparberg, Sweden");
+  });
+
+  it("takes the candidate place.description names when none is Preferred (FVFW-Y6P)", () => {
+    const fact = simplifyOnePlace({
+      original: "Tobel, Tobel-Tägerschen, Thurgau, Switzerland",
+      description: "#place_11861494",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Tobel-Braunau, Thurgau, Switzerland"),
+            interpretedValue("Braunau, Thurgau, Switzerland", "11861494"),
+            interpretedValue("Braunau, Tobel, Thurgau, Switzerland", "11912912"),
+            interpretedValue("Tobel, Thurgau, Switzerland", "3059454"),
+            interpretedValue("Tobel, Tobel-Tägerschen, Thurgau, Switzerland", "11861493"),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Tobel-Braunau, Thurgau, Switzerland");
+    expect(fact.standard_place).toBe("Braunau, Thurgau, Switzerland");
+  });
+
+  it("ignores an Interpreted value that names no place (6CY2-PL2S)", () => {
+    const fact = simplifyOnePlace({
+      original: "Yabebyry",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Yabebyry", "PR_BIR_PLACE_ORIG"),
+            interpretedValue("Yabebyry", undefined, { labelId: "PR_BIR_PLACE" }),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Yabebyry");
+    expect(fact.standard_place).toBeUndefined();
+  });
+
+  it("passes over a Preferred value that names no place and lets place.description decide (SGZQ-Y3L)", () => {
+    const fact = simplifyOnePlace({
+      original: "Saint Peter, Carmarthenshire, Wales",
+      description: "#place_10579589",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            interpretedValue("Carmarthen, Carmarthenshire, Wales, United Kingdom", "10579589"),
+            interpretedValue("St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom", "10579913"),
+            interpretedValue("Carmarthen, Carmarthenshire, Wales, United Kingdom", "10579588"),
+            interpretedValue("Saint Peter, Carmarthenshire, Wales", undefined, { preferred: true }),
+          ],
+        },
+        { type: "http://gedcomx.org/Town", values: [originalValue("Carmarthen", "EVENT_TOWN_ORIG")] },
+      ],
+    });
+    expect(fact.place).toBe("Saint Peter, Carmarthenshire, Wales");
+    expect(fact.standard_place).toBe("Carmarthen, Carmarthenshire, Wales, United Kingdom");
+  });
+
+  it("does not count a Preferred Original value, on a relationship fact too (QK9S-KLJK)", () => {
+    const out = toSimplified({
+      persons: [{ id: "p1" }, { id: "p2" }],
+      relationships: [
+        {
+          type: "http://gedcomx.org/Couple",
+          person1: { resource: "#p1" },
+          person2: { resource: "#p2" },
+          facts: [
+            {
+              type: "http://gedcomx.org/Marriage",
+              place: {
+                original: "Ramore, Ontario, Canada",
+                description: "#place_9159962",
+                fields: [
+                  {
+                    type: PLACE_FIELD,
+                    values: [
+                      {
+                        ...originalValue("Ramore, Ontario, Canada"),
+                        qualifiers: [{ name: "http://familysearch.org/types/qualifiers/Preferred", value: "true" }],
+                      },
+                      interpretedValue("Ramore, Black River-Matheson Township, Cochrane, Ontario, Canada", "9159962"),
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const fact = out.relationships![0].facts![0];
+    expect(fact.place).toBe("Ramore, Ontario, Canada");
+    expect(fact.standard_place).toBe("Ramore, Black River-Matheson Township, Cochrane, Ontario, Canada");
+  });
+
+  it("yields nothing when the candidates disagree and nothing chooses between them (65TF-GJMJ without its description)", () => {
+    const fact = simplifyOnePlace({
+      original: "San Cristóbal",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            interpretedValue("San Cristóbal, Dominican Republic", "3165"),
+            interpretedValue("San Cristóbal, San Cristóbal, Dominican Republic", "448307"),
+          ],
+        },
+      ],
+    });
+    expect(fact.standard_place).toBeUndefined();
+  });
+
+  it("yields nothing when two Preferred candidates disagree", () => {
+    const fact = simplifyOnePlace({
+      original: "Boda",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            interpretedValue("Boda, Kopparberg, Sweden", "3461825", { preferred: true }),
+            interpretedValue("Boda, Rättvik, Dalarna, Sweden", "6666548", { preferred: true }),
+          ],
+        },
+      ],
+    });
+    expect(fact.standard_place).toBeUndefined();
+  });
+
+  it("yields nothing when place.description names a place no candidate carries (search-response shape, 71LN-7LN2)", () => {
+    // In a search response the Interpreted text is often the as-written text and
+    // its resource a related place; there, `normalized` is the standard.
+    const fact = simplifyOnePlace({
+      original: "Київ, Київська, Российская империя",
+      description: "#11692585",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [interpretedValue("Київ, Київська, Российская империя", "10932640")],
+        },
+      ],
+    });
+    expect(fact.standard_place).toBeUndefined();
+  });
+
+  it("keeps place.normalized ahead of any Interpreted value (search response, 71LN-7LN2)", () => {
+    const fact = simplifyOnePlace({
+      original: "Київ, Київська, Российская империя",
+      normalized: [{ lang: "en", value: "Kyiv, Kiev Governorate, Russian Empire" }],
+      description: "#11692585",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [interpretedValue("Київ, Київська, Российская империя", "10932640")],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Київ, Київська, Российская империя");
+    expect(fact.standard_place).toBe("Kyiv, Kiev Governorate, Russian Empire");
+  });
+
+  it("reads Interpreted values from the Place field only", () => {
+    const fact = simplifyOnePlace({
+      original: "Ramore",
+      fields: [{ type: "http://gedcomx.org/City", values: [interpretedValue("Ramore, Ontario, Canada", "9159962")] }],
+    });
+    expect(fact.standard_place).toBeUndefined();
+  });
+
+  it("gives a non-place phrase no standard form from an Interpreted value either", () => {
+    const fact = simplifyOnePlace({
+      original: "Same House",
+      fields: [{ type: PLACE_FIELD, values: [interpretedValue("Same, Manufahi, Timor-Leste", "123")] }],
+    });
+    expect(fact.place).toBe("Same House");
+    expect(fact.standard_place).toBeUndefined();
+  });
+});
+
+describe("gedcomx-convert — the as-written place when place.original holds the standardized text", () => {
+  it("takes the Original value when place.original is the Interpreted text (6NG4-MVP3)", () => {
+    const fact = simplifyOnePlace({
+      original: "Faial, Santana, Madeira, Portugal",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("dos Mainhos", "PR_RES_PLACE_ORIG"),
+            interpretedValue("Faial, Santana, Madeira, Portugal", "1831208", {
+              preferred: true,
+              labelId: "PR_RES_PLACE",
+            }),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("dos Mainhos");
+    expect(fact.standard_place).toBe("Faial, Santana, Madeira, Portugal");
+  });
+
+  it("takes it even when the Interpreted text names no place (NQ2T-HP1)", () => {
+    const fact = simplifyOnePlace({
+      original: "Santiago de Puriscal, Santiago, San José, Costa Rica",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Santiago, San José, Costa Rica"),
+            interpretedValue("Santiago de Puriscal, Santiago, San José, Costa Rica", undefined, { preferred: true }),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Santiago, San José, Costa Rica");
+    expect(fact.standard_place).toBeUndefined();
+  });
+
+  it("keeps place.original when it is no Interpreted text", () => {
+    const fact = simplifyOnePlace({
+      original: "Salem",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Salem, Massachusetts"),
+            interpretedValue("Salem, Essex, Massachusetts, United States", "1234"),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Salem");
+  });
+
+  it("keeps place.original when the Place field holds two different Original texts", () => {
+    const fact = simplifyOnePlace({
+      original: "Salem, Essex, Massachusetts, United States",
+      fields: [
+        {
+          type: PLACE_FIELD,
+          values: [
+            originalValue("Salem, Massachusetts, United States"),
+            originalValue("Salem", "EVENT_TOWN_ORIG"),
+            interpretedValue("Salem, Essex, Massachusetts, United States", "1234"),
+          ],
+        },
+      ],
+    });
+    expect(fact.place).toBe("Salem, Essex, Massachusetts, United States");
+  });
+});
+
+describe("gedcomx-convert — coverage.standard_place from the response's places[]", () => {
+  const coverageSource = (id: string, description: string) => ({
+    id,
+    resourceType: "http://gedcomx.org/Record",
+    coverage: [{ spatial: { description }, recordType: "http://gedcomx.org/Census" }],
+  });
+
+  it("names a coverage place that places[] names, by fragment or by URL (search response, 261-…-K28)", () => {
+    const out = toSimplified({
+      sourceDescriptions: [
+        coverageSource("src_r_180787103925", "#10593184"),
+        coverageSource("src_r_2", "https://www.familysearch.org/platform/places/description/10593184"),
+      ],
+      places: [
+        {
+          id: "10593184",
+          names: [{ value: "Rosskeen, Ross-shire, Scotland, United Kingdom" }],
+          latitude: 57.7,
+          longitude: -4.2,
+        },
+      ],
+    } as GedcomX);
+    for (const source of out.sources ?? []) {
+      expect(source.coverage).toEqual({
+        place_rep_id: "10593184",
+        standard_place: "Rosskeen, Ross-shire, Scotland, United Kingdom",
+        record_type: "Census",
+      });
+    }
+    expect(out.places?.[0]?.name).toBe("Rosskeen, Ross-shire, Scotland, United Kingdom");
+  });
+
+  it("leaves standard_place unset when places[] does not name the coverage place (record read, SGZQ-Y3L)", () => {
+    const out = toSimplified({
+      sourceDescriptions: [
+        coverageSource("src_r_1433233710", placeUrl("10579589")),
+        coverageSource("src_r_0", "#0"),
+      ],
+      places: [{ id: "place_10579589" }],
+    } as GedcomX);
+    expect(out.sources?.[0]?.coverage).toEqual({ place_rep_id: "10579589", record_type: "Census" });
+    expect(out.sources?.[1]?.coverage).toEqual({ place_rep_id: "0", record_type: "Census" });
   });
 });

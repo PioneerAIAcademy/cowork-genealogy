@@ -391,6 +391,59 @@ describe("recordReadTool", () => {
     // touch the resolver at all.
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
   });
+
+  it("keeps FamilySearch's own standardized place from the record's Place field, with no resolver call (6NG4-MVP3)", async () => {
+    const { resolveStandardPlace } = await import("../../src/utils/place-resolver.js");
+    const placeUrl = "https://www.familysearch.org/platform/places/description/1831208";
+    const preferred = [{ name: "http://familysearch.org/types/qualifiers/Preferred", value: "true" }];
+    mockOk({
+      persons: [
+        {
+          id: "p_296514286894",
+          facts: [
+            {
+              type: "http://gedcomx.org/Christening",
+              place: {
+                original: "Faial, Santana, Madeira, Portugal",
+                description: "#place_1831208",
+                fields: [
+                  {
+                    type: "http://gedcomx.org/Place",
+                    values: [
+                      { type: "http://gedcomx.org/Original", labelId: "EVENT_PLACE_ORIG", text: "Faial, Santana, Madeira, Portugal", resource: placeUrl },
+                      { type: "http://gedcomx.org/Interpreted", labelId: "EVENT_PLACE", text: "Faial, Santana, Madeira, Portugal", resource: placeUrl },
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              type: "http://gedcomx.org/Residence",
+              place: {
+                original: "Faial, Santana, Madeira, Portugal",
+                fields: [
+                  {
+                    type: "http://gedcomx.org/Place",
+                    values: [
+                      { type: "http://gedcomx.org/Original", labelId: "PR_RES_PLACE_ORIG", text: "dos Mainhos" },
+                      { type: "http://gedcomx.org/Interpreted", labelId: "PR_RES_PLACE", text: "Faial, Santana, Madeira, Portugal", resource: placeUrl, qualifiers: preferred },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+      places: [{ id: "place_1831208" }],
+    } as unknown as GedcomX);
+    const out = await recordReadTool({ recordId: "6NG4-MVP3" }, LOCAL);
+    expect(out.persons?.[0].facts?.map((f) => [f.place, f.standard_place])).toEqual([
+      ["Faial, Santana, Madeira, Portugal", "Faial, Santana, Madeira, Portugal"],
+      ["dos Mainhos", "Faial, Santana, Madeira, Portugal"],
+    ]);
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
 });
 
 // ─── Sidecar mode (resultsRef) — no network ────────────────────────────────

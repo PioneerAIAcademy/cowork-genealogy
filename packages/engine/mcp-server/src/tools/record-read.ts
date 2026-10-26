@@ -58,7 +58,7 @@ export const recordReadSchema = {
           "sidecar host-side, WITHOUT a live FamilySearch fetch. For the person " +
           "you searched, the sidecar carries the same facts, the source citation, " +
           "and standardized places from the search stage (a live read keeps only " +
-          "the record's own normalized places, never resolver-derived ones). It returns OTHER household members " +
+          "the record's own standardized places, never resolver-derived ones). It returns OTHER household members " +
           "(co-residents) with reduced facts — so omit this (live read) when you " +
           "need a co-resident's full facts, or for a record that was not part of a " +
           "staged search. Requires `projectPath`.",
@@ -148,9 +148,9 @@ export async function recordReadTool(
 
   const body = (await res.json()) as GedcomX;
   // Use toSimplified, NOT toSimplifiedStandardized. toSimplified keeps whatever
-  // standard_place the record's own `normalized` value supplies and never falls
+  // standard_place FamilySearch standardized on the record itself and never falls
   // back to the resolver; toSimplifiedStandardized would additionally resolve any
-  // free-text place NAME the record left un-normalized, and the resolver
+  // free-text place NAME the record left unstandardized, and the resolver
   // mis-places ambiguous names. Ruled to stay this way on a live re-probe
   // (issue #1908 Phase 2, Option 4, decided 2026-09-12). Do not flip it on the
   // two cross-country examples that motivated the original rule (observed
@@ -158,10 +158,11 @@ export async function recordReadTool(
   // -> "Rochdale, South Africa") — neither was among the re-probe's 28
   // observations, but the run surfaced an intra-country mis-resolution that
   // countryConsistency cannot detect: "Eye Town" -> "Eye, Suffolk", where the
-  // same record's fully-qualified fact reads Northamptonshire. 0 of the 28
-  // carried a `normalized` place at all, so the live path filled no
-  // standard_place for any probed record. Measurement and rationale:
-  // docs/record-read-sidecar-scope.md; re-measure with
+  // same record's fully-qualified fact reads Northamptonshire. A recapi record
+  // never sends `normalized` (0 of the 28); it carries FamilySearch's standard
+  // name as an `Interpreted` value of the place's `Place` field, which
+  // toSimplified reads (gedcomx-convert-spec.md, Rule 7). Measurement and
+  // rationale: docs/record-read-sidecar-scope.md; re-measure with
   // dev/probe-record-read-places.ts. Records reached via the search sidecar
   // already carry the search stage's standardized place.
   const simplified = toSimplified(body);
@@ -356,7 +357,7 @@ async function readFromSidecar(
   // hit the soft cap, spending FS round-trips on the one path whose purpose is to
   // avoid them. A live record_read (omit resultsRef) does not resolver-standardize
   // at all: it uses pure toSimplified (see the comment above), keeping only the
-  // record's own normalized places — never resolving an ambiguous place NAME and
+  // record's own standardized places — never resolving an ambiguous place NAME and
   // mis-placing it (see the toSimplified comment above for the observed
   // mis-resolutions).
   // The staged source DOES carry the page-image ark, as a bare `{ id, url }`

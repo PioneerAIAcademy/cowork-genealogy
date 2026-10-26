@@ -6,9 +6,10 @@
  * and reads its output with `collectFacts` — it measures what `record_read`
  * actually returns, it does not reconstruct it. `record_read`'s live path calls
  * `toSimplified` (not `toSimplifiedStandardized`), so a fact carries a
- * `standard_place` only when the record's own `normalized` value supplied one
- * (via `pickNormalizedPlace`); the resolver is never consulted. How often that
- * happens is the `standard_place` column / headline count below. The
+ * `standard_place` only when the record itself supplied one (a `normalized`
+ * value, or the chosen `Interpreted` value of the place's `Place` field); the
+ * resolver is never consulted. How often that happens is the `standard_place`
+ * column / headline count below. The
  * justification (the "Use toSimplified, NOT toSimplifiedStandardized" block in
  * record-read.ts) cites two mis-resolutions observed 2026-07-08 — before two
  * resolver fixes landed (4823ffdf, 2026-07-22, phrase-quote the `name:` query;
@@ -210,7 +211,7 @@ async function main(): Promise<void> {
   );
   console.log(
     `record_read output carried standard_place: ${withStandardPlace}/${total} ` +
-      "(what pickNormalizedPlace produced from recapi's own normalized values)",
+      "(what toSimplified kept from the record's own standardized values)",
   );
   console.log(
     "countryConsistency: " +

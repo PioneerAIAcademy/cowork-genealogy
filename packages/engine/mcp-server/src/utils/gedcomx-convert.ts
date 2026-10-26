@@ -1,6 +1,7 @@
 import type {
   GedcomX,
   GedcomXFact,
+  GedcomXFieldValue,
   GedcomXName,
   GedcomXNamePart,
   GedcomXNote,
@@ -33,6 +34,10 @@ const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
 const QUALITY_QUALIFIER = "fsmcp:quality";
 const PERSISTENT_ID = "http://gedcomx.org/Persistent";
 const PARENT_CHILD = "ParentChild";
+const PLACE_FIELD = URI_PREFIX + "Place";
+const INTERPRETED_VALUE = URI_PREFIX + "Interpreted";
+const ORIGINAL_VALUE = URI_PREFIX + "Original";
+const PREFERRED_QUALIFIER = "http://familysearch.org/types/qualifiers/Preferred";
 
 type NamePartKind = "Prefix" | "Given" | "Surname" | "Suffix";
 const KNOWN_NAME_PARTS: readonly NamePartKind[] = [
@@ -158,17 +163,42 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
     out.relationships = relationships.map(simplifyRelationship);
   }
 
+  const places = (Array.isArray(gedcomx.places) ? gedcomx.places : []).map(
+    simplifyPlaceDescription,
+  );
+
   const sourceDescriptions = Array.isArray(gedcomx.sourceDescriptions)
     ? gedcomx.sourceDescriptions
     : [];
   if (sourceDescriptions.length > 0) {
-    out.sources = sourceDescriptions.map(simplifySourceDescription);
+    // A search response's `places[]` names the places its record refers to,
+    // often the coverage place among them. Copy that name onto the coverage;
+    // no lookup, only what the response already says.
+    const placeNames = placeNamesById(places);
+    out.sources = sourceDescriptions.map((desc) => {
+      const source = simplifySourceDescription(desc);
+      const name = placeNames.get(source.coverage?.place_rep_id ?? "");
+      if (name !== undefined && source.coverage) source.coverage.standard_place = name;
+      return source;
+    });
   }
 
-  const places = Array.isArray(gedcomx.places) ? gedcomx.places : [];
-  if (places.length > 0) out.places = places.map(simplifyPlaceDescription);
+  if (places.length > 0) out.places = places;
 
   return out;
+}
+
+/** Place id → name for each simplified place that carries a name. A search
+ *  response's entries are keyed by the bare id (`"10593184"`); a record read's
+ *  are `"place_<id>"` and carry no names. */
+function placeNamesById(places: SimplifiedPlaceDescription[]): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const place of places) {
+    const id = /^(?:place_)?(\d+)$/.exec(place.id ?? "")?.[1];
+    if (id === undefined || names.has(id)) continue;
+    if (typeof place.name === "string" && place.name.trim() !== "") names.set(id, place.name);
+  }
+  return names;
 }
 
 function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
@@ -303,6 +333,84 @@ function pickNormalizedPlace(
   return normalized.find((n) => n.value)?.value;
 }
 
+type RawPlace = NonNullable<GedcomXFact["place"]>;
+
+/** The text-bearing values of a place's `http://gedcomx.org/Place` field(s). */
+function placeFieldValues(place: RawPlace): (GedcomXFieldValue & { text: string })[] {
+  const values: (GedcomXFieldValue & { text: string })[] = [];
+  for (const field of Array.isArray(place.fields) ? place.fields : []) {
+    if (field?.type !== PLACE_FIELD || !Array.isArray(field.values)) continue;
+    for (const value of field.values) {
+      if (typeof value?.text === "string" && value.text.trim() !== "") {
+        values.push(value as GedcomXFieldValue & { text: string });
+      }
+    }
+  }
+  return values;
+}
+
+/** The FamilySearch place id a reference names: `…/places/description/<id>`,
+ *  `#place_<id>` (record read) or `#<id>` (search). */
+function placeIdOf(ref: unknown): string | undefined {
+  if (typeof ref !== "string") return undefined;
+  return /(?:\/places\/description\/|^#(?:place_)?)(\d+)$/.exec(ref)?.[1];
+}
+
+/**
+ * The standardized place a record read carries in its `Place` field. A record
+ * read (recapi) sends no `normalized` value; FamilySearch's standard full name
+ * is the text of an `Interpreted` value whose `resource` names the place
+ * (`…/places/description/<id>`). A value with no place id is not a standard:
+ * its text is often just the as-written text echoed back. Among several
+ * candidates, the one marked Preferred wins, else the one `place.description`
+ * names, else the only one; a choice that is still ambiguous yields nothing.
+ */
+function pickInterpretedPlace(place: RawPlace): string | undefined {
+  const candidates: { name: string; id: string; preferred: boolean }[] = [];
+  for (const value of placeFieldValues(place)) {
+    if (value.type !== INTERPRETED_VALUE) continue;
+    const id = placeIdOf(value.resource);
+    if (id === undefined) continue;
+    const preferred = (Array.isArray(value.qualifiers) ? value.qualifiers : []).some(
+      (q) => q?.name === PREFERRED_QUALIFIER && String(q.value).trim().toLowerCase() === "true",
+    );
+    candidates.push({ name: value.text.trim(), id, preferred });
+  }
+  if (candidates.length === 0) return undefined;
+  const preferred = candidates.filter((c) => c.preferred);
+  const describedId = placeIdOf(place.description);
+  const chosen =
+    preferred.length > 0
+      ? preferred
+      : describedId !== undefined
+        ? candidates.filter((c) => c.id === describedId)
+        : candidates;
+  const names = new Set(chosen.map((c) => c.name));
+  return names.size === 1 ? chosen[0].name : undefined;
+}
+
+/**
+ * The place as the record wrote it. Some record reads put FamilySearch's
+ * standardized text in `place.original` and keep the as-written text only in
+ * the `Original` value of the same `Place` field. When `place.original` equals
+ * an `Interpreted` text and the field holds one different `Original` text,
+ * that text is the as-written place.
+ */
+function asWrittenPlace(place: RawPlace, original: string): string {
+  let originalIsInterpreted = false;
+  const written = new Set<string>();
+  for (const value of placeFieldValues(place)) {
+    if (value.type === INTERPRETED_VALUE && value.text.trim() === original.trim()) {
+      originalIsInterpreted = true;
+    } else if (value.type === ORIGINAL_VALUE) {
+      written.add(value.text);
+    }
+  }
+  if (!originalIsInterpreted || written.size !== 1) return original;
+  const [text] = written;
+  return text.trim() === original.trim() ? original : text;
+}
+
 function simplifyFact(fact: GedcomXFact): SimplifiedFact {
   const out: SimplifiedFact = {};
   if (fact.id !== undefined) out.id = fact.id;
@@ -323,15 +431,17 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
 
   if (fact.place) {
     if (typeof fact.place.original === "string") {
-      out.place = fact.place.original;
+      out.place = asWrittenPlace(fact.place, fact.place.original);
     }
-    // Standardized-place sidecar (cf. standard_date): take the canonical name
-    // straight from the raw GedcomX `normalized` values when present — pure, no
-    // network. Free-text places that lack a normalized value are filled later
-    // by the document-level standardization pass (toSimplifiedStandardized).
-    // A non-place phrase ("Same House") keeps no standard form, even one
+    // Standardized-place sidecar (cf. standard_date): take FamilySearch's own
+    // standardized name from the raw response — `normalized` (search, tree) or
+    // the chosen `Interpreted` place value (record read) — pure, no network.
+    // Free-text places that carry neither are filled later by the
+    // document-level standardization pass (toSimplifiedStandardized). A
+    // non-place phrase ("Same House") keeps no standard form, even one
     // FamilySearch supplies.
-    const standard = pickNormalizedPlace(fact.place.normalized);
+    const standard =
+      pickNormalizedPlace(fact.place.normalized) ?? pickInterpretedPlace(fact.place);
     if (standard && !isNonPlacePhrase(out.place ?? "")) out.standard_place = standard;
   }
 
@@ -722,8 +832,9 @@ function expandPlaceDescription(
 }
 
 // ─── Place standardization (network) ─────────────────────────────────────────
-// `toSimplified` populates `standard_place` from raw `place.normalized` (pure).
-// Free-text places that lack a normalized value are standardized here, by
+// `toSimplified` populates `standard_place` from FamilySearch's own standardized
+// value — raw `place.normalized`, else the chosen `Interpreted` place value
+// (pure). Free-text places that carry neither are standardized here, by
 // resolving the place name through the shared place resolver. This is the only
 // part of the converter that touches the network; it is best-effort.
 

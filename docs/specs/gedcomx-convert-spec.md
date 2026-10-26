@@ -35,10 +35,11 @@ or malformed optional fields.
 ## Input types — GedcomX
 
 The functions accept the subset of GedcomX that FamilySearch returns through
-the `person_read`, `cets`, and `record_search` endpoints. (`record_search` runs
-each search entry's `content.gedcomx` through `toSimplified` so downstream tools
-get the faithful record shape instead of the flattened summary.) Fields outside
-this subset are dropped during simplification.
+the `person_read`, `cets`, `record_search` and `record_read` endpoints.
+(`record_search` runs each search entry's `content.gedcomx` through
+`toSimplified` so downstream tools get the faithful record shape instead of the
+flattened summary; `record_read` runs the recapi persona body through it.)
+Fields outside this subset are dropped during simplification.
 
 ```typescript
 export type GedcomX = {
@@ -81,8 +82,24 @@ export type GedcomXFact = {
   type?: string;            // URI, e.g. "http://gedcomx.org/Birth"
   primary?: boolean;
   date?: { original?: string; formal?: string };
-  place?: { original?: string; description?: string };
+  place?: {
+    original?: string;
+    normalized?: { value: string; lang?: string }[];
+    description?: string;   // "#place_1831208" (record read), "#11692585" (search)
+    fields?: GedcomXField[];
+  };
   sources?: GedcomXSourceReference[];
+};
+
+export type GedcomXField = {
+  type?: string;            // URI, e.g. "http://gedcomx.org/Place"
+  values?: {
+    type?: string;          // "http://gedcomx.org/Original" | "http://gedcomx.org/Interpreted"
+    labelId?: string;       // e.g. "EVENT_PLACE", "PR_RES_PLACE_ORIG"
+    text?: string;
+    resource?: string;      // e.g. "https://www.familysearch.org/platform/places/description/1831208"
+    qualifiers?: GedcomXQualifier[];
+  }[];
 };
 
 export type GedcomXRelationship = {
@@ -384,12 +401,48 @@ equivalent.
 { "original": "Denver, Colorado, USA", "description": "#place1" }  →  place: "Denver, Colorado, USA"
 { "original": "Denver", "normalized": [{ "value": "Denver, Colorado, United States", "lang": "en" }] }
                                                   →  place: "Denver", standard_place: "Denver, Colorado, United States"
+{ "original": "Faial, Santana, Madeira, Portugal",
+  "fields": [{ "type": "http://gedcomx.org/Place", "values": [
+    { "type": "http://gedcomx.org/Original", "labelId": "PR_RES_PLACE_ORIG", "text": "dos Mainhos" },
+    { "type": "http://gedcomx.org/Interpreted", "labelId": "PR_RES_PLACE",
+      "text": "Faial, Santana, Madeira, Portugal",
+      "resource": "https://www.familysearch.org/platform/places/description/1831208",
+      "qualifiers": [{ "name": "http://familysearch.org/types/qualifiers/Preferred", "value": "true" }] } ] }] }
+                                                  →  place: "dos Mainhos", standard_place: "Faial, Santana, Madeira, Portugal"
 ```
 
-`place` is `place.original` verbatim. `standard_place` is the standardized
-name: `toSimplified` (pure) takes it from `place.normalized` — preferring the
-`lang === "en"` entry, else the first. The `description` reference is dropped;
-richer place data lives in the top-level `places[]` array (Rule 12).
+`place` is the place as the record wrote it: `place.original` verbatim, except
+for the record-read case under **As-written text** below. `standard_place` is
+FamilySearch's own standardized name, read from the response with no lookup
+(pure):
+
+1. `place.normalized` — the `lang === "en"` entry, else the first. Search and
+   tree responses carry it.
+2. Else an `Interpreted` value of the place's `http://gedcomx.org/Place` field
+   that has both text and a `resource` naming a place
+   (`…/places/description/<id>`). A record read (the recapi persona endpoint)
+   never sends `normalized`; this value's text is FamilySearch's standard full
+   name, in the record's language as sent ("Kuopio, Kuopio, Suomi"). Among such
+   values take the one whose `http://familysearch.org/types/qualifiers/Preferred`
+   qualifier is `true`; else the one whose id `place.description`
+   (`#place_<id>`) names; else the only one. If the chosen values disagree on
+   the name, or `description` names an id none of them carries, there is no
+   `standard_place`.
+
+An `Interpreted` value with no place id is never used, Preferred or not: its
+text is often the as-written text echoed back ("Yabebyry"). Step 2 is not for
+search responses either, whose `Interpreted` text is often the as-written text;
+they carry `normalized`, which wins.
+
+**As-written text.** Some record reads put the standardized text in
+`place.original` and keep what the record says only in the `Original` value of
+the same `Place` field (`labelId` like `EVENT_PLACE_ORIG`). When
+`place.original` equals an `Interpreted` text of that field and the field holds
+exactly one `Original` text, different from it, `place` is that `Original`
+text.
+
+The `description` reference is otherwise dropped; richer place data lives in
+the top-level `places[]` array (Rule 12).
 
 A census or register answer that names no place ("Same House", "Same Place",
 "Do", "Rural", …: `NON_PLACE_PHRASES` in `place-resolver.ts`, whole text
@@ -404,8 +457,8 @@ standardizes as usual.
 `toGedcomX` writes only `{ original: placeString }` and ignores
 `standard_place` on the reverse path.
 
-Free-text places with no `normalized` value are left without a
-`standard_place` by the pure converter. The async wrapper
+Free-text places with no standardized value (neither step above) are left
+without a `standard_place` by the pure converter. The async wrapper
 `toSimplifiedStandardized` fills them by resolving `place` through
 `place_search` (network) — deduping identical strings, resolving ≤8 in
 parallel, best-effort (never throws, leaves the field empty on failure).
@@ -417,7 +470,7 @@ run `standardizePlaces` over the flattened facts of a multi-result response
 (`record_search` / `person_search`). The pure `toSimplified` remains for
 callers that want no I/O. Exception — `record_read`'s live path calls the pure
 `toSimplified`, not `toSimplifiedStandardized`: it keeps whatever `standard_place`
-the response's own `normalized` value supplies, and never falls back to the
+the record itself carries (step 2 above), and never falls back to the
 resolver. See `docs/record-read-sidecar-scope.md` for the measurement and
 rationale.
 
@@ -581,7 +634,10 @@ format as `resource_type` and `coverage`:
 
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
   `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
-  via `repIdToStandardPlace`; `record_read` resolves it to `standard_place`),
+  via `repIdToStandardPlace`), `standard_place` (the name the response's own
+  `places[]` gives that id, when it gives one — a search response names the
+  places its record refers to, keyed by the bare id; a record read's `places[]`
+  carry no names, so `record_read` resolves the id with `repIdToStandardPlace`),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the
