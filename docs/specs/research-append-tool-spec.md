@@ -677,25 +677,44 @@ with a warning rather than kept for the new place:
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
      it: the places the call's other assertions with the same `record_id` name.
-     A bare single-segment place ("Shenandoah") has no context of its own, so
-     the resolver uses that record context: a sibling place whose first segment
-     is the name, or the name after an administrative prefix ("Borough of",
-     "Town of", "City of", "Township of", …), is resolved instead — "New York" is
-     not the fuller form of "York", else a best match typed continent, country,
-     state or province is kept as it is, even against the record's area (a bare
-     "Germany" beside Gettysburg is not Germany Township; the cost: a bare
-     "Washington" beside Kentucky places is the state), else only a candidate
-     whose own name starts with the same word and has a segment equal to a
-     jurisdiction the siblings share counts (a variant-name hit, "Laxton" for
-     "Lexington", never does), else the best match is kept only
-     when FamilySearch types it a jurisdiction (continent, country, state,
-     province, territory, county, district, region, or first/second-level admin
-     division) and is otherwise left unset (genealogist ruling 2026-10-06, option
-     C with fallback B′). Measured on
-     the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
-     of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
-     Temple" to France, and the country guard below cannot catch either, since a
-     one-token place names no country.
+     A bare single-segment place ("Kent", "Shenandoah") names no parent, so
+     FamilySearch's best hit for it is whichever same-named place ranks highest
+     anywhere, and the country guard below cannot catch a wrong one, since a
+     one-token place names no country. The resolver never keeps that hit. In
+     order:
+     1. the bundled one-word list answers, with no search: the text, folded
+        (case, accents, punctuation and spacing; "Co. Clare" is "co clare"), is
+        looked up in `config/one-word-places.json` (`listedOneWordPlace`,
+        `src/utils/one-word-places.ts`), whose value is the place it
+        standardizes to on every record;
+     2. else a sibling place from the record context whose first segment is the
+        name, or the name after an administrative prefix ("Borough of", "Town
+        of", "City of", "Township of", …), is resolved instead — "New York" is
+        not the fuller form of "York";
+     3. else the field is left unset with the warning above.
+
+     The list is the lead's (2026-10-26): "Mis-standardizing a place is worse
+     than not standardizing it", with every listed entry at least 95% right.
+     English historic counties and Irish counties are listed over their foreign
+     namesakes ("Kent" is the English county, "Dublin" County Dublin), and
+     Georgia (the US state), Republic of Georgia, New York, Quebec, Mexico,
+     Washington, New Jersey and Jersey (the Channel Island) are curated. An entry
+     the list holds for one record country only (bare "Ohio", for US records) or
+     excepts in some record countries ("NY", not in Swedish records, where Ny is
+     a parish) is not applied, because the resolver does not know a record's
+     country. The rule it replaces, the genealogist's ruling of 2026-10-06
+     (option C with fallback B′), kept a best hit FamilySearch typed a country,
+     state or other jurisdiction, and searched inside the jurisdiction the
+     siblings share. Measured on the 3,643 one-word facts of matcher-lab m13's
+     held-out records, scored against FamilySearch's own standardization: the old
+     rule (measured at b4741d558) was right on 2,413 and wrong on 168; this rule,
+     re-run on the same recorded FamilySearch responses, is right on 1,686 and
+     wrong on 10, each of the 10 also wrong before, and leaves unset 804 facts the
+     old rule got right. Record context is passed because of the
+     record-structurer trials (2026-10-04): with none, the will's "Shenandoah"
+     beside "Borough of Shenandoah, County of Schuylkill" resolved to New Zealand
+     and "Logan LDS Temple" to France. `dev/build-one-word-places.ts` rebuilds the
+     list from matcher-lab's `m13/one_word_places_final.json`.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`

@@ -409,6 +409,10 @@ Free-text places with no `normalized` value are left without a
 `toSimplifiedStandardized` fills them by resolving `place` through
 `place_search` (network) — deduping identical strings, resolving ≤8 in
 parallel, best-effort (never throws, leaves the field empty on failure).
+A one-segment place ("Kent") is the exception: it is standardized only from
+the bundled one-word list, with no search, and is otherwise left unset — the
+converter passes no record context, so the resolver's sibling route never
+applies (`research-append-tool-spec.md`, lever B).
 A resolved value is also omitted when `countryConsistency(place, resolved)`
 returns `contradiction`: this is a read path with no warning channel to the
 model, so an unset field is the only honest outcome. Tools
