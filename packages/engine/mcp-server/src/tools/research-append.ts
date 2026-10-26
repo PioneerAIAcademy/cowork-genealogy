@@ -7284,6 +7284,14 @@ function applyOne(
           .map((it: any) => [it.id, it.status]),
       );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
+        // Before the completed-item skip: a `plans` update re-sending a completed
+        // item whole could otherwise write a collection_url that was never stored.
+        const storedItem = (Array.isArray(storedPlan?.items) ? storedPlan.items : []).find(
+          (it: any) => it && item && it.id === item.id,
+        );
+        invariantErrors.push(
+          ...collectionUrlInvariants(item, storedCollectionUrls, storedItem?.collection_url),
+        );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -7301,12 +7309,6 @@ function applyOne(
         if (item && storedStatusById.get(item.id) !== item.status) {
           invariantErrors.push(...planItemCapturePendingInvariants(item, research));
         }
-        const storedItem = (Array.isArray(storedPlan?.items) ? storedPlan.items : []).find(
-          (it: any) => it && item && it.id === item.id,
-        );
-        invariantErrors.push(
-          ...collectionUrlInvariants(item, storedCollectionUrls, storedItem?.collection_url),
-        );
       }
     }
   }

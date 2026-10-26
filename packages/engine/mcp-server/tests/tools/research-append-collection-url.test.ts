@@ -12,6 +12,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { researchAppend } from "../../src/tools/research-append.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 let dir: string;
 
@@ -176,6 +177,7 @@ describe("research_append: plan_item.collection_url must be a stored collection"
   });
 
   it("REFUSES, without throwing, when external-collections.json is malformed", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     seed([item()]);
     writeFileSync(join(dir, "external-collections.json"), "{not json", "utf-8");
     const r = await appendItem({ collection_url: STORED });
@@ -208,6 +210,18 @@ describe("research_append: plan_item.collection_url must be a stored collection"
     const r = await run({ section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
       fields: { collection_url: INVENTED, status: "in_progress" } });
     expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  it("REFUSES an unstored url on a COMPLETED item re-sent whole by a plans update, and keeps its own url", async () => {
+    seed([item({ status: "completed", collection_url: STORED })]);
+    storeCollections([STORED]);
+    const bad = await run({ section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [item({ status: "completed", collection_url: INVENTED })] } });
+    expect(bad.ok).toBe(false);
+    expect(JSON.stringify(bad)).toContain("collection_url");
+    const same = await run({ section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [item({ status: "completed", collection_url: STORED }), item({ id: "pli_002", sequence: 2 })] } });
+    expect(same.ok, JSON.stringify(same)).toBe(true);
   });
 
   it("REFUSES an unstored url on an inline item of a plans update", async () => {
