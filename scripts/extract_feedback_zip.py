@@ -28,7 +28,6 @@ def main(argv):
             for info in zf.infolist():
                 # open() checks the local header against orig_filename, which
                 # this leaves alone.
-                info.filename = info.filename.replace("\\", "/")
                 zf.extract(info, dest)
     # Broad on purpose: an encrypted member (RuntimeError), an unsupported
     # method (NotImplementedError) or a corrupt stream (zlib.error) fails the

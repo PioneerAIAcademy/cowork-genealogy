@@ -116,7 +116,6 @@ fi
 mkdir -p "$DEST_DIR"
 # Absolute from here on: the script later cds into it and still reads files
 # through it, which a relative path would resolve a second time.
-DEST_DIR="$(cd "$DEST_DIR" && pwd)"
 if ! "$PY" -I "$SCRIPT_DIR/extract_feedback_zip.py" "$ZIP_PATH" "$DEST_DIR"; then
   echo "Error: extraction failed: $ZIP_PATH" >&2
   exit 1
@@ -254,7 +253,7 @@ if [[ -f "$FB_JSON" ]] && [[ -n "$(tr -d '[:space:]' < "$FB_JSON" 2>/dev/null)" 
     # -I because this runs inside the case directory: without it a json.py
     # from the bundle shadows the stdlib module and runs here. -X utf8 because
     # -I also ignores PYTHONIOENCODING, and the prompt may be non-ASCII.
-    if PY_OUT="$("$PY" -I -X utf8 -c "import json,sys
+    if PY_OUT="$("$PY" -c "import json,sys
 try:
     print(json.load(open(sys.argv[1], encoding='utf-8')).get('user_prompt') or '')
 except Exception:
