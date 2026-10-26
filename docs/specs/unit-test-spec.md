@@ -203,7 +203,7 @@ Format:
 1. Among fixtures whose `tool` matches the call, evaluate each fixture's `args` predicate in declaration order. The first whose predicate matches the call's actual args wins.
 2. If no fixture matches, the harness returns a structured `fixture_not_found` error to the skill and **aborts the run** with `aborted_reason: unmatched_tool_call` (Section 15). The skill ran against an error response, so its output can't be meaningfully graded — the abort is a corpus signal that the test is missing a fixture (or an existing fixture's `args` predicate is wrong), not a quality verdict on the skill.
 
-A fixture's `args` block is **always required and non-empty.** It serves two purposes: routing during dispatch (deciding which fixture answers a given call) and grading via the Tool Arguments base dimension (canonical expected args for the LLM judge to compare against Claude's actual args). The single source of truth keeps the two purposes consistent.
+A fixture's `args` block is **always required and non-empty**, except for a tool that takes no arguments (`NO_ARGUMENT_TOOLS` in `harness/fixtures.py`), whose only call is `{}`. It serves two purposes: routing during dispatch (deciding which fixture answers a given call) and grading via the Tool Arguments base dimension (canonical expected args for the LLM judge to compare against Claude's actual args). The single source of truth keeps the two purposes consistent.
 
 **Predicated fixtures have no usage limit.** A fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates.
 

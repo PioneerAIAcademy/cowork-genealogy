@@ -632,6 +632,15 @@ def replay(
                     entry_id = _next_id(out.research, section)
                     if entry_id is not None:
                         out.synthesised_ids += 1
+            # A re-sent staged ref that was already logged answers with the
+            # existing entry's id and writes nothing, so an id the log already
+            # holds is not a second append.
+            if (
+                name == "research_log_append"
+                and entry_id is not None
+                and any(e.get("id") == entry_id for e in out.research.get("log") or [] if isinstance(e, dict))
+            ):
+                continue
             _apply_op(out.research, op, entry_id, out)
             # An assertion `update` touching a mirrored attribute ALSO rewrites
             # the tree fact minted from it (#2472). The research half is applied
