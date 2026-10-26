@@ -21,6 +21,7 @@
     "scenario_notes": null
   },
   "execution": {
+    "sdk_message_silence_seconds": 360,
     "max_wall_clock_seconds": 480
   },
   "mcp_fixtures": [
