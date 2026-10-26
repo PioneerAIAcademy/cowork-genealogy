@@ -205,7 +205,7 @@ You hold `planItemId` and `planId`. Set the item once at the end of triage, by h
    ```
    research_log_append({
      projectPath,
-     planItemId: null,
+     planItemId,                   // the hints item; completing it (step 4) needs a log entry that names it
      tool: "person_record_matches",
      query: { id: "LZNY-BRF", recordId: "<hint ark>" },
      outcome: "positive",          // accept → positive, reject → negative
@@ -220,8 +220,8 @@ You hold `planItemId` and `planId`. Set the item once at the end of triage, by h
 3. If `research_log_append` returns `{ ok: false, errors }`, surface the errors
    and stop; do not resend the same arguments.
 4. **Complete the plan item.** Once the verdicts are logged, set the item
-   `completed` — the log entries above are the entry that names it, so this is
-   accepted:
+   `completed` — the verdict entries above name it (`plan_item_id = planItemId`),
+   which is the attribution the engine requires to complete it:
 
    ```
    research_append({ projectPath, section: "plan_items", op: "update",

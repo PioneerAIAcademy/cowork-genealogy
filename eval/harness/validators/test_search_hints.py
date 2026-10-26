@@ -192,10 +192,12 @@ def test_thin_hint_is_not_enough_information(agent_returns, text_response, test)
 # --- Record mode --------------------------------------------------------
 
 def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns, text_response, test):
-    """One log entry per stated verdict: tool person_record_matches, no plan
-    item, outcome following the verdict. The accepted hint's log id comes back
-    with its ark, so record-extraction reuses the entry instead of writing a
-    second one."""
+    """One log entry per stated verdict: tool person_record_matches, each naming
+    the fs_hints plan item (`plan_item_id = planItemId`) so record mode can
+    complete the item (the engine refuses a `completed` write with no log entry
+    naming the item), outcome following the verdict. The accepted hint's log id
+    comes back with its ark, so record-extraction reuses the entry instead of
+    writing a second one (issue #3153)."""
     if "record-mode" not in test.get("tags", []):
         pytest.skip("not a record-mode test")
     entries = _new_log_entries(before_state, after_state)
@@ -217,7 +219,10 @@ def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns,
         assert entry.get("tool") == "person_record_matches", (
             f"{pid}: tool is {entry.get('tool')!r}, not 'person_record_matches'"
         )
-        assert entry.get("plan_item_id") is None, f"{pid}: plan_item_id should be null for a hint review"
+        assert entry.get("plan_item_id"), (
+            f"{pid}: a hint-review verdict entry must name its fs_hints plan item "
+            f"(plan_item_id), or record mode cannot complete the item"
+        )
         assert entry.get("outcome") == outcome, (
             f"{pid}: outcome {entry.get('outcome')!r} does not follow the researcher's verdict ({outcome})"
         )

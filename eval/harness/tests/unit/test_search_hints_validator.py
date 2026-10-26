@@ -257,7 +257,7 @@ def test_thin_fails_a_missing_line():
 
 # --- record mode --------------------------------------------------------
 
-def _entry(id_, pid, outcome, tool="person_record_matches", pli=None):
+def _entry(id_, pid, outcome, tool="person_record_matches", pli="pli_h"):
     return {
         "id": id_, "tool": tool, "plan_item_id": pli, "outcome": outcome,
         "query": {"id": "LZNY-BRF", "recordId": f"https://familysearch.org/ark:/61903/1:1:{pid}"},
@@ -302,9 +302,11 @@ def test_record_fails_the_wrong_tool():
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
 
-def test_record_fails_a_plan_item_on_an_ad_hoc_review():
-    log = [_entry("log_006", "M70C", "positive", pli="pli_003"), _GOOD[1]]
-    with pytest.raises(AssertionError, match="plan_item_id should be null"):
+def test_record_fails_a_null_plan_item():
+    # A verdict entry that names no plan item leaves the fs_hints item with no
+    # log naming it, so record mode cannot complete it (issue #3153).
+    log = [_entry("log_006", "M70C", "positive", pli=None), _GOOD[1]]
+    with pytest.raises(AssertionError, match="must name its fs_hints plan item"):
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
 
