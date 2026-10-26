@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import json
 import re
-from typing import NamedTuple
 
 import pytest
 
@@ -367,40 +366,6 @@ _TARGET_RECORD_TYPES = ("church", "vital_record")
 _INDIRECT_JURISDICTION = "trysil"
 
 
-class _ObjectiveTarget(NamedTuple):
-    """What the objective's target record looks like in one scenario.
-    `jurisdiction` and `rationale` are patterns matched case-insensitively
-    with `re.search`. `rationale` narrows a target that shares its place and
-    type with other items (a held death certificate vs. a birth record in the
-    same county); `indirect` names a second place that must neither lead nor
-    gate it."""
-    description: str
-    jurisdiction: str
-    record_types: tuple[str, ...]
-    rationale: str | None = None
-    indirect: str | None = None
-
-
-# The Kongsberg scenario is the default, so a test with no entry here keeps the
-# behaviour this validator shipped with.
-_DEFAULT_OBJECTIVE_TARGET = _ObjectiveTarget(
-    "a baptism record in Kongsberg", _TARGET_JURISDICTION, _TARGET_RECORD_TYPES,
-    indirect=_INDIRECT_JURISDICTION,
-)
-# Issue #1830 item 2: when the objective's facts came from a document the user
-# holds, that document is the target (principle 7's widened trigger). The place
-# matches Chicago or Cook County, since either is a correct way to write it.
-_OBJECTIVE_TARGET_BY_TEST_ID: dict[str, _ObjectiveTarget] = {
-    "ut_research_plan_hdo": _ObjectiveTarget(
-        "Anna Kovač's 1952 death certificate, which the user holds",
-        r"cook|chicago",
-        ("vital_record", "death", "death_record", "death_certificate", "civil_registration",
-         "other"),
-        rationale=r"\bdeath\b|\bcertificate\b",
-    ),
-}
-
-
 def _plan_items_in_sequence(research: dict) -> list[dict]:
     items: list[dict] = []
     for plan in research.get("plans", []) or []:
@@ -423,7 +388,6 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     after = after_state.get("research_json")
     if after is None:
         pytest.skip("missing research.json for diff")
-    spec = _OBJECTIVE_TARGET_BY_TEST_ID.get(test.get("id"), _DEFAULT_OBJECTIVE_TARGET)
 
     items = _plan_items_in_sequence(after)
     if not items:
@@ -432,28 +396,25 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     def juris(item: dict) -> str:
         return str(item.get("jurisdiction") or "").lower()
 
-    def is_target(item: dict) -> bool:
-        return (
-            re.search(spec.jurisdiction, juris(item), re.IGNORECASE) is not None
-            and (spec.indirect is None or spec.indirect not in juris(item))
-            and str(item.get("record_type") or "").lower() in spec.record_types
-            and (
-                spec.rationale is None
-                or re.search(spec.rationale, str(item.get("rationale") or ""), re.IGNORECASE)
-                is not None
-            )
-        )
-
     # An item naming BOTH places cannot be the target. `jurisdiction` is free
     # text and the skill really writes multi-place values -- `r3d`'s own run
     # produced "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway" -- so
     # without this exclusion one item satisfies both the target test and the
     # ahead-of-target test, and relabelling the seq-1 death item makes the
     # identical defect pass. Found in review of #2033.
-    target = next((i for i in items if is_target(i)), None)
+    target = next(
+        (
+            i
+            for i in items
+            if _TARGET_JURISDICTION in juris(i)
+            and _INDIRECT_JURISDICTION not in juris(i)
+            and str(i.get("record_type") or "").lower() in _TARGET_RECORD_TYPES
+        ),
+        None,
+    )
     assert target is not None, (
         f"no plan item targets the objective's record "
-        f"({spec.description}: record_type in {spec.record_types}); "
+        f"(record_type in {_TARGET_RECORD_TYPES} in {_TARGET_JURISDICTION.title()}); "
         f"items were: "
         + ", ".join(
             f"seq {i.get('sequence')} {i.get('record_type')}/{i.get('jurisdiction')}"
@@ -472,7 +433,8 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     # what precedes it is not the point.
     ahead = [i for i in items if (i.get("sequence") or 0) < target_seq]
     assert not ahead, (
-        f"the objective names {spec.description}, but "
+        f"the objective asks for a baptism record in "
+        f"{_TARGET_JURISDICTION.title()} and supplies the place, but "
         f"{len(ahead)} item(s) are sequenced "
         f"ahead of it (target is seq {target_seq}):\n  - "
         + "\n  - ".join(
@@ -482,20 +444,22 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
         )
     )
 
-    # The target must not be reachable only via an indirect item. With no
-    # indirect place named, any parent gates it: a held document is read first,
-    # never only when some other search comes back empty.
+    # The target must not be reachable only via an indirect item.
     fallback_of = target.get("fallback_for")
     if fallback_of:
         parent = next((i for i in items if i.get("id") == fallback_of), None)
-        gated = parent is not None and (spec.indirect is None or spec.indirect in juris(parent))
-        assert not gated, (
+        assert parent is None or _INDIRECT_JURISDICTION not in juris(parent), (
             f"the objective's target item {target.get('id')} is a "
-            f"fallback_for {fallback_of} "
-            f"({parent.get('jurisdiction') if parent else '?'}) "
-            f"— the requested record must not be gated behind an "
+            f"fallback_for {fallback_of}, a {_INDIRECT_JURISDICTION.title()} "
+            f"item — the requested record must not be gated behind an "
             f"indirect source"
         )
+# ===========================================================================
+# Deterministic checks over newly written plans (issue #1866, research-plan
+# deep dive #1650). Unlike the tag-gated validators above these run on EVERY
+# research-plan test and skip only when the run added no new plan: a tag
+# nobody sets is how a validator runs, passes, and cannot fail (#1755, #1788).
+# ===========================================================================
 
 
 # --- Tag-gated: a pension item reaches past the question's window -----------
