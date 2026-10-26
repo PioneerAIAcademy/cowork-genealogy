@@ -800,16 +800,29 @@ _STILL_TO_SEARCH_CUE = re.compile(
     r"|remain(?:s|ing)? unsearched|still (?:to search|unsearched)|unexamined|next step",
     re.I,
 )
+_FOOTNOTE_DEF = re.compile(r"[ \t]*(?:\^(\d+)|\[\^(\d+)\]:)[ \t]")
+_FOOTNOTE_REF = re.compile(r"\^(\d+)|\[\^(\d+)\]")
+
+
+def _footnote_number(line):
+    m = _FOOTNOTE_DEF.match(line)
+    return (m.group(1) or m.group(2)) if m else None
 
 
 def _still_to_search_text(text):
     """Each section's text, split at heading lines, from its first
-    still-to-search cue to its end."""
+    still-to-search cue to its end. A footnote there counts only when that
+    text cites it: the footnotes gather every citation in the narrative,
+    those of records it reports as searched too."""
     parts = []
     for para in re.split(r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$))", text or "", flags=re.M):
         m = _STILL_TO_SEARCH_CUE.search(para)
         if m:
-            parts.append(para[m.start():])
+            lines = para[m.start():].split("\n")
+            kept = [line for line in lines if _footnote_number(line) is None]
+            cited = {a or b for a, b in _FOOTNOTE_REF.findall("\n".join(kept))}
+            kept += [line for line in lines if _footnote_number(line) in cited]
+            parts.append("\n".join(kept))
     return "\n".join(parts)
 
 
