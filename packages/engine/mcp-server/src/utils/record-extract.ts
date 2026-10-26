@@ -1601,9 +1601,15 @@ export const WITHHELD_SUSPICIOUS = "[withheld: suspicious text]";
  * (lead, 2026-09-29: "the record, the people on it and the key facts extracted,
  * plus any defaulted-classification warnings. Not every assertion, and not bare
  * counts"). The caller never sees the record, so this is the only account of it
- * that reaches the researcher.
+ * that reaches the researcher. `unresolvedPlaces` are the places the write found
+ * no standard form for: this extraction cannot tell a lookup that missed from
+ * one never made, so the writer passes them in.
  */
-export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult): string {
+export function summarizeExtraction(
+  doc: ExtractDocument,
+  result: ExtractResult,
+  unresolvedPlaces: readonly string[] = [],
+): string {
   const gx = doc.gedcomx ?? {};
   const title = collectionTitle(gx) ?? `record ${doc.recordId}`;
   const lines: string[] = [];
@@ -1615,8 +1621,8 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
   // from every line below: this summary is relayed verbatim into the caller's
   // context, where it would read as an instruction rather than data.
   const flagged = (a: ExtractedAssertion | undefined) => a !== undefined && isSuspiciousText(a.informant_bias_notes);
-  // A relationship's value names the other person ("son of Thomas Flynn"), and
-  // any other value may.
+  // A flagged person's name, wherever any line would print it: a relationship's
+  // value names the other person ("son of Thomas Flynn"), and any other text may.
   const flaggedNames = result.assertions.filter((a) => a.fact_type === "name" && a.value && flagged(a)).map((a) => a.value);
   const withholdNames = (text: string) => flaggedNames.reduce((t, n) => t.split(n).join(WITHHELD_SUSPICIOUS), text);
   const event = result.assertions.find((a) => a.fact_type === result.recordType && (a.date || a.place));
@@ -1634,8 +1640,7 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
     byPersona.set(key, arr);
   }
   for (const as of byPersona.values()) {
-    const nameA = as.find((a) => a.fact_type === "name");
-    const name = !nameA ? "(unnamed)" : flagged(nameA) ? WITHHELD_SUSPICIOUS : nameA.value;
+    const name = as.find((a) => a.fact_type === "name")?.value ?? "(unnamed)";
     const facts = as
       .filter((a) => a.fact_type !== "name" && a.fact_type !== "sex")
       .filter((a) => !(result.recordType === "census" && a.fact_type === "census"))
@@ -1660,8 +1665,7 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
           body += ` (per ${a.informant_bias_notes!.match(/stated on (\d+)/)?.[1] ?? "other"} household line(s))`;
         }
         return body;
-      })
-      .map(withholdNames);
+      });
     lines.push(`- ${name} (${as[0].record_role})${facts.length ? ": " + facts.join("; ") : ""}.`);
   }
 
@@ -1680,6 +1684,7 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
       );
     }
   }
+  // Names withheld before the dates are read, so no date is read out of one.
   const calendar = calendarFlags(
     result.assertions.filter((a) => !flagged(a)).map((a) => ({ date: a.date, value: withholdNames(a.value) })),
   );
@@ -1703,5 +1708,7 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
         `classification: no table row covers a ${result.recordType.replace(/_/g, " ")} record yet.`,
     );
   }
-  return lines.join("\n");
+  const places = [...new Set(unresolvedPlaces)];
+  if (places.length > 0) lines.push(`Places kept as written, with no standard place found: ${places.join("; ")}.`);
+  return lines.map(withholdNames).join("\n");
 }

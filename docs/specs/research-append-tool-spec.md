@@ -670,16 +670,23 @@ A place-of-event variant's place lifted from `value` before the levers run
 like any other, with two differences. A lookup naming a different country
 (Lever A) is dropped with a warning, not a refusal: the writer of a document
 cannot supply a `standard_place`, so a refusal would lose every assertion in it.
-A geocoded answer the country check cannot judge is kept only when its own name,
-its first segment, is one of the place text's comma parts (compared ignoring
-case, accents, periods, type words and an "X of" prefix): "Hilperton,
-Wiltshire" keeps "Hilperton, Wiltshire, England, United Kingdom", while "at the
-home of her daughter" drops "Of, Trabzon, Türkiye". A dropped answer leaves the place as
-written, with no `standard_place`. The lift holds on an append and on an update
-that leaves `place` alone, such as an `informant_bias_notes` note or
-`extraction_append`'s question tie. On such an update the lifted place and its
-`standard_place` go onto the stored entry, not into the op, so §3.1 does not
-treat them as a correction to carry onto a linked tree fact. The levers:
+A geocoded answer the country check cannot judge is dropped too when the text's
+trailing comma part names a country the alias table knows, since the answer
+then names none it knows: "March, Cambridgeshire, England" drops "March,
+Transvaal, South Africa", a country the table does not carry. Otherwise it is
+kept only when the text is one comma part, which the resolver's bare-name rule
+(Lever B) has already judged, or when the answer's own name, its first
+segment, is one of the text's comma parts (compared ignoring case, accents,
+periods, type words and an "X of" prefix): "Hilperton, Wiltshire" keeps
+"Hilperton, Wiltshire, England, United Kingdom" and "Ky" keeps "Kentucky,
+United States", while "at the home of her daughter, Mrs. John Smith" drops
+"Of, Trabzon, Türkiye". A dropped answer leaves the place as written, with no
+`standard_place`. The lift holds on an append and on an update that leaves
+`place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
+question tie. On such an update the lifted place and its `standard_place` go
+onto the stored entry, not into the op, so §3.1 does not treat them as a
+correction to carry onto a linked tree fact, and a stored `standard_place: null`
+stays an opt-out, as on an append. The levers:
 
 - **Lever B — sidecar copy first, never re-geocode what the record resolved.**
   When the op carries a `place` but omits `standard_place` (**strictly absent**;
@@ -721,10 +728,13 @@ treat them as a correction to carry onto a linked tree fact. The levers:
   by Lever A or the value-derived check above) is listed in
   `unresolvedPlaces: string[]`, as well as warned about, and never in
   `resolvedPlaces`. A place on an assertion whose `informant_bias_notes` carry
-  the `[suspicious text` marker is shown as `[withheld: suspicious text]` in
-  every echo, warning and error of these levers, never as written: the record's
-  text can carry an instruction, and `extraction_append`'s summary relays these
-  places verbatim (§11.7).
+  the `[suspicious text` marker is never looked up, by sidecar copy or
+  geocoding: it stays as written, with no `standard_place`, and is neither
+  warned about nor echoed. A refusal of its supplied `standard_place` (Lever A),
+  and the warning that clears its old one when an update corrects its place,
+  show it as `[withheld: suspicious text]`: the record's text can carry an
+  instruction, and `extraction_append`'s summary relays these echoes verbatim
+  (§11.7).
 - **Lever A — country-contradiction guard.** On the op's final
   `place`/`standard_place` pair (supplied or resolved): when the place TEXT's
   trailing comma-token names a recognized country (a small alias table:
@@ -805,16 +815,19 @@ splintering into inconsistent labels, over a form the model added:
   tool lifts the place value into the machine-readable `place` field when neither
   `place` nor `standard_place` is already set (the human `value` of a place-claim
   *is* the place string, e.g. `"Ireland"`). The lift comes before §3.6's lookups,
-  so the lifted place is standardized, as a value-derived place. The `[?]` a
+  on an append and on an update that does not set `standard_place`, so the
+  lifted place is standardized, as a value-derived place. The `[?]` a
   doubted reading ends its `value` with stays in the `value` and is not lifted:
   "Hilperton, Wiltshire [?]" gets the place "Hilperton, Wiltshire", and a `value`
-  that is only `[?]` lifts nothing. An assertion
+  that is only `[?]` lifts nothing. A date is never lifted: a `value` equal to
+  the assertion's `date` (a document's variant given only a date carries it in
+  `value` too, so `{ type: "deathplace", date: "Sunday, March" }` stays a date)
+  or one the date standardizer reads ("26 Jan 1958") stays in `value`. An assertion
   with `record_basis: "absent"` is never lifted: its `value` says what the record
   lacks ("Mary Schreiber, his wife, is not named among the survivors"), not where
   anything happened. Nor is one whose `informant_bias_notes` carry the
   `[suspicious text` marker: its text stays in `value`, which a tree event fact
-  never takes, so it is never looked up, echoed or carried onto the tree as a
-  place. This keeps a birthplace-claim and a
+  never takes, so it is never carried onto the tree as a place. This keeps a birthplace-claim and a
   birth-date claim independently classifiable as two `birth` assertions — the
   census case where a stated birthplace is `direct` while the computed birth year
   is `indirect` — distinguished by field population (`place` set = the
@@ -2766,15 +2779,17 @@ without this line a place miss would never reach the researcher.
 Text from an assertion flagged with the `[suspicious text` marker is withheld
 from every line, printed as `[withheld: suspicious text]`: a flagged fact
 prints only that, without its type, which a document writes freely; the event
-in the first line; a person's name, and that name wherever a fact or the
-calendar line would print it ("son of …"); the places line (§3.6); the
-`Suspicious text:` line, which names the role of each flagged passage and
-nothing of its text; the different-surname lead (which is not written when
-either the head's or the principal's name is flagged) and the note on a census
-whose jurisdiction the relationship-column table lacks (which withholds the
-place of a flagged census fact). The summary is relayed character for
-character into the caller's context, where such text would read as an
-instruction.
+in the first line; a person's name, and that name wherever any line would print
+it, one filter run over every line: a fact or the calendar line ("son of …"),
+the first line, a note and the places line, where an unflagged place names a
+flagged person ("home of his son …"); the `Suspicious text:` line, which names
+the role of each flagged passage and nothing of its text; the different-surname
+lead (which is not written when either the head's or the principal's name is
+flagged) and the note on a census whose jurisdiction the relationship-column
+table lacks (which withholds the place of a flagged census fact). A flagged
+place is never looked up (§3.6), so the places line never names it. The
+summary is relayed character for character into the caller's context, where
+such text would read as an instruction.
 
 ### 11.8 Person mode — a person's attached records, extracted and linked
 

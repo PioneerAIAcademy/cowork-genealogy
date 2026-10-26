@@ -6298,10 +6298,11 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
- *  labels an assertion with one of these, `canonicalizeAssertionLabels` folds
- *  the type into the event (via FACT_TYPE_ALIASES) AND lifts the place value
- *  into the `place` field if it is not already there — so the machine-readable
- *  place survives the fold and the assertion reads as the event's place-claim. */
+ *  labels an assertion with one of these, `liftVariantPlace` lifts the place
+ *  value into the `place` field if it is not already there, and
+ *  `canonicalizeAssertionLabels` folds the type into the event (via
+ *  FACT_TYPE_ALIASES) — so the machine-readable place survives the fold and the
+ *  assertion reads as the event's place-claim. */
 const PLACE_VARIANT_KEYS = new Set([
   "birthplace",
   "placeofbirth",
@@ -6324,18 +6325,37 @@ function valuePlaceText(entry: Record<string, unknown>): string {
 }
 
 /** `value` may be lifted into `place`: neither `place` nor `standard_place` is
- *  set, the value holds text, and the assertion is not an absence, whose value
+ *  set, the value holds text that is not a date (the assertion's own `date`, as
+ *  a document's place variant given only a date carries it in `value` too, or
+ *  any text `stdDate` reads), and the assertion is not an absence, whose value
  *  says what the record lacks rather than naming a place, nor flagged as
- *  suspicious text, which stays in `value`: as a place it would be looked up,
- *  echoed and carried onto the tree. */
+ *  suspicious text, which stays in `value`: as a place it would be carried onto
+ *  the tree. */
 function placeLiftable(entry: Record<string, unknown>): boolean {
+  const text = valuePlaceText(entry);
   return (
     isBlank(entry.place) &&
     isBlank(entry.standard_place) &&
-    !isBlank(valuePlaceText(entry)) &&
+    !isBlank(text) &&
+    text !== entry.date &&
+    stdDate(text) === "" &&
     entry.record_basis !== "absent" &&
     !isSuspiciousText(entry.informant_bias_notes as string | undefined)
   );
+}
+
+/** Why a value-derived place drops a geocoded answer the country check could
+ *  not judge, or null to keep it. When the text names a country the check
+ *  knows, the answer names none it knows. When the text has more than one comma
+ *  part, the answer's own name, its first segment, must be one of them; a
+ *  one-part text is the resolver's bare-name rule's to judge. */
+function unconfirmedValueAnswer(place: string, standardPlace: string): string | null {
+  const parts = placeSegments(place);
+  if (canonicalCountry(parts[parts.length - 1] ?? "") !== null) return "does not name the country the text names";
+  if (parts.length > 1 && !standardPlaceNamedInText(place, standardPlace)) {
+    return "could not be confirmed, as the text names neither a country nor that place";
+  }
+  return null;
 }
 
 /** A folded place-of-event variant must keep its place machine-readable: lift
@@ -6354,14 +6374,14 @@ function liftVariantPlace(entry: Record<string, unknown>): boolean {
 
 /** Best-effort canonicalization of an assertion's `fact_type` in place. Maps a
  *  known alias (by normalized key) to its canonical spelling, and folds a
- *  place-of-event variant into the event type while lifting its place value into
- *  the `place` field (see the doc comment on FACT_TYPE_ALIASES). Leaves an
- *  unrecognized value untouched (open enum). No-op for a non-assertion entry
- *  (only assertions carry `fact_type`) or a non-string value. */
+ *  place-of-event variant into the event type, whose place value `prepareOps`
+ *  has already lifted into the `place` field (see the doc comment on
+ *  FACT_TYPE_ALIASES). Leaves an unrecognized value untouched (open enum). No-op
+ *  for a non-assertion entry (only assertions carry `fact_type`) or a non-string
+ *  value. */
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
-  liftVariantPlace(entry);
   const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
@@ -8276,9 +8296,8 @@ async function prepareOps(
   };
 
   // A place variant's place given only in `value` ("birthplace") is lifted into
-  // `place` here, before the lookups below, which applyOne's fold would
-  // otherwise do after them. It is a value-derived place, whose lookup
-  // applyPlaceLevers must confirm.
+  // `place` here, before the lookups below and applyOne's fold. It is a
+  // value-derived place, whose lookup applyPlaceLevers must confirm.
   const liftedFromValue = new Set<object>();
   for (const op of ops) {
     if (op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object") {
@@ -8302,20 +8321,22 @@ async function prepareOps(
    *  standard_place contradicting the place's country is an error, unless
    *  `dropContradiction` or the place is `valueDerived` (lifted from `value`),
    *  when the lookup is dropped instead. A value-derived place keeps a geocoded
-   *  answer the country check cannot judge only when the answer's own name is
-   *  in the place text. A dropped lookup is warned about and listed in
-   *  unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
-   *  as suspicious text is echoed as WITHHELD_SUSPICIOUS, never as written. */
+   *  answer the country check cannot judge only when the text names no country
+   *  the check knows, and, for a text of more than one comma part, the answer's
+   *  own name is one of them: a one-part text is the resolver's bare-name rule's
+   *  to judge. A dropped lookup is warned about and listed in unresolvedPlaces,
+   *  never in resolvedPlaces. A place on an assertion flagged as suspicious text
+   *  is never looked up, and a refusal shows it as WITHHELD_SUSPICIOUS. */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
     matchedRecord: any,
     { dropContradiction = false, valueDerived = false }: { dropContradiction?: boolean; valueDerived?: boolean } = {},
   ): Promise<void> => {
-    const shown: string = isSuspiciousText(entry.informant_bias_notes) ? WITHHELD_SUSPICIOUS : entry.place;
+    const flaggedText = isSuspiciousText(entry.informant_bias_notes);
     const unresolved = (why = "") => {
-      warnings.push(`could not resolve standard_place for '${shown}' (left unset)${why}`);
-      unresolvedPlaces.push(shown);
+      warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)${why}`);
+      unresolvedPlaces.push(entry.place);
     };
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
@@ -8324,6 +8345,7 @@ async function prepareOps(
     // ("Same House") is left unset, silently: it has no standard form.
     let filled: "sidecar" | "geocoded" | null = null;
     if (
+      !flaggedText &&
       factText(entry.place) !== undefined &&
       entry.standard_place === undefined &&
       !isNonPlacePhrase(factText(entry.place)!)
@@ -8364,7 +8386,7 @@ async function prepareOps(
       errors.push(
         fmt(
           i,
-          `standard_place '${sp}' contradicts place '${shown}' — the place text ` +
+          `standard_place '${sp}' contradicts place '${flaggedText ? WITHHELD_SUSPICIOUS : entry.place}' — the place text ` +
             "names a different country. Re-resolve with place_search / place_search_all and supply the " +
             "correct standard_place, or set standard_place: null if no standard form exists.",
         ),
@@ -8372,19 +8394,20 @@ async function prepareOps(
       return;
     }
     if (verdict === "unverifiable" && filled === "geocoded") {
-      if (valueDerived && !standardPlaceNamedInText(entry.place, sp)) {
+      const unconfirmed = valueDerived ? unconfirmedValueAnswer(entry.place, sp) : null;
+      if (unconfirmed) {
         delete entry.standard_place;
-        unresolved(`: the lookup's answer '${sp}' could not be confirmed, as the text names neither a country nor that place`);
+        unresolved(`: the lookup's answer '${sp}' ${unconfirmed}`);
         return;
       }
       warnings.push(
-        `resolved standard_place '${sp}' for place '${shown}' — the country ` +
+        `resolved standard_place '${sp}' for place '${entry.place}' — the country ` +
           "could not be cross-checked (either the place text names no country, or the standard place " +
           "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
           "right place",
       );
     }
-    if (filled) resolvedPlaces.push({ place: shown, standardPlace: sp, source: filled });
+    if (filled) resolvedPlaces.push({ place: entry.place, standardPlace: sp, source: filled });
   };
 
   for (let i = 0; i < ops.length; i++) {
@@ -8574,16 +8597,17 @@ async function prepareOps(
     const cur = ((research.assertions ?? []) as any[]).find((a: any) => a?.id === op.entryId);
     if (!cur) continue;
     const setsPlace = Object.prototype.hasOwnProperty.call(fields, "place");
-    // A stored place variant still holding its place in `value` gets it lifted by
-    // applyOne's fold, after these lookups, so it is lifted here. Onto the stored
-    // entry when the op leaves `place` alone: a note or a question tie is not a
-    // place correction for rewriteLinkedFacts to carry onto the tree.
+    // A stored place variant still holding its place in `value` gets it lifted
+    // here, before the lookups. Onto the stored entry when the op leaves `place`
+    // alone: a note or a question tie is not a place correction for
+    // rewriteLinkedFacts to carry onto the tree. A stored `standard_place: null`
+    // stays an opt-out, as on an append.
     const merged = { ...cur, ...fields };
     const lifted = liftVariantPlace(merged);
     if (lifted) {
       if (!setsPlace) {
         cur.place = merged.place;
-        const view: any = { ...merged, standard_place: undefined };
+        const view: any = { ...merged };
         await applyPlaceLevers(view, i, null, { dropContradiction: true, valueDerived: true });
         if (typeof view.standard_place === "string") cur.standard_place = view.standard_place;
         continue;
