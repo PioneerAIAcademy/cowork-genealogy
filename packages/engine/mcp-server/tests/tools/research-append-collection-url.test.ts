@@ -129,6 +129,33 @@ describe("research_append: plan_item.collection_url must be a stored collection"
     expect(storedPlans()[0].items[1].collection_url).toBe(STORED);
   });
 
+  it("ACCEPTS another spelling of a stored collection, compared by the dedupe key", async () => {
+    seed([item()]);
+    storeCollections([STORED]);
+    for (const spelling of [
+      "https://www.ancestry.com/search/collections/7163",
+      "https://search.ancestry.com/search/db.aspx?dbid=7163",
+      "https://www.ancestry.com/search/collections/7163/?name=Flynn",
+    ]) {
+      const r = await appendItem({ collection_url: spelling });
+      expect(r.ok, `${spelling}: ${JSON.stringify(r)}`).toBe(true);
+    }
+  });
+
+  it("REFUSES an unstored id in another spelling", async () => {
+    seed([item()]);
+    storeCollections([STORED]);
+    const r = await appendItem({ collection_url: "https://search.ancestry.com/search/db.aspx?dbid=9093" });
+    expect(r.ok).toBe(false);
+  });
+
+  it("does not check a status update that does not touch collection_url", async () => {
+    seed([item({ repository: "Ancestry", collection_url: INVENTED })]);
+    const r = await run({ section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { status: "in_progress" } });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
   it("REFUSES a url that is not stored, and writes nothing", async () => {
     seed([item()]);
     storeCollections([STORED]);

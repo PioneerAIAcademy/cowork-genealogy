@@ -78,7 +78,7 @@ export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
-import { readExternalCollections, EXTERNAL_COLLECTIONS_FILE } from "../utils/external-collections-store.js";
+import { collectionKey, readExternalCollections, EXTERNAL_COLLECTIONS_FILE } from "../utils/external-collections-store.js";
 import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
@@ -5084,24 +5084,37 @@ function planItemSkipInvariants(
   return errors;
 }
 
-/** The curated collection urls in `external-collections.json`, or why they could
- *  not be read. Read once per call, before the sync apply loop, and only when an
- *  op mentions `collection_url`. */
-export type StoredCollectionUrls = { urls: ReadonlySet<string> } | { error: string };
+/** The curated collections in `external-collections.json`, by `collectionKey`, or
+ *  why they could not be read. Every place's rows, so a plan item's free-text
+ *  jurisdiction never has to be matched to a stored place. Read once per call,
+ *  before the sync apply loop, and only when an op sets `collection_url`. */
+export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
 
 async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
   try {
     const doc = await readExternalCollections(projectPath);
-    const urls = new Set<string>();
+    const keys = new Set<string>();
     for (const entry of Object.values(doc?.places ?? {})) {
       for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
-        if (typeof row?.url === "string") urls.add(row.url);
+        if (typeof row?.url === "string") keys.add(collectionKey(row.url));
       }
     }
-    return { urls };
+    return { keys };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/** Whether any op sets a plan item's `collection_url`, directly or on an inline
+ *  `items[]` entry of a `plans` op. Reads the fields, never a serialization: an op
+ *  can hold a value JSON cannot encode. */
+function opsSetCollectionUrl(ops: readonly ResearchAppendOp[]): boolean {
+  const has = (o: unknown) => !!o && typeof o === "object" && Object.hasOwn(o, "collection_url");
+  return ops.some((op: any) =>
+    [op?.entry, op?.fields].some(
+      (body) => has(body) || (Array.isArray(body?.items) && body.items.some(has)),
+    ),
+  );
 }
 
 /** A plan item's `collection_url` must be a curated collection FamilySearch
@@ -5129,14 +5142,14 @@ function collectionUrlInvariants(
         "or omit collection_url.",
     ];
   }
-  if (stored.urls.size === 0) {
+  if (stored.keys.size === 0) {
     return [
       `plan_items[${pid}]: collection_url '${url}' is not a stored curated collection — nothing is ` +
         `stored for this project yet. Fetch the place with external_links_search({standardPlace, ` +
         `projectPath}) first, then ${remedy.charAt(0).toLowerCase()}${remedy.slice(1)}`,
     ];
   }
-  if (!stored.urls.has(url)) {
+  if (!stored.keys.has(collectionKey(url))) {
     return [
       `plan_items[${pid}]: collection_url '${url}' is not in ${EXTERNAL_COLLECTIONS_FILE}. ${remedy}`,
     ];
@@ -8627,7 +8640,7 @@ export async function researchAppend(
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
 
-    const storedCollectionUrls = JSON.stringify(ops).includes("collection_url")
+    const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
       : undefined;
 
