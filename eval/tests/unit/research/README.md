@@ -75,6 +75,17 @@ validators skip the router's denied hand-offs. Because nothing else runs, this
 suite's snapshot carries only the frontmatter of the agents it does not run
 (`<agent>.md#frontmatter`), and a body-only edit to one leaves its run log active.
 
+## Hosted project tests
+
+`project_list` is live, so every test gets the folder answer the desktop
+extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
+`project-list-hosted-flynn`, the answer a hosted server gives a signed-in user
+with one project. They are the hosted pairs of `ut_research_tsi` and
+`ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
+validators that read which `projectPath` the router took from that answer. The
+mock serves every project tool from the test's one workspace, whatever path is
+passed, so each test's scenario is the project its route should open.
+
 ## Agent dispatch tests (issue #1851)
 
 Every agent the routing table spawns is the asserted first hand-off of at least

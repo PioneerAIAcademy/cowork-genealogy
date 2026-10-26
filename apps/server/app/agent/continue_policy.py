@@ -161,12 +161,17 @@ def delivered_stop_reason(summary: str | None) -> str:
 def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """An allow-with-rewrite forcing a delegation to the foreground, or None.
 
-    The one hook arm on either plane that CHANGES a call rather than refusing it.
-    Returns None when the call is not a delegation, or when it already carries an
-    explicit `run_in_background: False`. Every other shape is rewritten, because
-    the CLI backgrounds an agent when the key is absent (2.1.220, and still on 2.1.294:
-    "Agents run in the background by default") and both measured incidents carried no
-    key at all.
+    One of the two hook arms that CHANGE a call rather than refusing it (the alpha's
+    effort arm is the other). Returns None when the call is not a delegation, or when it
+    already carries an explicit `run_in_background: False`. Every other shape is
+    rewritten, because the CLI backgrounds an agent when the key is absent ("Agents run
+    in the background by default", its own tool text from 2.1.215 through 2.1.308) and
+    both measured incidents carried no key at all.
+
+    It outlives the Stop veto, which never covered this: see `DELEGATION_TOOLS`. Without
+    it a turn ends while its delegations still run. The prototype worker then kills the
+    CLI (`_run_turn`), so the delegation dies mid-run; on the alpha its report arrives
+    after the turn, where `_drain_background` discards it.
     """
     data = dict(tool_input or {})
     if tool_name not in DELEGATION_TOOLS or data.get("run_in_background") is False:

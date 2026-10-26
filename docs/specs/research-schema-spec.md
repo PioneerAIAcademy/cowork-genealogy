@@ -672,11 +672,12 @@ Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_rea
 | `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches. `validate_research_schema` enforces the `^pli_` prefix here (matching the JSON Schema and the sibling reference fields); a non-`pli_` value such as a question id is invalid. |
 | `performed` | string | yes | ISO 8601 datetime with timezone |
 | `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `person_read`, `image_search`, `external_site`) |
-| `query` | object | yes | Freeform object capturing the search parameters used |
+| `query` | object | yes | Freeform object capturing the search parameters used. For `record_search` it is the call's own echo of its inputs, so a plan-item `recordType` is recorded as sent, not as the upstream types it searched: `land` searched `other`; `tax` `other` and `census`; `court` `other` and `probate`; `vital_record` and `church` `birth`, `marriage` and `death`; `cemetery` `death` (record-search-tool-spec-v2.md) |
 | `outcome` | `log_outcome` | yes | Result of the search |
-| `results_examined` | number | yes | Number of results examined (0 for negative) |
+| `results_examined` | number | yes | Number of results examined (0 for negative). For a staged `record_search` with no caller value, the rows returned; the caller sends fewer only when fewer were triaged |
 | `results_ref` | string or null | no | Relative path to the sidecar file holding this search's raw results (e.g. `results/log_005.json`). Null for nil searches and for entries whose payload could not be faithfully retained. See 5.4.1 |
 | `results_available` | number or null | no | Total hits reported upstream by the tool (e.g. `fulltext_search` `totalResults`). Distinct from `results_examined`; null when the tool reports no total |
+| `staged_ref` | string | no | The `results/.staging/` file the entry's sidecar was finalized from, written by `research_log_append`. Lets a re-sent, already-logged staged ref be answered with this entry from `research.json` alone, with no sidecar read. Absent on entries written before it existed, whose re-log keeps the refusal |
 | `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 
