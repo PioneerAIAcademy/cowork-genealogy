@@ -238,6 +238,12 @@ field on a jurisdiction or collection.
 - **Cover topical breadth.** Don't stop at vital records and census — every record type in the template gets at least its one line.
 - **Cite the FamilySearch Wiki page, not just its title.** Every FamilySearch Wiki tool result carries its page URL — `source_url` on each `wiki_search` result, `url` from `wiki_read` and `wiki_place_page`. When a claim about what records exist, when they begin, or when registration was required comes from the FamilySearch Wiki, give that URL alongside the article title so the researcher can check it. A date or availability claim you cannot attach a returned URL to is not a finding: say the FamilySearch Wiki does not cover it rather than asserting it from memory. The same URLs go in `pages_read[].url` when you persist.
 - **Search adjoining jurisdictions across a border.** A family near a border likely generated records on both sides, so always instruct the researcher to search across it — naming the adjoining counties *and* the towns within them, not just the bordering states or countries. Take the neighbours from the *Neighboring Counties* table on the county's own `_Genealogy` page (Step 3); if that page or table did not come back, give the cross-border instruction anyway and say the neighbours were not listed. Take the level each side recorded at from that side's `{Jurisdiction}_Vital_Records` page: where a jurisdiction created records at **both** town and county level, a county-only survey misses the town series. Because a `jurisdictions[]` entry is locked to `{ name, date_range }`, the cross-border advice itself goes in `quirks[]` (e.g. "Town lies 4 miles from the state line — check the adjoining county's town clerks as well as the home-state county series").
+- **A catalog place-label is not proof of parish membership.** A `volume_search`
+  or `catalog_search` place-string says where FamilySearch filed a volume, not
+  which civil parish a congregation served. When a retrieved page assigns the
+  congregation to another parish, follow the page and say the two disagree. When
+  no tool result settles the parish, say so, and do not place the congregation or
+  recommend its registers as the research parish's own.
 
 ## Re-invocation behavior
 
@@ -445,6 +451,10 @@ is what tells the researcher where to route the search.
 | Ancestry | [list] | Subscription |
 | [Others] | [list] | [Access type] |
 
+[List a repository or online index only with a URL a tool result returned —
+never one from memory — and name which gap (a "Records NOT online" entry or a
+pre-filing-period gap) each index helps fill.]
+
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or
 `totalResults` is higher than the number of volumes detailed, give both
@@ -468,16 +478,20 @@ records do not exist.]
 
 ## Known record losses
 
-[Document any known destructions — courthouse fires, floods, wartime
-damage, intentional destruction — with dates and what was lost. Note
-any substitute sources that partially compensate.]
+[State that a specific record set was destroyed, lost or survived only when a
+tool result says so for that record set, and cite it. A loss a tool result states
+for a whole class of records may be given as cited context, but never narrowed to
+these records; an empty search result is a coverage gap, not a loss. When no tool
+result settles the fate, say so and name the repository a tool result says holds
+the records. Note any substitute sources that partially compensate.]
 
 ## Research tips
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
   inline per the rule "Cite the FamilySearch Wiki page, not just its title",
   i.e. the claim, then the returned page title linked to its returned URL. Take the
   claim from the fetched page; do not carry one over from this template]
-- [Naming conventions or spelling patterns for this area]
+- [Naming conventions or spelling patterns for this area — quote the cited
+  source exactly; do not reverse or alter which relative a naming position names]
 - [Alternative sources when primary records are missing]
 - [Efficient research sequence for this jurisdiction]
 - [Relevant finding aids and research guides to consult]
