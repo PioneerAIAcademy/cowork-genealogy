@@ -3113,6 +3113,25 @@ describe("research_append (Phase 3)", () => {
       expect(errors.some((e) => e.includes("claims[0]"))).toBe(false);
     });
 
+    // ut_proof_conclusion_022: a not_proved maternity claim sent without its
+    // relationship was dropped when told to leave "a claim of any other kind" out.
+    it("a parentage claim with no relationship is told to add it, not to drop it", async () => {
+      for (const extra of [{}, { relationship: null }]) {
+        for (const label of ["maternity", "paternity", "Mother", "parentage"]) {
+          const errors = await refusal([
+            relationshipClaim(),
+            { ...factClaim(extra), claim: label, proof_tier: "not_proved" },
+          ]);
+          const line = errors.find((e) => e.includes("claims[1]"));
+          expect(line, errors.join("\n")).toBeDefined();
+          expect(line).toContain(`claim '${label}' is a parentage claim`);
+          expect(line).toContain('type: "ParentChild"');
+          expect(line).toContain("not_proved included. Do not drop it.");
+          expect(line).not.toContain("leave a claim of any other kind out");
+        }
+      }
+    });
+
     it("a fact claim whose relationship is null", async () => {
       const errors = await refusal([factClaim({ relationship: null })]);
       const line = errors.find((e) => e.includes("claims[0]"));

@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_research_hnp",
+    "skill": "research",
+    "name": "Hosted: a person no listed project is about starts a new project at newProjectPath",
+    "type": "positive",
+    "description": "The hosted pair of ut_research_tsi, with the same message. project_list answers hosted: one project, on the parents of Patrick Flynn, and a fresh newProjectPath. The message names Hannah Pruitt, whom no listed project is about, so the router spawns @plugin:init-project with newProjectPath as projectPath, not the listed project's path and not the working folder. The run ends at that hand-off (execution.stop_at_stub).",
+    "tags": [
+      "routing",
+      "routes-to:init-project",
+      "uses-new-project-path"
+    ]
+  },
+  "input": {
+    "user_message": "Find the parents of Hannah Pruitt, FamilySearch ID LZ00-AAA.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "project-list-hosted-flynn"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "stop_at_stub": true,
+    "stub_skills": [
+      "init-project",
+      "tree-survey",
+      "question-selection"
+    ]
+  },
+  "judge_context": [
+    "project_list answered hosted: one listed project, on Patrick Flynn, at /proj_3f9a1c2e7b4d6a80, and newProjectPath /proj_8c21d0e94fa7b315. The message is about Hannah Pruitt, so the new project belongs at newProjectPath. A deterministic validator (test_new_person_starts_at_new_project_path) checks which projectPath the hand-off names; do not grade that yourself.",
+    "init-project is stubbed and the run ends at the router's first hand-off by design (execution.stop_at_stub). No project is created, and no closing summary or log entry follows the spawn; do not mark any of them as missing.",
+    "ROUTING IS NOT YOURS TO GRADE: the hand-off is asserted deterministically by test_routes_to_expected_skill from the PreToolUse hook records. Grade only the router's own pre-hand-off work: state derivation and narration. The delegation should carry the FamilySearch ID LZ00-AAA."
+  ]
+}

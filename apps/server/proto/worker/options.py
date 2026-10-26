@@ -101,6 +101,8 @@ GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 GATEWAY_AGENT_MODELS = {
     "claude-sonnet-4-6": "us.anthropic.claude-sonnet-4-6",
     "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
+    # Not yet served through TAP's gateway: first seen there at U14's check.
+    "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
 }
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);

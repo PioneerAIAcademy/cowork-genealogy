@@ -179,17 +179,24 @@ already own entry existence (`test_positive_appends_log_entry`) and `outcome`
 honesty (`test_log_outcome_positive_record_search`,
 `test_log_outcome_honest_no_match`). **Do not re-grade any of those here.**
 
-What is left is the part only a reader can judge: whether `query` faithfully
-reproduces the search that was actually run, whether `results_examined` matches
-what was really reviewed, and whether `notes` would help a future researcher.
+What is left is the part only a reader can judge, and it depends on who wrote the
+field. For a search that returned results and was logged with its
+`stagedResultsRef`, `research_log_append` fills `query`, `results_examined`,
+`results_available` and `outcome: "positive"` from the staged search itself, so
+those are the tool's, not the skill's: grade only `notes`, whether an `outcome`
+override was owed and sent (`negative` when the ranker found no match in the
+pool, `partial` for a collection mismatch), and whether a
+lower `results_examined` was sent when fewer rows were triaged than returned. For
+a zero-result search, the skill still writes `query`, `outcome` and
+`results_examined` itself, and they are graded as below.
 
 Judge these from the skill's own account of what it wrote. Sidecar files are
 newly created and do not appear in the file-change diff, so their absence from
 the diff is never evidence.
 
-- **pass:** `query` reproduces the search — the parameters actually sent, not a paraphrase, and complete enough to re-run. `results_examined` matches the number of candidates actually triaged. `notes` is a specific one-liner a later reader could act on ("1850 Schuylkill household matched; 1870 collection-mismatch candidate rejected on collection year"), not a restatement of the query.
-- **partial:** The entry is broadly right but one authored field is thin: `query` omits a parameter that materially shaped the result set; `results_examined` is approximate ("about 3") when an exact count was available; or `notes` is generic ("search completed", "found some results") and carries no information a future reader lacks.
-- **fail:** `query` misrepresents what was searched (wrong parameters, or so abbreviated the search cannot be reconstructed), or `results_examined` is materially wrong in a way that would mislead an exhaustiveness claim.
+- **pass:** Every field the skill authored is right. A skill-written `query` reproduces the search — the parameters actually sent, not a paraphrase, and complete enough to re-run. An `outcome` override is sent where one is owed. `notes` is a specific one-liner a later reader could act on ("1850 Schuylkill household matched; 1870 collection-mismatch candidate rejected on collection year"), not a restatement of the query.
+- **partial:** The entry is broadly right but one authored field is thin: a skill-written `query` omits a parameter that materially shaped the result set; a skill-written `results_examined` is approximate ("about 3") when an exact count was available; or `notes` is generic ("search completed", "found some results") and carries no information a future reader lacks.
+- **fail:** A skill-written `query` misrepresents what was searched (wrong parameters, or so abbreviated the search cannot be reconstructed); a collection mismatch or a no-match pool is left at the tool's `positive` with no override; or a skill-written `results_examined` is materially wrong in a way that would mislead an exhaustiveness claim.
 
 ## Nil escalation
 

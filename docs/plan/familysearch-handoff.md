@@ -168,7 +168,7 @@ CI (`eb-bundles.yml`, Node 24) repeats the build, verify and amd64 smoke on ever
 
 **U28.** Why: an `Alias v1_0` binding (F18) serves `https://<host>/service/<name>/x` from the origin as `/x` with `X-Orig-Base: /service/<name>` (Blueprint's alias binding doc), but the SPA calls root-absolute `/api/…` paths (14 in `apps/web/src` and `packages/viewer-ui/src`), `apps/web` builds with Vite's default `base` of `/`, and `web/app.py` sets its cookies on `path="/"`; `PUBLIC_URL` and F15's redirect must carry the prefix too. Not needed if F18 grants a `CDN Service` host. **Done when:** on compose, behind a proxy that strips a prefix and sets `X-Orig-Base`, sign-in, a turn and its SSE stream work and every request the browser makes stays under the prefix.
 
-**U29.** Why: on FamilySearch's platform an `rds_postgres` service's credentials reach the services that `references` it only through SAS (`rds_postgres` doc, "Credential Secrets": applications read `app_user` from SAS, rotated on each deploy; ade-abbie reads `ps-<blueprint>-<system>-<service>-db` with `sas-client`), not as an environment variable. The instance already carries what the clients need: Blueprint sets `SAS_SITE`, `SAS_MACHINE_CREDENTIAL_URI` and `SAS_USE_INTERNAL_BINDING` on a Beanstalk instance, with no `/etc/fs-sas` or `/tmp/.sas` files (FS112 `hold-probe`, 2026-10-24, n=1), which `sas-client` (Python, Artifactory) and `@fs/sas-client` (Node) both read. The credential works: on that instance `@fs/sas-client` 4.3.0 (installed from Artifactory at build time; it cleared curation) loaded the machine id and key from `SAS_MACHINE_CREDENTIAL_URI` with the instance role, located SAS through the internal binding (`SAS_USE_INTERNAL_BINDING` true), and SAS answered 404 for an object that does not exist, an authenticated refusal, not a 401 or 403 (`hold-probe`, PR fs-eng/search-agent-tools#137, 2026-10-24, n=1). Reading a real database object waits on the database (F14). Web and worker resolve their DSN from the `fchDatabase` object (`fchUser`, `fchPassword`, `fchDbConnectUrl`, a JDBC URL to rewrite) at start and on an authentication failure (the password rotates on deploy); tools does the same in Node; `migrate.py` needs the tables' owner, and the doc names only `app_user` and `app_user_ro` for referencing services, so who holds the owner credential is the DBAs' answer (step 6). Keep the environment DSNs for compose and the U13 rehearsal. **Done when:** on Blueprint, all three tiers and `migrate.py` connect with no DSN in their environment, and a redeploy that rotates the password recovers without a restart.
+**U29.** Why: on FamilySearch's platform an `rds_postgres` service's credentials reach the services that `references` it only through SAS (`rds_postgres` doc, "Credential Secrets": applications read `app_user` from SAS, rotated on each deploy; ade-abbie reads `ps-<blueprint>-<system>-<service>-db` with `sas-client`), not as an environment variable. The instance already carries what the clients need: Blueprint sets `SAS_SITE`, `SAS_MACHINE_CREDENTIAL_URI` and `SAS_USE_INTERNAL_BINDING` on a Beanstalk instance, with no `/etc/fs-sas` or `/tmp/.sas` files (FS112 `hold-probe`, 2026-10-24, n=1), which `sas-client` (Python, Artifactory) and `@fs/sas-client` (Node) both read. The credential works: on that instance `@fs/sas-client` 4.3.0 (installed from Artifactory at build time; it cleared curation) loaded the machine id and key from `SAS_MACHINE_CREDENTIAL_URI` with the instance role, located SAS through the internal binding (`SAS_USE_INTERNAL_BINDING` true), and SAS answered 404 for an object that does not exist, an authenticated refusal, not a 401 or 403 (`hold-probe`, PR fs-eng/search-agent-tools#137, 2026-10-24, n=1). Reading a real database object waits on the database (F14). Web and worker resolve their DSN from the `fchDatabase` object (`fchUser`, `fchPassword`, `fchDbConnectUrl`, a JDBC URL to rewrite) at start and on an authentication failure (the password rotates on deploy); tools does the same in Node; `migrate.py` needs the tables' owner, and the doc names only `app_user` and `app_user_ro` for referencing services, so who holds the owner credential is the DBAs' answer (step 6). Keep the environment DSNs for compose, the U13 rehearsal and the [self-hosted beta](self-hosted-mcp-beta.md). **Done when:** on Blueprint, all three tiers and `migrate.py` connect with no DSN in their environment, and a redeploy that rotates the password recovers without a restart.
 
 ## 2. Preconditions only FamilySearch can answer or do
 
@@ -391,10 +391,48 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
 - List 2 is answered: F5–F9, F11's concurrency question, F16 and F17.
 - More than one worker or tools instance only once U18 has chosen the scaling metric (U6, the fencing it needed, is built).
 
+## Alignment with the self-hosted beta
+
+The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools tiers for Cowork users, with chat off and no worker or queue. The lead makes its changes to the shared code, in that plan. Each change is additive and keeps this plan's behavior as the default:
+- **Web tier:**
+  - a chat switch, on by default;
+  - project-keyed routes beside the session routes;
+  - an admission setting: the allowlist, or a user cap;
+  - a connection pool, and `/livez`;
+  - Claude's OAuth sign-in server on the Python MCP SDK (`mcp` joins `proto-web`);
+  - users looked up by FamilySearch id, under a unique index;
+  - the FamilySearch redirect URI as a setting, the public URL plus `/callback` by default;
+  - with chat off only: a 24-hour session cookie, a single-use sign-in state, the onboarding page at `/`, the policies, the deletion date and the deletion code;
+  - a FamilySearch sign-in budget, off unless set;
+  - OpenRouter linking and a project download;
+  - a feedback sink setting: `FEEDBACK_URL`, else S3 as today.
+- **Web bundle:** an nginx file setting `client_max_body_size 26m` and `proxy_read_timeout 600s`. Today nginx's 1 MB default refuses the web tier's 25 MB uploads here too.
+- **Browser app:** `apps/web` and `packages/viewer-ui` read feature flags from `/auth/config`; a flag it does not send keeps today's behavior.
+- **Schema:** new numbered files from 016.
+- **Tools:**
+  - `project_list`, which here lists the worker's project (PR #3852); a worker bundle with the research router's project step needs a tools tier that has it, so tools deploys first;
+  - G4's writer-tool checks and a `record_search` schema trim, if the beta needs them;
+  - one door that also takes connector tokens, keeps taking the worker's stamped bearer, and answers the worker's refusals 403 as today; a request without the worker's project header needs a connector token;
+  - the HTTP smoke runs every row through its stamped-turn client, which seeds a user, a project that user owns and the turn, and runs a connector client only with `--connector`. Acceptance step 2's bearer becomes the one the seeded turn is stamped with, its no-bearer run passes on the tools' FamilySearch 401s, and its role also needs INSERT and DELETE on users and projects. Every door test that sends no project header (`http-server.test.ts` 1, 2b, 3, 4 and 2e's no-header case, and `http-server-pg.test.ts`'s "no project header") moves to the stamped or connector path;
+  - `projectUrl` and `uploadUrl` only when the tools tier's public-URL and uploads settings are set;
+  - the session-end hook, `auth_status`'s session check, the per-user cap and the 429 pause for connector callers only;
+  - the FamilySearch budget, the transcription cap, the transcription switch and the shared collections cache, each keeping today's behavior when unset.
+
+**Planned after the beta launches** (the beta plan's "After launch" section, February–March 2027): the worker hands its CLI a per-attempt token instead of the patron's FamilySearch token, so the tools tier, not the worker, holds `FS_TOKEN_ENC_KEY`; and server-side refresh goes, so a patron signs in again when FamilySearch ends the session, as a beta user does.
+
+**Later options for this plan.** None is decided. Each would simplify code already built here:
+- polling instead of the SSE stream;
+- no server-held messages, and no automatic resume on redelivery;
+- botocore's SQS client in place of the hand-signed one;
+- a compose shim that models only sqsd;
+- a CDN Service binding for F18, so that U28 is not needed.
+
+**A finding (2026-10-26).** Step 19 and `grants.py` take an 8-hour idle limit from FamilySearch documentation, and the start gate admits a session up to `FS_GRANT_MAX_START_AGE_S` (26,400 s) old. FamilySearch's API reference says an access token expires 24 hours after it is issued, or after 60 unused minutes (`developers.familysearch.org/main/reference/getaccesstoken`); `docs/testing-guides/oauth-tool-testing-guide.md` gives the 8 hours to the refresh token. The refresher renews only a patron with an open turn (`DUE_SQL` in `grants.py`), so the first message after an idle hour can start its run on an expired access token.
+
 ## Not in scope
 
 - The E2B/Fly/Neon alpha's token-refresh race (issue #2887): PR #2977 merged 2026-09-29 (engine 401 re-read; it re-reads only under `LOCAL`, so a bearer is unaffected), PR #2973 merged 2026-09-29.
 - The eval harness: stays ours; U15, U16 port its measurements.
 - `apps/server/dev/p1/` and `apps/server/proto/{seed,export,grade,compare,drive,smoke,turn}.py`: the re-run kit, never deployed.
-- Opaque session tokens replacing the live bearer, unless F8 requires them.
+- Opaque session tokens replacing the live bearer: planned after the beta launches (Alignment with the self-hosted beta, above).
 - The turn-scoped batch ledger: cut 2026-09-10 (P1: a resumed turn re-decides).
