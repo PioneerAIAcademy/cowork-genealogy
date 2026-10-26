@@ -567,8 +567,8 @@ up while the body ran on the main thread, and each cost a run to find.
 ## What is still open
 
 - **`search-records` orientation share (baseline for the handed-state follow-up,
-  issue #3581).** Committed run `eval/runlogs/unit/search-records/v8_2026-10-20_18-41-45.json`
-  (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
+  issue #3581).** Run `v8_2026-10-20_18-41-45`, pruned from the tree and living in
+  commit ee85a63e5 (ids-only delegation): 26 of 27 tests reach `record_search`. The MCP calls before
   the first one are a median of 2 and a mean of 1.77 (min 1, max 3): the
   `research_query` read of `plans`, plus, in 17 of the 26 tests, one or two
   `wiki_read`s of FamilySearch census pages. No question is read. Counting the
