@@ -2479,3 +2479,15 @@ def test_state_and_response_observations_coexist():
     )
     assert "response mentions a volume" in out
     assert "field X missing" in out
+
+
+def test_judge_client_times_out_and_leaves_retries_to_call_judge():
+    """A hung call fails at JUDGE_TIMEOUT_SECONDS, not the SDK's 600 s, and only
+    `_call_judge`'s loop retries it (#2995: one call sat in grading 30+ min)."""
+    from harness.auth import AuthConfig
+    from harness.judge import JUDGE_TIMEOUT_SECONDS, _make_client
+
+    client = _make_client(AuthConfig(skill_runner_mode="api_key", api_key="sk-test", detail="t"))
+    assert client.timeout == JUDGE_TIMEOUT_SECONDS
+    assert JUDGE_TIMEOUT_SECONDS <= 300
+    assert client.max_retries == 0
