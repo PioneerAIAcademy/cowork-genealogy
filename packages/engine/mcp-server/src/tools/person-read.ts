@@ -599,7 +599,7 @@ function mergeDescriptions(
 
   const have = new Set(sources.map((s) => s.id));
   const shaped = shapeSources(
-    descriptions.map(simplifySourceDescription),
+    descriptions.map((d) => simplifySourceDescription(d)),
     descriptions as FSSourceDescription[],
   );
   // A source attached to BOTH the subject and a relative is the common case for a

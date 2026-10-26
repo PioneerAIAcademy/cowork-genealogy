@@ -659,7 +659,8 @@ with no sidecar is not rejected here. Legitimate sidecar-less entries
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
-the base, no sidecar is consulted (geocoding only), a resolved value is written into
+the base, no sidecar value is copied (geocoding only; its sidecar record still gives
+the record's country, below), a resolved value is written into
 the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place:
@@ -676,7 +677,11 @@ with a warning rather than kept for the new place:
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
-     it: the places the call's other assertions with the same `record_id` name.
+     it: the places the call's other assertions with the same `record_id` name,
+     and the record's country — the last segment of the sidecar record's
+     Collection coverage place (its `coverage.standard_place`, else its
+     `coverage.place_rep_id` resolved by id), never read off the record's facts
+     or the place text; none without a sidecar record or a collection coverage.
      A bare single-segment place ("Kent", "Shenandoah") names no parent, so
      FamilySearch's best hit for it is whichever same-named place ranks highest
      anywhere, and the country guard below cannot catch a wrong one, since a
@@ -685,8 +690,13 @@ with a warning rather than kept for the new place:
      1. the bundled one-word list answers, with no search: the text, folded
         (case, accents, punctuation and spacing; "Co. Clare" is "co clare"), is
         looked up in `config/one-word-places.json` (`listedOneWordPlace`,
-        `src/utils/one-word-places.ts`), whose value is the place it
-        standardizes to on every record;
+        `src/utils/one-word-places.ts`). Most entries apply to every record. An
+        entry for one record country ("Texas", US records) applies only when
+        the record's country is that country, and one withheld in some record
+        countries ("Louth", not British records, where it is the Lincolnshire
+        town) only when the record's country is known and another. An
+        accent-exact entry applies only to its accented spellings as written
+        ("Ísland" is Iceland; the English word "Island" is never standardized);
      2. else a sibling place from the record context whose first segment is the
         name, or the name after an administrative prefix ("Borough of", "Town
         of", "City of", "Township of", …), is resolved instead — "New York" is
@@ -698,23 +708,25 @@ with a warning rather than kept for the new place:
      English historic counties and Irish counties are listed over their foreign
      namesakes ("Kent" is the English county, "Dublin" County Dublin), and
      Georgia (the US state), Republic of Georgia, New York, Quebec, Mexico,
-     Washington, New Jersey and Jersey (the Channel Island) are curated. An entry
-     the list holds for one record country only (bare "Ohio", for US records) or
-     excepts in some record countries ("NY", not in Swedish records, where Ny is
-     a parish) is not applied, because the resolver does not know a record's
-     country. The rule it replaces, the genealogist's ruling of 2026-10-06
-     (option C with fallback B′), kept a best hit FamilySearch typed a country,
-     state or other jurisdiction, and searched inside the jurisdiction the
-     siblings share. Measured on the 3,643 one-word facts of matcher-lab m13's
-     held-out records, scored against FamilySearch's own standardization: the old
-     rule (measured at b4741d558) was right on 2,413 and wrong on 168; this rule,
-     re-run on the same recorded FamilySearch responses, is right on 1,686 and
-     wrong on 10, each of the 10 also wrong before, and leaves unset 804 facts the
-     old rule got right. Record context is passed because of the
-     record-structurer trials (2026-10-04): with none, the will's "Shenandoah"
-     beside "Borough of Shenandoah, County of Schuylkill" resolved to New Zealand
-     and "Logan LDS Temple" to France. `dev/build-one-word-places.ts` rebuilds the
-     list from matcher-lab's `m13/one_word_places_final.json`.
+     Washington, New Jersey and Jersey (the Channel Island) are curated. A
+     country, state or province is listed even where a county or town shares its
+     name ("Counties and towns should not block states or countries"; "Costa
+     Rica", "Ohio", "Peru"). The rule it replaces, the genealogist's ruling of
+     2026-10-06 (option C with fallback B′), kept a best hit FamilySearch typed a
+     country, state or other jurisdiction, and searched inside the jurisdiction
+     the siblings share. Measured on the 3,643 one-word facts of matcher-lab
+     m13's held-out records, scored against FamilySearch's own standardization
+     and re-run on the same recorded FamilySearch responses: the old rule
+     (measured at b4741d558) was right on 2,413 and wrong on 168; this rule is
+     right on 2,258 and wrong on 13 with the record's country as this tool
+     derives it, and right on 2,053 and wrong on 13 with no record country (as
+     `tree_edit` and `tree_correct` call it). Each of the 13 was also wrong
+     before. It leaves unset 337 facts the old rule got right (454 with no
+     record country). Record context is passed because of the record-structurer
+     trials (2026-10-04): with none, the will's "Shenandoah" beside "Borough of
+     Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
+     Temple" to France. `dev/build-one-word-places.ts` rebuilds the list from
+     matcher-lab's `m13/one_word_places_final.json`.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`

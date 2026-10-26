@@ -19,6 +19,8 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         return "West Bromwich, Staffordshire, England, United Kingdom";
       return null;
     }),
+    // A sidecar collection's coverage rep (the record's country). Offline.
+    repIdToStandardPlace: vi.fn(async (repId: string) => (repId === "4321" ? "Coahuila, Mexico" : null)),
     // The birthplace cap's distance test (#3390). Unknown names resolve to null,
     // so no test reaches the live Places API.
     standardPlaceToCoords: vi.fn(async (name: string) => {
@@ -76,7 +78,12 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
+import {
+  resolveStandardPlace,
+  repIdToStandardPlace,
+  standardPlaceToCoords,
+  checkFirstPlace,
+} from "../../src/utils/place-resolver.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -8935,10 +8942,89 @@ describe("research_append (composite persist + enforcement)", () => {
       ],
     });
     expect(r.ok, JSON.stringify(r)).toBe(true);
-    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
-      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith(
+      "Shenandoah",
+      expect.objectContaining({ contextPlaces: ["Borough of Shenandoah, County of Schuylkill"] }),
+    );
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith(
+      "Dublin, Ireland",
+      expect.objectContaining({ contextPlaces: [] }),
+    );
+  });
+
+  /** The record country research_append offered the resolver for `place`. */
+  const countryGiven = async (place: string) => {
+    const call = vi.mocked(resolveStandardPlace).mock.calls.find(([text]) => text === place);
+    expect(call, place).toBeDefined();
+    return call![1]!.recordCountry!();
+  };
+
+  /** sidecarRecord() whose collection covers `coverage`; its record's own
+   *  coverage is a Texas place, which must never count. */
+  const recordInCollection = (coverage: Record<string, string> | null) => {
+    const rec: any = sidecarRecord();
+    rec.gedcomx.sources = [
+      { id: "SD-R", resource_type: "Record", coverage: { standard_place: "Austin, Travis, Texas, United States" } },
+      ...(coverage ? [{ id: "SD-C", resource_type: "Collection", coverage }] : []),
+    ];
+    return rec;
+  };
+
+  const appendFromRecord = (place: string) => ({
+    section: "assertions" as const,
+    op: "append" as const,
+    entry: { ...noId(validAssertion("x", "src_001")), record_id: "ark:/61903/1:1:ABCD-123", log_entry_id: "log_001", place },
+  });
+
+  it("offers the resolver the record's country: its collection's coverage place", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([recordInCollection({ standard_place: "Forêts, France", place_rep_id: "4321" })]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Luxemburg")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Luxemburg")).toBe("France");
+  });
+
+  it("resolves the collection's coverage rep id by id when the sidecar names no coverage place", async () => {
+    vi.mocked(repIdToStandardPlace).mockClear();
+    await writeProject(sidecarResearch());
+    await writeSidecar([recordInCollection({ place_rep_id: "4321" })]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Texas")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBe("Mexico");
+    expect(vi.mocked(repIdToStandardPlace)).toHaveBeenCalledWith("4321");
+  });
+
+  it("never reads the record's country off its places: with no collection coverage there is none", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([recordInCollection(null)]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [appendFromRecord("Texas"), appendFromRecord("Austin, Travis, Texas, United States")],
     });
-    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBeNull();
+  });
+
+  it("offers the record's country when an update corrects an assertion's place", async () => {
+    const research = sidecarResearch();
+    research.assertions.push({
+      ...validAssertion("a_002"),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      record_persona_id: "p_1",
+      log_entry_id: "log_001",
+      place: "Pottsville, Pennsylvania",
+    });
+    await writeProject(research);
+    await writeSidecar([recordInCollection({ standard_place: "Forêts, France" })]);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_002",
+      fields: { place: "Luxemburg" },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Luxemburg")).toBe("France");
   });
 
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {

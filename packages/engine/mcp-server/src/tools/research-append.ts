@@ -57,6 +57,7 @@ import {
   UK_CONSTITUENTS,
   placeTypeKey,
   resolveStandardPlace,
+  repIdToStandardPlace,
   countryConsistency,
   isNonPlacePhrase,
   checkFirstPlace,
@@ -7552,6 +7553,26 @@ function sidecarStandardPlace(gx: any, place: string): string | null {
   return null;
 }
 
+/** A sidecar result's record id: record_search and record_read stage GedcomX
+ *  personas keyed on `recordId`, the persona-less producers (full text,
+ *  external links) transcripts keyed on `id` (#2038). */
+function sidecarResultId(tool: string, r: any): string | undefined {
+  const v = PERSONA_BEARING_PRODUCERS.has(tool) ? r?.recordId : r?.id;
+  return typeof v === "string" ? v : undefined;
+}
+
+/** The country of a sidecar record: the last segment of its Collection source's
+ *  coverage place, which is the coverage's `standard_place` (a live
+ *  `record_read` resolves it), else its `place_rep_id` resolved by id. Null when
+ *  the record names no collection coverage. Never read off the record's facts. */
+async function recordCountryOf(gx: any): Promise<string | null> {
+  const sources: any[] = Array.isArray(gx?.sources) ? gx.sources : [];
+  const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
+  let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
+  if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
+  return place ? (placeSegments(place).at(-1) ?? null) : null;
+}
+
 interface PreparedOps {
   treeMutated: boolean;
   /** Attestations for every record a `person_evidence` op in this batch links
@@ -8249,12 +8270,15 @@ async function prepareOps(
 
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
-   *  `dropContradiction`, when it is left unset instead. */
+   *  `dropContradiction`, when it is left unset instead. `countryRecord` is the
+   *  sidecar record the assertion comes from, whose collection gives the
+   *  resolver the record's country (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
     matchedRecord: any,
     dropContradiction = false,
+    countryRecord: any = matchedRecord,
   ): Promise<void> => {
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
@@ -8280,7 +8304,8 @@ async function prepareOps(
         try {
           const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
             .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+          const recordCountry = () => recordCountryOf(countryRecord?.gedcomx);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces, recordCountry })) ?? null;
         } catch {
           sp = null;
         }
@@ -8394,10 +8419,7 @@ async function prepareOps(
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
           const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
-          const resultId = (r: any): string | undefined => {
-            const v = personaBearing ? r?.recordId : r?.id;
-            return typeof v === "string" ? v : undefined;
-          };
+          const resultId = (r: any): string | undefined => sidecarResultId(logEntry.tool, r);
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
             (r) => r && typeof r === "object" && resultId(r) !== undefined && arkToBareId(resultId(r)!) === key,
@@ -8515,7 +8537,14 @@ async function prepareOps(
     const place = factText(fields.place);
     if (!cur || place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    await applyPlaceLevers(view, i, null, true);
+    const logEntry = typeof view.log_entry_id === "string" ? logById.get(view.log_entry_id) : undefined;
+    const results = typeof logEntry?.results_ref === "string" ? await readSidecarResults(logEntry.results_ref) : null;
+    const key = arkToBareId(String(view.record_id ?? ""));
+    const record = results?.find((r) => {
+      const id = sidecarResultId(logEntry.tool, r);
+      return id !== undefined && arkToBareId(id) === key;
+    });
+    await applyPlaceLevers(view, i, null, true, record);
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {

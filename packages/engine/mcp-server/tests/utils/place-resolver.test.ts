@@ -838,11 +838,40 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 
-  it("does not apply an entry the list holds for one record country only", async () => {
-    // "Ohio" is listed for US records only, so it waits for a resolver that
-    // knows a record's country.
-    byName({ Ohio: [entry({ placeRepId: "oh", fullName: "Ohio, United States", type: "State", score: 1 })] });
-    expect(await resolveStandardPlace("Ohio")).toBeNull();
+  it("applies an entry for one record country only with that record country, and asks for it only then", async () => {
+    // "Texas" is listed for US records only.
+    const us = vi.fn(async () => "United States");
+    expect(await resolveStandardPlace("Texas", { recordCountry: us })).toBe("Texas, United States");
+    expect(await resolveStandardPlace("Texas", { recordCountry: async () => "Mexico" })).toBeNull();
+    expect(await resolveStandardPlace("Texas", { recordCountry: async () => null })).toBeNull();
+    expect(await resolveStandardPlace("Texas")).toBeNull();
+    expect(await resolveStandardPlace("Kent", { recordCountry: us })).toBe("Kent, England, United Kingdom");
+    expect(us).toHaveBeenCalledTimes(1);
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+
+  it("withholds an entry in a record country it is excepted in, and when the record's country is unknown", async () => {
+    // Bare "Louth" in a British record is the Lincolnshire town.
+    expect(await resolveStandardPlace("Louth", { recordCountry: async () => "United States" })).toBe(
+      "County Louth, Ireland",
+    );
+    expect(await resolveStandardPlace("Louth", { recordCountry: async () => "United Kingdom" })).toBeNull();
+    expect(await resolveStandardPlace("Louth")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+
+  it("tries the sibling route when the record's country rules a listed entry out", async () => {
+    byName({ "Texas, Hidalgo": [entry({ placeRepId: "mx", fullName: "Texas, Hidalgo, Mexico", score: 1 })] });
+    expect(
+      await resolveStandardPlace("Texas", { contextPlaces: ["Texas, Hidalgo"], recordCountry: async () => "Mexico" }),
+    ).toBe("Texas, Hidalgo, Mexico");
+  });
+
+  it("answers an accent-exact entry only as written: 'Ísland' is Iceland, 'Island' is not a place", async () => {
+    byName({ Island: [entry({ placeRepId: "is", fullName: "Iceland", type: "Country", score: 1 })] });
+    expect(await resolveStandardPlace("Ísland")).toBe("Iceland");
+    expect(await resolveStandardPlace("Island", { recordCountry: async () => "Iceland" })).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 
   it("answers from the list before a sibling that starts with the name", async () => {
@@ -866,6 +895,20 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
         contextPlaces: ["Borough of Shenandoah, County of Schuylkill", "Mahanoy City, Schuylkill"],
       }),
     ).toBe("Shenandoah, Schuylkill, Pennsylvania, United States");
+  });
+
+  it("finds the sibling for a name written with a stray comma", async () => {
+    byName({
+      "Borough of Shenandoah, County of Schuylkill": [
+        entry({ placeRepId: "pa", fullName: "Shenandoah, Schuylkill, Pennsylvania, United States", score: 0.9 }),
+      ],
+    });
+    for (const text of ["Shenandoah,", ", Shenandoah", "Shenandoah ,"]) {
+      expect(
+        await resolveStandardPlace(text, { contextPlaces: ["Borough of Shenandoah, County of Schuylkill"] }),
+        text,
+      ).toBe("Shenandoah, Schuylkill, Pennsylvania, United States");
+    }
   });
 
   it("does not take a sibling whose first segment merely contains the name", async () => {

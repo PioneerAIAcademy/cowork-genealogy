@@ -27,7 +27,7 @@ import {
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestYear } from "./date-helpers.js";
-import { listedOneWordPlace } from "./one-word-places.js";
+import { listedOneWordPlace, oneWordPlaceNeedsCountry } from "./one-word-places.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
@@ -59,11 +59,19 @@ export interface ResolveOpts {
   date?: string;
   /**
    * Other place texts from the same source (the record's other facts). Used
-   * only for a bare single-segment input the one-word list does not hold: a
+   * only for a bare single-segment input the one-word list does not answer: a
    * sibling place that spells the name out is resolved instead. See
    * `resolveBareName`.
    */
   contextPlaces?: string[];
+  /**
+   * The country of the record the place comes from (the last segment of its
+   * collection's coverage place), null when unknown. Asked for only by a bare
+   * single-segment input whose one-word list entry holds for one record country
+   * or is withheld in some (`oneWordPlaceNeedsCountry`); without it such an entry
+   * gives nothing. Never derived from the place text itself.
+   */
+  recordCountry?: () => Promise<string | null>;
 }
 
 // ─── Caches ────────────────────────────────────────────────────────────────
@@ -798,14 +806,17 @@ function topScored(entries: SearchEntry[]): SearchEntry[] {
  * In order: the bundled list of one-word places answers (`listedOneWordPlace`);
  * else a sibling place from the same source that is this name, or this name
  * after "Borough of" and the like, is resolved instead; else the place is left
- * unresolved. FamilySearch's best hit is never kept, whatever its type. The
- * list holds only entries that apply on every record: one the evidence gives
- * for a single record country ("Ohio", US records) or excepts in some ("NY",
- * not Swedish records) waits for a resolver that knows a record's country.
+ * unresolved. FamilySearch's best hit is never kept, whatever its type. A list
+ * entry for one record country ("Texas", US records) answers only when the
+ * caller's `recordCountry` is that country, and one withheld in some ("Louth",
+ * not British records) only when it is a known other country; an accent-exact
+ * entry answers only its accented spellings ("Ísland" is Iceland, "Island" is
+ * nothing).
  *
  * The lead's decisions of 2026-10-26: "Mis-standardizing a place is worse than
  * not standardizing it", with listed entries at least 95% right; English
  * historic counties and Irish counties are listed over their foreign namesakes;
+ * counties and towns do not keep a country, state or province out of the list;
  * and the curated names (Georgia the US state, Republic of Georgia the country,
  * New York, Quebec, Mexico, Washington, New Jersey, Jersey the Channel Island).
  * This replaces the genealogist ruling of 2026-10-06 (option C with fallback
@@ -813,15 +824,18 @@ function topScored(entries: SearchEntry[]): SearchEntry[] {
  * other jurisdiction, and searched inside the jurisdiction the siblings share.
  * Measured on the 3,643 one-word facts of matcher-lab m13's HOLDOUT records,
  * scored against FamilySearch's own standardization: the old routes were right
- * on 2,413 and wrong on 168; the list then the sibling, as bundled, is right on
- * 1,686 and wrong on 10, each of the 10 also wrong before. The cost is
- * coverage: 804 facts the old routes got right are left unresolved.
+ * on 2,413 and wrong on 168; the list then the sibling is right on 2,258 and
+ * wrong on 13 with the record country research_append derives, and right on
+ * 2,053 and wrong on 13 with none, each of the 13 also wrong before. The cost is
+ * coverage: 337 facts the old routes got right are left unresolved (454 with no
+ * record country).
  */
 async function resolveBareName(name: string, opts: ResolveOpts): Promise<string | null> {
-  const listed = listedOneWordPlace(name);
+  const country = opts.recordCountry && oneWordPlaceNeedsCountry(name) ? await opts.recordCountry() : null;
+  const listed = listedOneWordPlace(name, country);
   if (listed) return listed;
 
-  const bare = normalizeKey(name);
+  const bare = normalizeKey(placeSegments(name)[0]);
   const fuller = (opts.contextPlaces ?? [])
     .map(placeSegments)
     .find((segs) => {

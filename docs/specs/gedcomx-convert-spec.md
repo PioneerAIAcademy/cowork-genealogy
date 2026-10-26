@@ -411,8 +411,9 @@ Free-text places with no `normalized` value are left without a
 parallel, best-effort (never throws, leaves the field empty on failure).
 A one-segment place ("Kent") is the exception: it is standardized only from
 the bundled one-word list, with no search, and is otherwise left unset — the
-converter passes no record context, so the resolver's sibling route never
-applies (`research-append-tool-spec.md`, lever B).
+converter passes no record context and no record country, so the resolver's
+sibling route never applies and only the list's entries that hold on every
+record do (`research-append-tool-spec.md`, lever B).
 A resolved value is also omitted when `countryConsistency(place, resolved)`
 returns `contradiction`: this is a read path with no warning channel to the
 model, so an unset field is the only honest outcome. Tools
@@ -585,7 +586,12 @@ format as `resource_type` and `coverage`:
 
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
   `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
-  via `repIdToStandardPlace`; `record_read` resolves it to `standard_place`),
+  via `repIdToStandardPlace`; `record_read` resolves it to `standard_place`; none
+  when the description references a place of the document's `places[]` that is
+  identified only by an authority place id, `…/authorities/v1/place/<n>`, since
+  `<n>` is a place id and read as a rep id names another place — in matcher-lab
+  m13's record reads only collection coverages were such references, and the
+  authority id 1927074 read as a rep is Minto, New South Wales, Australia),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the
