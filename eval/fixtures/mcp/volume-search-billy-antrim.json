@@ -1,0 +1,87 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized image groups (browse-only films) for Billy, County Antrim, Ireland, 1780-1870. Trimmed verbatim from the alpha-feedback transcript (case feedback-2026-10-07, locality-guide subagent). The decisive detail: FamilySearch's own volume place-string labels the Ballylinny Presbyterian christening and marriage registers 'Ballylinny, Billy, County Antrim, Ireland' — grouping the Ballylinny congregation under Billy civil parish.",
+  "args": {
+    "standardPlace": "~Billy"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Billy, County Antrim, Ireland",
+      "startYear": 1780,
+      "endYear": 1870
+    },
+    "totalResults": 4,
+    "results": [
+      {
+        "imageGroupNumber": "008682995_005_M94W-68Y",
+        "imageGroupPrefix": "008682995",
+        "imageCount": 50,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Billy, County Antrim, Ireland",
+            "startYear": 1867,
+            "endYear": 1933,
+            "dateRange": "Apr 1, 1867-Sep 11, 1933",
+            "recordType": "School Records"
+          }
+        ],
+        "volumes": ["V. 239-240 Deffrick National School Girls"]
+      },
+      {
+        "imageGroupNumber": "007907410_008_M9VF-SK5",
+        "imageGroupPrefix": "007907410",
+        "imageCount": 65,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Ballylinny, Billy, County Antrim, Ireland",
+            "startYear": 1837,
+            "endYear": 1868,
+            "dateRange": "1837-1868",
+            "recordType": "christenings"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007765074_009_M9VX-Q7W",
+        "imageGroupPrefix": "007765074",
+        "imageCount": 50,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Ballylinny, Billy, County Antrim, Ireland",
+            "startYear": 1837,
+            "endYear": 1864,
+            "dateRange": "1837-1864",
+            "recordType": "Marriage Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004689599",
+        "imageGroupPrefix": "004689599",
+        "imageCount": 76,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Ballylinny, Billy, County Antrim, Ireland",
+            "startYear": 1867,
+            "endYear": 1881,
+            "dateRange": "1867-1881",
+            "recordType": "Valuation"
+          }
+        ],
+        "volumes": ["VAL 12B/1/7B"]
+      }
+    ]
+  }
+}

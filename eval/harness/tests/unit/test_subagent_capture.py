@@ -24,6 +24,7 @@ from e2e.subagent_capture import (
     pair_tool_calls,
     parse_jsonl,
     summarize_transcript,
+    subagent_tool_messages,
     summarize_turn,
     transcript_agent_id,
 )
@@ -1163,3 +1164,63 @@ def test_backfill_captures_a_background_agents_staged_transcription(shortspace: 
     backfill_background_tool_calls(workspace, tool_calls)
     [entry] = [tc for tc in tool_calls if tc.get("agent_id") == "bg778"]
     assert entry[STAGED_TRANSCRIPTION_KEY] == "the page"
+
+
+# --- subagent_tool_messages (#3713): which calls shared one API message ------
+
+def _msg(mid, *blocks):
+    """One record of an API message: Claude Code writes one record per block."""
+    rec = _assistant("tool_use", 10, list(blocks))
+    if mid is not None:
+        rec["message"]["id"] = mid
+    return rec
+
+
+def test_two_tool_calls_in_one_message_are_one_entry():
+    records = [_msg("msg_1", _tool_use("mcp__genealogy__person_warnings")),
+               _msg("msg_1", _tool_use("mcp__genealogy__person_warnings"))]
+    assert subagent_tool_messages(records) == [["person_warnings", "person_warnings"]]
+
+
+def test_two_messages_are_two_entries_in_order():
+    records = [_msg("msg_1", _tool_use("mcp__genealogy__research_query")),
+               {"type": "user", "message": {"role": "user", "content": []}},
+               _msg("msg_2", _tool_use("mcp__genealogy__person_warnings"))]
+    assert subagent_tool_messages(records) == [["research_query"], ["person_warnings"]]
+
+
+def test_a_message_with_no_tool_call_is_absent():
+    records = [_msg("msg_1", _thinking()),
+               _msg("msg_2", _tool_use("Read"))]
+    assert subagent_tool_messages(records) == [["Read"]]
+
+
+def test_a_record_with_no_message_id_stays_alone():
+    """Never merged with its neighbour: reads as not batched, never as batched."""
+    records = [_msg(None, _tool_use("mcp__genealogy__person_warnings")),
+               _msg(None, _tool_use("mcp__genealogy__person_warnings"))]
+    assert subagent_tool_messages(records) == [["person_warnings"], ["person_warnings"]]
+
+
+def test_the_summary_carries_tool_messages():
+    records = [_msg("msg_1", _tool_use("mcp__genealogy__person_warnings"),
+                    _tool_use("mcp__genealogy__person_warnings"))]
+    assert summarize_transcript(records)["tool_messages"] == [["person_warnings", "person_warnings"]]
+
+
+def _blob(*blocks):
+    """The id-less `api-request-blob` copy newer Claude Code writes after a message."""
+    return {"type": "api-request-blob", "agentId": "a", "hash": "h", "sessionId": "s",
+            "message": {"role": "assistant", "content": list(blocks)}}
+
+
+def test_a_request_blob_copy_is_not_a_second_message():
+    pw = _tool_use("mcp__genealogy__person_warnings")
+    records = [_msg("msg_1", pw), _msg("msg_1", pw), _blob(pw, pw),
+               _msg("msg_2", _tool_use("Read")), _blob(_tool_use("Read"))]
+    assert subagent_tool_messages(records) == [["person_warnings", "person_warnings"], ["Read"]]
+
+
+def test_a_request_blob_is_not_counted_as_a_turn():
+    records = [_msg("msg_1", _tool_use("Read")), _blob(_tool_use("Read"))]
+    assert summarize_transcript(records)["num_assistant_turns"] == 1
