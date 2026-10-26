@@ -565,7 +565,7 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
 **Acceptance check**
 - The person-evidence suite passes at `--runs-per-test 3`, with `_014` and `_022` present and passing and no xfail marker left, so rule 10 (`rule10_no_xfail_markers`) is green.
 - `tests/tools/materialize-facts.test.ts`: "a minted person carries only a name and gender"; "materialize_facts on an existing person writes nothing and still reports a competing Birth".
-- `tests/tools/tree-edit.test.ts`: "add_relationship with no covering claim warns"; "add_fact matching its claim by the join passes"; "a minted person's name needs no claim"; "a value correction to a legacy fact no claim covers passes".
+- `tests/tools/tree-edit.test.ts`: "add_relationship with no covering claim warns"; "add_relationship carrying a literal relationship.sources and no sourceAssertionId, with no covering claim, warns (the Christiana Clark route, issue #3781)"; "add_fact matching its claim by the join passes"; "a minted person's name needs no claim"; "a value correction to a legacy fact no claim covers passes".
 - `tests/utils/conclusion-status.test.ts`: "an import edge whose parent was merged away still reads as an import".
 - `tests/packaging/ownership-manifest.test.ts` and `eval/harness/tests/unit/test_ownership_manifest.py` pass, with `agent:person-evidence` paired with `materialize_facts` alone on tree `persons` and named on no other tree row.
 - In the skill_invocation tests under `eval/harness/tests/unit/`, an edge written under a claim is not flagged as a proof-conclusion effect with no invocation.
