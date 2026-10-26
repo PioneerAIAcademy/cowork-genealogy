@@ -21,6 +21,8 @@ const BASE = { GENEALOGY_PG_DSN: "postgresql://u:p@127.0.0.1:1/d", GENEALOGY_S3_
 // before it could exit 2 — and startHttp, left at 5s after runHttp was raised,
 // failed the readiness case the same way at 5021ms inside the full engine suite.
 const START_TIMEOUT_MS = 15_000;
+// A test's own budget: one child start plus 5s for what follows it.
+const TEST_TIMEOUT_MS = START_TIMEOUT_MS + 5_000;
 
 /** The environment `build/http.js` sees: the inherited one minus every GENEALOGY_* variable, plus `storeEnv`. */
 function childEnv(storeEnv: Record<string, string>): NodeJS.ProcessEnv {
@@ -116,7 +118,7 @@ describe("build/http.js readiness", () => {
     } finally {
       child.kill("SIGKILL");
     }
-  }, 20_000);
+  }, TEST_TIMEOUT_MS);
 });
 
 describe("build/http.js store environment", () => {
@@ -124,31 +126,31 @@ describe("build/http.js store environment", () => {
     const r = await runHttp({ ...BASE, GENEALOGY_S3_ACCESS_KEY: "ak" });
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toMatch(/required environment not set: GENEALOGY_S3_SECRET_KEY/);
-  }, 20_000);
+  }, TEST_TIMEOUT_MS);
 
   it("exits 2 naming GENEALOGY_S3_FORCE_PATH_STYLE when it is neither true nor false", async () => {
     const r = await runHttp({ ...BASE, GENEALOGY_S3_FORCE_PATH_STYLE: "yes" });
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toMatch(/invalid value.*GENEALOGY_S3_FORCE_PATH_STYLE/);
-  }, 20_000);
+  }, TEST_TIMEOUT_MS);
 
   it("exits 2 naming an orphan sweep grace under its floor", async () => {
     const r = await runHttp({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "60" });
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toMatch(/invalid value: GENEALOGY_ORPHAN_GRACE_S .*at least 3600/);
-  }, 20_000);
+  }, TEST_TIMEOUT_MS);
 
   it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {
     const on = await runHttp(BASE, /listening on .*\n/);
     expect(on.stderr).toMatch(/orphan sweep: every 3600 s, grace 86400 s\n/);
     const off = await runHttp({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "0" }, /listening on .*\n/);
     expect(off.stderr).toMatch(/orphan sweep: off\n/);
-  }, 20_000);
+  }, START_TIMEOUT_MS + TEST_TIMEOUT_MS);
 
   it("names the SDK default chain on start-up when neither S3 key is set", async () => {
     const r = await runHttp(BASE, /s3 credentials:.*\n/);
     expect(r.stderr).toMatch(/s3 credentials: SDK default chain; region us-east-1; endpoint AWS default/);
-  }, 20_000);
+  }, TEST_TIMEOUT_MS);
 
   it("names static keys on start-up without printing either key", async () => {
     const r = await runHttp(
@@ -157,7 +159,7 @@ describe("build/http.js store environment", () => {
     );
     expect(r.stderr).toMatch(/s3 credentials: static keys;/);
     expect(r.stderr).not.toMatch(/ak-sentinel|sk-sentinel/);
-  }, 20_000);
+  }, TEST_TIMEOUT_MS);
 });
 
 describe("build/http.js debug holds", () => {
@@ -165,7 +167,7 @@ describe("build/http.js debug holds", () => {
     const r = await runHttp(BASE, /listening on .*\n/);
     expect(r.stderr).toMatch(/listening on/);
     expect(r.stderr).not.toMatch(/debug hold|GENEALOGY_DEBUG_/i);
-  }, 10_000);
+  }, TEST_TIMEOUT_MS);
 
   it("names a set hold and its value before listening", async () => {
     const r = await runHttp({ ...BASE, GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS: "45000" }, /listening on .*\n/);
@@ -173,5 +175,5 @@ describe("build/http.js debug holds", () => {
       /debug holds set \(never in production\): GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS="45000"\n(.|\n)*listening on/,
     );
     expect(r.stderr).not.toMatch(/GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS/);
-  }, 10_000);
+  }, TEST_TIMEOUT_MS);
 });
