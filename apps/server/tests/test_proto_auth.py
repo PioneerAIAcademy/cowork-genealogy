@@ -752,6 +752,23 @@ async def test_refresh_tokens_classifies_responses_and_transport_errors(monkeypa
     assert stalled.kind == "ambiguous", "a deadline cannot tell whether FamilySearch processed it"
 
 
+async def test_token_calls_send_the_browser_user_agent(monkeypatch):
+    """Imperva's rules for ident differ by endpoint (handoff step 18, 2026-10-24), so the
+    code exchange and the refresh both send the browser UA."""
+    agents: list[str | None] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        agents.append(request.headers.get("user-agent"))
+        return httpx.Response(200, json={"access_token": "a", "refresh_token": "r"})
+
+    await auth.refresh_tokens("r-1", transport=httpx.MockTransport(handler))
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(httpx, "AsyncClient",
+                        lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw))
+    await auth.exchange_code("c", "v")
+    assert agents == [auth.BROWSER_USER_AGENT] * 2
+
+
 @pytest.mark.parametrize("stored, presented, raises", [
     (FS_ID, FS_ID, False), (None, FS_ID, False), (FS_ID, None, False), (FS_ID, "ZZZZ-999", True),
 ])

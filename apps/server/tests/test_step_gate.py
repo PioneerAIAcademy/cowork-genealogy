@@ -379,3 +379,54 @@ def test_a_failing_seed_write_does_not_fail_the_call(boundary):
     g = gate(boundary, on_first_step=boom, log=lambda **kw: logs.append(kw))
     assert g.check(*spawn("search-records"), subagent=False) is None
     assert any(e.get("ev") == "step_seed_failed" for e in logs)
+
+
+# ── decision 26: the step check goes AHEAD of foreground_rewrite ─────────────────
+
+
+def _updated(out) -> dict:
+    return (out.get("hookSpecificOutput") or {}).get("updatedInput") or {}
+
+
+def test_an_allowed_step_is_still_forced_into_the_foreground(boundary):
+    """Decision 26 (2026-10-25): `foreground_rewrite` STAYS, and from PR 1 it is the
+    only thing keeping a step's agents inside its turn -- no hosted turn binds the
+    Stop veto any more, and the worker kills the CLI at turn end, so a backgrounded
+    agent dies mid-search.
+
+    So the step check must not swallow the rewrite on the calls it allows. Both the
+    first step of a turn and an allowed same-group follower come back carrying
+    `run_in_background: false`.
+    """
+    hook = _hook([], step_gate=gate(boundary))
+    first = _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "search-records"}})
+    assert _decision(first) == "allow"
+    assert _updated(first).get("run_in_background") is False, first
+
+    same_group = _call(hook, {"tool_name": "Task",
+                              "tool_input": {"subagent_type": "record-structurer"}})
+    assert _decision(same_group) == "allow", same_group
+    assert _updated(same_group).get("run_in_background") is False, same_group
+
+
+def test_an_out_of_group_step_gets_the_deny_not_the_rewrite(boundary):
+    """The other half of acceptance item 2: the step check returns BEFORE the rewrite,
+    so a crossing is refused rather than quietly foregrounded and run."""
+    hook = _hook([], step_gate=gate(boundary))
+    assert _decision(_call(hook, {"tool_name": "Task",
+                                  "tool_input": {"subagent_type": "search-records"}})) == "allow"
+    out = _call(hook, {"tool_name": "Task", "tool_input": {"subagent_type": "proof-conclusion"}})
+    assert _decision(out) == "deny"
+    assert "run_in_background" not in _updated(out), (
+        "a denied crossing must carry no rewrite: the call does not run, so stamping "
+        "its input says the hook had two minds about it"
+    )
+
+
+def test_the_rewrite_still_applies_when_no_step_gate_is_built(boundary):
+    """A turn whose boundary could not be built runs unbounded (logged loudly), but it
+    must still keep its agents in the foreground -- that is the arm decision 26 keeps."""
+    out = _call(_hook([], step_gate=None),
+                {"tool_name": "Task", "tool_input": {"subagent_type": "search-records"}})
+    assert _decision(out) == "allow"
+    assert _updated(out).get("run_in_background") is False

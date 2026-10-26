@@ -114,9 +114,9 @@ class Settings(BaseSettings):
     #   SUBAGENT_EFFORT_BY_AGENT  JSON {"agent-name": level}, overriding SUBAGENT_EFFORT.
     # The helper levels are written onto each Agent call by the PreToolUse hook (the call's
     # own `effort`, CLI 2.1.294+), not into the agent files. A bad level fails start-up
-    # here; inside the sandbox the CLI would only warn and ignore it. Turning the alpha down
-    # for real users is the lead's call (cost-latency plan T4.1, Q4); the settings exist so
-    # an arm can be run, not to change the default.
+    # here; inside the sandbox the CLI would only warn and ignore it. The lead set the
+    # alpha's main thread to low on 2026-10-21 (`deploy/fly.toml`); the helper levels stay
+    # unset until the lead sets them (cost-latency plan T4.1, Q4).
     orchestrator_effort: EffortSetting | None = None
     subagent_effort: EffortSetting | None = None
     subagent_effort_by_agent: dict[str, EffortSetting] = {}
