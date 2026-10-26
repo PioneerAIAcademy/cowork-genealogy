@@ -190,8 +190,27 @@ critique no longer stands.
 
 `nextStep` orders by what blocks what: an unresolved conflict outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
-outranks competing parent sets, which outrank a missing resolve, which outranks a
-missing summary. A missing critique is never a next step.
+outranks competing parent sets, which outrank **the researcher's choice**, which
+outranks a missing resolve, which outranks a missing summary. A missing critique
+is never a next step.
+
+**The researcher's choice is the one rung that names no step** (step mode,
+section B). When a question's search stopped on `resources_spent`, it has no
+proof summary, no `planned` or `in_progress` item is left on its active plan,
+and every log entry the question owns is listed in `search_stop.log_entry_ids`,
+`nextStep` reads `researcher's choice: research-plan or proof-conclusion
+(default …)`. The search ran out of budget rather than out of sources, so
+searching on and concluding are both defensible and the document cannot settle
+which — the default comes from the stop's own `justification` (an "Overturn
+risk:" prefix means conclude; anything else, including an older stop that wrote
+free prose, means plan).
+
+"Every log entry the question owns" is wider than the `plan_item_id` filter used
+everywhere else in this ladder: it is the entries on the question's plan items
+**plus** each later entry that closes one of their external-site hand-offs,
+matched by URL. A researcher's upload carries no `plan_item_id`, so under the
+plain filter it could never undo a choice the stop predates, and the question
+would sit at the choice for good.
 
 **Evidence nobody has linked to a person routes to person-evidence.** When a
 question has assertions extracted for it, none of them carries a live
