@@ -372,7 +372,11 @@ describe('fixed-file delivery', () => {
   it('caches and sends external-collections.json on its own channel', () => {
     const win = fakeWindow()
     const doc = { places: { P: { rows: [] } } }
-    applyFixedFile('external-collections.json', doc, win as unknown as Parameters<typeof applyFixedFile>[2])
+    applyFixedFile(
+      'external-collections.json',
+      doc,
+      win as unknown as Parameters<typeof applyFixedFile>[2]
+    )
     expect(win.webContents.send).toHaveBeenCalledWith('project:collections-updated', doc)
     expect(getCurrentState().collections).toBe(doc)
     // A collections write must not touch the research or tree caches.
@@ -382,16 +386,27 @@ describe('fixed-file delivery', () => {
 
   it('stopWatching clears the cached collections', () => {
     const win = fakeWindow()
-    applyFixedFile('external-collections.json', { places: {} }, win as unknown as Parameters<typeof applyFixedFile>[2])
+    applyFixedFile(
+      'external-collections.json',
+      { places: {} },
+      win as unknown as Parameters<typeof applyFixedFile>[2]
+    )
     stopWatching()
     expect(getCurrentState().collections).toBeNull()
   })
 
   it('a deleted external-collections.json clears the section, with no error', () => {
     const win = fakeWindow()
-    applyFixedFile('external-collections.json', { places: {} }, win as unknown as Parameters<typeof applyFixedFile>[2])
+    applyFixedFile(
+      'external-collections.json',
+      { places: {} },
+      win as unknown as Parameters<typeof applyFixedFile>[2]
+    )
     win.webContents.send.mockClear()
-    applyFixedUnlink('external-collections.json', win as unknown as Parameters<typeof applyFixedUnlink>[1])
+    applyFixedUnlink(
+      'external-collections.json',
+      win as unknown as Parameters<typeof applyFixedUnlink>[1]
+    )
     expect(win.webContents.send.mock.calls).toEqual([['project:collections-updated', null]])
     expect(getCurrentState().collections).toBeNull()
   })
@@ -399,6 +414,8 @@ describe('fixed-file delivery', () => {
   it('a deleted research.json is still an error', () => {
     const win = fakeWindow()
     applyFixedUnlink('research.json', win as unknown as Parameters<typeof applyFixedUnlink>[1])
-    expect(win.webContents.send.mock.calls).toEqual([['project:watch-error', 'research.json deleted']])
+    expect(win.webContents.send.mock.calls).toEqual([
+      ['project:watch-error', 'research.json deleted']
+    ])
   })
 })

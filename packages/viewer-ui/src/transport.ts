@@ -79,8 +79,9 @@ export interface SidecarRead {
 export interface SubscriptionHandlers {
   onResearch: (data: ResearchData) => void
   onGedcomx: (data: GedcomxData) => void
-  /** `external-collections.json` changed; `null` when it was removed. Sent only
-   *  when that file itself changes, never on a research.json write. */
+  /** `external-collections.json` changed, or was sent at connect. Sent only
+   *  when that file itself changes, never on a research.json write. `null` when
+   *  it was removed — Electron only; the web tiers do not report a deletion. */
   onCollections: (data: ExternalCollectionsData | null) => void
   onSidecar: (event: { logId: string; mtime: number }) => void
   onError: (message: string) => void

@@ -335,7 +335,7 @@ and electron share code" requires).
 >   job builds either one — see `docs/architecture.md`, "Two products, one repo".
 > - **The counts have moved:** **27** skills (not 28) and **47** MCP tools in
 >   `allToolSchemas`/`manifest.json` (not 30).
-> - **`viewer-ui` holds 13 section components**, not 11 — see the note under
+> - **`viewer-ui` holds 14 section components**, not 11 — see the note under
 >   §4.1, which explains why 11 is still the right number *there*.
 > - **`/apps/cowork-plugin` and `/apps/mcpb` were never created.** Both artifacts
 >   are still built by top-level `scripts/` (`build-mcpb.mjs`, `package-plugin.mjs`,
@@ -379,8 +379,8 @@ interface ResearchTransport {
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
 `progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
-the count that actually moved** (2026-06-07); two sections were added
-later, so the package holds **13** today.
+the count that actually moved** (2026-06-07); three sections were added
+later, so the package holds **14** today.
 
 > **As built, verified 2026-08-02.** The interface shipped essentially verbatim
 > (`packages/viewer-ui/src/transport.ts`), with an Electron IPC adapter
@@ -397,12 +397,13 @@ later, so the package holds **13** today.
 > dropped — `selectFolder?`, `getFeedbackContext?`, `getSourceImage?` — each
 > optional precisely because one host cannot serve it.
 >
-> **The "11 sections" above is correct and must not be changed to 13.** Exactly
+> **The "11 sections" above is correct and must not be changed to 14.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
 > in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
-> and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
-> directly — they were never part of the migration this sentence describes. The
-> package holds 13 today; the migration moved 11.
+> `LocalitiesSection` (2026-07-15) and `CollectionsSection` (2026-10-27) were
+> built afterwards, in `viewer-ui` directly — they were never part of the
+> migration this sentence describes. The package holds 14 today; the migration
+> moved 11.
 
 ---
 
