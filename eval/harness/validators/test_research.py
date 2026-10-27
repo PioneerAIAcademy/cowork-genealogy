@@ -862,6 +862,76 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     )
 
 
+def _agent_spawns(builtin_tool_calls) -> list[dict]:
+    """Main-thread ``Agent`` spawns, read from the hook records.
+
+    Keyed on ``args.subagent_type``, not the tool name: the recorded name is
+    ``None`` for an Agent spawn in this harness, so a name-based match finds
+    nothing and any assertion over the result passes vacuously
+    (``_spawn_prompts`` above carries the same note).
+    """
+    return [
+        call for call in builtin_tool_calls or []
+        if (call.get("args") or {}).get("subagent_type")
+    ]
+
+
+def _backgrounded(args: dict) -> bool | None:
+    """``run_in_background`` as the model sent it: True, False, or None if absent.
+
+    The value arrives as a real bool on some paths and as its string spelling on
+    others, so both are read. Anything else is treated as absent rather than
+    guessed at.
+    """
+    if "run_in_background" not in args:
+        return None
+    raw = args["run_in_background"]
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, str):
+        lowered = raw.strip().lower()
+        if lowered in ("true", "1"):
+            return True
+        if lowered in ("false", "0"):
+            return False
+    return None
+
+
+def test_every_agent_spawn_runs_in_the_foreground(test, builtin_tool_calls):
+    """Decision 27: every ``@plugin:`` spawn carries ``run_in_background: false``.
+
+    A step has to finish inside its own turn. A backgrounded spawn returns
+    immediately and the turn ends with the step still running, so the report the
+    researcher gets describes nothing and the "Continue with ...?" line offers
+    the step after one that never happened.
+
+    Read from the hook records, which hold the model's OWN input before
+    `foreground_rewrite` rewrites it. Asserting after the rewrite would pass on
+    every run whether the router asked for it or not -- the rewrite is a
+    backstop, and this is the check that the prose works without it.
+
+    An absent field fails: the SDK's default is background, so saying nothing is
+    saying background.
+    """
+    spawns = _agent_spawns(builtin_tool_calls)
+    if not spawns:
+        pytest.skip("no Agent spawn in this run")
+    offenders = []
+    for call in spawns:
+        args = call.get("args") or {}
+        if _backgrounded(args) is not False:
+            offenders.append(
+                f"{args.get('subagent_type')}: run_in_background="
+                f"{args.get('run_in_background', '<absent>')!r}"
+            )
+    assert not offenders, (
+        "These spawns did not ask for the foreground: "
+        + "; ".join(offenders)
+        + ". research/SKILL.md requires `run_in_background: false` on every "
+        "spawn (decision 27); an absent field means background."
+    )
+
+
 def _hosted_listing(tool_calls) -> dict:
     """The hosted answer ``project_list`` gave the router, read from the call log."""
     for call in tool_calls or []:
