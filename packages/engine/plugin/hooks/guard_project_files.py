@@ -185,6 +185,10 @@ OWNED_CLAIMS = {
             "resolution_rationale",
             "resolution_kind",
             "resolved_value",
+            # What moves a question from conflict-resolution to ending on an
+            # unsettled conflict. Unrouted, the main thread could stamp it onto
+            # an analysed conflict and end the research with no weighing.
+            "weighed_log_entry_ids",
         ),
         "resolved",
     ),
