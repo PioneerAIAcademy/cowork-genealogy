@@ -8394,8 +8394,8 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
   });
 
-  // ── D2: non-persona producers (fulltext_search / external_links_search) ──
-  // These stage a sidecar keyed on `id`, with no GedcomX persona (#2038).
+  // ── D2: non-persona producers (fulltext_search / legacy external_links_search) ──
+  // Their sidecars key on `id`, with no GedcomX persona (#2038).
   const ftsResearch = () => {
     const r = baseResearch();
     r.log = [{ ...searchLogEntry("results/log_001.json"), tool: "fulltext_search" }] as any;
