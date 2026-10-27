@@ -71,6 +71,10 @@ SELECT t.step,
          FROM turns n
         WHERE n.session_id = t.session_id
           AND n.enqueued_at > t.enqueued_at
+          -- A held `auto` reply the researcher's own message displaced closes
+          -- `superseded`. It was never sent, so crediting it would report a
+          -- boundary as answered by a reply nobody saw.
+          AND n.outcome IS DISTINCT FROM 'superseded'
         ORDER BY n.enqueued_at
         LIMIT 1
   ) nxt ON TRUE

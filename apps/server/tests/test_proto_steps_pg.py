@@ -42,6 +42,7 @@ def _session(dsn: str) -> tuple[str, str]:
 def _turn(
     dsn: str, sid: str, pid: str, text: str, *, seq: int, step=None, mode=None,
     wait_s: int = 0, tokens=(0, 0, 0, 0), auto: bool = False, completed: bool = True,
+    outcome=None,
 ) -> str:
     """One turn, enqueued `seq` minutes apart so `enqueued_at` orders them, and
     closed `wait_s` after it was enqueued."""
@@ -52,10 +53,10 @@ def _turn(
     sql(
         dsn,
         "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, completed_at, "
-        "step, mode, input_tokens, cache_creation_tokens, cache_read_tokens, output_tokens) "
+        "step, mode, input_tokens, cache_creation_tokens, cache_read_tokens, output_tokens, outcome) "
         "VALUES (%s, %s, %s, %s, now() + make_interval(mins => %s), "
-        "CASE WHEN %s THEN now() + make_interval(mins => %s, secs => %s) END, %s, %s, %s, %s, %s, %s)",
-        (tid, sid, pid, Jsonb(message), seq, completed, seq, wait_s, step, mode, *tokens),
+        "CASE WHEN %s THEN now() + make_interval(mins => %s, secs => %s) END, %s, %s, %s, %s, %s, %s, %s)",
+        (tid, sid, pid, Jsonb(message), seq, completed, seq, wait_s, step, mode, *tokens, outcome),
     )
     return tid
 
@@ -150,6 +151,23 @@ def test_a_host_wrap_up_is_the_host_s_and_a_typed_phrase_reads_as_step_mode_read
     r = _report(dsn)
     assert r["replies"]["research-plan"] == {"Wrap it up. (host)": 1}, r["replies"]
     assert r["replies"]["search-records"] == {"Continue.": 1}, r["replies"]
+
+
+def test_a_superseded_host_reply_is_not_credited_as_the_answer(pg_steps_dsn):
+    """A held `auto` reply the researcher's own message displaced closes
+    `superseded`. It was never sent and nobody saw it, so counting it would
+    report the boundary as answered by a reply that did not happen -- and would
+    hide the researcher's real one, which is the next row after it."""
+    dsn = pg_steps_dsn
+    sid, pid = _session(dsn)
+    _turn(dsn, sid, pid, "go", seq=1, step="search-records", wait_s=5)
+    # The host queued "Keep going.", the researcher typed over it, and the held
+    # row was superseded.
+    _turn(dsn, sid, pid, "Keep going.", seq=2, auto=True, outcome="superseded")
+    _turn(dsn, sid, pid, "Wrap it up.", seq=3, step="proof-conclusion", wait_s=5)
+
+    r = _report(dsn)
+    assert r["replies"]["search-records"] == {"Wrap it up.": 1}, r["replies"]
 
 
 def test_a_typed_message_is_not_counted_as_a_reply_phrase(pg_steps_dsn):

@@ -175,6 +175,15 @@ def test_wrapup_allows_its_members_in_order():
     assert sb.step_allowed(["person-evidence"], "proof-conclusion", mode="wrapup", ctx=ctx) is True
 
 
+def test_wrapup_allows_a_member_to_repeat():
+    # person-evidence links several records in one wrap-up; a repeat is not
+    # going back. The order check is `>=`, and `>` would forbid exactly this
+    # while every other step test stayed green.
+    ctx = {"open_items": True}
+    assert sb.step_allowed(["research-plan", "person-evidence"], "person-evidence",
+                           mode="wrapup", ctx=ctx) is True
+
+
 def test_wrapup_refuses_going_back_and_refuses_a_non_member():
     ctx = {"open_items": True}
     assert sb.step_allowed(["research-exhaustiveness"], "person-evidence", mode="wrapup", ctx=ctx) is False
