@@ -28,17 +28,76 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 21, `hint-samples.csv` row 684,
-flags `adds_father,adds_mother`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Poland, Tarnow, Roman Catholic Diocese Church Books, 1612-1900", the baptism of Lucia Skora at Przecław on 13 November 1807, daughter of Antonius Skora and Elisabeth Skrownionka. The index gives no birth date, godparents or house number.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Antonius Skora and Elisabeth Skrownionka as her parents, plus a `required` finding that the report documents
-the rejection.
+**Resolved: TRUE MATCH** (adjudicated 2026-10-26; index-based, `image_basis: false`).
+Retrieval was tool-assisted (MCP `record_read` / `record_search` / `catalog_search` /
+`image_search` against live FamilySearch, plus web lookups); the identity
+judgement is the genealogists'.
 
-A plausible candidate on name and place. Same given name and surname, same parish, and an 1807 baptism makes her about 25 at the 1832 marriage and 39 at the last child's baptism in 1846 — ordinary ages. None of the subject's ten attached sources is her own baptism or her marriage; every one is a child's baptism or a godparent entry from 1833 to 1856, so this is not a re-index of anything already in the tree.
+**What the FamilySearch index establishes (facts).** The hinted baptism
+(`ark:/61903/1:1:X54T-461`) records **Lucia Skora, baptised 13 November 1807 at
+Przecław**, daughter of **Antonius Skora and Elisabeth Skrownionka** (the hinted
+index's spelling; two further indexes of the *same* event, `6VQK-F3N3` and
+`6V3J-2YZ3`, spell the mother **Skowronionka** and add residence "house 18" — a
+spelling variant of one woman, not a second identity).
+Independent records establish the subject's life events: her daughter **Hedvigis
+Maron** was baptised 11 Oct 1829 naming the mother Lucia Skora (`X57Q-7X5`); her
+first husband **Mathias (Maciej) Maron died 5 March 1832**, buried Przecław
+(`6V3H-ZYBY`); she is named as mother of the **Skrzypek children 1833–1846**; and a
+daughter's **1856 marriage** names the couple Laurentii Skrzypek + Luciae Skora
+(`6V3Z-T2P1`, an attached tree source).
 
-The gap is that nothing in the index ties the 1807 infant to the 1832 bride beyond the name, and Skóra is a common surname in the Mielec area, so a second Lucia Skóra baptised at Przecław within a few years is a live alternative the index alone cannot exclude. The discriminating check is the 1832 Przecław marriage entry for Laurentius Skrzypek and Lucia Skóra: Galician registers of this period usually state the bride's age and parents. A bride of about 25 who is a daughter of Antonius Skóra and Elisabeth (Skrownionka) settles it; different parents make this a different Lucia. The Austrian-format baptism registers of her own children from 1833 on may also name the mother's parents, and are a second route if the marriage is not indexed.
+**What is inference (not stated in any single record).** No record directly ties
+the Skrzypek-children's mother, or the 1832 Skrzypek bride, to the 1807 baptism —
+none states her parents, birth date, or age. The identification rests on three
+inferences: (a) the Maron-wife Lucia Skora is the Skrzypek-mother Lucia Skora — from
+the shared name, the single parish, and the widow-remarriage timing (husband dies
+March 1832, remarriage November 1832); (b) she was **born ~1807** — from her
+childbearing span (a daughter in 1829, children to 1846); and (c) she is specifically
+the 1807-baptised Lucia — because that is the only Lucia Skora baptism found in the
+index for the window, whose parents are then taken as hers.
+
+**Search scope.** The "only one baptism" point is **index-bounded, not exhaustive**:
+a single FamilySearch index search (given name Lucia; surname Skora/Skóra; Przecław,
+Mielec, Podkarpackie; baptism 1803–1813) returned **no competing Lucia Skora
+baptism**. But it searches only FamilySearch-indexed records; an unindexed baptism,
+one indexed under a markedly different name/place spelling (she is recorded variably
+as Skura/Skara/Skóra, and the place is standardised two ways, Przecław-Rzeszów vs
+Przecław-Mielec), or one outside the window would not appear — and these registers
+are only partially indexed (the marriage index omits the 1832 Skrzypek entry).
+
+**Distinguished from the older Lucia Skóra.** A published transcription records a
+**1792** Przecław marriage of Maciej Maroń × Lucja Skóra (bride b. ~1771, also a
+daughter of an Antoni Skóra + Elżbieta Skowron). She is **excluded as the subject**
+by childbearing age (she would be ~62–75 during the subject's 1833–1846 births), and
+the subject's first husband Mathias Maron (b. ~1805) is a different, younger man than
+the 1792 groom. That 1792 record is **not** used as evidence for the subject's
+parents.
+
+The shared parental names (Antoni/Antonius Skóra and Elżbieta/Elisabeth, with
+variant Skowron–, Skowronionka–, and Skrownionka– spellings) do not establish
+that the two Lucias belonged to the same couple. If the reported birth date of
+approximately 1771 for the older Lucia is correct, she and Lucia baptized in
+1807 could not both be daughters of the same couple. This distinction does not
+change finding f1, whose stated parents come from the 1807 baptism index.
+
+**Limitations.** This is an index-based identification partly by elimination;
+`image_basis` is false. The **12 November 1832 Skrzypek–Skóra marriage entry** — the
+record that would state the bride's age, parents, and widow status directly —
+**could not be read**: its register images in **both** filmed copies (image groups
+`7997601` and `4645864`) returned **HTTP 403** (access restricted to a FamilySearch
+Center / Affiliate Library), so **Step 1a calibration was not performed and the entry
+was not examined**. A reported **Geneteka** index of an 1829 Maroń–Skóra marriage
+naming the parents **could not be verified** (its results are JavaScript-loaded and
+were not retrievable; its Przecław marriage coverage appears to begin ~1843). A
+**second genealogist concurred** that the FamilySearch records support the
+identification; that opinion is **corroboration** and did not involve examining the
+inaccessible marriage images.
+
+**Net.** On the FamilySearch index — a single matching 1807 baptism, the Maron
+first-marriage chain anchored by the 5 March 1832 death, the Skrzypek remarriage
+timing, and the childbearing-age exclusion of the older Lucia — the hint is accepted
+as a **true match**: Lucia Skora's parents were Antonius Skora and Elisabeth
+Skrownionka (the hinted record's spelling; the duplicate indexes spell the mother
+Skowronionka). The direct 1832-marriage confirmation remains unread (access-restricted).
+**This conclusion must be revisited if the original 1832 marriage record becomes
+available and contradicts the identification.**

@@ -853,7 +853,7 @@ the `max_cost_usd` note in §6 step 5.
 
    **Agent `model:` pins interact with reasoning effort, and one pin is
    load-bearing.** Effort is per-agent too, since agent `effort:` was verified to
-   bind on 2026-08-25 — but no agent pins one today, so in practice every step runs
+   bind on 2026-08-25 — but only `search-wikipedia` pins one (`effort: low`), so in practice nearly every step runs
    at the session effort and `model:` is the lever that has been used (each
    `packages/engine/plugin/agents/*.md`). So when one agent misbehaves at the
    run's effort level, repinning that agent — its model, its effort, or both —
@@ -1035,6 +1035,12 @@ In an autonomous run the harness **denies these tools for the entire run**
   live profile; several issue sentences interpolate values off that profile
   (`{originalDate}`, `{originalPlace}`), so a stripped date or place can be
   returned verbatim
+- `project_create` — given `personId`, reads the person off the live tree and
+  returns their relatives by name. An e2e run always starts in an existing
+  project, which `project_create` refuses, so no legitimate call exists, but a
+  call naming a fresh folder would get past that refusal. Blocked by name, not
+  on `personId`, so the hosted proto worker, which blocks by bare name only,
+  mirrors the same block
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,
