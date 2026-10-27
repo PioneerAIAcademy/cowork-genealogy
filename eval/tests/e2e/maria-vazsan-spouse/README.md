@@ -28,17 +28,20 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 24, `hint-samples.csv` row 811,
-flags `adds_spouse,adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Slovakia, Church and Synagogue Books, 1592-1935", the baptism of Maria Czibula at Bojnice on 9 June 1900, daughter of János Czibula and Maria Vázsan. The index gives the mother no age and no parents.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming János Czibula as her husband, plus a `required` finding that the report documents
-the rejection.
+**Resolved: FALSE MATCH** (adjudicated 2026-10-27; index/tree-based. `image_basis` left unset — no register page image was read or calibrated in this resolution.)
 
-A weak candidate. The name and parish match exactly: Vázsan is a rare surname, and the subject was baptised in the same parish. The problem is age. Born in 1853, she would have been **47** at a June 1900 birth. That is possible but rare, and it would make Maria Czibula a last child. The likelier reading is that the mother is a younger Maria Vázsan, perhaps a niece born in the 1870s to one of the subject's brothers (János, b. 1849; Jósef, b. 1843). The tree does not carry that generation, so it would not show her. The half-sister Maria (b. 1832) is ruled out by age. None of the tree's sources is this baptism, and no Czibula appears anywhere in the tree.
+**Verdict.** FamilySearch's hint attached the mother persona on a 1900 Bojnice baptism to the subject (`LJTH-GRX`), but that "Maria Vázsan" is a different, younger woman. The hint is a false match.
 
-The discriminating check is the Czibula–Vázsan marriage. Find the marriage of János Czibula and Maria Vázsan in the Bojnice registers, probably 1875–1899. Hungarian-era Catholic marriage entries give the bride's age and parents. A bride born about 1853 to Ignatius Vázsan and Anna Prividzer makes this a true match. A bride born in the 1870s, or one with other parents, makes it the wrong Maria. Earlier Czibula baptisms with this mother would also show when the marriage began. A run of births ending in 1900 fits the subject; a first child near 1900 does not.
+**What the index and tree establish (tool-assisted retrieval: `record_read`, `person_read`, `record_search`, `source_attachments`).**
+- The hint record — the 9 Jun 1900 Bojnice baptism of Maria Czibula (`ark:/61903/1:1:QVNW-6T7D`; mother persona `ark:/61903/1:1:QVNW-6T7X`) — indexes the mother only as "Maria Vázsan", with **no age and no parents**.
+- That mother persona is already attached on FamilySearch to tree person **`LJT8-8L5`**, not to the subject.
+- `LJT8-8L5` is **Maria Vázsan, born 20 Oct 1869 at Bojnice** (`ark:/61903/1:1:QVNW-69C8`), **daughter of Ferencz (Franciscus) Vázsan and Julianna Hoffmann** — a different parentage and generation from the subject. She married **Joannes (János) Czibula** (`LJT8-8LP`) on **21 November 1893**, and the couple's children — János (1894), Josephus (1895), Stephanus (1897) and **Maria (9 Jun 1900, the hint child)** — form a coherent run at one household.
+- The subject (`LJTH-GRX`) is **Maria Vázsan, baptised 10 Jan 1853 at Bojnice, daughter of Ignatius Vázsan and Anna Prividzer**; her only attached source is her own baptism, and she carries no spouse or children in the tree.
+
+**Independent genealogist research (not from the tools above).** The researcher found that the **1893 marriage record** names the bride as **20 years old and the daughter of Ferencz Vázsan** — confirming she is the younger Maria, not the 1853 subject — and connected the younger Mária and János to the four children baptised 1894–1900. (The marriage's stated age ~20 implies a birth about 1873; the baptismal index gives 1869. The two differ by a few years but both place her a generation after the subject and name Ferencz, not Ignatius, as her father.)
+
+**No image basis.** This resolution does **not** rest on reading the original register page images, and **no same-page calibration was performed**; the false match is settled by the index and tree records above. `image_basis` is left unset (indexes alone settled it), and the disproving ARKs in `expected-findings.json` are index (`1:1:`) records.
+
+**Why no substitute answer.** A bounded index search for the subject's own marriage (Maria Vázsan, Bojnice, 1869–1895) and children (mother Maria Vázsan, Bojnice, 1872–1894) returned many results — "Maria Vázsan" is a common name in this parish (32 marriage and 462 mother-name hits) — but **none is identifiable as the 1853 subject**: the dated bride candidates have different parents (e.g. daughters of Caspari or Josephi Vázsan), and child baptisms do not index the mother's parents. The search is index-bounded and the name is common, so this is "no record found identifiable as hers," not proof that none exists. Outcome: false match, no findable substitute.
+
+**Revisit** if the subject's own marriage, or a child's baptism naming her parents (Ignatius Vázsan / Anna Prividzer), is later found — which would convert this to a different-answer outcome.
