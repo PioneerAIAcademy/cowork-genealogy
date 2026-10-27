@@ -585,14 +585,13 @@ def test_person_evidence_may_not_write_tree_sources():
 @pytest.mark.parametrize("section,_id", [
     ("localities", "loc_001"),
     ("evaluations", "ev_001"),
-    ("known_holdings", "kh_001"),
 ])
 def test_deleting_from_a_newly_covered_section_fails(section, _id):
-    """The three sections the old diff set omitted.
+    """The two sections the old diff set omitted.
 
     Each one's spec row states the no-delete rule — `localities` refreshes in
-    place, `evaluations` retires via `superseded_by`, `known_holdings` never
-    deletes — and until now nothing checked any of them.
+    place, `evaluations` retires via `superseded_by` — and until now nothing
+    checked either of them.
     """
     with pytest.raises(AssertionError) as e:
         check_no_deletes(research(**{section: entry(_id)}), research())

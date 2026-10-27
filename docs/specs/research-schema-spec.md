@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `known_holdings.relates_to_person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, and `namesakes.person_id` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, and `namesakes.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -30,7 +30,6 @@ A project often starts with a question about a person who does not yet exist in 
 {
   "project": { },
   "researcher_profile": { },
-  "known_holdings": [ ],
   "questions": [ ],
   "plans": [ ],
   "log": [ ],
@@ -61,9 +60,6 @@ entirely:
 - `researcher_profile` — seeded by `project_create` on every create, as the
   fixed house profile (`HOUSE_RESEARCHER_PROFILE`); `init-project` adds
   `subscriptions` only when the researcher volunteers site access (Section 5.1.1).
-- `known_holdings` — written by `init-project` from the holdings survey: what
-  the researcher already has (documents, prior research, living-relative
-  knowledge) before any new research begins (Section 5.1.2).
 - `localities` — written by `locality-guide`; absent on projects that predate
   it (Section 5.13).
 - `warning_justifications` — appended by the tree-writer tools as a side
@@ -114,8 +110,6 @@ flagged. (One row below is the exception, and says so.)
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
 | `severity` | `high`, `medium`, `low` | timeline gaps (Section 5.10) |
-| `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
-| `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
 | `experience_level` | `novice`, `intermediate`, `experienced`, `professional` | researcher_profile (Section 5.1.1) |
 | `subscription` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none` | researcher_profile (the `subscriptions` array's items). Note the mixed casing: these are mostly site brand names, not the lowercase_with_underscores used elsewhere. The last two are access *routes* rather than sites — see Section 5.1.1 |
 | `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
@@ -214,7 +208,6 @@ value is rejected at write time.
 | Prefix | Section | Example |
 |--------|---------|---------|
 | `rp_` | project | `rp_001` |
-| `kh_` | known_holdings | `kh_001` |
 | `q_` | questions | `q_001` |
 | `pl_` | plans | `pl_001` |
 | `pli_` | plan items | `pli_001` |
@@ -243,7 +236,7 @@ Two distinct formats appear in this file, and the distinction is enforced.
 
 | Format | Fields | Shape |
 |--------|--------|-------|
-| **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
+| **Date** | `project.created`, `project.updated`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
 | **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp`, `proof_summaries[].updated` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
 
 Write the colon form with a `Z` or a numeric offset and both validators accept
@@ -294,7 +287,6 @@ described under "Who actually writes a row" below.
 |---------|-----------|---------|---------------|
 | `project` | init-project (objective, title, subject_person_ids — **once, at creation**), proof-conclusion (status, updated) | all | Mutable (status, updated). Any skill may refresh `updated` alone — it is a per-session activity ping. The three creation fields are **set-once**: `research_append` refuses to rewrite one that already holds a value, because every later step plans against them. That constrains the system, not the researcher — a human edits the file directly |
 | `researcher_profile` | init-project (at creation, fixed values); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
-| `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `search_stop`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `search_stop.stopped_because` to be a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) — checked from either side, on the post-merge entry — and a gate-value `stopped_because` is refused while an item on the question's **active** plan is `in_progress` **or `planned`** (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared) |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images (`items[].status`); `extraction_append` (`items[].status`, `in_progress` → `completed` only, by tool identity) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
@@ -550,33 +542,6 @@ directly.
 | `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. **No longer written by `init-project`** — the question was dropped 2026-08-31 rather than the field, because removing the field would be a five-site schema change and buys nothing. Access is now assumed available for every site, and the field records it only when a researcher volunteers it unprompted; absent is the normal state, and `["none"]` is not written as a default because it asserts the researcher said they have nothing. Any value written is still normalized to the enum exactly. |
 | `narration_guidance` | string | no | The house-style instruction text, fixed at creation. Skills read and follow this text directly — the string lives only in `init-project`. |
 | `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening turn asks only the research objective (stored in `project.objective`) and nothing about the researcher. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
-
-### 5.1.2 `known_holdings`
-
-Optional array. Captures what the researcher already has on hand —
-documents, prior research, knowledge from living relatives — surveyed by
-`init-project` before any new research begins. This is the "gather what
-you already know" part of GPS Step 2's preliminary survey, alongside the
-FamilySearch tree fetch.
-
-Entries are intentionally lightweight: a free-text description plus a
-type tag and a confidence flag. They are **not** sources or assertions.
-When the researcher later brings the actual document, it is extracted
-through `extraction_append` (the record-structurer agent structures it) into
-proper sources/assertions. The originating holding is never deleted,
-preserving the survey record; nothing currently sets its `promoted` flag —
-which writer should is an open question (`ownership.json`, `known_holdings`).
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | yes | Holding ID (`kh_` prefix) |
-| `holding_type` | `holding_type` | yes | Kind of item: `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` |
-| `description` | string | yes | What the researcher reported having, in their words (e.g., "grandmother's death certificate", "a binder of notes from a 2008 courthouse trip") |
-| `relevant_facts` | string or null | no | Facts or leads the item may supply, if the researcher described them (e.g., "lists her parents' names"). Null when not stated |
-| `relates_to_person_ids` | string[] | no | GedcomX person IDs the holding concerns (may be empty) |
-| `confidence` | `holding_confidence` | yes | How settled the researcher is about the item: `confident` or `unsure`. Lets downstream skills prioritize verifying shaky holdings over re-confirming settled ones |
-| `promoted` | boolean | yes | Whether the item has been extracted into proper sources/assertions yet. `false` at survey time; meant to become `true` once the item is extracted; no writer sets it today (see above). Never delete the entry |
-| `created` | string | yes | ISO 8601 date |
 
 ### 5.2 `questions`
 
@@ -2137,10 +2102,9 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
   `gps-mentor` critiqued proof summary ps_001 and returned
   `consider_addressing`. The mentor's actual reasoning lives in the file named
   by `file_path`, not in `research.json`. See Section 5.12.
-- **`researcher_profile`, `known_holdings`, `localities`,
-  `warning_justifications` and `namesakes` are absent.** All five are optional
-  (Section 1); a project that skipped the holdings survey, has done no locality
-  research, has justified no warning and has recorded no namesake legitimately
+- **`researcher_profile`, `localities`, `warning_justifications` and
+  `namesakes` are absent.** All four are optional (Section 1); a project that
+  has done no locality research, has justified no warning and has recorded no namesake legitimately
   has none of them. The other twelve keys are all present. On a younger
   project several of them would be present but empty, which is required;
   omitting them is not.

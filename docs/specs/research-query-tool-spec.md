@@ -116,7 +116,6 @@ enough to reach a user.
 
 | Section | Why not |
 |---|---|
-| `known_holdings` | Write-only, and slated for deletion from the schema — exposing it would create a contract that deletion then has to remove. |
 | `warning_justifications` | Writer-tool only: the warning gate appends it as a side effect of a justified write. |
 | `project` | An object, not an array. This tool pages arrays. |
 | `researcher_profile` | An object, not an array. |

@@ -30,7 +30,6 @@ SKILL.md §"Person merging" describes this as one call — `merge_tree_persons` 
 | `research.json` | `project.subject_person_ids` |
 | `research.json` | `person_evidence[].person_id` |
 | `research.json` | `timelines[].person_ids` |
-| `research.json` | `known_holdings[].relates_to_person_ids` |
 
 After the rewrite, the deprecated person must be deleted from `tree.gedcomx.json` `persons[]`, and both project files must be left structurally valid. `merge_tree_persons` validates before persisting, so a separate `validate_research_schema` call is neither required nor available to this skill (SKILL.md § Validation).
 

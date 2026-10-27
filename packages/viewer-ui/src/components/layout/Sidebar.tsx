@@ -62,11 +62,6 @@ export default function Sidebar({
       label: 'Project Overview',
       countFn: () => (research?.project ? 1 : 0)
     },
-    {
-      key: 'known_holdings',
-      label: 'Known Information',
-      countFn: () => research?.known_holdings?.length ?? 0
-    },
     { key: 'questions', label: 'Questions', countFn: () => research?.questions?.length ?? 0 },
     { key: 'localities', label: 'Localities', countFn: () => research?.localities?.length ?? 0 },
     {

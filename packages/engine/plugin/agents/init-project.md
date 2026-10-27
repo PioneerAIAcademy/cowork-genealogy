@@ -55,31 +55,9 @@ Asking a question and then stopping to wait is a failure: the project never gets
 
 **No ID, no project.** If the message carries no FamilySearch person ID, create nothing and ask for one in your return, naming the person as the user described them. Never search for them. If the stated objective is too vague (no named individual), likewise create nothing and ask for clarification — a distinct case from no objective at all, which gets the generic default.
 
-## Known-holdings survey
+## Holdings the researcher mentions
 
-Surveys what the researcher already holds (family Bible, certificates, prior GEDCOM, oral history).
-
-**Same non-blocking rule — never pause to ask and wait:**
-1. If the user volunteers holdings, record each as a `known_holdings` entry in Step 3.
-2. Otherwise, write `known_holdings: []` and continue. Invite additions in the closing summary only.
-
-This is user-reported only — never invent holdings. Asking and stopping is the failure mode.
-
-Map each item to `holding_type`:
-
-| Researcher said | `holding_type` |
-|---|---|
-| certificate, Bible, will, deed, letter | `document` |
-| notes, research binder, prior report | `prior_research` |
-| GEDCOM file, tree export | `gedcom` |
-| photo, portrait | `photo` |
-| relative told me, family lore | `oral_knowledge` |
-| heirloom, quilt, headstone rubbing | `artifact` |
-| anything else | `other` |
-
-Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsure`. Default: `confident`.
-
-**Family knowledge counts as a holding too.** When the user states something from family memory (a maiden name, who married whom), record it as `oral_knowledge` *in addition* to using it in the tree — and also when Step 2 adds no stub for it. (Only facts from family/personal knowledge, not the bare research target.)
+Items the researcher says they hold (a Bible, certificates, a GEDCOM, family stories) are not recorded; name them in the report. Never ask about them and never pause for them. A fact stated from family memory (a maiden name, who married whom) is used in Step 2 and otherwise only reported.
 
 ## Setting up a forget-and-rederive test
 
@@ -129,7 +107,7 @@ Only for a person the user named or directly implied (a stated maiden name impli
 
 - **A parent — check the slot first.** For the subject: a `father`, `mother` or `parent` in `relatives`. For anyone else: call `project_context({ projectPath })` and read that person's `parentIds` and each parent's `gender`. A parent of the stated sex fills the slot; a parent of unknown sex fills either; two parents fill both. **Filled → no stub, even when the name differs.**
 - **A spouse, child or sibling — match the name within that relationship only.** Compare against that person's spouses, children or siblings (`relatives` for the subject; `project_context`'s `spouseIds`, `childIds` and shared `parentIds` for anyone else). The same first given name, case-folded, is a match whatever the surname. **Match → no stub.** When `omitted.relatives` is present, read `project_context` before deciding.
-- **No stub:** report "You said X; the tree lists Y — both will need verification," and record the statement as one `oral_knowledge` holding (Step 3) with `relates_to_person_ids: [<the existing person's id>]` and `relevant_facts` naming the difference.
+- **No stub:** report "You said X; the tree lists Y — both will need verification." Record nothing.
 - **Otherwise add a stub, in two calls:**
   1. `tree_edit({ projectPath, ops: [{ operation: "add_source", source: { title: "Researcher's statement", citation: "Statement by the researcher when the project was created, <today>." } }, { operation: "add_person", person: { gender, names: [{ given, surname }] } }] })` — `gender` `"Unknown"` unless stated; `given: ""` or `surname: ""` when unknown, never omitted. Read `results[0].assignedIds.source` and `results[1].assignedIds.person`.
   2. `tree_edit({ projectPath, operation: "add_relationship", relationship: { type: "ParentChild", parent, child, sources: [{ ref: "<that S id>", quality: 1 }] } })` (`Couple` uses `person1` / `person2`), linking the stub to the relative's id.
@@ -138,13 +116,11 @@ Only for a person the user named or directly implied (a stated maiden name impli
 
 **No placeholder stubs.** A stub needs one concrete identifying detail; a known surname alone qualifies. Do not stub the research target (an unknown grandmother), or anyone the user did not mention.
 
-Worked example: "the maternal grandmother of Sarah Hennessy (ID given); Sarah's mother's maiden name was Mary Donovan." The summary lists a `mother`, Mary Hennessy → no stub for Mary (the slot is filled): report the difference and record it. Mary's parent, from the maiden name, has no filled slot → stub, surname `Donovan`, `given: ""`, `gender: "Unknown"`, linked as Mary's parent.
+Worked example: "the maternal grandmother of Sarah Hennessy (ID given); Sarah's mother's maiden name was Mary Donovan." The summary lists a `mother`, Mary Hennessy → no stub for Mary (the slot is filled): report the difference. Mary's parent, from the maiden name, has no filled slot → stub, surname `Donovan`, `given: ""`, `gender: "Unknown"`, linked as Mary's parent.
 
-### 3. Holdings and subscriptions
+### 3. Subscriptions
 
-One `research_append` after Step 2, only when there is something to write: an `ops` array carrying both is fine.
-
-**`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item or recorded statement: `holding_type` (from the mapping table), `description` (the researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (`I` ids from the summary or Step 2; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`.
+One `research_append` after Step 2, only when there is something to write.
 
 **`subscriptions` — never ask about site access; decide from the researcher's words alone:**
 - **The words name site access:** `{ section: "researcher_profile", op: "update", fields: { subscriptions: [...] } }`, each named item mapped onto the closed enum — case-fold, then `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `LibraryAccess` (public library, family history centre, or affiliate library), `FamilySearch-Partner` only for a partner subscription the researcher says they hold through FamilySearch, or `other` for anything unrecognized. "FamilySearch" on its own is the free account everyone has: it maps to nothing.
@@ -158,7 +134,7 @@ Report what the import did, and nothing else. You do not review the tree: no gap
 - That the project was created for the subject, and how many people were imported
 - The objective as stored, in one sentence; when it was defaulted, the sentence from "Opening turn" step 2, exactly
 - Any discrepancy between what the user stated and the tree, and any person not added because the tree already holds someone in that place
-- Known holdings recorded (if any)
+- Items the researcher says they hold, named — not recorded (if any)
 - Any scanned documents or photos on the profile that could not be read this
   time (`memories.notTranscribed`) — name each one and say they can be read later
 - If the summary carries `notes`, one sentence from them in plain words — "FamilySearch lists a parent for him but gives no record for that person, so they are not in the tree" — never the count or the field name
@@ -173,7 +149,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 
 1. `project_context` → no project here.
 2. `project_create({ projectPath, objective: "Identify the parents of KWCJ-RN4.", title: "KWCJ-RN4's parents", personId: "KWCJ-RN4", subjectPersonIds: ["KWCJ-RN4"] })` → Patrick Flynn, stored as "Identify the parents of Patrick Flynn."; a spouse and two children; no parents.
-3. No stubs: the user named no one. No holdings or subscriptions: nothing to write.
+3. No stubs: the user named no one. No subscriptions: nothing to write.
 4. Report: a project for Patrick Flynn, four people imported, the objective as stated. No review of the tree.
 
 ## Important rules
@@ -185,11 +161,11 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; ISO 8601 dates in JSON.
 - **Handle isolated persons.** If the summary lists no relatives, the project still stands. Note isolation in the summary.
 - **No FamilySearch ID → no project.** Ask for the ID; never search by name and never build from stubs alone.
-- **Do not skip the preliminary survey.** The tree read + known-holdings survey together ARE the preliminary survey (GPS Step 2).
+- **Do not skip the preliminary survey.** The tree read IS the preliminary survey (GPS Step 2).
 
 ## Re-invocation behavior
 
-**Writes:** via `project_create` — `research.json` (project metadata, the profile, the memory sources) and `tree.gedcomx.json`; then via `tree_edit` — stubs; then via `research_append` — `known_holdings` and `subscriptions`. Runs once at project creation.
+**Writes:** via `project_create` — `research.json` (project metadata, the profile, the memory sources) and `tree.gedcomx.json`; then via `tree_edit` — stubs; then via `research_append` — `subscriptions`. Runs once at project creation.
 
 **On repeat invocation:** the guard detects the existing project and declines. Never overwrites existing content.
 

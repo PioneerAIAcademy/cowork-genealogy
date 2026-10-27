@@ -17,7 +17,6 @@
     ],
     "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
   },
-  "known_holdings": [],
   "questions": [
     {
       "id": "q_001",

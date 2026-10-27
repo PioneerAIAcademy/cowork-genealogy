@@ -388,7 +388,6 @@ describe('ResearchDataProvider — closeSidecar cancellation', () => {
 // ============================================================
 
 const emptyResearch = {
-  known_holdings: [],
   questions: [],
   plans: [],
   log: [],

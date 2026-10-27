@@ -42,7 +42,7 @@ describe('section empty states', () => {
       // Every <p>, not `querySelector('p')`. The first paragraph is not
       // necessarily the empty state: a section that renders a subtitle above a
       // BLANK empty state passed the single-selector version, which is exactly
-      // the future case this guard exists to catch. All 15 sections render one
+      // the future case this guard exists to catch. All 14 sections render one
       // <p> today, so this is the same assertion for them.
       const paragraphs = Array.from(container.querySelectorAll('p'))
       expect(paragraphs.length).toBeGreaterThan(0)
@@ -60,15 +60,13 @@ describe('section empty states', () => {
 // Agents count: once research-plan (issue #2116) and timeline (issue #2797)
 // converted, no rendered section had a `skill:` owner left.
 //
-// Three prose exceptions, whose copy names the moment instead of the slug.
+// Two prose exceptions, whose copy names the moment instead of the slug.
 // `proof_summaries` (the Findings page) is owned by `agent:proof-conclusion`,
-// but "proof" is kept out of what the researcher reads; `known_holdings`
-// (`agent:init-project`) and `evaluations` (`agent:gps-mentor`) entered this set
-// only when agents did. Listing them explicitly keeps the default strict: a NEW
+// but "proof" is kept out of what the researcher reads; `evaluations`
+// (`agent:gps-mentor`) entered this set only when agents did. Listing them explicitly keeps the default strict: a NEW
 // section with no alias must contain its own slug.
 const PROSE_ALIASES: Record<string, string> = {
   proof_summaries: 'as the evidence for a question comes together',
-  known_holdings: 'when the project is initialized',
   evaluations: 'when the mentor',
 }
 
