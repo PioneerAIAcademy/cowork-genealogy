@@ -189,7 +189,8 @@ replacement is itself present and satisfies the join; if nothing replaced it, th
 critique no longer stands.
 
 `nextStep` orders by what blocks what: **an unsettled conflict that has weighed
-everything** outranks an unresolved conflict, which outranks a question
+everything** outranks **a conflict that wants evidence already planned**, which
+outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
@@ -205,6 +206,21 @@ conflict-resolution there would weigh the same evidence again. Once the question
 has a `not_proved` summary with `shortfall: "conflict"`, `nextStep` is null — the
 research ended on the conflict. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.
+
+**A conflict that wants evidence already planned routes to the search** (step
+mode, section E). The route agents send a conflict needing new evidence to
+research-plan, which writes plan items on the SAME question rather than opening
+a helper one. When every open conflict carries an `independence_analysis` and
+the question's active plan still has an open item (one waiting only on an
+upload aside), `nextStep` names that item's search — `search-records`, or
+`search-external-sites — <pli> (<repo>)` when its repository is not
+FamilySearch. Without this rung the conflict rung below fires on every pass and
+the items those agents just asked for never run.
+
+`independence_analysis` is the marker because conflict-resolution fills it on
+every analysis, resolved or not. A conflict not yet analysed still goes to
+conflict-resolution first, even beside an analysed one. Once the items close,
+the rung above decides whether anything is left to weigh.
 
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no
