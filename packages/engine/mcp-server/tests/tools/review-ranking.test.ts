@@ -112,7 +112,7 @@ function project(personEvidence: unknown[]): string {
     questions: [], plans: [], plan_items: [], log: [], sources: [], assertions: [],
     person_evidence: personEvidence,
     conflicts: [], hypotheses: [], timelines: [], proof_summaries: [],
-    evaluations: [], localities: [], known_holdings: [],
+    evaluations: [], localities: [],
   }), "utf8");
   writeFileSync(join(dir, "tree.gedcomx.json"),
     JSON.stringify({ persons: [{ id: "I1" }], relationships: [], sources: [] }), "utf8");

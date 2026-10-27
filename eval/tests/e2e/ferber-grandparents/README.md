@@ -33,3 +33,13 @@ covers the ancestry-extension half) and the unstripped `tree.gedcomx.json` with 
 grandparents included. It is provenance/documentation only — not part of the benchmark contract
 that `starting-research.json` / `starting-tree.gedcomx.json` / `expected-findings.json` define, and
 the harness does not read it.
+
+The client also provided two clippings, recorded in the project as it was run and moved here when
+issue #2069 deleted the section that held them:
+
+- **Obituary of Charles Ferber**, *Fort Lauderdale News* (Fort Lauderdale, FL), 13 Dec 1967. States
+  Charles died at age 76 (implying birth ~1891); died 1967; had moved from Cincinnati, Ohio about 13
+  years earlier, possibly to that Florida residence in 1953.
+- **1900 U.S. Census clipping** for the Ferber household, Cincinnati, Ohio. Per the client's reading:
+  William Ferber age 31, born 1869 in Germany; Emma Ferber age 29, born in Kentucky; married 10 years;
+  Charles Ferber, son, age 9. This is the clipping behind the birthplace conflict above.

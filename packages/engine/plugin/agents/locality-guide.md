@@ -54,6 +54,9 @@ tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
 ---
 
 # Locality Guide
@@ -125,7 +128,7 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "gettin
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", projectPath: "<project path; omit with no project>" })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880, summary: true })
 catalog_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 wiki_read({ url: "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" })
@@ -139,7 +142,7 @@ wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 
 `catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` (and each `filmNotes` entry's `copyLocation`) says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. Name the parish that served a place at the research date only when a tool result in this run names it for that place and date. Otherwise say the affiliation is unconfirmed, name no candidate parish (no "most likely", no list of possibilities), and send the user to where that country's parish registers are held, per the wiki page you fetched. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
 
-`external_links_search` returns a flat list of FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages) filtered to the requested time window. The list is not deduplicated — collapse duplicate URLs before listing repositories. **Compare `totalForPlace` and `results.length`:** if `totalForPlace > 0` but `results` is empty, FS has resources for this place outside your time window — note the gap rather than reporting "no online resources." If `totalForPlace === 0`, FS has no curated external links for this place at all.
+`external_links_search` returns FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages), deduplicated, and with `projectPath` stores the place's full list in the project. When `inlineCapped` is true, or to list one record type, read `research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })`. `totalForPlace === 0` means FS has no curated external links for this place.
 
 ### 4. Classify access levels
 

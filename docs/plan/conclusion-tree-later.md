@@ -81,8 +81,6 @@ recorded as evidence that never counts as proof on its own.
   to reach a person's found-in-records view.
 - If `ut_record_extraction_g4k` still carries its xfail marker (Stage 3 deletes it unless issue
   #2484 lands first), this part's record-extraction run clears it, per rule 10.
-- Issue #2069, deleting `known_holdings`, is decided separately; this needs `known_holdings`
-  neither way.
 
 *Acceptance:* a statement made in a hosted session becomes a researcher-source assertion that
 reads "from you, not yet checked" and never reads likely on its own. A claim citing it beside a
