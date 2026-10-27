@@ -389,6 +389,7 @@ patterns, etc.).
 
 - **timeline:** Request a hypothesis-testing timeline to check event coherence.
 - **conflict-resolution:** When supporting and contradicting evidence exist, specific conflicts may need resolution.
+- **research-plan:** When a hypothesis needs a record nobody has fetched, the deciding search is planned as items on the question already open. When no question is open, **question-selection** instead — research-plan writes nothing when no question matches.
 - **proof-conclusion:** When a hypothesis reaches `supported`, it's ready for a proof conclusion. A hypothesis that cannot reach `supported` still concludes — `proof-conclusion` accepts assertions and `person_evidence` for a question as an alternative; an indirect argument resting on a single source takes that route.
 
 ## Important rules
