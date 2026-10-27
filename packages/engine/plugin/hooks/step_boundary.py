@@ -67,6 +67,9 @@ _SOLO = (
     "search-familysearch-wiki",
     "search-wikipedia",
     "validate-schema",
+    # Its own group: a one-shot ask that needs no project and writes nothing,
+    # the shape section K describes.
+    "where-else-to-search",
 )
 for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
@@ -127,6 +130,7 @@ STEP_LABELS: dict[str, str] = {
     "search-familysearch-wiki": "searching the FamilySearch wiki",
     "search-wikipedia": "searching Wikipedia",
     "validate-schema": "validating the project files",
+    "where-else-to-search": "listing other sites to search",
 }
 
 _DENY_REASON = (
