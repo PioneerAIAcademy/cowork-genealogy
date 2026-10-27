@@ -326,8 +326,14 @@ that apply:
     `DEFAULT_MAX_NUDGES`, now 0, which is what every real turn carries; the worker honouring
     what was stamped is the layering the field exists for, and hardcoding 0 would remove the
     only way to exercise the veto/deny/halt path deliberately. `max_nudges()`'s docstring
-    says so. The two recipes that still exported 40 (`proto-demo-auto`, `proto-probe-resume`)
-    now default to 0.
+    says so.
+  - **`proto-demo-auto` and `proto-probe-resume` keep exporting 40, deliberately.** That
+    export is what keeps the Stop hook under a live test at all, and `test_proto_demo.py`
+    pins it on purpose. Under step mode such a turn gets veto, deny, then halt, so the
+    recipe does not reach its verdict today. Lowering it to 0 would not fix that: without
+    the keep-going driver below the run is one step, and the verdict wants a completed
+    project either way. Both paths need the driver, so the export stays where its own
+    tests put it.
   - **Still owed, and NOT in PR 1:** `demo.py`'s keep-going driver — posting "keep going."
     after each turn and waiting until the session has no open or held turn — with the
     `bounds.py`, `turn.py` and `test_proto_target.py` changes beside it. Until it lands,
