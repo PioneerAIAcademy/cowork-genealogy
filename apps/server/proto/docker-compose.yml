@@ -294,12 +294,13 @@ services:
       # browser path it can see -- so each recipe recreates this container with its own
       # export instead, and proto-demo exports 0 to stay a one-turn run.
       #
-      # 60 is sized on STEP count, not on the nudge histogram: measured over the 189
-      # committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
-      # max 76 -- so 60 clears p99 with margin. The nudge histogram (median 1, p90 4)
-      # describes runs under a harness that FORBIDS yielding and does not describe this
-      # regime. The cap is not the spend control either; 1e's per-session bound is.
-      # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
+      # 0 under step mode: a turn is one step and ends at its boundary on purpose,
+      # so there is nothing for a Stop veto to re-open (`turn_max_nudges`). The host's
+      # own reply continues the run, bounded by `MAX_AUTO_REPLIES` in step_boundary.py.
+      # The earlier 60 was sized on step count per run to clear a p99 under a harness
+      # that FORBADE yielding; that regime is gone, and the test that re-derived the
+      # p99 from the corpus went with it. The cap was never the spend control; 1e's
+      # per-session bound is.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
     depends_on:
       postgres:

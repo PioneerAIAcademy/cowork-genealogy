@@ -652,8 +652,11 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   inherits a spent budget. A `job` turn is still bounded on this plane: the gate
 >   enforces `step` (`step_boundary.gate_mode`) while the turn records `job`.
 >
->   `AUTO_CONTINUE_MAX_STEPS` is replaced by `MAX_AUTO_REPLIES` (30) in
->   `step_boundary.py`, which every plane loads. The literal `Next: <step>.
+>   `MAX_AUTO_REPLIES` (30) in `step_boundary.py` is the prototype's and the e2e
+>   harness's reply cap. It does NOT replace `AUTO_CONTINUE_MAX_STEPS`
+>   everywhere: the alpha still reads that setting
+>   (`apps/server/app/agent/runner.py`), and neither the alpha nor Cowork loads
+>   `step_boundary.py` at all (decision 25). The literal `Next: <step>.
 >   Continue?` and `AutoContinue` stay until the alpha moves over.
 
 ### 6.3 Database (Postgres) — minimum tables

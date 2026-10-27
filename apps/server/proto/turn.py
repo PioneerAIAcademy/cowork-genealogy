@@ -47,8 +47,8 @@ foreground one resumes cleanly, so tool name alone cannot select it. ``tool_call
 no input column -- 004_worker.sql adds only ``tool_use_id`` -- so the selector reads the
 ``tool_use`` block out of ``session_entries.entry``, the SDK's own transcript. Pair it
 with ``--text-file`` (``probes/background-delegation.txt`` asks for two record
-extractions at once) and ``AUTONOMOUS_MAX_NUDGES > 0``, which ``make proto-kill`` leaves
-at 0: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
+extractions at once). Under step mode the cap is 0 everywhere and nothing re-opens a
+turn, so the probe no longer depends on it: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
 none of the eight ``bagley-father-1884`` runs, so it has to be provoked. The two checks that are about
 the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
 ``--expect-grant-refresh`` (U3, refused with ``--kill-signal term``) proves the resumed

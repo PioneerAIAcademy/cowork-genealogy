@@ -46,7 +46,7 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; required -- unset or empty refuses to start),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``),
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
@@ -1337,8 +1337,10 @@ def max_nudges(env: Mapping[str, str] | None = None) -> int:
     with "Continue with X?". A nudge past that re-opens a turn that ended on purpose.
 
     A malformed or unset value still takes the default, and that default is still the
-    operator's to change -- a recipe that wants the old continuous behaviour exports a
-    positive cap explicitly, exactly as a recipe wanting one turn used to export 0."""
+    operator's to change -- but a positive cap no longer restores the old continuous
+    behaviour, because the step boundary is enforced independently of it. A turn under a
+    positive cap is vetoed for ending at its boundary, reaches for the next step, is
+    denied by the gate, and halts. Export a positive cap only to exercise that path."""
     raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
     text = (raw or "").strip()
     if not text:
