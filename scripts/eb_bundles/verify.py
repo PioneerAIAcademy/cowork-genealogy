@@ -50,7 +50,11 @@ REQUIRED = {
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
                                    "proto/turn_message.py", "proto/migrate.py",
                                  "proto/worker/worker.py", "proto/worker/options.py",
-                                 "plugin/.claude-plugin/plugin.json", "plugin/hooks/hooks.json"),
+                                 "plugin/.claude-plugin/plugin.json", "plugin/hooks/hooks.json",
+                                 # The step boundary. Missing, the worker logs one
+                                 # `step_gate_unavailable` line and runs unbounded
+                                 # turns -- a degradation nothing else would catch.
+                                 "plugin/hooks/step_boundary.py"),
     "tools": COMMON_REQUIRED + ("package.json", "package-lock.json", "build/http.js", "build/build-info.json",
                                 "config/familysearch.json", "node_modules/pg/package.json",
                                 "smoke/dev/smoke-http.js"),

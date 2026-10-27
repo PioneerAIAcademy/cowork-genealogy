@@ -271,6 +271,7 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 "proto/sql/001_schema.sql": (b"", f),
                 "proto/worker/worker.py": (b"", f), "proto/worker/options.py": (b"", f),
                 "plugin/.claude-plugin/plugin.json": (b"{}", f), "plugin/hooks/hooks.json": (b"{}", f),
+                "plugin/hooks/step_boundary.py": (b"", f),
                 "plugin/agents/citation.md": (b"", f), "plugin/skills/research/SKILL.md": (b"", f)}
     return {**common,
             "Procfile": (b"web: node build/http.js --host 127.0.0.1 --port 8080\n", f),
@@ -349,6 +350,12 @@ def _add(tier, **kv):
 
 REJECTED = {
     "missing Procfile": ("web", lambda: _drop("web", "Procfile"), "missing Procfile"),
+    # The build already ships it (it copies the whole plugin directory), so this
+    # is about the verifier noticing if that ever stops being true: without the
+    # file the worker degrades to one log line and unbounded turns.
+    "worker without the step boundary": (
+        "worker", lambda: _drop("worker", "plugin/hooks/step_boundary.py"),
+        "plugin/hooks/step_boundary.py"),
     "web --port differs from PORT": ("web", lambda: _add("web", **{
         "Procfile": b"web: python -m uvicorn web.app:app --host 127.0.0.1 --port 8001\n"}), "differs from"),
     "tools PORT differs from --port": ("tools", lambda: _add("tools", **{
