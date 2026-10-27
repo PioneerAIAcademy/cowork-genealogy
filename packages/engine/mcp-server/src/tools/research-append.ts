@@ -79,6 +79,14 @@ import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
+  collectionKey,
+  readExternalCollections,
+  storedCollectionKeys,
+  EXTERNAL_COLLECTIONS_FILE,
+  type ExternalCollectionsDoc,
+  type StoredCollectionRow,
+} from "../utils/external-collections-store.js";
+import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
   assertionTreeFactType,
@@ -2755,6 +2763,40 @@ function capSource(a: any): unknown {
   return typeof a?.source_id === "string" && a.source_id !== "" ? a.source_id : (a?.record_id ?? null);
 }
 
+/** The sources a call's person_evidence appends link from, each with the op
+ *  indices under it. Keyed by `capSource`, so a document that keeps each party
+ *  on its own record id is one source; a record id is compared bare and shown
+ *  as first written. An assertion not in research.json before the call is not
+ *  counted. */
+export function personEvidenceAppendSources(
+  ops: readonly ResearchAppendOp[],
+  research: any,
+): Map<string, { shown: string; ops: number[] }> {
+  const byId = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) if (typeof a?.id === "string") byId.set(a.id, a);
+  const out = new Map<string, { shown: string; ops: number[] }>();
+  ops.forEach((op, i) => {
+    if (op?.section !== "person_evidence" || op.op !== "append") return;
+    const a = byId.get((op.entry as any)?.assertion_id);
+    const src = capSource(a);
+    if (typeof src !== "string" || src === "") return;
+    const key = src === a.source_id ? src : arkToBareId(src);
+    const seen = out.get(key);
+    if (seen) seen.ops.push(i);
+    else out.set(key, { shown: src, ops: [i] });
+  });
+  return out;
+}
+
+function oneSourcePerCallError(sources: Map<string, { shown: string; ops: number[] }>): string {
+  const listed = [...sources.values()].map((s) => `'${s.shown}' (ops ${s.ops.join(", ")})`).join("; ");
+  return (
+    `these person_evidence appends link assertions from ${sources.size} sources: ${listed}. ` +
+    "Send one research_append call per source, written as soon as that source's links are decided; " +
+    "nothing in this call was written."
+  );
+}
+
 /** A record party: the bare record id with the party `recordPartyKeyer` reads
  *  across that record's assertions. Under one source, two personas that share a
  *  role on separate records stay apart. */
@@ -5414,6 +5456,122 @@ function planItemSkipInvariants(
   return errors;
 }
 
+/** The curated collections in `external-collections.json`, by `collectionKey`, or
+ *  why they could not be read. Every place's rows, so a plan item's free-text
+ *  jurisdiction never has to be matched to a stored place. Read once per call,
+ *  before the sync apply loop, and only when an op sets `collection_url`. */
+export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
+
+async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
+  try {
+    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
+ *  inline `items[]`. An update is not an append, so a status change never warns. */
+function appendedPlanItems(ops: readonly ResearchAppendOp[]): any[] {
+  const out: any[] = [];
+  for (const op of ops as any[]) {
+    if (op?.op !== "append") continue;
+    if (op.section === "plan_items" && op.entry && typeof op.entry === "object") out.push(op.entry);
+    if (op.section === "plans" && Array.isArray(op.entry?.items)) out.push(...op.entry.items.filter((i: unknown) => i && typeof i === "object"));
+  }
+  return out;
+}
+
+const PLACE_NOISE = /\b(county|parish|co\.|township|twp\.?|city of)\b/gi;
+
+/** The stored collections that fit an external-site item appended without a
+ *  `collection_url`: rows of every stored place whose first part ("Schuylkill",
+ *  "Pennsylvania") names a part of the item's free-text jurisdiction, narrowed to
+ *  the item's record type when both carry one. A WARNING, so the loose place match
+ *  is acceptable here; it could not decide a refusal (lead ruling, 2026-10-23). */
+export function storedCollectionsHint(item: any, doc: ExternalCollectionsDoc | null): string | undefined {
+  const repository = typeof item?.repository === "string" ? item.repository : "";
+  if (repository === "" || /familysearch/i.test(repository) || item?.collection_url) return undefined;
+  const parts = new Set(
+    String(item?.jurisdiction ?? "")
+      .replace(PLACE_NOISE, " ")
+      .split(",")
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const type = typeof item?.record_type === "string" ? item.record_type.toLowerCase() : "";
+  const fits: StoredCollectionRow[] = [];
+  for (const [place, entry] of Object.entries(doc?.places ?? {})) {
+    if (!parts.has(place.split(",")[0].trim().toLowerCase())) continue;
+    for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
+      const types = (row?.record_types ?? []).map((t) => String(t).toLowerCase());
+      if (type && types.length > 0 && !types.includes(type)) continue;
+      if (typeof row?.url === "string" && !fits.some((f) => f.url === row.url)) fits.push(row);
+    }
+  }
+  if (fits.length === 0) return undefined;
+  const shown = fits.slice(0, 8).map((r) => `${r.url} (${r.link_text})`).join("; ");
+  const more = fits.length > 8 ? `; and ${fits.length - 8} more` : "";
+  return (
+    `${/^[aeiou]/i.test(repository) ? "An" : "A"} ${repository} plan item (${item?.record_type ?? "?"}, ` +
+    `${item?.jurisdiction ?? "?"}) was added with no ` +
+    `collection_url, and ${EXTERNAL_COLLECTIONS_FILE} holds ${fits.length} collection(s) that fit it: ${shown}${more}. ` +
+    `Set collection_url to one of these urls, or leave it off for a site-wide search.`
+  );
+}
+
+/** Whether any op sets a plan item's `collection_url`, directly or on an inline
+ *  `items[]` entry of a `plans` op. Reads the fields, never a serialization: an op
+ *  can hold a value JSON cannot encode. */
+function opsSetCollectionUrl(ops: readonly ResearchAppendOp[]): boolean {
+  const has = (o: unknown) => !!o && typeof o === "object" && Object.hasOwn(o, "collection_url");
+  return ops.some((op: any) =>
+    [op?.entry, op?.fields].some(
+      (body) => has(body) || (Array.isArray(body?.items) && body.items.some(has)),
+    ),
+  );
+}
+
+/** A plan item's `collection_url` must be a curated collection FamilySearch
+ *  returned for a place, not one recalled from memory (#2995). Decidable from
+ *  `external-collections.json` alone, so it is a writer precondition (ADR-0011).
+ *  Only a url this op SETS is checked: one stored before a re-fetch dropped it
+ *  is left alone, or an unrelated edit to that item would be refused. A
+ *  non-string value is the validator's type error, not this rule's. */
+function collectionUrlInvariants(
+  item: any,
+  stored: StoredCollectionUrls | undefined,
+  previous?: unknown,
+): string[] {
+  const url = item?.collection_url;
+  if (typeof url !== "string" || url === "" || url === previous) return [];
+  const pid = item?.id ?? "(new)";
+  const remedy =
+    "Copy a row's url from research_query({section: \"external_collections\", place, recordType}), " +
+    "or omit collection_url for a site-wide search.";
+  if (!stored) return [];
+  if ("error" in stored) {
+    return [
+      `plan_items[${pid}]: collection_url cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be ` +
+        `read (${stored.error}). Re-fetch the place with external_links_search({standardPlace, projectPath}), ` +
+        "or omit collection_url.",
+    ];
+  }
+  if (stored.keys.size === 0) {
+    return [
+      `plan_items[${pid}]: collection_url '${url}' is not a stored curated collection — nothing is ` +
+        `stored for this project yet. Fetch the place with external_links_search({standardPlace, ` +
+        `projectPath}) first, then ${remedy.charAt(0).toLowerCase()}${remedy.slice(1)}`,
+    ];
+  }
+  if (!stored.keys.has(collectionKey(url))) {
+    return [
+      `plan_items[${pid}]: collection_url '${url}' is not in ${EXTERNAL_COLLECTIONS_FILE}. ${remedy}`,
+    ];
+  }
+  return [];
+}
+
 /** The two tiers that are a final answer rather than a stalled one: `proved`
  *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
  *  deliberately absent — it is a non-answer, so something IS holding it back. */
@@ -6608,6 +6766,7 @@ function applyOne(
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
   birthPlaceCoords?: BirthPlaceCoords,
+  storedCollectionUrls?: StoredCollectionUrls,
   // `ResearchAppendOptions.attachmentLink`: only extraction_append's personId
   // mode sets it, as a function argument no tool input reaches.
   attachmentLink = false,
@@ -7159,6 +7318,14 @@ function applyOne(
           .map((it: any) => [it.id, it.status]),
       );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
+        // Before the completed-item skip: a `plans` update re-sending a completed
+        // item whole could otherwise write a collection_url that was never stored.
+        const storedItem = (Array.isArray(storedPlan?.items) ? storedPlan.items : []).find(
+          (it: any) => it && item && it.id === item.id,
+        );
+        invariantErrors.push(
+          ...collectionUrlInvariants(item, storedCollectionUrls, storedItem?.collection_url),
+        );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -7241,6 +7408,15 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
+      invariantErrors.push(
+        ...collectionUrlInvariants(
+          resultEntry,
+          storedCollectionUrls,
+          op.op === "update" ? storedItem?.collection_url : undefined,
+        ),
+      );
     }
   }
   // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on
@@ -8387,10 +8563,10 @@ async function prepareOps(
         const results = await readSidecarResults(ref);
         if (results) {
           // record_search and record_read stage GedcomX personas; their results key on
-          // `recordId`. fulltext_search / external_links_search stage transcript
-          // text and links keyed on `id`, with no persona document — matching
-          // them on `recordId` (a field they never carry) matched nothing every
-          // time, which either rejected a persona-linked write with an empty
+          // `recordId`. fulltext_search stages transcript text (and a legacy
+          // external_links_search sidecar holds links) keyed on `id`, with no
+          // persona document — matching them on `recordId` (a field they never
+          // carry) matched nothing every time, which either rejected a persona-linked write with an empty
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
           const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
@@ -8882,8 +9058,22 @@ export async function researchAppend(
       if (outsideLane.length > 0) return fail(boundErrors(outsideLane));
     }
 
+    // ─── One source per call (#3544) ─────────────────────────────────────────
+    // All-or-nothing over several sources throws away every source's links for
+    // one source's error: in the e2e corpus, 1,045 links from error-free sources
+    // went with 48 refused multi-source calls. Refusing the shape keeps the call
+    // atomic; it never commits part of a batch.
+    if (!options.attachmentLink) {
+      const sources = personEvidenceAppendSources(ops, research);
+      if (sources.size > 1) return fail([oneSourcePerCallError(sources)]);
+    }
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+
+    const storedCollectionUrls = opsSetCollectionUrl(ops)
+      ? await loadStoredCollectionUrls(projectPath)
+      : undefined;
 
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
@@ -8903,6 +9093,7 @@ export async function researchAppend(
         prep.createdAssertions,
         prep.personLinks,
         prep.birthPlaceCoords,
+        storedCollectionUrls,
         options.attachmentLink === true,
         ctx.reserved,
       ),
@@ -9002,6 +9193,19 @@ export async function researchAppend(
       const entry = ((planOp.op === "append" ? (planOp as any).entry : (planOp as any).fields) ?? {});
       for (const flag of planItemFlags(entry, localitiesForPlan)) {
         planItemWarnings.push(flag.message);
+      }
+    }
+    const appendedItems = appendedPlanItems(ops);
+    if (appendedItems.some((i) => i.repository && !/familysearch/i.test(String(i.repository)) && !i.collection_url)) {
+      let stored: ExternalCollectionsDoc | null = null;
+      try {
+        stored = await readExternalCollections(projectPath);
+      } catch {
+        // A malformed file is research_append's refusal only when a collection_url is set.
+      }
+      for (const i of appendedItems) {
+        const hint = storedCollectionsHint(i, stored);
+        if (hint) planItemWarnings.push(hint);
       }
     }
 
