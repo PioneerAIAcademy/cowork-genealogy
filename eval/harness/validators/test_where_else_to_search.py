@@ -205,13 +205,16 @@ def test_each_entry_states_its_rows_span_and_nothing_more(tool_calls, agent_retu
         row = rows.get(base_of[built[0]]) or {}
         coverage = _dash(lines[1])
         spans = _grounded_spans(row)
-        if row.get("startYear") is None and "undated collection" in coverage.lower():
+        if row.get("startYear") is None and coverage.strip().lower() == "undated collection.":
             continue
         assert spans, (
             f"row {row.get('linkText')!r} has no years in its fields or its title, so its entry "
             f"must say 'Undated collection.': {lines[1]!r}"
         )
-        assert any(re.search(rf"(?<!\d){s}(?!\d)", coverage) for s in spans), (
+        stated = re.fullmatch(r"Covers (\d{4})(?:-(\d{4}))?(?:[,;] [^.()]*)?\.", coverage.strip())
+        assert stated, f"coverage line must be 'Covers <span>, which ...' and nothing more: {lines[1]!r}"
+        said = stated.group(1) if stated.group(2) in (None, stated.group(1)) else f"{stated.group(1)}-{stated.group(2)}"
+        assert said in spans, (
             f"row {row.get('linkText')!r} carries spans {spans}; its entry says {lines[1]!r}"
         )
     if base_of:

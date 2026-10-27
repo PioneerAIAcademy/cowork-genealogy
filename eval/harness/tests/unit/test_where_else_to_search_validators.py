@@ -185,6 +185,8 @@ def test_span_fires_on_an_invented_span_an_extra_sentence_or_a_missing_entry():
         check_span(CALLS, _span_reply(_entry("**Muster Rolls**", "Covers 1861–1865.")), None, t)
     with pytest.raises(AssertionError):  # a fourth line: a fact no tool returned
         check_span(CALLS, _span_reply(_entry("**Muster Rolls**", "Covers 1860–1869.") + "\nMany Irishmen enlisted."), None, t)
+    with pytest.raises(AssertionError):  # a grounded span, then a sentence no tool returned
+        check_span(CALLS, _span_reply(_entry("**Muster Rolls**", "Covers 1860–1869, which includes your 1862. (This is a census, not a muster roll, but places him in the county.)")), None, t)
     with pytest.raises(AssertionError):  # the coverage line dropped
         check_span(CALLS, _span_reply(f"**Muster Rolls**\n{BUILT}"), None, t)
     with pytest.raises(AssertionError):  # built, but no entry carries it
@@ -225,6 +227,8 @@ def test_span_requires_undated_when_no_tool_named_any_year():
     check_span(calls, _span_reply(_entry("**City Directories** — Ancestry", "Undated collection.")), None, t)
     with pytest.raises(AssertionError):
         check_span(calls, _span_reply(_entry("**City Directories** — Ancestry", "Covers 1822–1995.")), None, t)
+    with pytest.raises(AssertionError):  # undated, then a claim no tool returned
+        check_span(calls, _span_reply(_entry("**City Directories** — Ancestry", "Undated collection. (Indexes journal articles; a Blount County marriage may be indexed here.)")), None, t)
 
 
 def test_span_reads_decade_plurals_in_a_title():
@@ -239,6 +243,8 @@ def test_span_accepts_a_single_year_row_written_once():
     calls = [one_year, build_call()]
     check_span(calls, _span_reply(_entry("**1801 Census** — Ancestry", "Covers 1801, your searched year.")), None, where_test())
     check_span(calls, _span_reply(_entry("**1801 Census** — Ancestry", "Covers 1801–1801.")), None, where_test())
+    with pytest.raises(AssertionError):  # an invented span carried by the searched year
+        check_span(calls, _span_reply(_entry("**1801 Census** — Ancestry", "Covers 1700–1900, which includes your 1801.")), None, where_test())
 
 
 def test_zero_results_fires_on_any_build_or_link_and_accepts_a_plain_answer():

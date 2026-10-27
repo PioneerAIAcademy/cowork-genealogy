@@ -82,7 +82,7 @@ Otherwise → proceed.
    | www.findmypast.com, search.findmypast.com, www.findmypast.co.uk | `findmypast` |
    | www.findagrave.com | `findagrave` |
    | www.newspapers.com | `newspapers` |
-   | www.loc.gov | `chronicling_america` |
+   | www.loc.gov, only a `url` whose path starts `/collections/chronicling-america` | `chronicling_america` |
    | catalog.archives.gov | `archives_gov` |
    | archive.org | `archive_org` |
    | billiongraves.com | `billiongraves` |
