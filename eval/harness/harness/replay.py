@@ -52,8 +52,8 @@ own module docstring that it is pure analysis over committed data, and importing
 from __future__ import annotations
 
 import copy
-import re
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -332,9 +332,63 @@ class ReplayResult:
         self.unmodelled[what] = self.unmodelled.get(what, 0) + 1
 
 
+def _count_overlapping(text: str, needle: str) -> int:
+    count, i = 0, text.find(needle)
+    while i != -1:
+        count += 1
+        i = text.find(needle, i + 1)
+    return count
+
+
+def _expand_edits(state: dict, op: dict, entry_id: str | None) -> dict | None:
+    """The fields an accepted `edits` op wrote, or None when the replayed text cannot
+    show them. The engine accepted each `old` only where it occurred exactly once, so
+    the same count in the replayed text reproduces the write."""
+    edits = op.get("edits")
+    if isinstance(edits, str):
+        try:
+            edits = json.loads(edits)
+        except ValueError:
+            return None
+    if op.get("section") != "proof_summaries" or not isinstance(edits, list):
+        return None
+    target = entry_id or op.get("entryId")
+    entry = next(
+        (e for e in state.get("proof_summaries") or [] if isinstance(e, dict) and e.get("id") == target),
+        None,
+    )
+    if entry is None:
+        return None
+    written: dict = {}
+    for e in edits:
+        if not isinstance(e, dict):
+            return None
+        field, old, new = e.get("field"), e.get("old"), e.get("new")
+        text = written.get(field, entry.get(field))
+        if not (isinstance(text, str) and isinstance(old, str) and old and isinstance(new, str)):
+            return None
+        if _count_overlapping(text, old) != 1:
+            return None
+        i = text.index(old)
+        written[field] = text[:i] + new + text[i + len(old):]
+    return written
+
+
 def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) -> None:
     section = op.get("section")
     verb = op.get("op") or "append"
+    # research_append expands `edits` into `fields`. Where the replayed text cannot
+    # reproduce the expansion, report it rather than replay the field as unchanged;
+    # with no `fields` beside it there is then nothing applied.
+    if op.get("edits"):
+        written = _expand_edits(state, op, entry_id)
+        if written is None:
+            out.note_unmodelled(f"{section}:edits")
+            if not isinstance(op.get("fields"), dict):
+                return
+        else:
+            fields = op.get("fields") if isinstance(op.get("fields"), dict) else {}
+            op = {**op, "fields": {**fields, **written}}
     entry = op.get("entry")
     if not isinstance(entry, dict):
         entry = op.get("fields") if isinstance(op.get("fields"), dict) else {}
