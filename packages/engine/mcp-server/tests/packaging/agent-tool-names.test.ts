@@ -736,6 +736,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // New agent (issue #3521), one-shot and project-free: after a FamilySearch
+  // records search it lists curated external collections with prefilled links.
+  // No `Read`, no `project_context` and no writer, so "writes nothing" is
+  // structural. `build_external_search_url` logs only when given a `projectPath`,
+  // which the body never passes.
+  "where-else-to-search.md": {
+    tools: [
+      "place_search",
+      "external_links_search",
+      "build_external_search_url",
+    ],
+    denies: [],
+  },
+
   // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
   // `person_record_matches` for the pending matches, `research_query` to find a
   // hint the project already extracted, `record_read` per hint,
