@@ -240,9 +240,8 @@ The staged file is not consumed; the 24h TTL prune removes it.
 today's ISO date; every analytical section as an empty array; and the supplied
 tree.
 
-**What it deliberately does not write:** `researcher_profile` and
-`known_holdings`. Both are written afterwards through `research_append`, from
-what the researcher actually said. An agent must never invent a profile — a
+**What it deliberately does not write:** `researcher_profile`. It is written
+afterwards through `research_append`. An agent must never invent a profile — a
 project was observed created with an experience level and subscriptions the user
 was never asked for, and a fabricated profile is indistinguishable downstream
 from a real one, while an absent one has a working fallback in every skill.
@@ -317,8 +316,8 @@ the write ahead of the validation and watching two cases go red.
 ## 6. Enforcement
 
 > `packages/engine/mcp-server/tests/tools/project-create.test.ts` — the refusals,
-> the atomic no-write-on-failure property, and that neither `researcher_profile`
-> nor `known_holdings` is invented; the tree built from a staged
+> the atomic no-write-on-failure property, and that no `researcher_profile`
+> is invented; the tree built from a staged
 > `person-read-flynn-family.json` (a merged-person redirect, a memory source with
 > `text`/`image_ref`/`artifact_url`, a top-level `notes`) against a committed
 > literal; additions by PID landing in the starting baseline; the label, ref,

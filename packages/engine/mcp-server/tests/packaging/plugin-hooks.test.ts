@@ -887,12 +887,10 @@ describe("the guard script's decisions", () => {
   it.each([
     ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
-    ["known_holdings", { section: "known_holdings", op: "append", entry: {} }],
     ["sources (a memory's transcription)", { section: "sources", op: "append", entry: {} }],
-    ["all three in one batch", {
+    ["both in one batch", {
       ops: [
         { section: "researcher_profile", op: "update", fields: {} },
-        { section: "known_holdings", op: "append", entry: {} },
         { section: "sources", op: "append", entry: {} },
       ],
     }],

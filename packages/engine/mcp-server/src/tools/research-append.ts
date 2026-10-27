@@ -172,7 +172,6 @@ const SECTIONS: Record<string, SectionConfig> = {
     },
   },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
-  known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
   localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
   // A row is never retired and never re-pointed: person_id is the person it
   // shadows, so it is not among the fields an update may set.
@@ -6826,7 +6825,7 @@ function applyOne(
     array = parent[config.nested.field];
     idPool = idPoolOf(research, section, config);
   } else {
-    // Initialize an absent optional section (e.g. known_holdings) on first write.
+    // Initialize an absent optional section (e.g. localities) on first write.
     if (research[section] === undefined) research[section] = [];
     if (!Array.isArray(research[section])) {
       throw new ResearchAppendError(`research.json '${section}' is not an array`);
@@ -9371,7 +9370,7 @@ function documentFailure(c: {
     return c.namesake.length > 0 ? { errors: c.namesake, hints: [personEvidence] } : undefined;
   }
   // Shape errors surface here (the document validator, not applyOne), so this is the
-  // site the evaluations/known_holdings rejections land on.
+  // site the evaluations rejections land on.
   const mapped = mapValidationErrors(formatIssues(c.validation.errors), c.applied, c.isBatch);
   const misroute = emptyCreatedPlanErrors(c.ops, c.doc, c.applied, c.namedByRefusedItems).map((m) =>
     c.fmt(m.index, m.message),
@@ -9553,7 +9552,6 @@ export const RESEARCH_APPEND_SECTIONS = [
   "timelines",
   "proof_summaries",
   "evaluations",
-  "known_holdings",
   "localities",
   "namesakes",
   "project",

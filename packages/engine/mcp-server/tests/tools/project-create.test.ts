@@ -172,16 +172,14 @@ describe("project_create", () => {
     }
   });
 
-  it("writes no researcher_profile and no known_holdings", async () => {
-    // Both are written afterwards through research_append, from what the
-    // researcher actually said. A project was observed created with an
+  it("writes no researcher_profile", async () => {
+    // It is written afterwards through research_append. A project was observed created with an
     // experience level and subscriptions the user was never asked for, and a
     // fabricated profile is indistinguishable downstream from a real one while
     // an absent one falls back to sane defaults everywhere.
     await projectCreate({ projectPath: dir, objective: "Who were John's parents?" });
     const research = await readResearch();
     expect(research.researcher_profile).toBeUndefined();
-    expect(research.known_holdings).toBeUndefined();
   });
 
   it("creates a valid empty tree when none is supplied", async () => {

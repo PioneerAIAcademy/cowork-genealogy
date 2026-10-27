@@ -73,27 +73,6 @@
     },
     {
       "artifact": "research.json",
-      "section": "known_holdings",
-      "owner": "agent:init-project",
-      "callers": [
-        "agent:init-project"
-      ],
-      "writerTools": [
-        "research_append",
-        "merge_tree_persons"
-      ],
-      "toolAuthorized": [
-        "merge_tree_persons"
-      ],
-      "enforceableAt": [],
-      "notes": "Recorded as unowned while the only writer was init-project's raw file write, on a measurement taken over the e2e corpus — where init-project never runs, because every fixture starts from an existing project. The unit corpus does exercise it. Now routed through `research_append` with the rest of project creation. Not enforceable on the unit plane: the section is outside the diff set that plane iterates.",
-      "requires": "init-project surveys what the researcher already holds at project creation and writes one entry per reported item, after the tree ops — `relates_to_person_ids` names tree persons, and the validator rejects a reference to a person that does not exist yet.",
-      "failure": "The survey is what stops the first research plan re-finding records the researcher already has. Written before the tree persons exist, every entry's person references dangle and the write is rejected outright.",
-      "remedy": "Write it through `research_append` after the tree batch. Whether anything downstream should also set the `promoted` flag is an open question, tracked separately.",
-      "override": "none"
-    },
-    {
-      "artifact": "research.json",
       "section": "questions",
       "owner": "agent:question-selection",
       "callers": [

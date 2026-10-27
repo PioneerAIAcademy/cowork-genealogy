@@ -410,3 +410,110 @@ describe("retired field names (exhaustive_declaration → search_stop, #2539)", 
     expect(schema).toContain("2026-10-07");
   });
 });
+
+// ── known_holdings deleted (issue #2069, 2026-10-27) ────────────────────────
+//
+// A deletion, not a rename: the section, its `$def` and its two closed enums
+// went with nothing replacing them. Three tokens, so this block is a helper over
+// a token set rather than a third copy of the two above. `known_holding` also
+// matches `known_holdings` (fixed-string, substring).
+//
+// The reach check runs per token, on all but `holding_confidence`: that one
+// only ever existed as a `$defs` name and appears in no run log or capture, so
+// no frozen hit can prove the scan reaches it. The other two prove the scan.
+
+interface RetiredSet {
+  tokens: readonly string[];
+  reachTokens: readonly string[];
+  frozenPrefixes: readonly string[];
+  allowed: Record<string, string>;
+  why: string;
+  registryDate: string;
+}
+
+function filesContainingToken(token: string): string[] {
+  let out = "";
+  try {
+    out = git("grep", "-l", "--untracked", "--fixed-strings", token, "--", ".");
+  } catch (err: any) {
+    if (err?.status === 1 && !err?.stdout?.toString().trim()) return [];
+    throw err;
+  }
+  return out.split("\n").filter(Boolean);
+}
+
+function describeRetiredSet(set: RetiredSet): void {
+  const hitsByToken = new Map(set.tokens.map((t) => [t, filesContainingToken(t)]));
+  const hits = new Set([...hitsByToken.values()].flat());
+  const frozen = (p: string) => set.frozenPrefixes.some((prefix) => p.startsWith(prefix));
+
+  for (const token of set.reachTokens) {
+    it(`finds "${token}" in the frozen corpus, proving the scan reaches the repo`, () => {
+      expect(
+        (hitsByToken.get(token) ?? []).filter(frozen).length,
+        `no tracked file under ${set.frozenPrefixes.join(", ")} contains "${token}" — ` +
+          `the scan is not reaching the repository`,
+      ).toBeGreaterThan(0);
+    });
+  }
+
+  it(`no live file still names ${set.tokens.join(" / ")} outside the allow-list`, () => {
+    const leaked = [...hits].filter((p) => !frozen(p) && !(p in set.allowed)).sort();
+    expect(
+      leaked,
+      `${set.why} These tracked files still name it. Remove the mention, or — only ` +
+        `for a dated record — add the path to the allow-list in this file with its reason:\n` +
+        leaked.map((p) => `  - ${p}`).join("\n"),
+    ).toEqual([]);
+  });
+
+  it("has no stale entries in the allow-list", () => {
+    const stale = Object.keys(set.allowed).filter((p) => !hits.has(p)).sort();
+    expect(
+      stale,
+      `these allow-list entries name files that no longer contain any of ` +
+        `${set.tokens.join(", ")} — delete them:\n` +
+        stale.map((p) => `  - ${p}`).join("\n"),
+    ).toEqual([]);
+  });
+
+  it("every allow-list entry carries a reason", () => {
+    const blank = Object.entries(set.allowed)
+      .filter(([, reason]) => reason.trim().length < 20)
+      .map(([p]) => p);
+    expect(blank, `these allow-list entries have no usable reason`).toEqual([]);
+  });
+
+  it("records the retirement in enums.schema.json", () => {
+    const schema = readFileSync(
+      join(projectRoot, "docs", "specs", "schemas", "enums.schema.json"),
+      "utf8",
+    );
+    for (const token of set.tokens) expect(schema).toContain(token);
+    expect(schema).toContain(set.registryDate);
+  });
+}
+
+describe("retired schema identifiers (known_holdings deleted, #2069)", () => {
+  describeRetiredSet({
+    tokens: ["known_holding", "holding_type", "holding_confidence"],
+    reachTokens: ["known_holding", "holding_type"],
+    frozenPrefixes: FROZEN_PREFIXES2,
+    why: "The known_holdings section and its holding_type / holding_confidence enums were deleted (#2069).",
+    registryDate: "2026-10-27",
+    allowed: {
+      "docs/specs/schemas/enums.schema.json":
+        "the retirement registry — its $comment names the deleted identifiers by design",
+      "packages/schema/schemas/enums.schema.json":
+        "the retirement registry — byte-identical copy of the above",
+      "packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts":
+        "this file — it names the deleted identifiers in order to ban them",
+      "packages/engine/mcp-server/tests/validation/validator.test.ts":
+        "plants a stale known_holdings key to prove the validator rejects it at the document root",
+      "docs/specs/guardrail-enforcement-spec.md":
+        "dated measurement history (owner audit and research_query coverage) of the corpus as it stood then",
+      "docs/specs/hosted-web-workbench-spec.md":
+        "a dated 'As built, verified 2026-08-02' note listing the sections added after the spec was written",
+    },
+  });
+});

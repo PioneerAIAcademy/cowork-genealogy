@@ -4,9 +4,9 @@ Grading dimensions for init-project unit tests. Evaluated by the LLM judge
 alongside the base rubric (Correctness, Completeness, Tool Arguments).
 
 > **DRAFT — pending genealogist review.** Expanded from the original
-> single "Stub person quality" dimension to cover all five jobs the agent
-> performs (define problem, survey tree, survey holdings, fixed
-> profile, write + validate files). Genealogist to confirm thresholds
+> single "Stub person quality" dimension to cover all four jobs the agent
+> performs (define problem, survey tree, fixed profile, write + validate
+> files). Genealogist to confirm thresholds
 > and wording before release. Not every dimension applies to every test —
 > score `null` (N/A) when a test does not exercise it (e.g. place
 > standardization on a test with no hand-entered place).
@@ -143,23 +143,3 @@ the tool left without one. A value `project_create` resolved host-side, on the
   (including a `standard_place` copied from the fact's free-text `place`),
   or a tool-supplied `standard_place` is altered or dropped.
 - **N/A:** The test involves no places at all.
-
-## Known-holdings capture
-
-When the user volunteers what they already hold (documents, prior research,
-GEDCOMs, oral knowledge), is each recorded as a conforming `known_holdings`
-entry — sensible `holding_type`, `confidence`, `promoted: false`, a `kh_` id,
-and `relates_to_person_ids` linked to a real tree person where applicable —
-without fabricating holdings? When none are volunteered, is the survey
-skipped cleanly (`known_holdings: []`)?
-
-- **pass:** Every volunteered item is captured with a sensible `holding_type`
-  and `confidence`, `promoted: false`, and a person link where the item clearly
-  concerns a tree person; nothing is fabricated; holdings are not over-promoted
-  into `sources`/`assertions`. No holdings volunteered → `known_holdings: []`.
-- **partial:** Holdings captured but with a questionable `holding_type`/
-  `confidence`, a missing person link that was clearly implied, or one
-  volunteered item dropped.
-- **fail:** Volunteered holdings dropped entirely, holdings fabricated, or
-  items written as full sources/assertions instead of lightweight survey notes.
-- **N/A:** Test does not involve known holdings.

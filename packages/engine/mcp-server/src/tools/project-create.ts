@@ -71,9 +71,8 @@ import {
 import { treePidOfArk } from "../utils/ark.js";
 import type { SimplifiedFact } from "../types/gedcomx.js";
 
-/** The sections a new project starts with, all empty. `researcher_profile` and
- *  `known_holdings` are deliberately absent: both are written after the fact,
- *  through `research_append`, from what the researcher actually said. An agent
+/** The sections a new project starts with, all empty. `researcher_profile` is
+ *  deliberately absent: it is written after the fact, through `research_append`. An agent
  *  must never invent a profile — a project was observed created with an
  *  experience level and subscriptions the user was never asked for, and a
  *  fabricated profile is indistinguishable downstream from a real one, while an
@@ -596,7 +595,7 @@ export const projectCreateSchema = {
     "standardized; tell the researcher about those.\n" +
     "\n" +
     "Refuses if either file already exists; it never overwrites a project. It does NOT " +
-    "write `researcher_profile` or `known_holdings` — write those afterwards with " +
+    "write `researcher_profile` — write it afterwards with " +
     "research_append, from what the researcher actually told you. Never invent a profile: " +
     "an absent one falls back to sane defaults everywhere, a wrong one silently changes " +
     "narration for the life of the project.\n" +

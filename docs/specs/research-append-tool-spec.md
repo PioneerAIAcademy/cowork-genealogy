@@ -4,7 +4,7 @@
 > `research_log_append` (`research-log-editor-spec.md`). That tool owns the one
 > append-only section (`log[]` + its sidecars); this one owns the **other**
 > mutable `research.json` sections — sources, assertions, person_evidence,
-> questions, plans, conflicts, hypotheses, known_holdings, timelines, localities,
+> questions, plans, conflicts, hypotheses, timelines, localities,
 > namesakes. It is the single largest remaining hand-edited-JSON surface in the
 > skill catalog and the home for the state-coupling invariants the
 > skill-determinism audit surfaced.
@@ -58,7 +58,7 @@ those "all other sections" is written **by hand** across ~8 skills, each ending 
 the re-serialize-and-revalidate loop this tool direction exists to kill:
 
 - **Id allocation by hand** — every section uses a prefix + next-number id
-  (`src_`, `a_`, `pe_`, `q_`, `pl_`, `pli_`, `c_`, `h_`, `t_`, `kh_`); the LLM
+  (`src_`, `a_`, `pe_`, `q_`, `pl_`, `pli_`, `c_`, `h_`, `t_`); the LLM
   computes "next available" and can collide or skip.
 - **Supersede-not-delete is prose, not structure** — `person_evidence` revision
   sets `superseded_by` on the old entry ([`research-schema-spec.md` §"5.7 `person_evidence`"](research-schema-spec.md#57-person_evidence)); a stray
@@ -88,7 +88,7 @@ the re-serialize-and-revalidate loop this tool direction exists to kill:
 | Only `log` is append-only; all other sections allow field updates, preserve ids, never delete | [`research-schema-spec.md` §"4. Ownership Table"](research-schema-spec.md#4-ownership-table); [§"5.4 `log`"](research-schema-spec.md#54-log) |
 | `person_evidence` revision sets `superseded_by`, never deletes | [`research-schema-spec.md` §"5.7 `person_evidence`"](research-schema-spec.md#57-person_evidence) |
 | `plans`: re-plan creates a new plan, old one set `superseded`; search skills update only `items[].status` | [`research-schema-spec.md` §"4. Ownership Table"](research-schema-spec.md#4-ownership-table); [§"5.3 `plans`"](research-schema-spec.md#53-plans) |
-| id prefixes per section | `src/validation/validator.ts` `ID_PREFIXES` (`src_/a_/pe_/q_/pl_/pli_/c_/h_/t_/kh_/loc_/ns_`) |
+| id prefixes per section | `src/validation/validator.ts` `ID_PREFIXES` (`src_/a_/pe_/q_/pl_/pli_/c_/h_/t_/loc_/ns_`) |
 | Coupling invariants already validated post-hoc | `validateResearch`: search_stop (stop-gate `stopped_because` ⇒ `log_entry_ids` non-empty and `stop_criteria` non-null), conflict (`"fact conflict requires at least 2 competing_assertion_ids"`), hypothesis (`"ruled_out is true but ruled_out_reason is missing"`) |
 | The shipped append template: id/timestamp assignment, validate-before-persist, atomic write, compact return, camelCase→snake_case | `src/tools/research-log-append.ts`, `research-log-editor-spec.md` |
 | Shared write layer | `src/utils/project-io.ts` (`atomicWriteJson`), `src/validation/validator.ts` (`validateParsed`) |
@@ -103,7 +103,7 @@ research_append({
   section:
     | "sources" | "assertions" | "person_evidence"
     | "questions" | "plans" | "plan_items"
-    | "conflicts" | "hypotheses" | "known_holdings" | "timelines" | "rejected_links"
+    | "conflicts" | "hypotheses" | "timelines" | "rejected_links"
     | "proof_summaries" | "evaluations" | "localities"
     | "namesakes"   // namesakes: update limited to its updatableFields, §3.1
     | "project",    // project: update-only singleton, §3.1

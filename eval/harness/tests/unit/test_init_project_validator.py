@@ -84,7 +84,6 @@ def compliant():
             op="update",
             fields={"experience_level": "novice"},
         ),
-        call("research_append", section="known_holdings", op="append", entry={}),
     ]
 
 

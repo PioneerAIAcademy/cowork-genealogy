@@ -3,7 +3,7 @@
   "$id": "enums.schema.json",
   "title": "Cowork Genealogy Shared Enums",
   "description": "Enumerated string values used across research.json and tree.gedcomx.json. Closed enums use $defs/<name>; open enums use $defs/<name>_recommended (validators may warn on unknown values but not reject).",
-  "$comment": "Retired identifiers, kept here so the rename is discoverable from the schema rather than only from the lint that enforces it (ADR-0008's \"revisit if a first value removal ever happens\" row; issue #2524). 2026-09-18: `evidence_type` (direct | indirect | negative) was renamed to `record_basis` (stated | inferred | absent). 2026-10-07: `exhaustive_declaration` (object field on question) was renamed to `search_stop`; the `declared` boolean inside it became `stopped_because` (enum). Committed run logs under eval/runlogs/ are deliberately NOT migrated and still carry the retired spelling; packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts bans it everywhere else.",
+  "$comment": "Retired identifiers, kept here so the rename is discoverable from the schema rather than only from the lint that enforces it (ADR-0008's \"revisit if a first value removal ever happens\" row; issue #2524). 2026-09-18: `evidence_type` (direct | indirect | negative) was renamed to `record_basis` (stated | inferred | absent). 2026-10-07: `exhaustive_declaration` (object field on question) was renamed to `search_stop`; the `declared` boolean inside it became `stopped_because` (enum). 2026-10-27: the `known_holdings` section (`$defs/known_holding`) and its `holding_type` and `holding_confidence` enums were deleted outright, not renamed (issue #2069): write-only, and its promotion lifecycle was never built. Committed run logs under eval/runlogs/ are deliberately NOT migrated and still carry the retired spelling; packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts bans it everywhere else.",
   "$defs": {
     "question_status": {
       "enum": ["open", "in_progress", "exhaustive_declared", "resolved"]
@@ -260,20 +260,6 @@
         "Foster",
         "Guardian"
       ]
-    },
-    "holding_type": {
-      "enum": [
-        "document",
-        "prior_research",
-        "oral_knowledge",
-        "gedcom",
-        "photo",
-        "artifact",
-        "other"
-      ]
-    },
-    "holding_confidence": {
-      "enum": ["confident", "unsure"]
     },
     "experience_level": {
       "description": "Researcher's genealogy experience, set by init-project. Drives narration density via researcher_profile.narration_guidance.",

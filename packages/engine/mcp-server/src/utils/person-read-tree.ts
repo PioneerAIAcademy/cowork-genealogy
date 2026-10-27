@@ -51,7 +51,7 @@ export interface IdMap {
   /** FamilySearch source id -> tree `S` id (ref mode). */
   sources: Record<string, string>;
   /** Addition person label -> minted `I` id (ref mode), so a later step can
-   *  name a stub (e.g. `known_holdings.relates_to_person_ids`). */
+   *  name a stub (e.g. `person_evidence.person_id`). */
   additions: Record<string, string>;
   /** The tree id of the FamilySearch-tree source: `S1` in ref mode; without a
    *  ref, the generic one, when something hand-entered was cited to it. */

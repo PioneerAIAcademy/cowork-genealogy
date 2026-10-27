@@ -57,31 +57,9 @@ Do not ask about experience level or anything else about the researcher. Every p
 
 A stated level in the message ("I'm a professional genealogist") is not persisted. Store both fields in `research.json` `researcher_profile` (Step 4).
 
-## Known-holdings survey
+## Holdings the researcher mentions
 
-Surveys what the researcher already holds (family Bible, certificates, prior GEDCOM, oral history).
-
-**Same non-blocking rule — never pause to ask and wait:**
-1. If the user volunteers holdings, record each as a `known_holdings` entry in Step 4.
-2. Otherwise, write `known_holdings: []` and continue. Invite additions in the closing summary only.
-
-This is user-reported only — never invent holdings. Asking and stopping is the failure mode.
-
-Map each item to `holding_type`:
-
-| Researcher said | `holding_type` |
-|---|---|
-| certificate, Bible, will, deed, letter | `document` |
-| notes, research binder, prior report | `prior_research` |
-| GEDCOM file, tree export | `gedcom` |
-| photo, portrait | `photo` |
-| relative told me, family lore | `oral_knowledge` |
-| heirloom, quilt, headstone rubbing | `artifact` |
-| anything else | `other` |
-
-Confidence: "I'm sure / definitely" → `confident`; "I think / maybe" → `unsure`. Default: `confident`.
-
-**Family knowledge counts as a holding too.** When the user states something from family memory (a maiden name, who married whom), record it as `oral_knowledge` *in addition* to using it in the tree. The two are not mutually exclusive: "Mary Donovan" both creates Mary's stub and is itself oral knowledge worth surveying. Do not let "I used it in the tree" drop it from `known_holdings`. (Only facts from family/personal knowledge, not the bare research target.)
+Items the researcher says they hold (a Bible, certificates, a GEDCOM, family stories) are not recorded; name them in the report. Never ask about them and never pause for them.
 
 ## Setting up a forget-and-rederive test
 
@@ -169,9 +147,9 @@ The result's `idMap` gives the tree ids assigned: `persons` (FamilySearch ID →
 
 If `project_create` refuses with `subject_person_ids contains '<the subject's FamilySearch ID>' which is not in tree.gedcomx.json persons`, the installed extension predates `personReadRef`: tell the user to update it, and stop. Any other refusal is about your call: fix it and call again.
 
-### 4a. Profile and holdings
+### 4a. Profile and memory sources
 
-`research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write; one call each or one call carrying both in an `ops` array, either is fine.
+`research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write, `researcher_profile` and memory `sources`; one call each or one call carrying both in an `ops` array, either is fine.
 
 **`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: { experience_level: "novice", narration_guidance: "<the fixed string above, verbatim>" } })` — the same two values on every project, plus `subscriptions` when the researcher's words name site access (below). This call always writes.
 
@@ -197,8 +175,6 @@ If `project_create` refuses with `subject_person_ids contains '<the subject's Fa
 
 A memory whose `notes` says it was not transcribed gets **no** `sources` entry — never one with `transcription: null`. It is already in `tree.gedcomx.json` with its title and URL, which is the lead; a `sources` entry would assert it was examined. Name each one in the Step 5 report, which has a bullet for them. If no memory was transcribed, `sources` stays empty.
 
-**`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (`I` ids from `idMap`; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
-
 ### 5. Report the import
 
 Report what the import did, and nothing else. You do not review the tree: no gaps, errors, research targets or advice. Errors are check-warnings', gaps and the first research question are question-selection's, and the caller runs them when it wants them.
@@ -207,7 +183,7 @@ Report what the import did, and nothing else. You do not review the tree: no gap
 - That the project was created for the subject, and how many people were imported
 - The objective in one sentence, and whether it was defaulted
 - Any discrepancy between what the user stated and the tree (Step 2)
-- Known holdings recorded (if any)
+- Items the researcher says they hold, named — not recorded (if any)
 - Any scanned documents or photos on the profile that could not be read this
   time — name each one and say they can be read later
 - If `person_read` returned a top-level `notes` array, one sentence from it: a
@@ -227,7 +203,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 2. Receive: Patrick Flynn, Male, Birth ~1845 Ireland, Death 1908-03-12 Schuylkill County PA. No parents. Spouse: Mary Kelly. Children: James, Margaret. Attached sources.
 3. No additions: the user named no one the read lacks.
 4. `project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["KWCJ-RN4"] })`. Tell the user where the project was created.
-5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
+5. `research_append` for `researcher_profile` (the fixed novice profile).
 6. Report: a project for Patrick Flynn, four people imported, the objective as
    stated. No review of the tree.
 
@@ -241,12 +217,12 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; jurisdictions as they existed at event time; ISO 8601 dates in JSON.
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → no project.** Ask for the ID; never search by name and never build from stubs alone.
-- **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
+- **Do not skip the preliminary survey.** The tree fetch IS the preliminary survey (GPS Step 2).
 - **The profile is fixed.** Always `novice` and the house-style string, verbatim; never ask, never map a stated level.
 
 ## Re-invocation behavior
 
-**Writes:** via `project_create` — `research.json` (project metadata, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources); then via `research_append` — `researcher_profile` and `known_holdings`. Runs once at project creation.
+**Writes:** via `project_create` — `research.json` (project metadata, empty section arrays) and `tree.gedcomx.json` (initial persons, relationships, sources); then via `research_append` — `researcher_profile` and memory `sources`. Runs once at project creation.
 
 **On repeat invocation:** the guard clause detects existing `research.json` and declines. Never overwrites existing `questions`/`plans`/`log`/`assertions`/`sources` content.
 
