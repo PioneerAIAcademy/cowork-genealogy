@@ -376,8 +376,15 @@ class Hub:
                     if seen.get(rel) != mt:  # new or changed
                         seen[rel] = mt
                         await self._emit_change(rel)
+                await self._emit_collections_removed(seen)
             except OSError:
                 pass
+
+    async def _emit_collections_removed(self, seen: dict[str, float]) -> None:
+        # The one optional root file: its removal clears the viewer's section.
+        if COLLECTIONS_FILE in seen and not (PROJECT_DIR / COLLECTIONS_FILE).is_file():
+            del seen[COLLECTIONS_FILE]
+            await self.broadcast(_collections_frame(None))
 
     @staticmethod
     def _is_internal(rel: str) -> bool:
@@ -434,9 +441,9 @@ class Hub:
         gedcomx = _read_json(PROJECT_DIR / "tree.gedcomx.json")
         if gedcomx is not None:
             await self.send_one(ws, {"type": "gedcomx_updated", "data": gedcomx})
-        collections = _read_json(PROJECT_DIR / COLLECTIONS_FILE)
-        if collections is not None:
-            await self.send_one(ws, _collections_frame(collections))
+        # Sent even when absent (data null), so a reconnect after the file was
+        # removed clears the section instead of keeping the old list.
+        await self.send_one(ws, _collections_frame(_read_json(PROJECT_DIR / COLLECTIONS_FILE)))
         results = PROJECT_DIR / "results"
         if results.is_dir():
             for f in sorted(results.glob("*.json")):

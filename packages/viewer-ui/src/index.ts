@@ -18,6 +18,7 @@ export type {
 
 export { setOpenExternal, openExternal, setOpenFamilySearch, openFamilySearch } from './lib/external'
 export { resolveFamilySearchTarget } from './lib/familysearch-url'
+export { EXTERNAL_COLLECTIONS_FILE } from './lib/externalCollections'
 export type { ExternalCollectionsData, ExternalCollectionRow } from './lib/externalCollections'
 
 export type {

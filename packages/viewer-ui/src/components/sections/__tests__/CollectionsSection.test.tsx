@@ -31,6 +31,17 @@ const doc = parseExternalCollections({
           end_year: '1870'
         },
         {
+          key: 'plain',
+          url: 'http://example.org/census',
+          link_text: 'Plain http census',
+          record_types: ['Census'],
+          place: 'Schuylkill, Pennsylvania, United States',
+          cost: '',
+          content_type: '',
+          start_year: '',
+          end_year: ''
+        },
+        {
           key: 'bad',
           url: 'javascript:alert(1)',
           link_text: 'Not a real link',
@@ -70,7 +81,7 @@ describe('CollectionsSection', () => {
     mockCollections(doc)
     render(<CollectionsSection />)
     expect(screen.getByText('Schuylkill, Pennsylvania, United States')).toBeInTheDocument()
-    expect(screen.getByText('2 collections · 2 record types')).toBeInTheDocument()
+    expect(screen.getByText('3 collections · 2 record types')).toBeInTheDocument()
     expect(screen.getByText('Fetched — nothing specific to this place')).toBeInTheDocument()
   })
 
@@ -95,6 +106,13 @@ describe('CollectionsSection', () => {
       screen.getByRole('button', { name: 'https://www.ancestry.com/search/collections/7163/' })
     )
     expect(open).toHaveBeenCalledWith('https://www.ancestry.com/search/collections/7163/')
+  })
+
+  it('shows an http url as text: Electron opens only https', async () => {
+    mockCollections(doc)
+    render(<CollectionsSection />)
+    await expand('Schuylkill, Pennsylvania, United States')
+    expect(screen.getByText('http://example.org/census').tagName).toBe('CODE')
   })
 
   it('shows a non-http url as text, never as a button', async () => {

@@ -81,7 +81,7 @@ export interface SubscriptionHandlers {
   onGedcomx: (data: GedcomxData) => void
   /** `external-collections.json` changed, or was sent at connect. Sent only
    *  when that file itself changes, never on a research.json write. `null` when
-   *  it was removed — Electron only; the web tiers do not report a deletion. */
+   *  it was removed or is absent at connect. */
   onCollections: (data: ExternalCollectionsData | null) => void
   onSidecar: (event: { logId: string; mtime: number }) => void
   onError: (message: string) => void

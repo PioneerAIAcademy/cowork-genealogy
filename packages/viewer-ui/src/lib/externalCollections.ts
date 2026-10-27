@@ -4,6 +4,8 @@
 // the web side never imports the engine. The file is not schema-validated, so
 // everything that arrives is parsed here before the viewer renders it.
 
+export const EXTERNAL_COLLECTIONS_FILE = 'external-collections.json'
+
 export interface ExternalCollectionRow {
   key: string
   url: string

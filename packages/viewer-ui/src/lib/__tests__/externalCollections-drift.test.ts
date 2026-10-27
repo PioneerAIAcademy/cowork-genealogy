@@ -11,14 +11,19 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(here, '..', '..', '..', '..', '..')
 
+/** `name: type` per member, whitespace and trailing separators dropped. */
 function interfaceFields(source: string, name: string): string[] {
   const m = source.match(new RegExp(`interface ${name}\\s*\\{([^}]*)\\}`))
   if (!m) throw new Error(`interface ${name} not found`)
-  return [...m[1].matchAll(/^\s*([a-z_]+)\??\s*:/gm)].map((f) => f[1]).sort()
+  return m[1]
+    .split(/[;\n]/)
+    .map((line) => line.replace(/\/\/.*$/, '').replace(/\s+/g, ''))
+    .filter(Boolean)
+    .sort()
 }
 
 describe('external collections row: engine and viewer agree', () => {
-  it('names the same fields', () => {
+  it('declares the same fields with the same types', () => {
     const engine = readFileSync(
       join(repoRoot, 'packages/engine/mcp-server/src/utils/external-collections-store.ts'),
       'utf8'
@@ -30,6 +35,9 @@ describe('external collections row: engine and viewer agree', () => {
   })
 
   it('reads fields across a reflowed body', () => {
-    expect(interfaceFields('interface X {\n  b: string;\n  a?: string[]\n}', 'X')).toEqual(['a', 'b'])
+    expect(interfaceFields('interface X {\n  b2: string; aB?: string[] // note\n}', 'X')).toEqual([
+      'aB?:string[]',
+      'b2:string'
+    ])
   })
 })

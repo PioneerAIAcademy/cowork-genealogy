@@ -150,7 +150,9 @@ async def test_snapshot_includes_collections_when_present(tmp_path, monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_snapshot_omits_collections_when_absent(tmp_path, monkeypatch):
+async def test_snapshot_sends_null_collections_when_absent(tmp_path, monkeypatch):
+    """A reconnect after the file was removed must clear the section, not keep
+    the list the client already holds."""
     import app.sandbox_server as mod
 
     monkeypatch.setattr(mod, "PROJECT_DIR", tmp_path)
@@ -158,4 +160,37 @@ async def test_snapshot_omits_collections_when_absent(tmp_path, monkeypatch):
     hub = _SnapshotHub()
     await hub.send_snapshot(object())
 
-    assert [m["type"] for m in hub.sent] == ["status"]
+    assert hub.sent[1:] == [
+        {"type": "document_updated", "name": "external-collections.json", "data": None}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_removing_collections_broadcasts_null_once(tmp_path, monkeypatch):
+    import app.sandbox_server as mod
+
+    monkeypatch.setattr(mod, "PROJECT_DIR", tmp_path)
+    seen = {"external-collections.json": 1.0, "research.json": 1.0}
+
+    hub = _RecordingHub()
+    await hub._emit_collections_removed(seen)
+    await hub._emit_collections_removed(seen)
+
+    assert hub.sent == [
+        {"type": "document_updated", "name": "external-collections.json", "data": None}
+    ]
+    assert "external-collections.json" not in seen
+
+
+@pytest.mark.asyncio
+async def test_present_collections_are_not_reported_removed(tmp_path, monkeypatch):
+    import app.sandbox_server as mod
+
+    monkeypatch.setattr(mod, "PROJECT_DIR", tmp_path)
+    (tmp_path / "external-collections.json").write_text(_COLLECTIONS, encoding="utf-8")
+    seen = {"external-collections.json": 1.0}
+
+    hub = _RecordingHub()
+    await hub._emit_collections_removed(seen)
+
+    assert hub.sent == []

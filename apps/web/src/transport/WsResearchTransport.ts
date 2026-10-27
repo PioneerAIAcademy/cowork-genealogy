@@ -1,4 +1,4 @@
-import { resolveFamilySearchTarget } from '@genealogy/viewer-ui'
+import { EXTERNAL_COLLECTIONS_FILE, resolveFamilySearchTarget } from '@genealogy/viewer-ui'
 import type {
   ResearchTransport,
   SubscriptionHandlers,
@@ -52,7 +52,7 @@ export class WsResearchTransport implements ResearchTransport {
         // The proto tier sends every other root document this way too, so the
         // name is what selects the file.
         case 'document_updated':
-          if (msg.name === 'external-collections.json') {
+          if (msg.name === EXTERNAL_COLLECTIONS_FILE) {
             handlers.onCollections((msg.data as ExternalCollectionsData | null) ?? null)
           }
           break

@@ -1,14 +1,12 @@
 import { useMemo } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
-import { openExternal } from '../../lib/external'
+import { isOpenableUrl, openExternal } from '../../lib/external'
 import { groupCollections, type ExternalCollectionRow } from '../../lib/externalCollections'
 import styles from './CollectionsSection.module.css'
 
 // These links point at Ancestry, MyHeritage and other sites, so they go through
-// the generic `openExternal` channel with the URL shown as its own text. Only
-// http(s) URLs are clickable, matching ExternalLinksResults.
-const OPENABLE_RE = /^https?:\/\//i
+// the generic `openExternal` channel with the URL shown as its own text.
 
 function years(row: ExternalCollectionRow): string {
   if (!row.start_year && !row.end_year) return ''
@@ -23,7 +21,7 @@ function CollectionItem({ row }: { row: ExternalCollectionRow }): React.JSX.Elem
     <li className={styles.listItem}>
       <span className={styles.itemName}>{row.link_text || url}</span>
       {details && <span className={styles.itemDetail}>{details}</span>}
-      {OPENABLE_RE.test(url) ? (
+      {isOpenableUrl(url) ? (
         <button type="button" className={styles.link} onClick={() => openExternal(url)}>
           {url}
         </button>

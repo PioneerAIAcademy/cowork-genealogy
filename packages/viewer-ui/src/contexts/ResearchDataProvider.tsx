@@ -212,6 +212,9 @@ export function ResearchDataProvider({
         // folder-switch control once a folder is open — so this is hardening for
         // whenever one appears (#1722 review).
         setNotice(null)
+        // Optional per folder: a new folder without the file sends nothing to
+        // replace the old one's list.
+        setCollections(null)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to select folder')

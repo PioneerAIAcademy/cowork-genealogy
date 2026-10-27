@@ -613,6 +613,16 @@ describe('ResearchDataProvider — external collections', () => {
     expect(h.ctx().collections).toBeNull()
   })
 
+  it('clears the previous folder list when another folder is chosen', async () => {
+    const t = makeCollectionsTransport(null)
+    const transport: ResearchTransport = { ...t.transport, selectFolder: async () => '/other' }
+    const h = makeHarness(transport)
+    h.render()
+    act(() => t.fire(doc))
+    await act(async () => h.ctx().selectFolder())
+    expect(h.ctx().collections).toBeNull()
+  })
+
   // Hosted path: the socket can send the file before REST /state resolves with
   // `collections: null`. The late snapshot must not wipe what the socket sent.
   it('keeps a socket-delivered document when a later snapshot carries none', async () => {
