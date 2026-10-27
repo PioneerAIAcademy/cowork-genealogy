@@ -27,4 +27,6 @@ father's link to I1 stand at `probable` or `confident`. Linking the father alone
 first is refused, and the refusal names that route.
 
 `same_person` answers from hand-authored mocks (strong scores, since the tree
-already attaches the record to all three), not live captures.
+already attaches the record to all three), not live captures. Each mock answers
+every assertion of this record scored against its tree person, so the other
+side of each relationship assertion is answered too.
