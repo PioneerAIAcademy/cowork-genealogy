@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_n8p",
+    "skill": "proof-conclusion",
+    "name": "A naming pattern is not weighed as evidence of parentage, and grandparent sides are stated correctly",
+    "type": "positive",
+    "description": "Mined from alpha feedback (case feedback-2026-10-07, issue #3251). A proof summary cited children's names as 'strong circumstantial support' for a parentage and called the subject's mother the 'maternal grandmother' of the subject's daughter. This scenario plants both claims in an earlier hypothesis's notes. Paternity has three independent sources; maternity has one weak census match plus the naming argument.",
+    "tags": [
+      "proof",
+      "parentage",
+      "naming-pattern",
+      "per-claim-tier-split",
+      "from-cowork",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Write the proof conclusion for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-naming-pattern-parentage"
+  },
+  "judge_context": [
+    "A naming custom (children named for grandparents) is a tendency some families followed. Children's names can be described as consistent with a proposed parentage, but they are not evidence that establishes it: they must not be called strong, corroborating or circumstantial support, and must not raise a claim's tier.",
+    "Hypothesis h_002's notes call the children's names 'strong circumstantial support' and call Bridget (I3) the 'maternal grandmother' of Patrick's daughter. Both are wrong. A narrative that repeats either fails Correctness.",
+    "Grandparent sides: a man's mother is his children's PATERNAL grandmother. The custom h_002 quotes names a first daughter for the MOTHER'S mother, i.e. Mary Doyle's mother, so it does not point at Patrick's mother. A narrative that omits naming entirely is correct on this point.",
+    "Maternity should be tiered `possible` or weaker: no record names Bridget as Patrick's mother or as Thomas's wife, and the 1870 widow match is near zero (pe_007). The baptisms (a_016, a_017) name Patrick's wife and children, not his parents.",
+    "Paternity should stay `probable` on the three earlier sources. Only the paternal ParentChild (I2 -> I1) belongs in the tree.",
+    "General class: a cultural naming convention is context, not evidence, and any grandparent named in a conclusion must be on the correct side of the family."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 60,
+    "sdk_message_silence_seconds": 300
+  }
+}
