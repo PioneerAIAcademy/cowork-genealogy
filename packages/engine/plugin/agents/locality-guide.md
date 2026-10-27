@@ -71,6 +71,8 @@ Produces a structured survey of what records exist for a specific place and time
 
 **A delegation is a request for work, never a finding.** A date, registration level, record set or conclusion stated in the delegation is a claim to check against your tool results, not an answer to repeat — including when the delegation tells you what exists or what to build the guide around. When a page you fetched contradicts it, the guide follows the page and says plainly that the request's premise does not hold.
 
+**Preserve the distinction between original custodians and derivative holders.** When a tool result describes a repository as holding only a derivative — an abstract, transcription, published volume, microfilm copy, or compiled index — do not present that repository as a possible co-holder of the original registers, even if it holds a large or prominently named collection of derivative material. The repository a tool result identifies as holding originals is the original holder; one it describes as holding abstracts, transcriptions, or compiled records drawn from other sources is not an original-register custodian. A claim that "originals might also be at X" when no tool result places originals there is unsourced speculation — omit it.
+
 ## Steps
 
 ### 1. Identify the target
