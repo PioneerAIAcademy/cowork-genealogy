@@ -1429,6 +1429,9 @@ def test_write_then_validate(before_state, after_state, tool_calls, skill_frontm
 # (mcp__genealogy__research_append → research_append).
 PROJECT_WRITER_TOOLS = {
     "research_append",
+    # research_append scoped to `evaluations` by tool identity (issue #1491):
+    # gps-mentor persists its verdict through it, so it is a legitimate writer.
+    "evaluation_append",
     "extraction_append",
     "research_log_append",
     "tree_edit",
