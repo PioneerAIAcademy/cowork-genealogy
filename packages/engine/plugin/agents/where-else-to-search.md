@@ -99,7 +99,8 @@ Otherwise → proceed.
    overlapping ones. Take at most 8.
 4. **Build all selected links in one parallel batch.** For each:
    `build_external_search_url({ site, baseUrl: <the row's url>, attributes })`,
-   with `attributes` from the search: `givenName`, `surname`, and the event's
+   copying the `url` character for character: no slash added or dropped,
+   `http` never changed to `https`. Build it with `attributes` from the search: `givenName`, `surname`, and the event's
    year and place (`birthYear`/`birthPlace`, `deathYear`/`deathPlace`,
    `marriageYear`/`marriagePlace`, `residenceYear`/`residencePlace`; the year is
    the middle of the range, the place is `standardPlace`). Never pass
@@ -147,17 +148,21 @@ label, heading or field name**:
 
    ```
    **<linkText>** — <site name>, <free | needs a subscription>
-   Covers <startYear>–<endYear>, which includes your <years searched>. | Undated collection.
+   Covers <span>, which includes your <years searched>. | Undated collection.
    <url>
    ```
 
    The span is the row's `startYear`–`endYear`, or the years its `linkText`
-   names. A row with neither is "Undated collection." Never write a span that
-   is in neither. For a span that only partly overlaps, say which years overlap. Add no
+   names: a row with no `startYear` whose `linkText` is "Iowa State Census
+   1856" is "Covers 1856, which includes your <years searched>." A row with neither is
+   "Undated collection." Never write a span that is in neither. The coverage
+   line is one of those two sentences and nothing else: no parenthesis, no
+   dash, no second clause. For a span that only partly overlaps, say which years overlap. Add no
    sentence about what the collection holds, who is in it, or why the person
    might be there: anything not in that shape is a fact no tool returned.
 3. If there are "also on file" rows: one line, "Also listed, without a filled-in
-   search:", then each `linkText` and its `url`.
+   search:", then each `linkText` and its `url` exactly as returned, `http://`
+   included.
 4. One sentence: open a link, and bring back anything found to keep researching.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
