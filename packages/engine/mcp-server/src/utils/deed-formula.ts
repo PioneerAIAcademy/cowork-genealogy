@@ -138,13 +138,16 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
   const errs: string[] = [];
 
   const informative = (hs: Hit[]) => hs.filter((h) => h.parties.length > 0);
-  const refuseIf = (hs: Hit[], contradicts: (h: Hit) => boolean, what: string) => {
+  // `mislabelled` picks the parties the error names, so the agent is not told to
+  // relabel a party the phrase lists and the labels already agree on.
+  const refuseIf = (hs: Hit[], contradicts: (h: Hit) => boolean, what: string, mislabelled: (p: DocumentPerson) => boolean) => {
     const inf = informative(hs);
     if (inf.length === 0 || !inf.every(contradicts)) return;
     const h = inf[0];
+    const named = h.parties.filter(mislabelled);
     errs.push(
-      `${path}: the transcription says "${h.phrase}", which names ${h.parties.map((p) => partyName(doc, p.id)).join(" and ")} as ${what}, ` +
-        `but the document labels ${h.parties.length > 1 ? "them" : "that party"} otherwise. Relabel the parties by that phrase and resend.`,
+      `${path}: the transcription says "${h.phrase}", which names ${named.map((p) => partyName(doc, p.id)).join(" and ")} as ${what}, ` +
+        `but the document labels ${named.length > 1 ? "them" : "that party"} otherwise. Relabel ${named.length > 1 ? "those parties" : "that party"} by the phrase and resend.`,
     );
   };
 
@@ -159,8 +162,9 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
       hitsAfter(doc, text, GRANTOR),
       (h) => !h.parties.some((p) => kind(p) === "grantor") && h.parties.some((p) => kind(p) === "grantee" || kind(p) === "witness"),
       "the grantor",
+      (p) => kind(p) === "grantee" || kind(p) === "witness",
     );
-    refuseIf(hitsAfter(doc, text, PAID_BY), (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "witness"), "the one paying (the grantee's side)");
+    refuseIf(hitsAfter(doc, text, PAID_BY), (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "witness"), "the one paying (the grantee's side)", (p) => kind(p) === "grantor" || kind(p) === "witness");
     const placed = new Set(
       [...hitsAfter(doc, text, GRANTOR), ...hitsAfter(doc, text, PAID_BY)].flatMap((h) => h.parties.map((p) => p.id)),
     );
@@ -168,6 +172,7 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
       hitsAfter(doc, rawText, IN_PRESENCE, true).map((h) => ({ ...h, parties: h.parties.filter((p) => !placed.has(p.id)) })),
       (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "grantee"),
       "witnesses",
+      (p) => kind(p) === "grantor" || kind(p) === "grantee",
     );
   }
 

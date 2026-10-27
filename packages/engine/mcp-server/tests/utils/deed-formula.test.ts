@@ -205,6 +205,11 @@ describe("deedFormulaErrors: what must still be refused (#3881)", () => {
     expect(errs).toMatch(/paid by John Dewey/);
     expect(errs).not.toMatch(/Know ye/);
   });
+  it("names only the mislabelled party, not a correctly labelled one the phrase also lists", () => {
+    const errs = deedFormulaErrors(d(["grantor", "grantee", "grantor", "witness"]), text, "d").join(" ");
+    expect(errs).toMatch(/names p3 \(Gad Palmer\) as witnesses/);
+    expect(errs).not.toMatch(/p4/);
+  });
   it("refuses the payer labelled witness", () => {
     expect(deedFormulaErrors(d(["grantor", "witness", "witness", "witness"]), text, "d").join(" ")).toMatch(/paid by John Dewey/);
   });
