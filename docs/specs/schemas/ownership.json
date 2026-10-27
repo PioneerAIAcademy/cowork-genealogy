@@ -321,6 +321,12 @@
           "tools": [
             "research_log_append"
           ]
+        },
+        {
+          "agent": "agent:where-else-to-search",
+          "tools": [
+            "build_external_search_url"
+          ]
         }
       ],
       "writerTools": [

@@ -853,7 +853,7 @@ the `max_cost_usd` note in §6 step 5.
 
    **Agent `model:` pins interact with reasoning effort, and one pin is
    load-bearing.** Effort is per-agent too, since agent `effort:` was verified to
-   bind on 2026-08-25 — but no agent pins one today, so in practice every step runs
+   bind on 2026-08-25 — but only `search-wikipedia` pins one (`effort: low`), so in practice nearly every step runs
    at the session effort and `model:` is the lever that has been used (each
    `packages/engine/plugin/agents/*.md`). So when one agent misbehaves at the
    run's effort level, repinning that agent — its model, its effort, or both —

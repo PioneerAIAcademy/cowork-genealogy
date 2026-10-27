@@ -222,15 +222,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **30** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-nine agents are `gps-mentor`, `record-structurer`,
+The thirty agents are `gps-mentor`, `record-structurer`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `search-records`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`,
 `timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project`, `tree-survey` and `research-plan`.
+`init-project`, `tree-survey`, `research-plan` and `where-else-to-search`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -562,15 +562,16 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `search-wikipedia` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia` → `low`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
 | **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
-> unit harness (`harness/orchestrator.py` honours the field, falling back to
-> `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
+> unit harness (`session_model_for` in `harness/orchestrator.py` honours it for a
+> `SKILL.md` suite, falling back to `DEFAULT_MODEL`; an agent-keyed suite's main
+> thread always runs `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.

@@ -20,7 +20,9 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
+    load_skill_frontmatter,
     load_suite_frontmatter,
+    suite_body_path,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -171,6 +173,40 @@ FILE_VALIDITY_VALIDATORS = frozenset(
 )
 
 
+def session_model_for(
+    skill: str,
+    skills_dir: Path,
+    cli_model: str,
+    *,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> str:
+    """The model a test session's main thread runs on.
+
+    A `SKILL.md` suite runs its skill on the main thread, so the skill's
+    `model:` wins when set: Claude Code's turn-scoped skill override
+    (code.claude.com/docs/en/skills).
+
+    An agent-keyed suite (issue #1253) never runs its agent on the main
+    thread. A direct test's main thread is the dispatcher and a routed test's
+    is the router; the agent runs as a subagent on its own `model:` and
+    `effort:`, which the CLI applies itself. Production's lead runs the
+    default model whatever a helper declares, so the dispatcher keeps
+    `cli_model`. When the agent's model was applied to the whole session, a
+    Haiku dispatcher refused or reworded delegations no production lead does
+    (issue #3870).
+
+    Kept here, not in `allowed_tools.py`, which is in the validators' import
+    closure: a change there moves rule 2c's `validators.shared` for every suite.
+    """
+    body = suite_body_path(skill, skills_dir, agents_dir=agents_dir)
+    if body.name != "SKILL.md":
+        return cli_model
+    declared = load_skill_frontmatter(body).get("model")
+    if isinstance(declared, str) and declared.strip():
+        return declared.strip()
+    return cli_model
+
+
 def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
     """True when no gating validator failed.
 
@@ -280,14 +316,7 @@ async def _run_one_test_async(
     skill_frontmatter = load_suite_frontmatter(
         spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
-    # Honor the `model:` field in SKILL.md frontmatter when set (matches
-    # Claude Code skill-frontmatter semantics: turn-scoped model override
-    # per code.claude.com/docs/en/skills). Falls back to the CLI-provided
-    # `model` arg (which defaults to DEFAULT_MODEL) when the field is
-    # absent or empty.
-    skill_model = skill_frontmatter.get("model")
-    if isinstance(skill_model, str) and skill_model.strip():
-        model = skill_model.strip()
+    model = session_model_for(spec.skill, paths.skills_dir, model)
     # The judge reads the scenario's judge-brief.md, falling back to its whole
     # README.md until one is written; each fallback is reported (issue #2478).
     scenario_brief = load_scenario_brief(paths.scenarios_dir, spec.scenario)
