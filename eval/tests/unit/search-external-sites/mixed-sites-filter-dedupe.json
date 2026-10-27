@@ -4,7 +4,7 @@
     "skill": "search-external-sites",
     "name": "Mixed-site curated list: host-filter to Ancestry and dedupe repeated URLs",
     "type": "positive",
-    "description": "external_links_search returns a flat mixed-site, duplicate-heavy list (the same Ancestry probate URL three times under different labels, plus MyHeritage / Find A Grave / FamilySearch-wiki / Newspapers.com entries). The skill's consumption rules: filter by URL host to the requested site, dedupe, and pick the most specific collection match. The probate search for Thomas Flynn (Patrick's likely father) is a real research thread in this scenario.",
+    "description": "FamilySearch's curated list for the place is mixed-site and duplicate-heavy (the same Ancestry probate URL three times under different labels, plus MyHeritage / Find A Grave / FamilySearch-wiki / Newspapers.com entries); the stored list holds each collection once. The agent's rules: keep rows on the requested site and pick the most specific collection match. The probate search for Thomas Flynn (Patrick's likely father) is a real research thread in this scenario.",
     "tags": [
       "ancestry",
       "external-site",
@@ -28,9 +28,9 @@
   ],
   "judge_context": [
     "Should use only ancestry.com URLs from the curated list — the MyHeritage, Find A Grave, FamilySearch-wiki, and Newspapers.com entries are not Ancestry options and should not be presented as such",
-    "The same Ancestry probate collection URL (collections/8800) appears three times under different labels — it should be collapsed to one option, not presented as three different collections",
+    "FamilySearch lists the Ancestry probate collection (collections/8800) three times under different labels; the stored list holds it once. It should be presented as one option, not three",
     "Should pick the probate/wills collection (matching the plan's record type) as the search base, not the 1850 census collection, and append the search parameters to the curated URL rather than rebuilding a site-wide URL from scratch",
     "A research-log entry must be written in the same turn the URL is generated: site ancestry, outcome partial, capture_received false",
-    "This test grades host-filtering, deduping, and collection match — NOT date-encoding style. The 1870–1890 window may be encoded as a representative year (e.g. a midpoint plus a note) or as an explicit range; both are acceptable, so do not penalize using a single year (e.g. death=1880) instead of a range as an unsupported claim or over-narrowing."
+    "This test grades host-filtering and collection match — NOT date-encoding style. The 1870–1890 window may be encoded as a representative year (e.g. a midpoint plus a note) or as an explicit range; both are acceptable, so do not penalize using a single year (e.g. death=1880) instead of a range as an unsupported claim or over-narrowing."
   ]
 }

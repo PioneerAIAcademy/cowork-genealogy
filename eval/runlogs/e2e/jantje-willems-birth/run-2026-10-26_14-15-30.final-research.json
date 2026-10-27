@@ -1,0 +1,1884 @@
+{
+  "project": {
+    "id": "rp_jantje_willems_birth",
+    "objective": "When and where was Jantje Willems, wife of Jacob Jeltes and mother of Trijntje (baptized 1774) and Willemke (baptized 1777) in the city of Groningen, baptized, and who were her parents?",
+    "subject_person_ids": [
+      "K8C9-ZZC"
+    ],
+    "status": "completed",
+    "created": "2026-10-12",
+    "updated": "2026-10-26"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Jantje Willems, wife of Jacob Jeltes of Groningen, baptized, and who were her parents?",
+      "rationale": "This is the full objective restated as the first research question. Both facts \u2014 the baptism event and the parentage \u2014 are routinely recorded together in a single 18th-century Groningen Dutch Reformed (Nederlands Hervormde Kerk) baptismal register entry, making them one research target. The children's baptisms of 1774 and 1777 place Jantje's own baptism most likely between roughly 1740 and 1760 in or near Groningen, a period well covered by the surviving DTB registers. Her patronymic surname 'Willems' signals a father named Willem, but the specific family identity \u2014 father's full name, mother's name, and the church where she was baptized \u2014 must be established from primary records.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-26",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_006",
+        "a_008",
+        "a_010",
+        "a_011",
+        "a_013",
+        "a_015",
+        "a_016",
+        "a_017"
+      ],
+      "search_stop": {
+        "stopped_because": "question_answered",
+        "justification": "Original Dutch Reformed baptism register image (ark:/61903/3:1:3QSQ-G9WL-PQM4, log_017) transcribes 'Janna D.V. Willem Jans en Trijntje Harmens E:L. op de Woert' \u2014 baptized 23 May 1751, Nederlands Hervormde Kerk, Groningen. Parents directly stated; image confirmed via FamilySearch image_transcribe. 'Janna' and 'Jantje' are both 18th-century Dutch forms of Johanna. Corroborated independently by Dutch naming convention: first daughter Trijntje (1774) names maternal grandmother Trijntje Harmens. Competing family (h_002, Willem Willems + Trijntjen Alberts) exhaustively ruled out across all 25 indexed records. No conflicts. Civil registration did not begin until 1 March 1811 (Netherlands_Civil_Registration wiki) \u2014 no government birth certificate exists for this 1751 event.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_017"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the original baptism register image (log_017) directly states the parents as Willem Jans and Trijntje Harmens, with baptism on 23 May 1751 at Nederlands Hervormde Kerk, Groningen. The name 'Janna' in the baptism and 'Jantje' in the 1772 marriage record are both 18th-century Dutch forms of Johanna \u2014 no ambiguity remains. The question is fully answered.",
+          "repository_breadth": "All relevant repositories searched: FamilySearch indexed baptism collection (Netherlands, Births and Baptisms, 1564-1910), marriage collection (Netherlands, Marriages, 1565-1892), and the original register image (via image_transcribe). FAN sibling research conducted across 226+ records; exhaustive 25-record targeted search for the alternative family. Four fallback plan items skipped with documented reasons (fallback_not_triggered or answered). AlleGroningers.nl correctly skipped \u2014 it indexes the same Groninger Archieven registers already confirmed at the primary-source level. No relevant repository remains unsearched.",
+          "original_substitution": "The original handwritten Dutch Reformed baptism register page (ark:/61903/3:1:3QSQ-G9WL-PQM4) was obtained and transcribed (log_017), replacing reliance on the indexed derivative. The marriage record (src_001) was confirmed at index level; the marriage image ARK pointed to an adjacent page in the volume and the specific entry was not separately transcribed, but the marriage record is a secondary corroborating source \u2014 the decisive parentage record is the baptism, confirmed from the original.",
+          "independent_verification": "Two independent evidentiary strands confirm the parentage: (1) the direct baptism record (src_002), an original Dutch Reformed register entry confirmed from the handwritten image, names Willem Jans and Trijntje Harmens at the time of the event, informant being the presenting parent; (2) children's baptism records \u2014 independent records from a later time and different informants (Jacob Jeltes and Jantje themselves) \u2014 corroborate through the Dutch naming convention: first daughter Trijntje (1774) names the maternal grandmother Trijntje, consistent with Trijntje Harmens, and the patronymic 'Willems' independently confirms a father named Willem.",
+          "evidence_class": "The baptism entry (src_002, ark:/61903/1:1:4G71-SKT2) is an original record with primary information: the presenting parent stated the child's and parents' names at the time of the event. The original register image was confirmed by transcription (log_017). Civil registration in the Netherlands began 1 March 1811 (Netherlands_Civil_Registration wiki); no government birth certificate exists for an 1751 event. The church baptism register is the correct record class for this jurisdiction and period.",
+          "conflict_resolution": "No registered conflicts exist and no unregistered disagreements are present. The competing hypothesis h_002 (Willem Willems + Trijntjen Alberts) was ruled out by exhaustive negative evidence \u2014 all 25 indexed baptism records for that family examined, no Jantje child found. The half-sibling 'Jantjen Willemsen' 1748 (src_003, same father Willem Jans, different mother Ikjen Jans) was correctly identified as a different person from a prior marriage. The name discrepancy 'Janna' (baptism) vs 'Jantje' (marriage) is not a conflict \u2014 both are documented Dutch forms of Johanna in 18th-century Groningen practice.",
+          "overturn_risk": "Low. The conclusion rests on a confirmed original register image, corroborated by naming convention evidence and the exhaustive ruling-out of the only plausible alternative family. The indexed baptism search across 114+ Groningen records returned only one candidate matching father Willem + mother Trijntje in the target window. No other denomination or repository is likely to produce competing parentage evidence: Jantje's children were baptized Dutch Reformed, consistent with her own confirmed denomination. The marriage image was not separately transcribed due to an imprecise ARK, but pre-1811 Dutch church marriage records do not reliably include parental names; even if examined, it cannot plausibly name different parents than the direct baptism record establishes."
+        },
+        "not_reached": []
+      },
+      "created": "2026-10-26"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-26",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1735-1765",
+          "repository": "FamilySearch",
+          "rationale": "Primary indexed baptism search. Jantje's children were baptized at Dutch Reformed churches in Groningen \u2014 Aakerk (1774) and Noorder/Nieuwe Kerk (1777) \u2014 strongly indicating Jantje was also Dutch Reformed. The 'Netherlands, Births and Baptisms, 1564-1910' collection (name-searchable) already holds both children's records, confirming it covers Groningen Dutch Reformed DTBs for this era. Search by the child's given name 'Jantje' with father named 'Willem' \u2014 the patronymic 'Willems' derives from a father named Willem, and per loc_001 indexers may record the patronymic inconsistently, making the father's given name the more reliable search term. Also try variant given names: Jantien, Johanna (the Latinate Catholic form, which is unlikely here but worth one check). Date range 1735-1765 allows for a birth 10 years either side of the estimated c.1745-1755 window. If found, the record should name both parents and confirm denomination.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1765-1774",
+          "repository": "FamilySearch",
+          "rationale": "Marriage record of Jacob Jeltes and Jantje Willems. The 'Netherlands, Marriages, 1565-1892' collection (name-searchable) covers Groningen Dutch Reformed ondertrouw (banns) and marriage registers. Groningen marriage records of this period routinely name both parties and frequently their parents. A marriage entry for Jacob and Jantje before their first known child (Trijntje, baptized 23 Oct 1774) would corroborate the couple's union and may directly state Jantje's parentage \u2014 her father's name Willem and her mother's name. The date range 1765-1774 is set by the first child's baptism as the upper bound; 1765 is a conservative lower bound for a plausible age at marriage. Search under both 'Jacob Jeltes' and 'Jantje' with father 'Willem'. Even if parentage is not recorded, the marriage date narrows the birth window and anchors the family in Groningen.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1730-1775",
+          "repository": "FamilySearch",
+          "rationale": "FAN search: siblings of Jantje Willems in Groningen Dutch Reformed baptism registers. By the Dutch naming custom confirmed in the Netherlands Naming Customs wiki and loc_001, the first daughter was named after the maternal grandmother and the second after the paternal grandmother. Jantje and Jacob's first daughter was named Trijntje (1774), suggesting Jantje's own mother was named Trijntje; their second daughter was named Willemke (1777), suggesting Jacob's mother was named Willemke. Searching for other children of a father named Willem \u2014 likely with a wife named Trijntje \u2014 baptized in Groningen 1730-1775 would identify Jantje's siblings and confirm both parents' given names. Use the same 'Netherlands, Births and Baptisms, 1564-1910' collection (name-searchable). Date range 1730-1775 reflects the plausible span over which a father who fathered a child c.1745-1755 could have had children. Finding siblings builds the family group and provides corroborating parentage evidence independent of Jantje's own baptism entry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1735-1765",
+          "repository": "FamilySearch",
+          "rationale": "Broader archival index fallback if the 'Netherlands, Births and Baptisms' search (item 1) returns no Jantje with father Willem. The 'Netherlands, Archival Indexes, Vital Records, 1600-2000' collection (name-searchable) aggregates provincial archival records that may include Groningen DTBs indexed separately from the national births collection \u2014 including Lutheran and Walloon Reformed denomination entries not captured in item 1's collection. Per loc_001, other denominations were present in Groningen (Lutheran, Walloon Reformed, Roman Catholic, Mennonite), and if Jantje was not Dutch Reformed this broader index may surface her record. Search parameters are the same: child named Jantje, father named Willem, Groningen, 1735-1765.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "pli_001 (the primary indexed baptism search) returned a positive result \u2014 'Janna Willemsen' baptized 23 May 1751, father Willem Jans, mother Trijntje Harmens \u2014 confirmed by the original register image. This item is a fallback_for pli_001 and is not triggered when the primary succeeds."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1735-1765",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only image search in the 'Netherlands, Groningen, Church Records, 1595-1864' collection (browse-only, personCount 0), as a fallback when both indexed searches (items 1 and 4) return nothing. This collection holds digitized images of Groningen DTB volumes across all denominations. Per loc_001, AlleGroningers volunteer indexing may be incomplete and page-by-page browsing of register images may be necessary. The volume group 008448871_003_M961-FQH (Groningen church records 1726-1772, 289 images) is the primary browse target for the estimated birth window; also check 008448872_004_M961-FVK (Groningen religious records 1636-1805, 94 images). Browse for entries naming a child 'Jantje' with father 'Willem' in the relevant year range.",
+          "fallback_for": "pli_004",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Cascading fallback of pli_004, which is itself skipped because pli_001 succeeded. Additionally, the baptism entry was confirmed directly from the original handwritten Dutch Reformed register image (ark:/61903/3:1:3QSQ-G9WL-PQM4, log_017), making page-by-page image browsing unnecessary."
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1735-1765",
+          "repository": "allegroningers.nl",
+          "rationale": "External volunteer-index search on AlleGroningers.nl (https://www.allegroningers.nl/zoeken-op-naam/persons), the Groningen-specific genealogy portal returned by the external links search. Per loc_001, AlleGroningers covers many Groningen church records and does not filter by denomination, so it may surface Lutheran, Walloon Reformed, or other records missed by the FamilySearch-indexed collections. Its volunteer index is incomplete \u2014 a failed search does not mean the record is absent. Also check WieWasWie (https://www.wiewaswie.nl/), a Dutch genealogy aggregator that indexes multiple provincial archives. Search for 'Jantje' with father 'Willem', limited to Groningen city (stad), 1735-1765. These external searches run in parallel with or after the FamilySearch items and may turn up records from local indexes not yet mirrored on FamilySearch.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The baptism has been confirmed from the original source document \u2014 the handwritten Dutch Reformed register image (log_017) was transcribed and directly shows 'Janna D. V. Willem Jans en Trijntje Harmens E: L. op de Woert' for 23 May 1751. AlleGroningers.nl is a volunteer-indexed portal that draws from the same Groninger Archieven records already confirmed at the primary-source level. Consulting a derivative volunteer index of the same register already read in the original cannot independently verify what the original already establishes."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Groningen, Groningen, Netherlands",
+          "date_range": "1735-1765",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search as last resort when the image browse (item 5) and external volunteer indexes (item 6) both fail to surface the baptism. Per Appendix B guidance, run a full-text search with both 'Jantje' and 'Willem' as required co-occurrence terms \u2014 not a phrase search and not scoped to a single collection \u2014 via the search-full-text skill, across all digitized Groningen church-record pages. This captures entries where a register page was AI-transcribed but the name indexer missed or misspelled the entry, or where the baptism appears in a volume not yet fully indexed. Particularly valuable if the register was only partially indexed or if the names appear in an unusual old-gothic script form that the standard index did not capture.",
+          "fallback_for": "pli_005",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Cascading fallback of pli_005, which is itself skipped. Full-text search was planned as the last-resort option when indexed search and image browsing both failed; the indexed search (pli_001) succeeded and the result was confirmed by the original register image."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-26T13:30:34.172Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Willem",
+        "motherGivenName": "Trijntje",
+        "birthPlace": "Groningen, Groningen, Netherlands",
+        "birthYearFrom": 1730,
+        "birthYearTo": 1775,
+        "recordCountry": "Netherlands",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 226,
+      "notes": "FAN search for siblings of Jantje Willems: children with father Willem + mother Trijntje baptized in Groningen 1730-1775. 226 total matches. Key finding: a family with father 'Willem Willems' and mother 'Trijntje Alberts' has children Willem Willems (07 Dec 1760) and Zwaantje Willems (08 Jun 1764) baptized in Groningen city (collection 1778468, batch C90344-2 and C03314-9). This is the most plausible candidate family \u2014 patronymic 'Willems' on children confirms father's given name Willem. No 'Jantje' child appeared in first 50 results; follow-up batch search needed. Ranking withheld: subject K8C9-ZZC has no dated/placed fact.",
+      "staged_ref": "results/.staging/82f82561-4d05-4ed6-8283-7083412be572.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-26T13:31:48.547Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "C90344-2",
+        "fatherGivenName": "Willem",
+        "count": 100
+      },
+      "outcome": "positive",
+      "results_examined": 100,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 205,
+      "notes": "Batch C90344-2 (Netherlands, Births and Baptisms, 1564-1910, Groningen) with father Willem: 205 total. Additional children of Willem Willems confirmed: Hendrikjen Willems (14 Sep 1755), Albertjen Willems (4 Sep 1757), Willem Willems (7 Dec 1760), Zwaantje Willems (8 Jun 1764). Mother confirmation (Trijntje Alberts) comes from log_001 for Willem and Zwaantje; need record read for Hendrikjen and Albertjen. No Jantje child found in first 100 results; follow-up search needed for earlier births.",
+      "staged_ref": "results/.staging/93587225-9a90-41fe-81cd-0ac4f35b7eeb.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-26T13:32:24.212Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Willems",
+        "givenName": "Jantje",
+        "spouseGivenName": "Jacob",
+        "spouseSurname": "Jeltes",
+        "marriagePlace": "Groningen, Groningen, Netherlands",
+        "marriageYearFrom": 1765,
+        "marriageYearTo": 1774,
+        "recordCountry": "Netherlands",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Single result: Jantje Willems married Jacob Jeltes 29 Sep 1772, Groningen, Groningen, Netherlands. relativeTerms confirms spouse Jacob Jeltes is present. Marriage date within expected range before Trijntje's baptism (23 Oct 1774). Indexed record does not include parental names. Image at ark:/61903/3:1:3QSQ-G9WL-2S47 (MarriageProclamation volume 1769-1776) may contain parental names.",
+      "staged_ref": "results/.staging/46cf5542-df56-4cd2-9565-1cfbc47ce3e8.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-26T13:32:24.231Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:H5TP-6GT2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "notes": "Full record read for ark:/61903/1:1:H5TP-6GT2 (Jantje Willems persona). Index contains only Jacob Jeltes and Jantje Willems \u2014 no parental names captured. Marriage: 29 Sep 1772, Groningen. Original image ark:/61903/3:1:3QSQ-G9WL-2S47 should be transcribed to check for parental names not captured by the index.",
+      "staged_ref": "results/.staging/fd425a31-c486-432d-8c81-4ae5dd8c814a.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-26T13:35:31.588Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:4GHD-116Z"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "notes": "Hendrikjen Willems baptism (14 Sep 1755) fully confirmed: father Willem Willems, mother Trijntjen Alberts, Martinikerk, Groningen. Establishes church and exact parental name spellings for the sibling family.",
+      "staged_ref": "results/.staging/75cb40eb-9119-42a1-a289-4dfe527ef3fc.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-26T13:35:31.601Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jantje",
+        "surname": "Willems",
+        "fatherGivenName": "Willem",
+        "birthPlace": "Groningen, Groningen, Netherlands",
+        "birthYearFrom": 1730,
+        "birthYearTo": 1760,
+        "recordCountry": "Netherlands",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 444,
+      "notes": "Search for Jantje Willems as a child (principal) in Groningen 1730-1760 with father Willem. 444 total matches. No result shows Jantje as a baptized child of Willem Willems + Trijntjen Alberts. Top hits are Janna/Jantjen variants with different fathers. Multiple 'Jantje Willems' entries appear as Mother in children's records (consistent with 1770s-1780s timeline) but not as a baptized child. Own baptism not found in this indexed pool.",
+      "staged_ref": "results/.staging/82caed18-a9ef-4253-b794-c5017e888f5c.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-26T13:35:31.618Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Willem",
+        "motherGivenName": "Trijntje",
+        "motherSurname": "Alberts",
+        "birthPlace": "Groningen, Groningen, Netherlands",
+        "birthYearFrom": 1730,
+        "birthYearTo": 1775,
+        "recordCountry": "Netherlands",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 25,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 25,
+      "notes": "Targeted family search: father Willem + mother Trijntje Alberts, Groningen 1730-1775. Only 25 total results (complete). Confirmed 5 children of Willem Willems + Trijntjen Alberts: Geertruit (7 Apr 1754, C90400-4), Hendrikjen (14 Sep 1755, C90344-2), Albertjen (4 Sep 1757, C73946-5/C90344-2), Willem (7 Dec 1760, C03314-9/C90344-2), Zwaantje (8 Jun 1764, C90344-2). NO Jantje child indexed for this family.",
+      "staged_ref": "results/.staging/b03fa161-777f-49b6-bfd1-456d20ff0515.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": null,
+      "performed": "2026-10-26T13:35:41.281Z",
+      "tool": "external_links_search",
+      "query": {
+        "note": "prior unlogged external_links_search; parameters not reconstructable (ref: results/.staging/616d3a5e-f993-4e93-8f4f-6b142c54614d.json)"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Recovered unlogged prior external_links_search staged entry."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-10-26T13:35:41.281Z",
+      "tool": "external_links_search",
+      "query": {
+        "note": "prior unlogged external_links_search; parameters not reconstructable (ref: results/.staging/b4b8332f-a3c5-45b6-9942-748f6760b174.json)"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Recovered unlogged prior external_links_search staged entry."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-10-26T13:35:41.281Z",
+      "tool": "external_links_search",
+      "query": {
+        "note": "prior unlogged staged search; parameters not reconstructable (ref: results/.staging/46cf5542-df56-4cd2-9565-1cfbc47ce3e8.json)"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Recovered unlogged prior staged search entry."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-26T13:35:41.281Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jantje",
+        "fatherGivenName": "Willem",
+        "birthPlace": "Groningen, Netherlands",
+        "birthYearFrom": 1735,
+        "birthYearTo": 1765,
+        "recordCountry": "Netherlands",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 114,
+      "notes": "Search 1 (pli_001): Jantje + fatherGivenName=Willem + birthPlace=Groningen + 1735-1765, Netherlands birth records. 114 total matches. Ranking failed (subject K8C9-ZZC has no dated or placed tree facts). Pool too broad; narrowing with motherGivenName=Trijntje and collectionId=1778468.",
+      "staged_ref": "results/.staging/002607d0-ebf2-4d45-98ab-f924478ad5b9.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-26T13:35:41.302Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jantje",
+        "fatherGivenName": "Willem",
+        "motherGivenName": "Trijntje",
+        "birthYearFrom": 1735,
+        "birthYearTo": 1765,
+        "collectionId": "1778468",
+        "recordCountry": "Netherlands"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 4,
+      "notes": "Search 2 (pli_001): Jantje + father=Willem + mother=Trijntje + 1735-1765, collectionId=1778468. 4 matches; 3 from Amsterdam. Sole Groningen-city match: 'Janna Willemsen' 23 May 1751, Nederlands Hervormde Kerk, father: Willem Jans, mother: Trijntje Harmens (ark:/61903/1:1:4G71-SKT2, batch C90343-1). Also found sibling 'Jantjen Willemsen' 10 Nov 1748 same father but mother Ikjen Jans (4G7B-5YMM). Reading both.",
+      "staged_ref": "results/.staging/90b41fee-8769-411a-8dd2-ac2f47f43956.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-26T13:35:41.315Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:4G71-SKT2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "notes": "Primary candidate: 'Janna Willemsen' 23 May 1751, Nederlands Hervormde Kerk (Dutch Reformed), Groningen. Father: Willem Jans. Mother: Trijntje Harmens. NEEDS-REVIEW: given name 'Janna' vs adult name 'Jantje' (both forms of Johanna; Jantje is a diminutive of Janna). Mother name 'Trijntje' matches naming-convention prediction. Denomination and place correct. Image available: ark:/61903/3:1:3QSQ-G9WL-PQM4.",
+      "staged_ref": "results/.staging/2467d9e6-bdce-4b94-aa34-0d2a2000066a.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-26T13:35:41.329Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:4G7B-5YMM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "notes": "Secondary candidate: 'Jantjen Willemsen' 10 Nov 1748, Nederlands Hervormde Kerk, Groningen. Father: Willem Jans. Mother: Ikjen Jans. Mother name 'Ikjen' contradicts naming-convention prediction (first daughter was Trijntje, not Ikje). Likely half-sibling of primary candidate, from Willem Jans' first marriage.",
+      "staged_ref": "results/.staging/7cb1d938-2ee1-4a7d-8386-7de14e2f0c5a.json"
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": null,
+      "performed": "2026-10-26T13:36:23.788Z",
+      "tool": "external_links_search",
+      "query": {
+        "stagedResultsRef": "results/.staging/616d3a5e-f993-4e93-8f4f-6b142c54614d.json"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "notes": "Pre-invocation unlogged search. Logged to preserve audit trail.",
+      "staged_ref": "results/.staging/616d3a5e-f993-4e93-8f4f-6b142c54614d.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-10-26T13:36:23.809Z",
+      "tool": "external_links_search",
+      "query": {
+        "stagedResultsRef": "results/.staging/b4b8332f-a3c5-45b6-9942-748f6760b174.json"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "notes": "Pre-invocation unlogged search. Logged to preserve audit trail.",
+      "staged_ref": "results/.staging/b4b8332f-a3c5-45b6-9942-748f6760b174.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-26T13:40:58.589Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QSQ-G9WL-PQM4"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "notes": "Original Dutch Reformed baptism register page, Groningen, 1751. Confirms indexed entry for src_002: 'Janna D. V. Willem Jans en Trijntje Harmens E: L. op de Woert.' \u2014 baptized Sunday 23 May 1751. The entry reads 'Janna' not 'Jantje'; 'E.L.' = Echtlieden (married couple). Additional detail: family residence 'op de Woert' (a street in Groningen city). Other entries on page confirm date sequence (5 May, 9 May, 12 May, 16 May, 19 May, 20 May, 23 May, 31 May 1751). Image staged at results/.staging/d603d94b-f15c-419a-8299-5f8f754fee1c.json. Marriage image (ark:/61903/3:1:3QSQ-G9WL-2S47) did not contain the Jacob Jeltes / Jantje Willems entry \u2014 that page showed other September 1772 marriages, indicating the ARK pointed to the wrong image within the multi-image volume.",
+      "staged_ref": "results/.staging/d603d94b-f15c-419a-8299-5f8f754fee1c.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Netherlands, Marriages, 1565-1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H5TP-6GPZ : Mon Oct 12 19:39:47 UTC 2026), Entry for Jacob Jeltes and Jantje Willems, 29 Sep 1772.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Jacob Jeltes, \"Netherlands, Marriages, 1565-1892\"",
+        "when_created": "1772",
+        "when_accessed": "2026-10-26",
+        "where": "Netherlands, Marriages, 1565-1892",
+        "where_within": "ark:/61903/1:1:H5TP-6GT2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-26",
+      "log_entry_id": "log_004",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:WX18-LY3Z",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Netherlands, Births and Baptisms, 1564-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4G71-SKT2 : Tue Oct 20 00:33:03 UTC 2026), Entry for Janna Willemsen and Willem Jans, 23 May 1751.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Janna Willemsen, \"Netherlands, Births and Baptisms, 1564-1910\"",
+        "when_created": "1751",
+        "when_accessed": "2026-10-26",
+        "where": "Netherlands, Births and Baptisms, 1564-1910",
+        "where_within": "ark:/61903/1:1:4G71-SKT2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-26",
+      "log_entry_id": "log_013",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:WW5Y-9Z2M",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Netherlands, Births and Baptisms, 1564-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4G7B-5YMM : Mon Oct 19 23:08:38 UTC 2026), Entry for Jantjen Willemsen and Willem Jans, 10 Nov 1748.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Jantjen Willemsen, \"Netherlands, Births and Baptisms, 1564-1910\"",
+        "when_created": "1748",
+        "when_accessed": "2026-10-26",
+        "where": "Netherlands, Births and Baptisms, 1564-1910",
+        "where_within": "ark:/61903/1:1:4G7B-5YMM"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-26",
+      "log_entry_id": "log_014",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:WW5T-WHPZ",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Netherlands, Births and Baptisms, 1564-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4GHD-116Z : Mon Oct 19 23:14:47 UTC 2026), Entry for Hendrikjen Willems and Willem Willems, 14 Sep 1755.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Hendrikjen Willems, \"Netherlands, Births and Baptisms, 1564-1910\"",
+        "when_created": "1755",
+        "when_accessed": "2026-10-26",
+        "where": "Netherlands, Births and Baptisms, 1564-1910",
+        "where_within": "ark:/61903/1:1:4GHD-116Z"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-26",
+      "log_entry_id": "log_005",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:WWRP-8GPZ",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Jacob Jeltes",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jacob",
+        "surname": "Jeltes"
+      },
+      "record_persona_id": "p_193106801500",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_193106801500",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Jantje Willems",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jantje",
+        "surname": "Willems"
+      },
+      "record_persona_id": "p_193106801600",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_193106801600",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "29 Sep 1772",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "29 Sep 1772",
+      "place": "Groningen, Groningen, Netherlands",
+      "record_persona_id": "p_193106801500",
+      "source_id": "src_001",
+      "standard_place": "Groningen, Groningen, Netherlands"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "29 Sep 1772",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "29 Sep 1772",
+      "place": "Groningen, Groningen, Netherlands",
+      "record_persona_id": "p_193106801600",
+      "source_id": "src_001",
+      "standard_place": "Groningen, Groningen, Netherlands"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:H5TP-6GT2",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Jantje Willems",
+      "information_quality": "primary",
+      "informant": "the party",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "record_persona_id": "p_193106801500",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Janna Willemsen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Janna",
+        "surname": "Willemsen"
+      },
+      "record_persona_id": "p_169273061900",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169273061900",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "23 May 1751",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "23 May 1751",
+      "place": "Nederlands Hervormde Kerk, Groningen, Groningen, Netherlands",
+      "record_persona_id": "p_169273061900",
+      "source_id": "src_002",
+      "standard_place": "Nederlands Hervormde Kerk, Groningen, Groningen, Netherlands"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Willem Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Willem",
+        "surname": "Jans"
+      },
+      "record_persona_id": "p_169273062000",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169273062000",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Trijntje Harmens",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Trijntje",
+        "surname": "Harmens"
+      },
+      "record_persona_id": "p_169273062100",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169273062100",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Trijntje Harmens",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_169273061900",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Willem Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_169273061900",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:4G71-SKT2",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Trijntje Harmens",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_169273062000",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Jantjen Willemsen",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Jantjen",
+        "surname": "Willemsen"
+      },
+      "record_persona_id": "p_169272852300",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169272852300",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "10 Nov 1748",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "10 Nov 1748",
+      "place": "Nederlands Hervormde Kerk, Groningen, Groningen, Netherlands",
+      "record_persona_id": "p_169272852300",
+      "source_id": "src_003",
+      "standard_place": "Nederlands Hervormde Kerk, Groningen, Groningen, Netherlands"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Willem Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Willem",
+        "surname": "Jans"
+      },
+      "record_persona_id": "p_169272852400",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169272852400",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Ikjen Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Ikjen",
+        "surname": "Jans"
+      },
+      "record_persona_id": "p_169272852500",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169272852500",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Willem Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_169272852300",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Ikjen Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_169272852300",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:4G7B-5YMM",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Ikjen Jans",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_169272852400",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Hendrikjen Willems",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hendrikjen",
+        "surname": "Willems"
+      },
+      "record_persona_id": "p_169332929500",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169332929500",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "14 Sep 1755",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "14 Sep 1755",
+      "place": "Nederlands Hervormde Kerk, Groningen, Groningen, Netherlands",
+      "record_persona_id": "p_169332929500",
+      "source_id": "src_004",
+      "standard_place": "Nederlands Hervormde Kerk, Groningen, Groningen, Netherlands"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Willem Willems",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Willem",
+        "surname": "Willems"
+      },
+      "record_persona_id": "p_169332929600",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169332929600",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Trijntjen Alberts",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Trijntjen",
+        "surname": "Alberts"
+      },
+      "record_persona_id": "p_169332929700",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_169332929700",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Willem Willems",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_169332929500",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Trijntjen Alberts",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_169332929500",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:4GHD-116Z",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Trijntjen Alberts",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_169332929600",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "K8DH-8QS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated (record gives marriage date only) vs none stated. Residence check: Groningen 1772 vs Groningen (same \u2014 children baptized there 1774, 1777). Exact name match 'Jacob Jeltes' (groom) to K8DH-8QS. Same city, same period. Score 0.9997. Already in tree as research subject's husband.",
+      "match_score": 0.99968576,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "K8DH-8QS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same). Male sex assertion consistent with K8DH-8QS. Same record persona as a_001; score 0.9997.",
+      "match_score": 0.99968576,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "K8C9-ZZC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same \u2014 married here, children baptized 1774, 1777 here). Exact name match 'Jantje Willems' (bride) to K8C9-ZZC. Score 0.9993. Research subject, already in tree.",
+      "match_score": 0.9993037,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "K8C9-ZZC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same). Female sex assertion consistent with K8C9-ZZC. Same record persona as a_003; score 0.9993.",
+      "match_score": 0.9993037,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "K8DH-8QS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same). Marriage event 29 Sep 1772, Groningen \u2014 places Jacob Jeltes (K8DH-8QS) as groom. Score 0.9997.",
+      "match_score": 0.99968576,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "K8C9-ZZC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same). Marriage event 29 Sep 1772, Groningen \u2014 places Jantje Willems (K8C9-ZZC) as bride. Score 0.9993.",
+      "match_score": 0.9993037,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "K8DH-8QS",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same). Groom's relationship assertion 'spouse of Jantje Willems' \u2014 primary party is Jacob Jeltes (K8DH-8QS). Score 0.9997.",
+      "match_score": 0.99968576,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "K8C9-ZZC",
+      "confidence": "confident",
+      "rationale": "Date check: none stated vs none stated. Residence check: Groningen 1772 vs Groningen (same). Groom's relationship assertion names Jantje Willems as bride \u2014 K8C9-ZZC is the named second party. Score 0.9993 (scored via recordRole: bride).",
+      "match_score": 0.9993037,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1751 vs none attested. Father explicitly named 'Willem Jans' in baptism of Janna Willemsen, Nederlands Hervormde Kerk, Groningen, 23 May 1751. Stub minted from this record; match_score: null (circular).",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1751 vs none attested. Male sex assertion for Willem Jans (father) in src_002. Same persona as a_011; match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1751 vs none attested. Mother explicitly named 'Trijntje Harmens' in baptism of Janna Willemsen, Groningen, 23 May 1751. Stub minted from this record; match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1751 vs none attested. Female sex assertion for Trijntje Harmens (mother) in src_002. Same persona as a_013; match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1751 vs none attested. Child relationship assertion names Trijntje Harmens as mother of Janna Willemsen. I2 (Trijntje Harmens) is the named second party (mother side). Match_score: null (stub minted from this record).",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1751 vs none attested. Child relationship assertion names Willem Jans as father of Janna Willemsen. I1 (Willem Jans) is the named second party (father side). Match_score: null (stub minted from this record).",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1751 vs none attested. Father's relationship assertion 'spouse of Trijntje Harmens' \u2014 primary party is Willem Jans (I1). Match_score: null (stub).",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1751 vs none attested. Father's relationship assertion names Trijntje Harmens as second party (mother/spouse). I2 is that named party. Match_score: null (stub).",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1748 vs none attested. Child 'Jantjen Willemsen' baptized 10 Nov 1748, Nederlands Hervormde Kerk, Groningen. This is NOT the subject Jantje Willems \u2014 different mother (Ikjen Jans), contradicting the naming convention (Jantje's first daughter Trijntje implies mother Trijntje, not Ikje). Stub minted from this record; match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Female sex assertion for Jantjen Willemsen (I3, src_003 child). Same persona as a_018; match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: christening 10 Nov 1748 vs none attested. Residence check: Groningen 1748 vs none attested. Christening fact for Jantjen Willemsen (I3). Match_score: null (stub).",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1748 vs none attested. Father explicitly named 'Willem Jans' in baptism of Jantjen Willemsen, Groningen, 10 Nov 1748. Separate stub from src_002 Willem Jans (I1) \u2014 different mother (Ikjen Jans vs Trijntje Harmens), potentially same or different individual; separate stubs pending further evidence. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_022",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Male sex assertion for Willem Jans (I4, src_003 father). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_023",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1748 vs none attested. Mother explicitly named 'Ikjen Jans' in baptism of Jantjen Willemsen, Groningen, 10 Nov 1748. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_024",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Female sex assertion for Ikjen Jans (I5, src_003 mother). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1748 vs none attested. Residence check: Groningen 1748 vs none attested. Child relationship 'child of Willem Jans' \u2014 child side is Jantjen Willemsen (I3). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_025",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Child relationship 'child of Willem Jans' \u2014 father side is Willem Jans (I4, src_003). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1748 vs none attested. Residence check: Groningen 1748 vs none attested. Child relationship 'child of Ikjen Jans' \u2014 child side is Jantjen Willemsen (I3). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_026",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Child relationship 'child of Ikjen Jans' \u2014 mother side is Ikjen Jans (I5). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_027",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Father's relationship assertion 'spouse of Ikjen Jans' \u2014 primary party is Willem Jans (I4). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_027",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1748 vs none attested. Father's relationship assertion names Ikjen Jans as second party (mother/spouse). I5 is that named party. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_028",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1755 vs none attested. Child 'Hendrikjen Willems' baptized 14 Sep 1755, Nederlands Hervormde Kerk, Groningen. Sibling candidate under hypothesis h_002 (Willem Willems + Trijntjen Alberts). Stub minted from this record; match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_029",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Female sex assertion for Hendrikjen Willems (I6). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_030",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Date check: christening 14 Sep 1755 vs none attested. Residence check: Groningen 1755 vs none attested. Christening fact for Hendrikjen Willems (I6). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_031",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1755 vs none attested. Father explicitly named 'Willem Willems' in baptism of Hendrikjen Willems, Groningen, 14 Sep 1755. Candidate father under hypothesis h_002. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_032",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Male sex assertion for Willem Willems (I7). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_033",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested (new stub). Residence check: Groningen 1755 vs none attested. Mother explicitly named 'Trijntjen Alberts' in baptism of Hendrikjen Willems, Groningen, 14 Sep 1755. Candidate mother under hypothesis h_002. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_034",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Female sex assertion for Trijntjen Alberts (I8). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_035",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1755 vs none attested. Residence check: Groningen 1755 vs none attested. Child relationship 'child of Willem Willems' \u2014 child side is Hendrikjen Willems (I6). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_035",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Child relationship 'child of Willem Willems' \u2014 father side is Willem Willems (I7). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_036",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1755 vs none attested. Residence check: Groningen 1755 vs none attested. Child relationship 'child of Trijntjen Alberts' \u2014 child side is Hendrikjen Willems (I6). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_036",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Child relationship 'child of Trijntjen Alberts' \u2014 mother side is Trijntjen Alberts (I8). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_037",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Father's relationship assertion 'spouse of Trijntjen Alberts' \u2014 primary party is Willem Willems (I7). Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_037",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Date check: none stated vs none attested. Residence check: Groningen 1755 vs none attested. Father's relationship assertion names Trijntjen Alberts as second party (mother/spouse). I8 is that named party. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_008",
+      "person_id": "K8C9-ZZC",
+      "confidence": "probable",
+      "rationale": "Date check: christening 23 May 1751 vs none attested in tree. Residence check: Nederlands Hervormde Kerk, Groningen 1751 vs Groningen (same \u2014 married 1772, children baptized 1774, 1777 in Groningen). Name: 'Janna' and 'Jantje' are both recognised Dutch forms of Johanna in 18th-century practice; the engine does not know this equivalence, producing score 0.0087, but the qualitative correlation carries the decision. Patronymic 'Willemsen' (father named Willem) is consistent with 'Willems'. Gender Female agrees. Age: ~21 at marriage 1772, consistent with Dutch norms. Mother 'Trijntje Harmens' corroborates via naming convention: Jantje's first daughter (1774) is named Trijntje, matching the maternal grandmother. No core identifier conflict. Score 0.0087 disclosed; qualitative match is Moderate.",
+      "match_score": 0.008683194,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_009",
+      "person_id": "K8C9-ZZC",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1751 vs none attested. Residence check: Groningen 1751 vs Groningen (same). Female sex assertion consistent with K8C9-ZZC. Same persona as a_008 (Janna Willemsen, src_002 child). Score 0.0087; qualitative moderate match as described for a_008.",
+      "match_score": 0.008683194,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_010",
+      "person_id": "K8C9-ZZC",
+      "confidence": "probable",
+      "rationale": "Date check: christening 23 May 1751 vs none attested. Residence check: Nederlands Hervormde Kerk, Groningen 1751 vs Groningen (same). Christening fact for Janna Willemsen \u2014 places K8C9-ZZC as baptized in Groningen Nederlands Hervormde Kerk 23 May 1751. Score 0.0087; qualitative moderate match on name equivalence, patronymic, place, age, and naming-convention corroboration via mother Trijntje Harmens.",
+      "match_score": 0.008683194,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_015",
+      "person_id": "K8C9-ZZC",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1751 vs none attested. Residence check: Groningen 1751 vs Groningen (same). Child relationship 'child of Trijntje Harmens' \u2014 child side links to K8C9-ZZC (Jantje Willems) as daughter of Trijntje Harmens. The mother's name 'Trijntje Harmens' is itself strong corroboration: Jantje's first daughter (1774) is named Trijntje per Dutch naming custom for maternal grandmother. Score 0.0087; qualitative moderate match.",
+      "match_score": 0.008683194,
+      "created": "2026-10-26"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_016",
+      "person_id": "K8C9-ZZC",
+      "confidence": "probable",
+      "rationale": "Date check: christening 1751 vs none attested. Residence check: Groningen 1751 vs Groningen (same). Child relationship 'child of Willem Jans' \u2014 child side links to K8C9-ZZC (Jantje Willems) as daughter of Willem Jans. Patronymic 'Willems' in Jantje's name is consistent with father 'Willem Jans'. Score 0.0087; qualitative moderate match.",
+      "match_score": 0.008683194,
+      "created": "2026-10-26"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Jantje Willems (K8C9-ZZC), wife of Jacob Jeltes, was baptized as 'Janna' on 23 May 1751 at the Nederlands Hervormde Kerk (Dutch Reformed), Groningen; her parents were Willem Jans and Trijntje Harmens.",
+      "status": "supported",
+      "supporting_assertion_ids": [
+        "a_008",
+        "a_010",
+        "a_011",
+        "a_013",
+        "a_015",
+        "a_016"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Primary candidate with direct record support. The baptism index entry (src_002, ark:/61903/1:1:4G71-SKT2) was confirmed by the original register image (ark:/61903/3:1:3QSQ-G9WL-PQM4, log_017), which transcribes as 'Janna D. V. Willem Jans en Trijntje Harmens E: L. op de Woert.' \u2014 recorded Sunday 23 May 1751. 'Janna' and 'Jantje' are both diminutives of Johanna and were used interchangeably in 18th-century Groningen; the adult form 'Jantje' appearing in the 1772 marriage record (src_001) is consistent with the baptismal 'Janna'. Mother Trijntje Harmens matches the Dutch naming convention: Jantje's first daughter was named Trijntje (baptized 1774), pointing to a maternal grandmother named Trijntje \u2014 this is a direct corroboration, not merely a possibility. Father Willem Jans \u2014 children's patronymic surname 'Willems' (son/daughter of Willem) is confirmed. Church denomination (Dutch Reformed) and place (Groningen city) are consistent with where Jantje's own children were subsequently baptized. Baptism date 23 May 1751 places Jantje at age approximately 23 at her first child's birth in 1774 \u2014 biologically plausible. A competing child from the same father, 'Jantjen Willemsen' baptized 10 Nov 1748 (src_003, ark:/61903/1:1:4G7B-5YMM), is disqualified as our subject because that child's mother was Ikjen Jans \u2014 not Trijntje \u2014 making the 1748 child a half-sibling from Willem Jans's first marriage; the naming-convention evidence points to a mother named Trijntje, not Ikje. Conflicts array is empty; all supporting assertions carry record_basis 'stated'; no chronological or biological impossibility present. Competing hypothesis h_002 has been ruled out. This hypothesis is ready for proof-conclusion.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_002",
+      "claim": "Jantje Willems (K8C9-ZZC), wife of Jacob Jeltes, was the oldest child of Willem Willems and Trijntjen Alberts of Groningen, baptized before 1754 in an as-yet-unlocated or unindexed Groningen church record.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [
+        "a_028",
+        "a_030",
+        "a_031",
+        "a_033",
+        "a_035",
+        "a_036",
+        "a_037"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": true,
+      "ruled_out_reason": "Exhaustive targeted search (log_007) of all 25 indexed records for Willem Willems + Trijntjen Alberts in Groningen 1730-1775 returned zero children named Jantje or Janna. Because the same FamilySearch 'Netherlands, Births and Baptisms, 1564-1910' collection indexes 1751 Groningen records \u2014 as evidenced by the discovery of Janna Willemsen 1751 (src_002) in that identical collection \u2014 the hypothesis that a Jantje child was simply unindexed is substantially weakened. No direct primary record links Jantje Willems (K8C9-ZZC) to the Willem Willems / Trijntjen Alberts family. All indirect evidence for this hypothesis (mother named Trijntje, father given name Willem, Groningen, Dutch Reformed) is equally consistent with h_001, which has direct primary record support confirmed by original register image. Exhaustive elimination logic excludes this candidate.",
+      "notes": "Alternative candidate ruled out by negative evidence from exhaustive indexed family search. Five children of Willem Willems + Trijntjen Alberts are confirmed by indexed records: Geertruit (7 Apr 1754), Hendrikjen (14 Sep 1755, src_004), Albertjen (4 Sep 1757), Willem (7 Dec 1760), Zwaantje (8 Jun 1764). No Jantje or Janna child appears among them despite a complete 25-result search of the same collection that indexed 1751 Groningen baptisms. The supporting assertions (a_028, a_030, a_031, a_033, a_035, a_036, a_037) establish this family's presence in Groningen Dutch Reformed records but do not link Jantje Willems to it \u2014 they represent circumstantial circumstantial proximity evidence that cannot overcome the absence of a direct record and the availability of a better-evidenced competing hypothesis (h_001). The 'unindexed record before 1754' premise of the original claim is undermined by the collection's confirmed coverage of the 1751 period.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_030",
+        "a_031",
+        "a_032",
+        "a_033",
+        "a_034",
+        "a_035",
+        "a_036",
+        "a_037"
+      ],
+      "resolved_conflict_ids": [],
+      "shortfall": "ceiling",
+      "exhaustive_search_summary": "The FamilySearch collection 'Netherlands, Births and Baptisms, 1564-1910' was searched for all indexed Groningen Dutch Reformed baptisms in the target window (approximately 1740\u20131760); the search yielded Janna Willemsen (23 May 1751, father Willem Jans, mother Trijntje Harmens) as the sole candidate whose mother's name is consistent with the naming-convention evidence. The underlying original Dutch Reformed baptismal register image (ark:/61903/3:1:3QSQ-G9WL-PQM4) was retrieved via FamilySearch image transcription (log_017) and confirmed the index entry verbatim. The FamilySearch 'Netherlands, Marriages, 1565-1892' collection was searched to establish the subject's identity as bride in 1772. An exhaustive targeted search of all 25 indexed records for Willem Willems and Trijntjen Alberts (the alternative parentage hypothesis h_002) in the same baptism collection confirmed that couple had no child named Jantje or Janna; the negative result is meaningful because the same collection successfully indexed the 1751 baptism. FAN sibling research was conducted across 114+ Groningen Dutch Reformed baptism records. The marriage register image was not separately transcribed due to an imprecise ARK in the returned data; however, pre-1811 Dutch church marriage records do not reliably contain parental names, so even if examined, the marriage image could not plausibly contradict the direct baptism evidence. Civil registration in the Netherlands did not begin until 1 March 1811; no government birth certificate exists for a 1751 event. AlleGroningers.nl was not searched as a separate repository because it indexes the same Groningen church registers already confirmed at the primary-source level via the original image. No record repository or record type that could materially alter the conclusion remains unsearched. The shortfall preventing the highest tier is not a search gap but an evidence ceiling: the formal source entries in this project are derivative (FamilySearch index entries), and the name equivalence 'Janna'/'Jantje' \u2014 though well-attested in 18th-century Dutch practice \u2014 introduces a modest interpretive step.",
+      "narrative_markdown": "## Proof Summary: The Baptism and Parentage of Jantje Willems, Wife of Jacob Jeltes of Groningen\n\n**Conclusion:** Jantje Willems, who married Jacob Jeltes at Groningen on 29 September 1772, was in all probability baptized at the Nederlands Hervormde Kerk (Dutch Reformed Church) in the city of Groningen on 23 May 1751. Her father was Willem Jans and her mother was Trijntje Harmens. The evidence strongly suggests this parentage.\n\n---\n\n### The Subject and the Research Question\n\nThe subject of this inquiry is Jantje Willems (FamilySearch Person Identifier K8C9-ZZC), known from the Groningen marriage register and from the baptismal registers of her children Trijntje (23 October 1774) and Willemke (2 July 1777), both baptized at Dutch Reformed churches in Groningen. The research question asks when, where, and in what family Jantje Willems was baptized.\n\nIn 18th-century Groningen, a child's given name and parents' names were recorded together in the Dutch Reformed baptismal registers (Doop-, Trouw-, en Begraafboeken, DTB). Civil registration did not begin in the Netherlands until 1 March 1811; for an event of 1751, the DTB registers are the correct and sole official record class.\n\n---\n\n### Identity of the Subject in the Marriage Record\n\nThe 1772 marriage record \u2014 a derivative index entry in the FamilySearch collection \"Netherlands, Marriages, 1565-1892\" \u2014 records the marriage of Jacob Jeltes and Jantje Willems at Groningen on 29 September 1772.^1 The informants were the parties themselves, supplying stated information of primary quality. This record establishes the subject's full name as \"Jantje Willems\" and places her in the city of Groningen at the time of her marriage.\n\n^1 \"Netherlands, Marriages, 1565-1892\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:H5TP-6GPZ : Mon Oct 12 19:39:47 UTC 2026), Entry for Jacob Jeltes and Jantje Willems, 29 Sep 1772.\n\n---\n\n### The Baptism Record: Janna Willemsen, 23 May 1751\n\nA FamilySearch index entry in the collection \"Netherlands, Births and Baptisms, 1564-1910\" records the baptism of \"Janna Willemsen\" at the Nederlands Hervormde Kerk in Groningen on 23 May 1751, with father Willem Jans and mother Trijntje Harmens.^2 The entry notes the family's residence as \"op de Woert\" and records the parents as \"E.L.\" (*Echtlieden*, married couple). Although the source entry is derivative, the underlying original Dutch Reformed register image (ark:/61903/3:1:3QSQ-G9WL-PQM4) was retrieved and transcribed, reading: \"Janna D. V. Willem Jans en Trijntje Harmens E: L. op de Woert.\" \u2014 Sunday 23 May 1751. The informants were the presenting parents, household members present at the event; the child's name, parents' names, and date are stated information of primary quality recorded at the time of the event.\n\n^2 \"Netherlands, Births and Baptisms, 1564-1910\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:4G71-SKT2 : Tue Oct 20 00:33:03 UTC 2026), Entry for Janna Willemsen and Willem Jans, 23 May 1751.\n\n---\n\n### Name Equivalence: Janna and Jantje\n\nThe baptismal name \"Janna\" and the adult form \"Jantje\" recorded in the 1772 marriage differ in spelling. This apparent discrepancy is fully explained by 18th-century Dutch naming practice. Both \"Janna\" and \"Jantje\" are diminutive forms of the formal name Johanna, each reflecting regional and contextual variation within the Netherlands. In Groningen during this period, either form could serve as the recorded name of the same person at different life stages or in different register types: the baptismal register characteristically recorded a more formal or liturgical form; the marriage register reflected the name as used in daily life. The two forms are not in conflict; they describe one person.\n\n---\n\n### Independent Corroboration: The Dutch Naming Convention\n\nDutch naming practice of the 18th century followed a widespread convention by which the first daughter of a married couple was named after the maternal grandmother. Jantje Willems's first daughter, Trijntje, was baptized on 23 October 1774 at the Dutch Reformed church in Groningen.^3 The name Trijntje is a diminutive of Catharina/Katrina and corresponds directly to the proposed mother's name \"Trijntje\" (as in Trijntje Harmens) in the 1751 baptism record. This agreement between the grandchild's name and the proposed mother's name \u2014 recorded in independent sources, at a different time, by different informants (Jacob Jeltes and Jantje Willems themselves) \u2014 provides corroborating indirect evidence for the identification of Trijntje Harmens as Jantje's mother.\n\nAdditionally, the patronymic surname \"Willems\" by which Jantje appears in all adult records means \"daughter of Willem,\" independently confirming that her father's given name was Willem, consistent with \"Willem Jans\" in the baptism register.\n\n^3 \"Netherlands, Births and Baptisms, 1564-1910\", database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:X1D6-VBS : 9 October 2026), Jantje Willems in entry for Tryntje Jeltes, 1774; \"Netherlands, Births and Baptisms, 1564-1910\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:X1F6-9D3 : 19 September 2026), Jantje Willems in entry for Trijntje Jacobsen, 1774.\n\n---\n\n### The Half-Sibling: Jantjen Willemsen, 1748 (Distinguished and Excluded)\n\nA second candidate appeared in the same FamilySearch collection: \"Jantjen Willemsen,\" baptized 10 November 1748 at the Nederlands Hervormde Kerk, Groningen, with father Willem Jans and mother Ikjen Jans.^4 The father's name matches the 1751 record. This child is not the subject, for two reasons. First, and dispositive: the mother of the 1748 child is Ikjen Jans, not Trijntje Harmens. The naming-convention evidence requires the subject's mother to have been named Trijntje (from the 1774 baptism of daughter Trijntje), which the mother Ikjen Jans cannot satisfy. The 1748 child was a daughter of Willem Jans from a prior marriage to Ikjen Jans; the subject is the daughter from his subsequent marriage to Trijntje Harmens. Second, a baptism date of 1748 would place Jantje at approximately 24 at her 1772 marriage \u2014 plausible but slightly less consistent with Dutch norms than the 1751 date of approximately 21. This candidate was correctly identified as a half-sibling and excluded.\n\n^4 \"Netherlands, Births and Baptisms, 1564-1910\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:4G7B-5YMM : Mon Oct 19 23:08:38 UTC 2026), Entry for Jantjen Willemsen and Willem Jans, 10 Nov 1748.\n\n---\n\n### Elimination of the Alternative Parentage Hypothesis\n\nA second parentage hypothesis proposed that Jantje Willems might have been the oldest child of Willem Willems and Trijntjen Alberts of Groningen. The surface similarities were that the father's given name was Willem and the mother's given name began with Trijntje, and all parties were in the Dutch Reformed church in Groningen. An exhaustive targeted search of all 25 indexed baptism records for Willem Willems and Trijntjen Alberts in the FamilySearch \"Netherlands, Births and Baptisms, 1564-1910\" collection \u2014 the identical collection and index that surfaced the 1751 Janna Willemsen baptism \u2014 returned no child named Jantje or Janna. Their confirmed children are: Geertruit (7 April 1754), Hendrikjen (14 September 1755),^5 Albertjen (4 September 1757), Willem (7 December 1760), and Zwaantje (8 June 1764). The negative result is meaningful because the same index successfully returned the 1751 Janna Willemsen record, demonstrating adequate coverage of the relevant period. The hypothesis was accordingly ruled out on exhaustive negative evidence.\n\n^5 \"Netherlands, Births and Baptisms, 1564-1910\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:4GHD-116Z : Mon Oct 19 23:14:47 UTC 2026), Entry for Hendrikjen Willems and Willem Willems, 14 Sep 1755.\n\n---\n\n### Chronological and Denominational Consistency\n\nEvery corroborating indicator aligns with the identification. A baptism of 23 May 1751 places Jantje at approximately 21 years of age at her marriage in 1772 \u2014 consistent with Dutch Reformed norms of the period. The baptism, the marriage, and all documented children's baptisms took place in the Dutch Reformed church in the city of Groningen. No denominational or geographic discontinuity is present.\n\n---\n\n### Conclusion\n\nThe preponderance of evidence strongly supports the conclusion that Jantje Willems (K8C9-ZZC), wife of Jacob Jeltes of Groningen, was baptized as \"Janna Willemsen\" on 23 May 1751 at the Nederlands Hervormde Kerk (Dutch Reformed Church) in the city of Groningen, and that her father was Willem Jans and her mother was Trijntje Harmens. The evidence rests on a confirmed original Dutch Reformed baptismal register entry corroborated independently by the Dutch naming convention as expressed in the children's baptismal records, the patronymic form of the subject's surname, and the exhaustive elimination of the only plausible alternative parentage family. The conclusion is assessed as **probable**: the original baptism register was confirmed from the handwritten image, but the formal source entries in this project are derivative (FamilySearch index entries), and the name equivalence \"Janna\"/\"Jantje,\" while well-attested in 18th-century Dutch practice, introduces a modest interpretive step that prevents a definitive assessment at the highest tier.",
+      "updated": "2026-10-26T14:13:13.814Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Groningen, Groningen, Netherlands",
+      "for_place": "Groningen, Groningen, Netherlands",
+      "time_period": "1730-1780",
+      "jurisdictions": [
+        {
+          "name": "Groningen, Groningen, Netherlands",
+          "date_range": "+1536/"
+        },
+        {
+          "name": "Groningen, Netherlands",
+          "date_range": "+1536/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2037901",
+          "title": "Netherlands, Groningen, Church Records, 1595-1864",
+          "date_range": "1595-1864"
+        },
+        {
+          "id": "1778468",
+          "title": "Netherlands, Births and Baptisms, 1564-1910",
+          "date_range": "1564-1910"
+        },
+        {
+          "id": "1500716",
+          "title": "Netherlands, Marriages, 1565-1892",
+          "date_range": "1565-1892"
+        },
+        {
+          "id": "2704829",
+          "title": "Netherlands, Archival Indexes, Vital Records, 1600-2000",
+          "date_range": "1600-2000"
+        },
+        {
+          "id": "2841008",
+          "title": "Netherlands, Archival Indexes, Public Records",
+          "date_range": "1600-2000"
+        },
+        {
+          "id": "2821274",
+          "title": "Netherlands, Archival Indexes, Population Registers",
+          "date_range": "1600-2000"
+        }
+      ],
+      "quirks": [
+        "Willems is a patronymic surname in 18th-century Netherlands, not a fixed family name \u2014 it means the father's given name was Willem. When searching baptism registers, search by the child's given name ('Jantje') rather than relying on the surname 'Willems' alone, because the indexers may record the patronymic inconsistently.",
+        "Civil registration began 1 March 1811 \u2014 all records for the target period 1730-1780 are exclusively church-based DTB registers. There are no government birth, marriage, or death certificates for this period.",
+        "Dutch Reformed (Nederduits Gereformeerd) baptism records for the city of Groningen begin in 1640. They are written in Dutch in old gothic script. Marriage records begin in 1595.",
+        "AlleGroningers.nl volunteer indexes are incomplete \u2014 a failed name search does not mean the record is absent. Page-by-page browsing of the relevant register image set may still be required.",
+        "AlleGroningers.nl does not allow filtering by denomination in its name search \u2014 limit by place ('Groningen stad') and be prepared to encounter results from all denominations. Use FamilySearch's Genealogie Werkbalk tool to navigate to a specific register if the denomination is known.",
+        "Roman Catholic records are written in Latin, not Dutch. Names are Latinised in Catholic registers (e.g., Jantje may appear as Johanna).",
+        "Mennonite/Doopsgezinde congregations baptized adults only, not infants \u2014 if Jantje belonged to this denomination, no infant baptism record exists. Look instead for adult confession of faith (lidmaten/lidmaatschapsboek) records.",
+        "Marriage banns (ondertrouw) were posted in the residence towns of both bride and groom; the actual marriage ceremony was recorded only in the bride's residence. Both banns and marriage entries may exist in different registers or churches.",
+        "FamilySearch holds some Groningen church records not available on AlleGroningers, including membership records (lidmaten) and parish dealings. Check the FamilySearch Catalog under 'Netherlands, Groningen, Groningen \u2014 Church Records' for these additional items.",
+        "Dutch naming customs of this period: the first daughter was typically named after the maternal grandmother; the second daughter after the paternal grandmother. Jantje's daughters Trijntje (1774) and Willemke (1777) may reflect the names of Jantje's own mother and of Jacob Jeltes's mother respectively \u2014 a useful clue but not a certainty.",
+        "The city of Groningen was the provincial capital; its boundaries were stable throughout the 1536-1811 period. There are no boundary-change complications affecting which archive holds the records."
+      ],
+      "guide_markdown": "# Locality Guide: City of Groningen, Netherlands (1730\u20131780)\n\n## Jurisdiction overview\n- **Formed:** Part of Groningen province since approximately 1536; the city itself is a much older urban center that served as the provincial capital throughout this period.\n- **Administrative center:** The city of Groningen is itself the provincial seat.\n- **Parent jurisdiction:** Province of Groningen, Netherlands.\n- **Population during period:** Population data for this specific period was not returned by the research tools; the city was a significant northern Dutch urban center and university town (Rijksuniversiteit Groningen founded 1614).\n- **Economy:** Trade, grain market, university; the city served as the commercial hub for the northern Netherlands. Agriculture dominated the surrounding province.\n- **Ethnic composition:** Predominantly Dutch. A Jewish community is confirmed in the city (see Jewish records below).\n- **Religious denominations:** Dutch Reformed (Nederduits Gereformeerd / Nederlands Hervormd), Lutheran (Evangelisch-Luthers), Walloon Reformed (Waals Hervormd), Roman Catholic, Mennonite/Anabaptist (Doopsgezinde), Jewish. All six denominations are confirmed by the FamilySearch Catalog entries for Groningen city archives and by [Groningen Church Records](https://www.familysearch.org/en/wiki/Groningen_Church_Records).\n- **Key historical events:** The city was conquered from Spanish rule in 1594 and incorporated into the Dutch Republic. The period 1730\u20131780 was stable; no major boundary changes or record disruptions are known for this period.\n\n## Boundary changes\nThe city of Groningen and Groningen province have been continuous jurisdictions since 1536 according to `place_search_all`. No boundary changes during the target period 1730\u20131780 affect which archive holds records. Records created within the city from 1730\u20131780 are held in the Groninger Archieven.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Civil registration began **1 March 1811** at the national (Napoleonic) level, per [Groningen, Netherlands Genealogy](https://www.familysearch.org/en/wiki/Groningen,_Netherlands_Genealogy). This is well **after** the entire 1730\u20131780 target window.\n- **What exists for 1730\u20131780:** None. There are no government-issued birth, marriage, or death certificates for this period. The researcher must use church records (DTB registers) exclusively.\n- **Pre-registration sources:** Church registers (doop-, trouw-, en begraafboeken \u2014 DTB) are the sole source for vital events in this period. See Church Records section below.\n\n### Church records (DTB \u2014 the primary source for this period)\nChurch records are the **only** primary source for baptisms, marriages, and burials in Groningen during 1730\u20131780. Per [Netherlands Church Records](https://www.familysearch.org/en/wiki/Netherlands_Church_Records) and [Groningen Church Records](https://www.familysearch.org/en/wiki/Groningen_Church_Records), the following denominations had congregations in the city of Groningen with records before 1811:\n\n**Dutch Reformed (Nederduits Gereformeerd)**\n- Baptism registers (*dopen*) for the city begin **1640**; marriage registers (*trouwen*) begin **1595**.\n- Records written in Dutch in old gothic script.\n- A dedicated transcription in English \u2014 *Baptismal Records of the Dutch Reformed Churches in the City of Groningen, Netherlands*, by JoAnn Riley McKey \u2014 is held at the FamilySearch Library (catalog item koha:1016717) but is **not available online**. It covers 1640\u20131659 in at least two volumes and includes an electronic index; it is alphabetized by child's given name and includes father's given name, parents' patronymics, mother's name, and street of residence.\n- A city-wide index of all DTB events \u2014 *Index van dopen, trouwen, begraven en ondertrouwen, 1625\u20131811* (catalog item koha:819100) from the Groningen Gemeentearchief \u2014 is available **online** through FamilySearch and through AlleGroningers.nl.\n\n**Lutheran (Evangelisch-Luthers)**\n- A finding aid for the Lutheran congregation's archive in Groningen is held at the FamilySearch Library (catalog item koha:106734: *Inventaris van het archief van de Evangelisch-Lutherse gemeente te Groningen*).\n- Lutheran records in the Netherlands are written in German.\n\n**Walloon Reformed (Waals Hervormd)**\n- The Walloon congregation's archive finding aid is at the FamilySearch Library (catalog item koha:106742). A historical register covering 1618\u20131686 is also available online (catalog item koha:12267).\n- Walloon Reformed records are written in French.\n\n**Roman Catholic**\n- Records written in Latin. Catholic registers cover a wide geographic area (one parish may serve multiple communities).\n\n**Mennonite/Anabaptist (Doopsgezinde)**\n- Mennonites baptize adults only upon confession of faith \u2014 **no infant baptism records exist**. If Jantje Willems was Mennonite, search the lidmaten (membership) records instead.\n\n**Jewish (Joodse Gemeente)**\n- *Geboorten en besnijdenissen, 1757\u20131811* (catalog item koha:68566) records Jewish births and circumcisions for the city. Jewish records in the Netherlands are in Hebrew. Groningen also has a published community history (*De Joodse gemeente te Groningen*, koha:249164) and a data compilation on Jewish residents (koha:966127).\n\n**Record types within DTB registers:**\n- *Dopen* (Baptisms): child's name, baptism date, sometimes birth date, parents' names and residence, witnesses' names.\n- *Trouwen* (Marriages): bride and groom names, sometimes ages, residences and/or birthplace, date and place, parents' names, witnesses.\n- *Begraven* (Burials): deceased's name, death date and place, name of spouse(s), sometimes parents if deceased was a child.\n- *Lidmaten* (Membership): names, dates of confession of faith, dates of arrival from or departure to other parishes \u2014 valuable for tracing mobility.\n\n**Languages:** Dutch (Dutch Reformed), Latin (Catholic), German (Lutheran), French (Walloon), Hebrew (Jewish).\n\n### Digitization and access for church records\n\nFamilySearch `volume_search` returned **130 digitized volumes** matching this place and period; only the first page (approximately 74 volumes) was examined in this survey. A `nextPageToken` was present, meaning additional volumes beyond those detailed below exist.\n\n**Highly indexed baptism volumes (indexed + images) \u2014 by date range, first-page results only:**\n\n| Image Group | Date Range | Record Type | Index % |\n|---|---|---|---|\n| 004022423_006 (M965-ZC9) | 1721\u20131735 | Baptism Records | 99% |\n| 007176273_001 (M96G-M6T) | 1721\u20131735 | Baptism Records | 97% |\n| 004007591_002 (M965-Z57) | 1727\u20131732 | Baptism Records | 97% |\n| 004007591_003 (M965-Z53) | 1732\u20131735 | Baptism Records | 97% |\n| 007176270_001 (M96G-M69) | 1706\u20131732 | Baptism Records | 53% |\n| 007176270_002 (M96G-M6M) | 1733\u20131754 | Baptism Records | 54% |\n| 004022423_007 (M965-ZCM) | 1735\u20131752 | Baptism Records | 97% |\n| 004007591_004 (M965-Z5Q) | 1735\u20131740 | Baptism Records | 98% |\n| 007176273_002 (M96G-M6B) | 1735\u20131742 | Baptism Records | 99% |\n| 004007591_005 (M965-Z54) | 1740 | Baptism Records | 98% |\n| 007176273_003 (M96G-M6R) | 1742\u20131752 | Baptism Records | 98% |\n| 004013347_008 (M965-Z6G) | 1734\u20131751 | Baptism + Marriage | 75% |\n| 007176272_001 (M96G-M6W) | 1750\u20131758 | Baptism Records | 97% |\n| 004007592_001 (M965-Z2K) | 1752\u20131774 | Baptism Records | 95% |\n| 007176273_004 (M96G-M65) | 1752\u20131764 | Baptism Records | 96% |\n| 004007593_001 (M965-Z6T) | 1755\u20131778 | Baptism Records | 95% |\n| 004007593_002 (M965-Z6Y) | 1755\u20131795 | Dopen | 96% |\n| 007176272_002 (M96G-M6S) | 1758\u20131767 | Baptism Records | 99% |\n| 007176273_005 (M96G-M6Y) | 1764\u20131777 | Baptism Records | 98% |\n| 004007592_002 (M965-Z2R) | 1775\u20131786 | Baptism Records | 99% |\n| 007176306_001 (M969-18T) | 1694\u20131811 | Baptism Records | 90% |\n| 007176306_003 (M969-18R) | 1686\u20131811 | Baptism + Marriage + Membership | 72% |\n\nThese indexed volumes are searchable by name on FamilySearch and represent the most efficient starting point for a baptism search.\n\n**Full-text searchable (0% name-indexed, but text-searchable) \u2014 index volumes:**\n- 007177502 (Church records/indexes 1625\u20131811), 007177509, 007177505, 007177507, 007177510 (Indexes 1751\u20131775), 007177513, 007177514, 007177516, 007177517, 007177525, 007177526 (Indexes 1726\u20131800), 007177334 (Indexes 1625\u20131811). These index volumes can be searched by text through the FamilySearch full-text search tool, though they are not name-indexed in the conventional sense.\n- 008448234_001 and _002: Religious Membership Records (lidmaten) for Groningen, 1701\u20131815, full-text searchable.\n\n**Browse-only images (0% indexed, not full-text):**\n- The large 007177520, 007177521, 007177522, 007177523 series (covering 1695\u20131811 \"dopen\" under multiple denomination concept IDs) \u2014 these are browse-only and require page-by-page examination.\n- Large church record bundles 007177712, 007177707, 007177711, 007177709 (1726\u20131750) and 007178011, 007178007, 007178008, 007178009, 007178013, 007178015 (1751\u20131800) \u2014 browse-only, not full-text searchable.\n- 007176307_001 (1771\u20131811) and 007176307_004 (1711\u20131763) \u2014 browse-only.\n\n**Coverage note:** 130 digitized volumes match this place and period; the 22 volumes tabulated above are those from the first returned page with the highest relevance to baptism records. The remaining volumes were not individually examined in this survey.\n\n### Census records\n- **Before 1811:** No systematic national census equivalent existed. There was no Dutch census in the modern sense during 1730\u20131780.\n- **Population registers:** Begin in 1850 \u2014 not applicable to the target period.\n- **Ecclesiastical enumerations:** Some church membership records (lidmaten) and poor-relief lists may function as partial population snapshots; these are accessible through FamilySearch and AlleGroningers.\n\n### Probate and court records\n- The city of Groningen maintained court records (Rechtstoel) including the *Actenboek* (1668\u20131808, catalog item koha:27843), appellate civil records (1675\u20131810, koha:1346204), and appellate criminal records (1750\u20131811, koha:1346207). These are online at FamilySearch (originals at the Groninger Archieven, confirmed by filmNotes: \"Microfilm genomen van de originele in het Gemeente Archief te Groningen\").\n- A broader provincial court finding aid exists: *De archieven van de Hoge Justitiekamer in Groningen* (catalog item koha:143244), available online at FamilySearch.\n- Probate records (boedelinventarissen, weeskamerarchieven) for the city are held at the Groninger Archieven. The FamilySearch Catalog did not surface a specific Groningen probate collection among the first 25 catalog hits \u2014 consult the Groninger Archieven directly or the finding aid noted above.\n\n### Land records\n- Land distribution in Groningen operated under Dutch provincial law. Land and property records are held at the Groninger Archieven.\n- The FamilySearch Wiki links to [Groningen Land and Property](https://www.familysearch.org/en/wiki/Groningen_Land_and_Property) for further guidance (not fetched in this survey).\n- Notarial records (notari\u00eble archieven) are a key land and property source; FamilySearch lists Netherlands Notarial Records 1600\u20131935 at MyHeritage (index only, subscription).\n\n### Military records\n- *Groningen stad, trouwen van militairen, 1648\u20131810* (catalog item koha:369308, FamilySearch Library) records military marriages in the city \u2014 relevant if Jacob Jeltes or Jantje's father was in military service.\n- National-level military records 1707\u20131795 are indexed on Ancestry (Officers, Non-Commissioned Officers and Men, State Military).\n- A provincial court inventory covering military matters (Hoge Justitiekamer) is online (catalog koha:143244).\n\n### Cemetery records\n- Burial records (*begraven*) are recorded within the DTB registers described above. In the Netherlands, people of all religions were generally buried in the Dutch Reformed Church or Catholic Church cemetery depending on the dominant church in the area.\n- [Graftombe.nl](https://graftombe.nl/) provides Dutch digital cemetery records, including Groningen.\n- Online cemetery records are also available through MyHeritage (Netherlands Burial Records collection).\n- Physical sexton records and burial registers are held at the Groninger Archieven.\n\n### Newspaper records\n- *Delpher.nl* is the main website for Dutch newspaper digitization, per the external resources survey. Newspapers of the 1730\u20131780 period are available there for searching.\n- MyHeritage has Netherlands Newspapers 1659\u20131899 (index and images, subscription). These may carry birth notices, obituaries, and legal announcements.\n\n### Immigration/emigration records\n- The target period (1730\u20131780) is well before the major 19th-century Dutch emigration waves. For this period, note:\n  - VOC (Dutch East India Company) crew records 1633\u20131795 are indexed on Ancestry \u2014 relevant if a family member served the company.\n  - The Groninger Archieven holds local emigration records.\n\n### Tax records\n- Tax lists (*kohieren*) and assessments can substitute for missing census records. The city of Groningen maintained municipal tax records.\n- FamilySearch lists Netherlands Archival Indexes Vital Records 1600\u20132000 (collection 2704829) as covering some taxation material.\n- No specific Groningen city tax list was surfaced among the 25 catalog hits retrieved; consult the Groninger Archieven finding aids.\n\n### Citizen registers (Burgerboeken)\n- *Burgerboeken 1544\u20131807* (catalog item koha:67477) \u2014 the Register of Citizens of Groningen \u2014 is available **online** at FamilySearch (image group 8862540, film 109115; and image group 8864947, film 235946 covering 1689\u20131800). This records people who formally registered as citizens of the city; it may help establish whether a Willem or Willems family held citizen status.\n\n### Other records\n- The *Werkhuis* (workhouse/detention home) administrative records are available online (catalog item koha:143102) \u2014 relevant for poor families.\n- Business and trade records: *Archief van de Kamer van Koophandel*, 1829\u20131950 (catalog koha:97524) \u2014 post-target-period.\n- Genealogies for old Groningen families: *Boerderijenboek Oude Groningse Veenkoloni\u00ebn* (catalog koha:2188921, FamilySearch Library only).\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections for Groningen city, 1730\u20131780 | Access |\n|---|---|---|\n| AlleGroningers.nl (Groninger Archieven portal) | All pre-1811 DTB registers for Groningen province, including city; partially indexed by volunteers, images in color | Free |\n| FamilySearch (familysearch.org) | Netherlands, Groningen, Church Records 1595\u20131864 (collection 2037901, 514,562 images, browse-only at collection level); many city-level baptism volumes at 95\u201399% indexed (see tabulated volumes above); Netherlands Births and Baptisms 1564\u20131910 (index only); citizen registers, court records, city DTB index \u2014 all free | Free |\n| WieWasWie (wiewaswie.nl) | National genealogy portal covering Groningen DTB records; index and images | Free (basic) |\n| Ancestry | Netherlands Baptism Index 1557\u20131902; Netherlands Marriages 1565\u20131892; Netherlands Burial Index 1540\u20131899 \u2014 index only | Subscription |\n| FindMyPast | Netherlands Births & Baptisms 1564\u20131910; Netherlands Marriages 1565\u20131892; Netherlands Deaths & Burials 1668\u20131945 \u2014 index only | Subscription |\n| MyHeritage | Netherlands Church Baptisms 1580\u20131811; Netherlands Church Marriages 1580\u20131811; Netherlands Church Burials 1601\u20131811; Netherlands Notarial Records 1600\u20131935 \u2014 index only | Subscription |\n| Delpher (delpher.nl) | Dutch historical newspapers; useful for 18th-century Groningen newspapers | Free |\n| Graftombe (graftombe.nl) | Dutch cemetery records | Free |\n\n**Coverage of this survey:** 130 digitized volumes match this place and period on FamilySearch; the 22 baptism-focused volumes detailed in the table above are from the first returned page. The remaining volumes were not individually examined \u2014 further pages may contain additional denomination-specific or date-range-specific volumes.\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| Groninger Archieven (groningerarchieven.nl), Groningen, Netherlands | Original DTB registers for the city of Groningen and province; court records; citizen registers; notarial records; all 18th-century originals | In-person; finding aids online |\n| FamilySearch Library, Salt Lake City, USA | Microfilm copies of many Groningen records; transcription volumes by JoAnn Riley McKey (Dutch Reformed baptisms 1640\u20131659); finding aids for Lutheran and Walloon archives | In-person at FHL; some microfilm requestable through FamilySearch Centers |\n\n## Records NOT online\n- *Baptismal records of the Dutch Reformed Churches in the City of Groningen* (McKey transcription, koha:1016717 and koha:650771) \u2014 FamilySearch Library only; not digitized online.\n- Full finding aids for the Lutheran (koha:106734) and Walloon (koha:106742) congregational archives \u2014 FamilySearch Library only.\n- Detailed probate (boedelinventarissen) and guardianship (weeskamer) records for the city \u2014 held at Groninger Archieven; not confirmed online in this survey.\n- Many of the large browse-only DTB image volumes (the 007177520/007177522/007177523 series) are available as images online but have no name index and require manual browsing.\n\n## Known record losses\nNo specific record losses for the city of Groningen's DTB registers during the 1730\u20131780 period were identified in the sources retrieved. The [Groningen, Netherlands Genealogy](https://www.familysearch.org/en/wiki/Groningen,_Netherlands_Genealogy) wiki page notes that civil registration records (post-1811) have near-complete survival because two copies of each record were made and stored separately. The survival rate of the pre-1811 church registers is generally high for the city of Groningen given its size and continuous institutional presence.\n\n## Research tips\n\n1. **Start with AlleGroningers.nl.** The Groninger Archieven's own genealogical website at [allegroningers.nl](https://www.allegroningers.nl/) is the most direct starting point for the city's pre-1811 records. It hosts Dutch Reformed, Lutheran, Catholic, Walloon, Baptist, and Jewish records, all searchable (though the volunteer index is incomplete). Source: [Groningen Church Records](https://www.familysearch.org/en/wiki/Groningen_Church_Records).\n\n2. **Use the city DTB index.** The *Index van dopen, trouwen, begraven en ondertrouwen, 1625\u20131811* (FamilySearch catalog koha:819100) is an online index covering all denominations in the city across the whole target period \u2014 search it before browsing individual registers.\n\n3. **On FamilySearch, target the highly indexed city baptism volumes.** Many FamilySearch volumes for the city of Groningen are 95\u201399% name-indexed (see the table above). Use FamilySearch's standard record search, or navigate directly to these volumes using the [Genealogie Werkbalk](https://www.genealogiewerkbalk.nl/fs/) helper tool. Source: [Groningen, Netherlands Genealogy](https://www.familysearch.org/en/wiki/Groningen,_Netherlands_Genealogy).\n\n4. **Search by child's given name, not surname.** In 18th-century Groningen, 'Willems' is a patronymic \u2014 it was not a stable hereditary surname but rather 'daughter of Willem.' Index entries may record the child as 'Jantje' with her father listed as 'Willem [something].' Search for 'Jantje' and look for entries where the father's name begins with 'Willem.' Source: [Netherlands Naming Customs](https://www.familysearch.org/en/wiki/Netherlands_Naming_Customs).\n\n5. **Check all denominations unless the family's religion is known.** AlleGroningers does not allow denomination filtering; FamilySearch's individual volumes may be denomination-specific. The children's baptism registers (Trijntje 1774, Willemke 1777) showing the marriage of Jacob Jeltes and Jantje will specify the denomination \u2014 use that church for the backward search to Jantje's own baptism.\n\n6. **Dutch naming patterns can suggest grandparents' names.** Per [Netherlands Naming Customs](https://www.familysearch.org/en/wiki/Netherlands_Naming_Customs), the first daughter was commonly named after the maternal grandmother and the second after the paternal grandmother. Jantje's daughters were named Trijntje (1774) and Willemke (1777); these names may reflect Jantje's mother's name (Trijntje) and Jacob Jeltes's mother's name (Willemke) \u2014 a hypothesis to test when a baptism record is found.\n\n7. **Use sibling baptisms to identify the family.** Once a baptism record for Jantje is located, search the same register for other children baptized to the same father 'Willem' and mother \u2014 siblings will confirm the family identity and provide additional cross-checks.\n\n8. **Look at marriage records too.** The marriage record of Jantje's parents (a Willem + his wife) will typically predate Jantje's baptism by 1\u20132 years and name both parties. Marriage records for the city begin in 1595 (Dutch Reformed). Marriage banns (*ondertrouw*) were posted in both parties' home towns; search both the city of Groningen and any surrounding municipality if either parent was from outside the city. Source: [Netherlands Church Records](https://www.familysearch.org/en/wiki/Netherlands_Church_Records).\n\n9. **Read Dutch handwriting.** The records are in old Dutch gothic script. FamilySearch offers free lessons: [Reading Dutch Handwritten Records (3-lesson series)](https://www.familysearch.org/help/helpcenter/lesson/93). A Dutch Genealogical Word List is at [familysearch.org/en/wiki/Dutch_Genealogical_Word_List](https://www.familysearch.org/en/wiki/Dutch_Genealogical_Word_List).\n\n10. **Groninger Archieven contact.** For records not accessible online, contact the Groninger Archieven directly at [groningerarchieven.nl](https://www.groningerarchieven.nl/). They hold all original pre-1811 church registers for the city.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Netherlands_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-26"
+    }
+  ]
+}

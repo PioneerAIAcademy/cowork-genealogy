@@ -33,7 +33,6 @@ const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
 export const STAGING_SEARCH_TOOLS = new Set([
   "record_search",
   "fulltext_search",
-  "external_links_search",
 ]);
 
 /**
@@ -62,9 +61,10 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * staging producer added is treated as persona-less until it is listed here,
  * which fails safe rather than silently matching nothing on a `recordId` field
  * it does not carry (#2038). `record_search` and `record_read` results key on
- * `recordId`; the persona-less producers (`fulltext_search`,
- * `external_links_search`) key on `id`. Mirrors `personaReachable` in
- * research-append.ts and `_persona_reachable` in the eval harness.
+ * `recordId`; the persona-less producer `fulltext_search` keys on `id`, as do
+ * legacy `external_links_search` sidecars from before #2995. Mirrors
+ * `personaReachable` in research-append.ts and `_persona_reachable` in the eval
+ * harness.
  *
  * `record_read` was MISSING here until issue #2937, and both mirrors already
  * counted it — `personaReachable` returns true on `logEntry.tool ===
@@ -513,9 +513,11 @@ export async function unloggedStagedSearches(
     const ref = entry.ref;
     try {
       const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
-      // An acquisition read is logged as `user_provided` or under the search that
-      // found it, never under its own tool name, so it can never pair here.
-      if (STAGING_CAPABLE_TOOLS.has(envelope.tool) && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
+      // Only a search producer's file can be owed a log entry. An acquisition read
+      // is logged as `user_provided` or under the search that found it, and a
+      // legacy `external_links_search` file (that tool stopped staging in #2995)
+      // can no longer pair, so either would nag until the TTL.
+      if (typeof envelope.tool === "string" && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({
