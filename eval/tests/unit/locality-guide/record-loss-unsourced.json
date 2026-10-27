@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_locality_guide_k9d",
+    "skill": "locality-guide",
+    "name": "Record loss asserted from an empty search plus a generic fire statement",
+    "type": "positive",
+    "description": "Mined from alpha feedback (case feedback-2026-10-07, Billy civil parish, County Antrim). volume_search returns no Church of Ireland volume for Billy, and the Ireland Church Records wiki page states generally that Church of Ireland records 'began in 1536, but two-thirds were destroyed in 1922' -- naming no parish. The guide converted the empty result into a specific claim that Billy's own Church of Ireland registers were 'likely destroyed in the 1922 fire'. A record-loss claim for a specific parish must be grounded in a tool result that says those records were lost; an empty search is a coverage/digitization gap, and a generic fire statement does not establish loss of a particular parish's registers.",
+    "tags": [
+      "locality",
+      "ireland",
+      "county-antrim",
+      "record-loss",
+      "sourced-claims",
+      "from-cowork",
+      "re-invoke-safe"
+    ]
+  },
+  "input": {
+    "delegation": "Build a locality guide for Billy civil parish, County Antrim, Ireland (Bushmills area) for roughly 1780-1870: which record types are available, where they are held, and whether Church of Ireland registers are available.",
+    "scenario": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "max_tool_calls": 70,
+    "sdk_message_silence_seconds": 300
+  },
+  "judge_context": [
+    "In this scenario the tools return NO Church of Ireland digitized volume for Billy, and a general Ireland Church Records statement that 'two-thirds [of Church of Ireland records] were destroyed in 1922' -- with no parish named and nothing specific to Billy.",
+    "A statement that a specific parish's records were destroyed or lost must be grounded in a tool result that says so for those records. An empty volume_search/collections_search result is a coverage or digitization gap, not evidence of destruction.",
+    "The failure under test: asserting (even as 'likely') that Billy's Church of Ireland registers were destroyed in the 1922 fire, on the strength of an empty search plus the general fire statement.",
+    "Mentioning the 1922 fire as general Irish-records context is acceptable; attributing the loss of Billy's specific registers to it, with no Billy-specific source, is not. Reporting the absence as a coverage gap, or pointing to where the registers may survive, satisfies the behavior.",
+    "Saying that the survival of these registers is unconfirmed, or must be checked, and naming the repository that would confirm it, is the PASSING behaviour. It states no loss, even though it names the 1922 fire. Grade only what the guide itself states; do not read a 'cannot be confirmed' sentence as a claim that the records were destroyed.",
+    "General class: ground a record-loss claim in a source that states the loss; do not infer destruction from a null search result. Do not require or forbid any particular earliest-register date."
+  ],
+  "mcp_fixtures": [
+    "volume-search-billy-antrim",
+    "wiki-read-ireland-church-records",
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-any",
+    "wiki-place-page-any",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ]
+}

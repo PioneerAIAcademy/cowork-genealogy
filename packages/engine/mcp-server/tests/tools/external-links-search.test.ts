@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { externalLinksSearchTool } from "../../src/tools/external-links-search.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
-import {
-  stageSearchResults,
-  unloggedStagedSearches,
-} from "../../src/utils/results-staging.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -18,30 +14,11 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-// The staging util is exercised by tests/utils/results-staging.test.ts; here we
-// only assert the tool calls it correctly and shapes the inline copy around it.
-// Spread the real module so the note CONSTANTS stay real — a hand-written copy here
-// would let the tool's wording drift without any test noticing.
-vi.mock("../../src/utils/results-staging.js", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../../src/utils/results-staging.js")>();
-  return {
-    ...actual,
-    stageSearchResults: vi.fn(),
-    unloggedStagedSearches: vi.fn(),
-  };
-});
-const mockedStage = vi.mocked(stageSearchResults);
-const mockedUnlogged = vi.mocked(unloggedStagedSearches);
-
 // Runs before every test (in addition to the per-describe fetch resets);
 // default the resolver to a successful placeId so existing cases reach fetch.
 beforeEach(() => {
   mockResolveStandardPlaceToPlaceId.mockReset();
   mockResolveStandardPlaceToPlaceId.mockResolvedValue({ kind: "resolved", placeId: "1927089" });
-  mockedStage.mockReset();
-  mockedUnlogged.mockReset();
-  mockedUnlogged.mockResolvedValue([]);
 });
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -87,7 +64,7 @@ describe("externalLinksSearchTool — happy path", () => {
     mockFetch.mockReset();
   });
 
-  it("returns matching collections with url + linkText only", async () => {
+  it("returns matching collections with url, linkText and the collection's years", async () => {
     const collections = [
       {
         url: "https://example.com/census-1940",
@@ -121,7 +98,26 @@ describe("externalLinksSearchTool — happy path", () => {
     });
     expect(result.totalForPlace).toBe(2);
     expect(result.results).toEqual([
-      { url: "https://example.com/census-1940", linkText: "1940 Census" },
+      {
+        url: "https://example.com/census-1940",
+        linkText: "1940 Census",
+        startYear: 1940,
+        endYear: 1940,
+      },
+    ]);
+  });
+
+  it("carries no years on an undated collection", async () => {
+    mockFetch.mockResolvedValueOnce(
+      singlePage([
+        { url: "https://example.com/catalog", linkText: "Library Catalog", place: "France" },
+      ])
+    );
+
+    const result = await externalLinksSearchTool({ standardPlace: "France" });
+
+    expect(result.results).toEqual([
+      { url: "https://example.com/catalog", linkText: "Library Catalog" },
     ]);
   });
 
@@ -426,7 +422,7 @@ describe("externalLinksSearchTool — User-Agent contract", () => {
   });
 });
 
-describe("externalLinksSearchTool — staging, host filter, and inline cap", () => {
+describe("externalLinksSearchTool — host filter and inline cap", () => {
   beforeEach(() => {
     mockFetch.mockReset();
   });
@@ -437,169 +433,32 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
     { url: "https://www.ancestry.com/search/collections/2/", linkText: "PA Census" },
   ];
 
-  it("stages the full pre-filter set with tool 'external_links_search' when projectPath is supplied", async () => {
+  it("host filter narrows the inline results to the target site", async () => {
     mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    mockedStage.mockResolvedValueOnce({
-      resultsRef: "results/.staging/abc.json",
-      returnedCount: 3,
-    });
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      projectPath: "/tmp/project",
-    });
-
-    expect(mockedStage).toHaveBeenCalledTimes(1);
-    const stageArg = mockedStage.mock.calls[0][0];
-    expect(stageArg).toMatchObject({
-      projectPath: "/tmp/project",
-      tool: "external_links_search",
-    });
-    // The staged payload is the FULL set (all hosts), before any host filter.
-    expect(stageArg.response.results).toHaveLength(3);
-    expect(result.staged).toEqual({
-      resultsRef: "results/.staging/abc.json",
-      returnedCount: 3,
-    });
-    expect(result.stagingError).toBeUndefined();
-  });
-
-  it("does not ask for a negative log entry when the host filter emptied results but links were staged", async () => {
-    // Round 2's blocking case. `results` is host-filtered and capped; `allLinks` is
-    // what gets staged. Keying the nil note on `results` would order a negative
-    // finding for a place that demonstrably has records on other hosts.
-    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    mockedStage.mockResolvedValueOnce({
-      resultsRef: "results/.staging/abc.json",
-      returnedCount: 3,
-    });
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      host: "nosuchsite.example",
-      projectPath: "/tmp/project",
-    });
-
-    expect(result.results).toHaveLength(0);
-    expect(result.staged).toBeTruthy();
-    expect(result.nilSearchNeedsLog).toBeUndefined();
-  });
-
-  it("asks for a negative log entry when the place itself has no links at all", async () => {
-    mockFetch.mockResolvedValueOnce(singlePage([]));
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      projectPath: "/tmp/project",
-    });
-
-    expect(result.results).toHaveLength(0);
-    expect(result.nilSearchNeedsLog).toContain('outcome: "negative"');
-  });
-
-  it("carries the unlogged-search note when the project holds an unlogged staged search", async () => {
-    mockedUnlogged.mockResolvedValue([
-      { ref: "results/.staging/stale0.json", tool: "external_links_search", retrieved: new Date().toISOString() },
-      { ref: "results/.staging/stale1.json", tool: "external_links_search", retrieved: new Date().toISOString() },
-    ]);
-    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    mockedStage.mockResolvedValueOnce({
-      resultsRef: "results/.staging/abc.json",
-      returnedCount: 3,
-    });
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      projectPath: "/tmp/project",
-    });
-
-    expect(result.unloggedSearches).toContain("2 earlier staged search");
-    const keys = Object.keys(result);
-    expect(keys.indexOf("unloggedSearches")).toBeLessThan(keys.indexOf("results"));
-  });
-
-  it("host filter narrows the inline results while the full set is still staged", async () => {
-    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    mockedStage.mockResolvedValueOnce({
-      resultsRef: "results/.staging/abc.json",
-      returnedCount: 3,
-    });
-
     const result = await externalLinksSearchTool({
       standardPlace: "Pennsylvania, United States",
       host: "ancestry.com",
-      projectPath: "/tmp/project",
     });
-
-    // Inline: only the two ancestry links, and `returned` reflects that.
     expect(result.results).toHaveLength(2);
     expect(result.returned).toBe(2);
     expect(result.results.every((r) => r.url.includes("ancestry.com"))).toBe(true);
-    // Staged: still the full 3-link set (host filter never touches the sidecar).
-    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(3);
   });
 
-  it("applies the host filter even when not staged (explicit query narrowing)", async () => {
-    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      host: "findagrave.com",
-    });
-    expect(mockedStage).not.toHaveBeenCalled();
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0]?.url).toContain("findagrave.com");
-    expect(result.staged).toBeUndefined();
-  });
-
-  it("caps the inline set at 200 on every call and says so; the staged set stays full", async () => {
+  it("caps the inline set at 200 on every call and says so", async () => {
     const many = Array.from({ length: 260 }, (_, i) => ({
       url: `https://example.com/c${String(i).padStart(3, "0")}`,
       linkText: `Collection ${i}`,
     }));
-
     mockFetch.mockResolvedValueOnce(singlePage(many));
-    const unstaged = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
-    expect(unstaged.results).toHaveLength(200);
-    expect(unstaged.returned).toBe(200);
-    expect(unstaged.inlineCapped).toBe(true);
-
-    mockFetch.mockResolvedValueOnce(singlePage(many));
-    mockedStage.mockResolvedValueOnce({ resultsRef: "results/.staging/def.json", returnedCount: 260 });
-    const staged = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      projectPath: "/tmp/project",
-    });
-    expect(staged.results).toHaveLength(200);
-    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(260);
+    const result = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
+    expect(result.results).toHaveLength(200);
+    expect(result.returned).toBe(200);
+    expect(result.inlineCapped).toBe(true);
   });
 
   it("does not flag inlineCapped when everything fits", async () => {
     mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
     const r = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
     expect(r.inlineCapped).toBeUndefined();
-  });
-
-  it("never fails the search when staging throws", async () => {
-    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    mockedStage.mockRejectedValueOnce(new Error("disk full"));
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-      projectPath: "/tmp/project",
-    });
-
-    expect(result.staged).toBeNull();
-    expect(result.stagingError).toBe("disk full");
-    expect(result.results).toHaveLength(3); // search result intact
-  });
-
-  it("does not stage when projectPath is omitted", async () => {
-    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
-    const result = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-    });
-    expect(mockedStage).not.toHaveBeenCalled();
-    expect(result.staged).toBeUndefined();
-    expect(result.returned).toBe(3);
   });
 });

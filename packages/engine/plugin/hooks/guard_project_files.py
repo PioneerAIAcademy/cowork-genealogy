@@ -72,6 +72,15 @@ FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 # refuse them; the false deny is the worse failure. See the guardrail spec.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
 
+# The delegation tools, denied only for `subagent_type: "fork"`. From Claude Code
+# 2.1.302 the SDK and the desktop app offer a fork by default: a copy of the main
+# thread with its context and tools, which runs a step without the plugin agent's
+# instructions or `tools:` list. The hosted path, both harnesses and the prototype
+# worker set CLAUDE_CODE_FORK_SUBAGENT=0, so no test ever sees one; Cowork's
+# environment is not ours to set, and this hook is the one thing that reaches it.
+DELEGATION_TOOLS = ("Agent", "Task")
+FORK_SUBAGENT_TYPE = "fork"
+
 # A path never contains a newline, and is never longer than the platform allows.
 # Both bounds exist to keep the scan below off file CONTENT travelling in the
 # same payload — but only the newline bound does real work there, since content
@@ -161,7 +170,7 @@ OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
 # conflict writing only the schema's required fields, and a section route denies
 # every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
 # on one field set to one value; the conflict's analytical product is spread over
-# six fields and a status. So the rule keys on the PRODUCT: an op that sets
+# seven fields and a status. So the rule keys on the PRODUCT: an op that sets
 # `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
 # a re-open that sets `status: "unresolved"` and clears the analysis, claim
 # nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
@@ -176,6 +185,10 @@ OWNED_CLAIMS = {
             "resolution_rationale",
             "resolution_kind",
             "resolved_value",
+            # What moves a question from conflict-resolution to ending on an
+            # unsettled conflict. Unrouted, the main thread could stamp it onto
+            # an analysed conflict and end the research with no weighing.
+            "weighed_log_entry_ids",
         ),
         "resolved",
     ),
@@ -261,14 +274,15 @@ AGENT_WRITABLE_SECTIONS = {
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
     "conflict-resolution": frozenset({"conflicts"}),
-    # init-project writes the fixed researcher profile, the volunteered
-    # holdings and one `sources` entry per transcribed memory, through
-    # research_append after project_create. It owns `project` (ownership.json),
-    # which project_create writes; `project.status` stays routed to
-    # proof-conclusion above. A lane, not a route: nothing is routed to this
-    # agent. It leaves out `questions`, which question-selection owns
-    # (issue #2122).
-    "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # init-project writes the volunteered holdings and site subscriptions
+    # through research_append after project_create, which itself writes the
+    # project, the fixed researcher profile and one `sources` entry per
+    # transcribed memory (issue #3384). It owns `project` (ownership.json);
+    # `project.status` stays routed to proof-conclusion above. A lane, not a
+    # route: nothing is routed to this agent. It leaves out `questions`, which
+    # question-selection owns (issue #2122), and `sources`, which only
+    # project_create writes for it.
+    "init-project": frozenset({"project", "researcher_profile", "known_holdings"}),
     # research-plan writes plans and their items and nothing else in
     # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
     # requires one for every agent granted research_append, and nothing is
@@ -332,6 +346,13 @@ REASON = (
     "research_append, research_log_append, tree_edit or tree_correct. These "
     "validate before persisting. Direct file writes never validate. "
     "external-collections.json is written only by external_links_search given a projectPath."
+)
+
+FORK_REASON = (
+    '{tool} with subagent_type "fork" is disabled in this plugin: a fork runs the step '
+    "without the plugin agent's instructions and tool limits. Delegate to the named "
+    "plugin agent the step calls for (its name is the subagent_type), or do the step "
+    "yourself."
 )
 
 
@@ -586,6 +607,15 @@ def decision(payload: dict) -> dict:
     tool_input = payload.get("tool_input")
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     tool_name = str(payload.get("tool_name") or "")
+
+    if tool_name in DELEGATION_TOOLS and tool_input.get("subagent_type") == FORK_SUBAGENT_TYPE:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": FORK_REASON.format(tool=tool_name),
+            },
+        }
 
     denied = owner_denied(tool_name, tool_input, payload)
     if denied is not None:

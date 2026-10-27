@@ -25,7 +25,8 @@ import type {
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  StoppedBecause, Subscription, LocalityPageSection, ResolutionKind, SkipCategory,
+  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
+  SkipCategory, RegistrationEvent, RegistrationLevel,
 } from './enums.generated.js'
 
 // ============================================================
@@ -106,6 +107,7 @@ export interface PlanItem {
   status: PlanItemStatus
   skip_category?: SkipCategory
   skip_reason?: string
+  collection_url?: string
 }
 
 export interface Plan {
@@ -138,6 +140,8 @@ export interface LogEntry {
   results_examined: number
   results_ref?: string | null
   results_available?: number | null
+  /** The results/.staging/ file this entry's sidecar was finalized from. */
+  staged_ref?: string
   notes?: string | null
   external_site: ExternalSiteDetail | null
 }
@@ -239,6 +243,7 @@ export interface Conflict {
   competing_assertion_ids: string[]
   independence_analysis?: string | null
   weighing_analysis?: string | null
+  weighed_log_entry_ids?: string[]
   preferred_assertion_id?: string | null
   resolution_rationale?: string | null
   resolution_kind?: ResolutionKind | null
@@ -349,6 +354,7 @@ export interface LocalityPageRead {
   section: LocalityPageSection
   url?: string | null
   found: boolean
+  outcome?: LocalityPageOutcome
 }
 
 export interface LocalityJurisdiction {
@@ -360,6 +366,37 @@ export interface LocalityCollection {
   id: string
   title: string
   date_range?: string | null
+  person_count?: number | null
+  record_count?: number | null
+}
+
+export interface LocalityRegistrationStart {
+  event: RegistrationEvent
+  level: RegistrationLevel
+  year: number
+  source_url: string
+}
+
+export interface LocalityVolumeCounts {
+  volumes: number
+  browse_only: number | null
+  fulltext_only: number | null
+}
+
+export interface LocalityVolumeBucket {
+  group: string
+  volumes: number
+  browse_only: number | null
+  fulltext_only: number | null
+}
+
+export interface LocalityVolumeSummary {
+  start_year?: number | null
+  end_year?: number | null
+  total_volumes: number
+  complete: boolean
+  by_record_type: LocalityVolumeBucket[]
+  untyped: LocalityVolumeCounts
 }
 
 export interface Locality {
@@ -372,6 +409,8 @@ export interface Locality {
   quirks?: string[]
   guide_markdown?: string | null
   pages_read: LocalityPageRead[]
+  registration_start?: LocalityRegistrationStart[]
+  volume_summary?: LocalityVolumeSummary
   source: string
   created: string
   updated?: string

@@ -53,7 +53,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Tags for filtering and grouping, and validator gates: a tag-gated validator runs only on tests that carry its tag, so a tag is a grading input, not a label. May be empty. One reserved tag changes grading: `grade:trigger` (positive tests only) grades on activation ALONE — the test passes once the skill under test fired and its validators passed, and the judge dimensions are recorded but diagnostic-only (grading_mode `trigger`, dimensions_gate_outcome false), unlike the default `dimensions` grading where a 1 or 2 forces a partial/fail. Use it for a routing/handoff test whose delegated sub-skills are stubbed, so an outcome score would measure the stub not the skill. It REQUIRES a non-empty execution.stub_skills (the runnability gate refuses a grade:trigger test that stubs nothing — otherwise the callees run for real and the tag silences the judge over a real execution, a vacuous pass, the same failure mode grade_on_invariant guards on the negative side); a skipped/errored judge does NOT fail a trigger test; and it does NOT relax the activation requirement. See docs/specs/unit-test-spec.md."
+          "description": "Tags for filtering and grouping, and validator gates: a tag-gated validator runs only on tests that carry its tag, so a tag is a grading input, not a label. May be empty. One reserved tag changes grading: `grade:trigger` (positive tests only) grades on activation ALONE — the test passes once the skill under test fired and its validators passed, and the judge dimensions are recorded but diagnostic-only (grading_mode `trigger`, dimensions_gate_outcome false), unlike the default `dimensions` grading where a 1 or 2 forces a partial/fail. Use it for a routing/handoff test whose delegated sub-skills are stubbed, so an outcome score would measure the stub not the skill. It REQUIRES a non-empty execution.stub_skills (the runnability gate refuses a grade:trigger test that stubs nothing — otherwise a Skill() callee runs for real (an agent spawn is denied by default unless execution.run_agents opts it in) and the tag silences the judge over a real execution, a vacuous pass, the same failure mode grade_on_invariant guards on the negative side); a skipped/errored judge does NOT fail a trigger test; and it does NOT relax the activation requirement. See docs/specs/unit-test-spec.md."
         },
         "holdout": {
           "type": "boolean",
@@ -328,6 +328,14 @@
           "type": "integer",
           "minimum": 1
         },
+        "run_agents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Any test type, routed tests only. Agents this test lets run LIVE when the skill under test spawns them. Every other main-thread spawn, except the suite's own agent, is denied with a stub by default (built-in types such as general-purpose included), so an agent no test opts in never runs and its body is not part of the run (#3568). An agent named here joins the snapshot with its full body; the test must stock a fixture for each of that agent's fixture-backed tools. Refused on a direct-arm test, for the suite's own agent, for a negative test's correct_skill, and together with stub_skills for the same name. The agent counterpart of run_skills.",
+          "uniqueItems": true
+        },
         "run_skills": {
           "type": "array",
           "items": {
@@ -335,6 +343,11 @@
           },
           "description": "Positive tests only. Sub-skills this test expects to EXECUTE for real (opt-in). Their allowed-tools join the session allowlist, and the test must stock a fixture for each of those tools. Omit to leave a Skill() callee un-unioned, which is the default for every test. Mutually exclusive with stub_skills for the same skill.",
           "uniqueItems": true
+        },
+        "step_mode": {
+          "type": "string",
+          "enum": ["step", "job", "wrapup"],
+          "description": "The step boundary this test's turn runs under (decision 25, docs/plan/research-step-mode.md). OMIT for no boundary, which is the default and what every test measures today: the harness builds no gate at all. Declare `step` to enforce one step per turn (the first spawn fixes the group; a second, out-of-group spawn is DENIED, and a second crossing HALTS the run as the worker's does); `job` to allow every step, as Cowork's one-turn \"Keep going\" does; `wrapup` for the dispose-to-conclusion order. The check runs BEFORE the stubs, so a stub's canned reply cannot stand in for a step denial. The predicate is the plugin's own packages/engine/plugin/hooks/step_boundary.py, loaded by the worker and both harnesses, so a test measures the rule production runs."
         },
         "stop_at_stub": {
           "type": "boolean",

@@ -409,10 +409,14 @@ describe("namesake cap", () => {
       expect(errs(byAssertion)).toContain("on link 'pe_002'");
     });
 
-    it("C7 an occupation matched only by a record linked in the same call", async () => {
-      await setup();
+    it("C7 an occupation matched only by a record raised in the same call", async () => {
+      // Two sources' appends cannot share a call (one source per call), so the
+      // same-call voucher arrives as a raise on standing links.
+      await setup(
+        research({ person_evidence: [standing("pe_001", "a_011", P, "speculative"), standing("pe_002", "a_001", P, "speculative")] }),
+      );
       await attest(["a_011", P], ["a_001", P]);
-      const r = await call(link("a_011", P), link("a_001", P));
+      const r = await call(update("pe_001", { confidence: "probable" }), update("pe_002", { confidence: "probable" }));
       expect(r.ok).toBe(false);
       expect(errs(r)).toContain(
         `The occupation 'clerk' on this source matches no record linked to '${P}' at 'probable' or better ` +
@@ -566,6 +570,21 @@ describe("namesake cap", () => {
       expect(errors.some((e) => /^ops\[1\]: .*namesakes\[1\].*'place'/.test(e))).toBe(true);
     });
 
+    it("still holds the link that applied to the cap when another op in the call fails, labelled with its own index", async () => {
+      // ops[0] fails on its own, so only ops[1] applies; the cap's refusal of it must
+      // still come back, as ops[1] (its place in the call), not ops[0] (its place among
+      // the ops that applied), and in the same response as the failure.
+      await setup();
+      await attest(["a_020", P]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await call({ section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } }, link("a_020", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toMatch(/^ops\[0\]: entryId 'c_999' not found in 'conflicts'/m);
+      expect(capErrors(r)).toHaveLength(1);
+      expect(capErrors(r)[0]).toMatch(/^ops\[1\]: confidence 'probable' is not available on link 'pe_001'/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
     it("keys the refusal to the last op that wrote the link", async () => {
       await setup(research({ person_evidence: [standing("pe_001", "a_020", N, "speculative")] }));
       await attest(["a_020", P]);
@@ -692,10 +711,10 @@ describe("namesake cap", () => {
     });
 
     it.each([
-      ["superseded", [link("a_011", P, "speculative"), update("pe_001", { superseded_by: "pe_002" })], "pe_003"],
-      ["lowered to speculative", [update("pe_001", { confidence: "speculative" })], "pe_002"],
-    ])("refuses an occupation tie whose voucher is %s in the same call", async (_label, ops, linkId) => {
-      await setup(research({ person_evidence: [standing("pe_001", "a_011", P)] }));
+      ["superseded", [standing("pe_002", "a_011", P, "speculative")], [update("pe_001", { superseded_by: "pe_002" })], "pe_003"],
+      ["lowered to speculative", [], [update("pe_001", { confidence: "speculative" })], "pe_002"],
+    ])("refuses an occupation tie whose voucher is %s in the same call", async (_label, seeded, ops, linkId) => {
+      await setup(research({ person_evidence: [standing("pe_001", "a_011", P), ...(seeded as unknown[])] }));
       await attest(["a_011", P], ["a_001", P]);
       const r = await call(...(ops as unknown[]), link("a_001", P));
       expect(r.ok).toBe(false);
@@ -1023,8 +1042,9 @@ describe("namesake cap", () => {
           "for 'KWCB-111': 1 probable or confident link(s) to 'KWCB-111' stand with nothing in their record " +
           "tying them to 'KWCB-111': 'pe_001' (assertion 'a_010' on source 'src_002', name). 1 fact(s) on " +
           "'KWCB-111' were copied through them: 'F1' Occupation (cites S2). The row is recorded and these stay " +
-          "as they are, but materialize_facts will not copy any further fact onto 'KWCB-111' through these " +
-          "links. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
+          "as they are, but materialize_facts will not copy any further fact onto 'KWCB-111' through these links, " +
+          "and tree_edit and tree_correct will not cite their records' S entries onto 'KWCB-111''s facts or " +
+          "names unless another record on the same S entry ties to 'KWCB-111'. For each link, person-evidence either ties it or lowers it to 'speculative' naming the " +
           "namesake. Remove a listed fact that belongs to the namesake with tree_correct (operation 'remove', " +
           "its factId and personId 'KWCB-111').",
       ]);

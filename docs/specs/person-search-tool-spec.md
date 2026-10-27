@@ -4,7 +4,11 @@
 > `{ decisive, tiedAtTop, reason }` saying whether the results chose one person or
 > needed a human to. `init-project` was its only reader, and it no longer searches by
 > name — a project now always starts from a FamilySearch PID — so nothing branched on
-> it. The helper, its suite and its probe went with it.
+> it. The helper, its suite and its probe went with it. The probe scripts and their
+> recorded responses stay reachable at tag `phase2-final` (`1ced02ac4`,
+> `3551593027`) as the evidence behind the sizing
+> `docs/plan/research-as-a-job-phase4-cold-start.md` cites; they are deliberately
+> not on `main`.
 
 ## Overview
 
@@ -508,7 +512,7 @@ For each `entry` in `response.entries`:
 | `<event>YearFrom > <event>YearTo` | Throw: `"<event>YearFrom must be <= <event>YearTo."` |
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
-| API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
+| API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | API returns 400 | Read body as JSON, extract error detail, throw: `"FamilySearch tree search rejected the query: ${detail}."` Fall back to a generic message if the body isn't parseable. |
 | API returns 429 | Throw: `"FamilySearch rate limit reached. Wait a moment and try again."` |
 | API returns 204 (no matches) | Return `{ ..., totalMatches: 0, returned: 0, results: [], hasMore: false }`. |

@@ -191,7 +191,7 @@ narration or the thinking — which is the whole argument. (It *does* fire on de
 calls: the shipped hook routes by caller identity off `agent_id`/`agent_type` in the
 payload. An earlier draft said otherwise, which contradicted both D15 and acceptance
 criterion 3.) Two `PreToolUse` hooks sit on P1's session. The shipped plugin hook's
-matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`, so it
+matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`, so it
 never fires on `extraction_append` — the call P1 kills on. The hosted `_pretool_hook`
 the driver inherits from `build_options` has no matcher, fires on every tool including
 that one, and allows it. P1's delegation evidence comes from the SDK stream's
@@ -1133,6 +1133,13 @@ same two 400s.
 So tool search works through a deployed gateway. F2 still stands, because TAP pins
 v1.5.0. This is the test bed, not TAP's route. It carries only the haiku alias and no
 API-key consumer.
+
+**Re-run 2026-10-24 on local v1.6.0 GA** with TAP's EKS `/bedrock` route (`fs-eng/tap-gateway`
+master `3e338f9b5`: no `maxBufferSize`, no guardrail), `--max-scans 12 --context-1m`, real
+Bedrock in our test account: FAIL on `stop_reasons` and `tool_choice` only, as alpha.2.
+`body_limit`: 12 scans (11,894,677 bytes) all 200, so the EKS gateway needs no
+`maxBufferSize` (handoff F3). `claude-sonnet-5` resolves through TAP's alias and is served
+(in our account, not TAP's); bare `claude-sonnet-4-6` is still 400.
 
 For what the CLI itself sends, `passthrough_proxy.py --upstream http://host:port` now
 fronts a gateway as well as `api.anthropic.com`.
@@ -2852,9 +2859,18 @@ sampling, gateway-wide. TAP decided on 2026-09-21 to capture everything in int.
   user types them and as the model narrates what it read. About 700k characters left
   per research turn.
 
-InfoSec's question is therefore about the narration, not raw records or scans. What
-lands in Langfuse itself, and how long it is kept, is still unmeasured. *Owner: us to
-raise; InfoSec + APT.*
+**Re-measured 2026-10-24 on local v1.6.0 GA** (the EKS gateway's version, with
+`tap-tracing`'s fields from `fs-eng/tap-gateway` master `3e338f9b5`, a local Jaeger, real
+Bedrock; n=1 per arm): text still leaves as above. `tool_result` content, text or JSON, is
+dropped from `gen_ai.prompt` outright, as are replayed `tool_use` inputs, and no image
+bytes appeared in 112 spans. But `gen_ai.tool_calls` carries **the model's own tool calls
+with their arguments** (`record_search {"surname": …}`), plain and streamed, so every
+search the agent makes leaves with its names, places, dates and ids. Re-run:
+`apps/server/dev/p1/probe_trace_export.py --base <route root> --jaeger <query root>`.
+
+InfoSec's question is therefore about the narration and the search arguments, not raw
+records or scans. What lands in Langfuse itself, and how long it is kept, is still
+unmeasured. *Owner: us to raise; InfoSec + APT.*
 
 **R12 — The SCP and the non-AWS egress.** The SCP denies direct Bedrock invoke to every
 principal in our account except `tap-gateway-invoke` and `bedrock-exception-*` — decide

@@ -45,7 +45,8 @@ def test_workspace_stages_plugin_agents(tmp_path):
         target_dir=tmp_path,
     )
     assert (ws / ".claude/agents/gps-mentor.md").exists()
-    assert (ws / ".claude/agents/image-reader.md").exists()
+    assert (ws / ".claude/agents/search-images.md").exists()
+    assert not (ws / ".claude/agents/image-reader.md").exists()  # retired, #2490
 
 
 def test_workspace_agents_dir_override(tmp_path):
@@ -127,6 +128,21 @@ def test_scenario_starting_tree_is_staged_only_when_the_scenario_ships_one(tmp_p
     staged = json.loads((tmp_path / "ws-with-baseline" / "starting-tree.gedcomx.json").read_text(encoding="utf-8"))
     assert staged == tree
 
+
+
+def test_scenario_external_collections_list_is_staged(tmp_path):
+    """A scenario's stored curated list must reach the workspace, or a test whose
+    agent reads it through research_query reads nothing (#2995)."""
+    scenarios = tmp_path / "scenarios"
+    scen = scenarios / "with-list"
+    scen.mkdir(parents=True)
+    (scen / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+    listing = {"places": {"Pennsylvania, United States": {"rows": []}}}
+    (scen / "external-collections.json").write_text(json.dumps(listing), encoding="utf-8")
+    target = tmp_path / "ws"
+    target.mkdir()
+    ws = build_workspace("with-list", scenarios, PLUGIN_SKILLS, target_dir=target)
+    assert json.loads((ws / "external-collections.json").read_text(encoding="utf-8")) == listing
 
 def test_missing_scenario_raises(tmp_path):
     with pytest.raises(InvalidScenarioError):

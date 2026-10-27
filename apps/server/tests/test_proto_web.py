@@ -35,6 +35,7 @@ PROTO = Path(__file__).resolve().parents[1] / "proto"
 sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
+import turn_message  # noqa: E402  (the shared claim and banner SQL, as the web image imports it)
 from web import app, auth  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
@@ -330,6 +331,18 @@ def test_row_to_wire_user_msg_and_agent_kinds():
     # The D3 stub worker's row today: kind turn_done, payload {turn_id, receive_count}.
     stub = EventRow(3, "turn_done", {"turn_id": "t1", "receive_count": 1}, T0)
     assert row_to_wire(stub)["event"] == {"turn_id": "t1", "receive_count": 1, "kind": "turn_done"}
+
+
+def test_row_to_wire_passes_the_host_reply_flag_through():
+    """The worker writes the host's "Keep going" reply as a user_msg with `auto: true`,
+    and ChatPane marks the bubble and sets `busy` off that flag. Dropped here, the
+    browser renders the host's reply as something the researcher typed."""
+    auto = EventRow(4, "user_msg", {"text": "Keep going.", "turn_id": "t2", "auto": True}, T0)
+    assert row_to_wire(auto) == {"type": "user_msg", "text": "Keep going.", "turn_id": "t2", "seq": 4, "auto": True}
+    # Only `true` marks it: a falsy or non-boolean value is an ordinary message.
+    for value in (False, "true", 1, None):
+        row = EventRow(5, "user_msg", {"text": "x", "turn_id": "t3", "auto": value}, T0)
+        assert "auto" not in row_to_wire(row), value
 
 
 def test_row_to_wire_kind_wins_over_a_payload_kind():
@@ -714,6 +727,12 @@ def test_the_rescue_claim_is_the_workers_own_statement():
         pathlib.Path(__file__).resolve().parents[1] / "proto" / "worker" / "worker.py"
     ).read_text(encoding="utf-8")
     claim = " ".join(worker_src.split("def take_queued_turn", 1)[1].split("def ", 1)[0].split())
+    # Section A2 moved the statement into `turn_message.CLAIM_HELD_SQL`, which both tiers
+    # import, so "the same statement" is now literally one string. Pin that both run it,
+    # and that it still has the shape the race tests rely on.
+    assert "turn_message.CLAIM_HELD_SQL" in claim, "the worker no longer runs the shared claim"
+    assert "turn_message.CLAIM_HELD_SQL" in web, "the web tier no longer runs the shared claim"
+    shared = " ".join(turn_message.CLAIM_HELD_SQL.split())
     for fragment in (
         # claimed_at dates the row from its release: the worker's retention backstop
         # reads COALESCE(claimed_at, enqueued_at), so a long-held message released without
@@ -723,12 +742,12 @@ def test_the_rescue_claim_is_the_workers_own_statement():
         # that already RAN and re-enqueue it; this was unpinned until a break test
         # swapped it for `outcome IS NOT NULL` and every test stayed green.
         "SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s",
-        "AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED",
+        "AND completed_at IS NULL",
+        "ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED",
         ") RETURNING message",
     ):
-        assert fragment in claim, f"the worker's claim changed shape: {fragment!r}"
-        assert fragment in web, f"the web tier's claim no longer matches the worker's: {fragment!r}"
-    assert web.count("UPDATE turns") == 1, "one statement, or the two releasers can both win"
+        assert fragment in shared, f"the shared claim changed shape: {fragment!r}"
+    assert shared.count("UPDATE turns") == 1, "one statement, or the two releasers can both win"
 
 
 def test_the_real_turn_active_query_excludes_a_held_row():
@@ -849,7 +868,8 @@ async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
     store._connect = fake_connect  # type: ignore[method-assign]
 
     assert await store.has_queued("sess_1") is True  # RecordingConn.fetchone answers truthy
-    assert conn.sql and conn.sql[-1] == " ".join(app.HAS_QUEUED_SQL.split())
+    # The SSE banner leaves host replies out (section A2); `admit_message` keeps them.
+    assert conn.sql and conn.sql[-1] == " ".join(turn_message.HAS_TYPED_QUEUED_SQL.split())
     # ...and the PARAMS, not just the statement. Both queries carry the held-row sentinel
     # as a bind, so a test that checked only the SQL string let `("sess_1", "nope")`
     # through -- which silently answers "nothing is held" forever, and on turn_active

@@ -67,7 +67,7 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 | **assertion** | One evidence claim extracted from one source, persisted in `research.json`. |
 | **proof summary / `ps_id`** | The written argument resolving one research question, carrying a confidence **tier**: `proved`, `probable`, `possible`, `not_proved`, or `disproved` (a closed enum — `enums.schema.json`). "Tier ≥ probable" in §4 means `proved` or `probable`. |
 | **sidecar** | A raw search payload stored at `results/<log_id>.json` instead of inside `research.json`, so the co-edited file stays small (§6.1). |
-| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read `project_create` takes by reference (`personReadRef`) and builds the starting tree from, instead of the model re-typing it. |
+| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
 | **projection** | A compact, filtered read of a large document — what `project_context` and `research_query` return instead of the whole file (§6.3). |
 | **compaction** | When a long session's context is summarized to fit the window. Skill bodies can be evicted by it — the reason §3.1 exists. |
 | **fixture** | Two different things. `eval/fixtures/mcp/` holds **mocked tool responses** for unit runs; `eval/tests/e2e/<slug>/` holds a **benchmark case** (a starting project plus expected findings). |
@@ -224,13 +224,13 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **30** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The thirty agents are `gps-mentor`, `record-structurer`, `image-reader`,
+The thirty agents are `gps-mentor`, `record-structurer`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `search-records`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`,
 `timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project`, `tree-survey` and `research-plan`.
+`init-project`, `tree-survey`, `research-plan` and `where-else-to-search`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -562,15 +562,16 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `search-wikipedia` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220 and 2.1.294 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12 and 2026-10-20; the harnesses run the hosted CLI, 2.1.294). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia` → `low`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
-> unit harness (`harness/orchestrator.py` honours the field, falling back to
-> `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
+> unit harness (`session_model_for` in `harness/orchestrator.py` honours it for a
+> `SKILL.md` suite, falling back to `DEFAULT_MODEL`; an agent-keyed suite's main
+> thread always runs `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.
@@ -800,6 +801,11 @@ tool it holds — "Give an agent a new tool", §5). Register it in the worker's
 what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
 agent trips". Then run `make agent-smoke` (§8) — its registration arm now runs
 in CI (`server-tests.yml`, keyless), but its dead-stub arm does not.
+A new agent is a new hand-off option for `research`, but nothing stales
+`research`'s run log over it: the snapshot fingerprints the frontmatter of the
+agents it **lists**, and a new file is not listed until the next run. Run
+`make eval-skill SKILL=research` yourself when the new agent's `description`
+could pull a routing test toward it.
 
 ---
 
@@ -873,6 +879,15 @@ There **is** an orchestrator, and it is a skill:
    status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
+
+   **Step mode inverts this** (decision 25, `docs/plan/research-step-mode.md`).
+   On the FS prototype a turn runs ONE step, reports it, and ends with
+   "Continue with &lt;label&gt;?" — so finishing a sub-skill is exactly where the
+   turn stops, and the stop conditions above describe the *job*, not the turn.
+   The boundary is enforced by `packages/engine/plugin/hooks/step_boundary.py`,
+   loaded as a library by the prototype worker and both eval harnesses. Cowork
+   and the hosted alpha get no such hook and keep the loop described here, so
+   both readings are live at once and which one applies depends on the plane.
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
@@ -954,6 +969,26 @@ they have different fixes, and only one of them is a description problem.
    that corpus, and **refuses to run** when that set has no positives (it used to
    report a pass without scoring anything). It makes real paid model calls, is not
    in CI, and only *proposes* text you then apply by hand.
+
+   **`make optimize-skill` reaches exactly one of the 32 routing targets.**
+   `build_eval_set.py --skill <name>` exits `ERROR: no skill` unless
+   `plugin/skills/<name>/` exists, so it cannot be pointed at `agents/<name>.md`;
+   of the two skill directories left, only `research` has trigger queries. Its
+   runner credits a trigger only on a `Skill` or `Read` call naming the target
+   and returns *not triggered* on any other tool, an `Agent` spawn included, so
+   pointing it at an agent would score every correct hand-off as a miss.
+
+   **The instrument for an agent is a routing negative**, not the optimizer: a
+   test with a `user_message`, no `grade_on_invariant`, and a
+   `negative.correct_skill` naming the agent asserts that the utterance routes
+   there, and the harness resolves an agent file as a valid target.
+   **No agent carries one today.** All 18 committed negatives that name an agent
+   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
+   routing branch, so the verdict is the tag-gated invariant validator alone and
+   the hand-off is never checked. A miss against any agent is therefore
+   unmeasured, not evidence about its description. Add the missed utterance as
+   such a negative first, and diagnose the delegation before editing any
+   description.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
@@ -1037,8 +1072,8 @@ bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
-probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165,
-same result): under `bypassPermissions` **both**
+probe-agent-binding`, reproduced twice; re-run 2026-10-20 on 2.1.294 / SDK 0.2.165
+and 2026-10-22 on 2.1.308 / SDK 0.2.172, same result): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what kept `record-extractor` (since retired) off the broad
 `research_append`, and its deny restated that rather than being the last line.
@@ -1059,8 +1094,8 @@ zero-tools spawn check: the probe's arm B granted one tool under all three
 spellings plus `ToolSearch`, denied that same tool, and the runtime refused the
 agent outright — "would be spawned with zero tools — refusing. Its tools list
 resolved to nothing: unrecognized [ToolSearch]", naming only the built-in,
-because the deny had already removed the three MCP entries. `image-reader`
-grants exactly one tool, so it is one entry from that shape. Guarded by the
+because the deny had already removed the three MCP entries. An agent that
+grants exactly one tool is one entry from that shape. Guarded by the
 "never denies a tool it also grants" case in `agent-tool-names.test.ts`, which
 is pinned synthetically because no agent ships a deny for it to fire on.
 
@@ -1218,11 +1253,11 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`), and despite this section's name it enforces **three**
++ `guard_project_files.py`), and despite this section's name it enforces **four**
 rules, not one. Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — wider than
-the file-write tools, because two of the three rules act on `research_append`
-itself:
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — wider
+than the file-write tools, because two rules act on `research_append` itself and
+one on the delegation tools:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
    `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
@@ -1245,6 +1280,9 @@ itself:
    `research_append` writing *outside* its own set (a test requires the lane),
    added after a measured 2026-08-19 incident in which
    `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
+4. **No fork subagents.** Denies `Agent` / `Task` with `subagent_type: "fork"`
+   (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
+   deny is what reaches Cowork.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
 the one thing no `tools:` list can express.** The deny message names the
@@ -1442,16 +1480,15 @@ broadcasts a `sidecar_updated` naming a log id that does not exist.
 The two documents and the sidecars are **written by different mechanisms**, and
 conflating them is the easy mistake. The documents go through validating writer
 tools called by the model. A **sidecar is staged host-side by the search tool
-that produced it** — `record_search`, `fulltext_search`, and
-`external_links_search` write their payload into `results/.staging/` and return a
+that produced it** — `record_search` and `fulltext_search` write their payload
+into `results/.staging/` and return a
 handle plus a **reduced** inline copy, which `research_log_append` later
 finalizes. The reduction differs by tool: `record_search` drops `gedcomx`,
 `collectionUrl`, and empty `treeMatches`, hoists `collectionTitle` into a
 response-level map, and de-duplicates `events`; `fulltext_search` drops
 `textDocument`; both leave
-name/date/place stubs for triage. `external_links_search` reduces differently —
-it caps the *number* of inline rows and leaves each row intact, because its
-payload is curated third-party URLs with nothing to triage on. **The full payload travels
+name/date/place stubs for triage. `external_links_search` stages nothing since
+2026-10: its durable copy is `external-collections.json` (above). **The full payload travels
 search tool → disk → log-append and never round-trips through the model**
 (`search-result-staging-spec.md`).
 
@@ -2411,7 +2448,7 @@ questions that only look open.
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
-| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) , [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
+| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`record-structurer-agent-spec.md`](specs/record-structurer-agent-spec.md) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
 | The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |

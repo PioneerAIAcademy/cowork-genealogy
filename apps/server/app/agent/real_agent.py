@@ -627,9 +627,7 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     # change a call rather than refusing it. Without it the Stop hook nudges a turn that is waiting on
     # its own background subagent, and the model answers the nudge by spawning a
     # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
-    # rewritten, because the CLI backgrounds an agent when the flag is absent (2.1.220,
-    # and 2.1.294: "Agents run in the background by default") and the measured
-    # incidents carried no flag at all.
+    # rewritten; `foreground_rewrite` says why, and why it outlives the Stop hook.
     # Shared with the prototype: one predicate, one rewrite, so a mutation in either
     # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
     # turn, and this file's own doctrine is that an inert arm looks identical to a
@@ -745,11 +743,15 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     a sandbox created before the proxy deploy still routes through the proxy
     after reconnect. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
     keeps tool search on regardless of the base URL (measured: probe P3b,
-    2026-09-11, ``make probe-gateway-path``).
+    2026-09-11, ``make probe-gateway-path``). ``CLAUDE_CODE_FORK_SUBAGENT=0`` keeps
+    the Agent tool from offering ``subagent_type: "fork"`` (on by default in the
+    SDK from CLI 2.1.302): a fork inherits the main thread's context and tools, not
+    a plugin agent's ``tools:`` list.
     """
     env: dict[str, str] = {
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
     }
     base_url = _current_base_url()
     if base_url:
@@ -768,7 +770,9 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
 #: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
 #: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
 #: while the setting moved to 30 would make the two disagree exactly where nobody looks.
-_DEFAULT_MAX_NUDGES = 30
+#: 0 under step mode (decision 25): a turn that stops has finished its one step, so
+#: there is nothing to nudge it past. `_build_hooks` binds no Stop hook at 0.
+_DEFAULT_MAX_NUDGES = 0
 
 
 def _max_nudges(env=None) -> int:

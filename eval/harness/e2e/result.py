@@ -183,7 +183,12 @@ from typing import Any
 # a string, `is_error` stays a bool and `outcome` stays a string, and only what
 # each one means changes. `narration`'s new `thread` key is the other case and
 # does NOT drive this bump: it is key-presence-detectable, exactly like
-# `narration` itself.
+# `narration` itself. So is `tool_calls[].staged_transcription` (#2490): since
+# `image_transcribe` stages the page and returns only `staged.resultsRef` and a
+# `digest`, entry 5's `transcription` is inline only when staging failed, and
+# the orchestrator saves a staged page under this key. Read the key when
+# present, else `response_summary`'s `transcription` — the shape every earlier
+# log has.
 HARNESS_SCHEMA_VERSION = 8
 
 
@@ -336,6 +341,12 @@ class E2eResult:
     # on a clean tree. Evidence for a reviewer, not a gate: no CI reads either.
     git_sha: str | None = None
     skills_hash: str | None = None
+
+    # The curated Ancestry collections the run's project stored, place -> sorted
+    # `ancestry:<id>` keys (#2995). What build-external-search-url-tool-spec.md
+    # §9.1 checks a generated collection URL against. A key set rather than a
+    # copy of the file: the file is ~0.15-0.3 MB per state.
+    external_collection_keys: dict[str, list[str]] = field(default_factory=dict)
 
     # Schema marker for readers. See HARNESS_SCHEMA_VERSION.
     harness_schema_version: int = HARNESS_SCHEMA_VERSION

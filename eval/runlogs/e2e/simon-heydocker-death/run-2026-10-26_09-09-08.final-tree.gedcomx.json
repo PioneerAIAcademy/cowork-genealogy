@@ -1,0 +1,265 @@
+{
+  "persons": [
+    {
+      "id": "GZRZ-TNG",
+      "ark": "ark:/61903/4:1:GZRZ-TNG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "e94d9c8a-b078-40ad-b987-ee2bd48fc3fd",
+          "preferred": true,
+          "given": "Simon",
+          "surname": "Heyd\u00f6cker",
+          "type": "BirthName"
+        },
+        {
+          "id": "N1",
+          "given": "Simon",
+          "surname": "Heydocker",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "079db9de-a7f6-43b0-b4a1-694b95b85f8e",
+          "type": "Death",
+          "date": "6. April 1836",
+          "place": "Austria",
+          "standard_place": "Austria",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "type": "Death",
+          "date": "6 April 1836",
+          "standard_date": "+1836-04-06",
+          "place": "St\u00f6tten (N\u00f6tten), Laakirchen, Gmunden, Upper Austria, Austria",
+          "standard_place": "Laakirchen, Gmunden, Upper Austria, Austria",
+          "sources": [
+            {
+              "ref": "S1"
+            }
+          ],
+          "id": "F1",
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "GZ76-1RJ",
+      "ark": "ark:/61903/4:1:GZ76-1RJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8ce39317-e44f-424f-82e6-f53cc3a38118",
+          "preferred": true,
+          "given": "Josef",
+          "surname": "Heidegger",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "437a32f0-dcfe-40ab-995c-debdc74dc50f",
+          "type": "Birth",
+          "date": "11. Oktober 1801",
+          "standard_date": "11 Oct 1801",
+          "place": "Laakirchen, Gmunden, Ober\u00f6sterreich, \u00d6sterreich",
+          "standard_place": "Laakirchen, Gmunden, Upper Austria, Austria"
+        },
+        {
+          "id": "d07e62ba-d362-4956-9782-0284514dfb0e",
+          "type": "Death",
+          "date": "1. M\u00e4rz 1880",
+          "standard_date": "1 Mar 1880",
+          "place": "Laakirchen, Gmunden, Ober\u00f6sterreich, \u00d6sterreich",
+          "standard_place": "Laakirchen, Gmunden, Upper Austria, Austria"
+        },
+        {
+          "id": "562c9bc3-d505-4b23-ac04-75d0c1ce5c07",
+          "type": "Burial",
+          "date": "3. M\u00e4rz 1880",
+          "standard_date": "3 Mar 1880",
+          "place": "Laakirchen, Gmunden, Ober\u00f6sterreich, \u00d6sterreich",
+          "standard_place": "Laakirchen, Gmunden, Upper Austria, Austria"
+        },
+        {
+          "id": "c841414f-c2cf-4bd6-abf3-4ecdbe4ff190",
+          "type": "Occupation",
+          "place": "St\u00f6tten, Gmunden, Ober\u00f6sterreich, \u00d6sterreich",
+          "standard_place": "St\u00f6tten, Gmunden, Upper Austria, Austria",
+          "value": "Bauer zu Hochegg, Ortschaft St\u00f6tten 14, Laakirchen"
+        },
+        {
+          "id": "164b48ea-3132-4dd4-9ee3-4f375e51a252",
+          "type": "Todesursache:",
+          "value": "Bronchitis"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3C7T-4WQ"
+        },
+        {
+          "ref": "3C7R-VMW"
+        }
+      ]
+    },
+    {
+      "id": "GZRZ-TJD",
+      "ark": "ark:/61903/4:1:GZRZ-TJD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "e45fffc6-3d84-4409-bc11-dd5d356751ab",
+          "preferred": true,
+          "given": "Juliana",
+          "surname": "Heidegger",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b65cb748-f951-4bf1-adbb-1bed43d44690",
+          "type": "Birth",
+          "date": "15. Juni 1798",
+          "standard_date": "15 Jun 1798",
+          "place": "Laakirchen, Gmunden, Ober\u00f6sterreich, \u00d6sterreich",
+          "standard_place": "Laakirchen, Gmunden, Upper Austria, Austria"
+        },
+        {
+          "id": "d6987311-45bc-4bd1-94c5-e5199b626fe2",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3C7T-QGW"
+        }
+      ]
+    },
+    {
+      "id": "GZRZ-51S",
+      "ark": "ark:/61903/4:1:GZRZ-51S",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "0d6f1820-88cc-4e20-9b52-f1567764d5db",
+          "preferred": true,
+          "given": "Katharina",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d7c130e6-fdf5-4338-b019-d9b28656f8dc",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GZRZ-TNG",
+      "person2": "GZRZ-51S"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GZRZ-TNG",
+      "child": "GZRZ-TJD"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GZRZ-51S",
+      "child": "GZRZ-TJD"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GZRZ-TNG",
+      "child": "GZ76-1RJ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GZRZ-51S",
+      "child": "GZ76-1RJ"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GZRZ-TNG",
+      "title": "Simon Heyd\u00f6cker",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Simon Heyd\u00f6cker (PID GZRZ-TNG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZRZ-TNG"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GZ76-1RJ",
+      "title": "Josef Heidegger",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Josef Heidegger (PID GZ76-1RJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZ76-1RJ"
+    },
+    {
+      "id": "sd_person_GZRZ-TJD",
+      "title": "Juliana Heidegger",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Juliana Heidegger (PID GZRZ-TJD); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZRZ-TJD"
+    },
+    {
+      "id": "sd_person_GZRZ-51S",
+      "title": "Katharina",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Katharina (PID GZRZ-51S); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZRZ-51S"
+    },
+    {
+      "id": "3C7T-4WQ",
+      "title": "Geburt Josef Heidegger, Laakirchen",
+      "url": "https://data.matricula-online.eu/de/oesterreich/oberoesterreich/laakirchen/101%252F05/?pg=18"
+    },
+    {
+      "id": "3C7R-VMW",
+      "title": "Tod Josef Heidegger, Laakirchen",
+      "url": "https://data.matricula-online.eu/de/oesterreich/oberoesterreich/laakirchen/306%252F1880/?pg=1"
+    },
+    {
+      "id": "3C7T-QGW",
+      "title": "Geburt Juliana Heidegger, Laakirchen",
+      "url": "https://data.matricula-online.eu/de/oesterreich/oberoesterreich/laakirchen/207%252F1839/?pg=3"
+    },
+    {
+      "id": "S1",
+      "title": "Eintrag f\u00fcr Simon Heydocker, \u201e\u00d6sterreich, Katholische Kirchenb\u00fccher, 1565-2007\u201c",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HSFG-MGN5",
+      "citation": "\"\u00d6sterreich, Katholische Kirchenb\u00fccher, 1565-2007\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6VYC-Q99N : Wed Oct 07 18:00:15 UTC 2026), Entry for Simon Heydocker, 6. April 1836."
+    }
+  ]
+}

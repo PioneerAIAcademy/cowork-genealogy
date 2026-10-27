@@ -365,6 +365,31 @@ describe("Project Validator", () => {
       }
     });
 
+    it("reports a log entry staged_ref that is not a string, and allows a string or its absence", async () => {
+      const entry = (extra: Record<string, unknown>) => ({
+        id: "log_001",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00.000Z",
+        tool: "record_search",
+        query: {},
+        outcome: "negative",
+        results_examined: 0,
+        external_site: null,
+        results_ref: null,
+        ...extra,
+      });
+      for (const bad of [null, 7, { ref: "x" }]) {
+        await writeProject({ ...minimalResearch, log: [entry({ staged_ref: bad })] }, minimalTree);
+        const result = await validateProject(testDir);
+        expect(result.errors.some((e) => e.message.includes("staged_ref must be a string"))).toBe(true);
+      }
+      for (const good of [{ staged_ref: "results/.staging/a.json" }, {}]) {
+        await writeProject({ ...minimalResearch, log: [entry(good)] }, minimalTree);
+        const result = await validateProject(testDir);
+        expect(result.errors.some((e) => e.message.includes("staged_ref"))).toBe(false);
+      }
+    });
+
     it("reports a plan item fallback_for that is not a sibling pli_ id, and allows a sibling or null", async () => {
       const item = (id: string, fallback_for: unknown) => ({
         id,
@@ -1494,7 +1519,121 @@ describe("Project Validator", () => {
     });
   });
 
+  describe("not_reached: a deferred entry names its source", () => {
+    // "Search more" plans from the deferred entries (step mode, section B), and the
+    // film, image or URL lives in `description`. One with none names nothing.
+    const withEntry = (entry: Record<string, unknown>) => ({
+      ...minimalResearch,
+      questions: [{
+        id: "q_001", question: "Test?", rationale: "Testing", selection_basis: "user_directed",
+        priority: "high", status: "in_progress", depends_on: [], unblocks: [], created: "2026-01-01",
+        resolved: null, resolution_assertion_ids: [],
+        search_stop: {
+          stopped_because: "resources_spent", log_entry_ids: [], stop_criteria: null,
+          justification: "Overturn risk: low.",
+          not_reached: [{ kind: "deferred", log_entry_id: null, wiki_title: null, ...entry }],
+        },
+      }],
+    });
+    const deferredErrors = async (entry: Record<string, unknown>) => {
+      await writeProject(withEntry(entry), minimalTree);
+      const result = await validateProject(testDir);
+      return result.errors.filter((e) => e.message.includes("when kind is 'deferred'"));
+    };
+
+    it("accepts a deferred entry that names the source", async () => {
+      expect(await deferredErrors({ description: "FHL film 1234567, Ripon parish registers" })).toEqual([]);
+    });
+
+    it("rejects one whose description is blank, null or missing", async () => {
+      for (const entry of [{ description: "   " }, { description: null }, {}]) {
+        expect((await deferredErrors(entry)).length, JSON.stringify(entry)).toBe(1);
+      }
+    });
+  });
+
   describe("Conflict validation", () => {
+    // `weighed_log_entry_ids` is what lets the ladder tell new evidence to weigh
+    // from evidence already weighed: conflict-resolution fills both analysis
+    // fields on every pass, and conflicts carry no timestamp.
+    function conflictProject(conflictExtra: Record<string, unknown>) {
+      return {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", tool: "record_search", query: {}, results_examined: 1, outcome: "positive", performed: "2026-01-01T00:00:00Z", plan_item_id: null, external_site: null },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
+          { id: "a_002", source_id: "src_001", record_id: "2", record_role: "principal", fact_type: "birth", value: "1851", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        conflicts: [
+          {
+            id: "c_001",
+            conflict_type: "fact",
+            description: "Birth year conflict",
+            disputed_attribute: "birth year",
+            competing_assertion_ids: ["a_001", "a_002"],
+            status: "unresolved",
+            blocks_question_ids: [],
+            ...conflictExtra,
+          },
+        ],
+      };
+    }
+
+    const conflictTree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+
+    it("accepts weighed_log_entry_ids naming a real log entry", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: ["log_001"] }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts a conflict with no weighed_log_entry_ids at all", async () => {
+      // Every conflict analysed before the field existed.
+      await writeProject(conflictProject({}), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects weighed_log_entry_ids: null, which the JSON Schema has no branch for", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: null }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("weighed_log_entry_ids must be an array"))).toBe(true);
+    });
+
+    it("rejects weighed_log_entry_ids that is not an array", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: "log_001" }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("weighed_log_entry_ids must be an array")),
+      ).toBe(true);
+    });
+
+    it("rejects a weighed id that resolves to no log entry", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: ["log_404"] }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("log_404"))).toBe(true);
+    });
+
+    it("still rejects an unknown sibling key beside it", async () => {
+      // Adding one optional field must not open the object up.
+      await writeProject(
+        conflictProject({ weighed_log_entry_ids: ["log_001"], weighed_log_entries: ["log_001"] }),
+        conflictTree,
+      );
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => JSON.stringify(e).includes("weighed_log_entries"))).toBe(true);
+    });
+
     it("requires disputed_attribute for fact conflicts", async () => {
       const research = {
         ...minimalResearch,
@@ -2899,7 +3038,19 @@ describe("Research closed shapes", () => {
           pages_read: [
             { section: "home", url: "https://x/Norway_Genealogy", found: true },
             { section: "research_tips", url: null, found: false },
+            { section: "online_records", url: null, found: false, outcome: "unreachable" },
           ],
+          registration_start: [
+            { event: "birth", level: "national", year: 1876, source_url: "https://x/Norway_Vital_Records" },
+          ],
+          volume_summary: {
+            start_year: 1800,
+            end_year: 1900,
+            total_volumes: 3,
+            complete: true,
+            by_record_type: [{ group: "Census", volumes: 2, browse_only: null, fulltext_only: null }],
+            untyped: { volumes: 1, browse_only: 1, fulltext_only: 0 },
+          },
           source: "locality-guide",
           created: "2026-01-02",
           updated: "2026-01-02",
@@ -2940,6 +3091,13 @@ describe("Research closed shapes", () => {
     research.log[1].external_site.site = "archion_de";
     const result = await validateParsed(research, maximalTree);
     expect(JSON.stringify(result.errors)).toMatch(/'archion_de' is not a valid site/);
+  });
+
+  it("accepts the openarch search site on external_site.site (#3185)", async () => {
+    const research = maximalResearch();
+    research.log[1].external_site.site = "openarch";
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
   });
 
   // #1270 — pages_read[].section is the `locality_page_section` closed enum.
@@ -2984,6 +3142,51 @@ describe("Research closed shapes", () => {
       expect(
         result.errors.filter((e) => e.message.includes("locality_page_section"))
       ).toEqual([]);
+    });
+
+    it("rejects a registration_start entry with a bad event, level or year, or no source_url", async () => {
+      const research = maximalResearch();
+      research.localities[0].registration_start = [
+        { event: "baptism", level: "province", year: "1876" },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      const msgs = result.errors
+        .filter((e) => e.path === "research.json/localities[0]/registration_start[0]")
+        .map((e) => e.message)
+        .join(" | ");
+      expect(msgs).toMatch(/'baptism' is not a valid registration_event/);
+      expect(msgs).toMatch(/'province' is not a valid registration_level/);
+      expect(msgs).toMatch(/year must be an integer/);
+      expect(msgs).toMatch(/source_url/);
+    });
+
+    it("rejects non-integer counts in collections and volume_summary, but accepts null where the schema does", async () => {
+      const research = maximalResearch();
+      research.localities[0].collections = [{ id: "1", title: "t", person_count: 1.5, record_count: null }];
+      research.localities[0].volume_summary.total_volumes = -1;
+      research.localities[0].volume_summary.by_record_type[0].volumes = null;
+      research.localities[0].volume_summary.untyped.browse_only = "3";
+      const result = await validateParsed(research, maximalTree);
+      const msgs = result.errors.map((e) => `${e.path}: ${e.message}`).join(" | ");
+      expect(msgs).toMatch(/collections\[0\]: person_count must be a non-negative integer or null/);
+      expect(msgs).not.toMatch(/record_count/);
+      expect(msgs).toMatch(/volume_summary: total_volumes must be a non-negative integer/);
+      expect(msgs).toMatch(/by_record_type\[0\]: volumes must be a non-negative integer; got null/);
+      expect(msgs).toMatch(/untyped: browse_only must be a non-negative integer or null/);
+    });
+
+    it("rejects an out-of-set pages_read[].outcome (locality_page_outcome)", async () => {
+      const research = maximalResearch();
+      research.localities[0].pages_read[2].outcome = "timeout";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/pages_read[2]" &&
+            e.message.includes("'timeout' is not a valid locality_page_outcome")
+        )
+      ).toBe(true);
     });
   });
 

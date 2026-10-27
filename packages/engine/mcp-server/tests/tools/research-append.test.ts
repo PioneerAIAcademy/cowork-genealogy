@@ -3,7 +3,7 @@ import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
-import { join } from "path";
+import { join, resolve } from "path";
 import { tmpdir } from "os";
 
 // Stub the network place resolver so the composite place-lever tests are
@@ -63,9 +63,13 @@ import {
   parentSide,
   unlinkedParentNarrativeInvariants,
   unlinkedParentProofInvariants,
+  narrativeLengthWarnings,
+  NARRATIVE_WORD_BUDGET,
 } from "../../src/tools/research-append.js";
-import { validateProject } from "../../src/validation/validator.js";
+import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
+import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
+import { jsonParseFailure } from "../../src/utils/coerce-json-arg.js";
 import {
   recordImageReadCap,
   sourceImageCapState,
@@ -74,6 +78,15 @@ import {
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
+
+/** Claude Code saves a tool result over this many characters to a file the agent may not be able to
+ *  read back, so a refused answer has to stay well under it. */
+const CLI_SPILL_CHARS_HERE = 50_000;
+
+/** The errors of a refusal without the line that leads a multi-op one ("Fix the earliest failure
+ *  first ..."), for a test about what the first op said. */
+const withoutLead = (errors: string[]): string[] =>
+  errors[0]?.startsWith("Fix the earliest failure first") ? errors.slice(1) : errors;
 
 const citationDetail = {
   who: "Census enumerator",
@@ -1602,7 +1615,12 @@ describe("research_append (Phase 2)", () => {
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
   it("appends a question and stamps created", async () => {
-    await writeProject();
+    // q_001 is resolved first: step mode's gate refuses a second question while
+    // another is still open (E), and this test is about the `created` stamp, not
+    // about the gate — which has its own block below.
+    const research = phase2Research();
+    research.questions[0].status = "resolved";
+    await writeProject(research);
     const { id: _o, created: _c, ...q } = validQuestion("x");
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
     expect(r.ok && singleOk(r).entryId).toBe("q_002");
@@ -2853,6 +2871,50 @@ describe("research_append (Phase 3)", () => {
       expect(r.errors.join(" ")).toContain("conclusive answer");
     });
 
+    // A summary that breaks two rules used to hear about one: the function
+    // returned at the first, and the second came back on the retry. The default
+    // project here has q_001 undeclared, so a conclusive tier breaks the stop
+    // gate as well as the shortfall rule.
+    describe("a summary breaking two rules is told about both, in one call", () => {
+      const stopGate = /requires question 'q_001' to already have its stop gate/;
+      const shortfallRule = /is a conclusive answer/;
+
+      it.each([
+        ["proved", "gap"],
+        ["proved", "ceiling"],
+        ["disproved", "conflict"],
+      ])("tier '%s' with shortfall '%s' on an undeclared question reports both", async (tier, shortfall) => {
+        await writeProject();
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await append(tier, shortfall);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.filter((e) => shortfallRule.test(e))).toHaveLength(1);
+        expect(r.errors.filter((e) => stopGate.test(e))).toHaveLength(1);
+        // Order is unchanged: the shortfall finding stays first.
+        expect(r.errors[0]).toMatch(shortfallRule);
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      });
+
+      it("a conclusive tier with shortfall 'none' on an undeclared question reports only the stop gate", async () => {
+        await writeProject();
+        const r = await append("proved", "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.filter((e) => stopGate.test(e))).toHaveLength(1);
+        expect(r.errors.some((e) => shortfallRule.test(e) || /reached no conclusive answer/.test(e))).toBe(false);
+      });
+
+      it("a lower tier with shortfall 'none' reports only the shortfall rule", async () => {
+        await writeProject();
+        const r = await append("probable", "none");
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.filter((e) => /reached no conclusive answer/.test(e))).toHaveLength(1);
+        expect(r.errors.some((e) => stopGate.test(e))).toBe(false);
+      });
+    });
+
     it.each(["proved", "disproved"])(
       "accepts shortfall 'none' on conclusive tier '%s'",
       async (tier) => {
@@ -2978,6 +3040,497 @@ describe("research_append (Phase 3)", () => {
       const msg = r.errors.join(" ");
       expect(msg).toContain("missing required field 'shortfall'");
       expect(msg).not.toContain("reached no conclusive answer");
+    });
+  });
+
+  // A claim is a ParentChild relationship; a fact claim has nowhere to put one.
+  // The reported failure: the refusal said only "missing required field
+  // 'relationship'", and the agent answered by dropping `claims` altogether, which
+  // left `tier` with nothing to be checked against. The refusal now says why and
+  // what to keep. What it refuses has not changed; only what it says.
+  describe("a claim that is not a ParentChild relationship says why", () => {
+    const treeWithParent = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Jim", surname: "Smith" }] }],
+    };
+    const relationshipClaim = (proofTier = "probable") => ({
+      claim: "parentage",
+      proof_tier: proofTier,
+      supporting_assertion_ids: ["a_001"],
+      relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+    });
+    const factClaim = (extra: Record<string, unknown> = {}) => ({
+      claim: "birthplace",
+      proof_tier: "probable",
+      supporting_assertion_ids: ["a_001"],
+      ...extra,
+    });
+    const appendWith = (claims: unknown[], tier = "probable") =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001",
+          tier,
+          vehicle: "summary",
+          shortfall: "gap",
+          supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "Searched census + vitals",
+          narrative_markdown: "## Conclusion\n...",
+          claims,
+        },
+      } as never);
+    const refusal = async (claims: unknown[], tier?: string) => {
+      await writeProject(undefined, treeWithParent);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await appendWith(claims, tier);
+      expect(r.ok).toBe(false);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      return errorsOf(r) ?? [];
+    };
+    /** What every one of these refusals must carry. */
+    const carriesTheReason = (text: string) => {
+      expect(text).toContain("claims[] holds ParentChild relationship claims only");
+      expect(text).toContain("Fact claims are not supported yet");
+      expect(text).toContain("#3213");
+      expect(text).toContain("#3032");
+      expect(text).toContain("keep the ParentChild claims in claims[]");
+      expect(text).toContain("tier must equal the strongest proof_tier among the claims that remain");
+      // The rule is max, which the spec rejects "weakest" for by name, and the text
+      // must not teach that dropping `claims` gets past the check.
+      expect(text).not.toMatch(/weakest/);
+      expect(text).not.toMatch(/escap|bypass|skips? the (tier )?check/i);
+    };
+
+    it("a fact claim with no relationship: keeps the old opening words and adds the reason", async () => {
+      const errors = await refusal([relationshipClaim(), factClaim()]);
+      const line = errors.find((e) => e.includes("claims[1]"));
+      expect(line, errors.join("\n")).toBeDefined();
+      expect(line).toContain("missing required field 'relationship'");
+      carriesTheReason(line!);
+      // The valid claim beside it is not blamed.
+      expect(errors.some((e) => e.includes("claims[0]"))).toBe(false);
+    });
+
+    // ut_proof_conclusion_022: a not_proved maternity claim sent without its
+    // relationship was dropped when told to leave "a claim of any other kind" out.
+    it("a parentage claim with no relationship is told to add it, not to drop it", async () => {
+      for (const extra of [{}, { relationship: null }]) {
+        for (const label of ["maternity", "paternity", "Mother", "parentage"]) {
+          const errors = await refusal([
+            relationshipClaim(),
+            { ...factClaim(extra), claim: label, proof_tier: "not_proved" },
+          ]);
+          const line = errors.find((e) => e.includes("claims[1]"));
+          expect(line, errors.join("\n")).toBeDefined();
+          expect(line).toContain(`claim '${label}' is a parentage claim`);
+          expect(line).toContain('type: "ParentChild"');
+          expect(line).toContain("not_proved included. Do not drop it.");
+          expect(line).not.toContain("leave a claim of any other kind out");
+        }
+      }
+    });
+
+    it("a fact claim whose relationship is null", async () => {
+      const errors = await refusal([factClaim({ relationship: null })]);
+      const line = errors.find((e) => e.includes("claims[0]"));
+      expect(line, errors.join("\n")).toBeDefined();
+      expect(line).toContain("required field 'relationship' is null");
+      carriesTheReason(line!);
+    });
+
+    it("a relationship of another type: keeps the old opening words and adds the reason", async () => {
+      const errors = await refusal([
+        factClaim({ relationship: { type: "Fact", parent: "I2", child: "I1" } }),
+        factClaim({ claim: "marriage", relationship: { type: "Couple", parent: "I2", child: "I1" } }),
+      ]);
+      const fact = errors.find((e) => e.includes("got 'Fact'"));
+      const couple = errors.find((e) => e.includes("got 'Couple'"));
+      expect(fact, errors.join("\n")).toBeDefined();
+      expect(couple, errors.join("\n")).toBeDefined();
+      expect(fact).toContain("relationship.type must be 'ParentChild'");
+      carriesTheReason(fact!);
+      carriesTheReason(couple!);
+    });
+
+    it.each([["an empty string", ""], ["false", false], ["zero", 0]])(
+      "a relationship that is %s is refused, not skipped",
+      async (_label, value) => {
+        // Both JSON Schemas declare it an object, but the guard here tested the
+        // value's truthiness, so each of these skipped every check and validated.
+        const errors = await refusal([factClaim({ relationship: value })]);
+        expect(errors.join("\n")).toMatch(/claims\[0\]\/relationship.*must be an object/);
+      },
+    );
+
+    it("a valid relationship claim is still accepted, and is persisted with its claims", async () => {
+      await writeProject(undefined, treeWithParent);
+      const r = await appendWith([relationshipClaim("probable")], "probable");
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual([relationshipClaim("probable")]);
+    });
+
+    it("keeping the relationship claims keeps tier checked against them, in the message the rule already had", async () => {
+      // The scalar is `probable`, the claim kept is `possible`: refused by the
+      // existing tier rule, whose wording is unchanged and carries no claim note.
+      const errors = await refusal([relationshipClaim("possible")], "probable");
+      const text = errors.join("\n");
+      expect(text).toContain("tier 'probable' does not match the stronger of claims[].proof_tier ('possible')");
+      expect(text).not.toContain("not supported yet");
+    });
+  });
+
+  // A warning, never a refusal: the budgets are approximate, and a narrative over
+  // one is not wrong enough to lose the write. Fixture words
+  // are built as N copies of "w" so the count is known by construction, not read
+  // back through the implementation's own counter.
+  describe("a narrative over its vehicle's word budget is written, with a warning", () => {
+    const words = (n: number, sep = " ") => Array(n).fill("w").join(sep);
+    const summaryEntry = (vehicle: string, narrative: string) => ({
+      question_id: "q_001",
+      tier: "probable",
+      vehicle,
+      shortfall: "gap",
+      supporting_assertion_ids: ["a_001"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals",
+      narrative_markdown: narrative,
+    });
+    const appendNarrative = (vehicle: string, narrative: string) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summaryEntry(vehicle, narrative),
+      } as never);
+    const warningsOf = (r: Awaited<ReturnType<typeof researchAppend>>) => (r.ok ? r.validation.warnings : []);
+    const budgetWarning = (r: Awaited<ReturnType<typeof researchAppend>>) =>
+      warningsOf(r).filter((w) => /word budget/.test(w));
+
+    it("a 'summary' over 500 words is written and the warning names the vehicle and 500", async () => {
+      await writeProject();
+      const r = await appendNarrative("summary", words(520));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      const warnings = budgetWarning(r);
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("proof_summaries ps_001");
+      expect(warnings[0]).toContain("520 words");
+      expect(warnings[0]).toContain("500-word budget");
+      expect(warnings[0]).toContain("'summary' vehicle");
+      // Written, in full.
+      const stored = (await readResearch()).proof_summaries[0];
+      expect(stored.narrative_markdown.split(/\s+/)).toHaveLength(520);
+    });
+
+    it("a write refused for another reason reports no length warning, and writes nothing", async () => {
+      // Over budget AND refused: a conclusive tier with shortfall 'gap' on q_001,
+      // which this project has not declared exhaustive. The warning is computed
+      // before the refusal, so this is where it could leak into a failed call.
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...summaryEntry("summary", words(600)), tier: "proved" },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)!.join(" ")).toContain("conclusive answer");
+      expect(JSON.stringify(r)).not.toMatch(/word budget/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it.each([
+      ["statement", 150, 150, false],
+      ["statement", 150, 151, true],
+      ["summary", 500, 500, false],
+      ["summary", 500, 501, true],
+      ["argument", 800, 800, false],
+      ["argument", 800, 801, true],
+    ])("vehicle '%s' (budget %i), %i words: warns=%s", async (vehicle, budget, n, warns) => {
+      await writeProject();
+      const r = await appendNarrative(vehicle, words(n));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      const warnings = budgetWarning(r);
+      if (!warns) {
+        expect(warnings).toEqual([]);
+        return;
+      }
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain(`${budget}-word budget`);
+      expect(warnings[0]).toContain(`'${vehicle}' vehicle`);
+      expect(warnings[0]).toContain(`${n} words`);
+    });
+
+    it("counts words across newlines, tabs and runs of spaces, not only single spaces", async () => {
+      await writeProject();
+      const r = await appendNarrative("statement", words(151, "\n\n"));
+      expect(budgetWarning(r)).toHaveLength(1);
+      await writeProject(); // a question carries one summary, so start clean for the second shape
+      const r2 = await appendNarrative("statement", `${words(75, "\t")}  \n  ${words(76, "   ")}`);
+      expect(budgetWarning(r2)).toHaveLength(1);
+      expect(warningsOf(r2).join(" ")).toContain("151 words");
+    });
+
+    it("never refuses, however long: the write stands with its warning", async () => {
+      await writeProject();
+      const r = await appendNarrative("argument", words(5000));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(budgetWarning(r)).toHaveLength(1);
+    });
+
+    it("an empty narrative draws no length warning", async () => {
+      await writeProject();
+      const r = await appendNarrative("summary", "");
+      expect(budgetWarning(r)).toEqual([]);
+    });
+
+    it("a vehicle that is not one of the three, and a narrative that is not text, draw no length warning and no crash", async () => {
+      await writeProject();
+      for (const vehicle of ["constructor", "__proto__", "toString", "essay"]) {
+        const r = await appendNarrative(vehicle, words(5000));
+        expect(r.ok, vehicle).toBe(false);
+        expect(errorsOf(r)!.join(" "), vehicle).not.toMatch(/word budget/);
+      }
+      const notText = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summaryEntry("summary", 5 as never),
+      } as never);
+      // The document validator refuses a narrative that is not a string; what matters
+      // here is that the length check neither crashes nor speaks before it does.
+      expect(notText.ok).toBe(false);
+      expect(budgetWarning(notText)).toEqual([]);
+      expect((errorsOf(notText) ?? []).join(" ")).not.toMatch(/word budget/);
+    });
+
+    it("narrativeLengthWarnings: a vehicle that is not one of the three, a narrative that is not text, or no entry is silent", () => {
+      // Direct, because through the tool a refused write drops its warnings and
+      // would hide a budget lookup that indexed the prototype.
+      const long = words(5000);
+      for (const vehicle of ["constructor", "__proto__", "toString", "hasOwnProperty", "essay", "", undefined, null, 5]) {
+        expect(narrativeLengthWarnings({ id: "ps_001", vehicle, narrative_markdown: long }), String(vehicle)).toEqual([]);
+      }
+      for (const narrative of [undefined, null, 5, {}, ["w"]]) {
+        expect(narrativeLengthWarnings({ id: "ps_001", vehicle: "summary", narrative_markdown: narrative })).toEqual([]);
+      }
+      expect(narrativeLengthWarnings(undefined)).toEqual([]);
+      expect(narrativeLengthWarnings(null)).toEqual([]);
+      expect(narrativeLengthWarnings({ id: "ps_001", vehicle: "summary", narrative_markdown: long })).toHaveLength(1);
+    });
+
+    it("the budget map names exactly the proof vehicles the validator allows", () => {
+      // A fourth vehicle added to the enum would otherwise get no budget, and nothing would say so.
+      expect([...NARRATIVE_WORD_BUDGET.keys()].sort()).toEqual([...VALIDATOR_ENUMS.proof_vehicle].sort());
+    });
+
+    it("the budgets are the upper bounds proof-conclusion.md gives for each form", async () => {
+      // The agent body is what the model reads. Editing its numbers has to reach the warning.
+      const body = await readFile(resolve(__dirname, "../../../plugin/agents/proof-conclusion.md"), "utf-8");
+      for (const [vehicle, budget] of NARRATIVE_WORD_BUDGET) {
+        const form = `${vehicle[0].toUpperCase()}${vehicle.slice(1)}`;
+        const line = body.split("\n").find((l) => l.startsWith(`- **${form}**`));
+        expect(line, `a "- **${form}**" line in proof-conclusion.md`).toBeDefined();
+        // "Budget: ≤~150 words", "Budget: ~300–500 words": the number before "words" is the upper bound.
+        expect(Number(/(\d+)\s*words/.exec(line!)?.[1]), form).toBe(budget);
+      }
+    });
+
+    it("the same warning rides a batch", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [{ section: "proof_summaries", op: "append", entry: summaryEntry("statement", words(160)) }],
+      } as never);
+      expect(r.ok).toBe(true);
+      expect(budgetWarning(r)).toHaveLength(1);
+      expect(budgetWarning(r)[0]).toContain("150-word budget");
+    });
+
+    describe("on an update, only when the op sets what the budget reads", () => {
+      const seeded = () => {
+        const r = phase3Research();
+        r.proof_summaries = [
+          {
+            id: "ps_001",
+            ...summaryEntry("summary", words(600)),
+            updated: "2026-01-01T00:00:00Z",
+          },
+        ];
+        return r;
+      };
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "update",
+          entryId: "ps_001",
+          fields,
+        } as never);
+
+      it("an unrelated edit to a summary already over budget is silent", async () => {
+        await writeProject(seeded());
+        for (const fields of [{ exhaustive_search_summary: "Searched census, vitals, wills" }, { shortfall: "ceiling" }, { tier: "possible" }]) {
+          const r = await update(fields);
+          expect(errorsOf(r) ?? [], JSON.stringify(fields)).toEqual([]);
+          expect(budgetWarning(r), JSON.stringify(fields)).toEqual([]);
+        }
+      });
+
+      it("an update that sets narrative_markdown is judged, even when it stays over", async () => {
+        await writeProject(seeded());
+        const r = await update({ narrative_markdown: words(601) });
+        expect(budgetWarning(r)).toHaveLength(1);
+        expect(budgetWarning(r)[0]).toContain("601 words");
+      });
+
+      it("an update that brings the narrative within budget is silent", async () => {
+        await writeProject(seeded());
+        const r = await update({ narrative_markdown: words(400) });
+        expect(errorsOf(r) ?? []).toEqual([]);
+        expect(budgetWarning(r)).toEqual([]);
+      });
+
+      it("an update that sets only the vehicle re-judges the stored narrative against the new budget", async () => {
+        await writeProject(seeded());
+        const r = await update({ vehicle: "statement" });
+        expect(budgetWarning(r)).toHaveLength(1);
+        expect(budgetWarning(r)[0]).toContain("150-word budget");
+        expect(budgetWarning(r)[0]).toContain("600 words");
+        const widened = await update({ vehicle: "argument" });
+        expect(budgetWarning(widened)).toEqual([]);
+      });
+    });
+  });
+
+  // `narrative_markdown` is the one required text field of a proof summary, and the
+  // validator knew only that it was present and not null: a number, a list or an
+  // object validated clean and was persisted. Both JSON Schemas declare a string.
+  describe("a proof summary's narrative_markdown must be a string", () => {
+    const entry = (narrative: unknown) => ({
+      question_id: "q_001",
+      tier: "probable",
+      vehicle: "summary",
+      shortfall: "gap",
+      supporting_assertion_ids: ["a_001"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals",
+      narrative_markdown: narrative,
+    });
+    const append = (narrative: unknown) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry: entry(narrative) } as never);
+    /** A project already holding a summary whose narrative is not text: drift written before the check. */
+    const legacy = (narrative: unknown) => {
+      const r = phase3Research();
+      r.proof_summaries = [{ id: "ps_001", ...entry(narrative), updated: "2026-01-01T00:00:00Z" }] as any;
+      return r;
+    };
+    const update = (fields: Record<string, unknown>) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields } as never);
+
+    it.each([
+      ["a number", 5, "number 5"],
+      ["a decimal", 1.5, "number 1.5"],
+      ["true", true, "boolean true"],
+      ["an object", { text: "## Conclusion" }, 'object {"text":"## Conclusion"}'],
+      ["a list of words", ["w", "w"], 'array ["w","w"]'],
+    ])("%s is refused on append, naming the type and the value, and nothing is written", async (_label, value, got) => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await append(value);
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)!.join("\n")).toContain(`research.json/proof_summaries[0]: 'narrative_markdown' must be a string, got ${got}`);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("the value is quoted to a short prefix, so a long non-string cannot make a long message", async () => {
+      await writeProject();
+      const r = await append({ text: "w ".repeat(5000) });
+      const line = errorsOf(r)!.find((e) => e.includes("'narrative_markdown' must be a string"))!;
+      expect(line.length).toBeLessThan(200);
+      expect(line).toContain("...");
+    });
+
+    it.each([
+      ["a number", 5, 6],
+      ["true", true, false],
+      ["a list", ["w"], ["x", "y"]],
+      ["an object", { text: "a" }, { text: "b", more: [1, 2, 3] }],
+    ])("an update that replaces a legacy non-string narrative (%s) with a different one of the same type is refused", async (_label, from, to) => {
+      // The introduced-errors diff keys an error on its path plus its message. With a message
+      // that named only the type, the new value read as the error already in the project.
+      await writeProject(legacy(from));
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await update({ narrative_markdown: to });
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)!.join("\n")).toContain("'narrative_markdown' must be a string, got");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("and an update that sends the legacy value back unchanged is tolerated, as one that touches something else is", async () => {
+      await writeProject(legacy(5));
+      const r = await update({ narrative_markdown: 5 });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
+
+    it("null keeps its own refusal, and is not also told it is not a string", async () => {
+      await writeProject();
+      const r = await append(null);
+      expect(r.ok).toBe(false);
+      const text = errorsOf(r)!.join("\n");
+      expect(text).toContain("required field 'narrative_markdown' is null");
+      expect(text).not.toContain("must be a string");
+    });
+
+    it("an update that sets a non-string is refused, and one that sets a string repairs a legacy entry", async () => {
+      await writeProject(legacy("## C\n..."));
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const refused = await update({ narrative_markdown: 5 });
+      expect(refused.ok).toBe(false);
+      expect(errorsOf(refused)!.join("\n")).toContain("'narrative_markdown' must be a string, got number 5");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      await writeProject(legacy(5));
+      const repaired = await update({ narrative_markdown: "## Conclusion\nRepaired." });
+      expect(errorsOf(repaired) ?? []).toEqual([]);
+      expect(repaired.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].narrative_markdown).toBe("## Conclusion\nRepaired.");
+    });
+
+    it("a string is accepted, the empty string and a long one included", async () => {
+      for (const text of ["## Conclusion\nA sentence.", "", "w ".repeat(2000)]) {
+        await writeProject();
+        const r = await append(text);
+        expect(errorsOf(r) ?? [], JSON.stringify(text).slice(0, 30)).toEqual([]);
+        expect(r.ok).toBe(true);
+      }
+    });
+
+    it("an entry already in the project with a non-string narrative is not refused for it again: the write stands, with a warning", async () => {
+      // The introduced-errors diff keys an error on its path plus its message. This write leaves
+      // the narrative alone, so the message is the one already in the project and is demoted.
+      await writeProject(legacy(5));
+      const r = await update({ shortfall: "ceiling" });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(warningsOfResult(r)).toMatch(/1 pre-existing schema error\(s\) not caused by this call/);
+    });
+
+    it("the length warning cannot throw on a legacy non-string narrative", async () => {
+      // The vehicle is being set, so the length check runs on the stored narrative, which is a number.
+      await writeProject(legacy(5));
+      const r = await update({ vehicle: "statement" });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(warningsOfResult(r)).not.toMatch(/word budget/);
     });
   });
 
@@ -4293,6 +4846,339 @@ describe("research_append (Phase 3)", () => {
       expect(r2.errors.join(" ")).toContain("log_001");
     });
 
+    // ── the edit form: `edits: [{ field, old, new }]` (issue #3542, lead 2c) ──
+    describe("edits: an exact-match change without re-sending the field", () => {
+      const NARRATIVE =
+        "## Conclusion\nJohn Flynn was born in 1850 in Cork.\n" +
+        "**What could resolve it:** the 1885 county estate file.\n" + "Tail text that must survive.";
+      const SEARCH = "Searched the 1850 census. Not yet examined: the 1885 county estate file.";
+      const withText = (state: any) => {
+        state.proof_summaries[0].narrative_markdown = NARRATIVE;
+        state.proof_summaries[0].exhaustive_search_summary = SEARCH;
+        return state;
+      };
+      const editPs001 = (edits: unknown, extra: Record<string, unknown> = {}) =>
+        researchAppend({
+          projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", edits, ...extra,
+        } as never);
+      const unchanged = async (before: string) =>
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      it("replaces the one match, keeps the rest, restamps updated, and persists no edits", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }]);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        const ps = (await readResearch()).proof_summaries[0];
+        expect(ps.narrative_markdown).toBe(NARRATIVE.replace("born in 1850", "born in 1851"));
+        expect(ps.exhaustive_search_summary).toBe(SEARCH);
+        expect(ps.updated).not.toBe(SUMMARY_WRITTEN);
+        expect("edits" in ps).toBe(false);
+      });
+
+      it("applies several edits in order, on one field and across both", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001([
+          { field: "narrative_markdown", old: "born in 1850", new: "born in 1851" },
+          { field: "narrative_markdown", old: "born in 1851 in Cork", new: "born in 1851 in Cork, Ireland" },
+          { field: "exhaustive_search_summary", old: "1850 census.", new: "1850 and 1860 censuses." },
+        ]);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        const ps = (await readResearch()).proof_summaries[0];
+        expect(ps.narrative_markdown).toContain("born in 1851 in Cork, Ireland.");
+        expect(ps.exhaustive_search_summary).toBe(SEARCH.replace("1850 census.", "1850 and 1860 censuses."));
+      });
+
+      it.each([
+        ["no match", "born in 1999", /occurs 0 times.*Copy it character for character/],
+        ["two matches", "the 1885 county estate file", /occurs 2 times.*more of the surrounding text/],
+      ])("refuses an old with %s, naming the count, and writes nothing", async (_label, old, expected) => {
+        const state = withText(withSearchedSince("2026-10-09T09:00:00Z"));
+        state.proof_summaries[0].narrative_markdown = NARRATIVE + " the 1885 county estate file";
+        await writeProject(state);
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await editPs001([{ field: "narrative_markdown", old, new: "x" }]);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toMatch(expected);
+        await unchanged(before);
+      });
+
+      it("counts overlapping occurrences: '--' occurs twice in '---'", async () => {
+        const state = withText(withSearchedSince("2026-10-09T09:00:00Z"));
+        state.proof_summaries[0].narrative_markdown = "## C\nA---B";
+        await writeProject(state);
+        const r = await editPs001([{ field: "narrative_markdown", old: "--", new: "-" }]);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toContain("occurs 2 times");
+      });
+
+      it("inserts the new text literally, with no $ replacement patterns", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born $& in $$ 1850 $`" }]);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        expect((await readResearch()).proof_summaries[0].narrative_markdown).toContain("born $& in $$ 1850 $`");
+      });
+
+      it.each([
+        ["a field outside the two", { edits: [{ field: "tier", old: "probable", new: "possible" }] }, /must be "narrative_markdown" or "exhaustive_search_summary"/],
+        ["an empty old", { edits: [{ field: "narrative_markdown", old: "", new: "x" }] }, /non-empty string/],
+        ["the same field also in fields", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], fields: { narrative_markdown: "z" } }, /also set in `fields`/],
+        ["an unknown entryId", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], entryId: "ps_999" }, /naming an existing proof summary/],
+        ["no entryId", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], entryId: undefined }, /'\(none\)' is not one/],
+        ["a new equal to its old", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1850" }] }, /must change the text/],
+        ["a fields that is not an object", { edits: [{ field: "narrative_markdown", old: "born in 1850", new: "y" }], fields: "tier: possible" }, /must be an object/],
+      ])("refuses %s", async (_label, extra, expected) => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const { edits, ...rest } = extra as any;
+        const r = await editPs001(edits, rest);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toMatch(expected);
+        await unchanged(before);
+      });
+
+      it.each([
+        ["another section", { section: "questions", op: "update", entryId: "q_001" }],
+        ["an append", { section: "proof_summaries", op: "append", entry: { question_id: "q_009" } }],
+      ])("refuses edits on %s", async (_label, op) => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir, ops: [{ ...op, edits: [{ field: "narrative_markdown", old: "a", new: "b" }] }],
+        } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toMatch(/ops\[0\]: `edits` applies only to an update of `proof_summaries`/);
+        // The worked example is the refused op's own section and op, not a proof summary edit.
+        expect(r.errors.join("\n")).toContain(`worked example for '${op.section}'`);
+        expect(r.errors.join("\n")).not.toContain("edits: [");
+      });
+
+      it.each([["null", null], ["empty", []]])("treats a %s edits beside an ordinary update as absent", async (_label, edits) => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001(edits, { fields: { tier: "possible" } });
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        const r2 = await researchAppend({
+          projectPath: dir, ops: [{ section: "questions", op: "update", entryId: "q_001", fields: { status: "open" }, edits }],
+        } as never);
+        expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
+      });
+
+      it("recovers edits sent as a JSON string", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001(JSON.stringify([{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }]));
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        expect((await readResearch()).proof_summaries[0].narrative_markdown).toContain("born in 1851");
+      });
+
+      it("counts as setting the field: after a later search an edit to one field alone is refused", async () => {
+        await writeProject(withText(withSearchedSince()));
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }]);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("exhaustive_search_summary");
+        expect(msg).toContain("log_001");
+        expect(msg).toContain("edits: [");
+        await unchanged(before);
+      });
+
+      it("after a later search, edits to both fields pass", async () => {
+        await writeProject(withText(withSearchedSince()));
+        const r = await editPs001([
+          { field: "narrative_markdown", old: "born in 1850", new: "born in 1851" },
+          { field: "exhaustive_search_summary", old: "1850 census.", new: "1850 and 1860 censuses." },
+        ]);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      });
+
+      it("an op object sent again after it succeeded is not refused as setting the field twice", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const ops = [{ section: "proof_summaries", op: "update", entryId: "ps_001",
+          edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }] }];
+        const r = await researchAppend({ projectPath: dir, ops } as never);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        const r2 = await researchAppend({ projectPath: dir, ops } as never);
+        expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
+      });
+
+      it("edits the text an earlier op in the same batch set", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { narrative_markdown: "## C\nfirst draft" } },
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "first draft", new: "second draft" }] },
+          ],
+        } as never);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        expect((await readResearch()).proof_summaries[0].narrative_markdown).toBe("## C\nsecond draft");
+      });
+
+      it("edits the text an earlier edits op set in its fields", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "proof_summaries", op: "update", entryId: "ps_001",
+              fields: { exhaustive_search_summary: "census; first pass" },
+              edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }] },
+            { section: "proof_summaries", op: "update", entryId: "ps_001",
+              edits: [{ field: "exhaustive_search_summary", old: "first pass", new: "second pass" }] },
+          ],
+        } as never);
+        expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+        expect((await readResearch()).proof_summaries[0].exhaustive_search_summary).toBe("census; second pass");
+      });
+
+      it("edits nothing an earlier op in the same batch emptied", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { narrative_markdown: null } },
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }] },
+          ],
+        } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toMatch(/ops\[1\]: edits\[0\]: ps_001 has no `narrative_markdown` text/);
+      });
+
+      it("says a later op's refusal may follow from an earlier one", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "born in 1805", new: "born in 1851" }] },
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "1851 in Cork", new: "1851 in Cork, Ireland" }] },
+          ],
+        } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors[0]).toMatch(/^Fix the earliest failure first \(ops\[0\]\)/);
+        // Only the edits were checked, so the line must not claim the rest of the batch was.
+        expect(r.errors[0]).toContain("Only the batch's `edits` were checked");
+        expect(r.errors[0]).not.toContain("was checked, and the document validated");
+        // One refused op has nothing to follow from.
+        const one = await editPs001([{ field: "narrative_markdown", old: "born in 1805", new: "x" }]);
+        expect(one.ok).toBe(false);
+        if (one.ok) return;
+        expect(one.errors.join(" ")).not.toContain("Fix the earliest failure first");
+      });
+
+      it("says the batch's other ops were not checked when one edit is refused beside them", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "questions", op: "update", entryId: "q_001", fields: { status: "open" } },
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "born in 1805", new: "x" }] },
+          ],
+        } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors[0]).toMatch(/^Fix the earliest failure first \(ops\[1\]\) and send the batch again\. Only the batch's `edits` were checked/);
+      });
+
+      it("bounds the refusal text when every edit fails", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const edits = Array.from({ length: 2000 }, (_, k) => ({ field: "narrative_markdown", old: `absent ${k}`, new: "x" }));
+        const r = await editPs001(edits);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join("\n").length).toBeLessThan(20_000);
+      });
+
+      it.each([
+        ["alone", false],
+        ["in a batch", true],
+      ])("a refusal not about the narrative, on an op that edits it, is shown the plain example (%s)", async (_label, batch) => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const op = { section: "proof_summaries", op: "update", entryId: "ps_001", fields: { id: "ps_002" },
+          edits: [{ field: "narrative_markdown", old: "born in 1850", new: "born in 1851" }] };
+        const r = batch
+          ? await researchAppend({ projectPath: dir, ops: [op, { section: "questions", op: "update", entryId: "q_001", fields: { status: "open" } }] } as never)
+          : await researchAppend({ projectPath: dir, ops: [op] } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const text = r.errors.join("\n");
+        expect(text).toContain("must not change the entry id");
+        expect(text).toContain("worked example for 'proof_summaries'");
+        expect(text).not.toContain("edits: [");
+      });
+
+      it("a refused edit teaches the edit form, not a re-sent field", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await editPs001([{ field: "narrative_markdown", old: "absent text", new: "x" }]);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join("\n")).toContain("edits: [");
+      });
+
+      describe("the word budget", () => {
+        const words = (n: number) => "## C\nborn in 1850 " + Array(n - 5).fill("w").join(" ");
+        const atWords = async (n: number) => {
+          const state = withText(withSearchedSince("2026-10-09T09:00:00Z"));
+          state.proof_summaries[0].narrative_markdown = words(n);
+          await writeProject(state);
+        };
+        const updatePs001Batch = (fields: Record<string, unknown>, edits: unknown[]) =>
+          researchAppend({ projectPath: dir, ops: [{ section: "proof_summaries", op: "update", entryId: "ps_001", fields, edits }] } as never);
+        const budgetWarning = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "").match(/over the 500-word budget/);
+
+        it("does not warn on an edit to a narrative already over it", async () => {
+          await atWords(505);
+          const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in about 1850" }]);
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).toBeNull();
+        });
+
+        it("warns on an edit that takes the narrative over it", async () => {
+          await atWords(500);
+          const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in about 1850" }]);
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).not.toBeNull();
+        });
+
+        it("still warns on a whole narrative re-sent in fields beside an edit to the search summary", async () => {
+          await atWords(505);
+          const r = await updatePs001Batch({ narrative_markdown: words(510) },
+            [{ field: "exhaustive_search_summary", old: "1850 census.", new: "1850 and 1860 censuses." }]);
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).not.toBeNull();
+        });
+
+        it("still warns on a whole narrative re-sent in fields over it", async () => {
+          await atWords(505);
+          const r = await updatePs001({ narrative_markdown: words(506) });
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).not.toBeNull();
+        });
+      });
+
+      it("refuses before any network lookup: a batch with a checkable locality makes no place call", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        vi.mocked(checkFirstPlace).mockClear();
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "localities", op: "append", entry: {
+              place: "Norway", for_place: "Ringebu, Oppland, Norway",
+              jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
+              collections: [], quirks: [], pages_read: [{ section: "home", url: "u1", found: true }],
+              source: "locality-guide" } },
+            { section: "proof_summaries", op: "update", entryId: "ps_001",
+              edits: [{ field: "narrative_markdown", old: "absent text", new: "x" }] },
+          ],
+        } as never);
+        expect(r.ok).toBe(false);
+        expect(checkFirstPlace).not.toHaveBeenCalled();
+      });
+    });
+
     it("refuses the same tier-only then one-field sequence inside a single batch", async () => {
       await writeProject(withSearchedSince());
       const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -5201,6 +6087,8 @@ describe("research_append (project singleton section)", () => {
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────
 
+/** The warnings of a successful result, joined. */
+const warningsOfResult = (r: { ok: boolean }) => ((r as any).validation?.warnings ?? []).join("\n");
 const noId = (o: any) => {
   const { id: _omit, ...rest } = o;
   return rest;
@@ -5316,10 +6204,11 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    const msg = r.errors[0];
+    const msg = withoutLead(r.errors)[0];
     // #2108 CHANGED WHICH GUARD ANSWERS THIS. The terminal-plan deny throws in
-    // applyOne, which returns the batch at once, so emptyCreatedPlanErrors —
-    // a post-pass over the applied ops — never runs on a COMPLETED parent. This
+    // applyOne, so those items are not among the ops that applied, and
+    // emptyCreatedPlanErrors — a post-pass over the applied ops — never sees
+    // them on a COMPLETED parent. This
     // is the exact corpus shape (54 appends, 6 calls, 4 run logs, all
     // flynn-first-plan-surveyed/pl_001), so the deny now owns the corpus case
     // and the misroute arm keeps the ACTIVE-parent and same-call-sibling cases
@@ -5332,8 +6221,9 @@ describe("research_append (batch ops)", () => {
     expect(msg).toMatch(/settled audit trail and takes no new items/);
     // Inherited from the arm it preempts: name the plan THIS call created.
     expect(msg).toMatch(/This call created plan 'pl_002' — re-issue these items with planId 'pl_002'/);
-    // Blamed on the offending plan_items op, not the plans append.
-    expect(msg).toMatch(/^ops\[1\]:/);
+    // Blamed on the offending plan_items ops, not the plans append. Both are refused the same
+    // way, so one line names the two.
+    expect(msg).toMatch(/^ops\[1\], ops\[2\]:/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -5575,7 +6465,7 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    const msg = r.errors[0];
+    const msg = withoutLead(r.errors)[0];
     expect(msg).toMatch(/plans entry 'pl_001' is 'superseded' \(question 'q_001'\)/);
     expect(msg).not.toMatch(/different question/);
     expect(msg).not.toMatch(/another question/);
@@ -5631,7 +6521,7 @@ describe("research_append (batch ops)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    const msg = r.errors[0];
+    const msg = withoutLead(r.errors)[0];
     expect(msg).toMatch(/^ops\[2\]:/); // the terminal target, not the active one
     expect(msg).toMatch(/plans entry 'pl_002' is 'superseded' \(question 'q_001'\)/);
     expect(msg).not.toMatch(/different question/); // it is not a different one
@@ -5993,9 +6883,20 @@ describe("research_append (batch ops)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
-  // ── No new question while research is running, bar the conflict exception ──
-  // Every way the exception could be claimed without holding is its own refuse
-  // case; the accept cases are the ones that keep the gate escapable.
+  // ── No new question while another question is still open (step mode, E) ──
+  //
+  // This REPLACES the older in-flight gate, which keyed on `plan_items` standing
+  // at `in_progress` and so admitted a second question whenever the first
+  // happened to have no running item -- between two steps, or before planning
+  // had begun. Keying on the QUESTION is what makes "one question at a time"
+  // hold by rule rather than by accident of timing, and it is why several cases
+  // below now refuse what the old gate allowed.
+  //
+  // The three old escapes (a conflict's `unblocks`, a same-call resolve, a
+  // `selection_basis: "unresolved_conflict"` claim) are gone with it. Every one
+  // was a way for the model to assert its way past the gate; the single
+  // exemption that replaces them is a fact about the DOCUMENT -- a proof summary
+  // and nothing left to do -- which the model cannot claim without writing it.
   const newQ = (fields: Record<string, unknown> = {}) => {
     const { id: _i, created: _c, ...q } = validQuestion("x");
     return { projectPath: dir, section: "questions", op: "append", entry: { ...q, ...fields } } as any;
@@ -6013,82 +6914,172 @@ describe("research_append (batch ops)", () => {
     (r as any).conflicts = conflicts;
     return r;
   };
+  /** A proof summary for `questionId`, which is half of the one exemption. */
+  const summaryFor = (questionId: string) => ({
+    id: "ps_001",
+    question_id: questionId,
+    conclusion: "John Smith's parents were Thomas and Mary.",
+    tier: "not_proved",
+    supporting_assertion_ids: [],
+    created: "2026-01-02",
+  });
   const refusedFor = async (research: any, fields: Record<string, unknown>) => {
     await writeProject(research);
     const before = await readFile(join(dir, "research.json"), "utf-8");
     const r = await researchAppend(newQ(fields));
     expect(r.ok).toBe(false);
-    expect((errorsOf(r) ?? []).join("\n")).toMatch(/still running: pli_001 \(on q_001\)/);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/cannot be opened while another is still open/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   };
 
-  it("(in-flight) refuses the d01 shape: a question depending on the in-flight question", async () => {
+  it("(open-question) refuses the d01 shape: a question depending on the open one", async () => {
     await refusedFor(running(), { depends_on: ["q_001"] });
   });
-  it("(in-flight) refuses an unrelated question", async () => {
+  it("(open-question) refuses a second question appended in the same call", async () => {
+    // The gate reads the pre-call snapshot, so on a project with no question at all
+    // two appends in one batch each saw nothing open. Decision 4: one per run.
+    await writeProject(baseResearch());
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { projectPath: _p, section: _s, op: _o, entry } = newQ();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "questions", op: "append", entry },
+        { section: "questions", op: "append", entry: { ...entry, question: "A second question?" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/was opened earlier in this same call/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+  it("(open-question) one question in one call is still admitted on an empty project", async () => {
+    await writeProject(baseResearch());
+    const { projectPath: _p, section: _s, op: _o, entry } = newQ();
+    const r = await researchAppend({ projectPath: dir, ops: [{ section: "questions", op: "append", entry }] } as never);
+    expect(r.ok).toBe(true);
+  });
+  it("(open-question) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
   });
-  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+  it("(open-question) names the open question and offers the wrap-up, which is the way out", async () => {
+    // The refusal has to be actionable. "Write no question" alone leaves the
+    // model with nowhere to go; the wrap-up is what actually frees the project.
     await writeProject(running());
-    const r = await researchAppend(newQ());
-    const msg = (errorsOf(r) ?? []).join("\n");
-    expect(msg).toMatch(/as it stood before the call/);
-    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
+    const msg = (errorsOf(await researchAppend(newQ())) ?? []).join("\n");
+    expect(msg).toMatch(/q_001 \(open, pli_001 still to do\)/);
+    expect(msg).toMatch(/offer to wrap it up/);
+    expect(msg).toMatch(/disposes its remaining items and writes its proof summary/);
   });
-  it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
-    await refusedFor(running(), { unblocks: ["q_001"] });
-  });
-  it("(in-flight) refuses when the blocking conflict is resolved or moot", async () => {
+  it("(open-question) a conflict's unblocks no longer buys a way past the gate", async () => {
+    // All three old escapes were model assertions. Each is now just another
+    // refusal, and the model is sent to the wrap-up instead.
+    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: ["q_001"] });
     await refusedFor(running([conflict("resolved", ["q_001"])]), { unblocks: ["q_001"] });
     await refusedFor(running([conflict("moot", ["q_001"])]), { unblocks: ["q_001"] });
   });
-  it("(in-flight) refuses when a conflict blocks the question but unblocks does not name it", async () => {
-    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
-    await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
-  });
-  it("(in-flight) still refuses the d01 shape even when the delegation also claims selection_basis: unresolved_conflict", async () => {
+  it("(open-question) a selection_basis of unresolved_conflict no longer buys one either", async () => {
+    await refusedFor(running(), { selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] });
     await refusedFor(running(), { depends_on: ["q_001"], selection_basis: "unresolved_conflict" });
   });
+  it("(open-question) refuses an ordinary objective_decomposition question", async () => {
+    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
+  });
 
-  it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
-    await writeProject(running([conflict("unresolved", ["q_001"])]));
-    expect((await researchAppend(newQ({ depends_on: [], unblocks: ["q_001"] }))).ok).toBe(true);
-  });
-  it("(in-flight) allows a new question when the items are only planned", async () => {
+  // ── What the old gate let through and this one does not ──
+  it("(open-question) refuses when the items are only planned — the question is what blocks", async () => {
     await writeProject(attrResearch("planned", []));
-    expect((await researchAppend(newQ({ depends_on: ["q_001"] }))).ok).toBe(true);
+    const r = await researchAppend(newQ({ depends_on: ["q_001"] }));
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/q_001 \(open, pli_001 still to do\)/);
   });
-  it("(in-flight) ignores an in_progress item on a superseded plan", async () => {
+  it("(open-question) refuses on a superseded plan: no items outstanding, but no summary either", async () => {
+    // `activePlanItems` still ignores a superseded plan, so nothing is
+    // outstanding here -- and the question STILL blocks, because the exemption
+    // needs a proof summary too. Not an unrecoverable deny: wrapping up or
+    // resolving q_001 clears it.
     const research = attrResearch("in_progress", []);
     research.plans[0].status = "superseded";
     await writeProject(research);
-    expect((await researchAppend(newQ())).ok).toBe(true);
+    const r = await researchAppend(newQ());
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/q_001 \(open, no proof summary\)/);
   });
-  it("(in-flight) ignores an in_progress item left on a resolved question's plan", async () => {
+  it("(open-question) refuses with no plans at all — a question blocks before planning begins", async () => {
+    const research = attrResearch("in_progress", []);
+    research.plans = [] as any;
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(false);
+  });
+
+  // ── The accepts: what keeps the gate escapable ──
+  it("(open-question) allows one past a resolved question", async () => {
     const research = attrResearch("in_progress", []);
     research.questions[0].status = "resolved";
     await writeProject(research);
     expect((await researchAppend(newQ())).ok).toBe(true);
   });
-  it("(in-flight) does not fire on an update to an existing question", async () => {
+  it("(open-question) allows one past a concluded question with nothing left to do", async () => {
+    // The exemption, both halves present: proof-conclusion wrote a summary but
+    // had to leave the question open (an identity conflict at `not_proved`),
+    // and its plan has no outstanding item.
+    const research = attrResearch("completed", []);
+    (research as any).proof_summaries = [summaryFor("q_001")];
+    await writeProject(research);
+    const r = await researchAppend(newQ());
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(open-question) needs BOTH halves: a summary with an item still to do still blocks", async () => {
+    // E's own route can hand a concluded question fresh searches. While those
+    // are open, the next question waits.
+    const research = attrResearch("in_progress", []);
+    (research as any).proof_summaries = [summaryFor("q_001")];
+    await writeProject(research);
+    const r = await researchAppend(newQ());
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/q_001 \(open, pli_001 still to do\)/);
+  });
+  it("(open-question) needs BOTH halves: nothing to do but no summary still blocks", async () => {
+    const research = attrResearch("completed", []);
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(false);
+  });
+  it("(open-question) a resources_spent stop is not a conclusion and does not unlock the project", async () => {
+    // The "not exhaustive" choice writes one of these. Admitting a new question
+    // here would leave q_001 unconcluded without the researcher being asked.
+    const research = attrResearch("completed", []);
+    research.questions[0].search_stop = {
+      stopped_because: "resources_spent", log_entry_ids: [], stop_criteria: null, not_reached: [],
+    } as any;
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(false);
+  });
+  it("(open-question) an item waiting only on an upload does not count as work in progress", async () => {
+    // Section I: the researcher is the blocker, so the question would otherwise
+    // be locked by a hand-off nobody inside the project can close.
+    const research = attrResearch("in_progress", []);
+    (research as any).proof_summaries = [summaryFor("q_001")];
+    (research as any).log = [
+      {
+        id: "log_001",
+        performed: "2026-01-02T00:00:00Z",
+        tool: "external_site",
+        plan_item_id: "pli_001",
+        query: {},
+        results_examined: 0,
+        outcome: "partial",
+        external_site: { site: "ancestry", url_generated: "https://example.test/x", capture_received: false },
+      },
+    ];
+    await writeProject(research);
+    const r = await researchAppend(newQ());
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(open-question) does not fire on an update to an existing question", async () => {
     const research = attrResearch("in_progress", []);
     research.questions = [{ ...validQuestion("q_001") }, { ...validQuestion("q_002"), depends_on: ["q_001"] }];
     await writeProject(research);
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
     expect(r.ok).toBe(true);
-  });
-
-  // ── issue #3259: the person_warnings-contradiction exception ──
-  // Unlike the conflict exception, not scoped to `unblocks` naming the
-  // in-flight question -- a contradiction found this call need not be about
-  // whatever is already in progress.
-  it("(in-flight) allows the person_warnings-contradiction exception: selection_basis unresolved_conflict, no unblocks, no conflicts[] entry at all", async () => {
-    await writeProject(running());
-    const r = await researchAppend(newQ({ selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] }));
-    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
-  });
-  it("(in-flight) still refuses an ordinary objective_decomposition question while an item is in-flight", async () => {
-    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
   });
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
@@ -6681,7 +7672,7 @@ describe("research_append (batch ops)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/^ops\[1\]:.*already has an active plan/);
+    expect(withoutLead(r.errors)[0]).toMatch(/^ops\[1\]:.*already has an active plan/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -6789,6 +7780,776 @@ describe("research_append (batch ops)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/non-empty/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // A string `ops` that will not parse used to surface as "`ops` must be a
+  // non-empty array" alone, and the model had nothing to fix. The refusal now
+  // carries the engine's own parse message and, where V8 gives none, the offset.
+  describe("a string `ops` that will not parse names why", () => {
+    /** The engine's own message for `text`, taken from the engine, not retyped. */
+    const engineMessage = (text: string): string => {
+      try {
+        JSON.parse(text);
+      } catch (e) {
+        return (e as Error).message;
+      }
+      throw new Error("the fixture parses");
+    };
+    const refuse = async (ops: unknown) => {
+      await writeProject();
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({ projectPath: dir, ops: ops as any });
+      expect(r.ok).toBe(false);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      return errorsOf(r) ?? [];
+    };
+
+    it("a syntax error in the middle: the engine's message and the offset of the stray comma", async () => {
+      const bad = '[{"section":"sources","op":"append",}]';
+      const errors = await refuse(bad);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatch(/^`ops` must be a non-empty array/);
+      expect(errors[0]).toContain(engineMessage(bad));
+      // The offset is checked against the position of the defect in the fixture,
+      // not re-derived from the message the way the implementation reads it.
+      expect(errors[0]).toContain(`position ${bad.indexOf(",}") + 1}`);
+      // V8's message already carries the position, so it is not said twice.
+      expect(errors[0]).not.toMatch(/\(offset /);
+    });
+
+    it("cut off at the end: V8 gives no position, so the offset is the end of the string", async () => {
+      const bad = '[{"section":';
+      const errors = await refuse(bad);
+      expect(errors[0]).toContain(engineMessage(bad));
+      expect(errors[0]).toContain(`(offset ${bad.length})`);
+    });
+
+    it("an unexpected token: the engine's message, which quotes the text, and no offset", async () => {
+      const bad = '[{"a":None}]';
+      const errors = await refuse(bad);
+      expect(errors[0]).toContain(engineMessage(bad));
+      expect(errors[0]).toContain("None");
+      expect(errors[0]).not.toMatch(/offset|position/);
+    });
+
+    it("names the reason for a stringified batch that has other text after it", async () => {
+      const bad = '[{"section":"sources","op":"append","entry":{}}] and then some prose';
+      const errors = await refuse(bad);
+      expect(errors[0]).toContain(engineMessage(bad));
+      // The first character V8 cannot place is the `a` of "and", just after the space.
+      expect(errors[0]).toContain(`position ${bad.indexOf("and then")}`);
+    });
+
+    it("says nothing about JSON when the string parses to something that is not an array", async () => {
+      for (const ok of ['{"section":"sources","op":"append"}', "[]", "null", "5"]) {
+        const errors = await refuse(ok);
+        expect(errors, ok).toEqual(["`ops` must be a non-empty array"]);
+      }
+    });
+
+    it("a JSON string literal is decoded ONCE, and what is judged is the text inside it", async () => {
+      // `"[{bad"` as sent is a valid JSON string; the batch inside it is not, and its error is named.
+      const inner = "[{bad";
+      const errors = await refuse(JSON.stringify(inner));
+      expect(errors[0]).toContain(engineMessage(inner));
+      // A literal holding a VALID batch is still a string after that one decode: not a batch, so
+      // refused and not applied (and `researchAppendFromCaller` decodes the same way, once).
+      const batch = JSON.stringify([{ section: "sources", op: "append", entry: noId(validSource("x")) }]);
+      expect(await refuse(JSON.stringify(batch))).toEqual(["`ops` must be a non-empty array"]);
+    });
+
+    it("says nothing about JSON when ops was never a string", async () => {
+      for (const notAString of [{}, 5, true, []]) {
+        const errors = await refuse(notAString);
+        expect(errors, JSON.stringify(notAString)).toEqual(["`ops` must be a non-empty array"]);
+      }
+    });
+
+    it("a valid stringified batch is still applied, not refused", async () => {
+      await writeProject();
+      const good = JSON.stringify([{ section: "sources", op: "append", entry: noId(validSource("x")) }]);
+      const r = await researchAppend({ projectPath: dir, ops: good as any });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
+
+    it("jsonParseFailure: undefined for a non-string and for text that parses; message and offset otherwise", () => {
+      expect(jsonParseFailure(undefined)).toBeUndefined();
+      expect(jsonParseFailure(5)).toBeUndefined();
+      expect(jsonParseFailure({ a: 1 })).toBeUndefined();
+      expect(jsonParseFailure("[1,2]")).toBeUndefined();
+      expect(jsonParseFailure("null")).toBeUndefined();
+      expect(jsonParseFailure('{"a":1,}')).toEqual({ message: engineMessage('{"a":1,}'), offset: 7 });
+      expect(jsonParseFailure("[1,")).toEqual({ message: engineMessage("[1,"), offset: 3 });
+      expect(jsonParseFailure("[1,]")).toEqual({ message: engineMessage("[1,]"), offset: null });
+      expect(jsonParseFailure("")).toEqual({ message: engineMessage(""), offset: 0 });
+      expect(jsonParseFailure("nope")).toEqual({ message: engineMessage("nope"), offset: null });
+    });
+
+    it("jsonParseFailure: a 'position N' inside the text V8 quotes is not a position", async () => {
+      // V8 quotes the caller's text in its "Unexpected token" message and gives no position there.
+      // The first "position N" in the message is then the caller's own, and the defect is at index 15.
+      const quoted = '["position 5", x]';
+      expect(engineMessage(quoted)).toContain("position 5");
+      expect(jsonParseFailure(quoted)).toEqual({ message: engineMessage(quoted), offset: null });
+      // A message that does end with V8's position still gives it, wherever the text says "position".
+      const both = '{"a":"position 9",}';
+      expect(engineMessage(both)).toMatch(/ at position \d+/);
+      expect(jsonParseFailure(both)?.offset).toBe(both.indexOf(",}") + 1);
+      // Through the tool: no `(offset N)` is invented from the quoted text either.
+      const errors = await refuse(quoted);
+      expect(errors[0]).toContain(engineMessage(quoted));
+      expect(errors[0]).not.toMatch(/\(offset /);
+    });
+  });
+});
+
+// ─── Every op's errors ───────────────────────────────────────────────────────
+//
+// A batch used to stop at its first failing op, so a batch with several bad ops
+// was sent round once per op. Every failing op is now reported, with the
+// whole-document check run on the ops that applied, and nothing is written.
+// `applyOne` mutates the document in place and most of its refusals come after
+// the entry is already in it, so each op is judged against a copy of the
+// document and a failed op leaves no trace for the ops after it
+// (`everyOpFailure`). That is what the one added line says, so the tests below
+// pin it, and pin that the file is byte-identical after every failed batch.
+
+describe("research_append (batch ops) — every op's errors", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-every-op-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+
+  /** The one line that leads a refusal that looked past its first failure. */
+  const NOTE = /^Fix the earliest failure first \(ops\[(\d+)\]\) and send the batch again\. The rest of the batch was checked, and the document validated, without the failed ops applied/;
+  const noteOf = (errors: string[]) => errors.filter((e) => NOTE.test(e));
+  /** The `ops[i]: …` lines, which are every op's own errors, and `ops[i], ops[j]: …` for ops that said the
+   *  same thing. Hints and the note do not start that way. */
+  const opLines = (errors: string[]) => errors.filter((e) => /^ops\[\d+\](, ops\[\d+\])*: /.test(e));
+
+  /** Run a batch that must fail, check it wrote nothing, and hand back the refusal. */
+  const refuse = async (ops: unknown[], research: any = baseResearch(), tree: any = baseTree, options?: any) => {
+    await writeProject(research, tree);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({ projectPath: dir, ops } as any, options);
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error("expected a refusal");
+    // All-or-nothing, whichever way the call got here.
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    return r;
+  };
+
+  // Refused before anything is written to the document: the entry carries an id,
+  // or names an entry that is not there.
+  const carriesAnId = { section: "hypotheses", op: "append", entry: { id: "h_001", ...validHypothesis() } };
+  const unknownConflict = { section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } };
+  const goodHypothesis = { section: "hypotheses", op: "append", entry: validHypothesis() };
+
+  it("reports every failing op in op order, adds the one line, and writes nothing", async () => {
+    const r = await refuse([carriesAnId, unknownConflict]);
+    const lines = opLines(r.errors);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatch(/^ops\[0\]: .*must not carry an id/);
+    expect(lines[1]).toMatch(/^ops\[1\]: entryId 'c_999' not found in 'conflicts'/);
+    expect(noteOf(r.errors)).toHaveLength(1);
+    expect(NOTE.exec(noteOf(r.errors)[0])![1]).toBe("0");
+    // The line leads: it says what to do with every error after it.
+    expect(r.errors[0]).toMatch(NOTE);
+    expect(r.opsReceived).toBe(2);
+  });
+
+  it("names the failing ops and not the ones that held, wherever they sit", async () => {
+    const r = await refuse([carriesAnId, goodHypothesis, unknownConflict]);
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "2"]);
+    expect(r.opsReceived).toBe(3);
+  });
+
+  it("a failed op leaves no trace: the op after it is judged without it", async () => {
+    // The project already has an active plan for q_001. ops[0] appends a second
+    // one, which the one-active-plan rule refuses AFTER the plan is already in the
+    // document. ops[1] names the id that plan would have taken. If the refused
+    // plan stayed in the document, ops[1] would find it and pass.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    const r = await refuse(
+      [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines[0]).toMatch(/^ops\[0\]:.*already has an active plan/);
+    expect(lines[1]).toMatch(/^ops\[1\]: plans entry 'pl_002' not found/);
+    expect(noteOf(r.errors)).toHaveLength(1);
+  });
+
+  it("a failure that is not the first leaves no trace either", async () => {
+    // The first failure is skipped when the rest is judged, since the judging starts from
+    // the document as the call found it. A LATER failure is the one that has to be undone:
+    // ops[1] is refused after its plan is already in the document, and ops[2] names the id
+    // that plan would have taken.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")])] as any;
+    const r = await refuse(
+      [
+        unknownConflict,
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "1", "2"]);
+    expect(lines[1]).toMatch(/already has an active plan/);
+    expect(lines[2]).toMatch(/^ops\[2\]: plans entry 'pl_002' not found/);
+  });
+
+  it.each([
+    ["the first failure", 0],
+    ["a later failure", 1],
+  ])("a failed UPDATE that is %s leaves no trace either: its merged fields are not seen by the op after it", async (_label, leading) => {
+    // pl_002 is completed. The update sets it active, which the one-active-plan rule
+    // refuses AFTER the merge is already in the document. The plan_items op after it
+    // reads the plan's status live: refused as a completed plan if the merge was undone,
+    // accepted if it was not.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+      validPlan("pl_002", "q_001", "completed", [seededPlanItem("pli_002")]),
+    ] as any;
+    const r = await refuse(
+      [
+        ...(leading ? [unknownConflict] : []),
+        { section: "plans", op: "update", entryId: "pl_002", fields: { status: "active" } },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines.some((l) => new RegExp(`^ops\\[${leading}\\]:.*already has an active plan`).test(l)), r.errors.join("\n")).toBe(true);
+    expect(lines.some((l) => new RegExp(`^ops\\[${leading + 1}\\]:.*plans entry 'pl_002' is 'completed'`).test(l)), r.errors.join("\n")).toBe(true);
+  });
+
+  it("still runs the whole-document check on the ops that applied, labelled with the op's own index", async () => {
+    // ops[1] is accepted by its own checks and refused by the document check, and it
+    // is the FIRST op that applied, so its place among the applied ops is 0.
+    const r = await refuse([unknownConflict, { section: "hypotheses", op: "append", entry: { ...validHypothesis(), status: "bogus" } }]);
+    const lines = opLines(r.errors);
+    expect(lines[0]).toMatch(/^ops\[0\]: entryId 'c_999' not found/);
+    const documentLines = lines.filter((l) => /research\.json\//.test(l));
+    expect(documentLines.length, r.errors.join("\n")).toBeGreaterThan(0);
+    expect(documentLines.every((l) => l.startsWith("ops[1]: research.json/hypotheses[0]"))).toBe(true);
+  });
+
+  it("keeps the cause-naming misroute message, labelled with the plans op's own index", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")])] as any;
+    const r = await refuse(
+      [
+        unknownConflict,
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002, left empty
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // wrote into another plan
+      ],
+      research,
+    );
+    const misroute = opLines(r.errors).find((l) => /plan 'pl_002' was created for question 'q_001' and ends this call with no items/.test(l));
+    expect(misroute, r.errors.join("\n")).toBeDefined();
+    expect(misroute).toMatch(/^ops\[1\]:/);
+    // …and the worked example the success path attaches to it.
+    expect(r.errors.some((e) => e.startsWith("worked example for 'plans'"))).toBe(true);
+  });
+
+  it("re-applies the ops as they were, so a first-pass push into a shared items array is not applied twice", async () => {
+    // The plan's `items` array is shared between the op and the document, and
+    // ops[1] pushes into it. Replaying ops mutated by the first pass would give
+    // the plan the item twice and report its refusal twice.
+    const r = await refuse([
+      { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+      { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "bogus" }, planId: "pl_001" },
+      unknownConflict,
+    ], (() => { const x = baseResearch(); x.questions = [validQuestion("q_001")]; return x; })());
+    const itemErrors = r.errors.filter((e) => /plans\[0\]\/items\[\d+\]/.test(e));
+    expect(itemErrors, r.errors.join("\n")).toHaveLength(1);
+    expect(itemErrors[0]).toMatch(/items\[0\]/);
+  });
+
+  it("the line names the first failure, wherever it sits", async () => {
+    const r = await refuse([goodHypothesis, carriesAnId, unknownConflict]);
+    expect(opLines(r.errors).map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["1", "2"]);
+    expect(noteOf(r.errors)).toHaveLength(1);
+    expect(NOTE.exec(noteOf(r.errors)[0])![1]).toBe("1");
+  });
+
+  it("an id a failed op would have taken is not counted as created in this call for the ops after it", async () => {
+    // ops[1] appends a second active plan, refused after it is already in the
+    // document (it would have been pl_003). ops[2] then writes into the COMPLETED
+    // pl_002, and that refusal says whether this call created a plan. It created
+    // none that stands, so it must not send the caller to pl_003.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+      validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]),
+    ] as any;
+    const r = await refuse(
+      [
+        unknownConflict,
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+      research,
+    );
+    const lines = opLines(r.errors);
+    expect(lines.some((l) => /^ops\[1\]:.*already has an active plan/.test(l))).toBe(true);
+    const terminal = lines.find((l) => /^ops\[2\]:.*plans entry 'pl_002' is 'completed'/.test(l));
+    expect(terminal, r.errors.join("\n")).toBeDefined();
+    expect(terminal).not.toContain("This call created plan");
+    expect(terminal).not.toContain("pl_003");
+  });
+
+  it("adds no line when the only failure is the last op", async () => {
+    const r = await refuse([goodHypothesis, unknownConflict]);
+    expect(opLines(r.errors)).toHaveLength(1);
+    expect(opLines(r.errors)[0]).toMatch(/^ops\[1\]:/);
+    expect(noteOf(r.errors)).toEqual([]);
+  });
+
+  it("a single-op batch fails with its own errors alone", async () => {
+    const r = await refuse([carriesAnId]);
+    expect(opLines(r.errors)).toHaveLength(1);
+    expect(noteOf(r.errors)).toEqual([]);
+    expect(r.opsReceived).toBe(1);
+  });
+
+  it("firstFailureOnly keeps the first-failure answer: one op's errors, no leading line, one worked example", async () => {
+    const r = await refuse([carriesAnId, unknownConflict, goodHypothesis], baseResearch(), baseTree, { firstFailureOnly: true });
+    expect(opLines(r.errors)).toHaveLength(1);
+    expect(opLines(r.errors)[0]).toMatch(/^ops\[0\]: .*must not carry an id/);
+    expect(noteOf(r.errors)).toEqual([]);
+    expect(r.errors.filter((e) => e.startsWith("worked example for '"))).toHaveLength(1);
+    expect(r.opsReceived).toBe(3);
+  });
+
+  it("a non-string entryId is refused like any other op's fault, and the ops after it are still judged", async () => {
+    // A numeric entryId used to make applyOne throw a TypeError from `.startsWith`, which hid
+    // every other later refusal. It is refused where it is first read, with a message that says
+    // what a valid one looks like.
+    const r = await refuse([
+      unknownConflict,
+      { section: "hypotheses", op: "update", entryId: 12, fields: { claim: "x" } },
+      carriesAnId,
+    ]);
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "1", "2"]);
+    expect(lines[1]).toMatch(/^ops\[1\]: update `entryId` must be a string such as 'h_001', got number 12/);
+    expect(r.errors[0]).toMatch(NOTE);
+    expect(r.opsReceived).toBe(3);
+  });
+
+  it("a non-string entryId is refused on a single op too, as a refusal and not a crash", async () => {
+    for (const bad of [12, { id: "h_001" }, ["h_001"], true]) {
+      const r = await refuse([{ section: "hypotheses", op: "update", entryId: bad, fields: { claim: "x" } }]);
+      expect(r.errors[0], JSON.stringify(bad)).toMatch(/update `entryId` must be a string such as 'h_001', got/);
+    }
+  });
+
+  it("an op that throws instead of being refused is reported as one that could not be checked, and does not hide the others", async () => {
+    // A BigInt `match_score` makes the score gate throw a TypeError while it builds its refusal
+    // (JSON.stringify cannot serialize it). Pass one never reaches it, since ops[0] fails first.
+    const throws = {
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: "a_999", person_id: "I1", confidence: "confident", match_score: 5n, rationale: "x" },
+    };
+    const r = await refuse([unknownConflict, throws, carriesAnId]);
+    const lines = opLines(r.errors);
+    expect(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1])).toEqual(["0", "1", "2"]);
+    expect(lines[1]).toMatch(/^ops\[1\]: could not be checked: .*BigInt/);
+    expect(lines[0]).toMatch(/entryId 'c_999' not found/);
+    expect(lines[2]).toMatch(/must not carry an id/);
+  });
+
+  it("attaches the worked example for each failing section, in op order, at most two", async () => {
+    const r = await refuse([carriesAnId, unknownConflict, { section: "timelines", op: "update", entryId: "t_999", fields: { label: "x" } }]);
+    const examples = r.errors.filter((e) => e.startsWith("worked example for '"));
+    // The first failure alone would give one example (hypotheses): the second is what each
+    // failing section means. The third failing section is past the cap of two.
+    expect(examples.map((e) => /^worked example for '([a-z_]+)'/.exec(e)![1])).toEqual(["hypotheses", "conflicts"]);
+  });
+
+  // What the second pass judges each op against is the document as the call found it, less the
+  // ops that failed: not the document the first pass left behind, which holds a refused op's merge.
+  describe("an op is judged without the failed ops, and without what the first pass did to the document", () => {
+    const linkTo = (assertionId: string) => ({
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: assertionId, person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "match" },
+    });
+
+    it("a correct link before a refused assertion update is not blamed for the update", async () => {
+      // a_001 has a recorded same_person score for I1, so the link holds on its own. The update
+      // after it moves the assertion to another record and is refused, and by then the first pass
+      // has merged its fields into the live assertion.
+      await writeProject();
+      await attestPairing(dir);
+      const alone = await researchAppend({ projectPath: dir, ops: [linkTo("a_001")] } as any);
+      expect(errorsOf(alone) ?? []).toEqual([]);
+      expect(alone.ok).toBe(true);
+
+      await writeProject();
+      const bad = { section: "assertions", op: "update", entryId: "a_001", fields: { record_id: "recX", record_basis: "absent" } };
+      const r = await refuse([linkTo("a_001"), bad]);
+      // Only the update is blamed (it breaks two rules, so two lines name it), and no line is about the link.
+      expect([...new Set(opLines(r.errors).map((l) => /^ops\[(\d+)\]/.exec(l)![1]))]).toEqual(["1"]);
+      expect(r.errors.join("\n")).not.toMatch(/same_person/);
+      // The refused op is last and nothing else is wrong, so there is nothing for the line to caveat.
+      expect(noteOf(r.errors)).toEqual([]);
+    });
+
+    it("an assertion update that HOLDS is seen by the link after it, exactly as it is when nothing else fails", async () => {
+      // The other direction: the second pass starts from the document as the call found it, but each op is
+      // judged against the ops before it that held. The update moves a_001 to rec2, and the pairing is
+      // attested for rec1 only, so the link is refused: by the call on its own, and by the second pass
+      // (the link is not the first failure, so it is the second pass that judges it).
+      const update = { section: "assertions", op: "update", entryId: "a_001", fields: { record_id: "rec2" } };
+      const verdictOn = (errors: string[], index: number) =>
+        opLines(errors).filter((l) => l.startsWith(`ops[${index}]`)).map((l) => l.replace(/^ops\[\d+\]: /, ""));
+      await writeProject();
+      await attestPairing(dir);
+      const alone = await researchAppend({ projectPath: dir, ops: [update, linkTo("a_001")] } as any);
+      expect(alone.ok).toBe(false);
+      const expected = verdictOn(errorsOf(alone) ?? [], 1);
+      expect(expected).not.toEqual([]);
+      const r = await refuse([unknownConflict, update, linkTo("a_001")]);
+      expect(verdictOn(r.errors, 2)).toEqual(expected);
+    });
+
+    it("proof-conclusion's own batch, [proof summary, question resolved], leads with the line when the summary is refused", async () => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      research.person_evidence = liveLinks("a_001") as any;
+      const r = await refuse(
+        [
+          {
+            section: "proof_summaries",
+            op: "append",
+            entry: {
+              question_id: "q_001", tier: "probable", vehicle: "summary", shortfall: "none",
+              supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+              exhaustive_search_summary: "Searched census", narrative_markdown: "## Conclusion\nJohn was born in 1850.",
+            },
+          },
+          { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved", resolved: "2026-10-22", resolution_assertion_ids: ["a_001"] } },
+        ],
+        research,
+      );
+      // The line leads and names the fault to fix first. The question update is refused only
+      // because no proof summary exists, and it is listed after the line, where it can be read as
+      // what it is.
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(NOTE.exec(r.errors[0])![1]).toBe("0");
+      const lines = opLines(r.errors);
+      expect(lines[0]).toMatch(/^ops\[0\]: .*shortfall 'none'/);
+      const resolved = lines.find((l) => /^ops\[1\]: question q_001 cannot be marked resolved/.test(l));
+      expect(resolved, r.errors.join("\n")).toBeDefined();
+      expect(r.errors.indexOf(resolved!)).toBeGreaterThan(r.errors.indexOf(lines[0]));
+    });
+
+    it("a plan whose own item op was refused is not called misrouted, and no advice to move items is given", async () => {
+      // ops[1] puts an item into the plan ops[0] creates and is refused on its own account. ops[2] is
+      // a legitimate item for another question's plan. Reading the empty plan as a misroute told the
+      // caller to put ops[2]'s item into the new plan too.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+      research.plans = [validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")])] as any;
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // pl_002
+          { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "completed" }, planId: "pl_002" },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+        ],
+        research,
+      );
+      const text = r.errors.join("\n");
+      expect(text).not.toMatch(/was created for question .* ends this call with no items/);
+      expect(text).not.toContain("must carry the id the tool assigned");
+      expect(text).not.toContain("Never a hard-coded");
+      const lines = opLines(r.errors);
+      expect(lines.some((l) => /^ops\[1\]: plan_items\[pli_\d+\]: an appended item cannot arrive 'completed'/.test(l))).toBe(true);
+      // The legitimate item is not blamed for anything.
+      expect(lines.some((l) => l.startsWith("ops[2]:"))).toBe(false);
+      // The new plan is empty, which the document check says, and the line leads because of it.
+      expect(lines.some((l) => /^ops\[0\]: research\.json\/plans\[1\]\/items/.test(l))).toBe(true);
+      expect(r.errors[0]).toMatch(NOTE);
+    });
+
+    it("a plan whose item ops were ALL refused is not called misrouted either", async () => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      const completed = { ...validPlanItem(), status: "completed" };
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+          { section: "plan_items", op: "append", entry: completed, planId: "pl_001" },
+          { section: "plan_items", op: "append", entry: completed, planId: "pl_001" },
+        ],
+        research,
+      );
+      expect(r.errors.join("\n")).not.toMatch(/ends this call with no items/);
+      // Each item op is refused in its own words: the second would have been pli_002 in the batch.
+      const lines = opLines(r.errors);
+      expect(lines.some((l) => /^ops\[1\]: plan_items\[pli_001\]/.test(l))).toBe(true);
+      expect(lines.some((l) => /^ops\[2\]: plan_items\[pli_002\]/.test(l))).toBe(true);
+    });
+
+    it("a failure on the LAST op leads with the line when the document check blames an earlier, correct op", async () => {
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // the shell, which is fine
+          { section: "plan_items", op: "append", entry: { ...validPlanItem(), status: "completed" }, planId: "pl_001" },
+        ],
+        research,
+      );
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(NOTE.exec(r.errors[0])![1]).toBe("1");
+      expect(opLines(r.errors).some((l) => /^ops\[0\]: research\.json\/plans\[0\]\/items: is empty/.test(l))).toBe(true);
+    });
+
+    it("a failed plan append keeps its id: the id a later message names is the one the fixed batch assigns", async () => {
+      // pl_001 is q_001's active plan and pl_002 is completed. ops[0] appends a second active plan for
+      // q_001 and is refused (it would have been pl_003). ops[1] appends q_003's plan, which is pl_004 once
+      // ops[0] is fixed. ops[2] writes into the COMPLETED pl_002, and that refusal names the plan this call created.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
+      research.plans = [
+        validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+        validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]),
+      ] as any;
+      const r = await refuse(
+        [
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_003", "active")) },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+        ],
+        research,
+      );
+      const terminal = opLines(r.errors).find((l) => /^ops\[2\]:.*plans entry 'pl_002' is 'completed'/.test(l));
+      expect(terminal, r.errors.join("\n")).toBeDefined();
+      expect(terminal).toContain("This call created plan 'pl_004'");
+      // Ground truth: fix ops[0] as its own message says (supersede the active plan first), and the plan
+      // for q_003 is the one the message named.
+      await writeProject(research);
+      const fixed = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plans", op: "update", entryId: "pl_001", fields: { status: "superseded" } },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_003", "active")) },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_003" },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_004" },
+        ],
+      } as any);
+      expect(errorsOf(fixed) ?? []).toEqual([]);
+      expect(fixed.ok).toBe(true);
+      const created = (fixed as any).results.filter((x: any) => x.section === "plans" && x.op === "append").map((x: any) => x.entryId);
+      expect(created).toEqual(["pl_003", "pl_004"]);
+    });
+
+    it("a failed UPDATE takes no id: the append after it gets the next one", async () => {
+      // ops[0] is a plans update that is refused, so it is not an append. ops[1] creates q_003's plan,
+      // pl_003. ops[2] writes into the COMPLETED pl_002, and that refusal names the plan this call created.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
+      research.plans = [
+        validPlan("pl_001", "q_001", "active", [seededPlanItem("pli_001")]),
+        validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]),
+      ] as any;
+      const r = await refuse(
+        [
+          { section: "plans", op: "update", entryId: "pl_999", fields: { status: "superseded" } },
+          { section: "plans", op: "append", entry: noId(validPlan("x", "q_003", "active")) },
+          { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+        ],
+        research,
+      );
+      expect(opLines(r.errors).some((l) => /^ops\[0\]: entryId 'pl_999' not found in 'plans'/.test(l))).toBe(true);
+      const terminal = opLines(r.errors).find((l) => /^ops\[2\]:.*plans entry 'pl_002' is 'completed'/.test(l));
+      expect(terminal, r.errors.join("\n")).toContain("This call created plan 'pl_003'");
+    });
+
+    describe("a failed assertion append keeps its id", () => {
+      // The attachment shape of a link (extraction_append's personId mode) skips the score gate, which
+      // refuses any link to an assertion the same call creates, so the ids are what is left to judge.
+      const speculativeLink = (assertionId: string) => ({
+        section: "person_evidence",
+        op: "append",
+        entry: { assertion_id: assertionId, person_id: "I1", confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE },
+      });
+      const batch = (failing: object) => [
+        failing,
+        { section: "assertions", op: "append", entry: noId(validAssertion("x")) }, // a_003 once the first is fixed
+        speculativeLink("a_003"),
+        speculativeLink("a_002"), // the id the failed op would have taken: nothing has it
+      ];
+
+      it.each([
+        ["one refused before it takes an id (the entry carries one)", { section: "assertions", op: "append", entry: { id: "a_777", ...noId(validAssertion("x")) } }],
+        ["one refused after it is in the document (a record_basis it cannot have)", { section: "assertions", op: "append", entry: { ...noId(validAssertion("x")), record_basis: "absent" } }],
+      ])("%s: a link to the id the next append takes is judged against it, and one to the failed id is refused", async (_label, failing) => {
+        const r = await refuse(batch(failing), baseResearch(), baseTree, { attachmentLink: true });
+        const lines = opLines(r.errors);
+        expect([...new Set(lines.map((l) => /^ops\[(\d+)\]/.exec(l)![1]))], r.errors.join("\n")).toEqual(["0", "3"]);
+        expect(lines[lines.length - 1]).toMatch(/^ops\[3\]: .*references assertion 'a_002' which does not exist/);
+        expect(r.errors[0]).toMatch(NOTE);
+      });
+    });
+  });
+
+  // A batch built by code can break one rule in every op, and `extraction_append` returns the errors
+  // twice. The list collapses lines that differ only in the op they name, and is capped.
+  describe("the list of errors is collapsed and capped", () => {
+    const lane = { allowedSections: new Set(["sources", "assertions"]), toolName: "extraction_append" };
+    const textLength = (errors: string[]) => errors.filter((e) => !e.startsWith("worked example")).join("").length;
+
+    it("lines that differ only in the op they name become one line naming the ops", async () => {
+      const r = await refuse([
+        carriesAnId,
+        { section: "conflicts", op: "update", entryId: "c_999", fields: { status: "moot" } },
+        carriesAnId,
+        { section: "conflicts", op: "update", entryId: "c_998", fields: { status: "moot" } },
+      ]);
+      const lines = opLines(r.errors);
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toMatch(/^ops\[0\], ops\[2\]: .*must not carry an id/);
+      expect(lines[1]).toMatch(/^ops\[1\]: entryId 'c_999' not found/);
+      expect(lines[2]).toMatch(/^ops\[3\]: entryId 'c_998' not found/);
+    });
+
+    it("sixty assertions that all break one rule: the same few lines naming the ops, far under the spill line, the line and the examples kept", async () => {
+      const source = noId(validSource("x")) as Record<string, unknown>;
+      delete source.gedcomx_source_description_id;
+      const ops: unknown[] = [{ section: "sources", op: "append", entry: source }];
+      for (let i = 0; i < 60; i++) {
+        ops.push({
+          section: "assertions",
+          op: "append",
+          entry: { ...noId(validAssertion("x")), source_id: undefined, record_id: "rec9", value: `v${i}`, record_basis: "absent" },
+        });
+      }
+      await writeProject();
+      const r = await researchAppend({ projectPath: dir, ops, sourceDescription: { title: "Some record" } } as any, lane);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      // 129 KB before. `extraction_append` returns the list twice, so the bound is on twice the size.
+      expect(JSON.stringify(r.errors).length * 2).toBeLessThan(CLI_SPILL_CHARS_HERE);
+      expect(textLength(r.errors)).toBeLessThan(9_000);
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(r.errors.some((e) => e.startsWith("worked example for '"))).toBe(true);
+      // One line carries all sixty ops.
+      expect(opLines(r.errors).some((l) => /^ops\[1\], ops\[2\], ops\[3\]/.test(l) && l.includes("ops[60]"))).toBe(true);
+    });
+
+    it("distinct messages are kept in order up to the cap, and what is left out is counted in one line", async () => {
+      // Forty ops, each refused with a message of its own: it quotes the bad entryId, 300 characters long.
+      const ops = Array.from({ length: 40 }, (_, i) => ({
+        section: "hypotheses",
+        op: "update",
+        entryId: `${"x".repeat(300)}${i}`,
+        fields: { claim: "x" },
+      }));
+      const r = await refuse(ops);
+      const kept = opLines(r.errors);
+      expect(kept.length).toBeGreaterThan(10);
+      expect(kept.length).toBeLessThan(40);
+      expect(kept[0]).toMatch(/^ops\[0\]: /);
+      expect(kept.map((l) => Number(/^ops\[(\d+)\]/.exec(l)![1]))).toEqual(kept.map((_, i) => i));
+      const note = r.errors.find((e) => /not listed here/.test(e))!;
+      expect(note).toBe(
+        `${40 - kept.length} more error messages, on ${40 - kept.length} more failing ops, not listed here, to keep this answer short. ` +
+          "They are listed in full once the earlier ones are fixed.",
+      );
+      expect(textLength(r.errors)).toBeLessThan(9_000);
+      // The line leads, the list follows, the note ends the list, and the worked example follows that.
+      expect(r.errors[0]).toMatch(NOTE);
+      expect(r.errors.indexOf(note)).toBe(r.errors.length - 2);
+      expect(r.errors[r.errors.length - 1]).toMatch(/^worked example for 'hypotheses'/);
+    });
+
+    it("the first message is kept however long it is", async () => {
+      const r = await refuse([
+        { section: "hypotheses", op: "update", entryId: "x".repeat(20_000), fields: { claim: "x" } },
+        goodHypothesis,
+      ]);
+      const lines = opLines(r.errors);
+      expect(lines).toHaveLength(1);
+      expect(lines[0].length).toBeGreaterThan(20_000);
+      expect(r.errors.some((e) => /not listed here/.test(e))).toBe(false);
+    });
+
+    it("a few messages are all listed, with no note about the rest", async () => {
+      const r = await refuse([carriesAnId, unknownConflict]);
+      expect(r.errors.some((e) => /not listed here/.test(e))).toBe(false);
+    });
+
+    it("the lane gate collapses ops outside the lane the same way", async () => {
+      const ops = Array.from({ length: 30 }, () => goodHypothesis);
+      const r = await refuse(ops, baseResearch(), baseTree, lane);
+      expect(r.errors).toHaveLength(1);
+      expect(r.errors[0]).toMatch(/^ops\[0\], ops\[1\], ops\[2\]/);
+      expect(r.errors[0]).toContain("ops[29]: section 'hypotheses' is not writable by extraction_append".replace("ops[29]: ", ""));
+    });
+  });
+
+  describe("the lane gate names every op outside the lane", () => {
+    const lane = { allowedSections: new Set(["sources", "assertions"]), toolName: "extraction_append" };
+
+    it("two ops outside the lane are both named, the one inside is not, and nothing is written", async () => {
+      const r = await refuse(
+        [unknownConflict, { section: "sources", op: "append", entry: noId(validSource("x")) }, goodHypothesis, { op: "append" }],
+        baseResearch(),
+        baseTree,
+        lane,
+      );
+      expect(r.errors).toHaveLength(3);
+      expect(r.errors[0]).toMatch(/^ops\[0\]: section 'conflicts' is not writable by extraction_append \(it writes only: sources, assertions\)/);
+      expect(r.errors[1]).toMatch(/^ops\[2\]: section 'hypotheses' is not writable by extraction_append/);
+      expect(r.errors[2]).toMatch(/^ops\[3\]: section 'undefined' is not writable by extraction_append/);
+      // The broad tool is never named: that string is the routing map for working around the lane.
+      expect(r.errors.join("\n")).not.toContain("research_append");
+      expect(r.opsReceived).toBe(4);
+    });
+
+    it("one op outside the lane is refused as before: one line, its own index", async () => {
+      const r = await refuse([{ section: "sources", op: "append", entry: noId(validSource("x")) }, goodHypothesis], baseResearch(), baseTree, lane);
+      expect(r.errors).toHaveLength(1);
+      expect(r.errors[0]).toMatch(/^ops\[1\]: section 'hypotheses' is not writable by extraction_append/);
+    });
+
+    it("a batch entirely inside the lane is not touched by the gate", async () => {
+      await writeProject();
+      const r = await researchAppend(
+        { projectPath: dir, ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }] } as any,
+        lane,
+      );
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
   });
 });
 
@@ -7091,8 +8852,8 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
   });
 
-  // ── D2: non-persona producers (fulltext_search / external_links_search) ──
-  // These stage a sidecar keyed on `id`, with no GedcomX persona (#2038).
+  // ── D2: non-persona producers (fulltext_search / legacy external_links_search) ──
+  // Their sidecars key on `id`, with no GedcomX persona (#2038).
   const ftsResearch = () => {
     const r = baseResearch();
     r.log = [{ ...searchLogEntry("results/log_001.json"), tool: "fulltext_search" }] as any;
@@ -9677,6 +11438,14 @@ describe("research_append — worked examples are themselves valid", () => {
     // supporting assertions linked. Only here, so the person_evidence example
     // still appends the project's first link.
     if (section === "proof_summaries") fixture.person_evidence = liveLinks("a_013");
+    // Step mode's gate (E) refuses a new question while another is still open,
+    // and the fixture seeds q_002/q_003 open as foreign keys the other examples
+    // reference. Only the `questions` example appends one, so only it needs them
+    // closed — resolving them here rather than in the fixture keeps q_003 open for
+    // the `plans` example, which appends a plan against it.
+    if (section === "questions") {
+      for (const q of fixture.questions) q.status = "resolved";
+    }
     await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });

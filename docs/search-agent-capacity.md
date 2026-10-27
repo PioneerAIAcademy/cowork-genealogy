@@ -18,9 +18,9 @@ minute per session, not per run. Settled means after a call ends. Unless marked
 - **The binding quota is tokens per day, not TPM.** The default is 700M per account and
   Region, across all models. That covers ~12 sessions running around the clock, or ~550
   runs of 1,800 s a day. The quota increase has to name it.
-- **The throttle decides on a reservation that nobody has measured.** Bedrock reserves
-  input + `max_tokens` when a call starts. Our CLI's `max_tokens` on the gateway path is
-  unknown.
+- **The throttle counts the `max_tokens` reservation.** Bedrock reserves input +
+  `max_tokens` when a call starts; the CLI sends 32,000. In our test account throttling
+  began near twice the TPM quota in reserved tokens (below).
 - **Scaling metric:** slot utilisation, `(Visible + NotVisible) / (instances ×
   HttpConnections)`, with scale-in protection that the worker sets on itself. There is a
   two-alarm fallback if Blueprint can express only one SQS metric per policy. Visible
@@ -131,11 +131,11 @@ no time limit.
   **File the increase for both.** AWS raises the per-day quota only through the Support case
   that goes with a TPM request. It gives priority to accounts already using their
   allocation, so the load run's CloudWatch history is the evidence.
-- **Reservation:** unmeasured. The worker sets no `max_tokens`
-  (`CLAUDE_CODE_MAX_OUTPUT_TOKENS` is unset), and the CLI's own default on the gateway path
-  is unknown. If a call reserves 32,000, a session making 4 calls a minute reserves ~128k
-  against ~40k settled. Fifty such sessions would hold ~6.4M at the peak. This arm decides
-  whether the 6M default throttles 50 sessions.
+- **Reservation:** **Measured in our test account** (2026-10-24, Sonnet 4.6, 6M TPM applied quota, identical ~1-token calls fired at once): 200 calls at `max_tokens` 64,000 throttled 24 and 7 (n=2), 200 at `max_tokens` 50 none, and 25 and 100 at 64,000 none. So the reservation counts, and throttling begins near 176–193 × 64k ≈ 11–12M reserved, about twice the TPM quota, not at 1×; `EstimatedTPMQuotaUsage` showed 34 per call in both arms (14 input + 5 × 4 output), the settled charge only. The CLI sends `max_tokens` 32,000 on every main-thread call on the gateway path (CLI 2.1.310, worker env, 2026-10-24). The worker sets no `max_tokens`
+  (`CLAUDE_CODE_MAX_OUTPUT_TOKENS` is unset). Each call reserves 32,000 plus its input, so a session making 4 calls a minute reserves ~128k
+  against ~40k settled. Fifty such sessions would hold ~6.4M at the peak: over the 6M quota,
+  under the ~12M burst onset measured. A one-minute burst draws on a full bucket, so whether a
+  reservation held over many minutes throttles nearer 1 × TPM is still the load run's to say.
 - **Several quotas are in play:** Sonnet 4.6 (`us.anthropic.claude-sonnet-4-6[1m]`, main
   thread and most agents), Sonnet 5 (`gps-mentor`, at 10× burndown) and Haiku 4.5 (the CLI's
   small model, `GATEWAY_SMALL_MODEL`). Each has its own TPM row. All three draw on one
@@ -315,8 +315,8 @@ non-throttling steps may run, with APT's agreement.
 
 - **Calibration** (~$12, single tenant only):
   - Burndown and cache-read accounting in the metric. Done above, in our test account.
-  - The reservation: bursts of K calls at `max_tokens` 32,000. Throttling should begin
-    near K × 32k = TPM.
+  - The reservation: done above, in our test account (onset near 2 × TPM reserved, not
+    1 ×). The gateway account's own onset still needs F5.
   - Cache reads held above the TPM quota for 3 minutes. No 429 means they are exempt from
     the throttle too.
   - Optional (~$20): output held at 5 × O ≈ 1.3 × TPM.

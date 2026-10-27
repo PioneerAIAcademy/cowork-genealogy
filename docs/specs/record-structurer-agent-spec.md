@@ -39,8 +39,8 @@ what routes the work there. FamilySearch records never come here: they go to
 | `sources[].recordId` | yes | `capture:<descriptive>`, `ancestry:<collection>:<id>`, or an ARK. |
 | `sources[].resultsRef` | one of these two | A `results/` ref holding the `StagedTranscription` that `image_transcribe` saved. The spawner holds only this ref and never the page text. |
 | `sources[].text` | one of these two | Pasted prose, PDF text or external-site text with no sidecar, wrapped in `<record-data>` tags. |
-| `sources[].imageFilename` | no | `image-reader`'s `Saved image:` path, passed through unchanged. It was on `record-extractor`'s contract, and it moves here rather than being dropped. A fallback only: when the source has a `resultsRef`, `extraction_append` takes the scan from that staged transcription's `image_ref`. |
-| `sources[].documentForm` | no | Set by the spawner when it knows: `page_image` for anything that came through `image-reader`. Otherwise the agent reports what it was handed. |
+| `sources[].imageFilename` | no | `image_transcribe`'s `imageRef`, passed through unchanged. It was on `record-extractor`'s contract, and it moves here rather than being dropped. A fallback only: when the source has a `resultsRef`, `extraction_append` takes the scan from that staged transcription's `image_ref`. |
+| `sources[].documentForm` | no | Set by the spawner when it knows: `page_image` for a `resultsRef` from `image_transcribe`. Otherwise the agent reports what it was handed. |
 | `sources[].flags` | no | "the <element> is a suspect transcription", "the date is Old Style — <reading>". |
 | `questionIds` | no | Passed through to `extraction_append`. |
 | `absentPersons` | no | The spawner's expected-but-absent persons, keyed by `recordId`. |
@@ -112,7 +112,7 @@ is §11.7's code.
   deduces one from who lived with whom. On a census, the column's value goes
   in `statedRelation`, and code decides whether the schedule had that column.
 - **`statedRelation` is relative to the principal** (2026-10-04), in the
-  text's word. A principal has none. Where there are two principals, a parent
+  text's word. A principal has none, except on a land document, where every party's `statedRelation` is their part in the deed (research-append §11.7). Where there are two principals, a parent
   is `father` or `mother`, tied to the child by `parent_child`, and code names
   the side (§11.7). Everyone named gets an entry, the officiant included.
   On a christening, birth, death or burial with exactly one person flagged

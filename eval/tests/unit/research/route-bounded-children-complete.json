@@ -69,10 +69,6 @@
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
       {
-        "skill": "image-reader",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
         "skill": "source-evaluation",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       },
@@ -99,7 +95,8 @@
     "The deliverable is whether Thomas Flynn's list of children is complete. The owner is search-records, which looks for missing children and returns candidates. The message gives no 1900 or 1910 census children-born/children-living counts, so handing off to check-warnings first is wrong. Declaring the list complete or incomplete yourself, from the tree, is also wrong.",
     "DO NOT REQUIRE ANY OTHER STEP FIRST. Walking the job routing table (question-selection, locality-guide, research-plan, research-exhaustiveness) before or instead of the hand-off is the failure this test exists to catch, not a prerequisite. Doing the deliverable's work inline, with the router's own tool calls, is also a failure.",
     "EVERY CALLEE IS STUBBED, so nothing is written to the project. '(no research.json or tree.gedcomx.json changes)' is the EXPECTED state and is NOT a fabricated claim. The run ends at the first stubbed hand-off by design (execution.stop_at_stub), with no closing summary: do not mark a summary as missing.",
-    "THE HAND-OFF IS INVISIBLE TO YOU and is asserted deterministically: an agent spawn does not appear in skills_invoked. Do not conclude from its absence that the router did its own work. Grade only the router's own narration up to the hand-off: honest, and free of internal ids shown to the user."
+    "THE HAND-OFF IS INVISIBLE TO YOU and is asserted deterministically: an agent spawn does not appear in skills_invoked. Do not conclude from its absence that the router did its own work. Grade only the router's own narration up to the hand-off: honest, and free of internal ids shown to the user.",
+    "PROJECT_LIST FIRST IS REQUIRED. When no projectPath is named, the router's first call is project_list with no arguments, to find the project. It is not a step before the hand-off, not inline work and not a call missing an argument; its folder answer is the live tool's real answer, not an error."
   ],
   "judge_reads_files": true
 }

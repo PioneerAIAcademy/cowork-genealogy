@@ -3,18 +3,40 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Owen Morris's parents were John Morris, a farmer born about 1818 at Llanilar, and Dorothy Morris, born about 1825 at Llanfihangel; the 1871 census lists him, aged about 12 and born at Llanbadarn-Fawr, as a farmer's son in their household at Lower Llanbadarn-y-Croyddin, Cardiganshire.",
+      "description": "Owen Morris's father was Owen Morris, born about 1815-1818 at Aberhafesp, Montgomeryshire, a labourer and later a gardener, already a widower by 1871. In the 1891 census at Cyfoeth-y-brenin (Borth), Cardiganshire, the subject is \"Owen Morris Junr\" (born about 1859, Montgomeryshire) and his father \"Owen Morris Senr\" lives with him; in 1871 the same father and son are at Newtown, Montgomeryshire. His mother is not identified.",
       "details": {
         "subject_person": "Owen Morris (GWWN-XP9)",
-        "relation": "parents",
+        "relation": "father",
         "target_person": {
-          "name": "John Morris and Dorothy Morris",
-          "father": "John Morris, farmer, born about 1818, Llanilar, Cardiganshire",
-          "mother": "Dorothy Morris, born about 1825, Llanfihangel, Cardiganshire"
+          "name": "Owen Morris",
+          "birth": "about 1815-1818, Aberhafesp, Montgomeryshire, Wales",
+          "note": "widowed labourer (1871, Newtown), widowed retired gardener (1891, Cyfoeth-y-brenin); mother not identified"
         }
       },
       "supporting_sources": [
-        "England and Wales, Census, 1871 — household of John Morris, Lower Llanbadarn-y-Croyddin, Cardiganshire: John (farmer, b. ~1818 Llanilar), wife Dorothy (b. ~1825 Llanfihangel), sons Owen (b. ~1859 Llanbadarn-Fawr), Evan (b. ~1868) and James (b. ~1871)"
+        "England and Wales, Census, 1891 — household of Owen Morris Junr, Cyfoeth-y-brenin, Cardiganshire: Owen Morris Junr (b. ~1859 Montgomeryshire, roller leather finisher), wife Ellen Elizabeth, son Thomas Rowley, and Owen Morris Senr (b. ~1815 Montgomeryshire, widowed, retired gardener), whose relationship to the head is indexed as \"Father\" (ark:/61903/1:1:45VS-5PZ; Owen Morris Senr ark:/61903/1:1:45V3-6N2)",
+        "England and Wales, Census, 1871 — household of Owen Morris, Newtown, Montgomeryshire: Owen Morris (b. ~1818 Aberhafesp, widowed, labourer) and son Owen (b. ~1860 Llandinam, Montgomeryshire) (ark:/61903/1:1:KDDP-KL4; son ark:/61903/1:1:KDDP-KLH)",
+        "England and Wales, Census, 1911 — Owen Morris, Cyfoeth-y-brenin, born Newtown, Montgomeryshire (ark:/61903/1:1:X7JG-Y45)",
+        "England and Wales, Census, 1851 — household of Owen Morris, Montgomeryshire: Owen Morris (b. ~1817 Aberhafesp, farmer of 20 acres, married) and wife Mary (b. ~1815 Llanwnog) (ark:/61903/1:1:SGDS-D7Z) — the father's earlier household; Mary is a candidate mother, not established as Owen's"
+      ],
+      "required": false
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that John Morris (farmer, b. ~1818 Llanilar) and Dorothy Morris (b. ~1825 Llanfihangel) of Lower Llanbadarn-y-Croyddin, Cardiganshire were Owen Morris's parents. Their son Owen in the 1871 census was born at Llanbadarn-Fawr, Cardiganshire, while the subject was born in Montgomeryshire (Newtown) and on the same 1871 census night was the son of Owen Morris at Newtown. Pass = the final tree.gedcomx.json contains no John or Dorothy Morris from that 1871 household. A rejected candidate may be documented in research.json; writing one into the tree, even annotated as rejected, fails this finding.",
+      "details": {
+        "subject_person": "Owen Morris (GWWN-XP9)",
+        "relation": "parents",
+        "wrong_candidate": {
+          "name": "John Morris and Dorothy Morris",
+          "note": "1871 census household at Lower Llanbadarn-y-Croyddin, Cardiganshire; their son Owen was born at Llanbadarn-Fawr, Cardiganshire — a different boy"
+        }
+      },
+      "supporting_sources": [
+        "England and Wales, Census, 1871 — household of John Morris, Lower Llanbadarn-y-Croyddin, Cardiganshire, son Owen b. ~1859 Llanbadarn-Fawr (ark:/61903/1:1:V555-VPP) — the hint record, a different boy",
+        "England and Wales, Census, 1871 — Owen Morris b. ~1860 Llandinam, Montgomeryshire, son of Owen Morris, Newtown (ark:/61903/1:1:KDDP-KLH) — the disproving record"
       ],
       "required": true
     }

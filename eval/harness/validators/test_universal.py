@@ -453,8 +453,8 @@ def test_id_references_resolve(after_state):
 #    correct writes, which is what a replay of the old literals over the
 #    committed corpus measured.
 #
-# A skill named by no row is read-only (convert-dates, translation);
-# it fails these checks if it touches a project file at all.
+# A skill named by no row is read-only; it fails these checks if it touches a
+# project file at all.
 
 
 def _healer_normalized(tree: dict) -> dict:
@@ -663,6 +663,38 @@ def _explained_by_attachment_links(before_section, after_section) -> bool:
         return False
     before_ids = {e.get("id") for e in before_section if isinstance(e, dict)}
     return all(is_attachment_link(e) for e in after_section if e.get("id") not in before_ids)
+
+
+def _is_person_timeline(entry) -> bool:
+    return (
+        isinstance(entry, dict)
+        and entry.get("hypothesis_id") is None
+        and isinstance(entry.get("person_ids"), list)
+        and len(entry["person_ids"]) == 1
+    )
+
+
+def _explained_by_person_timeline(before_section, after_section) -> bool:
+    """True when the whole `timelines` delta is `timeline_build`'s: a person
+    timeline appended, or one updated in place, and every other timeline
+    untouched. An edit to a hypothesis or multi-person timeline, or a removal,
+    fails (issue #3516).
+    """
+    before_ids, after_ids = _ids_unique(before_section), _ids_unique(after_section)
+    if before_ids is None or after_ids is None or not set(before_ids) <= set(after_ids):
+        return False
+    before_by_id = dict(zip(before_ids, before_section))
+    changed = False
+    for tid, new in zip(after_ids, after_section):
+        old = before_by_id.get(tid)
+        if old == new:
+            continue
+        if not _is_person_timeline(new) or (old is not None and not _is_person_timeline(old)):
+            return False
+        if old is not None and old.get("person_ids") != new.get("person_ids"):
+            return False
+        changed = True
+    return changed
 
 
 def _explained_by_question_tie(before_section, after_section, notes_ids: set[str]) -> bool:
@@ -885,6 +917,15 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
                 "merge_tree_persons" in called
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
+                continue
+            # timeline_build: a person timeline composed whole in code, so any
+            # skill may call it. Authorized for appending or updating a person's
+            # own timeline; a hypothesis timeline stays the timeline agent's.
+            if "timeline_build" in (identity_tools.get(section) or set()) and (
+                "timeline_build" in called
+            ) and section == "timelines" and _explained_by_person_timeline(
+                before.get(section), after.get(section)
+            ):
                 continue
             # extraction_append: roles and classifications are set in code, so
             # any skill may call it. Authorized for appends, and for the two
@@ -1394,6 +1435,7 @@ PROJECT_WRITER_TOOLS = {
     "tree_correct",
     "materialize_facts",
     "merge_tree_persons",
+    "timeline_build",
 }
 # Writers only when called with a projectPath: `build_external_search_url`
 # appends its in-flight hand-off log entry then, and writes nothing otherwise.
@@ -1467,8 +1509,8 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
     `image_read` returns inline base64; in the router's context the bytes
     accumulate and overflow the transport's ~1 MiB per-turn buffer, crashing
-    the run. Image reads must be delegated to the image-reader subagent, which
-    absorbs the base64 in a throwaway context and returns text.
+    the run. A page is read with `image_transcribe` instead, which OCRs it
+    host-side and stages the text, so no image bytes reach the context.
 
     `extraction_append` was the other guarded tool (#942) until issue #2937
     routed indexed-record extraction through code called from the main thread.
@@ -1487,12 +1529,12 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     if not blocked_context_calls:
         return
 
-    # Per-tool fix text: the owning subagent and the reason differ, and a
+    # Per-tool fix text: the replacement and the reason differ, and a
     # message naming the wrong one sends the reader after the wrong bug.
     owners = {
         "image_read": (
-            "image_read → @plugin:image-reader, so the base64 never enters the "
-            "router's context"
+            "image_read → image_transcribe (staged; read with sidecar_read), so "
+            "the base64 never enters the router's context"
         ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
@@ -1504,7 +1546,7 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         f"subagent-only tool(s) called from the main session: "
         f"{', '.join(offending_tools)} "
         f"({len(blocked_context_calls)} call(s), denied by the hook). "
-        f"Delegate to the owning subagent — {fixes}."
+        f"Do the work the sanctioned way — {fixes}."
     )
 
 
@@ -1708,6 +1750,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     An empty `correct_skill` means the owner is not a skill (extraction is a
     tool call and an agent; genealogist ruling 2026-09-30, option B), so the
     reply must carry a `Hand-back:` line without a name to look for.
+
+    The 'project-context-guard' tag admits one call: a `project_context` that
+    opens the run, which is how init-project learns a project already exists
+    (it writes nothing). Any second call, or any other tool, still fails.
     """
     from harness.skill_runner import subject_reply_text
 
@@ -1715,10 +1761,17 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         pytest.skip("not a hand-back test")
     owners = (test.get("negative") or {}).get("correct_skill") or []
 
-    assert (tool_calls or []) == [], (
+    calls = list(tool_calls or [])
+    if (
+        "project-context-guard" in test.get("tags", [])
+        and calls
+        and _bare_tool_name(calls[0].get("tool") or "") == "project_context"
+    ):
+        calls = calls[1:]
+    assert calls == [], (
         "a hand-back makes no tool call; got "
-        f"{len(tool_calls or [])} call(s): "
-        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
+        f"{len(calls)} call(s): "
+        + ", ".join(c.get("tool", "?") for c in calls)
     )
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
     if not owners:

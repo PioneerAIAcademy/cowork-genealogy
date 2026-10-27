@@ -551,6 +551,7 @@ function principalRoles(
   ps: Party[],
   gx: SimplifiedGedcomX,
   principalRole: string,
+  principalId?: string,
 ): Map<string, string> {
   const roles = new Map<string, string>();
   const counters = new Map<string, number>();
@@ -558,7 +559,7 @@ function principalRoles(
   const byId = new Map(ps.map((p) => [p.id, p]));
 
   const principal =
-    ps.find((p) => p.person.principal === true)?.id ?? ps[0]?.id;
+    principalId ?? ps.find((p) => p.person.principal === true)?.id ?? ps[0]?.id;
   if (principal) roles.set(principal, principalRole);
 
   for (const parent of parentOf.get(principal ?? "") ?? []) {
@@ -881,13 +882,37 @@ function classifyDocumentRow(
 
 /** Newspaper-announcement roles (genealogist ruling, 2026-09-30): the event's
  *  subject by event, and by sex where the event has two principals. */
-function newspaperRoles(ps: Party[], gx: SimplifiedGedcomX, eventType: string | undefined): Map<string, string> {
+function newspaperRoles(
+  ps: Party[],
+  gx: SimplifiedGedcomX,
+  eventType: string | undefined,
+  statedRelations?: Map<string, string>,
+): Map<string, string> {
   const principalRole =
     eventType === "birth" ? "child" : eventType === "marriage" || eventType === "engagement" || eventType === "anniversary" ? "__pair" : "principal";
   const roles = principalRoles(ps, gx, principalRole === "__pair" ? "principal" : principalRole);
   if (principalRole === "__pair") {
     const sides = new Map<string, string>();
-    for (const p of ps.filter((q) => q.person.principal === true)) {
+    const { parentOf, couples } = edges(gx);
+    const byId = new Map(ps.map((q) => [q.id, q]));
+    // The pair is the principals. When the agent marked only one, that
+    // principal's sole couple partner completes it, so an unmarked bride is
+    // still the bride; a second partner, one the text names otherwise (a late
+    // husband), or one whose gender is not stated against the principal's, is
+    // never given a side, since the side is read from gender.
+    const principalIds = new Set(ps.filter((q) => q.person.principal === true).map((q) => q.id));
+    const pairIds = new Set(principalIds);
+    if (principalIds.size === 1) {
+      const [only] = principalIds;
+      const partners = couples
+        .filter(([a, b]) => a === only || b === only)
+        .map(([a, b]) => (a === only ? b : a))
+        .filter((id) => byId.has(id));
+      const sex = (id: string) => genderOf(byId.get(id)!.person);
+      const opposite = partners.length === 1 && sex(only) !== "" && sex(partners[0]) !== "" && sex(only) !== sex(partners[0]);
+      if (opposite && !statedRelations?.get(partners[0])) pairIds.add(partners[0]);
+    }
+    for (const p of ps.filter((q) => pairIds.has(q.id))) {
       const female = genderOf(p.person) === "female";
       const side = eventType === "anniversary" ? (female ? "wife" : "husband") : female ? "bride" : "groom";
       roles.set(p.id, side);
@@ -895,8 +920,6 @@ function newspaperRoles(ps: Party[], gx: SimplifiedGedcomX, eventType: string | 
     }
     // Each party's parents are named by side, as on an indexed marriage, so the
     // groom's and the bride's fathers are not two unlabelled fathers.
-    const { parentOf } = edges(gx);
-    const byId = new Map(ps.map((q) => [q.id, q]));
     for (const [child, side] of sides) {
       for (const parent of parentOf.get(child) ?? []) {
         const which = genderOf(byId.get(parent)?.person ?? {}) === "female" ? "mother" : "father";
@@ -1054,9 +1077,14 @@ export function extractRecord(
   } else if (recordType === "obituary") {
     for (const [id, r] of principalRoles(ps, gx, "deceased")) roles.set(id, r);
   } else if (recordType === "probate") {
-    for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent")) roles.set(id, r);
+    for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent", mode?.decedentId)) roles.set(id, r);
   } else if (recordType === "newspaper_announcement") {
-    for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType)) roles.set(id, r);
+    for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType, mode?.statedRelations)) roles.set(id, r);
+  } else if (recordType === "land" && mode?.landRoles) {
+    // A document states each party's part in the deed, so the role is read from
+    // it. A party on neither side is numbered by the stated-relation pass below.
+    const counters = new Map<string, number>();
+    for (const p of ps) roles.set(p.id, mode.landRoles.get(p.id) ?? numbered("other", counters));
   } else if (recordType === "land") {
     // `grantee` for the principal, `grantor_N` for the rest. The record is
     // indexed under the party ACQUIRING the land — a patentee, a homesteader —
@@ -1203,8 +1231,8 @@ export function extractRecord(
           if (group.includes("place")) extra.place = f.place;
           if (basis === "inferred" && group.includes("date")) extra.date_certainty = "approximate";
           if (marks?.note) extra.informant_bias_notes = marks.note;
-          const value = group.includes("value") ? f.value : group.includes("date") ? f.date : f.place;
-          push(party, factType, String(value ?? ""), extra);
+          const value = String((group.includes("value") ? f.value : group.includes("date") ? f.date : f.place) ?? "");
+          push(party, factType, marks?.uncertain ? withDoubt(value) : value, extra);
         }
         continue;
       }
@@ -1531,6 +1559,12 @@ const MONTH_DAY_YEAR = new RegExp(`\\b${MONTH}\\s+\\d{1,2}(st|nd|rd|th)?,?\\s+(\
 const QUAKER_MONTH = /\b\d{1,2}(st|nd|rd|th)\s+(month|mo\.?)\b/i;
 const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
 
+/** The `[?]` a doubted reading carries at the end of its value. */
+const TRAILING_DOUBT = /\s*\[\?\]$/;
+
+/** A value with the doubt marker, added once. */
+const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
+
 /**
  * The dates the calendar route may apply to (genealogist ruling, 2026-09-30,
  * the broad trigger): a date with a day and a month before 1752, anywhere; a
@@ -1541,7 +1575,8 @@ const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
 export function calendarFlags(assertions: readonly { date?: string; value: string }[]): string[] {
   const out = new Set<string>();
   for (const a of assertions) {
-    for (const text of [a.date, a.value]) {
+    for (const raw of [a.date, a.value]) {
+      const text = raw?.replace(TRAILING_DOUBT, "");
       if (!text) continue;
       const dm = text.match(DAY_MONTH_YEAR) ?? text.match(MONTH_DAY_YEAR);
       const y = dm ? Number(dm[dm.length - 1]) : NaN;
@@ -1593,10 +1628,16 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
         // withheld here: this summary is relayed verbatim into the caller's
         // context, where it would read as an instruction rather than data.
         if (/\[suspicious text/i.test(a.informant_bias_notes ?? "")) return `${label} [withheld: suspicious text]`;
-        const own = a.value && a.value !== a.date && a.value !== a.place ? ` ${a.value}` : "";
+        // A value that is just the date or place (with or without the marker
+        // withDoubt added) is not printed again; that marker prints once, at the
+        // end, unless the agent already typed one into the date or place.
+        const bare = a.value.replace(TRAILING_DOUBT, "");
+        const echo = bare === a.date || bare === a.place || a.value === a.date || a.value === a.place;
+        const own = a.value && !echo ? ` ${a.value}` : "";
+        const mark = bare !== a.value && echo && ![a.date, a.place].some((x) => x?.includes("[?]")) ? " [?]" : "";
         const when = a.date ? ` ${a.date}` : "";
         const where = a.place ? ` ${a.place}` : "";
-        let body = `${label}${own}${when}${where}`;
+        let body = `${label}${own}${when}${where}${mark}`;
         if (a.record_basis === "inferred") body += " (computed)";
         if (/household member line/.test(a.informant_bias_notes ?? "")) {
           body += ` (per ${a.informant_bias_notes!.match(/stated on (\d+)/)?.[1] ?? "other"} household line(s))`;
@@ -1611,8 +1652,8 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
   if (result.recordType === "census") {
     const principal = (gx.persons ?? []).find((p) => p.principal === true);
     const headA = result.assertions.find((a) => a.record_role === "head_of_household" && a.fact_type === "name");
-    const ps = principal?.names?.[0]?.surname?.trim().toLowerCase();
-    const hs = (headA?.structured_value?.surname as string | undefined)?.trim().toLowerCase();
+    const ps = principal?.names?.[0]?.surname?.replace(TRAILING_DOUBT, "").trim().toLowerCase();
+    const hs = (headA?.structured_value?.surname as string | undefined)?.replace(TRAILING_DOUBT, "").trim().toLowerCase();
     if (ps && hs && ps !== hs) {
       lines.push(
         `Lead: the head, ${headA!.value}, has a different surname from ${fullName(principal!)}. ` +

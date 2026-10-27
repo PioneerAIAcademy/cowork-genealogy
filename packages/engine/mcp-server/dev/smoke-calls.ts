@@ -158,22 +158,42 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
   //
-  // personReadRef first, while the project does not exist yet, asserting its
-  // refusal through the transport. A successful staged create cannot be
-  // smoked: the run has one project, every later row works on the one the
-  // next row creates, and a second create is refused as "already exist".
+  // Two refusals first, while the project does not exist yet. A successful
+  // `personId` create cannot be smoked: the run has one project, every later
+  // row works on the one the hand-built row creates, and a second create is
+  // refused as "already exist".
   {
     tool: "project_create",
+    label: "project_create (removed personReadRef)",
     offline: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      objective: "Does the staged-read path reach the store?",
+      objective: "Is the removed parameter refused by name?",
       personReadRef: STAGED_REF,
     }),
     expect: (res) => ({
-      ok: res.body?.ok === false && /personReadRef/.test(JSON.stringify(res.body?.errors ?? "")),
+      ok: res.body?.ok === false && /personReadRef is no longer accepted/.test(JSON.stringify(res.body?.errors ?? "")),
       detail: brief(res, 300),
     }),
+  },
+  {
+    // `personId` reads FamilySearch through the request's principal, and writes
+    // nothing when the read fails. A project call always carries a bearer (the
+    // seeded grant), so with no FamilySearch token that bearer reaches
+    // FamilySearch, is rejected, and comes back as the reconnect instruction;
+    // with a real token the read reaches an id FamilySearch does not hold.
+    tool: "project_create",
+    label: "project_create (personId reaches the token)",
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      objective: "Does a personId create reach the principal?",
+      personId: "ZZZZ-ZZZ",
+    }),
+    expect: (res, ctx) => {
+      const reconnect = carries(res, HOSTED_REAUTH_INSTRUCTION);
+      const ok = res.body?.ok === false && (ctx.mode === "bearer" ? !reconnect : reconnect);
+      return { ok, detail: brief(res, 300) };
+    },
   },
   {
     tool: "project_create",
@@ -201,6 +221,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
     expect: noError,
+  },
+  {
+    // The stdio smoke runs the file store, which lists nothing; over HTTP the
+    // bound store lists the project the create above wrote.
+    tool: "project_list",
+    offline: true,
+    args: () => ({}),
+    expect: (res, ctx) => {
+      const listed =
+        Array.isArray(res.body?.projects) && res.body.projects.some((p: any) => p?.projectPath === ctx.projectPath);
+      return {
+        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed)),
+        detail: brief(res, 300),
+      };
+    },
   },
   {
     tool: "research_query",
@@ -347,6 +382,14 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // Nothing in this plan links P1, so this reaches `no_linked_evidence`: the
+    // transport and the read, not the event logic (Vitest covers that).
+    tool: "timeline_build",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, personId: "P1" }),
+    expect: okTrue,
+  },
+  {
     tool: "merge_warnings",
     offline: true,
     args: (ctx) => ({
@@ -484,9 +527,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   tokenStep("image_read", { imageId: REAL_IMAGE_ID }),
   {
-    // getOpenRouterApiKey runs before the FamilySearch fetch.
+    // getOpenRouterApiKey runs before the FamilySearch fetch. projectPath is
+    // required (#2490): without it the call stops at the project check and
+    // never reaches the key or the token this row exists to smoke.
     tool: "image_transcribe",
-    args: () => ({ imageId: REAL_IMAGE_ID }),
+    args: (ctx) => ({ imageId: REAL_IMAGE_ID, projectPath: ctx.projectPath }),
     expect: (res, ctx) => {
       if (ctx.openRouterKeyConfigured === false) return keyMissing(res);
       if (ctx.openRouterKeyConfigured === null) {

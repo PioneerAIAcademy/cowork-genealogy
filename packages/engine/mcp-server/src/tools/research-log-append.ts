@@ -31,11 +31,13 @@ import {
   noProjectResult,
   isInsideProject,
   assertInsideProject,
+  projectRelativeRef,
 } from "../utils/project-io.js";
 import {
   checkStagedResults,
   consumeStagedResults,
   finalizeStagedResults,
+  findLoggedStagedRef,
   readStagedEnvelopeQuery,
   readStagedResults,
   resolveStagedRef,
@@ -47,6 +49,7 @@ import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
+import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -92,10 +95,34 @@ const NIL_ESCALATION_THRESHOLD = 3;
 /** The FamilySearch index searches whose nils count toward the threshold. */
 const FS_INDEX_SEARCH_TOOLS = new Set(["record_search", "fulltext_search"]);
 
-/** Reference lookups log a looked-up article or overview, not a record search, so
- *  their `positive` entries carry no evidence to persist and are left out of the
- *  logging-without-persistence count (#3244). The census hedge still applies. */
-const REFERENCE_LOOKUP_TOOLS = new Set(["wiki_search", "wiki_read", "wikipedia_search", "historical_context"]);
+/** Reference lookups log a looked-up article, an overview or a report-only agent's
+ *  reply, not a record search, so their `positive` entries carry no evidence to
+ *  persist and are left out of the logging-without-persistence count (#3244,
+ *  #3524). The census hedge still applies. */
+const REFERENCE_LOOKUP_TOOLS = new Set([
+  "wiki_search",
+  "wiki_read",
+  "wikipedia_search",
+  "historical_context",
+  "source_evaluation",
+  "check_warnings",
+  "translation",
+  "convert_dates",
+  "validate_schema",
+]);
+
+/** The report-only agents' own entries: each logs its reply, then must return
+ *  that same reply. A success that logs one carries `next`, read right before
+ *  the agent's final message (#3524 review: translation returned only a note
+ *  that it had logged, so the dispatcher wrote its own translation). */
+const REPORT_TOOLS = new Set(["source_evaluation", "check_warnings", "translation", "convert_dates", "validate_schema"]);
+const REPORT_REPLY_NEXT =
+  "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. " +
+  "Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.";
+
+function reportReplyNext(tools: unknown[]): { next?: string } {
+  return tools.some((t) => typeof t === "string" && REPORT_TOOLS.has(t)) ? { next: REPORT_REPLY_NEXT } : {};
+}
 
 /** Question statuses under which the question is still open: every status but
  *  the two that close it. */
@@ -221,6 +248,9 @@ export interface ResearchLogAppendOpResult {
   performed: string;
   resultsRef: string | null;
   returnedCount: number | null;
+  /** True when the op's staged ref had already been logged: `logId` is that
+   *  existing entry, and nothing new was written for it (issue #3547). */
+  alreadyLogged?: true;
 }
 
 export type ResearchLogAppendResult =
@@ -230,6 +260,8 @@ export type ResearchLogAppendResult =
       validation: { valid: true; warnings: string[] };
       /** `NIL_ESCALATION_NOTE`, present only when it fired. */
       escalationDue?: string;
+      /** `REPORT_REPLY_NEXT`, present only when a report tool was logged. */
+      next?: string;
     } & ResearchLogAppendOpResult)
   | {
       ok: true;
@@ -238,6 +270,7 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
       escalationDue?: string;
+      next?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -602,9 +635,10 @@ const SOURCE_NAMED =
  * bracketed list of names after the household name ("Thomas Flynn household
  * (Mary, Patrick, Bridget)", `bracketedRosters`). What neither reads passes: a
  * note with no head claim keeps the older arms' verdict, so "Thomas Flynn,
- * Household head; his son Patrick" passes as its 1850 twin does.
+ * Household head; his son Patrick" passes as its 1850 twin does. The years
+ * (`HEAD_ONLY_US_CENSUS_YEARS`) live in the census table, which timeline_build
+ * also reads.
  */
-const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810, 1820, 1830, 1840]);
 
 /**
  * A phrase read as stating household structure, as the note wrote it. `head`
@@ -1579,6 +1613,26 @@ const QUERY_REQUIRED_MESSAGE =
   "carries the query.";
 
 /**
+ * Default a staged record_search op's counts and outcome from the staged search
+ * itself, so the model does not re-type what the tool already holds (issue
+ * #3547): `resultsExamined` is the rows returned, `resultsAvailable` the
+ * search's `totalMatches`, and `outcome` is `positive` — a staged search always
+ * has rows, since staging retains nothing for a nil one. A value the caller
+ * sends wins: `partial` for a collection mismatch, `error`, or a lower
+ * `resultsExamined` when fewer rows were triaged.
+ */
+function fillStagedSearchCounts(
+  op: ResearchLogAppendOp,
+  staged: { returnedCount: number; totalMatches: number | undefined },
+): void {
+  if (op.outcome === undefined || op.outcome === null) op.outcome = "positive";
+  if (op.resultsExamined === undefined || op.resultsExamined === null) op.resultsExamined = staged.returnedCount;
+  if ((op.resultsAvailable === undefined || op.resultsAvailable === null) && staged.totalMatches !== undefined) {
+    op.resultsAvailable = staged.totalMatches;
+  }
+}
+
+/**
  * Fill an omitted `tool` from the staged envelope, then refuse once naming every
  * required field still missing. Runs first, so every later preflight sees the
  * filled `tool`. Without it an omitted `tool` reached the staging check as
@@ -1587,10 +1641,14 @@ const QUERY_REQUIRED_MESSAGE =
  */
 async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   const ref = asNull(op.stagedResultsRef);
-  if ((op.tool === undefined || op.tool === null || op.tool === "") && typeof ref === "string") {
+  if (typeof ref === "string") {
     const staged = await readStagedEnvelopeQuery(projectPath, ref);
-    if (!staged) return; // an unreadable ref is preflightStagedRef's error to report
-    op.tool = staged.tool;
+    // An unreadable ref is preflightStagedRef's error to report. Asking for the
+    // fields it would have filled first sends the caller back with the same dead
+    // ref, and it learns the ref is gone only on the second round trip.
+    if (!staged) return;
+    if (op.tool === undefined || op.tool === null || op.tool === "") op.tool = staged.tool;
+    if (op.tool === "record_search" && staged.tool === "record_search") fillStagedSearchCounts(op, staged);
   }
   const toolMissing = op.tool === undefined || op.tool === null || op.tool === "";
   const queryMissing = typeof ref !== "string" && (op.query === undefined || op.query === null);
@@ -1966,6 +2024,9 @@ async function applyLogAppendOp(
     resultsRef = fin.resultsRef;
     returnedCount = fin.returnedCount;
     entry.results_ref = resultsRef;
+    // The staged file this entry came from, so a re-send of the same ref after a
+    // context compaction is answered with this entry (findLoggedStagedRef).
+    entry.staged_ref = projectRelativeRef(projectPath, stagedResultsRef);
     sidecarsCreated.push(resultsRef);
     stagedConsumed.push(stagedResultsRef);
 
@@ -2095,6 +2156,53 @@ export async function researchLogAppend(
       await resolveRef(input, "stagedResultsRef");
     }
 
+    // A staged ref already finalized into a log entry (re-sent after a context
+    // compaction) is answered with that entry's id, never logged twice. A re-send
+    // that names a different plan item, outcome or tool is a correction the
+    // append-only log cannot take that way, so it is refused naming the entry
+    // instead of being dropped. The log scan runs at most once per ref per call.
+    let loggedRefs: Map<string, Awaited<ReturnType<typeof findLoggedStagedRef>>> | undefined;
+    const alreadyLogged = async (op: ResearchLogAppendOp) => {
+      const ref = asNull(op.stagedResultsRef);
+      if (typeof ref !== "string" || !Array.isArray(research.log)) return undefined;
+      loggedRefs ??= new Map();
+      if (!loggedRefs.has(ref)) loggedRefs.set(ref, await findLoggedStagedRef(projectPath, ref, research.log));
+      const found = loggedRefs.get(ref);
+      if (!found) return undefined;
+      const prior = research.log.find((e: { id?: string }) => e.id === found.logId) ?? {};
+      const differs: string[] = [];
+      const sent = (v: unknown) => v !== undefined && v !== null && v !== "";
+      if (sent(op.tool) && op.tool !== prior.tool) differs.push(`tool '${op.tool}' (logged '${prior.tool}')`);
+      if (sent(op.planItemId) && op.planItemId !== prior.plan_item_id) {
+        differs.push(`planItemId '${op.planItemId}' (logged '${prior.plan_item_id}')`);
+      }
+      if (sent(op.outcome) && op.outcome !== prior.outcome) differs.push(`outcome '${op.outcome}' (logged '${prior.outcome}')`);
+      if (differs.length > 0) {
+        throw new LogAppendError(
+          `stagedResultsRef '${ref}' is already logged as ${found.logId}, and this re-send differs in ` +
+            `${differs.join(", ")}. The log is append-only: leave ${found.logId} as it is and append a ` +
+            "new entry, without the stagedResultsRef, whose notes state the correction.",
+        );
+      }
+      return found;
+    };
+    const alreadyLoggedResult = (
+      found: { logId: string; resultsRef: string | null },
+      field: string,
+    ): ResearchLogAppendOpResult => {
+      const prior = research.log.find((e: { id?: string }) => e.id === found.logId);
+      opWarnings.push(
+        `${field} was already logged as ${found.logId}; returned that entry and wrote nothing new for it.`,
+      );
+      return {
+        logId: found.logId,
+        performed: typeof prior?.performed === "string" ? prior.performed : "",
+        resultsRef: found.resultsRef,
+        returnedCount: null,
+        alreadyLogged: true,
+      };
+    };
+
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
@@ -2102,19 +2210,45 @@ export async function researchLogAppend(
       }
       const duplicate = duplicateStagedRefError(input.ops, projectPath);
       if (duplicate) return { ok: false, errors: [duplicate] };
+      // Every op is checked before any refusal, so one retry can fix them all;
+      // the batch still writes all or nothing.
+      const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
+      const preflightErrors: string[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
+          const found = await alreadyLogged(input.ops[i]);
+          if (found) {
+            logged.set(i, found);
+            continue;
+          }
           await preflightRequiredFields(input.ops[i], projectPath);
           await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
         } catch (e) {
-          if (e instanceof LogAppendError) return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
+          if (e instanceof LogAppendError) {
+            preflightErrors.push(`ops[${i}]: ${e.message}`);
+            continue;
+          }
           throw e;
         }
       }
+      if (preflightErrors.length > 0) return { ok: false, errors: preflightErrors };
+      if (logged.size === input.ops.length) {
+        return {
+          ok: true,
+          results: input.ops.map((_, i) => alreadyLoggedResult(logged.get(i)!, `ops[${i}].stagedResultsRef`)),
+          filesWritten: [],
+          validation: { valid: true, warnings: opWarnings },
+        };
+      }
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
+        const found = logged.get(i);
+        if (found) {
+          results.push(alreadyLoggedResult(found, `ops[${i}].stagedResultsRef`));
+          continue;
+        }
         try {
           results.push(
             await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated, opWarnings, stagedConsumed),
@@ -2138,6 +2272,7 @@ export async function researchLogAppend(
         ok: true,
         results,
         ...escalation(),
+        ...reportReplyNext(input.ops.map((op) => op?.tool)),
         filesWritten: ["research.json", ...sidecarsCreated],
         validation: {
           valid: true,
@@ -2166,6 +2301,11 @@ export async function researchLogAppend(
       externalSite: input.externalSite,
       stagedResultsRef: input.stagedResultsRef,
     };
+    const found = await alreadyLogged(singleOp);
+    if (found) {
+      const prior = alreadyLoggedResult(found, "stagedResultsRef");
+      return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
+    }
     await preflightRequiredFields(singleOp, projectPath);
     await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
@@ -2191,6 +2331,7 @@ export async function researchLogAppend(
       ok: true,
       ...result,
       ...escalation(),
+      ...reportReplyNext([singleOp.tool]),
       filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
       validation: {
         valid: true,
@@ -2247,7 +2388,7 @@ export const researchLogAppendSchema = {
         type: "string",
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
-          "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
+          "'fulltext_search', 'record_read', 'image_search', 'person_read', or " +
           "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
           "may be omitted alongside stagedResultsRef, which records it.",
       },
@@ -2274,11 +2415,16 @@ export const researchLogAppendSchema = {
       outcome: {
         type: "string",
         enum: [...OUTCOME_VALUES],
-        description: "Your analytical judgment of the search outcome.",
+        description:
+          "Your analytical judgment of the search outcome. May be omitted with a record_search " +
+          "`stagedResultsRef`, which logs it 'positive'; send 'partial' for a collection mismatch.",
       },
       resultsExamined: {
         type: "number",
-        description: "How many results you examined (0 for a nil search).",
+        description:
+          "How many results you examined (0 for a nil search). May be omitted with a " +
+          "record_search `stagedResultsRef`: it defaults to the rows returned; send a lower " +
+          "number only when you triaged fewer.",
       },
       planItemId: {
         type: ["string", "null"],
@@ -2286,7 +2432,9 @@ export const researchLogAppendSchema = {
       },
       resultsAvailable: {
         type: ["number", "null"],
-        description: "Total results the search reported as available, if known.",
+        description:
+          "Total results the search reported as available, if known. Filled from the staged " +
+          "search's `totalMatches` when omitted with a record_search `stagedResultsRef`.",
       },
       notes: {
         type: ["string", "null"],
@@ -2332,11 +2480,12 @@ export const researchLogAppendSchema = {
             externalSite: { type: ["object", "null"] },
             stagedResultsRef: { type: ["string", "null"] },
           },
-          // `query` and `tool` are deliberately absent: both may be omitted when
-          // `stagedResultsRef` carries a payload the producing tool already
-          // stamped with its own name and query. Enforced in code
+          // Nothing is required here: `query` and `tool` may be omitted when
+          // `stagedResultsRef` carries a payload the producing tool already stamped
+          // with its own name and query, and a record_search ref also supplies
+          // `outcome` and `resultsExamined`. A client-side `required` would refuse
+          // those ops before the tool could fill them. Enforced in code
           // (preflightRequiredFields), which names every field still missing.
-          required: ["outcome", "resultsExamined"],
         },
       },
     },

@@ -11,6 +11,9 @@ Honors the execution caps from unit-test-spec.md §15:
 - max_tool_calls: counted in the PreToolUse hook. The hook denies the
   over-limit call and signals stop. The run aborts with reason
   "max_tool_calls".
+- sdk_message_silence_seconds: asyncio.wait_for around each message, widened
+  to SUBAGENT_TASK_SILENCE_SECONDS while a subagent task is open. On timeout,
+  aborts with "sdk_stream_silence", which the orchestrator retries.
 - max_input_tokens_per_turn: **post-hoc.** Checked on each AssistantMessage's
   `usage.input_tokens` after the turn returned. The offending turn has
   already been billed by the time we abort — this catches runaway context
@@ -22,6 +25,8 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
+import importlib.util
+import json
 import re
 import sys
 import time
@@ -35,7 +40,11 @@ from claude_agent_sdk import (
     HookMatcher,
     RateLimitEvent,
     ResultMessage,
+    TERMINAL_TASK_STATUSES,
     SystemMessage,
+    TaskNotificationMessage,
+    TaskStartedMessage,
+    TaskUpdatedMessage,
     TextBlock,
     ToolResultBlock,
     ToolUseBlock,
@@ -54,6 +63,24 @@ from harness.delegation import foreground_rewrite
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
+
+
+_STEP_BOUNDARY = (
+    Path(__file__).resolve().parents[3]
+    / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
+)
+
+
+def load_step_boundary():
+    """The plugin's step boundary, loaded as a library -- the same file the worker and
+    the e2e orchestrator load, so the three planes cannot drift apart. Mirrors how
+    `context_policy.py` loads `guard_project_files.py`."""
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", _STEP_BOUNDARY)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {_STEP_BOUNDARY}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 # v1 permissive allowlist + disallow-tool backstop (per the user's tightening).
@@ -95,6 +122,15 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 # requires longer thinking should also bump `execution.max_wall_clock_
 # seconds` (see eval/tests/unit/record-extraction/*.json).
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
+
+# The window while a subagent task is open (between its `task_started` and a
+# terminal `task_notification` / `task_updated`). CLI 2.1.294 forwards a
+# subagent's tool calls but nothing of a turn that makes none, so its final
+# report streams no message at all until the task ends. Measured on
+# ut_locality_guide_027 (#3251, 2026-10-23): last tool call at 80s, then 334s
+# of silence for a 16,308-token final turn, against 7,485 tokens on 2.1.139.
+# A test's own `sdk_message_silence_seconds` still applies when larger.
+SUBAGENT_TASK_SILENCE_SECONDS = 600
 
 
 # When the harness abandons a run mid-stream (wall-clock / silence abort or
@@ -479,6 +515,32 @@ def spawn_stub_denial(
     return stub_denial(name, stub_agents[name])
 
 
+def default_spawn_denial(
+    tool_name: str,
+    input_data: dict[str, Any],
+    live_agents: set[str] | None,
+    stub_skills: dict[str, str | None],
+) -> dict[str, Any] | None:
+    """The stub denial for a main-thread spawn of any agent not in `live_agents`.
+
+    Deny-by-default (#3568): the orchestrator passes the suite's own agent plus
+    the test's `execution.run_agents`, and every other spawn — a built-in type
+    such as `general-purpose` included — is denied, so an agent no test opts in
+    never runs and its body cannot change the result. A spawn with no
+    `subagent_type` is a general-purpose spawn and is named so. A name the test
+    also lists in `stub_skills` (a skill-and-agent name) keeps its canned text.
+    `live_agents=None` (callers outside the unit orchestrator) denies nothing.
+    The hook reaches this only after the routing short-circuit, `stop_at_stub`
+    and explicit `spawn_stub_denial` branches have passed on the spawn.
+    """
+    if live_agents is None or tool_name not in SPAWN_TOOL_NAMES or input_data.get("agent_id"):
+        return None
+    name = (input_data.get("tool_input") or {}).get("subagent_type") or "general-purpose"
+    if name in live_agents:
+        return None
+    return stub_denial(name, stub_skills.get(name))
+
+
 def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
     """Whether a streamed ToolUseBlock hands off to a name in `stub_skills`.
 
@@ -542,8 +604,28 @@ _AGENT_RETURN_TRAILERS = (
 )
 
 
+# Claude Code 2.1.294 (SDK 0.2.165) wraps a subagent's return in a one-line
+# "[Subagent hand-back] ... The report follows:" header and indents every line
+# of the report by two spaces. Graded raw, no line of the agent's own text starts
+# at column zero, so every line-anchored check fails on a correct return. The
+# header may follow runtime notes ("Notes above this frame…"), so it is found at
+# the start of any line, never inside one.
+_HAND_BACK_HEADER = re.compile(r"^\[Subagent hand-back\][^\n]*\n", re.M)
+
+
+def strip_agent_return_frame(text: str) -> str:
+    """The report inside the runtime's hand-back frame, at its own indentation,
+    after any notes the runtime put above the frame."""
+    m = _HAND_BACK_HEADER.search(text)
+    if not m:
+        return text
+    lines = text[m.end():].split("\n")
+    return text[: m.start()] + "\n".join(line[2:] if line.startswith("  ") else line for line in lines)
+
+
 def strip_agent_return_trailer(text: str) -> str:
-    """The agent's own text, with runtime-appended trailers removed."""
+    """The agent's own text, with the runtime's frame and trailers removed."""
+    text = strip_agent_return_frame(text)
     for pattern in _AGENT_RETURN_TRAILERS:
         text = pattern.sub("", text)
     return text.strip()
@@ -866,9 +948,11 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
     tool_search: bool = True,
+    step_mode: str | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -925,6 +1009,28 @@ async def run_skill(
     # (non-aborted) termination.
     routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
+    # The step boundary (decision 25), OPT-IN per test via `execution.step_mode`.
+    #
+    # None means no gate, which is every test in the corpus today: PR 1 ships the
+    # mechanism, and a test opts in by declaring the mode its turn runs under. Enforcing
+    # by default would change what every existing test measures, and the only place that
+    # would show is a paid run -- so the default is the one that cannot surprise anyone.
+    #
+    # `ctx` is read from the workspace's own research.json, lazily, as the worker reads
+    # it: research-plan is gated on it in `step` (after research-exhaustiveness) and in
+    # `wrapup` (dispose, the order's first member), so without it a `wrapup` test could
+    # never dispose. A workspace with no research.json reads as no open items.
+    _step_gate = None
+    if step_mode:
+        _boundary = load_step_boundary()
+
+        def _step_ctx() -> dict:
+            path = workspace / "research.json"
+            data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+            return _boundary.step_ctx(data if isinstance(data, dict) else {})
+
+        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode, ctx=_step_ctx)
+
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
     # the negative-test short-circuit above: that one DENIES AND STOPS, because
     # a negative test's verdict is sealed the moment routing happens. A positive
@@ -940,6 +1046,10 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
+    # Deny-by-default (#3568): the agents a main-thread spawn may reach for real.
+    # Any other spawn is denied after the branches above (`default_spawn_denial`).
+    # None = deny nothing (callers outside the unit orchestrator).
+    _live_agents = set(live_agents) if live_agents is not None else None
     # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
     # stubbed name, by `Skill` call or agent spawn, ends the run through the
     # stop path of the negative-test short-circuit above, once the turn that
@@ -970,6 +1080,8 @@ async def run_skill(
         routing_resolved["tool_use_id"] = tool_use_id
         if name in _stub_skills:
             denial = stub_denial(name, _stub_skills[name])
+            # Its hand-back tells the caller its turn goes on; this one ends.
+            denial["hookSpecificOutput"].pop("additionalContext", None)
         else:
             callee = repr(name) if name else "a callee whose name cannot be read"
             denial = {
@@ -1008,6 +1120,33 @@ async def run_skill(
         # Telemetry only — never gates, denies, or counts toward any limit.
         if (builtin_record := builtin_call_record(tool_name, input_data)):
             builtin_tool_calls.append(builtin_record)
+        # The step boundary, BEFORE the stubs: a stub's canned reply must never
+        # replace a step denial, or the test would record the hand-off as taken.
+        # Only when the test declared a mode; otherwise `_step_gate` is None and this
+        # is inert, which is every test in the corpus today.
+        if _step_gate is not None:
+            try:
+                _verdict = _step_gate.check(
+                    tool_name, input_data.get("tool_input") or {},
+                    subagent=bool(input_data.get("agent_id")),
+                )
+            except Exception:  # noqa: BLE001 - a hook that raises fails a call the test was entitled to make
+                _verdict = None
+            if _verdict is not None:
+                _step_decision, _step_reason = _verdict
+                out = {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": _step_reason,
+                    }
+                }
+                # The halt is the backstop: a second crossing ends the run, as the
+                # worker's does, so a test cannot measure a turn that ran past it.
+                if _step_decision == "halt":
+                    out["continue_"] = False
+                    out["stopReason"] = _step_reason
+                return out
         # Track skill invocations so we can populate skills_invoked.
         if tool_name == "Skill":
             tool_input = input_data.get("tool_input", {}) or {}
@@ -1099,6 +1238,10 @@ async def run_skill(
             agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
             return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
+            return denial
+        elif (denial := default_spawn_denial(tool_name, input_data, _live_agents, _stub_skills)):
+            # Last on purpose: the short-circuit, the stop and an explicit stub's
+            # canned text all win over the default (#3568).
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
         # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
@@ -1307,9 +1450,10 @@ async def run_skill(
     # The open_query() async generator, hoisted so the finally below can close
     # it deterministically on every exit path (see that finally for why).
     iterator: Any = None
+    silence_window: float = sdk_message_silence_seconds
 
     async def _consume_messages():
-        nonlocal usage, error, aborted_reason, iterator
+        nonlocal usage, error, aborted_reason, iterator, silence_window
         # Manual iteration so each `__anext__()` can be wrapped in a
         # per-message silence watchdog. The SDK has no internal
         # generation-side timeout — once the control-channel
@@ -1319,16 +1463,29 @@ async def run_skill(
         # a distinguishable `sdk_stream_silence` reason that the
         # orchestrator retries.
         iterator = open_query(prompt=user_message, options=options).__aiter__()
+        open_tasks: set[str] = set()
         while True:
+            silence_window = (
+                max(sdk_message_silence_seconds, SUBAGENT_TASK_SILENCE_SECONDS)
+                if open_tasks
+                else sdk_message_silence_seconds
+            )
             try:
                 message = await asyncio.wait_for(
                     iterator.__anext__(),
-                    timeout=sdk_message_silence_seconds,
+                    timeout=silence_window,
                 )
             except StopAsyncIteration:
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            if isinstance(message, TaskStartedMessage):
+                open_tasks.add(message.task_id)
+            elif isinstance(message, TaskNotificationMessage) or (
+                isinstance(message, TaskUpdatedMessage)
+                and message.status in TERMINAL_TASK_STATUSES
+            ):
+                open_tasks.discard(message.task_id)
             if (
                 isinstance(message, SystemMessage)
                 and getattr(message, "subtype", None) == "init"
@@ -1709,7 +1866,7 @@ async def run_skill(
         if e.reason == "sdk_stream_silence":
             error = (
                 f"no SDK message received within "
-                f"{sdk_message_silence_seconds}s — likely an upstream "
+                f"{silence_window}s — likely an upstream "
                 f"API stall mid-generation"
             )
         else:

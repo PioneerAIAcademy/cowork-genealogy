@@ -13,7 +13,7 @@ import {
 
 /**
  * The unit harness's image-cap fixture must be the refusal `image_transcribe`
- * actually throws. `eval/tests/unit/image-reader` grades whether the agent relays
+ * actually throws. `eval/tests/unit/search-images` grades whether the agent relays
  * that text to its caller, so a fixture that drifted from the tool would grade
  * the relay of a message no patron can receive.
  */

@@ -122,6 +122,7 @@ RULES: dict[str, tuple[Rule, ...]] = {
         Rule(PROTO + "web/", "web/", top_py=True),
         Rule(PROTO + "enqueue.py", "enqueue.py"),
         Rule(PROTO + "grants.py", "grants.py"),
+        Rule(PROTO + "turn_message.py", "turn_message.py"),
         Rule(PROTO + "migrate.py", "migrate.py"),
         Rule(PROTO + "sql/", "sql/"),
         Rule(f"{layout.ENGINE_DIR}/config/familysearch.json", "config/familysearch.json"),
@@ -132,6 +133,7 @@ RULES: dict[str, tuple[Rule, ...]] = {
         Rule("apps/server/app/agent/", "app/agent/", top_py=True),
         Rule(PROTO + "enqueue.py", "proto/enqueue.py"),
         Rule(PROTO + "grants.py", "proto/grants.py"),
+        Rule(PROTO + "turn_message.py", "proto/turn_message.py"),
         Rule(PROTO + "migrate.py", "proto/migrate.py"),
         Rule(PROTO + "sql/", "proto/sql/"),
         Rule(PROTO + "worker/", "proto/worker/", top_py=True),
@@ -366,7 +368,8 @@ def toolchain(tiers: list[str]) -> dict[str, str | None]:
         if info["pnpm"] is None:
             raise BuildError("pnpm is not on PATH; the web tier builds the SPA with it")
         if not (REPO / "apps" / "web" / "node_modules").is_dir():
-            raise BuildError("apps/web has no node_modules; run `pnpm install --frozen-lockfile` first")
+            raise BuildError("apps/web has no node_modules; run `pnpm install --frozen-lockfile --filter 'web...' "
+                             "--config.node-linker=isolated` first")
     if "tools" in tiers or "web" in tiers:
         node = _version(["node", "--version"])
         if node is None or int(node.lstrip("v").split(".")[0]) < 22:

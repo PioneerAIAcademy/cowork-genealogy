@@ -46,6 +46,9 @@ tools:
   - mcp__genealogy__research_query
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__wiki_search
@@ -70,8 +73,11 @@ You are invoked with a delegation message:
 | `projectPath` | yes | The absolute project-folder path. |
 | `questionId` | no | The `q_` question the search serves. |
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
+| `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId` and `planId` arrived with it, and then it replaces the `research_query` read. |
+| `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
+| `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), as the tree holds them. Data, never a finding. |
 
-Resolve everything else yourself, starting cold: read the plan item with `research_query` (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, read it with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId`; if that `Read` is denied, take the subject's id from `project_context`. Never `Read` `research.json`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -130,10 +136,9 @@ step, and stop. The caller decides what runs next.
 ### 1. Identify the plan item
 
 Find the plan item the delegation names (`planItemId`), or when it names none the next plan item with `status: "planned"` in the active plan for the
-current question. You start cold: you hold nothing from the caller's run, and the
-delegation carries ids, not the plan item's text or status. Read it yourself.
+current question. When the delegation carries `plan_item` and `planId`, and its `id` equals `planItemId`, that is the plan item and its status: issue no `research_query` this invocation (the status update uses the delegated `planId`), and skip the rest of this section's query rules. A `plan_item` that arrives without `planId`, or whose `id` differs from `planItemId`, is not the item you were asked to run: ignore it, call `research_query` for `planItemId` as your first tool call, and make no `record_search` until it returns.
 
-**If you need project state you do not already have, fetch it with
+**With no matching `plan_item`, fetch the project state you lack with
 `research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
 grows all run, so a whole-file read costs more context every time.
 
@@ -644,13 +649,13 @@ Call `research_log_append` once per search — it assigns the next `log_` id, st
 
 Never write a bare sentence there — a prose `query` carrying an ARK is rejected before the tool runs, so nothing is logged. Keep ARKs in a keyed field.
 
-Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
+**A search that returned results:** pass `projectPath`, `planItemId`, `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle) and `notes` (a one-line summary). The tool fills `tool`, `query`, both counts and `outcome: "positive"` from the staged search. Send `outcome` whenever `positive` is wrong: `negative` when the ranker says the pool holds no match (Step 4), `partial` for a collection mismatch, `error`. Send `resultsExamined` only when you triaged fewer rows than came back.
 
-**Required log-entry fields.** Every `log[]` entry must carry: `id` (the next `log_NNN`), `plan_item_id` (null for an ad-hoc search), `performed` (ISO-8601 timestamp), `tool`, `query`, `outcome`, `results_examined`, and `external_site` — set `external_site` to **null** for FamilySearch `record_search` searches. Add `results_ref` for any results-returning search.
+**A zero-result search** (the search returned zero results, not merely a null `staged`): pass `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome: "negative"`, `resultsExamined: 0` and `notes`.
 
 **Append-only — never modify, overwrite, or re-order an existing `log[]` entry.** Each search, including each nil retry, becomes exactly one NEW entry with the next `log_` id; re-running a search is a fresh logged event, not an edit of a prior one. Even if you notice an error in an earlier entry, do NOT edit it — leave every existing entry byte-for-byte intact and append a new entry that notes the correction.
 
-**Sidecar correctness — what counts as nil is the result COUNT, not `staged`.** Any search returning one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — gets a `results/<log_id>.json` sidecar with that entry's `results_ref` set to `"results/<log_id>.json"` (never null). Only a **zero**-result search omits `stagedResultsRef` and leaves `results_ref` null. `research_log_append` writes the sidecar from the `stagedResultsRef` handle — which is why the Step 3 staging gate is mandatory before you get here; if results came back but `staged` is null you cannot patch it here (there is no way to set `results_ref` by hand), so re-run the identical query **with** `projectPath`. The sidecar is a JSON object — `{ "returned_count": <n>, "payload": { "results": [ <the records returned> ] } }`, never a bare array — where `returned_count` equals the number of records in `payload.results`, and `results_available` matches that count.
+**Sidecar correctness — what counts as nil is the result COUNT, not `staged`.** Any search returning one or more results — `outcome: "positive"` **or** a `partial` collection-mismatch — gets a `results/<log_id>.json` sidecar with that entry's `results_ref` set to `"results/<log_id>.json"` (never null). Only a **zero**-result search omits `stagedResultsRef` and leaves `results_ref` null. `research_log_append` writes the sidecar from the `stagedResultsRef` handle — which is why the Step 3 staging gate is mandatory before you get here; if results came back but `staged` is null you cannot patch it here (there is no way to set `results_ref` by hand), so re-run the identical query **with** `projectPath`.
 
 **Collection-mismatch:** When results come from the wrong collection (e.g., searched 1870 census, got 1850 results):
 - Log with `outcome: "partial"` (not `"negative"` — negative means zero results)
@@ -667,7 +672,7 @@ Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce t
 - `partial`: Results found but incomplete (e.g., image unavailable, or collection-mismatch)
 - `error`: Search failed (authentication, server error)
 
-If the call returns `{ ok: false, errors }`, surface the errors rather than retrying blindly. A common cause is a **stale `stagedResultsRef`** (staged files are pruned after ~24h) — re-run `record_search` to re-stage, then call `research_log_append` with the fresh ref.
+If the call returns `{ ok: false, errors }`, surface the errors rather than retrying blindly. A common cause is a **stale `stagedResultsRef`** (staged files are pruned after ~24h) — re-run `record_search` to re-stage, then call `research_log_append` with the fresh ref. A reply with `alreadyLogged: true` is not an error: that search is already logged under the `logId` it names, so do not log it again.
 
 Narrate from the tool's summary ("logged as log_006; retained 3 results"); do not echo the payload.
 
@@ -688,7 +693,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 **Run extraction only when the delegation itself says to extract** ("…and extract them"), and only for records that clear `needs-review`. Otherwise name the promising records in your return as ready for extraction and stop: the caller confirms, and you do not extract on your own. When it does say so, extraction is one call: `extraction_append({ projectPath, recordIds, questionIds })`, with each promising result's `recordId` field (never `arkId`, `ark`, `id` or `url`). It reads each record live, logs it and extracts it in code, so do not `record_read` first. Relay its summary verbatim.
 
 1. If a record ID is available, put it in `recordIds`.
-2. If the full record is unavailable but an image exists, record the image URL in the log. Name `image-reader` (page text), then `record-structurer`, in the caller-facing lines as the route; you spawn neither.
+2. If the full record is unavailable but an image exists, record the image URL in the log. Name `image_transcribe` (which stages the page), then `record-structurer` with its `staged.resultsRef`, in the caller-facing lines as the route; you call neither.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located." Never treat an index entry as equivalent to examining the original.
 
 **Passenger lists:** Starting 1820, US passenger manifests list every person aboard by name, including infants and young children — not just heads of household. (Canadian passenger lists are the exception, scarce before 1865.) When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.
@@ -753,7 +758,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 - **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
 - **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry instead (see Step 5).
-- **Don't skip plan items silently.** Set status to `skipped` with an explanation.
+- **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
 - **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries and plan-item status, not assertions.
@@ -773,7 +778,7 @@ Return **≤12 lines** to the caller, in this order:
 - the top match(es) with `matchScore`, attachment status, the cross-check result and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
-- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer` / `image-reader`, or `research-exhaustiveness`
+- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
 
@@ -1207,6 +1212,7 @@ collection does not exempt a lever from this requirement.
 | Lever | How | When to try |
 |---|---|---|
 | Search by neighbor | Search the adjacent census household | Subject missed by indexer or indexed badly |
+| Search by address | Not available: record search takes no street, house-number or dwelling term | — |
 | Search collateral relatives | Use uncommon brother/cousin/in-law surname | Subject's surname too common |
 | Maiden vs married name | Run two parallel searches | Female ancestor across her lifetime |
 

@@ -223,7 +223,7 @@ const EXAMPLES: Record<string, string> = {
     { "name": "Berks and Northampton Counties (parent jurisdictions)", "date_range": "pre-1811" }
   ],
   "collections": [
-    { "id": "2542790", "title": "Pennsylvania, Death Certificates, 1906-1968", "date_range": "1906-1968" }
+    { "id": "2542790", "title": "Pennsylvania, Death Certificates, 1906-1968", "date_range": "1906-1968", "person_count": 6542331, "record_count": 1980442 }
   ],
   "quirks": [
     "Schuylkill County was formed in 1811 from Berks and Northampton; pre-1811 records are filed under the parent counties.",
@@ -236,6 +236,14 @@ const EXAMPLES: Record<string, string> = {
     { "section": "online_records", "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records", "found": true },
     { "section": "research_tips", "url": null, "found": false }
   ],
+  "registration_start": [
+    { "event": "birth", "level": "state", "year": 1906, "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records" }
+  ],
+  "volume_summary": {
+    "start_year": 1845, "end_year": 1908, "total_volumes": 31, "complete": true,
+    "by_record_type": [{ "group": "Probate", "volumes": 12, "browse_only": 9, "fulltext_only": 2 }],
+    "untyped": { "volumes": 1, "browse_only": 1, "fulltext_only": 0 }
+  },
   "source": "locality-guide",
   "created": "2026-07-18",
   "updated": null
@@ -431,7 +439,27 @@ export function exampleFor(
     }
     // A summary's narrative and search summary are refused one without the
     // other (`narrativeAndSearchSummaryTogether`), so the generic placeholder
-    // would contradict the refusal it is attached to.
+    // would contradict the refusal it is attached to. A refusal over either of
+    // those fields is shown `edits`, so a small change is not taught to re-send
+    // both whole fields; any other is shown the two fields themselves.
+    if (section === "proof_summaries" && fieldsNamed.some((f) => NARRATIVE_EDIT_FIELDS.has(f))) {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "update",
+  entryId: "<existing-ps_-id>",
+  /* a small change: copy each old exactly from the field's current text; it must occur once.
+     After a later search, change both fields. To rewrite a field whole, pass it in fields instead. */
+  edits: [
+    { field: "narrative_markdown",
+      old: "**What could resolve it:** the 1885 county estate file.",
+      new: "**What could resolve it:** nothing further; the 1885 county estate file was searched." },
+    { field: "exhaustive_search_summary",
+      old: "Not yet examined: the 1885 county estate file.",
+      new: "Also searched: the 1885 county estate file." }
+  ]
+})`;
+    }
     if (section === "proof_summaries") {
       return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
@@ -536,6 +564,9 @@ export function exampleHints(
   }
   return hints;
 }
+
+/** The `proof_summaries` names a refused update is shown the `edits` example for. */
+const NARRATIVE_EDIT_FIELDS = new Set(["edits", "narrative_markdown", "exhaustive_search_summary"]);
 
 /** The `conflicts` fields a resolve names; a refused update naming one is
  *  shown the three worked resolves. */

@@ -211,3 +211,50 @@ def test_corrupt_sibling_counts_captures_not_unreadable(tmp_path):
     assert r.unreadable == 0
     assert r.sibling_unreadable == 1
     assert r.joined_assertions == 0
+
+
+# --- #2490: the staged shape ---------------------------------------------------
+
+_STAGED_SUMMARY = json.dumps(
+    [{"type": "text", "text": json.dumps({
+        "staged": {"resultsRef": "results/.staging/u.json", "returnedCount": 1},
+        "digest": {"id": "X", "chars": 9000, "excerpt": "Will Book G"},
+    })}]
+)
+
+
+def _join_research(ark: str) -> dict:
+    return {
+        "log": [{"id": "log_1", "tool": "image_transcribe", "query": {"imageArk": ark}}],
+        "assertions": [{"id": "a1", "log_entry_id": "log_1"}],
+    }
+
+
+def test_staged_call_with_captured_page_is_complete(tmp_path):
+    """A staged read's page lives under `staged_transcription`, not in the
+    summary; it is the full text, so the join is to a COMPLETE transcription."""
+    ark = "ark:/61903/3:1:AAAA-BBBB"
+    call = _transcribe(ark=ark, response_summary=_STAGED_SUMMARY, staged_transcription="T" * 9000)
+    r = scan([_write_run(tmp_path, [call], _join_research(ark))])
+    assert r.complete == 1 and r.staged_uncaptured == 0
+    assert r.complete_joined_assertions == 1
+
+
+def test_staged_call_without_captured_page_is_not_complete(tmp_path):
+    """The other direction: a staged summary is short, unmarked JSON, so read
+    alone it looks complete — but it holds only the digest, not the page."""
+    ark = "ark:/61903/3:1:AAAA-BBBB"
+    call = _transcribe(ark=ark, response_summary=_STAGED_SUMMARY)
+    r = scan([_write_run(tmp_path, [call], _join_research(ark))])
+    assert r.complete == 0 and r.staged_uncaptured == 1
+    assert r.joined_assertions == 1 and r.complete_joined_assertions == 0
+
+
+def test_inline_transcription_beside_a_failed_staging_is_still_complete(tmp_path):
+    """Old logs, and a staging failure today, carry the text inline."""
+    ark = "ark:/61903/3:1:AAAA-BBBB"
+    summary = json.dumps([{"type": "text", "text": json.dumps(
+        {"transcription": "the page", "staged": None, "stagingError": "disk full"}
+    )}])
+    r = scan([_write_run(tmp_path, [_transcribe(ark=ark, response_summary=summary)], _join_research(ark))])
+    assert r.complete == 1 and r.staged_uncaptured == 0

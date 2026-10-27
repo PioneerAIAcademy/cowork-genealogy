@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "The run died (connection error, ENOTFOUND) at ~12 minutes while still doing locality-guide research for Campbeltown, Argyll -- it never reached the research plan or search stage. No Marriage fact exists anywhere on Hugh Mclachlan or Catharine Muir in the tree; no mention of the 30 May 1845 Kilninian and Kilmore record or any marriage record at all. proof_summaries is empty."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "69ebb36507372c4479cec535046f4bab4385dc3227f85039cd63b2aaa3b2aa27",
+  "blind_bundle_digest": "6424a8b48cd5db6e3ddab9c6a9064bd3fe5531384a3570b3d953ebe374c7ae17"
+}
