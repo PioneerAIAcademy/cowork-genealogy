@@ -1166,9 +1166,13 @@ describe("extraction_append: documents", () => {
         expect((await rolesOf("capture:deed-indenture"))["Paul Meacham"]).toBe("grantee");
       });
 
-      it("checks nothing when the transcription cannot be read", async () => {
-        const r = await run([{ recordId: "capture:deed-gone", document: swappedDeed(), transcriptionRef: "results/.staging/pruned-after-24h.json" }]);
-        expect((r.errors ?? []).join(" ")).not.toMatch(/the transcription says/);
+      it("checks nothing, and still writes, when the cited transcription file cannot be read", async () => {
+        const doc = JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+        doc.log.push({ id: "log_001", performed: "2026-01-01T00:00:00Z", tool: "image_transcribe", query: { imageId: "gone" }, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json" });
+        await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+        const r = await run([{ recordId: "capture:deed-gone", document: swappedDeed(), transcriptionRef: "results/log_001.json" }]);
+        expect(r.ok).toBe(true);
+        expect((await rolesOf("capture:deed-gone"))["Paul Meacham"]).toBe("grantee");
       });
 
       it("checks nothing for a pasted-text document with no transcriptionRef", async () => {

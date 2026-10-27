@@ -200,20 +200,11 @@ describe("deedFormulaErrors: what must still be refused (#3881)", () => {
   it("refuses the grantor labelled witness", () => {
     expect(deedFormulaErrors(d(["witness", "grantee", "witness", "witness"]), text, "d").join(" ")).toMatch(/Know ye that I Paul Meacham/);
   });
-  it("refuses the payer labelled grantor when only the payer phrase contradicts", () => {
-    const errs = deedFormulaErrors(d(["grantor", "grantor", "witness", "witness"]), text, "d").join(" ");
-    expect(errs).toMatch(/paid by John Dewey/);
-    expect(errs).not.toMatch(/Know ye/);
-  });
   it("names only the mislabelled party, not a correctly labelled one the phrase also lists", () => {
     const errs = deedFormulaErrors(d(["grantor", "grantee", "grantor", "witness"]), text, "d").join(" ");
     expect(errs).toMatch(/names p3 \(Gad Palmer\) as witnesses/);
     expect(errs).not.toMatch(/p4/);
   });
-  it("refuses the payer labelled witness", () => {
-    expect(deedFormulaErrors(d(["grantor", "witness", "witness", "witness"]), text, "d").join(" ")).toMatch(/paid by John Dewey/);
-  });
-
   it("counts only phrases that name a party when several administrator phrases appear", () => {
     const probate = {
       recordType: "probate", documentForm: "page_image", source: { title: "p", repository: "r" },
@@ -226,5 +217,109 @@ describe("deedFormulaErrors: what must still be refused (#3881)", () => {
   it("does not throw on a name that is not a string", () => {
     const odd = { recordType: "land", documentForm: "page_image", source: { title: "d", repository: "r" }, persons: [{ id: "p1", names: [{ given: 5, surname: "Meacham" }], statedRelation: "grantor", facts: [] }] } as any;
     expect(() => deedFormulaErrors(odd, text, "d")).not.toThrow();
+  });
+});
+
+describe("deedFormulaErrors: payer, probate and signer shapes (PR review round 3, #3881)", () => {
+  const land = (persons: any[]) =>
+    ({ recordType: "land", documentForm: "page_image", source: { title: "d", repository: "r" }, persons }) as StructuredDocument;
+  const probate = (persons: any[]) =>
+    ({ recordType: "probate", documentForm: "page_image", source: { title: "p", repository: "r" }, persons }) as StructuredDocument;
+  const mm = () => land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantee")]);
+
+  it("refuses the payer labelled grantor when no Know-ye phrase names a grantor", () => {
+    const d = land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantor"), person("p3", "Sam", "Smith", "grantee")]);
+    const text = "This Indenture between Paul Meacham of the one part and Sam Smith of the other, for forty pounds paid by John Dewey of Westfield";
+    expect(deedFormulaErrors(d, text, "d").join(" ")).toMatch(/paid by John Dewey/);
+  });
+
+  it("refuses the payer labelled witness the same way", () => {
+    const d = land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "witness"), person("p3", "Sam", "Smith", "grantee")]);
+    const text = "This Indenture between Paul Meacham of the one part and Sam Smith of the other, for forty pounds paid by John Dewey of Westfield";
+    expect(deedFormulaErrors(d, text, "d").join(" ")).toMatch(/paid by John Dewey/);
+  });
+
+  it.each([
+    ["paid unto me by", "Know ye that I Paul Meacham for $500 paid unto me by John Dewey have sold"],
+    ["paid to us by", "Know ye that I Paul Meacham for $500 paid to us by John Dewey have sold"],
+    ["paid and secured to me by", "Know ye that I Paul Meacham for $500 paid and secured to me by John Dewey have sold"],
+    ["paid him by", "Know ye that I Paul Meacham for $500 paid him by John Dewey have sold"],
+    ["which was paid by", "Know ye that I Paul Meacham for $500 which was paid by John Dewey have sold"],
+  ])("accepts a deed whose consideration reads '%s', with a mortgage back on the page", (_n, deedText) => {
+    const text = `${deedText} unto the said John Dewey. Know all men by these presents that I John Dewey for $500 paid by Paul Meacham do grant unto the said Paul Meacham`;
+    expect(deedFormulaErrors(mm(), text, "d")).toEqual([]);
+  });
+
+  it.each([
+    "the debt, borne and paid by Paul Meacham",
+    "the note is fully paid by Paul Meacham",
+    "which shall be well and truly paid by the said Paul Meacham",
+    "which was duly paid by Paul Meacham",
+    "the taxes being paid by Paul Meacham",
+  ])("accepts a correct deed whose tax or mortgage clause says '%s'", (clause) => {
+    expect(deedFormulaErrors(mm(), `Know ye that I Paul Meacham for $500 paid unto me by John Dewey have sold, ${clause}`, "d")).toEqual([]);
+  });
+
+  it("accepts two Know-ye deeds on a page, for the second deed", () => {
+    const d = land([person("p1", "John", "Dewey", "grantor"), person("p2", "Sam", "Smith", "grantee")]);
+    expect(deedFormulaErrors(d, "Know ye that I Paul Meacham for $40 paid by John Dewey have sold. Know ye that I John Dewey for value received have sold to Sam Smith.", "d")).toEqual([]);
+  });
+
+  it("stays silent on a swapped page whose mortgage back names both parties as grantors (the narrowing's cost)", () => {
+    const d = land([person("p1", "Paul", "Meacham", "grantee"), person("p2", "John", "Dewey", "grantor")]);
+    const text = "Know ye that I Paul Meacham for $500 paid by John Dewey have sold. Know all men by these presents that I John Dewey paid by Paul Meacham do grant";
+    expect(deedFormulaErrors(d, text, "d")).toEqual([]);
+  });
+
+  it("probate: refuses the administrator made the decedent, however the name is introduced", () => {
+    const d = (porter: any) => probate([porter, person("p2", "Paul", "Meacham")]);
+    const porter = person("p1", "Isaac", "Porter", "administrator", [{ type: "probate" }]);
+    for (const lead of [
+      "Isaac Porter Administrator on the Estate of Paul Meacham",
+      "Isaac Porter of Westfield in the County of Hampshire, Administrator on the Estate of Paul Meacham",
+      "Isaac Porter, Esq., Administrator on the Estate of Paul Meacham",
+      "Isaac Porter Esq Administrator on the Estate of Paul Meacham",
+    ]) {
+      expect(deedFormulaErrors(d(porter), lead, "d").join(" ")).toMatch(/names p1 \(Isaac Porter\) as the administrator/);
+    }
+  });
+
+  it.each([
+    ["a payment to another estate's administrator", "To cash paid Gad Palmer, Administrator of the Estate of John Ingersoll, 5 dollars"],
+    ["an adm'r heading", "Account of Isaac Porter, adm'r of the estate of Paul Meacham"],
+    ["an Admr. heading", "Isaac Porter Admr."],
+    ["an executor's account", "Account of Isaac Porter, Executor of the last will of Paul Meacham"],
+    ["no heading phrase", "Paid the funeral charges and the doctor's bill"],
+    ["the subscriber", "the subscriber, Administrator on the estate of the late Paul Meacham. To cash paid Gad Palmer, Administrator of the Estate of John Ingersoll"],
+  ])("probate: accepts a correct document with %s", (_n, text) => {
+    const d = probate([person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "probate" }]), person("p3", "Gad", "Palmer")]);
+    expect(deedFormulaErrors(d, text, "d")).toEqual([]);
+  });
+
+  it("does not read a signer after a semicolon as a witness", () => {
+    const d = land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantee"), person("p3", "Gad", "Palmer", "witness")]);
+    const text = "This Indenture made between Paul Meacham of the one part and John Dewey of the other part. Signed sealed and delivered in presence of Gad Palmer; Paul Meacham (seal)";
+    expect(deedFormulaErrors(d, text, "d")).toEqual([]);
+  });
+
+  it("does not read 'That Whereas' as a name", () => {
+    const d = land([person("p1", "John", "Dewey", "grantee"), person("p2", "Paul", "Meacham", "grantor")]);
+    expect(deedFormulaErrors(d, "Know all men by these presents, That Whereas John Dewey recovered judgment", "d")).toEqual([]);
+  });
+
+  it("reads 'and' between witnesses (a witness labelled grantor is refused through it)", () => {
+    const d = land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantee"), person("p3", "Gad", "Palmer", "witness"), person("p4", "John", "Ingersol", "grantor")]);
+    expect(deedFormulaErrors(d, "This Indenture. Signed in presence of Gad Palmer and John Ingersol", "d").join(" ")).toMatch(/p4/);
+  });
+
+  it("reads the filler in 'paid at or before the ensealing and delivery of these presents by'", () => {
+    const d = land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantor"), person("p3", "Sam", "Smith", "grantee")]);
+    expect(deedFormulaErrors(d, "This Indenture, for $5 paid at or before the ensealing and delivery of these presents by John Dewey of Westfield", "d").join(" ")).toMatch(/paid at or before/);
+  });
+
+  it("a party the payer phrase places is not also read as a witness", () => {
+    const d = land([person("p1", "Ann", "Seller", "grantor"), person("p2", "Paul", "Roe", "grantee"), person("p3", "Gad", "Palmer", "witness")]);
+    const text = "This Indenture, Ann Seller selling, for $5 paid by Paul Roe of Boston. Signed in presence of Gad Palmer, Paul Roe (seal)";
+    expect(deedFormulaErrors(d, text, "d")).toEqual([]);
   });
 });

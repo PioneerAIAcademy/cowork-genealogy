@@ -1,21 +1,29 @@
 // deed-formula — checks a land or probate document's role labels against the
 // transcription's own formula (spec §11.7). record-structurer labels the
-// parties; the page says who the grantor, grantee, witnesses and administrator
-// are in a few fixed phrases, and a label such a phrase contradicts is refused.
+// parties; the page names the grantor, the payer, the witnesses and the
+// administrator in a few fixed phrases, and a label such a phrase contradicts is
+// refused.
 //
-// Built for precision over recall, because a pattern that matches wrongly
-// refuses a correct write and the agent has no way to write that deed. So:
-//   - a phrase anchors on its own words, then names are read as a strict list of
-//     capitalized words (2-4 per name, split by a comma, "and" or "&"), never as
-//     "whatever follows up to a period";
-//   - a name that matches no party, or more than one (a father and son, Johnson
-//     and Johnston), is dropped, and a phrase left with no name refuses nothing;
-//   - a formula that matches several times refuses only when every occurrence
-//     that names a party contradicts the labels;
-//   - the witness clause is read only to the end of its own line, so a signature
-//     block on the next lines is never a witness.
-// A form the phrases do not recognise (an indenture "between X of the one part",
-// a quitclaim, an abstract) and an unreadable text refuse nothing.
+// Built for precision over recall: a pattern that matches wrongly refuses a
+// correct write, and the agent has no way to write that deed, so a missed refusal
+// is the acceptable direction. Hence:
+//   - each phrase anchors on its own words; names are then read as a strict list
+//     of capitalized words (2-4 per name, split by a comma, "and" or "&"; a ";"
+//     or ":" ends the list), never "whatever follows up to a period";
+//   - a name matching no party, or more than one (a father and son, Johnson and
+//     Johnston), is dropped, and a phrase left with no name counts for nothing;
+//   - a formula matched more than once refuses only when every occurrence that
+//     names a party contradicts the labels (a page may hold two deeds);
+//   - the payer phrase ("paid by"), which also appears in mortgage-back and tax
+//     clauses and in consideration forms not read here, is consulted only when no
+//     "Know ye" phrase names a party labelled grantor;
+//   - the witness clause is read to the end of its own line, and a party another
+//     phrase here already places (the grantor, the payer) is never a witness;
+//   - the probate arm reads one thing: the decedent must not be the person named
+//     as administrator.
+// A form no phrase here matches (an indenture "between X of the one part", an
+// abstract), and any text that cannot be read, refuse nothing. A quitclaim or
+// indenture that carries one of these phrases is checked by it.
 
 import type { DocumentPerson, StructuredDocument } from "./structured-document.js";
 import { landSides, partyName, probateDecedentOrDefault } from "./structured-document.js";
@@ -27,12 +35,16 @@ const lower = (s: string) => s.toLowerCase().replace(/[^a-z'-]/g, "");
 /** Abbreviations whose period is not the end of a sentence. */
 const ABBREVIATION = new Set(["jno", "wm", "thos", "chas", "geo", "jas", "robt", "saml", "benj", "jr", "sr", "esq", "st", "mr", "mrs", "dr"]);
 
+/** Capitalized words that open a clause and are never part of a name. */
+const NOT_A_NAME = new Set(["whereas", "that", "the", "this", "know", "now", "and", "which", "witnesseth", "said", "we", "our"]);
+
 const NAME_TOKEN = /^[A-Z][A-Za-z'’-]*\.?$/;
 
 /**
  * Names read off the start of `rest`: a list of names, each 2-4 capitalized
  * words, split by a comma, "and" or "&". A lowercase word ends a name; so does a
- * sentence-ending period. Returns the names and the text they were read from.
+ * sentence-ending period, and a ";" or ":" ends the whole list. Returns the
+ * names and the text they were read from.
  */
 function readNames(rest: string): { names: string[][]; text: string } {
   const tokens = rest.trim().split(/\s+/);
@@ -42,19 +54,20 @@ function readNames(rest: string): { names: string[][]; text: string } {
   const names: string[][] = [];
   for (;;) {
     const cur: string[] = [];
-    let end: "comma" | "sentence" | null = null;
+    let end: "comma" | "stop" | null = null;
     while (i < tokens.length && cur.length < 4) {
       const raw = tokens[i];
       const core = raw.replace(/[,;:]+$/, "");
-      if (!NAME_TOKEN.test(core)) break;
+      if (!NAME_TOKEN.test(core) || NOT_A_NAME.has(lower(core))) break;
       cur.push(core.replace(/\.$/, ""));
       i++;
-      if (/[,;:]$/.test(raw)) { end = "comma"; break; }
-      if (core.endsWith(".") && core.length > 2 && !ABBREVIATION.has(lower(core))) { end = "sentence"; break; }
+      if (/[;:]$/.test(raw)) { end = "stop"; break; }
+      if (/,$/.test(raw)) { end = "comma"; break; }
+      if (core.endsWith(".") && core.length > 2 && !ABBREVIATION.has(lower(core))) { end = "stop"; break; }
     }
     if (cur.length < 2) break;
     names.push(cur);
-    if (end === "sentence") break;
+    if (end === "stop") break;
     if (end !== "comma") {
       if (!/^(and|&)$/i.test(tokens[i] ?? "")) break;
       i++;
@@ -69,10 +82,28 @@ function readNameBefore(before: string): string[] | undefined {
   const cur: string[] = [];
   for (let j = tokens.length - 1; j >= 0 && cur.length < 4; j--) {
     const core = tokens[j].replace(/[,;:]+$/, "");
-    if (!NAME_TOKEN.test(core) || (j < tokens.length - 1 && /[,;:]$/.test(tokens[j]))) break;
+    if (!NAME_TOKEN.test(core) || NOT_A_NAME.has(lower(core)) || (j < tokens.length - 1 && /[,;:]$/.test(tokens[j]))) break;
     cur.unshift(core.replace(/\.$/, ""));
   }
   return cur.length >= 2 ? cur : undefined;
+}
+
+/**
+ * The name just before "Administrator on the Estate of": directly before it, or
+ * before its "Esq.," or "of <place words>," tail ("Isaac Porter of Westfield in
+ * the County of Hampshire, Administrator").
+ */
+function readAdministrator(before: string): string[] | undefined {
+  const b = before.replace(/[,\s]+Esq(?:uire)?\.?[,\s]*$/i, "").replace(/[,\s]+$/, "");
+  const direct = readNameBefore(b);
+  if (direct) return direct;
+  const window = b.slice(-140);
+  const ofs = [...window.matchAll(/\s+of\s+/g)].map((m) => m.index!).reverse();
+  for (const at of ofs) {
+    const name = readNameBefore(window.slice(0, at));
+    if (name) return name;
+  }
+  return undefined;
 }
 
 /** Equal, or one edit apart for words of 5+ letters (Ingersol / Ingersoll). */
@@ -91,47 +122,49 @@ function partyFor(doc: StructuredDocument, name: string[]): DocumentPerson | und
   return found.length === 1 ? found[0] : undefined;
 }
 
-interface Hit {
-  phrase: string;
-  parties: DocumentPerson[];
-}
-
 const GRANTOR = /\bKnow\s+(?:ye|all\s+men)(?:\s+by\s+these\s+presents)?[,:]?\s+(?:that\s+)?(?:(?:I|we)\b[,:]?\s+)?/gi;
 const PAID_BY = /(?<!\b(?:be|been|is|are|was|were)\s+)\bpaid\b(?:[,\s]+(?:to\s+me|me|in\s+hand|at|or|before|the|ensealing|and|delivery|of|these|presents|hereof)){0,10}?[,\s]+by\s+/gi;
 const IN_PRESENCE = /\bin\s+(?:the\s+)?presence\s+of[ \t]+/gi;
 const ADMINISTRATOR = /\bAdministrat(?:or|rix)\s+(?:on|of)\s+the\s+Estate\s+of\s+/gi;
 
-function hitsAfter(doc: StructuredDocument, text: string, anchor: RegExp, lineOnly = false): Hit[] {
-  return [...text.matchAll(new RegExp(anchor.source, anchor.flags))].map((m) => {
-    const start = m.index! + m[0].length;
-    const rest = text.slice(start, start + 240);
-    const { names, text: read } = readNames(lineOnly ? rest.split(/\r?\n/)[0] : rest);
-    const parties = [...new Set(names.map((n) => partyFor(doc, n)).filter((p): p is DocumentPerson => !!p))];
-    return { phrase: `${m[0]}${read}`.replace(/\s+/g, " ").trim(), parties };
+/** Each match of `anchor` in `source`, with the names read after it. */
+function readAfter(source: string, anchor: RegExp, lineOnly = false) {
+  return [...source.matchAll(new RegExp(anchor.source, anchor.flags))].map((m) => {
+    const rest = source.slice(m.index! + m[0].length, m.index! + m[0].length + 240);
+    const read = readNames(lineOnly ? rest.split(/\r?\n/)[0] : rest);
+    return { phrase: `${m[0]}${read.text}`.replace(/\s+/g, " ").trim(), names: read.names };
   });
+}
+
+interface Hit {
+  phrase: string;
+  parties: DocumentPerson[];
+}
+
+function hitsAfter(doc: StructuredDocument, source: string, anchor: RegExp, lineOnly = false): Hit[] {
+  return readAfter(source, anchor, lineOnly).map((r) => ({
+    phrase: r.phrase,
+    parties: [...new Set(r.names.map((n) => partyFor(doc, n)).filter((p): p is DocumentPerson => !!p))],
+  }));
 }
 
 /** Every formula phrase `rawText` carries, for auditing the patterns against a corpus. */
 export function formulaPhrases(rawText: string): { formula: string; phrase: string; names: string[] }[] {
   const text = rawText.replace(/\s+/g, " ");
-  const read = (formula: string, source: string, anchor: RegExp, lineOnly = false) =>
-    [...source.matchAll(new RegExp(anchor.source, anchor.flags))].map((m) => {
-      const rest = source.slice(m.index! + m[0].length, m.index! + m[0].length + 240);
-      const r = readNames(lineOnly ? rest.split(/\r?\n/)[0] : rest);
-      return { formula, phrase: `${m[0]}${r.text}`.replace(/\s+/g, " ").trim(), names: r.names.map((n) => n.join(" ")) };
-    });
+  const tag = (formula: string, rows: ReturnType<typeof readAfter>) =>
+    rows.map((r) => ({ formula, phrase: r.phrase, names: r.names.map((n) => n.join(" ")) }));
   return [
-    ...read("grantor", text, GRANTOR),
-    ...read("grantee", text, PAID_BY),
-    ...read("witness", rawText, IN_PRESENCE, true),
-    ...read("administrator", text, ADMINISTRATOR),
+    ...tag("grantor", readAfter(text, GRANTOR)),
+    ...tag("grantee", readAfter(text, PAID_BY)),
+    ...tag("witness", readAfter(rawText, IN_PRESENCE, true)),
+    ...tag("administrator", readAfter(text, ADMINISTRATOR)),
   ];
 }
 
 /**
  * Errors for a document whose labels a phrase in `rawText` contradicts. Land: the
- * grantor, the payer and the witnesses. Probate: the administrator and the
- * estate's owner. Nothing else is read.
+ * grantor, the payer and the witnesses. Probate: the administrator. Nothing else
+ * is read.
  */
 export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path: string): string[] {
   const text = rawText.replace(/\s+/g, " ");
@@ -158,16 +191,24 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
       if (s) return s;
       return /^(witness|justice of the peace|register|notary|clerk)\b/.test(str(p.statedRelation).trim().toLowerCase()) ? "witness" : "other";
     };
+    const grantorHits = hitsAfter(doc, text, GRANTOR);
+    const payerHits = hitsAfter(doc, text, PAID_BY);
+
     refuseIf(
-      hitsAfter(doc, text, GRANTOR),
+      grantorHits,
       (h) => !h.parties.some((p) => kind(p) === "grantor") && h.parties.some((p) => kind(p) === "grantee" || kind(p) === "witness"),
       "the grantor",
       (p) => kind(p) === "grantee" || kind(p) === "witness",
     );
-    refuseIf(hitsAfter(doc, text, PAID_BY), (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "witness"), "the one paying (the grantee's side)", (p) => kind(p) === "grantor" || kind(p) === "witness");
-    const placed = new Set(
-      [...hitsAfter(doc, text, GRANTOR), ...hitsAfter(doc, text, PAID_BY)].flatMap((h) => h.parties.map((p) => p.id)),
-    );
+    if (!grantorHits.some((h) => h.parties.some((p) => kind(p) === "grantor"))) {
+      refuseIf(
+        payerHits,
+        (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "witness"),
+        "the one paying (the grantee's side)",
+        (p) => kind(p) === "grantor" || kind(p) === "witness",
+      );
+    }
+    const placed = new Set([...grantorHits, ...payerHits].flatMap((h) => h.parties.map((p) => p.id)));
     refuseIf(
       hitsAfter(doc, rawText, IN_PRESENCE, true).map((h) => ({ ...h, parties: h.parties.filter((p) => !placed.has(p.id)) })),
       (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "grantee"),
@@ -179,21 +220,18 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
   if (doc.recordType === "probate") {
     const decedent = probateDecedentOrDefault(doc);
     const hs = [...text.matchAll(new RegExp(ADMINISTRATOR.source, ADMINISTRATOR.flags))].map((m) => {
-      const admin = readNameBefore(text.slice(0, m.index));
+      const admin = readAdministrator(text.slice(0, m.index));
       const estate = readNames(text.slice(m.index! + m[0].length, m.index! + m[0].length + 240));
       return {
         phrase: `${admin ? `${admin.join(" ")} ` : ""}${m[0]}${estate.text}`.replace(/\s+/g, " ").trim(),
         administrator: admin ? partyFor(doc, admin) : undefined,
-        owners: [...new Set(estate.names.map((n) => partyFor(doc, n)).filter((p): p is DocumentPerson => !!p))],
       };
     });
-    const inf = hs.filter((h) => h.administrator || h.owners.length > 0);
-    const bad = (h: (typeof hs)[number]) =>
-      h.administrator?.id === decedent || (h.owners.length > 0 && !h.owners.some((p) => p.id === decedent));
-    if (decedent !== undefined && inf.length > 0 && inf.every(bad)) {
+    const inf = hs.filter((h) => h.administrator);
+    if (decedent !== undefined && inf.length > 0 && inf.every((h) => h.administrator!.id === decedent)) {
       errs.push(
-        `${path}: the transcription says "${inf[0].phrase}", so the decedent is the estate's owner, ` +
-          `but the document makes ${partyName(doc, decedent)} the decedent. Put the probate, will or death fact ` +
+        `${path}: the transcription says "${inf[0].phrase}", which names ${partyName(doc, decedent)} as the administrator, ` +
+          `but the document makes that party the decedent. Put the probate, will or death fact ` +
           `on the estate's owner and resend.`,
       );
     }
