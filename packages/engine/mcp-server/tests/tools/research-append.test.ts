@@ -5053,11 +5053,28 @@ describe("research_append (Phase 3)", () => {
         expect(r.ok).toBe(false);
         if (r.ok) return;
         expect(r.errors[0]).toMatch(/^Fix the earliest failure first \(ops\[0\]\)/);
+        // Only the edits were checked, so the line must not claim the rest of the batch was.
+        expect(r.errors[0]).toContain("Only the batch's `edits` were checked");
+        expect(r.errors[0]).not.toContain("was checked, and the document validated");
         // One refused op has nothing to follow from.
         const one = await editPs001([{ field: "narrative_markdown", old: "born in 1805", new: "x" }]);
         expect(one.ok).toBe(false);
         if (one.ok) return;
         expect(one.errors.join(" ")).not.toContain("Fix the earliest failure first");
+      });
+
+      it("says the batch's other ops were not checked when one edit is refused beside them", async () => {
+        await writeProject(withText(withSearchedSince("2026-10-09T09:00:00Z")));
+        const r = await researchAppend({
+          projectPath: dir,
+          ops: [
+            { section: "questions", op: "update", entryId: "q_001", fields: { status: "open" } },
+            { section: "proof_summaries", op: "update", entryId: "ps_001", edits: [{ field: "narrative_markdown", old: "born in 1805", new: "x" }] },
+          ],
+        } as never);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors[0]).toMatch(/^Fix the earliest failure first \(ops\[1\]\) and send the batch again\. Only the batch's `edits` were checked/);
       });
 
       it("bounds the refusal text when every edit fails", async () => {
@@ -5102,6 +5119,8 @@ describe("research_append (Phase 3)", () => {
           state.proof_summaries[0].narrative_markdown = words(n);
           await writeProject(state);
         };
+        const updatePs001Batch = (fields: Record<string, unknown>, edits: unknown[]) =>
+          researchAppend({ projectPath: dir, ops: [{ section: "proof_summaries", op: "update", entryId: "ps_001", fields, edits }] } as never);
         const budgetWarning = (r: any) => (r.ok ? r.validation.warnings.join(" ") : "").match(/over the 500-word budget/);
 
         it("does not warn on an edit to a narrative already over it", async () => {
@@ -5114,6 +5133,14 @@ describe("research_append (Phase 3)", () => {
         it("warns on an edit that takes the narrative over it", async () => {
           await atWords(500);
           const r = await editPs001([{ field: "narrative_markdown", old: "born in 1850", new: "born in about 1850" }]);
+          expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+          expect(budgetWarning(r)).not.toBeNull();
+        });
+
+        it("still warns on a whole narrative re-sent in fields beside an edit to the search summary", async () => {
+          await atWords(505);
+          const r = await updatePs001Batch({ narrative_markdown: words(510) },
+            [{ field: "exhaustive_search_summary", old: "1850 census.", new: "1850 and 1860 censuses." }]);
           expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
           expect(budgetWarning(r)).not.toBeNull();
         });

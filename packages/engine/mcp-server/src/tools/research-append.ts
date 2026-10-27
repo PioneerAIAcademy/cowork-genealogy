@@ -5582,7 +5582,7 @@ export interface ResearchAppendInput {
   fields?: Record<string, unknown>;
   edits?: NarrativeEdit[];
   planId?: string;
-  // Batch form — supply ops; when present the single-op fields above are ignored.
+  // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
   // writes once (all-or-nothing). Ids assigned earlier in the batch are visible
   // to later ops (the allocators scan the live document).
@@ -7546,14 +7546,14 @@ function applyOne(
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
-    // a summary already over budget is not told again, and neither is an `edits`
-    // change unless it is what took the narrative over.
+    // a summary already over budget is not told again, and neither is a narrative
+    // changed through `edits` unless the edit is what took it over.
     const setsBudgetInput =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle");
     const overBudgetBeforeEdit =
-      EDIT_EXPANDED_OPS.has(op) &&
+      NARRATIVE_EDITED_OPS.has(op) &&
       !Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle") &&
       narrativeLengthWarnings({ ...resultEntry, narrative_markdown: priorNarrative }).length > 0;
     if (setsBudgetInput && !overBudgetBeforeEdit) {
@@ -8771,9 +8771,9 @@ function decodeArg(value: unknown): unknown {
  *  summary. Every other field is short enough to re-send in `fields`. */
 const EDITABLE_NARRATIVE_FIELDS = new Set(["narrative_markdown", "exhaustive_search_summary"]);
 
-/** Ops whose `fields` an `edits` expansion wrote, so the length budget can tell a
- *  sentence edit from a narrative write. */
-const EDIT_EXPANDED_OPS = new WeakSet<object>();
+/** Ops whose `narrative_markdown` an `edits` expansion wrote, so the length budget
+ *  can tell a sentence edit from a narrative write. */
+const NARRATIVE_EDITED_OPS = new WeakSet<object>();
 
 /** Every start index of `needle` in `text`, overlapping ("--" is twice in "---"). */
 function occurrences(text: string, needle: string): number[] {
@@ -8886,7 +8886,7 @@ function expandNarrativeEdits(
     // A caller that re-sends the same op object must not meet its own expansion
     // as a `fields` collision.
     delete op.edits;
-    EDIT_EXPANDED_OPS.add(op);
+    if (next.has(key(op.entryId as string, "narrative_markdown"))) NARRATIVE_EDITED_OPS.add(op);
   });
   return errors;
 }
@@ -9077,7 +9077,7 @@ export async function researchAppend(
       // A refused op keeps its `edits`; one that expanded cleanly does not.
       const refused = ops.flatMap((op, i) => (op && Object.prototype.hasOwnProperty.call(op, "edits") ? [i] : []));
       return fail(
-        [...(refused.length > 1 ? [checkedWithoutLine(refused[0])] : []), ...boundErrors(editErrors)],
+        [...(ops.length > 1 ? [editsCheckedOnlyLine(refused[0])] : []), ...boundErrors(editErrors)],
         refused.map((i) => ({ ...failedOpHint(ops[i], []), fields: ["edits"] })),
       );
     }
@@ -9407,6 +9407,15 @@ interface ApplyContext {
 
 /** `applyOne` with this call's context bound, so both passes apply an op the same way. */
 type ApplyOp = (doc: any, op: ResearchAppendOp, opIndex: number, ctx: ApplyContext) => AppliedOp;
+
+/** The lead line of a batch refused on its `edits`, which are checked before anything else
+ *  in the batch: unlike `checkedWithoutLine`, nothing else was checked. */
+function editsCheckedOnlyLine(firstIndex: number): string {
+  return (
+    `Fix the earliest failure first (ops[${firstIndex}]) and send the batch again. Only the batch's ` +
+    "`edits` were checked, not its other ops, so the corrected batch may still be refused for something else."
+  );
+}
 
 /** The line a refusal leads with when it looked past its first failure. It leads, and
  *  says what to do, because the errors after the first were found WITHOUT the failed
@@ -9812,7 +9821,7 @@ export const researchAppendSchema = {
         description:
           "Batch form: apply many mutations in one validate-once/write-once call " +
           "(all-or-nothing). When present, the top-level section/op/entry/entryId/" +
-          "fields/planId are ignored. Use this to persist a whole record at once.",
+          "fields/edits/planId are ignored. Use this to persist a whole record at once.",
         items: {
           type: "object",
           properties: {
