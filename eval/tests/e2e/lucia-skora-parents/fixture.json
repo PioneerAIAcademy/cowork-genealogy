@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 21, hint-samples.csv row 684, flags adds_father/adds_mother, confidence 3). Draft transcribed from an 1807 Przecław Roman Catholic baptism entry; unverified."
+  "image_basis": false,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:X54T-461",
+    "identity": "same"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 21, hint-samples.csv row 684, flags adds_father/adds_mother, confidence 3). Resolved 2026-10-26 as a TRUE MATCH on index evidence (image_basis false). The FamilySearch index holds one Lucia Skora baptism at Przecław in 1803-1813 (13 Nov 1807, parents Antonius Skora and Elisabeth Skrownionka as spelled on the hinted index ark:/61903/1:1:X54T-461; the duplicate indexes 6VQK-F3N3/6V3J-2YZ3 spell the mother Skowronionka and add house 18 - a spelling variant of one woman, not a second identity) - no competing candidate found there; the search was index-bounded, not exhaustive (unindexed or differently-spelled baptisms would not appear). The subject is a Lucia Skora of childbearing age at Przecław 1829-1846, so born ~1807 - identifying her with that baptism by name/parish continuity, age-fit, and the absence of an indexed competitor; this is an inference, since no read record ties the Skrzypek-children's mother or the 1832 bride directly to the 1807 baptism. Her Maron first marriage is evidenced by daughter Hedvigis's 1829 baptism (X57Q-7X5) and Mathias Maron's death 5 Mar 1832 (6V3H-ZYBY), fitting the Nov 1832 Skrzypek remarriage; a daughter's 1856 marriage names Laurentii Skrzypek + Luciae Skora (6V3Z-T2P1). The older Lucia Skora of the 1792 Maron marriage (b. ~1771) is excluded as the subject by childbearing age. LIMITATIONS: the 1832 Skrzypek marriage entry (which would state the bride's age/parents/widowhood) was NOT read - both register image copies (IGN 7997601 and 4645864) returned HTTP 403; Step 1a calibration not performed. A reported Geneteka 1829 marriage is an unverified lead. A second genealogist concurred (corroboration; did not examine the inaccessible images). This conclusion must be revisited if the original 1832 marriage record becomes available and contradicts the identification. See README 'Notes for reviewers'."
 }
