@@ -321,6 +321,19 @@ that apply:
     equal (`test_alpha_stop_hook.py`), and that file's `>= 26` floor and `== 30` pins change with
     them. Existing alpha sandboxes keep their creation-time code until the 72-hour cutoff
     (`app/sessions.py`), so step mode reaches the alpha over about three days.
+  - **Deviation recorded (PR 1, review of aa48f22e):** `turn_max_nudges` keeps returning the
+    queue body's stamped value rather than a hardcoded 0. The switch is the WEB tier's
+    `DEFAULT_MAX_NUDGES`, now 0, which is what every real turn carries; the worker honouring
+    what was stamped is the layering the field exists for, and hardcoding 0 would remove the
+    only way to exercise the veto/deny/halt path deliberately. `max_nudges()`'s docstring
+    says so. The two recipes that still exported 40 (`proto-demo-auto`, `proto-probe-resume`)
+    now default to 0.
+  - **Still owed, and NOT in PR 1:** `demo.py`'s keep-going driver — posting "keep going."
+    after each turn and waiting until the session has no open or held turn — with the
+    `bounds.py`, `turn.py` and `test_proto_target.py` changes beside it. Until it lands,
+    `make proto-demo-auto` runs one step and its verdict, which wants a completed project,
+    is not reachable under step mode. It is a live billed recipe, so it is built and run
+    together rather than built blind here.
   - **Phase 2 deletes the veto** (see Phases).
 - **Outcomes:**
   - A step turn ends `ok`, which renders no label: at cap 0 no plane binds the Stop hook.
@@ -328,6 +341,21 @@ that apply:
     sets `completed` at turn close from `project_completed(read_research(...))` when no Stop
     verdict was recorded. The honest `completed` label (section C) then shows on step turns
     too.
+    - **Amended to the implemented rule (review of aa48f22e).** This said "only when the
+      project became completed DURING the turn". The worker cannot know that without reading
+      `research.json` at the turn's START — a read every turn would pay and a down store must
+      not be asked twice — so it labels the first `ok` turn that SEES a completed project
+      when no other turn of the project carries the label. Two consequences follow, and the
+      first is the better behaviour: when the completing turn closed `stopped`, `budget` or
+      `delivered`, the next ordinary turn carries the label, which is right — the project IS
+      complete and the researcher should be told, and labelling a turn they stopped would
+      not say that.
+    - **The second is a real gap, and it is the lead's call.** A project completed a SECOND
+      time — a follow-up question wrapped up after the first completion — is never labelled
+      again, so the researcher never sees "Research complete" for it. Fixing it properly
+      means stamping the project's completeness on the turn row at close and comparing with
+      the previous closed turn: one column, one small query, no extra `research.json` read,
+      but a migration. Worth doing, and sized here rather than guessed at.
 - **The router stops ordering the model not to yield.** `skills/research/SKILL.md` deletes:
   - the "Continuous work" orders;
   - "Iterate — without yielding";

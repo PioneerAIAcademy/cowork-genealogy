@@ -574,7 +574,7 @@ proto-kill: ## D14: one real turn killed at its first place_search call (docker 
 .PHONY: proto-probe-resume
 proto-probe-resume: ## 0a probe: kill a real turn inside a delegation and watch the resume (proto-bounds CASE=probe_resume) — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}" $(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
 	  ARGS="--kill-after-s $${KILL_AFTER_S-10} --deadline-s $${DEADLINE_S-2400} $(ARGS)"
 
 # U23: one live bound on compose per run -- Stop, the held-message release, the spend cap,
@@ -690,8 +690,8 @@ proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884
 # needed six. elasticmq's visibility timeout (2100 s) must stay above this export, or an
 # attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
-proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}"; \
+proto-demo-auto: ## D18: proto-demo under step mode (AUTONOMOUS_MAX_NUDGES, default 0 -- a positive cap now gives veto, deny, then halt) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
 	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
 	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
