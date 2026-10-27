@@ -854,18 +854,16 @@ async function recordIdsMode(
         { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
         { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
       );
-      // A hint's log entry keeps no sidecar, and a persona id must resolve
-      // against one: an assertion under it carries none.
-      if (reusedHint.has(o.recordId)) {
-        for (const op of ops as any[]) if (op?.entry && "record_persona_id" in op.entry) op.entry.record_persona_id = null;
-      }
+      // A hint's log entry keeps no sidecar, so the read staged in this call is
+      // what research_append verifies the persona ids against.
+      const hintReads = reusedHint.has(o.recordId) ? new Map([[o.logId!, o.stagedRef!]]) : undefined;
       // An attached record cites the tree S the import already made for it, so
       // no duplicate S is minted. research_append refuses both at once.
       const importedS = opts.sourceDescriptionIdByBare?.get(arkToBareId(o.recordId));
       if (importedS) (ops[0] as any).entry.gedcomx_source_description_id = importedS;
       const written = await researchAppend(
         { projectPath: input.projectPath, ops, ...(importedS ? {} : { sourceDescription }) } as ResearchAppendInput,
-        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", ...(hintReads ? { hintReads } : {}) },
       );
       if (!written.ok) {
         o.status = "refused";
