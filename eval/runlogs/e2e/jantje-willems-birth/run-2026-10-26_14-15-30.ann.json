@@ -5,8 +5,8 @@
     "f3": "false"
   },
   "notes": {
-    "f1": "Agent avoided Ikjen Jans as parent of K8C9-ZZC and kept the 1748 hint family (I4 Willem Jans + I5 Ikjen Jans) separate as parents of rejected candidate I3. However, it added a different person named Willem Jans (I1, from the 1751 baptism ark:/61903/1:1:4G71-SKT2) as K8C9-ZZC's parent via R8, failing the pass condition 'no Willem Jans OR Ikjen Jans as her parents'. Possible fixture issue: the agent found the 1751 Janna Willemsen entry (Willem Jans + Trijntje Harmens) via parent-name search, a strategy the fixture author's child-name search may have missed. If the 1751 baptism is correct, the expected findings need updating.",
-    "f3": "Agent produced a positive conclusion (q_001 status: resolved, 1751 baptism found, parents added to tree). The 1748 hint was rejected as a naming-convention mismatch (mother Ikjen vs predicted Trijntje), not because of the widow evidence from the 1772 register page. No negative conclusion documented. If the agent's 1751 finding is genuine, f3's expected negative conclusion would be wrong — fixture review warranted."
+    "f1": "Agent added I1 (Willem Jans, from 1751 baptism ark:/61903/1:1:4G71-SKT2) as K8C9-ZZC's parent via R8, failing the pass condition 'no Willem Jans OR Ikjen Jans as her parents'. The 1748 hint family (I4 Willem Jans + I5 Ikjen Jans) also appear in the tree as parents of I3 (Jantjen Willemsen). The 1751 record is also wrong: born 23 May 1751, the subject would have been ~13 at her April/May 1764 first marriage — less plausible than the hint. Fixture stands.",
+    "f3": "Agent produced a positive conclusion (q_001 status: resolved, 1751 baptism found, parents added to tree). The 1748 hint was rejected on naming-convention grounds (mother Ikjen vs predicted Trijntje), not because of the widow evidence from the 1772 register page. No negative conclusion documented. The 1751 record is also wrong: born 23 May 1751, the subject would have been ~13 at her April/May 1764 first marriage. Fixture stands."
   },
   "annotator": "mercyokum",
   "findings_hash": "383eb07236fcbc868bc0d8119580df42a5a8ae16d66c8286e17b80769d191594",
