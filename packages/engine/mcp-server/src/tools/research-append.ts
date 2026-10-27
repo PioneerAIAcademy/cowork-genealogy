@@ -79,6 +79,14 @@ import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
+  collectionKey,
+  readExternalCollections,
+  storedCollectionKeys,
+  EXTERNAL_COLLECTIONS_FILE,
+  type ExternalCollectionsDoc,
+  type StoredCollectionRow,
+} from "../utils/external-collections-store.js";
+import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
   assertionTreeFactType,
@@ -4551,9 +4559,10 @@ function narrativeAndSearchSummaryTogether(
       `\`${missing}\`, and question ${qid} has been searched since this summary was last ` +
       `written (${later.join(", ")}). Both fields say what was searched and what could still ` +
       "resolve the question, so read those log entries, rewrite both, and pass both in this one " +
-      `update. If \`${missing}\` is still accurate after you check it against them, pass its ` +
-      "current text unchanged. Leaving one stale is how a narrative ends up recommending records " +
-      "its own summary says were searched.",
+      `update. A small change to either can go in \`edits\` rather than re-sending the field. If ` +
+      `\`${missing}\` is still accurate after you check it against them, pass its current text ` +
+      "unchanged. Leaving one stale is how a narrative ends up recommending records its own " +
+      "summary says were searched.",
   ];
 }
 
@@ -5448,6 +5457,122 @@ function planItemSkipInvariants(
   return errors;
 }
 
+/** The curated collections in `external-collections.json`, by `collectionKey`, or
+ *  why they could not be read. Every place's rows, so a plan item's free-text
+ *  jurisdiction never has to be matched to a stored place. Read once per call,
+ *  before the sync apply loop, and only when an op sets `collection_url`. */
+export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
+
+async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
+  try {
+    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
+ *  inline `items[]`. An update is not an append, so a status change never warns. */
+function appendedPlanItems(ops: readonly ResearchAppendOp[]): any[] {
+  const out: any[] = [];
+  for (const op of ops as any[]) {
+    if (op?.op !== "append") continue;
+    if (op.section === "plan_items" && op.entry && typeof op.entry === "object") out.push(op.entry);
+    if (op.section === "plans" && Array.isArray(op.entry?.items)) out.push(...op.entry.items.filter((i: unknown) => i && typeof i === "object"));
+  }
+  return out;
+}
+
+const PLACE_NOISE = /\b(county|parish|co\.|township|twp\.?|city of)\b/gi;
+
+/** The stored collections that fit an external-site item appended without a
+ *  `collection_url`: rows of every stored place whose first part ("Schuylkill",
+ *  "Pennsylvania") names a part of the item's free-text jurisdiction, narrowed to
+ *  the item's record type when both carry one. A WARNING, so the loose place match
+ *  is acceptable here; it could not decide a refusal (lead ruling, 2026-10-23). */
+export function storedCollectionsHint(item: any, doc: ExternalCollectionsDoc | null): string | undefined {
+  const repository = typeof item?.repository === "string" ? item.repository : "";
+  if (repository === "" || /familysearch/i.test(repository) || item?.collection_url) return undefined;
+  const parts = new Set(
+    String(item?.jurisdiction ?? "")
+      .replace(PLACE_NOISE, " ")
+      .split(",")
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const type = typeof item?.record_type === "string" ? item.record_type.toLowerCase() : "";
+  const fits: StoredCollectionRow[] = [];
+  for (const [place, entry] of Object.entries(doc?.places ?? {})) {
+    if (!parts.has(place.split(",")[0].trim().toLowerCase())) continue;
+    for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
+      const types = (row?.record_types ?? []).map((t) => String(t).toLowerCase());
+      if (type && types.length > 0 && !types.includes(type)) continue;
+      if (typeof row?.url === "string" && !fits.some((f) => f.url === row.url)) fits.push(row);
+    }
+  }
+  if (fits.length === 0) return undefined;
+  const shown = fits.slice(0, 8).map((r) => `${r.url} (${r.link_text})`).join("; ");
+  const more = fits.length > 8 ? `; and ${fits.length - 8} more` : "";
+  return (
+    `${/^[aeiou]/i.test(repository) ? "An" : "A"} ${repository} plan item (${item?.record_type ?? "?"}, ` +
+    `${item?.jurisdiction ?? "?"}) was added with no ` +
+    `collection_url, and ${EXTERNAL_COLLECTIONS_FILE} holds ${fits.length} collection(s) that fit it: ${shown}${more}. ` +
+    `Set collection_url to one of these urls, or leave it off for a site-wide search.`
+  );
+}
+
+/** Whether any op sets a plan item's `collection_url`, directly or on an inline
+ *  `items[]` entry of a `plans` op. Reads the fields, never a serialization: an op
+ *  can hold a value JSON cannot encode. */
+function opsSetCollectionUrl(ops: readonly ResearchAppendOp[]): boolean {
+  const has = (o: unknown) => !!o && typeof o === "object" && Object.hasOwn(o, "collection_url");
+  return ops.some((op: any) =>
+    [op?.entry, op?.fields].some(
+      (body) => has(body) || (Array.isArray(body?.items) && body.items.some(has)),
+    ),
+  );
+}
+
+/** A plan item's `collection_url` must be a curated collection FamilySearch
+ *  returned for a place, not one recalled from memory (#2995). Decidable from
+ *  `external-collections.json` alone, so it is a writer precondition (ADR-0011).
+ *  Only a url this op SETS is checked: one stored before a re-fetch dropped it
+ *  is left alone, or an unrelated edit to that item would be refused. A
+ *  non-string value is the validator's type error, not this rule's. */
+function collectionUrlInvariants(
+  item: any,
+  stored: StoredCollectionUrls | undefined,
+  previous?: unknown,
+): string[] {
+  const url = item?.collection_url;
+  if (typeof url !== "string" || url === "" || url === previous) return [];
+  const pid = item?.id ?? "(new)";
+  const remedy =
+    "Copy a row's url from research_query({section: \"external_collections\", place, recordType}), " +
+    "or omit collection_url for a site-wide search.";
+  if (!stored) return [];
+  if ("error" in stored) {
+    return [
+      `plan_items[${pid}]: collection_url cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be ` +
+        `read (${stored.error}). Re-fetch the place with external_links_search({standardPlace, projectPath}), ` +
+        "or omit collection_url.",
+    ];
+  }
+  if (stored.keys.size === 0) {
+    return [
+      `plan_items[${pid}]: collection_url '${url}' is not a stored curated collection — nothing is ` +
+        `stored for this project yet. Fetch the place with external_links_search({standardPlace, ` +
+        `projectPath}) first, then ${remedy.charAt(0).toLowerCase()}${remedy.slice(1)}`,
+    ];
+  }
+  if (!stored.keys.has(collectionKey(url))) {
+    return [
+      `plan_items[${pid}]: collection_url '${url}' is not in ${EXTERNAL_COLLECTIONS_FILE}. ${remedy}`,
+    ];
+  }
+  return [];
+}
+
 /** The two tiers that are a final answer rather than a stalled one: `proved`
  *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
  *  deliberately absent — it is a non-answer, so something IS holding it back. */
@@ -5552,7 +5677,15 @@ export interface ResearchAppendOp {
   entry?: Record<string, unknown>; // op = append (no id — the tool assigns it)
   entryId?: string; // op = update
   fields?: Record<string, unknown>; // op = update (shallow-merged; id immutable)
+  edits?: NarrativeEdit[]; // op = update of proof_summaries: exact-match edits, expanded into `fields`
   planId?: string; // required for section = "plan_items"
+}
+
+/** One exact-match edit to a proof summary's narrative or search summary. */
+export interface NarrativeEdit {
+  field: string;
+  old: string;
+  new: string;
 }
 
 /** The tree `S` entry payload for the composite persist. camelCase param at the
@@ -5571,8 +5704,9 @@ export interface ResearchAppendInput {
   entry?: Record<string, unknown>;
   entryId?: string;
   fields?: Record<string, unknown>;
+  edits?: NarrativeEdit[];
   planId?: string;
-  // Batch form — supply ops; when present the single-op fields above are ignored.
+  // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
   // writes once (all-or-nothing). Ids assigned earlier in the batch are visible
   // to later ops (the allocators scan the live document).
@@ -6642,6 +6776,7 @@ function applyOne(
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
   birthPlaceCoords?: BirthPlaceCoords,
+  storedCollectionUrls?: StoredCollectionUrls,
   // `ResearchAppendOptions.attachmentLink`: only extraction_append's personId
   // mode sets it, as a function argument no tool input reaches.
   attachmentLink = false,
@@ -6840,6 +6975,8 @@ function applyOne(
   let arrayIndex: number | undefined;
   // The entry's own timestamp as it stood before this op restamped it.
   let priorStamp: unknown;
+  // A proof summary's narrative before this op's fields merge.
+  let priorNarrative: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
@@ -6946,6 +7083,7 @@ function applyOne(
     }
 
     priorStamp = config.stampTimestamp ? existing[config.stampTimestamp.field] : undefined;
+    priorNarrative = existing.narrative_markdown;
 
     // A completed plan item stays completed. search-records writes
     // `in_progress` after every search it logs, and extraction_append completes
@@ -7193,6 +7331,14 @@ function applyOne(
           .map((it: any) => [it.id, it.status]),
       );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
+        // Before the completed-item skip: a `plans` update re-sending a completed
+        // item whole could otherwise write a collection_url that was never stored.
+        const storedItem = (Array.isArray(storedPlan?.items) ? storedPlan.items : []).find(
+          (it: any) => it && item && it.id === item.id,
+        );
+        invariantErrors.push(
+          ...collectionUrlInvariants(item, storedCollectionUrls, storedItem?.collection_url),
+        );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
@@ -7275,6 +7421,15 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
+      invariantErrors.push(
+        ...collectionUrlInvariants(
+          resultEntry,
+          storedCollectionUrls,
+          op.op === "update" ? storedItem?.collection_url : undefined,
+        ),
+      );
     }
   }
   // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on
@@ -7533,12 +7688,17 @@ function applyOne(
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
-    // a summary already over budget is not told again.
-    if (
+    // a summary already over budget is not told again, and neither is a narrative
+    // changed through `edits` unless the edit is what took it over.
+    const setsBudgetInput =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
-      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle")
-    ) {
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle");
+    const overBudgetBeforeEdit =
+      NARRATIVE_EDITED_OPS.has(op) &&
+      !Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle") &&
+      narrativeLengthWarnings({ ...resultEntry, narrative_markdown: priorNarrative }).length > 0;
+    if (setsBudgetInput && !overBudgetBeforeEdit) {
       opWarnings.push(...narrativeLengthWarnings(resultEntry));
     }
   }
@@ -8421,10 +8581,10 @@ async function prepareOps(
         const results = await readSidecarResults(ref);
         if (results) {
           // record_search and record_read stage GedcomX personas; their results key on
-          // `recordId`. fulltext_search / external_links_search stage transcript
-          // text and links keyed on `id`, with no persona document — matching
-          // them on `recordId` (a field they never carry) matched nothing every
-          // time, which either rejected a persona-linked write with an empty
+          // `recordId`. fulltext_search stages transcript text (and a legacy
+          // external_links_search sidecar holds links) keyed on `id`, with no
+          // persona document — matching them on `recordId` (a field they never
+          // carry) matched nothing every time, which either rejected a persona-linked write with an empty
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
           const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
@@ -8749,6 +8909,130 @@ function decodeArg(value: unknown): unknown {
   return coerceJsonArg(value);
 }
 
+/** The fields an `edits` op may change: the two long prose fields of a proof
+ *  summary. Every other field is short enough to re-send in `fields`. */
+const EDITABLE_NARRATIVE_FIELDS = new Set(["narrative_markdown", "exhaustive_search_summary"]);
+
+/** Ops whose `narrative_markdown` an `edits` expansion wrote, so the length budget
+ *  can tell a sentence edit from a narrative write. */
+const NARRATIVE_EDITED_OPS = new WeakSet<object>();
+
+/** Every start index of `needle` in `text`, overlapping ("--" is twice in "---"). */
+function occurrences(text: string, needle: string): number[] {
+  const at: number[] = [];
+  for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) at.push(i);
+  return at;
+}
+
+/**
+ * Expand each op's `edits` into `fields`, in place, and return every refusal.
+ *
+ * A one-sentence change to a proof summary used to re-send the whole 6-17k
+ * narrative (issue #3542, lead 2c). Each edit names a field, an `old` that must
+ * occur exactly once in the field's current text, and its replacement. The text an
+ * edit applies to is the field as an earlier op in this batch left it, else the
+ * stored entry. Once expanded, every later guard (the narrative-and-search-summary
+ * rule, the `updated` stamp, validation) sees an ordinary `fields` update.
+ */
+function expandNarrativeEdits(
+  ops: ResearchAppendOp[],
+  research: any,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const errors: string[] = [];
+  const pending = new Map<string, unknown>();
+  const key = (id: string, field: string) => `${id}\u0000${field}`;
+  const stored = (id: string) =>
+    (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).find((ps: any) => ps?.id === id);
+  ops.forEach((op, i) => {
+    if (!op || typeof op !== "object") return;
+    // A null or empty `edits` is absent, as a null `entry` or `planId` is.
+    if (op.edits == null || (Array.isArray(op.edits) && op.edits.length === 0)) delete op.edits;
+    const fields = op.fields && typeof op.fields === "object" && !Array.isArray(op.fields) ? op.fields : undefined;
+    if (!Object.prototype.hasOwnProperty.call(op, "edits")) {
+      if (op.section === "proof_summaries" && op.op === "update" && typeof op.entryId === "string" && fields) {
+        for (const f of EDITABLE_NARRATIVE_FIELDS) {
+          if (Object.prototype.hasOwnProperty.call(fields, f)) pending.set(key(op.entryId, f), fields[f]);
+        }
+      }
+      return;
+    }
+    const refuse = (msg: string) => errors.push(fmt(i, msg));
+    if (op.section !== "proof_summaries" || op.op !== "update") {
+      refuse("`edits` applies only to an update of `proof_summaries`; elsewhere, pass the new value in `fields`.");
+      return;
+    }
+    if (op.fields !== undefined && !fields) {
+      refuse("`fields` beside `edits` must be an object of the other fields to change.");
+      return;
+    }
+    const edits = op.edits;
+    if (!Array.isArray(edits)) {
+      refuse("`edits` must be an array of { field, old, new }.");
+      return;
+    }
+    const entry = typeof op.entryId === "string" ? stored(op.entryId) : undefined;
+    if (!entry) {
+      refuse(`\`edits\` needs \`entryId\` naming an existing proof summary; '${op.entryId ?? "(none)"}' is not one.`);
+      return;
+    }
+    const before = errors.length;
+    const next = new Map<string, string>();
+    edits.forEach((e: any, j: number) => {
+      const at = `edits[${j}]`;
+      if (!e || typeof e !== "object" || !EDITABLE_NARRATIVE_FIELDS.has(e.field)) {
+        refuse(`${at}: \`field\` must be "narrative_markdown" or "exhaustive_search_summary".`);
+        return;
+      }
+      if (typeof e.old !== "string" || e.old === "" || typeof e.new !== "string") {
+        refuse(`${at}: \`old\` must be a non-empty string and \`new\` a string.`);
+        return;
+      }
+      if (e.new === e.old) {
+        refuse(`${at}: \`new\` is the same as \`old\`; an edit must change the text.`);
+        return;
+      }
+      if (fields && Object.prototype.hasOwnProperty.call(fields, e.field)) {
+        refuse(`${at}: \`${e.field}\` is also set in \`fields\`; pass it one way, not both.`);
+        return;
+      }
+      const k = key(op.entryId as string, e.field);
+      const text = next.has(k) ? next.get(k) : pending.has(k) ? pending.get(k) : entry[e.field];
+      if (typeof text !== "string") {
+        refuse(`${at}: ${op.entryId} has no \`${e.field}\` text to edit.`);
+        return;
+      }
+      const found = occurrences(text, e.old);
+      if (found.length !== 1) {
+        refuse(
+          `${at}: \`old\` occurs ${found.length} times in ${op.entryId}'s \`${e.field}\`; it must occur ` +
+            "exactly once. " +
+            (found.length === 0
+              ? "Copy it character for character from the field's current text."
+              : "Include more of the surrounding text so it matches one place."),
+        );
+        return;
+      }
+      next.set(k, text.slice(0, found[0]) + e.new + text.slice(found[0] + e.old.length));
+    });
+    if (errors.length > before) return;
+    const merged: Record<string, unknown> = { ...(fields ?? {}) };
+    for (const f of EDITABLE_NARRATIVE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(merged, f)) pending.set(key(op.entryId as string, f), merged[f]);
+    }
+    for (const [k, text] of next) {
+      merged[k.split("\u0000")[1]] = text;
+      pending.set(k, text);
+    }
+    op.fields = merged;
+    // A caller that re-sends the same op object must not meet its own expansion
+    // as a `fields` collision.
+    delete op.edits;
+    if (next.has(key(op.entryId as string, "narrative_markdown"))) NARRATIVE_EDITED_OPS.add(op);
+  });
+  return errors;
+}
+
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
@@ -8807,6 +9091,7 @@ export async function researchAppend(
   input.ops = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
   input.entry = decodeArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = decodeArg(input.fields) as Record<string, unknown> | undefined;
+  input.edits = decodeArg(input.edits) as NarrativeEdit[] | undefined;
   input.sourceDescription = decodeArg(input.sourceDescription) as SourceDescriptionInput | undefined;
   input.verdict = decodeArg(input.verdict) as Record<string, unknown> | undefined;
 
@@ -8879,6 +9164,7 @@ export async function researchAppend(
           entry: input.entry,
           entryId: input.entryId,
           fields: input.fields,
+          ...(input.edits != null ? { edits: input.edits } : {}),
           planId: input.planId,
         },
       ];
@@ -8926,8 +9212,24 @@ export async function researchAppend(
       if (sources.size > 1) return fail([oneSourcePerCallError(sources)]);
     }
 
+    // Before prepareOps: a call refused here must not reach its network lookups,
+    // and every guard after this sees an ordinary `fields` update.
+    const editErrors = expandNarrativeEdits(ops, research, fmt);
+    if (editErrors.length > 0) {
+      // A refused op keeps its `edits`; one that expanded cleanly does not.
+      const refused = ops.flatMap((op, i) => (op && Object.prototype.hasOwnProperty.call(op, "edits") ? [i] : []));
+      return fail(
+        [...(ops.length > 1 ? [editsCheckedOnlyLine(refused[0])] : []), ...boundErrors(editErrors)],
+        refused.map((i) => ({ ...failedOpHint(ops[i], []), fields: ["edits"] })),
+      );
+    }
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+
+    const storedCollectionUrls = opsSetCollectionUrl(ops)
+      ? await loadStoredCollectionUrls(projectPath)
+      : undefined;
 
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
@@ -8947,6 +9249,7 @@ export async function researchAppend(
         prep.createdAssertions,
         prep.personLinks,
         prep.birthPlaceCoords,
+        storedCollectionUrls,
         options.attachmentLink === true,
         ctx.reserved,
       ),
@@ -8973,7 +9276,7 @@ export async function researchAppend(
     if (firstFailure !== undefined) {
       const { index, errors } = firstFailure;
       /** What this call said before it looked past the first failure. */
-      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index])]);
+      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index], errors)]);
       if (ops.length === 1 || options.firstFailureOnly === true) return firstOnly();
       try {
         const every = await everyOpFailure({
@@ -9046,6 +9349,19 @@ export async function researchAppend(
       const entry = ((planOp.op === "append" ? (planOp as any).entry : (planOp as any).fields) ?? {});
       for (const flag of planItemFlags(entry, localitiesForPlan)) {
         planItemWarnings.push(flag.message);
+      }
+    }
+    const appendedItems = appendedPlanItems(ops);
+    if (appendedItems.some((i) => i.repository && !/familysearch/i.test(String(i.repository)) && !i.collection_url)) {
+      let stored: ExternalCollectionsDoc | null = null;
+      try {
+        stored = await readExternalCollections(projectPath);
+      } catch {
+        // A malformed file is research_append's refusal only when a collection_url is set.
+      }
+      for (const i of appendedItems) {
+        const hint = storedCollectionsHint(i, stored);
+        if (hint) planItemWarnings.push(hint);
       }
     }
 
@@ -9220,15 +9536,22 @@ interface OpFailure {
 
 type ExampleHint = { section: string; op: "append" | "update"; fields?: readonly string[] };
 
-/** The worked-example hint for an op that failed. */
-function failedOpHint(op: ResearchAppendOp): ExampleHint {
+/** The worked-example hint for an op that failed with `errors`. */
+function failedOpHint(op: ResearchAppendOp, errors: readonly string[]): ExampleHint {
+  let fields = Object.keys(op.fields ?? op.entry ?? {});
+  // A proof summary's narrative fields select the `edits` example, so they are
+  // dropped unless a refusal names one: a tier refusal on an op that also edits
+  // the narrative is not taught a narrative edit.
+  if (op.section === "proof_summaries" && !errors.some((m) => [...EDITABLE_NARRATIVE_FIELDS].some((f) => m.includes(f)))) {
+    fields = fields.filter((f) => !EDITABLE_NARRATIVE_FIELDS.has(f));
+  }
   return {
     section: String(op.section),
     op: op.op === "update" ? "update" : "append",
     // The field names the failing op actually set. The worked example
     // is keyed on these so a caller refused on one field is not handed
     // a payload for another — see exampleFor.
-    fields: Object.keys(op.fields ?? op.entry ?? {}),
+    fields,
   };
 }
 
@@ -9244,6 +9567,15 @@ interface ApplyContext {
 
 /** `applyOne` with this call's context bound, so both passes apply an op the same way. */
 type ApplyOp = (doc: any, op: ResearchAppendOp, opIndex: number, ctx: ApplyContext) => AppliedOp;
+
+/** The lead line of a batch refused on its `edits`, which are checked before anything else
+ *  in the batch: unlike `checkedWithoutLine`, nothing else was checked. */
+function editsCheckedOnlyLine(firstIndex: number): string {
+  return (
+    `Fix the earliest failure first (ops[${firstIndex}]) and send the batch again. Only the batch's ` +
+    "`edits` were checked, not its other ops, so the corrected batch may still be refused for something else."
+  );
+}
 
 /** The line a refusal leads with when it looked past its first failure. It leads, and
  *  says what to do, because the errors after the first were found WITHOUT the failed
@@ -9499,7 +9831,7 @@ async function everyOpFailure(c: {
   }
 
   const lines = failures.flatMap((f) => f.errors.map((m) => fmt(f.index, m)));
-  const hints = failures.map((f) => failedOpHint(ops[f.index]));
+  const hints = failures.map((f) => failedOpHint(ops[f.index], f.errors));
   let documentLines: string[] = [];
   if (applied.some((a) => !a.noop)) {
     const validation = await validateIntroduced(
@@ -9560,6 +9892,25 @@ export const RESEARCH_APPEND_SECTIONS = [
   "researcher_profile",
 ] as const;
 
+/** `edits` on the top-level call and on each batch op. */
+const EDITS_SCHEMA = {
+  type: "array",
+  description:
+    "update of proof_summaries: change part of `narrative_markdown` or " +
+    "`exhaustive_search_summary` without re-sending it. Each `old` is copied " +
+    "exactly from the field's current text and must occur in it once; it is " +
+    "replaced by `new`. Do not also set that field in `fields`.",
+  items: {
+    type: "object",
+    properties: {
+      field: { type: "string", enum: [...EDITABLE_NARRATIVE_FIELDS] },
+      old: { type: "string" },
+      new: { type: "string" },
+    },
+    required: ["field", "old", "new"],
+  },
+};
+
 export const researchAppendSchema = {
   name: "research_append",
   description:
@@ -9579,8 +9930,12 @@ export const researchAppendSchema = {
     "assertion, to record a re-reading or a doubt. Any other assertions write is " +
     "refused, and a disputed reading belongs in a conflict.\n" +
     "\n" +
+    "To change a sentence or two of a proof summary's `narrative_markdown` or " +
+    "`exhaustive_search_summary`, pass `edits: [{ field, old, new }]` on its update " +
+    "instead of re-sending the whole field.\n" +
+    "\n" +
     "To apply several mutations in one call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`). Batches are " +
+    "`{ section, op, entry?/entryId?/fields?/edits?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
@@ -9616,6 +9971,7 @@ export const researchAppendSchema = {
         type: "object",
         description: "update: the fields to shallow-merge onto the existing entry (the id is immutable).",
       },
+      edits: EDITS_SCHEMA,
       planId: {
         type: "string",
         description: "Required for section 'plan_items' — the pl_ id of the parent plan to write into.",
@@ -9625,7 +9981,7 @@ export const researchAppendSchema = {
         description:
           "Batch form: apply many mutations in one validate-once/write-once call " +
           "(all-or-nothing). When present, the top-level section/op/entry/entryId/" +
-          "fields/planId are ignored. Use this to persist a whole record at once.",
+          "fields/edits/planId are ignored. Use this to persist a whole record at once.",
         items: {
           type: "object",
           properties: {
@@ -9643,6 +9999,7 @@ export const researchAppendSchema = {
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },
             fields: { type: "object", description: "update: fields to shallow-merge (the id is immutable)." },
+            edits: EDITS_SCHEMA,
             planId: { type: "string", description: "Required when section is 'plan_items' — the parent pl_ id." },
           },
           required: ["section", "op"],

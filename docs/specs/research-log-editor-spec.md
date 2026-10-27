@@ -916,10 +916,10 @@ An explicit `query` that names a filter its staged search never sent is refused
 and nothing is written. The ground truth is the staged payload's `query`, which
 `record_search` and `fulltext_search` fill with their own echo of the call's
 arguments (`search-result-staging-spec.md` §6), so the caller does not author it.
-Those two are the only producers judged: `external_links_search`,
-`image_transcribe`, `record_read` and `person_read` stage no `echoQuery` of
-their arguments, and
-`person_search` does not stage.
+Those two are the only producers judged: `image_transcribe`, `record_read`
+and `person_read` stage no `echoQuery` of their arguments, a legacy
+`external_links_search` sidecar (it no longer stages, 2026-10) carries none
+either, and `person_search` does not stage.
 
 A key is refused only when all four hold: it is an input parameter of the
 producing tool's schema; it is a filter (§7); the caller gave it a value (`null`,
@@ -995,8 +995,8 @@ recorded for different arguments.
   `stageSearchResults` from the real `record_search` fixture shape, never
   hand-built: an unhedged household note with no census word is refused on a
   staged 1850 US census (no sidecar written, staged file kept) and allowed on an
-  England and Wales 1851 census, a mixed 1850/1880 search, `fulltext_search` and
-  `external_links_search` payloads, and a nil search; a parish-register note is
+  England and Wales 1851 census, a mixed 1850/1880 search, a `fulltext_search`
+  payload and a legacy `external_links_search` one, and a nil search; a parish-register note is
   allowed on an 1850 census; a missing staged file reports finalize's error, not
   the census refusal; a staged handle spelled `./results/.staging/...` or as an
   absolute path is judged the same as the plain one; a batch refusal of op 1 leaves op 0's staged file in place.
@@ -1007,7 +1007,7 @@ recorded for different arguments.
   Allowed: a key sent with a different value, a descriptive key, host plumbing,
   paging left at its defaults, `null` and `""` values, an empty `query`, a query
   that echoes the call, an omitted `query` (filled, plumbing stripped), no staged
-  handle, a staged payload with no `query`, and an `external_links_search`
+  handle, a staged payload with no `query`, and a legacy `external_links_search`
   handle.
 - **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
   and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
