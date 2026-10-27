@@ -15,15 +15,16 @@
     ]
   },
   "input": {
-    "delegation": "Write the proof conclusion for the parentage question q_001, then say what happens next.",
+    "delegation": "Write the proof conclusion for the parentage question q_001, then say what happens next.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "richardson-parentage-not-exhaustive"
   },
   "judge_context": [
-    "The next-step line must name **research-plan**. The tier is below proved and named searches remain, so the tier could advance, and the work that would advance it is searching.",
-    "Naming **question-selection** as the next step is the failure this test exists for. The current question is not finished, so asking for a new one is the wrong move — this is the routing section E changed.",
-    "Naming a record that would advance the tier is required either way, and it must be a reasonably obtainable one. A privacy-restricted or sealed record (a recent vital record under embargo) does not count as a next step.",
-    "Do not charge the agent on the TIER here. That `probable` is correct on this scenario is `ut_proof_conclusion_d7g`'s subject; this test is only about where it routes afterwards.",
-    "Naming BOTH research-plan and question-selection is not a pass. The point of the change is that one of them is wrong, so offering both leaves the caller to pick.",
+    "This scenario has ONE open question and no conflicts. At `probable` the agent resolves it (§7) and completes the project (§8), so the next-step line correctly says the project is complete. Do not charge that.",
+    "What this test is about is the OTHER half of the line: when the agent names what would advance the tier, it must route that to **research-plan**. Naming **question-selection** is the failure this test exists for — advancing a tier is a SEARCH on the question already answered, not a new question. This is the routing section E changed.",
+    "Naming BOTH research-plan and question-selection is not a pass: the point of the change is that one of them is wrong, so offering both leaves the caller to pick.",
+    "Naming a record that would advance the tier is required, and it must be a reasonably obtainable one. A privacy-restricted or sealed record (a recent vital record under embargo) does not count.",
+    "Saying nothing at all about advancing the tier is also a fail: the tier is below `proved` and named searches remain.",
+    "Do not charge the agent on the TIER here. That `probable` is correct on this scenario is `ut_proof_conclusion_d7g`'s subject; this test is only about where it routes.",
     "DATES — the 1832/1833 discrepancy is real fixture content, not an internal inconsistency to charge."
   ],
   "judge_reads_files": true,

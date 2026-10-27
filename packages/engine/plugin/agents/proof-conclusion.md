@@ -141,6 +141,12 @@ without a linked identity assertion: stop. Do not proceed to Step 1.** Those
 are workflow states — an upstream step has not run — so there is no finding to
 record. Report the failing IDs and route.
 
+**Except under `wrapUp: yes`, for step 3 only.** Proceed, conclude at
+`not_proved` with `shortfall: "gap"`, name who is unidentified and what
+identifying them would take, and resolve the question (§7). A question with no
+assertions at all is this case. Step 2's conflict IDs still stop you under
+`wrapUp: yes` — see §7.
+
 **If step 4 produces failing IDs, do not conclude the question — but do record
 the attempt.** An unresolved identity conflict is a research *finding*, not a
 missing prerequisite, and a question that comes back with nothing written
@@ -318,9 +324,11 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 **Only when you concluded it.** If the preconditions gate blocked you and you recorded the attempt at `not_proved`, the question stays **open** — you were prevented from concluding, which is not the same as concluding that nothing is there. A `not_proved` summary written after an exhaustive search that came back empty DOES close its question; a `not_proved` summary written because a conflict blocked the correlation does not. Leave it open and route.
 
-**Under `wrapUp: yes` you resolve the question at whatever tier you reached**, `not_proved` included, and whether or not the person was identified. The researcher asked to stop here; leaving the question open would hand them the same offer again on the next turn. Where an unidentified person would otherwise have blocked you, write `not_proved`, say in the summary what identifying it would take, and resolve. This is the one case where `not_proved` closes a question without an exhaustive search behind it, because the researcher's decision is the reason, not the evidence.
+**Under `wrapUp: yes` you resolve the question at the tier you reached**, `not_proved` included, and whether or not the person was identified. Where an unidentified person would otherwise have blocked you, write `not_proved` with `shortfall: "gap"`, name who is unidentified and what identifying them would take, and resolve.
 
-**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
+**A blocking conflict still holds the question open, `wrapUp: yes` or not.** Write or refresh the `not_proved` summary with `shortfall: "conflict"`, leave `status` as it is, and name the conflict. Do not rely on the writer tool to stop you: it builds its blocking set from the summary's `supporting_assertion_ids`, so a summary citing none resolves straight over an open conflict.
+
+**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9, which routes it to research-plan as plan items on this question.
 
 `resolution_assertion_ids` are the `a_` ids the conclusion rests on — the same ones in the summary's `supporting_assertion_ids`.
 
@@ -328,9 +336,8 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
-- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
-- **Unless the delegation passed `newQuestion: yes`.** The researcher is wrapping this question up in order to start a different one, so the project is not finished; stamp `updated` alone and say the new question is next. Completing here would close a project the researcher just told you they are continuing.
-- That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
+- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`. That write is refused while a blocking conflict is unresolved.
+- **Unless the delegation passed `newQuestion: yes`:** do not write `completed`. Call `research_append({ section: "project", op: "update", fields: {} })` instead and say the new question is next. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and fewer than two hypotheses for the question is refused — decline, and name hypothesis-tracking as the next step.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
@@ -345,7 +352,8 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → **research-plan** (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years). A tier that could advance is a SEARCH, so it routes to the step that plans searches; sending it to question-selection asked for a new question when the current one was not finished.
+- **Next step** — in this order, first that applies: the question is still open → the step that unblocks it; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**. Never question-selection for an advanceable tier.
+- **What would advance the tier**, when it is below `proved`: one line, naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo). Say it even when the project is complete, as what more would take rather than as the next step.
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
@@ -719,11 +727,11 @@ paragraphs of plain prose with **no label, heading or field name**:
    "exhaustive", not even inside a phrase such as "standard of proof"; say
    "the highest standard" instead.
 2. One sentence: what happens next, in plain language. When this invocation
-   set `project.status` to `completed`, write exactly this sentence instead,
-   and nothing else in the paragraph: "This research is finished for now. If
-   you'd like a second opinion on it, just ask." Say "for now" because the
-   search stop may list sources nobody reached: paragraph 1 already names them,
-   and a flat "finished" would contradict it.
+   set `project.status` to `completed`, write exactly one of these instead, and
+   nothing else in the paragraph. When the question's `search_stop` lists
+   unsearched sources (paragraph 1 names them): "This research is finished for
+   now. If you'd like a second opinion on it, just ask." When it does not:
+   "This research is finished. If you'd like a second opinion on it, just ask."
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

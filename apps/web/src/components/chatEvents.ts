@@ -91,10 +91,9 @@ export const CONNECT_LOST_NOTE =
   'lost — reload the page to start a new one.'
 
 export const TURN_OUTCOME_LABELS: Record<string, string> = {
-  // Step mode (section C): a project can now complete with sources nobody
-  // reached, because the researcher may choose to conclude at the "not
-  // exhaustive" choice. A flat "Research complete." would contradict the
-  // summary sitting directly above it, which names what was left.
+  // A project can complete with sources nobody reached: the researcher may
+  // choose to conclude rather than search on. A flat "Research complete." would
+  // contradict the summary sitting directly above it, which names what was left.
   completed: 'Research finished for now — see the summary for anything left unsearched. Send a message to research further.',
   stopped: 'Stopped — send a message to carry on.',
   queued: 'Picking up your message…',
@@ -102,8 +101,7 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
   decision: 'Waiting on you — see the question above.',
   // R4: the ask was met and the JOB is still open. It must not read like
-  // `completed` ('Research complete.'), or a plan-only request looks like a
-  // finished project.
+  // `completed` above, or a plan-only request looks like a finished project.
   delivered: "Done — that's what you asked for. Send a message to carry on.",
   mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
   // Added on main while this branch was open (U13/U23 outcomes).

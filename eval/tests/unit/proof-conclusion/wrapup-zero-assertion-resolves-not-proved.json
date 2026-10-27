@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "delegation": "wrapUp: yes. The researcher has asked to wrap up question q_001 (the parents of Patrick Flynn) and move on. Nothing has been searched for it yet. Write the proof conclusion for q_001 at whatever tier the evidence supports and resolve the question.",
+    "delegation": "wrapUp: yes. The researcher has asked to wrap up question q_001 (the parents of Patrick Flynn) and move on.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-census-nil"
   },
   "judge_context": [
