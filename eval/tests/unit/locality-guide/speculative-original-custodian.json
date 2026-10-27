@@ -4,7 +4,7 @@
     "skill": "locality-guide",
     "name": "Original-register custodian named correctly when tool result distinguishes originals from transcription copies",
     "type": "positive",
-    "description": "Mined from a live eval session (Oct 2026). The skill produced a guide that suggested HSP as a possible co-custodian of the Christ Church Philadelphia original registers, even though the wiki_read fixture clearly assigns original custody solely to Christ Church Preservation Trust and names HSP only as the holder of a published transcription. Tests that when tool results distinguish original custody from derivative holdings, the skill reports the original-holder accurately without speculative alternatives.",
+    "description": "Regression guard written after a live eval session (Oct 2026) in which the skill suggested HSP as a possible co-custodian of the Christ Church Philadelphia original registers. The fixtures here are synthetic, not that session's tool responses, and the test passed on the skill as it stood when written. Tests that when tool results distinguish original custody from derivative holdings, the skill reports the original-holder accurately without speculative alternatives.",
     "tags": ["repositories","sourced-claims","original-custody","philadelphia","from-eval","re-invoke-safe"]
   },
   "input": {
