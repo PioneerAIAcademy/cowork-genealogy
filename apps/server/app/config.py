@@ -78,12 +78,29 @@ class Settings(BaseSettings):
     # `_RUNNING_TIMEOUT_S` in `sandbox/e2b.py`), which a reconnect to a running sandbox
     # does not extend (#3305).
     #
-    # NOT the prototype's cap. `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the Beanstalk
-    # template both stay at 60 on purpose: that is a separate deployment with its own
-    # spend cap, and its recorded U13 acceptance figures were measured at 60
-    # (`docs/plan/familysearch-handoff.md`). Lowering it there would contradict the
-    # measurements, not just change a default.
-    autonomous_max_nudges: int = 30
+    # The prototype's cap moved to 0 WITH this one (step mode, decision 25). This note
+    # used to say the opposite -- that `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the
+    # Beanstalk template stay at 60 on purpose, because the U13 acceptance figures were
+    # measured there at 60 and lowering it would contradict the measurements. That held
+    # while the two planes ran different models of a turn. Under decision 25 the prototype
+    # is the plane that ENFORCES the step boundary, so a nudge cap above 0 there would veto
+    # the very stop the boundary just produced.
+    #
+    # The U13 figures stay true of what they measured; `familysearch-handoff.md` records
+    # that they were taken at 60. One of them already ran the other way: `probe_resume` was
+    # re-run twice WITH THE NUDGE ARM OFF (U13, 2026-10-10) and resumed correctly, so the
+    # resume path is not the part the cap was holding up.
+    #
+    # **0 under step mode** (lead, decision 25, 2026-10-21). Every turn is now ONE
+    # step, so a turn that stops has finished its step and there is nothing for a
+    # veto to push past: the hook would re-open a turn that ended on purpose, which
+    # is the 'it would not stop' the researcher reported. The sizing above is kept
+    # rather than deleted because it is the measurement that justified 30 while
+    # continuous work existed, and it is what a future reader needs if the veto ever
+    # comes back. At 0 `_build_hooks` binds no Stop hook at all.
+    #
+    # An operator can still raise it: the env var is read as before.
+    autonomous_max_nudges: int = 0
     # T4.1: reasoning effort for hosted sessions. ALL UNSET BY DEFAULT, which passes no
     # `--effort` and leaves every call at the CLI's own default -- exactly what ran before
     # these existed. Like MODEL and AUTONOMOUS_MAX_NUDGES they reach a sandbox once, at

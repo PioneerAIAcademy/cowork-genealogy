@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_init_project_014",
+    "skill": "init-project",
+    "name": "A stated wife whose name matches the read's gets no stub",
+    "type": "positive",
+    "description": "The family fixture holds Patrick Flynn's wife Mary Kelly. The user names his wife as Mary Kelly. A spouse is matched on the name within that relationship (lead ruling on #3384, 2026-10-20), so no stub is added. Tagged expects-no-stub; the only coverage of the name-match half of the ruling.",
+    "tags": [
+      "initialization",
+      "stubs",
+      "single-turn-decomposition",
+      "direct-arm",
+      "expects-no-stub"
+    ]
+  },
+  "input": {
+    "delegation": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to identify his parents. His wife was Mary Kelly.\n\nprojectPath: <workspace>",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "person-read-flynn-family"
+  ],
+  "judge_context": [
+    "The read (person-read-flynn-family, read by project_create on the host) already holds Patrick's wife Mary Kelly: the stated wife is the same person, so no stub is correct.",
+    "tree.gedcomx.json should hold exactly the six persons the read holds, with one Couple relationship.",
+    "The user named no one the read lacks, so no tree_edit call is needed."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "judge_reads_files": true
+}
