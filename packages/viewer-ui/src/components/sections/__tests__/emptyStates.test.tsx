@@ -60,15 +60,13 @@ describe('section empty states', () => {
 // Agents count: once research-plan (issue #2116) and timeline (issue #2797)
 // converted, no rendered section had a `skill:` owner left.
 //
-// Three prose exceptions, whose copy names the moment instead of the slug.
+// Two prose exceptions, whose copy names the moment instead of the slug.
 // `proof_summaries` (the Findings page) is owned by `agent:proof-conclusion`,
-// but "proof" is kept out of what the researcher reads; `known_holdings`
-// (`agent:init-project`) and `evaluations` (`agent:gps-mentor`) entered this set
-// only when agents did. Listing them explicitly keeps the default strict: a NEW
+// but "proof" is kept out of what the researcher reads; `evaluations`
+// (`agent:gps-mentor`) entered this set only when agents did. Listing them explicitly keeps the default strict: a NEW
 // section with no alias must contain its own slug.
 const PROSE_ALIASES: Record<string, string> = {
   proof_summaries: 'as the evidence for a question comes together',
-  known_holdings: 'when the project is initialized',
   evaluations: 'when the mentor',
 }
 

@@ -5417,19 +5417,6 @@ describe("research_append (Phase 3)", () => {
     expect(singleOk(r).entryId).toBe("ev_001");
     expect((await readResearch()).evaluations[0].timestamp).toMatch(/T.*:/);
   });
-
-  it("appends a known_holding and stamps `created` (date)", async () => {
-    await writeProject();
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "known_holdings",
-      op: "append",
-      entry: { holding_type: "document", description: "Family bible", confidence: "confident", promoted: false },
-    });
-    expect(r.ok && singleOk(r).entryId).toBe("kh_001");
-    const kh = (await readResearch()).known_holdings[0];
-    expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
-  });
 });
 
 describe("research_append (project singleton section)", () => {

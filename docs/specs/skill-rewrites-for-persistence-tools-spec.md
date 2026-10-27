@@ -72,8 +72,8 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   whole hand protocol with `merge_tree_persons({ projectPath, merges })`
   (`[survivorId, collapsedId]` pairs) — or `merge_record_into_tree({ projectPath,
   candidateGedcomx, merges })` when folding a `record_read` candidate. Narrate from
-  the tool's compact summary; the tool repoints all four `research.json` person-id
-  refs (closing the hand protocol's `known_holdings` gap).
+  the tool's compact summary; the tool repoints every `research.json` person-id
+  ref.
 - **Wave 2 — "Ad-hoc edits":** each subsection → a `tree_edit` operation —
   `add_fact` / `update_fact` / `add_name` / `update_name` / `update_person` /
   `add_person` / `add_relationship` / `remove` (facts/relationships only). The tool
