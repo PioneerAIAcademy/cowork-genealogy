@@ -1036,6 +1036,55 @@ describe("extraction_append: documents", () => {
     });
   });
 
+  describe("land classification rows (genealogist ruling, 2026-10-27)", () => {
+    const person = (id: string, given: string, surname: string, statedRelation: string, facts: any[]) =>
+      ({ id, gender: "male", names: [{ given, surname }], statedRelation, facts });
+    const deed = (informant?: { name: string }) => ({
+      recordType: "land",
+      documentForm: "page_image",
+      source: { title: "Hampshire Co. deeds, p. 384", repository: "FamilySearch" },
+      ...(informant ? { informant } : {}),
+      persons: [
+        person("p1", "Paul", "Meacham", "grantor", [
+          { type: "residence", place: "Southwick" },
+          { type: "birth", date: "1740" },
+          { type: "conveyance", date: "1790" },
+        ]),
+        person("p2", "John", "Dewey", "grantee", [{ type: "residence", place: "Westfield" }, { type: "birth", date: "1750" }]),
+        person("p3", "Gad", "Palmer", "witness", [{ type: "residence", place: "Southwick" }]),
+        person("p4", "John", "Ingersoll", "justice of the peace", [{ type: "acknowledgment", date: "1790" }]),
+      ],
+    });
+    const rowOf = (as: any[], role: string, fact: string, nth = 0) =>
+      as.filter((a) => a.record_role === role && a.fact_type === fact)[nth];
+    const cls = (a: any) => [a?.information_quality, a?.informant_proximity, a?.informant];
+
+    it("classifies each party's facts by the ruling, and none takes the default", async () => {
+      const r = await run([{ recordId: "capture:deed-rows", document: deed() }]);
+      expect(r.ok).toBe(true);
+      const as = await assertionsFor("capture:deed-rows");
+      expect(cls(rowOf(as, "grantor_1", "name"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "residence"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "conveyance"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "birth"))).toEqual(["secondary", "family_not_present", "the grantor"]);
+      expect(cls(rowOf(as, "grantee", "name"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantee", "residence"))).toEqual(["indeterminate", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantee", "birth"))).toEqual(["secondary", "family_not_present", "the grantor"]);
+      expect(cls(rowOf(as, "witness_1", "residence"))).toEqual(["primary", "witness", "the witnesses"]);
+      expect(cls(rowOf(as, "justice_of_the_peace_1", "acknowledgment"))).toEqual(["primary", "official_duty", "the acknowledging officer (justice of the peace or register)"]);
+      expect(as.some((a: any) => a.information_quality === "indeterminate" && a.informant_proximity === "unknown")).toBe(false);
+      expect(r.records[0].summary).not.toMatch(/no table row covers/);
+    });
+
+    it("a named informant replaces the generic string on the family rows only", async () => {
+      await run([{ recordId: "capture:deed-informant", document: deed({ name: "Hampshire Registry copyist" }) }]);
+      const as = await assertionsFor("capture:deed-informant");
+      expect(rowOf(as, "grantor_1", "birth").informant).toBe("Hampshire Registry copyist");
+      expect(rowOf(as, "grantor_1", "name").informant).toBe("the grantor");
+      expect(rowOf(as, "witness_1", "residence").informant).toBe("the witnesses");
+    });
+  });
+
   describe("deed and probate roles are read, and a couple must be stated (#3660)", () => {
     const person = (id: string, given: string, surname: string, statedRelation?: string, facts: any[] = []) =>
       ({ id, gender: "male", names: [{ given, surname }], ...(statedRelation ? { statedRelation } : {}), facts });
