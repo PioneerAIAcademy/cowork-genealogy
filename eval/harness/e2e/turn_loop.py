@@ -48,6 +48,10 @@ class Turn:
     #: The step this turn ran, as the caller's step gate saw it. None when the
     #: turn spawned nothing.
     step: str | None = None
+    #: The mode the turn RAN under (`step` / `job` / `wrapup`). A wrap-up turn
+    #: runs several steps, so the per-step report must keep it out of the step it
+    #: opened with -- as `proto/steps.py` does on the prototype side.
+    mode: str | None = None
     #: The reply that followed, or None when the loop stopped here.
     reply: str | None = None
     #: This turn's own `ResultMessage` figures, stamped by the caller. One per
@@ -205,6 +209,7 @@ def accumulate_usage(turns: list[Turn]) -> dict[str, Any]:
         {
             "index": t.index,
             "step": t.step,
+            "mode": t.mode,
             "wall_ms": t.wall_ms,
             "sent": t.sent,
             "reply": t.reply,

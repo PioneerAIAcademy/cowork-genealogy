@@ -458,7 +458,14 @@ def per_step_wait(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     costs: dict[str, list[float]] = {}
     order: list[str] = []
     for row in rows:
-        step = row.get("step") or "(no step)"
+        # A wrap-up turn runs SEVERAL steps -- dispose, link, settle, assess,
+        # conclude -- so charging its whole wall time to the step it opened
+        # with reports that step's p90 as the wrap-up's. `proto/steps.py`
+        # keeps those turns out of the per-step figures for the same reason;
+        # here they get their own row rather than being dropped, because the
+        # researcher waited for it either way.
+        step = ("(wrap-up)" if row.get("mode") == "wrapup"
+                else (row.get("step") or "(no step)"))
         if step not in order:
             order.append(step)
         wall = row.get("wall_ms")

@@ -42,6 +42,7 @@ _SETTINGS = (
     "agent_model", "subagent_model_override", "effort_level", "max_output_tokens",
     "caps", "betas", "deny_project_reads", "deny_shell", "person_evidence_guard",
     "resume_on_stall", "cli_version", "tool_search", "tool_search_offered", "step_mode",
+    "wrap_up_after",
 )
 _NUMBERED = re.compile(r"^(\d+)_comparison\.txt$")
 

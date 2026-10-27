@@ -932,6 +932,24 @@ def _complete(
                     return None
             cur.execute("SELECT next_session_seq(%s)", (turn["session_id"],))
             seq = cur.fetchone()[0]
+            queued = None
+            if auto_reply is not None:
+                reply = auto_reply.get("reply")
+                queued = (queue_auto_reply(cur, turn, reply, auto_reply.get("state") or {}, max_nudges)
+                          if reply else None)
+                if queued is None:
+                    # The run ended -- no offer, a cap, Stop, or the researcher's own
+                    # message already waiting. Clear the state so their next "Keep
+                    # going." is a new run rather than one resuming a spent budget.
+                    cur.execute(AUTO_REPLY_WRITE_SQL, (None, turn["session_id"]))
+                log(ev="auto_reply", turn_id=turn["turn_id"], session_id=turn["session_id"],
+                    reply=reply, queued_turn=queued)
+            # Written AFTER the reply is queued, so `reply_follows` reports what
+            # actually happened rather than what was planned. `seq` was taken
+            # before, so this frame keeps its place in the stream ahead of the
+            # reply's own event. The caller cannot set the field: `queue_auto_reply`
+            # refuses when a held row exists or Stop is set, and `complete()`'s
+            # lock-timeout path retries with the SAME `detail` and no reply at all.
             cur.execute(
                 "INSERT INTO session_events (session_id, seq, kind, payload, ts) "
                 "VALUES (%s, %s, 'turn_done', %s, now())",
@@ -943,7 +961,8 @@ def _complete(
                     # ended -- every ending used to look like success, and a half-finished
                     # run then reads to a genealogist as "nothing more was found".
                     Jsonb({"turn_id": turn["turn_id"], "receive_count": receive_count,
-                           "outcome": outcome, **(detail or {})}),
+                           "outcome": outcome, **(detail or {}),
+                           **({"reply_follows": True} if queued else {})}),
                 ),
             )
             tokens: tuple = (None, None, None, None)
@@ -965,17 +984,6 @@ def _complete(
                 (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, claim_epoch, turn["turn_id"],
                  claim_epoch, claim_epoch),
             )
-            if auto_reply is not None:
-                reply = auto_reply.get("reply")
-                queued = (queue_auto_reply(cur, turn, reply, auto_reply.get("state") or {}, max_nudges)
-                          if reply else None)
-                if queued is None:
-                    # The run ended -- no offer, a cap, Stop, or the researcher's own
-                    # message already waiting. Clear the state so their next "Keep
-                    # going." is a new run rather than one resuming a spent budget.
-                    cur.execute(AUTO_REPLY_WRITE_SQL, (None, turn["session_id"]))
-                log(ev="auto_reply", turn_id=turn["turn_id"], session_id=turn["session_id"],
-                    reply=reply, queued_turn=queued)
     conn.commit()
     return seq
 
@@ -3055,12 +3063,6 @@ async def _run_turn(
                        else boundary.reply_options(offered, research))
             if options:
                 detail["options"] = options
-            # Section A2. The browser keeps ChatPane busy and renders no buttons on a
-            # turn the host answers for the researcher, and this is how it knows. Left
-            # OUT rather than false, as `options` is, so the two agree: a frame with
-            # neither field is a turn that ended with nothing further coming.
-            if answered_by_host:
-                detail["reply_follows"] = True
             try:
                 detail["spend_estimate_usd"] = round(session_spend_usd(conn, sdk_session_id), 4)
             except Exception as exc:  # noqa: BLE001 - a calibration figure never fails a turn

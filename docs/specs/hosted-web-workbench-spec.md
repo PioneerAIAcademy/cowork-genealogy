@@ -630,7 +630,7 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   `reply_options(offered_step, research)`. The web shows one button per phrase
 >   and nothing else, and each sends its phrase **verbatim** — `step_mode(text)`
 >   is exact-phrase only, so a button sending its friendly label would start no
->   run. The field is left OUT when empty, as `reply_follows` is; a step that
+>   run. The field is left OUT when empty, as `reply_follows` is -- which the prototype sets from the reply it actually queued, not the one it planned, since `queue_auto_reply` refuses when a held row exists or Stop is set. No client reads `reply_follows` yet; a step that
 >   ended on a question for the researcher renders no buttons.
 >
 >   **"Keep going" is the host replying for the researcher**, not one long turn.

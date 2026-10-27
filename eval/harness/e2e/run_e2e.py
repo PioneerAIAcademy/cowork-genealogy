@@ -24,6 +24,7 @@ import os
 import sys
 from pathlib import Path
 
+from harness.skill_runner import load_step_boundary
 from e2e.orchestrator import (
     DEFAULT_FIXTURES_ROOT,
     DEFAULT_MCP_SERVER_ENTRY,
@@ -412,10 +413,24 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if args.wrap_up_after and not args.step_mode:
-        print("--wrap-up-after needs --step-mode: without it no host reply is sent "
-              "at all, so there is nothing to override.", file=sys.stderr)
+    # Three shapes used to exit 0 having done nothing, and record
+    # `usage.wrap_up_after` as if the arm had run: no --step-mode, --step-mode
+    # step (where `next_auto_reply` never replies, so there is nothing to swap),
+    # and a step name the gate never records -- a misspelling, or a GROUP key
+    # like `search` rather than the member `search-records`. A bought run that
+    # measures nothing is the failure worth refusing loudly.
+    if args.wrap_up_after and args.step_mode != "job":
+        print("--wrap-up-after needs --step-mode job: only a job turn gets a host "
+              "reply, so under any other mode there is nothing to override.",
+              file=sys.stderr)
         return 2
+    if args.wrap_up_after:
+        known = {s for group in load_step_boundary().GROUPS.values() for s in group}
+        if args.wrap_up_after not in known:
+            print(f"--wrap-up-after {args.wrap_up_after!r} is no step the gate "
+                  f"records, so the override could never fire. One of: "
+                  f"{', '.join(sorted(known))}.", file=sys.stderr)
+            return 2
 
     fixtures_root: Path = args.fixtures_root
     if not fixtures_root.exists():

@@ -3112,9 +3112,17 @@ async def _run_agent(
             outcome = "ok"
             if (turn.usage or {}).get("is_error"):
                 outcome = str((turn.usage or {}).get("stop_reason") or "error")
+            # The turn an answered question opens runs as `job`: without this the
+            # answer buys exactly one step and the run ends, because
+            # `next_auto_reply` replies to nothing but a `job` turn. Stamped on
+            # the turn too, so the per-step report can tell a wrap-up turn --
+            # which runs several steps -- from the step it opened with.
+            mode = turn.mode = _turn_mode(turn)
+            if turn.index == _answered_question.get("opened"):
+                mode = turn.mode = "job"
             decision = _boundary.next_auto_reply(
                 _reply_state,
-                _turn_mode(turn),
+                mode,
                 previous,
                 turn.step,
                 _boundary.offered_step(_last_text(turn)),
@@ -3136,10 +3144,19 @@ async def _run_agent(
             # question already on file. Answered at most once: a second time
             # would be a loop, and a run that asks twice has not understood the
             # answer, which is a finding rather than something to paper over.
+            # Only a `job` turn, and only while there is research left to do. The
+            # arm existed to keep a run going past a question it could answer; a
+            # concluded or completed project has nothing to keep going, and
+            # answering a proof-conclusion turn's closing courtesy question
+            # ("shall I look for his parents next?") would run a new step on a
+            # finished project and change the very files the judge grades.
             if (not reply and not _answered_question["done"]
-                    and outcome == "ok"
+                    and outcome == "ok" and mode == "job"
+                    and turn.step != "proof-conclusion"
+                    and not project_completed(read_research_json(workspace) or {})
                     and ended_on_a_question(_boundary, _last_text(turn))):
                 _answered_question["done"] = True
+                _answered_question["opened"] = turn.index + 1
                 reply = fixture.researcher_question
                 _emit(f"[host reply] turn {turn.index} answers the fixture's own question")
             if reply:

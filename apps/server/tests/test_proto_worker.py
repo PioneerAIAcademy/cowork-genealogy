@@ -188,6 +188,8 @@ class FakeCursor:
             return (self.conn.claim_epoch,)
         if "RETURNING message" in sql:  # the 1b claim
             return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
+        if "AND completed_at IS NULL) AS queued" in sql:  # HAS_QUEUED_SQL
+            return (self.conn.held_row_waiting,)
         if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
             return (self.conn.turn_active,)
         if "SELECT sdk_session_id FROM sessions" in sql:
@@ -233,6 +235,9 @@ class FakeConn:
         self.sdk_session_id = sdk_session_id
         self.usage = usage
         self.research: dict | None = None  # the documents row the Stop hook reads
+        # A held row already waiting: `queue_auto_reply` refuses the host's reply
+        # because the researcher's own message is next (re-review 9).
+        self.held_row_waiting = False
         self.tool_call_count = 0
         # turns.zero_progress_attempts (005_resume_guard.sql): bumped by the RETURNING
         # update, and zeroed by the reset the first tool call of an attempt issues.
@@ -6410,11 +6415,14 @@ def test_a_turn_that_makes_no_offer_carries_no_options_key(turn_env):
 
 
 def test_a_turn_the_host_answers_says_so_and_offers_no_buttons(turn_env):
-    """`reply_follows` (plan A2). The browser keeps ChatPane busy and renders no
-    buttons on a turn the host answers for the researcher, and this frame is how
-    it knows. It was described in a worker comment and in the workbench spec and
-    emitted nowhere, so the browser had no way to tell this turn from one that
-    ended with nothing coming.
+    """`reply_follows` (plan A2). The frame says a host reply is coming, so a
+    client can keep its composer busy and render no buttons for a turn the
+    researcher is not being asked to answer. It was described in a worker comment
+    and in the workbench spec and emitted nowhere.
+
+    **Nothing reads it yet.** ChatPane clears busy on every `turn_done` and does
+    not look at this field, so emitting it is the contract catching up with its
+    own documentation, not a behaviour change in the browser.
 
     The two fields have to agree: a host-answered turn carries `reply_follows`
     and NO `options`, because the choice has already been made. Buttons there
@@ -6429,6 +6437,22 @@ def test_a_turn_the_host_answers_says_so_and_offers_no_buttons(turn_env):
     payload = _turn_done_payload(turn_env["conn"])
     assert payload.get("reply_follows") is True, payload
     assert "options" not in payload, payload
+
+
+def test_reply_follows_is_absent_when_the_reply_was_refused(turn_env):
+    """Re-review 9. The field used to be set by the CALLER, from the reply it
+    planned. `queue_auto_reply` refuses when a held row already exists (the
+    researcher typed) or Stop is set, and `complete()`'s lock-timeout path
+    retries with the same `detail` and no reply at all -- so the browser was
+    told a reply was coming when none was. It now comes from what was queued."""
+    turn_env["conn"].research = _RESEARCH
+    turn_env["conn"].held_row_waiting = True
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    payload = _turn_done_payload(turn_env["conn"])
+    assert "reply_follows" not in payload, payload
 
 
 def test_a_turn_nobody_answers_for_carries_no_reply_follows_key(turn_env):
