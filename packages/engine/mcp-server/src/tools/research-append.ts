@@ -5270,7 +5270,10 @@ function planItemLogAttributionInvariants(
  */
 const RECORD_TYPE_TERMS: Record<string, readonly string[]> = {
   probate: [
-    "estate", "executor", "executrix", "administrator", "administratrix",
+    // No bare "estate": it is land in "real estate" (American) and in
+    // British/Irish estate records, so it passed the deed/land note this guard
+    // exists to refuse. The specific terms below carry probate without it (#3592).
+    "executor", "executrix", "administrator", "administratrix",
     "appraise", "appraisement", "inventory", "bequeath", "testament",
     "heir", "legatee", "probate",
   ],
@@ -5320,7 +5323,12 @@ export function planItemCompletionRecordTypeInvariants(entry: any, research: any
     .map((e: any) => `${e.tool ?? ""} ${e.notes ?? ""} ${JSON.stringify(e.query ?? {})}`)
     .join(" ")
     .toLowerCase();
-  if (terms.some((t) => haystack.includes(t))) return [];
+  // Leading word-boundary only (`\bterm`), not `\bterm\b`: several terms are
+  // deliberate stems (`naturaliz`, `enumerat`, `christen`, `appraise`) and
+  // need to match plurals (`baptism`→"baptisms"), which a trailing boundary
+  // would miss; the leading boundary still rejects a substring inside a word
+  // ("their" ≠ `heir`). The eval validator uses the same rule (#3592).
+  if (terms.some((t) => new RegExp(`\\b${t}`).test(haystack))) return [];
   return [
     `plan_items[${pid}]: record_type '${entry.record_type}', but no log[] entry attributed to it ` +
       `names a ${entry.record_type} search — none mentions any of ` +
@@ -5446,6 +5454,12 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
   );
   if (!ran) return [];
   if (planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
+  // Record-type escape hatch (mirrors the capture-pending one above): if the
+  // item cannot be completed because its searches are all the wrong record type
+  // (planItemCompletionRecordTypeInvariants would refuse), then skipping is the
+  // honest exit — otherwise it deadlocks at 'in_progress', neither completable
+  // nor skippable (the stuck state #3682's dispose flow removed). #3592.
+  if (planItemCompletionRecordTypeInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
   return [
     `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
       `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +

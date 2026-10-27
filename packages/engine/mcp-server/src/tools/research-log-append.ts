@@ -1707,7 +1707,9 @@ export function filteredNilRetryInvariants(
  * filtered zero-hit fulltext op with no unfiltered sibling
  * (`filteredNilRetryInvariants`). Batch-aware: an in-batch unfiltered sibling
  * clears the op, so it judges every op against the whole resolved batch plus the
- * committed `log[]`. Returns `{ i, message }` for the first firing op, or null.
+ * committed `log[]`. Returns `{ i, message }` for EVERY firing op (empty when
+ * none), so a batch's refusal names each failing `ops[i]` (§8.4), not just the
+ * first.
  *
  * zero-hit = a staged ref whose recomputed count is 0 (defensive — a real
  * zero-hit `fulltext_search` stages nothing, `stageSearchResults` returns null on
@@ -1722,11 +1724,16 @@ async function preflightFilteredNilRetry(
   ops: ResearchLogAppendOp[],
   research: any,
   projectPath: string,
-): Promise<{ i: number; message: string } | null> {
+): Promise<Array<{ i: number; message: string }>> {
   const resolved = await Promise.all(
     ops.map(async (op) => {
       try {
         if (op?.tool !== "fulltext_search") return { tool: op?.tool };
+        // An errored search (fixture_not_found, upstream error) that examined 0
+        // is not a filtered nil — the filter never ran, so there is nothing to
+        // retry unfiltered. #3592 (this dropped _014, a fixture_not_found error,
+        // from the row's true positives).
+        if (op?.outcome === "error") return { tool: op.tool };
         const ref = asNull(op.stagedResultsRef);
         let query: unknown = coerceObjectArg(op.query, "query");
         let zeroHit: boolean;
@@ -1751,11 +1758,12 @@ async function preflightFilteredNilRetry(
       }
     }),
   );
+  const firing: Array<{ i: number; message: string }> = [];
   for (let i = 0; i < resolved.length; i++) {
     const errors = filteredNilRetryInvariants(resolved[i], { log: research.log, ops: resolved });
-    if (errors.length > 0) return { i, message: errors[0] };
+    if (errors.length > 0) firing.push({ i, message: errors[0] });
   }
-  return null;
+  return firing;
 }
 
 const QUERY_REQUIRED_MESSAGE =
@@ -2399,8 +2407,10 @@ export async function researchLogAppend(
       // Needs the whole resolved batch (an in-batch unfiltered sibling clears an
       // op), so it runs once over every op after the per-op preflights. Runs only
       // once there is a new op to write (idempotent re-logs short-circuit above).
-      const nilRetry = await preflightFilteredNilRetry(input.ops, research, projectPath);
-      if (nilRetry) return { ok: false, errors: [`ops[${nilRetry.i}]: ${nilRetry.message}`] };
+      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath);
+      if (nilRetryErrors.length > 0) {
+        return { ok: false, errors: nilRetryErrors.map(({ i, message }) => `ops[${i}]: ${message}`) };
+      }
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         const found = logged.get(i);
@@ -2470,7 +2480,7 @@ export async function researchLogAppend(
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
     const singleNilRetry = await preflightFilteredNilRetry([singleOp], research, projectPath);
-    if (singleNilRetry) throw new LogAppendError(singleNilRetry.message);
+    if (singleNilRetry.length > 0) throw new LogAppendError(singleNilRetry[0].message);
     let result;
     try {
       result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings, stagedConsumed);

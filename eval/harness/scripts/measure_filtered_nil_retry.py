@@ -168,6 +168,11 @@ class Run:
         return None
 
     def _zero_hit(self, op: dict, call: dict, idx: int) -> bool:
+        # An errored search (fixture_not_found, upstream error) is not a filtered
+        # nil — the filter never ran, so there is nothing to retry — mirroring the
+        # engine gate. This is why ut_search_full_text_014 leaves the row. #3592.
+        if op.get("outcome") == "error":
+            return False
         ref = op.get("stagedResultsRef")
         if isinstance(ref, str) and ref not in ("", "null"):
             rc = _returned_count(op, call, idx)

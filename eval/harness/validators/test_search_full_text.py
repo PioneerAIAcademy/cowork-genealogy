@@ -513,7 +513,9 @@ def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
 # A record_type with no entry here (including family_bible) gets the
 # structural check only, not asserted clean by a term match it never had.
 RECORD_TYPE_TERMS = {
-    "probate": ("estate", "executor", "executrix", "administrator",
+    # No bare "estate": it is land in "real estate" (American) and in British/
+    # Irish estate records, so it passed the deed/land note this check refuses.
+    "probate": ("executor", "executrix", "administrator",
                 "administratrix", "appraise", "appraisement", "inventory",
                 "bequeath", "testament", "heir", "legatee", "probate"),
     "church": ("baptism", "baptismal", "christen", "confirmation", "burial"),
@@ -582,7 +584,11 @@ def test_plan_item_completion_matches_its_own_record_type(before_state, after_st
             str(e.get(k, "")) + " " + json.dumps(e.get("query") or {}, ensure_ascii=False)
             for e in attributed for k in ("tool", "notes")
         ).lower()
-        if not any(term in haystack for term in terms):
+        # Leading word-boundary only (r"\bterm"), not r"\bterm\b": several terms
+        # are deliberate stems (naturaliz, enumerat, christen) / match plurals
+        # (baptism->"baptisms") a trailing boundary would miss, while the leading
+        # boundary still rejects a substring inside a word ("their" != heir).
+        if not any(re.search(r"\b" + re.escape(term), haystack) for term in terms):
             errors.append(
                 f"{item_id} (record_type={record_type!r}) was marked completed, but none "
                 f"of its attributed log entries mention any of {terms}; attributed tools/"

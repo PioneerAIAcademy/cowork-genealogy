@@ -1,22 +1,38 @@
 {
   "guard": "plan-item-completion-record-type",
-  "description": "A research_append write marking a plan item `completed` whose `record_type` has a known vocabulary (RECORD_TYPE_TERMS: probate, census, vital/vital_record, church/church_record, marriage, naturalization, obituary) when some log[] entry is attributed to it but NONE names a search of that type — the probate item closed off a deed/land search (ut_search_full_text_016/_020). Silent when an attributed entry matches the type, when nothing is attributed (the structural gate's job), when the record_type is outside the vocabulary, and for any status but completed. Replayed by planItemCompletionRecordTypeInvariants (research-append.ts), the content half of the completion check.",
+  "description": "A research_append write marking a plan item `completed` whose `record_type` has a known vocabulary (RECORD_TYPE_TERMS: probate, census, vital/vital_record, church/church_record, marriage, naturalization, obituary) when some log[] entry is attributed to it but NONE names a search of that type \u2014 the probate item closed off a deed/land search (ut_search_full_text_016/_020). Silent when an attributed entry matches the type, when nothing is attributed (the structural gate's job), when the record_type is outside the vocabulary, and for any status but completed. Replayed by planItemCompletionRecordTypeInvariants (research-append.ts), the content half of the completion check.",
   "format": "expect: fire | silent, judged for the plan item named by `write` (found in research.plans[].items). research.log holds the attributed entries. Every fire case carries a `shape`; a guard needs at least two distinct fire shapes and at least one silent case.",
   "cases": [
     {
       "id": "probate-completed-off-land-search",
       "expect": "fire",
       "shape": "probate-off-land",
-      "why": "A probate plan item marked completed whose only attributed log entry is a deed/land fulltext search — no probate term in tool/notes/query.",
+      "why": "A probate plan item marked completed whose only attributed log entry is a deed/land fulltext search \u2014 no probate term in tool/notes/query.",
       "write": "pli_006",
       "research": {
         "plans": [
-          { "id": "pl_002", "status": "active", "items": [
-            { "id": "pli_006", "record_type": "probate", "status": "completed" }
-          ] }
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_006", "tool": "fulltext_search", "notes": "1 result in Pennsylvania Land Records (collectionId 2220359), Schuylkill", "query": { "keywords": "+Thomas +Flynn", "recordType": "deed" } }
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "1 result in Pennsylvania Land Records (collectionId 2220359), Schuylkill",
+            "query": {
+              "keywords": "+Thomas +Flynn",
+              "recordType": "deed"
+            }
+          }
         ]
       }
     },
@@ -24,96 +40,316 @@
       "id": "census-completed-off-marriage-search",
       "expect": "fire",
       "shape": "census-off-vital",
-      "why": "A census plan item marked completed whose only attributed entry is a marriage search — no census term (census/household/dwelling/enumerat).",
+      "why": "A census plan item marked completed whose only attributed entry is a marriage search \u2014 no census term (census/household/dwelling/enumerat).",
       "write": "pli_010",
       "research": {
         "plans": [
-          { "id": "pl_003", "status": "active", "items": [
-            { "id": "pli_010", "record_type": "census", "status": "completed" }
-          ] }
+          {
+            "id": "pl_003",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_010",
+                "record_type": "census",
+                "status": "completed"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_010", "tool": "record_search", "notes": "Marriage of John Flynn to Mary Byrne, 1868", "query": { "surname": "Flynn", "recordType": "marriage" } }
+          {
+            "plan_item_id": "pli_010",
+            "tool": "record_search",
+            "notes": "Marriage of John Flynn to Mary Byrne, 1868",
+            "query": {
+              "surname": "Flynn",
+              "recordType": "marriage"
+            }
+          }
         ]
       }
     },
     {
       "id": "probate-completed-with-estate-search",
       "expect": "silent",
-      "why": "An attributed entry names an estate search — the probate vocabulary matches.",
+      "why": "An attributed entry names an estate search \u2014 the probate vocabulary matches.",
       "write": "pli_006",
       "research": {
         "plans": [
-          { "id": "pl_002", "status": "active", "items": [
-            { "id": "pli_006", "record_type": "probate", "status": "completed" }
-          ] }
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_006", "tool": "fulltext_search", "notes": "Estate inventory and appraisement of Thomas Flynn", "query": { "keywords": "+Flynn +estate" } }
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "Estate inventory and appraisement of Thomas Flynn",
+            "query": {
+              "keywords": "+Flynn +estate"
+            }
+          }
         ]
       }
     },
     {
       "id": "probate-completed-via-recordtype-filter",
       "expect": "silent",
-      "why": "The attributed entry's query carries recordType: probate — the term appears in the serialized query.",
+      "why": "The attributed entry's query carries recordType: probate \u2014 the term appears in the serialized query.",
       "write": "pli_006",
       "research": {
         "plans": [
-          { "id": "pl_002", "status": "active", "items": [
-            { "id": "pli_006", "record_type": "probate", "status": "completed" }
-          ] }
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_006", "tool": "fulltext_search", "notes": "Searched Schuylkill records", "query": { "keywords": "+Thomas +Flynn", "recordType": "probate" } }
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "Searched Schuylkill records",
+            "query": {
+              "keywords": "+Thomas +Flynn",
+              "recordType": "probate"
+            }
+          }
         ]
       }
     },
     {
       "id": "unknown-record-type",
       "expect": "silent",
-      "why": "record_type 'deed' is outside RECORD_TYPE_TERMS — structural check only, no content assertion.",
+      "why": "record_type 'deed' is outside RECORD_TYPE_TERMS \u2014 structural check only, no content assertion.",
       "write": "pli_007",
       "research": {
         "plans": [
-          { "id": "pl_002", "status": "active", "items": [
-            { "id": "pli_007", "record_type": "deed", "status": "completed" }
-          ] }
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_007",
+                "record_type": "deed",
+                "status": "completed"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_007", "tool": "fulltext_search", "notes": "Pennsylvania Land Records", "query": { "keywords": "+Flynn" } }
+          {
+            "plan_item_id": "pli_007",
+            "tool": "fulltext_search",
+            "notes": "Pennsylvania Land Records",
+            "query": {
+              "keywords": "+Flynn"
+            }
+          }
         ]
       }
     },
     {
       "id": "no-attributed-entry",
       "expect": "silent",
-      "why": "Nothing is attributed to the item — the structural gate (planItemLogAttributionInvariants) owns this, not the content half.",
+      "why": "Nothing is attributed to the item \u2014 the structural gate (planItemLogAttributionInvariants) owns this, not the content half.",
       "write": "pli_006",
       "research": {
         "plans": [
-          { "id": "pl_002", "status": "active", "items": [
-            { "id": "pli_006", "record_type": "probate", "status": "completed" }
-          ] }
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_005", "tool": "fulltext_search", "notes": "unrelated", "query": { "keywords": "+other" } }
+          {
+            "plan_item_id": "pli_005",
+            "tool": "fulltext_search",
+            "notes": "unrelated",
+            "query": {
+              "keywords": "+other"
+            }
+          }
         ]
       }
     },
     {
       "id": "item-still-in-progress",
       "expect": "silent",
-      "why": "Forward only — an item not ending at completed is never judged.",
+      "why": "Forward only \u2014 an item not ending at completed is never judged.",
       "write": "pli_006",
       "research": {
         "plans": [
-          { "id": "pl_002", "status": "active", "items": [
-            { "id": "pli_006", "record_type": "probate", "status": "in_progress" }
-          ] }
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "in_progress"
+              }
+            ]
+          }
         ],
         "log": [
-          { "plan_item_id": "pli_006", "tool": "fulltext_search", "notes": "Pennsylvania Land Records", "query": { "keywords": "+Flynn", "recordType": "deed" } }
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "Pennsylvania Land Records",
+            "query": {
+              "keywords": "+Flynn",
+              "recordType": "deed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "naturalization-completed-with-naturalization-search",
+      "expect": "silent",
+      "why": "A naturalization item whose search names 'naturalization' \u2014 the leading-boundary stem `naturaliz` matches it (a trailing boundary would not).",
+      "write": "pli_020",
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_020",
+                "record_type": "naturalization",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_020",
+            "tool": "record_search",
+            "notes": "Naturalization record, declaration of intent, Schuylkill County",
+            "query": {
+              "surname": "Flynn"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "church-completed-with-baptisms-search",
+      "expect": "silent",
+      "why": "A church item whose search names 'baptisms' (plural) \u2014 the leading-boundary stem `baptism` matches it where a trailing boundary would not.",
+      "write": "pli_021",
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_021",
+                "record_type": "church",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_021",
+            "tool": "record_search",
+            "notes": "Parish baptisms register, St. Patrick's, 1850",
+            "query": {
+              "surname": "Flynn"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "probate-completed-off-real-estate-deed",
+      "expect": "fire",
+      "shape": "probate-off-real-estate",
+      "why": "A probate item whose only search is a 'real estate' deed note \u2014 with bare `estate` dropped, 'real estate' no longer satisfies the probate check (it is land, not probate).",
+      "write": "pli_006",
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "Thomas Flynn real estate deed, Schuylkill County",
+            "query": {
+              "keywords": "+Thomas +Flynn",
+              "recordType": "deed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "probate-completed-off-their-note-not-heir",
+      "expect": "fire",
+      "shape": "probate-off-substring",
+      "why": "A probate item whose note contains 'their' but no real probate term \u2014 the leading word-boundary rejects 'heir' as a substring of 'their', so the guard fires.",
+      "write": "pli_006",
+      "research": {
+        "plans": [
+          {
+            "id": "pl_002",
+            "status": "active",
+            "items": [
+              {
+                "id": "pli_006",
+                "record_type": "probate",
+                "status": "completed"
+              }
+            ]
+          }
+        ],
+        "log": [
+          {
+            "plan_item_id": "pli_006",
+            "tool": "fulltext_search",
+            "notes": "Flynn family and their Schuylkill land",
+            "query": {
+              "keywords": "+Flynn"
+            }
+          }
         ]
       }
     }

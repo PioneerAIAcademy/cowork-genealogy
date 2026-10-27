@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -44,7 +45,8 @@ SCENARIOS = REPO / "eval" / "fixtures" / "scenarios"
 # Ported from planItemCompletionRecordTypeInvariants / the eval validator
 # RECORD_TYPE_TERMS. The three must agree.
 RECORD_TYPE_TERMS = {
-    "probate": ("estate", "executor", "executrix", "administrator", "administratrix",
+    # No bare "estate": land in "real estate" / British-Irish estate records.
+    "probate": ("executor", "executrix", "administrator", "administratrix",
                 "appraise", "appraisement", "inventory", "bequeath", "testament",
                 "heir", "legatee", "probate"),
     "church": ("baptism", "baptismal", "christen", "confirmation", "burial"),
@@ -93,7 +95,8 @@ def _guard_refuses(record_type: str, attributed: list) -> bool:
         f"{e.get('tool', '')} {e.get('notes', '')} {json.dumps(e.get('query') or {}, ensure_ascii=False)}"
         for e in attributed
     ).lower()
-    return not any(t in haystack for t in terms)
+    # Leading word-boundary only (r"\bterm"); see the engine guard + validator.
+    return not any(re.search(r"\b" + re.escape(t), haystack) for t in terms)
 
 
 def _seed_items(research: dict) -> dict:

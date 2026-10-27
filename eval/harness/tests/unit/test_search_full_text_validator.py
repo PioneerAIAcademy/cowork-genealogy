@@ -705,3 +705,45 @@ def test_filtered_nil_retry_passes_a_place_nil_followed_by_an_unfiltered_retry()
         _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
         _unfiltered_call("+Flynn +Patrick"),
     ])
+
+
+# --- Leading word-boundary + dropped bare `estate` (#3592). A trailing
+# --- boundary would break the deliberate stems (naturaliz/baptism); dropping
+# --- bare `estate` keeps "real estate" (land) from passing the probate check.
+
+def _completion(record_type, notes, keywords="+Flynn", tool="record_search"):
+    before = {"research_json": {"plans": [
+        {"id": "pl_rt", "items": [{"id": "pli_rt", "record_type": record_type, "status": "in_progress"}]},
+    ]}}
+    after = {"research_json": {
+        "log": [{"id": "log_rt", "plan_item_id": "pli_rt", "tool": tool,
+                 "query": {"keywords": keywords}, "notes": notes}],
+        "plans": [{"id": "pl_rt", "items": [
+            {"id": "pli_rt", "record_type": record_type, "status": "completed"}]}],
+    }}
+    return before, after
+
+
+def test_plan_item_completion_passes_a_naturalization_stem():
+    """`naturaliz` is a stem: the leading boundary matches "naturalization"
+    where a trailing boundary would not."""
+    check_plan_item_completion(*_completion(
+        "naturalization", "Naturalization record, declaration of intent, Schuylkill County"))
+
+
+def test_plan_item_completion_passes_a_baptism_plural():
+    """`baptism` must match the plural "baptisms" -- a trailing boundary misses it."""
+    check_plan_item_completion(*_completion(
+        "church", "Parish baptisms register, St. Patrick's, 1850"))
+
+
+def test_plan_item_completion_fires_on_a_real_estate_deed_note():
+    """With bare `estate` dropped, a "real estate" deed note (land, not probate)
+    no longer passes the probate check -- the guard fires."""
+    before, after = _completion(
+        "probate", "Thomas Flynn real estate deed, Schuylkill County",
+        keywords="+Thomas +Flynn", tool="fulltext_search")
+    with pytest.raises(AssertionError) as e:
+        check_plan_item_completion(before, after)
+    assert "pli_rt" in str(e.value)
+    assert "probate" in str(e.value)

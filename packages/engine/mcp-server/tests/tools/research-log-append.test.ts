@@ -2679,6 +2679,24 @@ describe("research_log_append — filtered zero-hit fulltext names its unfiltere
     expect((await readJson("research.json")).log).toHaveLength(0);
   });
 
+  it("does not treat an errored search (0 results) as a filtered nil", async () => {
+    await writeProject(baseResearch());
+    // outcome "error" (fixture_not_found, upstream error) with 0 examined is not a
+    // filtered nil — the filter never ran, so no unfiltered retry is demanded. It
+    // logs as usual. #3592 (this is why _014, a fixture_not_found, left the row).
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "fulltext_search",
+      outcome: "error",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+      query: { keywords: "+Flynn +Patrick", place: "Schuylkill County, Pennsylvania" },
+      planItemId: null,
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readJson("research.json")).log).toHaveLength(1);
+  });
+
   it("allows it when the unfiltered retry is in the same batch", async () => {
     await writeProject(baseResearch());
     const r = await researchLogAppend({

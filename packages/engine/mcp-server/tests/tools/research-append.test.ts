@@ -14670,6 +14670,10 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
   const URL = "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
   const logEntry = (id: string, tool: string, outcome: string, extra: Record<string, unknown> = {}) => ({
     id, plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool, query: { surname: "Flynn" },
+    // census note so the search matches pli_001's (seededPlanItem) census record_type.
+    // Without it, the #3592 completion guard would refuse completion and the new
+    // searched-skip escape hatch would (correctly) allow the skip these tests refuse.
+    notes: "1850 census household",
     outcome, results_examined: 1, results_ref: null, external_site: null, ...extra,
   });
   const deferred = (id: string) =>
