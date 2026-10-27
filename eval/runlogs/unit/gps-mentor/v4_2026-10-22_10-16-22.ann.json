@@ -1,28 +1,7 @@
 {
-<<<<<<<< HEAD:eval/runlogs/unit/gps-mentor/v4_2026-10-27_09-33-40.ann.json
-  "run_log": "v4_2026-10-27_09-33-40.json",
-  "annotator": "florencemashipei4@gmail.com",
-========
   "run_log": "v4_2026-10-22_10-16-22.json",
   "annotator": "Francisbucci2@gmail.com",
->>>>>>>> origin/main:eval/runlogs/unit/gps-mentor/v4_2026-10-22_10-16-22.ann.json
   "corrections": [
-    {
-      "test_id": "ut_gps_mentor_k4p",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_k4p",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
     {
       "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "base",
@@ -80,49 +59,6 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/gps-mentor/v4_2026-10-27_09-33-40.ann.json
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool work: reading the state the verdict rests on",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "rubric",
-      "dimension_name": "Mentor voice and actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity and citation discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "rubric",
-      "dimension_name": "Focus discipline and refusal",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-========
       "test_id": "ut_gps_mentor_m2r",
       "dimension_source": "rubric",
       "dimension_name": "Mentor voice and actionability",
@@ -164,7 +100,6 @@
     },
     {
       "test_id": "ut_gps_mentor_m2r",
->>>>>>>> origin/main:eval/runlogs/unit/gps-mentor/v4_2026-10-22_10-16-22.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
