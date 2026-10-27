@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_rt1",
+    "skill": "conflict-resolution",
+    "name": "An unresolved conflict routes to research-plan, not question-selection (E)",
+    "type": "positive",
+    "description": "flynn-unresolved-conflict has c_001 (Ireland vs Pennsylvania birthplace) blocking the open question q_001, and both plans are completed, so nothing is searching. The conflict cannot be settled on the evidence on file and needs a new record. Section E moves that route: the evidence that would settle a conflict is a SEARCH on the question already open, so it goes to research-plan. Routing to question-selection opened a second question while the first was unfinished, which under step mode starts the next step on the wrong agent.",
+    "tags": [
+      "conflict-resolution",
+      "unresolved",
+      "routing",
+      "step-mode",
+      "birthplace",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Resolve conflict c_001 on Patrick Flynn's birthplace, then say what happens next.",
+    "scenario": "flynn-unresolved-conflict"
+  },
+  "judge_context": [
+    "The next-step recommendation must name **research-plan**, and should name the record type that would settle the conflict so the plan has something to act on.",
+    "Naming **question-selection**, or recommending a new research question, is the failure this test exists for. q_001 is still open and the conflict blocks it, so a second question would compete with the one already being worked.",
+    "Leaving c_001 `unresolved` with `preferred_assertion_id: null` is CORRECT here and must not be charged. A census birthplace against a death-certificate birthplace, with no further record, does not settle it. This test is about where the agent routes afterwards, not about whether it should have resolved.",
+    "The analysis fields (`independence_analysis`, `weighing_analysis`) should still be written even though the conflict stays unresolved. That is `ut_conflict_resolution_007`'s subject and is only noted here so a thin analysis is not read as this test passing.",
+    "Do not charge the agent for mentioning timeline as a way to test identity if it also names research-plan as the next step. The identity route is a different row of the same table and is unchanged."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

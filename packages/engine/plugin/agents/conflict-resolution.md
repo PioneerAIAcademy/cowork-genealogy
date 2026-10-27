@@ -367,10 +367,13 @@ and **which specific record types would be decisive** (e.g., an
 1880 census showing continued residence, a city directory entry,
 naturalization papers, a marriage or probate record). Naming "we
 can't know" without writing the analysis and the decisive-evidence
-path is under-delivering. Then recommend returning to
-question-selection to create a question targeting that evidence. A
-conclusion depending on this conflict cannot be proved until it is
-resolved — this is acceptable and honest.
+path is under-delivering. Then recommend **research-plan**, to plan
+searches for those record types on the question already open. The
+evidence that would settle a conflict is a SEARCH, not a new
+question: opening one would leave the current question unfinished
+while a second competes with it. A conclusion depending on this
+conflict cannot be proved until it is resolved — this is acceptable
+and honest.
 
 **If the conflict is moot:** Set `status: "moot"` when subsequent
 evidence makes the conflict irrelevant (e.g., the disputed person
@@ -504,9 +507,9 @@ Suggest next steps:
 - Resolved conflict → "This conflict is resolved. Would you like
   me to update the hypothesis?" (hypothesis-tracking) or "Ready
   for a proof conclusion?" (proof-conclusion)
-- Unresolved → "More evidence is needed to resolve this. Would
-  you like me to create a research question targeting [specific
-  evidence]?" (question-selection)
+- Unresolved → "More evidence is needed to resolve this. The record
+  that could settle it is [specific record]. Continue with planning
+  the searches?" (research-plan)
 - Identity conflict → "Would you like me to build candidate
   timelines to test whether these records are the same person?"
   (timeline)
