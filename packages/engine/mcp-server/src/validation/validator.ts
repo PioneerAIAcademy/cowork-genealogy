@@ -93,11 +93,6 @@ const CLOSED_ENUMS = {
     "GenealogyBank", "FindAGrave-Plus",
     "FamilySearch-Partner", "LibraryAccess", "other", "none",
   ]),
-  holding_type: new Set([
-    "document", "prior_research", "oral_knowledge", "gedcom",
-    "photo", "artifact", "other",
-  ]),
-  holding_confidence: new Set(["confident", "unsure"]),
   severity: new Set(["high", "medium", "low"]),
   evaluation_focus: new Set([
     "pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand",
@@ -256,7 +251,6 @@ export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}(
 // so a new id-prefixed section cannot get here without a check, or drift from it.
 export const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
-  known_holdings: "kh_",
   questions: "q_",
   plans: "pl_",
   plan_items: "pli_",
@@ -666,7 +660,7 @@ const NULLABLE_FIELDS = new Set([
 // tests/validation/validator.test.ts.
 export const RESEARCH_SHAPES = {
   document: new Set([
-    "project", "researcher_profile", "known_holdings", "questions", "plans",
+    "project", "researcher_profile", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
     "localities", "warning_justifications", "namesakes",
@@ -677,10 +671,6 @@ export const RESEARCH_SHAPES = {
   ]),
   researcher_profile: new Set([
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
-  ]),
-  known_holding: new Set([
-    "id", "holding_type", "description", "relates_to_person_ids",
-    "relevant_facts", "confidence", "promoted", "created",
   ]),
   question: new Set([
     "id", "question", "rationale", "selection_basis", "priority", "status",
@@ -820,7 +810,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, path, `missing top-level section '${section}'`);
     }
   }
-  checkAllowedKeys(data, RESEARCH_SHAPES.document, "research documents", path, report);
+  // Projects created before #2069 still carry the deleted known_holdings
+  // section, and no tool can remove a top-level key, so it warns instead of
+  // failing every later validation.
+  const { known_holdings: retiredHoldings, ...current } = data;
+  if (retiredHoldings !== undefined) {
+    addWarning(
+      report,
+      path,
+      "retired section 'known_holdings' is ignored: it was deleted from the schema (#2069) and nothing reads it. No action needed."
+    );
+  }
+  checkAllowedKeys(current, RESEARCH_SHAPES.document, "research documents", path, report);
 
   if (typeof data.project !== "object" || data.project === null) {
     addError(report, path, "project must be an object");
@@ -878,41 +879,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ia = rp.intended_audience;
       if (ia !== null && ia !== undefined && typeof ia !== "string") {
         addError(report, rpPath, "intended_audience must be a string");
-      }
-    }
-  }
-
-  // Known holdings (optional)
-  const holdings = data.known_holdings;
-  if (holdings !== null && holdings !== undefined) {
-    if (!Array.isArray(holdings)) {
-      addError(report, `${path}/known_holdings`, "known_holdings must be an array");
-    } else {
-      for (let i = 0; i < holdings.length; i++) {
-        const kh = holdings[i];
-        const khPath = `${path}/known_holdings[${i}]`;
-        if (!isObjectEntry(kh, khPath, report)) continue;
-        checkRequired(kh, [
-          "id", "holding_type", "description", "confidence", "promoted", "created",
-        ], khPath, report, NULLABLE_FIELDS);
-        checkAllowedKeys(kh, RESEARCH_SHAPES.known_holding, "known_holdings entries", khPath, report);
-        if ("id" in kh) {
-          checkIdPrefix(kh.id, ID_PREFIXES.known_holdings, khPath, report);
-        }
-        if ("holding_type" in kh) {
-          checkEnum(kh.holding_type, "holding_type", khPath, report);
-        }
-        if ("confidence" in kh) {
-          checkEnum(kh.confidence, "holding_confidence", khPath, report);
-        }
-        if ("promoted" in kh && typeof kh.promoted !== "boolean") {
-          addError(report, khPath, "promoted must be a boolean");
-        }
-        checkIsoDate(kh, "created", khPath, report);
-        const rtp = kh.relates_to_person_ids;
-        if (rtp !== null && rtp !== undefined && !Array.isArray(rtp)) {
-          addError(report, khPath, "relates_to_person_ids must be an array");
-        }
       }
     }
   }
@@ -2534,7 +2500,7 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings, proof_summaries[].claims[].relationship,
+  // timelines, proof_summaries[].claims[].relationship,
   // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
