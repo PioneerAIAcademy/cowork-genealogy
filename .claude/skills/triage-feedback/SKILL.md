@@ -67,7 +67,9 @@ whole tree blanked by redaction.
 
 The zip is at `~/Downloads/feedback-<timestamp>.zip`, named in the body's
 `make feedback-case ZIP=...` line. If it is not there, stop and ask the lead to
-download it from the body's Drive link. Unzip it to the scratchpad and read:
+download it from the body's Drive link. Extract it to the scratchpad with
+`python3 -I scripts/extract_feedback_zip.py <zip> <dir>` (`python` on Windows; not
+`unzip`, which fails on non-ASCII names on macOS) and read:
 
 - `_feedback/session-log.jsonl` and `_feedback/subagents/*.jsonl`: what the agent
   actually called, passed and got back. A Cowork bundle has none (its `FEEDBACK.md`

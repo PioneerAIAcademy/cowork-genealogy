@@ -9,6 +9,14 @@
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { isFourDigitYear, isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { researchLogAppend } from "./research-log-append.js";
+import { classifyProjectPath } from "../utils/project-io.js";
+import {
+  collectionKey,
+  EXTERNAL_COLLECTIONS_FILE,
+  namesCollection,
+  readExternalCollections,
+  storedCollectionKeys,
+} from "../utils/external-collections-store.js";
 
 export type ExternalSearchSite =
   | "ancestry"
@@ -1407,6 +1415,32 @@ export function handoffLineFor(url: string): string {
 
 // ─── The tool: build, then log the hand-off (spec §6) ─────────────────────────
 
+/** Why a collection-specific `baseUrl` is refused, or `undefined`. With a project
+ *  in hand the collection must be one FamilySearch curated for some place, stored
+ *  in `external-collections.json` (lead ruling, 2026-10-23): a recalled collection
+ *  id sends the researcher to the wrong records. A site's or an archive's own
+ *  search url names no collection and is not checked. */
+async function uncuratedBaseUrlError(projectPath: string, baseUrl: string): Promise<string | undefined> {
+  if (!namesCollection(baseUrl)) return undefined;
+  // Outside a project there is no stored list to check against, and the URL
+  // still serves a standalone search (spec §5).
+  if ((await classifyProjectPath(projectPath)) !== "project") return undefined;
+  const ways =
+    "Omit baseUrl for a site-wide search, or use a stored collection's url from " +
+    "research_query({section: \"external_collections\", place, recordType}).";
+  let keys: Set<string>;
+  try {
+    keys = storedCollectionKeys(await readExternalCollections(projectPath));
+  } catch (e) {
+    return `baseUrl cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be read (${e instanceof Error ? e.message : String(e)}). ${ways}`;
+  }
+  if (keys.has(collectionKey(baseUrl))) return undefined;
+  return keys.size === 0
+    ? `baseUrl ${baseUrl} names a collection, and nothing is stored in ${EXTERNAL_COLLECTIONS_FILE} yet. ` +
+        `Fetch the place with external_links_search({standardPlace, projectPath}) first, or omit baseUrl for a site-wide search.`
+    : `baseUrl ${baseUrl} names a collection that is not in ${EXTERNAL_COLLECTIONS_FILE}. ${ways}`;
+}
+
 // The build stays pure and synchronous; this wrapper adds the one write. With a
 // `projectPath` it appends the in-flight `external_site` entry — `outcome:
 // "partial"`, `capture_received: false` — through `researchLogAppend` itself,
@@ -1423,6 +1457,12 @@ export async function buildExternalSearchUrlTool(
       result.notes.push("'planItemId' has no effect without projectPath — nothing was logged");
     }
     return result;
+  }
+
+  const baseUrl = typeof input.baseUrl === "string" ? input.baseUrl.trim() : "";
+  if (baseUrl !== "") {
+    const refusal = await uncuratedBaseUrlError(projectPath, baseUrl);
+    if (refusal) return { ok: false, reason: "invalid_base_url", errors: [refusal] };
   }
 
   const attributes = coerceJsonArg(input.attributes);

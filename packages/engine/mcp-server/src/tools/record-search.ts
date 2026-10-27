@@ -1157,8 +1157,8 @@ export async function recordSearchTool(
       // strip inside `finalizeStagedResults`.
       //
       // Withheld HERE and not inside `stageSearchResults`, which is shared by
-      // `record_search`, `fulltext_search` and `external_links_search` and should
-      // not know one caller's field names. Destructuring a copy also keeps `out`
+      // `record_search`, `fulltext_search` and the read/transcribe tools and
+      // should not know one caller's field names. Destructuring a copy also keeps `out`
       // itself untouched, so the live response the model reads is unaffected and
       // the key order (`rankingSkipped` before `results`) is preserved in both.
       const {

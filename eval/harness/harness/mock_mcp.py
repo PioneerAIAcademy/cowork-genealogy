@@ -386,7 +386,7 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
 # a canned payload, so we materialize the staged file here (via the compiled
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
-STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
 
 # The search tools whose production response carries `query: echoQuery(input)`
 # (record-search.ts, fulltext-search.ts). person_search echoes too but is
@@ -445,15 +445,15 @@ def _fixture_is_nil(response: dict[str, Any]) -> bool:
     """Whether a fixture response represents a genuinely nil search.
 
     Mirrors the production gate: an empty `results` AND a zero upstream total.
-    `record_search` reports that total as `totalMatches`, `fulltext_search` as
-    `totalResults`, and `external_links_search` as `totalForPlace`; a fixture that
+    `record_search` reports that total as `totalMatches` and `fulltext_search` as
+    `totalResults`; a fixture that
     omits its total is treated as 0, since a canned response with no total claims
     no matches. Keyed on the total because `results` is the post-`mapEntry` set in
     production, and a page that fails mapping empties it while the total does not.
     """
     if response.get("results"):
         return False
-    for key in ("totalMatches", "totalResults", "totalForPlace"):
+    for key in ("totalMatches", "totalResults"):
         total = response.get(key)
         if isinstance(total, (int, float)) and total > 0:
             return False
@@ -552,8 +552,7 @@ def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
-# the compactors below, not by a Python mirror). `external_links_search`
-# stages but compacts nothing, so it is absent here by design.
+# the compactors below, not by a Python mirror).
 _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
     "fulltext_search": "compactStagedFulltextSearch",
@@ -1196,6 +1195,71 @@ def _stage_person_read(
         return response
 
 
+def _store_external_collections(
+    workspace: Path,
+    args: dict[str, Any],
+    response: dict[str, Any],
+    stored_rows: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Write external-collections.json the way the real `external_links_search` does.
+
+    Runs the COMPILED `dedupeCollections` + `recordExternalCollections`, so the
+    file's shape and bytes have one definition, in external-collections-store.ts.
+    The rows are the fixture's never-served `stored_rows` (raw API rows carrying
+    record_type and place) or, absent those, its inline `results[]`; a row with no
+    `place` is filed under the queried place, as production does. Adds `stored`
+    (or `collectionsError` for a non-project folder) as production does. A harness
+    fault returns the response untouched and warns: it is not a production error.
+    """
+    store_js = _MCP_BUILD / "utils" / "external-collections-store.js"
+    if not store_js.exists():
+        warnings.warn(f"mock external_links_search could not store its list: no engine build at {store_js}", stacklevel=2)
+        return response
+    rows = stored_rows if stored_rows is not None else [
+        {"url": r.get("url"), "linkText": r.get("linkText", "")}
+        for r in response.get("results") or []
+        if isinstance(r, dict) and isinstance(r.get("url"), str)
+    ]
+    posix = str(store_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ dedupeCollections, recordExternalCollections, EXTERNAL_COLLECTIONS_FILE }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const rows = dedupeCollections(i.rows.filter((r) => typeof r.url === 'string'), i.place);"
+        " const places = await recordExternalCollections(i.projectPath, i.place, rows);"
+        " process.stdout.write(JSON.stringify(places === null ? null : { file: EXTERNAL_COLLECTIONS_FILE, places }));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "place": args.get("standardPlace", ""),
+        "rows": rows,
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(
+                f"mock external_links_search could not store its list: node exited "
+                f"{proc.returncode}: {proc.stderr.strip()[:200]}",
+                stacklevel=2,
+            )
+            return response
+        stored = json.loads(out)
+    except Exception as e:
+        warnings.warn(f"mock external_links_search could not store its list: {type(e).__name__}: {e}", stacklevel=2)
+        return response
+    if stored is None:
+        return {
+            **response,
+            "collectionsError": (
+                "Nothing was stored: projectPath does not name a project folder (one holding "
+                "research.json or tree.gedcomx.json)."
+            ),
+        }
+    return {**response, "stored": stored}
+
+
 def _warn_unstaged(why: str) -> None:
     """A canned person_read the mock could not stage. init-project now passes
     the staged ref to project_create and stops when there is none, so this reads
@@ -1277,6 +1341,8 @@ def create_mock_server(
             or _PERMISSIVE_SCHEMA
         )
 
+        stored_rows_by_source = dict(bucket.get("stored_rows") or {})
+
         # Capture loop variables via default args so closures bind by value.
         async def handler(
             args,
@@ -1285,6 +1351,7 @@ def create_mock_server(
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
+            _stored_rows=stored_rows_by_source,
         ):
             entry: dict[str, Any] = {
                 "tool": f"mcp__genealogy__{_name}",
@@ -1330,6 +1397,19 @@ def create_mock_server(
             ):
                 entry["attested"], parties = _record_match_score(_workspace, args, response)
                 response = _overlay_parties(response, parties)
+
+            # Production's external_links_search stores the place's full list in
+            # external-collections.json whenever it is given a projectPath (#2995).
+            if (
+                _name == "external_links_search"
+                and _workspace is not None
+                and "error" not in response
+                and isinstance(args.get("projectPath"), str)
+                and args["projectPath"].strip()
+            ):
+                response = _store_external_collections(
+                    _workspace, args, response, _stored_rows.get(source_name)
+                )
 
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
@@ -1507,7 +1587,7 @@ def create_mock_server(
                 response = reordered
 
             # The unlogged-search notes (#2056), mirrored for the same reason and
-            # inserted in the same pre-`results` slot. All three staging tools carry
+            # inserted in the same pre-`results` slot. Both staging tools carry
             # them, so this list is STAGING_SEARCH_TOOLS.
             #
             # The nil condition mirrors production's on BOTH halves, and each half
@@ -1520,14 +1600,6 @@ def create_mock_server(
             #   "the condition never held" and "the agent ignored it"
             #   indistinguishable — in the plane whose whole job is telling those
             #   apart. `_fixture_is_nil` reads whichever total the fixture carries.
-            # - external_links_search stays approximate in BOTH directions, and
-            #   structurally so: production keys on `allLinks`, the year-filtered set
-            #   before host filtering, which a fixture never carries. `totalForPlace`
-            #   sits before the year filter and `results` after the host filter, so
-            #   `allLinks` lies between the only two numbers available here. A fixture
-            #   omitting its total over-emits; one whose year filter emptied a non-zero
-            #   total under-emits. Stated structurally on purpose — the enumerated-case
-            #   version of this note went stale twice.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and "error" not in response

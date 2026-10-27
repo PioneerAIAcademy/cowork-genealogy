@@ -36,5 +36,67 @@
         "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/collections/7163/",
+      "linkText": "1870 United States Federal Census - Schuylkill County, Pennsylvania",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1870",
+      "endYear": "1870",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/6742/",
+      "linkText": "1880 United States Federal Census - Schuylkill County, Pennsylvania",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1880",
+      "endYear": "1880",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/7884/",
+      "linkText": "1900 United States Federal Census - Schuylkill County, Pennsylvania",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1900",
+      "endYear": "1900",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-10132/1880-united-states-federal-census",
+      "linkText": "1880 United States Federal Census (MyHeritage) - Pennsylvania",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1880",
+      "endYear": "1880",
+      "place": "Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/1276/",
+      "linkText": "1850 United States Federal Census - Schuylkill County",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1850",
+      "endYear": "1850",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/7667/",
+      "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801",
+      "record_type": "Taxation",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1768",
+      "endYear": "1801",
+      "place": "Pennsylvania, United States"
+    }
+  ]
 }
