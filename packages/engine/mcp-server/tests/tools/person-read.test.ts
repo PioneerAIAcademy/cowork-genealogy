@@ -1,4 +1,5 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
+import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -746,6 +747,11 @@ describe("personReadTool", () => {
   it("throws on 401 with login guidance", async () => {
     mockStatus(401);
     await expect(personReadTool({ personId: "X" }, LOCAL)).rejects.toThrow(/login tool/);
+  });
+
+  it("throws on 401 with the reconnect instruction in hosted mode, never login", async () => {
+    mockStatus(401);
+    await expect(personReadTool({ personId: "X" }, bearerPrincipal("tok"))).rejects.toThrow(HOSTED_REAUTH_INSTRUCTION);
   });
 
   // 25a. Recovery: 429 then 200 → returns the successful result

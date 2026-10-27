@@ -50,6 +50,7 @@ import type {
   TreeSource,
   TreeSourceRef,
 } from "../types/person-read.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -749,10 +750,7 @@ async function fetchAndConvert(
   }
 
   if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
+    throw new Error(await rejectedTokenMessage(principal));
   }
   if (res.status === 403) {
     throw new Error(`Person ${pid} is restricted and cannot be viewed.`);

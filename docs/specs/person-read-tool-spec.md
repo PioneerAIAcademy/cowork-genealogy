@@ -553,7 +553,7 @@ sd.attribution.contributor.resourceId — who attached it
 | 200 | Success | Parse and convert response |
 | 204 | Living person (empty body) | Return `{ persons: [{ id, living: true, ... }], relationships: [], sources: [] }` |
 | 301 | Person merged into another | Read new ID from `Location` header, re-fetch |
-| 401 | Token expired/invalid | Let auth error propagate |
+| 401 | Token expired/invalid | Throw `rejectedTokenMessage`: the login instruction on the desktop, the hosted reconnect instruction in hosted mode |
 | 403 | Restricted person | Throw descriptive error |
 | 404 | Person not found | Throw descriptive error |
 | 410 | Person deleted | Throw descriptive error |

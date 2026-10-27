@@ -177,10 +177,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     }),
   },
   {
-    // `personId` reads FamilySearch through the request's principal. With no
-    // bearer it must stop at the token, before writing anything; with one it
-    // reads an id FamilySearch does not hold, so it reaches FamilySearch and
-    // still writes nothing.
+    // `personId` reads FamilySearch through the request's principal, and writes
+    // nothing when the read fails. A project call always carries a bearer (the
+    // seeded grant), so with no FamilySearch token that bearer reaches
+    // FamilySearch, is rejected, and comes back as the reconnect instruction;
+    // with a real token the read reaches an id FamilySearch does not hold.
     tool: "project_create",
     label: "project_create (personId reaches the token)",
     args: (ctx) => ({
@@ -189,8 +190,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       personId: "ZZZZ-ZZZ",
     }),
     expect: (res, ctx) => {
-      if (ctx.mode !== "bearer") return reauth(res, ctx);
-      const ok = res.body?.ok === false && !carries(res, HOSTED_REAUTH_INSTRUCTION);
+      const reconnect = carries(res, HOSTED_REAUTH_INSTRUCTION);
+      const ok = res.body?.ok === false && (ctx.mode === "bearer" ? !reconnect : reconnect);
       return { ok, detail: brief(res, 300) };
     },
   },
