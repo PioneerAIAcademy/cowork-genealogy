@@ -398,7 +398,24 @@ def main(argv: list[str] | None = None) -> int:
             "the runlog's usage block."
         ),
     )
+    parser.add_argument(
+        "--wrap-up-after",
+        metavar="STEP",
+        default=None,
+        help=(
+            "Answer \"Wrap it up.\" after the named step instead of what "
+            "next_auto_reply chose, which exercises B2's link-then-conclude path "
+            "(section F's separate arm). The step is a bare agent name, e.g. "
+            "search-records. Needs --step-mode; the run ends after that reply, "
+            "because the turn it opens reads `wrapup`."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    if args.wrap_up_after and not args.step_mode:
+        print("--wrap-up-after needs --step-mode: without it no host reply is sent "
+              "at all, so there is nothing to override.", file=sys.stderr)
+        return 2
 
     fixtures_root: Path = args.fixtures_root
     if not fixtures_root.exists():
@@ -495,6 +512,7 @@ def main(argv: list[str] | None = None) -> int:
         "context_1m": args.context_1m,
         "tool_search": args.tool_search,
         "step_mode": args.step_mode,
+        "wrap_up_after": args.wrap_up_after,
     }
 
     results: list[E2eResult] = []

@@ -844,6 +844,10 @@ that apply:
 - **`eval/harness/e2e/orchestrator.py` keeps one `ClaudeSDKClient` session open** with streaming
   input, and replies to each turn as production's "Keep going" does, with `next_auto_reply`
   (section A2). It also answers the fixture's own question when asked for a single one.
+  **Built:** a step that ends on a question for the researcher makes no offer, so the run
+  would end there with the fixture's own question already on file. The host answers it once —
+  a second time would be a loop, and a run that asks twice has not understood the answer,
+  which is a finding rather than something to paper over.
 - **The run ends** when the function stops: a turn with no "Continue with …?" line, a finished
   wrap-up turn, or the reply cap, which replaces `max_continue_nudges` (a Stop-veto counter
   today). The no-progress stop remains. Both caps are runaway guards only.
@@ -857,7 +861,10 @@ that apply:
   - two-question fixtures are re-scoped (genealogist work). maria-bracero-marriage's parents
     finding is already non-required (`docs/plan/attached-records-baseline.md`, decision 13).
 - **A separate e2e arm** answers "Wrap it up." right after the search step, which exercises
-  B2's link-then-conclude path.
+  B2's link-then-conclude path. **Built** as `--wrap-up-after <step>`: an override of the
+  REPLY, not a session mode, so `next_auto_reply` keeps no test-only branch. It swaps a reply
+  and never invents one, and the run ends after it because the turn that reply opens reads
+  `wrapup`. Refused without `--step-mode`, where no host reply is sent at all.
 - **Interim, if the persistent session slips:** the harness runs each fixture as one turn in
   mode `job`, as Cowork does, a stopgap that measures the old continuous flow. It keeps
   `stop_checker.py`'s veto and `max_continue_nudges`, so a conflict that cannot be settled runs

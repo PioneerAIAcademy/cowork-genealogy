@@ -594,6 +594,45 @@ def project_read_denied(
     )
 
 
+def wrap_up_override(boundary, reply: str | None, turn_step: str | None,
+                     wrap_up_after: str | None) -> str | None:
+    """Section F's separate arm: "Wrap it up." after one named step.
+
+    An override of the REPLY, not a session mode. `next_auto_reply` is
+    production's own function and must not grow a test-only branch, and section
+    F's point is that e2e exercises the real mechanism rather than a
+    harness-shaped imitation of it.
+
+    It swaps a reply; it never invents one. A turn `next_auto_reply` already
+    ended the run on stays ended, so the arm cannot extend a run past where
+    production would have stopped it.
+    """
+    if not reply or not wrap_up_after:
+        return reply
+    if turn_step != wrap_up_after:
+        return reply
+    return boundary.REPLY_WRAP_UP
+
+
+def ended_on_a_question(boundary, text: str | None) -> bool:
+    """Whether a turn's last text ends by asking the RESEARCHER something.
+
+    A step that ends on a question only the researcher can answer writes no
+    "Continue with ...?" line, so `next_auto_reply` returns nothing and the run
+    ends there. Both tests are needed: no offer alone also describes a final
+    conclusion, and a trailing "?" alone also describes the offer line itself.
+
+    Takes the text rather than the turn so it is pure, and so it reads the same
+    last-assistant-text the offer parser reads.
+    """
+    stripped = (text or "").strip()
+    if not stripped:
+        return False
+    if boundary.offered_step(stripped):
+        return False
+    return stripped.splitlines()[-1].strip().endswith("?")
+
+
 def step_turn_mode(boundary, opening_mode: str, turn) -> str:
     """The mode a step-mode turn RAN under (section F).
 
@@ -2090,6 +2129,7 @@ async def _run_agent(
     single_ask: bool = False,
     user_message: str | None = None,
     step_mode: str | None = None,
+    wrap_up_after: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -3056,6 +3096,8 @@ async def _run_agent(
                             return block.text
             return None
 
+        _answered_question = {"done": False}
+
         def _decide_reply(turn):
             """What the host replies after this turn, via production's own function.
 
@@ -3081,6 +3123,25 @@ async def _run_agent(
             _reply_state.clear()
             _reply_state.update(decision.get("state") or {})
             reply = decision.get("reply")
+            # Section F's separate arm: answer "Wrap it up." after one named step
+            # instead of what `next_auto_reply` chose, which exercises B2's
+            # link-then-conclude path. An override of the REPLY, not a session
+            # mode -- `next_auto_reply` is production's own function and must not
+            # grow a test-only branch. The run ends after it, because the next
+            # turn reads `wrapup` and that function answers nothing for one.
+            reply = wrap_up_override(_boundary, reply, turn.step, wrap_up_after)
+            # Section F: "answers the fixture's own question when asked for a
+            # single one". A step that ends on a question for the researcher
+            # makes no offer, so the run would end there with the fixture's own
+            # question already on file. Answered at most once: a second time
+            # would be a loop, and a run that asks twice has not understood the
+            # answer, which is a finding rather than something to paper over.
+            if (not reply and not _answered_question["done"]
+                    and outcome == "ok"
+                    and ended_on_a_question(_boundary, _last_text(turn))):
+                _answered_question["done"] = True
+                reply = fixture.researcher_question
+                _emit(f"[host reply] turn {turn.index} answers the fixture's own question")
             if reply:
                 _emit(f"[host reply] turn {turn.index} ({turn.step or 'no step'}) -> {reply}")
             return reply
@@ -3963,6 +4024,7 @@ async def run_e2e_test(
     context_1m: bool = False,
     tool_search: bool = True,
     step_mode: str | None = None,
+    wrap_up_after: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -4037,6 +4099,7 @@ async def run_e2e_test(
             context_1m=context_1m,
             tool_search=tool_search,
             step_mode=step_mode,
+            wrap_up_after=wrap_up_after,
         )
 
         final_research = read_research_json(workspace)
@@ -4232,6 +4295,7 @@ async def run_e2e_test(
             # committed run used. A step run is many turns on one session answered by
             # `next_auto_reply`, so it is not comparable to a run without it.
             "step_mode": step_mode,
+            "wrap_up_after": wrap_up_after,
         }
 
         # Summarize any subagent transcripts (record-structurer, search-images, …)
