@@ -72,6 +72,11 @@ const CLOSED_ENUMS = {
   not_reached_kind: new Set([
     "nil_search", "browse_only", "over_transport_cap", "paywalled",
     "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
+    // Step mode, decision 21: a source this question never planned, recorded by
+    // the "not exhaustive" choice so the declaration says what it left rather
+    // than silently omitting it. The only kind naming a source the agent CHOSE
+    // not to reach rather than one it could not.
+    "deferred",
   ]),
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
@@ -712,7 +717,7 @@ export const RESEARCH_SHAPES = {
     "identity_question", "competing_assertion_ids", "status",
     "preferred_assertion_id", "resolution_rationale",
     "independence_analysis", "weighing_analysis", "blocks_question_ids",
-    "resolution_kind", "resolved_value",
+    "resolution_kind", "resolved_value", "weighed_log_entry_ids",
   ]),
   hypothesis: new Set([
     "id", "claim", "status", "supporting_assertion_ids",
@@ -963,6 +968,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           }
           if (nr.kind === "wiki_named_untouched" && (nr.wiki_title === null || nr.wiki_title === undefined)) {
             addError(report, nrp, "wiki_title is required (non-null) when kind is 'wiki_named_untouched'");
+          }
+          // A `deferred` entry is the only record of a source this question chose
+          // not to plan, and "Search more" plans from it (step mode, section B): the
+          // film, image or URL lives in `description`, so one with none names nothing.
+          if (nr.kind === "deferred" && (typeof nr.description !== "string" || nr.description.trim() === "")) {
+            addError(report, nrp, "description is required (non-blank) when kind is 'deferred': name the source left unsearched");
           }
         }
       }
@@ -1477,6 +1488,22 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if (ct === "identity" && !c.identity_question) {
       addError(report, cp, "identity conflict requires identity_question");
+    }
+    // The question's log entries conflict-resolution has weighed. Optional,
+    // and it mirrors search_stop.log_entry_ids, so it is checked the same
+    // way: an array whose every id resolves to a real log entry. Absent is
+    // allowed; null is not, because the JSON Schema has no null branch.
+    if ("weighed_log_entry_ids" in c) {
+      const weighed = c.weighed_log_entry_ids;
+      if (!Array.isArray(weighed)) {
+        addError(report, cp, "weighed_log_entry_ids must be an array");
+      } else {
+        weighed.forEach((l: unknown, j: number) => {
+          const wp = `${cp}/weighed_log_entry_ids[${j}]`;
+          if (typeof l !== "string") addError(report, wp, "must be a string");
+          else checkRefExists(l, ids.log, "log entry", wp, report);
+        });
+      }
     }
     // identity_question is the question's text — schema type string|null. Reject
     // any other type (notably the boolean form that slipped past this validator

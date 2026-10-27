@@ -1498,7 +1498,121 @@ describe("Project Validator", () => {
     });
   });
 
+  describe("not_reached: a deferred entry names its source", () => {
+    // "Search more" plans from the deferred entries (step mode, section B), and the
+    // film, image or URL lives in `description`. One with none names nothing.
+    const withEntry = (entry: Record<string, unknown>) => ({
+      ...minimalResearch,
+      questions: [{
+        id: "q_001", question: "Test?", rationale: "Testing", selection_basis: "user_directed",
+        priority: "high", status: "in_progress", depends_on: [], unblocks: [], created: "2026-01-01",
+        resolved: null, resolution_assertion_ids: [],
+        search_stop: {
+          stopped_because: "resources_spent", log_entry_ids: [], stop_criteria: null,
+          justification: "Overturn risk: low.",
+          not_reached: [{ kind: "deferred", log_entry_id: null, wiki_title: null, ...entry }],
+        },
+      }],
+    });
+    const deferredErrors = async (entry: Record<string, unknown>) => {
+      await writeProject(withEntry(entry), minimalTree);
+      const result = await validateProject(testDir);
+      return result.errors.filter((e) => e.message.includes("when kind is 'deferred'"));
+    };
+
+    it("accepts a deferred entry that names the source", async () => {
+      expect(await deferredErrors({ description: "FHL film 1234567, Ripon parish registers" })).toEqual([]);
+    });
+
+    it("rejects one whose description is blank, null or missing", async () => {
+      for (const entry of [{ description: "   " }, { description: null }, {}]) {
+        expect((await deferredErrors(entry)).length, JSON.stringify(entry)).toBe(1);
+      }
+    });
+  });
+
   describe("Conflict validation", () => {
+    // `weighed_log_entry_ids` is what lets the ladder tell new evidence to weigh
+    // from evidence already weighed: conflict-resolution fills both analysis
+    // fields on every pass, and conflicts carry no timestamp.
+    function conflictProject(conflictExtra: Record<string, unknown>) {
+      return {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", tool: "record_search", query: {}, results_examined: 1, outcome: "positive", performed: "2026-01-01T00:00:00Z", plan_item_id: null, external_site: null },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "1", record_role: "principal", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
+          { id: "a_002", source_id: "src_001", record_id: "2", record_role: "principal", fact_type: "birth", value: "1851", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [] },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        conflicts: [
+          {
+            id: "c_001",
+            conflict_type: "fact",
+            description: "Birth year conflict",
+            disputed_attribute: "birth year",
+            competing_assertion_ids: ["a_001", "a_002"],
+            status: "unresolved",
+            blocks_question_ids: [],
+            ...conflictExtra,
+          },
+        ],
+      };
+    }
+
+    const conflictTree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+
+    it("accepts weighed_log_entry_ids naming a real log entry", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: ["log_001"] }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts a conflict with no weighed_log_entry_ids at all", async () => {
+      // Every conflict analysed before the field existed.
+      await writeProject(conflictProject({}), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects weighed_log_entry_ids: null, which the JSON Schema has no branch for", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: null }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("weighed_log_entry_ids must be an array"))).toBe(true);
+    });
+
+    it("rejects weighed_log_entry_ids that is not an array", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: "log_001" }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("weighed_log_entry_ids must be an array")),
+      ).toBe(true);
+    });
+
+    it("rejects a weighed id that resolves to no log entry", async () => {
+      await writeProject(conflictProject({ weighed_log_entry_ids: ["log_404"] }), conflictTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("log_404"))).toBe(true);
+    });
+
+    it("still rejects an unknown sibling key beside it", async () => {
+      // Adding one optional field must not open the object up.
+      await writeProject(
+        conflictProject({ weighed_log_entry_ids: ["log_001"], weighed_log_entries: ["log_001"] }),
+        conflictTree,
+      );
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => JSON.stringify(e).includes("weighed_log_entries"))).toBe(true);
+    });
+
     it("requires disputed_attribute for fact conflicts", async () => {
       const research = {
         ...minimalResearch,
