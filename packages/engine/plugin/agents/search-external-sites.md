@@ -312,7 +312,8 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
-**First, call `research_query` with `section: "conflicts"`.** Do this before
+**First, call `research_query` with `section: "conflicts"` and no `status`
+filter** — a resolved conflict names the value to encode. Do this before
 the `build_external_search_url` call, every time you are about to pass a
 place or date. `project_context` does not return `conflicts[]` and neither
 does the rendered project state, so this call is the only way you can see
