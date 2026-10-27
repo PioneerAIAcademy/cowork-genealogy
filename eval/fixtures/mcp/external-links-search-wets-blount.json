@@ -1,0 +1,899 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search for Blount County, Alabama, 1840-1880, captured live 2026-10-26 with dev/try-external-links-search.ts after rows gained startYear/endYear (issue #3521). The where-else-to-search suite's own copy: real rows, dated and undated, supported and unsupported hosts, and the 200-row inline cap. Shared fixtures predate the year fields and stay unchanged.",
+  "args": {
+    "standardPlace": "~Blount"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Blount, Alabama, United States",
+      "startYear": 1840,
+      "endYear": 1880
+    },
+    "totalForPlace": 249,
+    "returned": 200,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/1002",
+        "linkText": "U.S. World War II Draft Registration Cards, 1942"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1030",
+        "linkText": "Public Member Trees"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1106",
+        "linkText": "U.S., Confederate Service Records, 1861-1865",
+        "startYear": 1861,
+        "endYear": 1865
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1174",
+        "linkText": "U.S. Passport Applications, 1795-1925",
+        "startYear": 1795,
+        "endYear": 1925
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1192",
+        "linkText": "U.S. Naturalization Records Indexes for Alabama, 1794-1995",
+        "startYear": 1794,
+        "endYear": 1995
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "U.S., Selected Federal Census Non-Population Schedules, 1850-1880"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1411/",
+        "linkText": "JewishGen Online Worldwide Burial Registry"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1540",
+        "linkText": "U.S. City Directories"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1576",
+        "linkText": "Alabama State Census, 1820-1866"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1593",
+        "linkText": "Alabama Confederate Pension and Service Records, 1862-1947",
+        "startYear": 1862,
+        "endYear": 1947
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1634/",
+        "linkText": "U.S., 1880 Federal Census Schedules of Defective, Dependent, and Delinquent Classes"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1710",
+        "linkText": "Alabama Death Record of State Convicts, 1843-1951",
+        "startYear": 1843,
+        "endYear": 1951
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1736",
+        "linkText": "Alabama Civil War Muster Rolls, 1861-1865",
+        "startYear": 1861,
+        "endYear": 1865
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1764",
+        "linkText": "Alabama Soldiers in the Korean War"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2442/",
+        "linkText": "1940 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/26317",
+        "linkText": "Alabama Cemetery Records"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/26420",
+        "linkText": "Gleanings from Alabama newspaper files"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3531",
+        "linkText": "Alabama Compiled Census and Census Substitutes Index, 1810-1890",
+        "startYear": 1810,
+        "endYear": 1890
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/4192",
+        "linkText": "Alabama Compiled Marriages from Selected Counties, 1809-1920",
+        "startYear": 1809,
+        "endYear": 1920
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/4237",
+        "linkText": "Alabama Revolutionary War Soldiers"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48006",
+        "linkText": "Search Records, 1808-1870",
+        "startYear": 1808,
+        "endYear": 1955
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5445/",
+        "linkText": "1890 United States Federal Census Fragment"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60000",
+        "linkText": "Alabama Select Marriage Indexes, 1816-1942",
+        "startYear": 1816,
+        "endYear": 1942
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60525/",
+        "linkText": "U.S., Find a Grave Index, 1600s-Current"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60593",
+        "linkText": "U.S., Homestead Records, 1863-1908",
+        "startYear": 1863,
+        "endYear": 1908
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6061/",
+        "linkText": "1920 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60722/",
+        "linkText": "U.S., Evangelical Lutheran Church in America Church Records, 1781-1969",
+        "startYear": 1781,
+        "endYear": 1969
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60922",
+        "linkText": "Alabama Marriage Indexes, 1814-1935",
+        "startYear": 1814,
+        "endYear": 1935
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60923",
+        "linkText": "Alabama Civil Appointments, 1818-1939",
+        "startYear": 1818,
+        "endYear": 1939
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60968/",
+        "linkText": "Alabama, Voter Registration, 1867",
+        "startYear": 1867,
+        "endYear": 1867
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61157",
+        "linkText": "North America Family Histories, 1500-2000",
+        "startYear": 1500,
+        "endYear": 2000
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61365",
+        "linkText": "Alabama County Marriage Records, 1805-1967",
+        "startYear": 1805,
+        "endYear": 1967
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61584/",
+        "linkText": "U.S., Evangelical Lutheran Church in America, Swedish American Church Records, 1800-1947",
+        "startYear": 1800,
+        "endYear": 1947
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61748/",
+        "linkText": "Alabama Episcopal Diocese of Alabama Church Records, 1837-1970",
+        "startYear": 1837,
+        "endYear": 1970
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61907/",
+        "linkText": "U.S., Eastern Cherokee Indian Reservation Rolls, 1848-1970",
+        "startYear": 1848,
+        "endYear": 1970
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62116/",
+        "linkText": "U.S., Newspapers.com Marriage Index, 1800s-1999",
+        "startYear": 1800,
+        "endYear": 1999
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6224/",
+        "linkText": "1930 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62267/",
+        "linkText": "U.S., Southern Baptist Church Records, 1750-1899",
+        "startYear": 1750,
+        "endYear": 1899
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62308/",
+        "linkText": "1950 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6507",
+        "linkText": "Atlantic Ports, Gulf Coasts, and Great Lakes Passenger Lists, Roll 4, 1820-1870",
+        "startYear": 1820,
+        "endYear": 1870
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6742/",
+        "linkText": "1880 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/70662/",
+        "linkText": "Alabama, Episcopal Church Registers Index, 1832-1972",
+        "startYear": 1832,
+        "endYear": 1972
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7163/",
+        "linkText": "1870 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7486/?arrival=_alabama-usa_3&count=50",
+        "linkText": "All U.S. and Canada, Passenger and Immigration Lists Index, 1500s-1900s",
+        "startYear": 1500,
+        "endYear": 1999
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7602/",
+        "linkText": "1900 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "1860 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7668/",
+        "linkText": "1860 U.S. Federal Census - Slave Schedules"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7678/",
+        "linkText": "U.S. Revolutionary War Pensioner Census, 1840"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7838",
+        "linkText": "Alabama U.S. Marriage Index, 1800-1969",
+        "startYear": 1800,
+        "endYear": 1969
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7884/",
+        "linkText": "1910 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7890",
+        "linkText": "Atlantic Ports, Gulf Coasts, and Great Lakes Passenger Lists, Roll 8, 1845-1849",
+        "startYear": 1845,
+        "endYear": 1849
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8054/",
+        "linkText": "1850 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8055/",
+        "linkText": "1850 U.S. Federal Census - Slave Schedules"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8057/",
+        "linkText": "1840 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8058/",
+        "linkText": "1830 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8756/",
+        "linkText": "U.S., Federal Census Mortality Schedules, 1850-1885"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8799",
+        "linkText": "Alabama Wills and Probate Records, 1753-1999",
+        "startYear": 1753,
+        "endYear": 1999
+      },
+      {
+        "url": "http://africanamericancemeteries.com/",
+        "linkText": "African American Cemeteries Online"
+      },
+      {
+        "url": "http://africanamericancemeteries.com/al/",
+        "linkText": "African American Cemeteries in Alabama"
+      },
+      {
+        "url": "http://algensoc.org/main/publications.html",
+        "linkText": "Publications of the Alabama Genealogical Society"
+      },
+      {
+        "url": "http://archives.state.al.us/civilwar/search.cfm",
+        "linkText": "Alabama Civil War Service Database"
+      },
+      {
+        "url": "http://chroniclingamerica.loc.gov/",
+        "linkText": "Chronicling America: Historic American Newspapers Alabama"
+      },
+      {
+        "url": "http://death-records.net/georgia/death-records.htm",
+        "linkText": "Death Records Search"
+      },
+      {
+        "url": "http://digital.archives.alabama.gov/cdm/landingpage/collection/p17217coll3",
+        "linkText": "Alabama World War I Service Records"
+      },
+      {
+        "url": "http://digital.archives.alabama.gov/cdm/search",
+        "linkText": "Alabama Department of Archives and History"
+      },
+      {
+        "url": "http://genealogytrails.com/ala/bible_records.html",
+        "linkText": "Bible Records of Alabama"
+      },
+      {
+        "url": "http://ldsgenealogy.com/AL/Newspapers-and-Obituaries.htm",
+        "linkText": "Alabama Newspapers and Obituaries"
+      },
+      {
+        "url": "http://newslink.org/alnews.html",
+        "linkText": "Alabama Newspapers"
+      },
+      {
+        "url": "http://newspaperarchive.com/us/alabama/",
+        "linkText": "Alabama Newspapers Service Disruption FAQ"
+      },
+      {
+        "url": "http://obituarieshelp.org/alabama_newspaper_obituaries.html",
+        "linkText": "Alabama Newspaper Obituaries Listings"
+      },
+      {
+        "url": "http://search.ancestry.com/oldsearch/locality/dbpage.aspx?tp=2&p=3&categoryFilterID=38&showPaging=true",
+        "linkText": "Alabama Newspapers Search"
+      },
+      {
+        "url": "http://services.dar.org/Public/DAR_Research/search/?Tab_ID=12",
+        "linkText": "Bible Records and Transcriptions"
+      },
+      {
+        "url": "http://www.accessgenealogy.com/alabama/",
+        "linkText": "Alabama Genealogy"
+      },
+      {
+        "url": "http://www.archives.alabama.gov/civilwar/index.cfm",
+        "linkText": "Civil War Service Cards File, Alabama Department of Archives and History"
+      },
+      {
+        "url": "http://www.archives.alabama.gov/goldstar/search.cfm",
+        "linkText": "Alabama World War I Gold Star Database"
+      },
+      {
+        "url": "http://www.archives.alabama.gov/voterreg/index.cfm",
+        "linkText": "Alabama 1867 Voter Registration Records"
+      },
+      {
+        "url": "http://www.archives.alabama.gov/voterreg/search.cfm",
+        "linkText": "Alabama Voter Registration Records, 1867",
+        "startYear": 1867,
+        "endYear": 1867
+      },
+      {
+        "url": "http://www.archives.gov/atlanta/finding-aids/freedmens-bureau.pdf",
+        "linkText": "NARA A Genealogical Finding Aid"
+      },
+      {
+        "url": "http://www.archives.gov/research/alic/reference/military/ww2.html",
+        "linkText": "NARA World War II Military Resources"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/civil-war/confederate/pension.html",
+        "linkText": "Confederate Pension Records"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/civil-war/resources.html",
+        "linkText": "Civil War Records"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/korean-war/casualty-lists/al-alpha.pdf",
+        "linkText": "Korean Conflict State-Level Casualty Lists - Alabama"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/vietnam-war/casualty-lists/al-alpha.pdf",
+        "linkText": "Vietnam Conflict State-Level Casualty Lists - Alabama"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/ww1/draft-registration/index.html",
+        "linkText": "World War I Selective Service Records"
+      },
+      {
+        "url": "http://www.archives.gov/veterans/",
+        "linkText": "Veterans' Service Records"
+      },
+      {
+        "url": "http://www.biblerecords.com/",
+        "linkText": "Bible Records Online"
+      },
+      {
+        "url": "http://www.courtreference.com/Alabama-Courts.htm",
+        "linkText": "Guide to Alabama Court Records"
+      },
+      {
+        "url": "http://www.deathindexes.com/alabama/index.html",
+        "linkText": "Alabama Death Records, Indexes and Obituaries"
+      },
+      {
+        "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gs&",
+        "linkText": "Cemetery Records"
+      },
+      {
+        "url": "http://www.fold3.com/institution-index.php",
+        "linkText": "Historical Military Records"
+      },
+      {
+        "url": "http://www.fold3.com/title_765/wwii_old_mans_draft_registration_cards",
+        "linkText": "WWII 'Old Man's Draft' Registration Cards"
+      },
+      {
+        "url": "http://www.genealogybank.com",
+        "linkText": "Genealogy, Family History & Ancestry Search"
+      },
+      {
+        "url": "http://www.genealogybuff.com/al/",
+        "linkText": "Alabama Genealogy Data"
+      },
+      {
+        "url": "http://www.genealogytrails.com/ala/",
+        "linkText": "Alabama Family History and Genealogy Records"
+      },
+      {
+        "url": "http://www.genwed.com/state/algen.htm",
+        "linkText": "Alabama Marriage Records"
+      },
+      {
+        "url": "http://www.idreamof.com/",
+        "linkText": "I Dream of Genealogy"
+      },
+      {
+        "url": "http://www.idreamof.com/bio/al.html",
+        "linkText": "Alabama Biographies and Bibles"
+      },
+      {
+        "url": "http://www.idreamof.com/cemetery/al.html",
+        "linkText": "Alabama Cemeteries"
+      },
+      {
+        "url": "http://www.idreamof.com/marriage/al.html",
+        "linkText": "I Dream of Genealogy"
+      },
+      {
+        "url": "http://www.interment.net/us/al/alabama-cemetery-records.htm",
+        "linkText": "Alabama Cemetery Records Archive"
+      },
+      {
+        "url": "http://www.interment.net/us/al/index.htm",
+        "linkText": "Alabama Cemetery Records"
+      },
+      {
+        "url": "http://www.interment.net/us/index.htm",
+        "linkText": "USA Cemetery Records"
+      },
+      {
+        "url": "http://www.mapofus.org/alabama/",
+        "linkText": "Maps of Alabama"
+      },
+      {
+        "url": "http://www.newhorizonsgenealogicalservices.com/al-census.htm",
+        "linkText": "Alabama State Census Records Online"
+      },
+      {
+        "url": "http://www.newspapers.com/place-alabama/?xid=186",
+        "linkText": "Historical Newspapers in Alabama"
+      },
+      {
+        "url": "http://www.obitlinkspage.com/obit/al.htm",
+        "linkText": "Alabama Obituary Links"
+      },
+      {
+        "url": "http://www.obitsarchive.com/oa-search/we/Archives/?p_action=keyword&p_product=OBAR&p_theme=obar&d_sources=location&d_place=Alabama",
+        "linkText": "Alabama Obituaries Archives Online"
+      },
+      {
+        "url": "http://www.onlinenewspapers.com/usstate/usalabam.htm",
+        "linkText": "Alabama Newspapers, Online"
+      },
+      {
+        "url": "http://www.usgenweb.org/",
+        "linkText": "USGenWeb"
+      },
+      {
+        "url": "http://www.usgwarchives.net/al/cemetery.htm",
+        "linkText": "Alabama Tombstone Transcription Project"
+      },
+      {
+        "url": "http://www.usgwarchives.net/pensions/civilwar/alindex.htm",
+        "linkText": "Civil War, Alabama"
+      },
+      {
+        "url": "http://www.worldwar1.com/dbc/ymca.htm",
+        "linkText": "History of YMCA in WWI"
+      },
+      {
+        "url": "http://www.wwiimemorial.com/",
+        "linkText": "National WWII Memorial, Washington, D.C."
+      },
+      {
+        "url": "http://yanceyfamilygenealogy.org/family_bible_index_Locations_AL.htm",
+        "linkText": "The Family Bible Index - Alabama"
+      },
+      {
+        "url": "https://1950census.archives.gov/search/",
+        "linkText": "1950 Census Records"
+      },
+      {
+        "url": "https://accessgenealogy.com/",
+        "linkText": "AccessGenealogy"
+      },
+      {
+        "url": "https://accessgenealogy.com/alabama/alabama-bible-records.htm",
+        "linkText": "Alabama Bible Records"
+      },
+      {
+        "url": "https://accessgenealogy.com/cemetery/alabama-cemetery-records.htm",
+        "linkText": "Bot Verification"
+      },
+      {
+        "url": "https://acpl-cms.wise.oclc.org/genealogy",
+        "linkText": "Allen County Public Library"
+      },
+      {
+        "url": "https://alabama.hometownlocator.com/features/cultural,class,cemetery.cfm",
+        "linkText": "Alabama Physical, Cultural, & Historic Features & Landmarks"
+      },
+      {
+        "url": "https://alabamagravestones.org/",
+        "linkText": "Alabama Gravestone Photo Project"
+      },
+      {
+        "url": "https://algensoc.org/records-index/",
+        "linkText": "Alabama Loose Papers by County"
+      },
+      {
+        "url": "https://algenweb.org/",
+        "linkText": "ALGenWeb Project - Alabama"
+      },
+      {
+        "url": "https://archives.alabama.gov/civilwar/search.cfm",
+        "linkText": "Alabama Civil War Service Cards File"
+      },
+      {
+        "url": "https://archives.alabama.gov/goldstar/search.cfm",
+        "linkText": "World War I Gold Star Database"
+      },
+      {
+        "url": "https://archives.alabama.gov/voterreg/search.cfm",
+        "linkText": "Alabama State Archives 1867 Voter Registration Records"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Magnolia-Cemetery/8921",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/10452640",
+        "linkText": "Third Military District, 3.11.1867-7.28.1868"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/55287624",
+        "linkText": "Laws Relating to Immigration and Nationality and Directories of Courts Having Naturalization Jurisdiction, 2001–2001"
+      },
+      {
+        "url": "https://digital.archives.alabama.gov/digital/collection/goldstar",
+        "linkText": "Alabama World War I Gold Star Database"
+      },
+      {
+        "url": "https://digital.newberry.org/ahcb/pages/Alabama.html",
+        "linkText": "Newberry Library Atlas of Historical County Boundaries"
+      },
+      {
+        "url": "https://glorecords.blm.gov/s/",
+        "linkText": "U.S. Land Patent Search, 1788-1960s",
+        "startYear": 1788,
+        "endYear": 1969
+      },
+      {
+        "url": "https://glorecords.blm.gov/search/default.aspx?searchTabIndex=0&searchByTypeIndex=1",
+        "linkText": "Survey Plats and Field Notes"
+      },
+      {
+        "url": "https://historygeo.com/",
+        "linkText": "Historical Maps and Family History"
+      },
+      {
+        "url": "https://iajgscemetery.org/",
+        "linkText": "International Jewish Cemetery Project"
+      },
+      {
+        "url": "https://iajgscemetery.org/usa/alabama-al",
+        "linkText": "Alabama Jewish Cemetery Project"
+      },
+      {
+        "url": "https://informationwanted.org/",
+        "linkText": "Last Seen: Finding Family After Slavery"
+      },
+      {
+        "url": "https://ldsgenealogy.com/AL/Cemetery-Records.htm",
+        "linkText": "Alabama Cemetery Records"
+      },
+      {
+        "url": "https://linkpendium.com/al-genealogy/",
+        "linkText": "Alabama Census and Vital Records"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/alabama-state-census-1855",
+        "linkText": "Alabama State Census 1855"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/alabama-state-census-1866",
+        "linkText": "Alabama State Census 1866"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/periodical-source-index",
+        "linkText": "Periodical Source Index (PERSI)"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/united-states-marriages?state=alabama",
+        "linkText": "US Marriages – Alabama, 1733-2013",
+        "startYear": 1733,
+        "endYear": 2013
+      },
+      {
+        "url": "https://web.archive.org/web/20210421053304/https://archives.alabama.gov/findaids/v3967.htm",
+        "linkText": "Alabama Archives Confederate Census 1921"
+      },
+      {
+        "url": "https://web.archive.org/web/20210505195322/https://archives.alabama.gov/referenc/alamilor/mil_org.html",
+        "linkText": "Alabama Archives Historical Sketches of Alabama Military Units"
+      },
+      {
+        "url": "https://web.archive.org/web/20211215104921/https://archives.alabama.gov/civilwar/index.cfm",
+        "linkText": "Alabama Civil War Service Cards File"
+      },
+      {
+        "url": "https://www.alabamapioneers.com/tag/alabama-bible-records/",
+        "linkText": "Alabama Bible Records"
+      },
+      {
+        "url": "https://www.alabamapublichealth.gov/vitalrecords/",
+        "linkText": "Alabama Department of Public Health"
+      },
+      {
+        "url": "https://www.americanancestors.org/search/databasesearch/1569/alabama-deaths-1908-1974",
+        "linkText": "Database Search, 1816-1957",
+        "startYear": 1816,
+        "endYear": 1974
+      },
+      {
+        "url": "https://www.archives.alabama.gov/",
+        "linkText": "Alabama Department of Archives and History, 1818-1929",
+        "startYear": 1818,
+        "endYear": 1929
+      },
+      {
+        "url": "https://www.archives.alabama.gov/goldstar/search.cfm",
+        "linkText": "World War I Gold Star Database"
+      },
+      {
+        "url": "https://www.archives.gov/files/calendar/genealogy-fair/2018/2-kluskens-handout.pdf",
+        "linkText": "Federal Records that Help Identify Former Slaves and Slave Owners"
+      },
+      {
+        "url": "https://www.archives.gov/files/research/naturalization/401-approved-southern-claims.pdf",
+        "linkText": "Southern Claims Commission Approved Claims"
+      },
+      {
+        "url": "https://www.archives.gov/files/research/naturalization/418-disapproved-southern-claims.pdf",
+        "linkText": "Southern Claims Commission: Barred and Disallowed Claims, 1871-1880",
+        "startYear": 1871,
+        "endYear": 1880
+      },
+      {
+        "url": "https://www.archives.gov/files/research/naturalization/naturalization-files.pdf",
+        "linkText": "Research Guide to Selected Bureau of Naturalization Case and Correspondence Files, 1906–1946"
+      },
+      {
+        "url": "https://www.archives.gov/locations",
+        "linkText": "National Archives and Records Administration (NARA) regional facilities"
+      },
+      {
+        "url": "https://www.archives.gov/personnel-records-center",
+        "linkText": "National Personnel Records Center"
+      },
+      {
+        "url": "https://www.archives.gov/personnel-records-center/dd-214",
+        "linkText": "DD Form 214, Discharge Papers and Separation Documents"
+      },
+      {
+        "url": "https://www.archives.gov/research/immigration/naturalization",
+        "linkText": "Naturalization Records"
+      },
+      {
+        "url": "https://www.archives.gov/research/immigration/naturalization/history-cert-of-naturalization",
+        "linkText": "History of the Certificate of Naturalization"
+      },
+      {
+        "url": "https://www.archives.gov/research/immigration/naturalization/history-dec-of-intent",
+        "linkText": "History of the Declaration of Intention, 1795–1952",
+        "startYear": 1795,
+        "endYear": 1952
+      },
+      {
+        "url": "https://www.archives.gov/research/immigration/overview",
+        "linkText": "Immigration Records, 1820-1982",
+        "startYear": 1820,
+        "endYear": 1982
+      },
+      {
+        "url": "https://www.archives.gov/research/immigration/passenger-arrival.html#https://www.archives.gov/research/immigration/passenger-arrival.html#where",
+        "linkText": "Port of Arrival, 1820-1982",
+        "startYear": 1820,
+        "endYear": 1982
+      },
+      {
+        "url": "https://www.archives.gov/research/military/army/compiled-military-service-records",
+        "linkText": "Compiled Military Service Records"
+      },
+      {
+        "url": "https://www.archives.gov/research/military/civil-war/resources",
+        "linkText": "Civil War Records: Basic Research Sources"
+      },
+      {
+        "url": "https://www.archives.gov/research/military/civil-war/southern-claims-commission",
+        "linkText": "Southern Claims Commission Records"
+      },
+      {
+        "url": "https://www.archives.gov/research/military/genealogy",
+        "linkText": "Genealogy Research in Military Records, National Archives"
+      },
+      {
+        "url": "https://www.archives.gov/research/military/ww2",
+        "linkText": "NARA World War II Records"
+      },
+      {
+        "url": "https://www.archives.gov/research/military/ww2/finding-aids.html",
+        "linkText": "NARA Finding Aids Related to WWII"
+      },
+      {
+        "url": "https://www.archives.gov/research/military/ww2/ww2-participation.pdf",
+        "linkText": "NARA Finding Information on Personal Participation in World War II"
+      },
+      {
+        "url": "https://www.archives.gov/st-louis/selective-service#wwii",
+        "linkText": "Selective Service Records, National Archives at St. Louis"
+      },
+      {
+        "url": "https://www.archives.gov/veterans/military-service-records/about-service-records-0",
+        "linkText": "About Military Service Records and Official Personnel Military Files"
+      },
+      {
+        "url": "https://www.blacksheepancestors.com/united-states/Alabama/",
+        "linkText": "Alabama – Blacksheep Ancestors"
+      },
+      {
+        "url": "https://www.cem.va.gov/cems/nchp/alabama.asp",
+        "linkText": "Alabama National Cemetery"
+      },
+      {
+        "url": "https://www.deathindexes.com/",
+        "linkText": "Online Searchable Death Indexes and Obituaries"
+      },
+      {
+        "url": "https://www.deathindexes.com/alabama/index.html",
+        "linkText": "Alabama Obituary and Cemetery Indexes"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery-browse/USA/Alabama?id=state_3",
+        "linkText": "Cemeteries in Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery-browse/USA?id=country_4",
+        "linkText": "Cemeteries in USA"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/109408/fort-mitchell-national-cemetery",
+        "linkText": "Fort Mitchell National Cemetery, Fort Mitchell, Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/109427/mobile-national-cemetery",
+        "linkText": "Mobile National Cemetery in Mobile, Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/2131095/fort-mcclellan-military-cemetery",
+        "linkText": "Fort McClellan Military Cemetery, Anniston, Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/2279623/alabama-national-cemetery",
+        "linkText": "Alabama National Cemetery in Montevallo, Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/24167/magnolia-cemetery",
+        "linkText": "Magnolia Cemetery in Mobile, Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/2421587/alabama-state-veterans-memorial-cemetery",
+        "linkText": "Alabama State Veterans Memorial Cemetery, Spanish Fort, Alabama"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/search?cemetery-name=Jewish+Cemetery&cemetery-loc=Alabama%2C+United+States+of+America&only-with-cemeteries=cemOnly&locationId=state_3",
+        "linkText": "Jewish Cemeteries in Alabama"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=united%20states%2c%20national%20veterans%20cemetery%20index&state=alabama&sid=999",
+        "linkText": "Alabama National Veterans Cemetery Index"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=united+states+deaths+%26+burials+1833-1970&sid=103&state=alabama",
+        "linkText": "United States Deaths & Burials 1833-1970 in Alabama",
+        "startYear": 1833,
+        "endYear": 1970
+      },
+      {
+        "url": "https://www.freestateofwinston.org/biblerecords.htm",
+        "linkText": "Bible Records"
+      },
+      {
+        "url": "https://www.genealogybank.com/explore/newspapers/all/usa/alabama/?kbid=10435&m=13",
+        "linkText": "Alabama Newspaper Archives, 1813-2003",
+        "startYear": 1813,
+        "endYear": 2003
+      },
+      {
+        "url": "https://www.genealogycenter.info/persi/",
+        "linkText": "PERiodical Source Index (PERSI)"
+      },
+      {
+        "url": "https://www.hometownlocator.com/",
+        "linkText": "State Gazetteer: Boundary Maps and Demographic Data"
+      },
+      {
+        "url": "https://www.jewishgen.org/",
+        "linkText": "JewishGen - The Home of Jewish Genealogy"
+      },
+      {
+        "url": "https://www.jewishgen.org/databases/Cemetery/tree/CemList.htm",
+        "linkText": "JewishGen Online Worldwide Burial Registry"
+      },
+      {
+        "url": "https://www.learnwebskills.com/patriot/countyhistories1.htm#al",
+        "linkText": "County and Town Histories"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10017/passenger-immigration-lists-1500-1900?action=query&formId=pili&formMode=1&useTranslation=1&initialFormIds=immigration,pili&qimmigration=Event+et.immigration+ep.alabama+epmo.similar",
+        "linkText": "Passenger and Immigration Lists, 1500-1900",
+        "startYear": 1500,
+        "endYear": 1999
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10019/germans-immigrating-to-the-united-states?s=1&formId=immigration-norels&formMode=1&useTranslation=1&exactSearch=&action=query&initialFormIds=immigration,pili&p=1&qimmigration=Event+et.immigration+ep.Alabama+epmo.similar",
+        "linkText": "Germans Immigrating to the U.S."
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10027/service-records-of-confederate-soldiers",
+        "linkText": "Service Records of Confederate Soldiers"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10029/russians-immigrating-to-the-united-states?s=1&formId=immigration-norels&formMode=1&useTranslation=1&exactSearch=&action=query&initialFormIds=immigration,pili,immigration-norels&p=1&qimmigration=Event+et.immigration+ep.Alabama+epmo.similar",
+        "linkText": "Russians Immigrating to the U.S."
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10030/italians-immigrating-to-the-united-states?s=1&formId=immigration-norels&formMode=1&useTranslation=1&exactSearch=&action=query&initialFormIds=immigration,pili,immigration-norels&p=1&qimmigration=Event+et.immigration+ep.Alabama+epmo.similar",
+        "linkText": "Italians Immigrating to the U.S."
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10119/immigrant-ships-transcribers-guild?action=query&formId=istg&formMode=1&useTranslation=1&qimmigration=Event+et.immigration+ep.alabama+epmo.similar&initialFormIds=immigration",
+        "linkText": "Immigrant Ships Transcribers Guild"
+      }
+    ],
+    "inlineCapped": true
+  }
+}

@@ -22,6 +22,7 @@ import type {
   MetadataRmsGroup,
   MetadataRmsCoverageEntry,
 } from "../types/volume-search.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
@@ -145,9 +146,7 @@ async function callGroupSearch(
   }
 
   if (response.status === 401) {
-    throw new Error(
-      "FamilySearch session not accepted; call the login tool to re-authenticate."
-    );
+    throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
   }
   if (response.status === 403) {
     throw new Error("FamilySearch volume search API error: 403 Forbidden.");

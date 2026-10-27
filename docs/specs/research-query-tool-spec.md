@@ -328,8 +328,8 @@ so that rule would be accepted and match nothing, ever.
     `information_quality`, `record_basis`, `informant`, and
     `informant_proximity` per assertion — most of the body — so trimming fields
     would not shrink the payload enough to fit 57 in one call.
-  - **A staged-to-disk fallback** (as `fulltext_search` / `external_links_search`
-    use, because *their* source is a live one-shot API response) is unwarranted
+  - **A staged-to-disk fallback** (as `fulltext_search` uses, because *its*
+    source is a live one-shot API response) is unwarranted
     here for the same on-disk reason.
 
   `offset` is typed `number` and rejected loudly when it is not a non-negative

@@ -55,6 +55,7 @@ import {
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -1015,9 +1016,7 @@ export async function recordSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
@@ -1157,8 +1156,8 @@ export async function recordSearchTool(
       // strip inside `finalizeStagedResults`.
       //
       // Withheld HERE and not inside `stageSearchResults`, which is shared by
-      // `record_search`, `fulltext_search` and `external_links_search` and should
-      // not know one caller's field names. Destructuring a copy also keeps `out`
+      // `record_search`, `fulltext_search` and the read/transcribe tools and
+      // should not know one caller's field names. Destructuring a copy also keeps `out`
       // itself untouched, so the live response the model reads is unaffected and
       // the key order (`rankingSkipped` before `results`) is preserved in both.
       const {

@@ -2324,16 +2324,18 @@ def test_create_message_rides_out_a_connection_drop_of_about_a_minute(monkeypatc
     assert slept == [2.0, 4.0, 8.0, 16.0, 30.0]
 
 
-def test_create_message_gives_up_after_six_connection_errors(monkeypatch):
+def test_create_message_gives_up_after_fifteen_connection_errors(monkeypatch):
+    """Fifteen attempts at a 90 s ceiling: frequent stalls each cost one short wait
+    rather than failing the test ungraded (#2995)."""
     import time
 
     monkeypatch.setattr(time, "sleep", lambda s: None)
-    client = _FlakyClient(fails=6)
-    with pytest.raises(judge.JudgeError, match="failed after 6 attempts"):
+    client = _FlakyClient(fails=15)
+    with pytest.raises(judge.JudgeError, match="failed after 15 attempts"):
         judge._create_message_with_retry(
             client=client, model="m", prefix="p", suffix="s", grading_tool=judge.GRADING_TOOL,
         )
-    assert client.calls == 6
+    assert client.calls == 15
 
 
 def test_compute_cost_counts_cached_tokens_alongside_input_not_inside_it():
@@ -2479,6 +2481,18 @@ def test_state_and_response_observations_coexist():
     )
     assert "response mentions a volume" in out
     assert "field X missing" in out
+
+
+def test_judge_client_times_out_and_leaves_retries_to_call_judge():
+    """A hung call fails at JUDGE_TIMEOUT_SECONDS, not the SDK's 600 s, and only
+    `_call_judge`'s loop retries it (#2995: one call sat in grading 30+ min)."""
+    from harness.auth import AuthConfig
+    from harness.judge import JUDGE_TIMEOUT_SECONDS, _make_client
+
+    client = _make_client(AuthConfig(skill_runner_mode="api_key", api_key="sk-test", detail="t"))
+    assert client.timeout == JUDGE_TIMEOUT_SECONDS
+    assert JUDGE_TIMEOUT_SECONDS <= 300
+    assert client.max_retries == 0
 
 
 # --- refused writer calls (issue #3839) --------------------------------------

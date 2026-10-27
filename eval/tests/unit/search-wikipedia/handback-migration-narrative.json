@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_m7h",
+    "skill": "search-wikipedia",
+    "name": "Migration narrative — hand back to historical-context, look nothing up",
+    "type": "negative",
+    "description": "The request asks for a narrative account of a migration pattern, which is historical-context's job. The agent must hand back naming historical-context, with no wikipedia_search and no log write. The other side of the hand-off line added in PR #3871, which made an explicit 'look X up on Wikipedia' a single-article request even when X is a migration (ut_search_wikipedia_012). Added for issue #3870. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back) and test_no_wiki_no_write (no-wiki-no-write).",
+    "tags": [
+      "hand-back",
+      "no-wiki-no-write",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Explain how Cornish chain migration to South Australia worked in the 1840s — who went first, how they drew family after them, and why",
+    "scenario": null
+  },
+  "negative": {
+    "correct_skill": [
+      "historical-context"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "A narrative synthesis of a migration pattern is historical-context's work, not a single encyclopedia article lookup."
+  },
+  "mcp_fixtures": [
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "The correct reply is a short hand-back naming historical-context as the agent that owns a narrative account of a migration pattern. Calling wikipedia_search, logging anything, or writing the migration history itself is a fail.",
+    "The registered fixture exists only to make the no-lookup clause falsifiable; do not read it as a hint that a lookup is expected.",
+    "Brevity is correct. Do not penalize a hand-back for being short."
+  ]
+}

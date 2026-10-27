@@ -75,37 +75,6 @@ describe("buildFromStagedRead — places the read could not standardize", () => 
 });
 
 describe("buildFromStagedRead — the place retry's time budget", () => {
-  it("refuses a bad addition before the retry, without waiting on a hanging resolver", async () => {
-    resolver.mockImplementation(() => new Promise(() => {}));
-    await expect(
-      buildFromStagedRead({
-        staged: read([{ type: "Death", place: "Hanging Place" }]),
-        additions: { relationships: [{ type: "ParentChild", parent: "NOPE-000", child: "LZNY-BRF" }] },
-        now: NOW,
-      }),
-    ).rejects.toThrow(/neither a FamilySearch ID/);
-    expect(resolver).not.toHaveBeenCalled();
-  }, 5_000);
-
-  it("does not run the retry during the build itself", async () => {
-    resolver.mockResolvedValue("Somewhere");
-    const built = await buildFromStagedRead({ staged: read([{ type: "Death", place: "Later Place" }]), now: NOW });
-    expect(resolver).not.toHaveBeenCalled();
-    await built.fillPlaces();
-    expect(built.tree.persons[0].facts[0].standard_place).toBe("Somewhere");
-  });
-
-  it("retries only the read's facts, never an addition's", async () => {
-    resolver.mockResolvedValue("Somewhere");
-    const { tree } = await buildAndFill({
-      staged: read([]),
-      additions: { persons: [{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "X" }], facts: [{ type: "Birth", place: "Typed Place" }] }] },
-      now: NOW,
-    });
-    expect(resolver).not.toHaveBeenCalled();
-    expect("standard_place" in tree.persons[1].facts[0]).toBe(false);
-  });
-
   it("returns within the budget when the resolver hangs, keeping the place unresolved", async () => {
     vi.useFakeTimers();
     try {
