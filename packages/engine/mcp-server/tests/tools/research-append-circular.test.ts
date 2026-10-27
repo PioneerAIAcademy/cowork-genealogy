@@ -356,11 +356,15 @@ describe("circular corroboration (issue #2943)", () => {
       expect(circular(await call(link("a_001", W)))).toHaveLength(1);
     });
 
-    it("clears it when the same call links the census to both", async () => {
+    it("clears it when the census is linked to both in the call before", async () => {
+      // One source per call: the census's links go in their own call, then the
+      // christening's link is judged against them.
       const r = research();
       await setup(r);
       await attest(r, ["a_001", W], ["a_031", W], ["a_030", J]);
-      const res = await call(link("a_031", W), link("a_030", J), link("a_001", W));
+      const census = await call(link("a_031", W), link("a_030", J));
+      expect(census.ok, errs(census)).toBe(true);
+      const res = await call(link("a_001", W));
       expect(res.ok, errs(res)).toBe(true);
     });
 

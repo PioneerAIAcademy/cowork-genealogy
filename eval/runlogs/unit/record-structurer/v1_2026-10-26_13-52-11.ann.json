@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-09-28_10-12-15.json",
+  "run_log": "v1_2026-10-26_13-52-11.json",
   "annotator": "johnpeterbrown@ymail.com",
   "corrections": [
     {
-      "test_id": "ut_search_wikipedia_008",
+      "test_id": "ut_record_structurer_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_008",
+      "test_id": "ut_record_structurer_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,15 +19,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_008",
+      "test_id": "ut_record_structurer_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_005",
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -35,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_005",
+      "test_id": "ut_record_structurer_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -43,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_005",
+      "test_id": "ut_record_structurer_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -51,31 +75,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_005",
+      "test_id": "ut_record_structurer_007",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
+      "dimension_name": "Faithful reading",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_005",
+      "test_id": "ut_record_structurer_007",
       "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_005",
+      "test_id": "ut_record_structurer_007",
       "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_003",
+      "test_id": "ut_record_structurer_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -83,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_003",
+      "test_id": "ut_record_structurer_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_003",
+      "test_id": "ut_record_structurer_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,31 +123,79 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_003",
+      "test_id": "ut_record_structurer_002",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
+      "dimension_name": "Faithful reading",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_003",
+      "test_id": "ut_record_structurer_002",
       "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_003",
+      "test_id": "ut_record_structurer_002",
       "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_002",
+      "test_id": "ut_record_structurer_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Correct out as expected"
+    },
+    {
+      "test_id": "ut_record_structurer_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Good call to recover correctly"
+    },
+    {
+      "test_id": "ut_record_structurer_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Faithful reading",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Stated relations",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Verbatim relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -131,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -139,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -147,31 +219,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
+      "dimension_name": "Faithful reading",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_002",
+      "test_id": "ut_record_structurer_001",
       "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_001",
+      "test_id": "ut_record_structurer_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +251,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_001",
+      "test_id": "ut_record_structurer_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +259,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_001",
+      "test_id": "ut_record_structurer_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,31 +267,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_001",
+      "test_id": "ut_record_structurer_004",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
+      "dimension_name": "Faithful reading",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_001",
+      "test_id": "ut_record_structurer_004",
       "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_001",
+      "test_id": "ut_record_structurer_004",
       "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_009",
+      "test_id": "ut_record_structurer_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -227,7 +299,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_009",
+      "test_id": "ut_record_structurer_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -235,7 +307,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_009",
+      "test_id": "ut_record_structurer_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -243,31 +315,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_009",
+      "test_id": "ut_record_structurer_005",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_009",
+      "test_id": "ut_record_structurer_005",
       "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_009",
+      "test_id": "ut_record_structurer_005",
       "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
+      "dimension_name": "Faithful reading",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_w8m",
+      "test_id": "ut_record_structurer_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -275,7 +347,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_w8m",
+      "test_id": "ut_record_structurer_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -283,7 +355,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_w8m",
+      "test_id": "ut_record_structurer_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -291,169 +363,25 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_w8m",
+      "test_id": "ut_record_structurer_003",
       "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
+      "dimension_name": "Faithful reading",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_w8m",
+      "test_id": "ut_record_structurer_003",
       "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
+      "dimension_name": "Stated relations",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_w8m",
+      "test_id": "ut_record_structurer_003",
       "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_p4t",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_p4t",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_p4t",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_p4t",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_p4t",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_p4t",
-      "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Template fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool query and response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wikipedia_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Reply economy",
+      "dimension_name": "Verbatim relay",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

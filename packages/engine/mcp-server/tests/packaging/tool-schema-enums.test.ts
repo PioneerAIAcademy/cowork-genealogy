@@ -41,6 +41,7 @@ const toolsDir = join(engineRoot, "src", "tools");
 const EXEMPT: Array<{ file: string; enumName: string; why: string }> = [
   { file: "record-search.ts", enumName: "gender", why: "FamilySearch search-API `sex` qualifier, owned upstream" },
   { file: "person-search.ts", enumName: "gender", why: "FamilySearch search-API `sex` qualifier, owned upstream" },
+  { file: "record-search.ts", enumName: "registration_event", why: "FamilySearch upstream record types in PLAN_RECORD_TYPE_ALIASES; the overlap with the registration enum is coincidence" },
 ];
 
 function closedEnums(): Map<string, Set<string>> {

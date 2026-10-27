@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_research_plan_d9k",
+    "skill": "research-plan",
+    "name": "Dispose completes a searched in_progress item and skips an unsearched planned one",
+    "type": "positive",
+    "description": "The third test the step-mode plan names for this PR (Phase 1, prep PR 1): 'Dispose, named one `in_progress` item with a nil search entry and one `planned` item never searched, completes the first and skips the second (B).' Two rules meet here and they pull opposite ways, which is why one fixture must carry both. A search that RAN closes its item as `completed` even when it found nothing, and `research_append` REFUSES `skipped` there (planItemSearchedSkipInvariants, issue #3516, decision 9 of attached-records-baseline.md) -- a skip says nothing was searched, and research-exhaustiveness reads a disposed item as settled, so a skip after a search misstates the record. An item never searched is the opposite case and must NOT be completed, because completing it would claim a search nobody ran. Dispose previously acted on `planned` items only, so a searched `in_progress` item had no disposition at all and the declaration stayed refused forever.",
+    "tags": [
+      "planning",
+      "dispose-mode",
+      "research-plan-dispose",
+      "research-plan-no-new-plan",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "research-exhaustiveness refused the stop-gate declaration for q_001 because items on the active plan pl_002 are still open. Dispose of the named items: complete each whose search was done, or skip it with a skip_category.\n\nquestionId: q_001\nplanItemIds: pli_006, pli_004\nprojectPath: <workspace>",
+    "scenario": "flynn-identity-geographic-thin"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "place-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: how an item closes depends on whether its SEARCH RAN, not on the status it currently holds.",
+    "COMPLIANT: pli_006 ends at status 'completed', AND pli_004 ends at status 'skipped' with a skip_category.",
+    "pli_006 is `in_progress` and has a tied `record_search` log entry, so its search RAN. It must be `completed`. `research_append` refuses `skipped` on it, so completing it is not a stylistic preference but the only write the tool will accept. Marking it skipped, or leaving it `in_progress`, is the failure this test exists to catch: Dispose used to act on `planned` items only, so a searched `in_progress` item had no disposition and the declaration stayed refused.",
+    "pli_004 is `planned` with no tied log entry, so no search ran. It must be `skipped` with a skip_category, NOT completed -- completing it would claim a search nobody ran.",
+    "Do not require a particular skip_category for pli_004. The refusal reason is research-exhaustiveness's business; any category the agent can justify from the project is acceptable here.",
+    "pli_005 was not named in the delegation. Dispose acts on the ids it was given, so pli_005 changing status is a failure.",
+    "No new plan and no supersede: the stop criteria are already judged, and superseding would carry the same items into a new plan and re-block the gate.",
+    "The agent executes nothing itself and hands execution back to its caller, so do not grade whether any search ran."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30
+  }
+}

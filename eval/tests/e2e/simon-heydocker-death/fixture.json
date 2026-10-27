@@ -15,7 +15,7 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 36, hint-samples.csv row 39, flags adds_birth/adds_death, confidence 3). Resolved as a false match: the 24 Aug 1808 Laakirchen death of Simon Heydocker aged 30 (ark:/61903/1:1:6VYC-Q9W5) is a younger man; the tree's Simon married Katharina Plank on 18 Nov 1787 aged 21 (ark:/61903/1:1:6VYC-29XS) and had children baptized 1789-1801. His real death is not verified. Avoid guard plus a documented-negative finding; decided on the indexes, image_basis off.",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 36, hint-samples.csv row 39, flags adds_birth/adds_death, confidence 3). Resolved as false match plus substitute confirmed: the 24 Aug 1808 Laakirchen death of Simon Heydocker aged 30 (ark:/61903/1:1:6VYC-Q9W5) is a younger man; the tree's Simon married Katharina Plank on 18 Nov 1787 aged 21 (ark:/61903/1:1:6VYC-29XS) and had children baptized 1789-1801. His real death is 6 April 1836, Nötten house 14, Laakirchen, aged 68 (ark:/61903/1:1:6VYC-Q99N; image calibration passed 2026-10-26 — see README). Avoid guard (f1) plus a positive death-fact finding (f2).",
   "caps": {
     "wall_clock_seconds": 9000
   },

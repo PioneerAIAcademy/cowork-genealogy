@@ -21,8 +21,9 @@ The grading gate checks annotation *presence*, not content. Deeper content
 validity (drift / incomplete / malformed) is the maintainer's
 ``calibrate_judge --dry-run`` step and the loader's own classification — kept
 out of CI so this script stays stdlib-only and never needs the harness venv.
-The one content check that lives here is the component-derivation drift warning
-below: it is pure stdlib JSON arithmetic, so it meets the same constraint.
+The two content checks that live here, the component-derivation and re-grade
+drift warnings below, are pure stdlib JSON arithmetic, so they meet the same
+constraint.
 
 ## 1M-window gate (BLOCKING)
 
@@ -73,6 +74,17 @@ so the disagreement is reported, not corrected. Warn-only, never blocks. Finding
 derivation already reconciled (``matched_model`` present) and ``avoid`` findings
 (whose ``matched`` is not a link tally) are skipped; ``fact`` is *not* skipped —
 it is excluded from the derivation, not from this report.
+
+## Re-grade drift check (WARN only)
+
+``findings_hash`` covers the whole ``expected-findings.json``, so rewording one
+finding forces a re-grade of every label in its annotations (issue #3614). This
+warns when a PR-modified ``.ann.json`` moves a label on a finding that is
+identical at the merge-base of BASE_SHA and HEAD_SHA and at HEAD_SHA, so the
+reviewer can tell a label that moved
+with its finding from one that moved because a sibling did. Warn-only: a
+deliberate re-grade is legitimate. Runs before the blocking gates so a re-grade
+PR that also trips one still shows it.
 
 ## Not gated: fixture validity
 
@@ -722,6 +734,91 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
 
 
 # --------------------------------------------------------------------------- #
+# Re-grade drift check (warn only): a modified annotation moved a label on a
+# finding whose own text did not change
+# --------------------------------------------------------------------------- #
+
+def check_regraded_unchanged_findings(base: str, head: str) -> list[str]:
+    """Warn-only: a PR-MODIFIED ``.ann.json`` whose label moved on a finding that
+    is identical in ``expected-findings.json`` at *base* and *head*.
+
+    ``findings_hash`` is whole-file, so rewording one finding stales the
+    annotation and the re-grade re-derives every label, including the untouched
+    ones (issue #3614: PR #3605 moved catharina-gosner-daughter f2 that way).
+    Warn, not error: a deliberate re-grade of an unchanged finding is legitimate.
+
+    Selects with its own diff: `_is_primary_runlog` drops every ``.ann.json``, so
+    the run-log selectors would return nothing. Diffs from the merge-base, not
+    *base*: CI's BASE_SHA is main's tip, so a re-grade main gained after the
+    branch point would otherwise show, reversed, on a PR that never touched it.
+    M only — an added or renamed-in annotation has no prior label. A finding id
+    absent on either side is the whole-file ``findings_hash`` rung's business,
+    not this one's. Anything unreadable or wrong-shaped is skipped, never raised
+    on.
+    """
+    def git(*args: str) -> str:
+        return subprocess.check_output(
+            ["git", *args], text=True, encoding="utf-8", cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+
+    try:
+        base = git("merge-base", base, head).strip()
+        out = git("-c", "diff.renames=true", "diff",
+                  "--name-status", "--diff-filter=M", base, head)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return [
+            f"could not diff {base}...{head}, so the re-grade drift check did not "
+            "run: a label moved on an unchanged finding would not be reported."
+        ]
+    warnings: list[str] = []
+    for line in out.splitlines():
+        rel = Path(line.split("\t")[-1].strip())
+        if not (
+            len(rel.parts) == 5
+            and rel.parts[:3] == ("eval", "runlogs", "e2e")
+            and rel.name.startswith("run-")
+            and rel.name.endswith(".ann.json")
+        ):
+            continue
+        ef_rel = Path("eval", "tests", "e2e", rel.parts[3], "expected-findings.json")
+        sides = [
+            (_read_at_head(sha, rel, missing_ok=True),
+             _read_at_head(sha, ef_rel, missing_ok=True))
+            for sha in (base, head)
+        ]
+        if any(doc is None for side in sides for doc in side):
+            continue
+        (old_ann, old_ef), (new_ann, new_ef) = sides
+        old_pf, new_pf = old_ann.get("per_finding"), new_ann.get("per_finding")
+        old_fs, new_fs = old_ef.get("findings"), new_ef.get("findings")
+        if not (
+            isinstance(old_pf, dict) and isinstance(new_pf, dict)
+            and isinstance(old_fs, list) and isinstance(new_fs, list)
+        ):
+            continue
+        old_by_id, new_by_id = (
+            {str(f.get("id")): f for f in fs if isinstance(f, dict)}
+            for fs in (old_fs, new_fs)
+        )
+        for fid in sorted(new_pf):
+            old, new = old_pf.get(fid), new_pf[fid]
+            if old is None or old == new:
+                continue
+            if fid not in old_by_id or fid not in new_by_id:
+                continue
+            if old_by_id[fid] == new_by_id[fid]:
+                warnings.append(
+                    f"annotation '{rel}' finding {fid}: label moved {old!r} → "
+                    f"{new!r} but the finding is unchanged in expected-findings.json. "
+                    "A re-grade forced by a sibling finding's rewording re-derives "
+                    "every label — restore the prior label and note unless this "
+                    "re-grade was deliberate, and say so in the PR (issue #3614)."
+                )
+    return warnings
+
+
+# --------------------------------------------------------------------------- #
 # Annotation structural validation (blocking): reimplemented mechanical rungs
 # from calibrate_judge.load_annotated_runs (rungs 1-10)
 # --------------------------------------------------------------------------- #
@@ -1003,12 +1100,18 @@ def main() -> int:
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
 
+    # --- Re-grade drift (warn only) — before the gates, so a re-grade PR that
+    # --- also trips a findings_hash error still shows it.
+    for w in check_regraded_unchanged_findings(os.environ["BASE_SHA"], head):
+        print(f"::warning::{w}")
+        print(f"  ! {w}", file=sys.stderr)
+
     # Both gates read the AR set. For the grading gate that closes a real hole:
     # a run promoted out of quarantine arrives as a RENAME, and every run in
     # eval/runlogs/_2491-exploratory-quarantine/ has a final tree and no
     # annotation -- the exact population this gate rejects, arriving by the one
     # route `--diff-filter=A` cannot see. This is NOT the widening #2581
-    # forbids: the shared selector is untouched and the two warn loops above
+    # forbids: the shared selector is untouched and the first two warn loops above
     # still read it, so only this one blocking gate changes what it sees.
     # Same handler shape as the selector above: `_read_at_head` refuses on an
     # unreadable blob, and without this that refusal would leave main() as a
