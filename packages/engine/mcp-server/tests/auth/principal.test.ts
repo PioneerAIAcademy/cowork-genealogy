@@ -62,6 +62,12 @@ describe("bearer principal", () => {
     expect(REJECTED_TOKEN_MESSAGE).toMatch(/login tool/);
   });
 
+  it("a tool's own 401 text is kept on the desktop and replaced in hosted mode", async () => {
+    const own = "FamilySearch session not accepted; call the login tool to re-authenticate.";
+    expect(await rejectedTokenMessage(LOCAL, own)).toBe(own);
+    expect(await rejectedTokenMessage(bearer, own)).toBe(HOSTED_REAUTH_INSTRUCTION);
+  });
+
   it("loadConfig is the carried config, with hosted implied", async () => {
     const config = await loadConfig(bearer);
     expect(config.hosted).toBe(true);

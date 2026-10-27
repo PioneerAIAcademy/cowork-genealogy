@@ -155,9 +155,13 @@ export const REJECTED_TOKEN_MESSAGE =
   "expired or been revoked — call the login tool to re-authenticate.";
 
 /** What a tool throws when FamilySearch answers 401: in hosted mode the app's
- *  Reconnect button, as for a missing session, since `login` is a dead end there. */
-export async function rejectedTokenMessage(principal: Principal): Promise<string> {
-  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : REJECTED_TOKEN_MESSAGE;
+ *  Reconnect button, as for a missing session, since `login` is a dead end there;
+ *  on the desktop, the tool's own `desktopText`. */
+export async function rejectedTokenMessage(
+  principal: Principal,
+  desktopText: string = REJECTED_TOKEN_MESSAGE,
+): Promise<string> {
+  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : desktopText;
 }
 
 export async function getWikiApiUrl(principal: Principal): Promise<string> {
