@@ -152,3 +152,10 @@ appear more than once, with different collections.
   each one fires on a planted defect and passes a legitimate variant.
 - Timing: the p50 of `tests[].totals.duration_ms` in that run log, which
   includes no live latency, plus one live timing.
+- Live timing, 2026-10-27: one Cowork session on Windows, plugin built from
+  this branch, John Smith / 1870 census / Schuylkill County. The agent was
+  named in the message, and `date +%s` in the VM before and after the call
+  measured **244 s** for 8 entries. The one-minute target is not met live.
+  In the same run's verbatim return, 5 of the 8 coverage lines fail the span
+  validator, and 4 of them add a reason no tool returned. The unit suite's final run did not
+  produce it, so the suite under-samples this slip.
