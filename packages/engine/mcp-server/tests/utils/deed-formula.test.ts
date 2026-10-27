@@ -118,6 +118,10 @@ describe("deedFormulaErrors: shapes a correct document takes (PR review, #3881)"
     ["the same without ss", "in presence of Gad Palmer, John Ingersol Hampshire Then Paul Meacham personally appeared"],
     ["a signature and witness column run together", "In the presence of ℗ us as witnesses : Paul Meacham Russell E"],
     ["a signer after the witnesses' sentence", "in presence of Gad Palmer, John Ingersol. Paul Meacham (seal)"],
+    ["a signer on the witness header line (two columns)", "Signed sealed and delivered in presence of     Paul Meacham (seal)\nGad Palmer\nJohn Ingersol"],
+    ["a signer on one line with the witnesses", "Signed in presence of Gad Palmer, Paul Meacham (seal)"],
+    ["a later tax clause naming the grantor", "The taxes for 1907 are to be paid by Paul Meacham."],
+    ["a mortgage already paid by the grantor", "free of the mortgage to Sam Jones which was paid by Paul Meacham in full."],
   ])("accepts %s", (_n, text) => {
     expect(deedFormulaErrors(meacham(), `Know ye that I Paul Meacham of Southwick have sold to John Dewey. ${text}`, "d")).toEqual([]);
   });
@@ -141,6 +145,11 @@ describe("deedFormulaErrors: shapes a correct document takes (PR review, #3881)"
     ["a receipt acknowledgment", "the receipt of which is hereby acknowledged and conveyed unto Eli Ward", { given: "Eli", surname: "Ward", rel: "witness" }],
   ])("accepts %s that names a party who is not the grantor or grantee", (_n, text, x) => {
     expect(deedFormulaErrors(meacham([person("p5", x.given, x.surname, x.rel)]), text, "d")).toEqual([]);
+  });
+
+  it("reads witnesses only to the end of the 'in presence of' line", () => {
+    const text = "This indenture between Paul Meacham and John Dewey. Signed in presence of Gad Palmer,\nPaul Meacham (seal)";
+    expect(deedFormulaErrors(meacham(), text, "d")).toEqual([]);
   });
 
   it("accepts a husband paying for a deed to his wife", () => {

@@ -97,7 +97,7 @@ interface Hit {
 }
 
 const GRANTOR = /\bKnow\s+(?:ye|all\s+men)(?:\s+by\s+these\s+presents)?[,:]?\s+(?:that\s+)?(?:(?:I|we)\b[,:]?\s+)?/gi;
-const PAID_BY = /\bpaid\b(?:[,\s]+(?:to\s+me|me|in\s+hand|at|or|before|the|ensealing|and|delivery|of|these|presents|hereof)){0,10}?[,\s]+by\s+/gi;
+const PAID_BY = /(?<!\b(?:be|been|is|are|was|were)\s+)\bpaid\b(?:[,\s]+(?:to\s+me|me|in\s+hand|at|or|before|the|ensealing|and|delivery|of|these|presents|hereof)){0,10}?[,\s]+by\s+/gi;
 const IN_PRESENCE = /\bin\s+(?:the\s+)?presence\s+of[ \t]+/gi;
 const ADMINISTRATOR = /\bAdministrat(?:or|rix)\s+(?:on|of)\s+the\s+Estate\s+of\s+/gi;
 
@@ -161,8 +161,11 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
       "the grantor",
     );
     refuseIf(hitsAfter(doc, text, PAID_BY), (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "witness"), "the one paying (the grantee's side)");
+    const placed = new Set(
+      [...hitsAfter(doc, text, GRANTOR), ...hitsAfter(doc, text, PAID_BY)].flatMap((h) => h.parties.map((p) => p.id)),
+    );
     refuseIf(
-      hitsAfter(doc, rawText, IN_PRESENCE, true),
+      hitsAfter(doc, rawText, IN_PRESENCE, true).map((h) => ({ ...h, parties: h.parties.filter((p) => !placed.has(p.id)) })),
       (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "grantee"),
       "witnesses",
     );
