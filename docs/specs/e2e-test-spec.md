@@ -880,7 +880,10 @@ the `max_cost_usd` note in §6 step 5.
    worker's `CONTINUE_REASON`
    (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
    two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
-   the copy). Before replying, the hook classifies the agent's closing words
+   the copy). The hosted planes' completion halt is NOT emulated: they end the turn at the
+   PostToolUse of the proof-conclusion call that completes the project
+   (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
+   those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
    (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
    class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
    for a completion claim the two differ — no run log ever carries a

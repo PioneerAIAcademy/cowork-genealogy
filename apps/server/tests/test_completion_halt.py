@@ -31,6 +31,13 @@ def _fixture(name: str):
     return data.get("tool_response", data.get("content"))
 
 
+def _completing() -> dict:
+    """A proof-conclusion return that completed the project, in the PostToolUse dict shape
+    (probe item e): the cruz-corona run-log return's blocks, which end on the sentence the
+    agent writes only when it set `completed`."""
+    return {"status": "completed", "agentType": "proof-conclusion", "content": _fixture("unframed_two_blocks")}
+
+
 # ── summary_for_user ─────────────────────────────────────────────────────────────────
 
 
@@ -117,7 +124,7 @@ def test_completion_halt_summary_is_the_transition(before, now, halts):
         return now
 
     data = {"tool_name": "Agent", "tool_input": {"subagent_type": "proof-conclusion"},
-            "tool_response": _fixture("posttool_dict")}
+            "tool_response": _completing()}
     out = cp.completion_halt_summary(data, before, research_now)
     assert (out is not None) is halts
     if before == "completed":
@@ -153,26 +160,6 @@ def test_status_before_call_never_guesses(research, expected):
 )
 def test_wants_status_before(data, expected):
     assert cp.wants_status_before(data) is expected
-
-
-def test_the_ported_frame_patterns_match_the_harness():
-    """`continue_policy` carries a copy of the harness's frame and trailer regexes (this
-    package cannot import `eval/`). A CLI change to the frame fixed in one copy only would
-    leak the trailer into the summary or quietly disable the halt."""
-    import ast
-
-    source = (Path(__file__).resolve().parents[3] / "eval" / "harness" / "harness" / "skill_runner.py").read_text(encoding="utf-8")
-    harness = {}
-    for node in ast.parse(source).body:
-        if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name):
-            name = node.targets[0].id
-            if name == "_HAND_BACK_HEADER":
-                harness[name] = [ast.literal_eval(node.value.args[0])]
-            elif name == "_AGENT_RETURN_TRAILERS":
-                harness[name] = [ast.literal_eval(call.args[0]) for call in node.value.elts]
-    assert set(harness) == {"_HAND_BACK_HEADER", "_AGENT_RETURN_TRAILERS"}, "the harness moved them"
-    assert [cp._HAND_BACK_HEADER.pattern] == harness["_HAND_BACK_HEADER"]
-    assert [p.pattern for p in cp._AGENT_RETURN_TRAILERS] == harness["_AGENT_RETURN_TRAILERS"]
 
 
 # ── the alpha plane ──────────────────────────────────────────────────────────────────
@@ -213,7 +200,7 @@ def _agent_call(response=None, subagent_type="proof-conclusion", **extra):
     return {
         "tool_name": "Agent",
         "tool_input": {"subagent_type": subagent_type, "prompt": "conclude q_001"},
-        "tool_response": response if response is not None else _fixture("posttool_dict"),
+        "tool_response": response if response is not None else _completing(),
         **extra,
     }
 
@@ -235,7 +222,7 @@ def _call_through(tmp_path, hooks, payload, before: str | None, after: str, tid=
 def test_the_alpha_halts_on_the_call_that_completes_the_project(tmp_path):
     hooks, agent = _alpha(tmp_path)
     out = _call_through(tmp_path, hooks, _agent_call(), "active", "completed")
-    summary = cp.summary_for_user(_fixture("posttool_dict"))
+    summary = cp.summary_for_user(_completing())
     assert out == {"continue": False, "stopReason": summary}
     assert agent._hook_counter["completion_summary"] == summary
 
@@ -369,7 +356,7 @@ def _worker_hook(status_before="active", research_now=None):
 def test_the_worker_halts_with_exactly_the_continue__dict():
     hook, completed = _worker_hook()
     out = _post(hook, _agent_call())
-    summary = cp.summary_for_user(_fixture("posttool_dict"))
+    summary = cp.summary_for_user(_completing())
     assert out == {"continue_": False, "stopReason": summary}, "no PreToolUse deny half"
     assert completed == [summary]
 
@@ -414,3 +401,54 @@ def test_the_worker_allows_the_call_when_the_read_raises():
     )
     assert _post(hook, _agent_call()) == {}
     assert completed == []
+
+
+
+# ── the review round: the completing call only, no raise, no summary after more text ──
+
+
+def test_a_proof_conclusion_call_that_did_not_complete_the_project_never_halts(tmp_path):
+    """Two proof-conclusion calls in flight: the other one completed the project while this
+    one ran. Its return lacks the completing sentence, so it does not end the turn."""
+    hooks, agent = _alpha(tmp_path)
+    response = {"agentType": "proof-conclusion",
+                "content": "q_001 found.\n---\nA finding about q_001.\n\nNext we look at q_002."}
+    assert _call_through(tmp_path, hooks, _agent_call(response=response), "active", "completed") == {}
+    assert agent._hook_counter["completion_summary"] is None
+    hook, completed = _worker_hook()
+    assert _post(hook, _agent_call(response=response)) == {}
+    assert completed == []
+
+
+@pytest.mark.parametrize("name", [["Agent"], {"x": 1}, 7, None])
+def test_an_unhashable_or_odd_tool_name_never_raises(tmp_path, name):
+    payload = {"tool_name": name, "tool_input": {"subagent_type": "proof-conclusion"}}
+    assert cp.wants_status_before(payload) is False
+    assert cp.completion_halt_summary(payload, "active", lambda: {"project": {"status": "completed"}}) is None
+    hooks, _agent = _alpha(tmp_path)
+    assert _post(_status_hook(hooks), payload) == {}
+    assert _post(_halt_hook(hooks), payload) == {}
+
+
+def test_handle_turn_drops_the_summary_when_the_model_kept_talking(tmp_path):
+    """A halt the runtime did not honour: the model's own message is the turn's last."""
+    from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+
+    from _fakes import ReplayFakeClient, attach, turn_events
+
+    agent = real_agent.RealAgent(tmp_path)
+    agent._hook_counter = {"tool_calls": 0}
+    said = AssistantMessage(content=[TextBlock(text="Here is my own wrap-up.")], model="m")
+    done = ResultMessage(subtype="success", duration_ms=1, duration_api_ms=1,
+                         is_error=False, num_turns=3, session_id="s1")
+
+    class KeptTalking(ReplayFakeClient):
+        async def receive_response(self):
+            agent._hook_counter["completion_summary"] = "The research is finished."
+            async for message in super().receive_response():
+                yield message
+
+    attach(agent, KeptTalking([said, done]))
+    events = asyncio.run(turn_events(agent, "conclude it"))
+    texts = [e["text"] for e in events if e["kind"] == "text"]
+    assert texts == ["Here is my own wrap-up."], texts

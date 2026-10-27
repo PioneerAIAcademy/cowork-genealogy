@@ -1,5 +1,6 @@
 """The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
-``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration) and, on the D18
+``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration, and end the turn when a
+proof-conclusion call completes the project) and, on the D18
 autonomous arm only, ``Stop`` (veto the model's voluntary yield, ``make_stop_hook``).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",

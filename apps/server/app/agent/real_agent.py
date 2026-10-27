@@ -842,7 +842,8 @@ def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
 
 def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
-    session; ``Stop`` (1d) is what makes one user message run a whole research job.
+    session; ``Stop`` (1d) is what makes one user message run a whole research job;
+    ``PostToolUse`` ends the turn when a proof-conclusion call completes the project.
 
     The tool counter is per SESSION and lives here rather than on a module global, so two
     sandboxes in one process cannot read each other's progress. It is what
@@ -1803,6 +1804,13 @@ class RealAgent:
                         self._mcp_calls += 1
                     if ev.get("kind") == "error":
                         error_emitted = True
+                    # The completion halt's summary is for a turn that ENDED at the halt. A
+                    # main-thread message after it means the turn went on, so the model's own
+                    # words are the turn's last, and the summary is not added after them.
+                    if ev.get("kind") == "text" and "agent" not in ev:
+                        counter_now = getattr(self, "_hook_counter", None)
+                        if counter_now and counter_now.get("completion_summary"):
+                            counter_now["completion_summary"] = None
                     yield ev
                 if isinstance(message, SystemMessage):
                     # #941 ported from the e2e harness (issue #1126). The CLI's

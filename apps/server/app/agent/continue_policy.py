@@ -225,16 +225,22 @@ def project_completed(research: Mapping[str, Any] | None) -> bool:
 
 PROOF_CONCLUSION_AGENT = "proof-conclusion"
 
+# The closing sentence proof-conclusion's `summary_for_user` carries exactly when the
+# invocation set `project.status` to `completed` (proof-conclusion.md, `### summary_for_user`).
+# The halt requires it, so a proof-conclusion call that did NOT complete the project, running
+# beside the one that did, never ends the turn on its own summary. Pinned to the agent body
+# by `eval/harness/tests/unit/test_completion_halt_parity.py`.
+PROOF_CONCLUSION_FINISHED = "The research is finished. If you'd like a second opinion on it, just ask."
+
 # The runtime's frame and trailer around a subagent's return as the MODEL sees it. The
 # PostToolUse `tool_response` came without them in the probe; they are stripped anyway so
 # a string-shaped return parses the same. Ported from `eval/harness/harness/skill_runner.py`
 # (`_HAND_BACK_HEADER`, `_AGENT_RETURN_TRAILERS`, `strip_agent_return_frame`), which this
 # package cannot import.
 _HAND_BACK_HEADER = re.compile(r"^\[Subagent hand-back\][^\n]*\n", re.M)
-# Built by a call, not written as a tuple: `test_continue_policy_parity.py` lifts every
-# literal-looking module assignment into a namespace with no imports.
-_AGENT_RETURN_TRAILERS = tuple(
-    re.compile(pattern) for pattern in (r"(?m)^agentId:\s*\S+.*$", r"(?s)<usage>.*?</usage>")
+_AGENT_RETURN_TRAILERS = (
+    re.compile(r"(?m)^agentId:\s*\S+.*$"),
+    re.compile(r"(?s)<usage>.*?</usage>"),
 )
 
 
@@ -292,9 +298,11 @@ def status_before_call(research: Mapping[str, Any] | None) -> str:
 def wants_status_before(data: Mapping[str, Any]) -> bool:
     """Whether a PreToolUse call is one the completion halt needs the status before: a
     main-thread (no `agent_id` key) delegation to proof-conclusion."""
+    name = data.get("tool_name")
     return (
         "agent_id" not in data
-        and data.get("tool_name") in DELEGATION_TOOLS
+        and isinstance(name, str)
+        and name in DELEGATION_TOOLS
         and is_proof_conclusion_call(data.get("tool_input"))
     )
 
@@ -306,18 +314,24 @@ def completion_halt_summary(
 ) -> str | None:
     """The summary to end the turn on, or None to let it run on: the ONE predicate both
     planes' PostToolUse arms call. A main-thread proof-conclusion call that moved the
-    project to `completed`, whose return carries a `summary_for_user`. The transition, not
-    the state, so a follow-up question in a project already completed never ends a turn.
-    ``research_now`` is read only once every cheaper test has passed."""
+    project to `completed`, whose return carries a `summary_for_user` ending on
+    ``PROOF_CONCLUSION_FINISHED``. The transition, not the state, so a follow-up question in
+    a project already completed never ends a turn. ``research_now`` is read only once every
+    cheaper test has passed."""
+    name = data.get("tool_name")
     if (
         "agent_id" in data
-        or data.get("tool_name") not in DELEGATION_TOOLS
+        or not isinstance(name, str)
+        or name not in DELEGATION_TOOLS
         or not is_proof_conclusion_call(data.get("tool_input"))
         or status_before == "completed"
         or not project_completed(research_now())
     ):
         return None
-    return summary_for_user(data.get("tool_response"))
+    summary = summary_for_user(data.get("tool_response"))
+    if summary is None or not summary.endswith(PROOF_CONCLUSION_FINISHED):
+        return None
+    return summary
 
 
 def should_continue_run(

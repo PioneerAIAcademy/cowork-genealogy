@@ -6369,9 +6369,13 @@ def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
 
 # ── the completion halt end to end (#3542 lead 1) ─────────────────────────────────────
 
-_POSTTOOL_DICT = json.loads(
-    (Path(__file__).parent / "fixtures" / "agent_returns" / "posttool_dict.json").read_text(encoding="utf-8")
-)["tool_response"]
+# A proof-conclusion return that completed the project, in the PostToolUse dict shape: the
+# cruz-corona run-log return's blocks, which end on the agent's completing sentence.
+_POSTTOOL_DICT = {
+    "status": "completed", "agentType": "proof-conclusion",
+    "content": json.loads((Path(__file__).parent / "fixtures" / "agent_returns" / "unframed_two_blocks.json")
+                          .read_text(encoding="utf-8"))["content"],
+}
 
 
 class AgentCall:
@@ -6563,4 +6567,34 @@ def test_a_raising_status_read_lets_the_call_run(turn_env, monkeypatch):
         [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert call.posttool_reply == {}
+    assert summary["outcome"] == "ok"
+
+
+
+def test_the_summary_is_dropped_when_the_model_kept_talking(turn_env, monkeypatch):
+    """A halt the runtime did not honour: the model's own message is the turn's last text."""
+    research = {"project": {"status": "active"}}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _text("my own wrap-up"), _result(num_turns=3)],
+        _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert _text_events(turn_env["conn"]) == ["my own wrap-up"]
+
+
+def test_an_odd_tool_name_never_raises_out_of_the_wrapper(turn_env, monkeypatch):
+    """The CLI never sends a list here, but a raising PreToolUse fails a call the patron was
+    entitled to make: the wrapper's checks sit inside its try."""
+    hook_input = {"tool_name": ["Agent"], "tool_input": {}}
+
+    class OddClient(FakeClient):
+        async def receive_response(self):
+            reply = await self.env["options"]["pretool_hook"](hook_input, "toolu_odd", None)
+            self.pretool_replies.append(reply)
+            for m in self.messages:
+                yield m
+
+    turn_env["client"] = OddClient([_init(), _result(num_turns=1)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["outcome"] == "ok"

@@ -2490,19 +2490,21 @@ async def _run_turn(
 
         async def pretool(input_data, tool_use_id, context):
             reply = await hook(input_data, tool_use_id, context)
-            data = input_data if isinstance(input_data, dict) else {}
-            use_id = tool_use_id or data.get("tool_use_id")
             # After the hook, and only when it let the call run: a halted or denied call
             # never reaches PostToolUse, so its reading would be a wasted document read.
-            answer = reply if isinstance(reply, dict) else {}
-            stopped = answer.get("continue_") is False or (
-                (answer.get("hookSpecificOutput") or {}).get("permissionDecision") == "deny")
-            if use_id and not stopped and not attempt["store_down"] and wants_status_before(data):
-                try:
+            # All of it inside the try: a raising PreToolUse fails a call the patron was
+            # entitled to make, and the halt is only an optimisation.
+            try:
+                data = input_data if isinstance(input_data, dict) else {}
+                use_id = tool_use_id or data.get("tool_use_id")
+                answer = reply if isinstance(reply, dict) else {}
+                stopped = answer.get("continue_") is False or (
+                    (answer.get("hookSpecificOutput") or {}).get("permissionDecision") == "deny")
+                if use_id and not stopped and not attempt["store_down"] and wants_status_before(data):
                     status_before[str(use_id)] = status_before_call(read_research(conn, project_id))
-                except Exception as exc:  # noqa: BLE001 - the halt is an optimisation; the call runs on
-                    log(ev="completion_status_failed", turn_id=turn_id,
-                        error=f"{type(exc).__name__}: {exc}")
+            except Exception as exc:  # noqa: BLE001 - the call runs on
+                log(ev="completion_status_failed", turn_id=turn_id,
+                    error=f"{type(exc).__name__}: {exc}")
             return reply
 
         posttool = make_posttool_hook(
@@ -2634,6 +2636,10 @@ async def _run_turn(
                                              "(transcript append refused)")
                         raise MirrorError(f"session store append failed: {msg.error or msg.data}")
                     for event in map_message(msg, tool_names, tasks, live, task_ids=task_ids):
+                        # A main-thread message after a completion halt: the turn went on,
+                        # so the summary is not added after the model's own last words.
+                        if event.get("kind") == "text" and "agent" not in event:
+                            terminal.pop("completion_summary", None)
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                     if isinstance(msg, ResultMessage):
                         pass_result = msg
