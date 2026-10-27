@@ -28,5 +28,47 @@
         "linkText": "Family Records: Cemetery and Bible Records Mainly Michigan and Massachusetts"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.myheritage.com/research/collection-20822/1855-massachusetts-state-census",
+      "linkText": "1855 Massachusetts State Census",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1855",
+      "endYear": "1855",
+      "place": "Massachusetts, United States"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-10906/united-states-massachusetts-death-index-1840-1910",
+      "linkText": "Massachusetts Death Index, 1840-1910",
+      "record_type": "Death",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1840",
+      "endYear": "1910",
+      "place": "Massachusetts, United States"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-62348/new-england-business-directory-and-gazetteer-1918-part-3",
+      "linkText": "New England Business Directory and Gazetteer, 1918, Part 3",
+      "record_type": "Directories",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Massachusetts, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/20156/",
+      "linkText": "Family Records: Cemetery and Bible Records Mainly Michigan and Massachusetts",
+      "record_type": "Cemeteries",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Massachusetts, United States"
+    }
+  ]
 }

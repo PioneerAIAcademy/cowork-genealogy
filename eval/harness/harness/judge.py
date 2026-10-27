@@ -41,6 +41,15 @@ DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
 JUDGE_TEMPERATURE = 0.0
 # The last API version that accepts sampling parameters; 2026-10-21 rejects them.
 LEGACY_SAMPLING_API_VERSION = "2023-06-01"
+# One judge call's ceiling. A grading call takes about 20 s; the largest
+# answer measured in the #2995 runs (about 2,200 output tokens) is under 50 s.
+# Stalls are frequent, and a stalled call finished on a quick retry, so a short
+# ceiling with more attempts recovers fastest: at 180 s, one call in fifteen ran
+# out all six attempts, and in locality-guide one ran out ten. The SDK's default of
+# 600 s let a hung call sit for ten
+# minutes. The SDK's own retries are off (`max_retries=0`), so `_call_judge`'s
+# loop, with its backoff, is the only one.
+JUDGE_TIMEOUT_SECONDS = 90.0
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
@@ -421,6 +430,90 @@ def _live_args_omitted(args: Any) -> Any:
     return marker if full_len > len(marker) else args
 
 
+# A tool that REFUSED a call wrote nothing, but its args were rendered verbatim
+# and read by the judge as the agent's conclusion (issue #3839): in
+# ut_proof_conclusion_32f the failing rationales quoted the refused draft's
+# narrative while the saved rewrite passed every validator. `judge_context`
+# already forbids that in prose, and prose does not hold.
+#
+# WRITERS ONLY. Of the 121 refused reader calls in the committed corpus, 67
+# carry argument values that appear nowhere in their response, and `Tool
+# Arguments` is a base dimension graded on every run — blanking a read would
+# erase evidence the judge is still required to score. A refused reader's args
+# are the question asked; a refused writer's are a conclusion it did not reach.
+# Kept in step with `docs/specs/schemas/ownership.json`'s `writerTools` union
+# by `test_writer_tools_classifies_every_ownership_writer`, which fails when a
+# new writer tool ships unclassified. A blind sync would be wrong, so every
+# divergence is named here with its reason.
+_WRITER_TOOLS = frozenset(
+    {
+        "research_append",
+        "extraction_append",
+        "tree_edit",
+        "tree_correct",
+        "materialize_facts",
+        "merge_tree_persons",
+        "timeline_build",
+        "project_create",
+        "tree_forget",
+    }
+)
+
+# Writer tools whose refused args stay, with the rule that keeps them. Blanking
+# these would delete evidence a rubric or the judge prompt directs the judge to
+# read -- the same mistake as blanking a reader.
+_WRITER_ARGS_ALWAYS_KEPT = {
+    # `search-full-text/rubric.md`: "the research-log entry's `query` object
+    # records a filter that the `fulltext_search` tool call never actually
+    # sent -- check the executed args, not just the narrated summary". A log
+    # entry's args are the record of the search that ran, not a conclusion.
+    # 69 refused calls in the corpus, 14 never retried.
+    "research_log_append": "search rubrics grade its executed args",
+    # `search-external-sites/rubric.md` fails a call "with fabricated arguments".
+    "build_external_search_url": "search-external-sites grades its args",
+}
+
+# Says only what is always true. "it wrote nothing" would be FALSE for
+# `extraction_append`'s recordIds mode, which persists its research_log_append
+# batch BEFORE the per-record writes and returns ok: false when every record is
+# refused -- its own summary then reads "read and logged as <logId>, but the
+# write was refused" (extraction-append.ts). Asserting "wrote nothing" beside
+# that response_summary would hand the judge a fabricated conclusion: the
+# defect this change exists to remove, inverted.
+#
+# Must stay <= the ~66 chars `_live_args_omitted` renders a live call's args at
+# in the MEASURED view, or the refusal marker grows the drop budget and pushes
+# out the earliest calls -- the regression #3442 records, where a dropped call
+# made the judge score a correct citation as fabricated.
+# `test_refusal_marker_cannot_grow_the_size_guard_budget` pins it.
+_REFUSED_ARGS_MARKER = "[args omitted: the tool refused this call]"
+
+
+def _is_refused_writer(call: dict[str, Any]) -> bool:
+    """A writer call the tool refused.
+
+    The predicate is `resp.get("ok") is False`, never `resp["ok"]`: 8,502 calls
+    in the corpus carry `response: None` and 2,518 dict responses have no `ok`
+    key at all. Tool names are fully qualified (`mcp__genealogy__<name>`), so
+    this suffix-matches -- a bare-name set silently matches nothing.
+    """
+    resp = call.get("response")
+    if not (isinstance(resp, dict) and resp.get("ok") is False):
+        return False
+    bare = str(call.get("tool", "")).rsplit("__", 1)[-1]
+    return bare in _WRITER_TOOLS and bare not in _WRITER_ARGS_ALWAYS_KEPT
+
+
+def _args_for_render(call: dict[str, Any], live_args: Callable[[Any], Any]) -> Any:
+    """The `args` value to render. Returns a new value; never mutates `call` --
+    `_run_judge` runs before `output.tool_calls` is built from these same dicts,
+    so an in-place write would land a fabricated value in the committed run log.
+    """
+    if _is_refused_writer(call):
+        return _REFUSED_ARGS_MARKER
+    return live_args(call["args"]) if _is_live_call(call) else call["args"]
+
+
 def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
     """Render the tool_calls slot with a total-size cap.
 
@@ -445,7 +538,7 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
             [
                 {
                     "tool": c["tool"],
-                    "args": live_args(c["args"]) if _is_live_call(c) else c["args"],
+                    "args": _args_for_render(c, live_args),
                     "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
                     # array_sample=None: render EVERY result, not the first 3.
@@ -466,7 +559,8 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
             return (
                 f"(_dropped_for_size: {dropped} earliest tool calls "
                 f"dropped to keep tool calls under {_TOOL_CALLS_MAX_CHARS} chars, "
-                f"not counting live calls' args)\n"
+                f"not counting live calls' args or a refused writer's "
+                f"omitted args)\n"
                 + body
             )
         return body
@@ -608,7 +702,7 @@ def grade(
 
 
 def _create_message_with_retry(
-    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=6
+    *, client, model, prefix, suffix, grading_tool, temperature=None, _attempts=15
 ):
     """Call Anthropic with retry-with-backoff on transient errors.
 
@@ -698,12 +792,12 @@ def _make_client(auth: AuthConfig) -> anthropic.Anthropic:
     the operator never configured one and the judge can't run.
     """
     if auth.api_key:
-        return anthropic.Anthropic(api_key=auth.api_key)
+        return anthropic.Anthropic(api_key=auth.api_key, timeout=JUDGE_TIMEOUT_SECONDS, max_retries=0)
     import os
     if os.environ.get("ANTHROPIC_API_KEY"):
         # Defensive — should be picked up by resolve_auth, but if the env
         # changed since the AuthConfig was built, use what's there.
-        return anthropic.Anthropic()
+        return anthropic.Anthropic(timeout=JUDGE_TIMEOUT_SECONDS, max_retries=0)
     raise JudgeError(
         "The judge requires an Anthropic API key. Subscription auth "
         "alone is not enough for the judge layer. Set ANTHROPIC_API_KEY "
