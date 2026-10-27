@@ -92,8 +92,14 @@ function readNameBefore(before: string): string[] | undefined {
   return cur.length >= 2 ? cur : undefined;
 }
 
-/** Equal, or one edit apart for words of 5+ letters (Ingersol / Ingersoll). */
-const near = (a: string, b: string) => a === b || (a.length >= 5 && b.length >= 5 && levenshteinDistance(a, b) <= 1);
+/** Clerks' given-name abbreviations, read as the full name. */
+const GIVEN_ABBR: Record<string, string> = {
+  jno: "john", wm: "william", thos: "thomas", chas: "charles", geo: "george",
+  jas: "james", robt: "robert", saml: "samuel", benj: "benjamin",
+};
+
+/** Equal (abbreviations expanded), or one edit apart for words of 5+ letters (Ingersol / Ingersoll). */
+const near = (a: string, b: string) => a === b || (GIVEN_ABBR[a] ?? a) === (GIVEN_ABBR[b] ?? b) || (a.length >= 5 && b.length >= 5 && levenshteinDistance(a, b) <= 1);
 
 /** The one party a name matches (given name and surname both), or undefined when
  *  it matches none or several. */
@@ -205,9 +211,9 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
 
   if (doc.recordType === "probate") {
     const decedent = probateDecedentOrDefault(doc);
-    const hs = [...text.matchAll(new RegExp(ADMINISTRATOR.source, ADMINISTRATOR.flags))].map((m) => {
-      const admin = readNameBefore(text.slice(0, m.index).replace(/[,\s]+$/, ""));
-      const estate = readNames(text.slice(m.index! + m[0].length, m.index! + m[0].length + 240));
+    const hs = [...rawText.matchAll(new RegExp(ADMINISTRATOR.source, ADMINISTRATOR.flags))].map((m) => {
+      const admin = readNameBefore((rawText.slice(0, m.index).split(/\r?\n/).pop() ?? "").replace(/[,\s]+$/, ""));
+      const estate = readNames(rawText.slice(m.index! + m[0].length, m.index! + m[0].length + 240));
       return {
         phrase: `${admin ? `${admin.join(" ")} ` : ""}${m[0]}${estate.text}`.replace(/\s+/g, " ").trim(),
         administrator: admin ? partyFor(doc, admin) : undefined,

@@ -95,6 +95,11 @@ describe("deedFormulaErrors: probate", () => {
     expect(errs).toMatch(/Administrator on the Estate of Paul Meacham/);
   });
 
+  it("does not read a heading on the line above as the administrator", () => {
+    const text = "ESTATE OF PAUL MEACHAM\nADMINISTRATOR ON THE ESTATE OF SAID PAUL MEACHAM. ISAAC PORTER";
+    expect(deedFormulaErrors(probate([], [{ type: "probate" }]), text, "d")).toEqual([]);
+  });
+
   it("stays silent when the text has no administrator phrase", () => {
     expect(deedFormulaErrors(probate([{ type: "probate" }], []), "Letters were granted on the estate.", "d")).toEqual([]);
   });
@@ -306,8 +311,16 @@ describe("deedFormulaErrors: payer, probate and signer shapes (PR review round 3
 
   it("does not read a signer after a semicolon as a witness", () => {
     const d = land([person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantee"), person("p3", "Gad", "Palmer", "witness")]);
-    const text = "This Indenture made between Paul Meacham of the one part and John Dewey of the other part. Signed sealed and delivered in presence of Gad Palmer; Paul Meacham (seal)";
+    const text = "This Indenture made between Paul Meacham of the one part and John Dewey of the other part. Signed sealed and delivered in presence of Gad Palmer; and Paul Meacham (seal)";
     expect(deedFormulaErrors(d, text, "d")).toEqual([]);
+  });
+
+  it("reads a clerk's abbreviated given name (Jno.) so a neighbouring deed's phrase is not the only one", () => {
+    const d = land([person("p1", "John", "Easton", "grantor"), person("p2", "Paul", "Meacham", "grantee")]);
+    const text = "Know ye that I Jno. Easton of Westfield have sold unto Paul Meacham a tract. Know ye that I Paul Meacham of Southwick have sold unto John Dewey a tract.";
+    expect(deedFormulaErrors(d, text, "d")).toEqual([]);
+    const swapped = land([person("p1", "John", "Easton", "grantee"), person("p2", "Paul", "Meacham", "grantor")]);
+    expect(deedFormulaErrors(swapped, text.split(". Know")[0], "d").join(" ")).toMatch(/Jno\. Easton/);
   });
 
   it("does not read 'That Whereas' as a name", () => {
