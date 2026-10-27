@@ -18,6 +18,8 @@ export interface VolumeSearchInput {
    */
   recordTypeGroups?: string[];
   pageToken?: string;
+  /** First page only: also count every matching volume by record-type group. */
+  summary?: boolean;
 }
 
 // ---------- RMS request ----------
@@ -43,6 +45,11 @@ export interface MetadataRmsSearchRequest {
   active: boolean;
   pageSize: number;
   nextPageToken?: string;
+  /**
+   * Undocumented, 1-based; matches the token pages exactly (probed 2026-10-22).
+   * Used only by the rollup, which falls back to token paging if it stops working.
+   */
+  pageNumber?: number;
 }
 
 // ---------- RMS response ----------
@@ -132,4 +139,33 @@ export interface VolumeSearchResult {
   totalResults: number;
   nextPageToken?: string;
   results: VolumeGroup[];
+  /** Present when the input asked for `summary` and it could be computed. */
+  summary?: VolumeRollup;
+  /** Why `summary` is missing when it was asked for; the page is still complete. */
+  summaryError?: string;
+}
+
+/**
+ * Volumes in one record-type group. Of those with no name-indexed images,
+ * `fulltextOnly` are full-text searchable and `browseOnly` are not; both are null
+ * when the full-text check failed.
+ */
+export interface VolumeRollupBucket {
+  group: string;
+  volumes: number;
+  browseOnly: number | null;
+  fulltextOnly: number | null;
+}
+
+/**
+ * Every matching volume counted by record-type group. A volume counts in every
+ * group its coverages reach, ancestors included, so buckets can sum past
+ * `totalVolumes`; `untyped` holds the volumes that reach no group. `complete` is
+ * false when the volumes exceeded the rollup's page cap.
+ */
+export interface VolumeRollup {
+  totalVolumes: number;
+  complete: boolean;
+  byRecordType: VolumeRollupBucket[];
+  untyped: Omit<VolumeRollupBucket, "group">;
 }
