@@ -276,7 +276,7 @@ untied links, a narrative over its vehicle's word budget).
 
 To persist many entries at once (e.g. a record's source + every assertion + its
 person-evidence links), pass an optional `ops` array instead of the top-level
-`section`/`op`/`entry`/`entryId`/`fields`/`planId` (which are ignored when `ops`
+`section`/`op`/`entry`/`entryId`/`fields`/`edits`/`planId` (which are ignored when `ops`
 is present). Each op is the same per-op shape the single form takes:
 
 ```typescript
@@ -416,10 +416,10 @@ deeply nested argument as a JSON **string** rather than inline JSON — the ~25 
 `ops` batch of a full record is exactly the size that triggers it. Because the input
 schema declares `ops` as an array and `entry`/`fields` as objects, a string value is
 unambiguously a mis-serialization. The tool therefore JSON-parses a string-valued
-`ops`/`entry`/`fields` before any shape check (`src/utils/coerce-json-arg.ts`), **once**:
+`ops`/`entry`/`fields`/`edits` before any shape check (`src/utils/coerce-json-arg.ts`), **once**:
 a string that is still a string after that decode (a batch stringified twice) is not
 recovered and is refused, and the assertion guard of a direct caller judges that same
-decode, so it cannot read as an empty list a batch that the tool then applies. An
+decode, so it cannot read as an empty list a batch that the tool then applies. Only top-level arguments are decoded: an `edits` string inside an `ops` item is refused as not an array. An
 unparseable string falls through to the normal, specific error (e.g. ``` `ops` must
 be a non-empty array ```). For a string `ops` that will not parse, that error also
 says why: the engine's own parse message, and an offset where that message holds no
@@ -915,11 +915,12 @@ rebuilds the field.
   each other, and an edit may follow a rewrite of the same field in the same batch.
 - **Absent.** A null or empty `edits` counts as absent, as a null `entry` or
   `planId` does.
-- **How it applies.** Before any other check runs, the tool expands each edit into
-  the op's `fields`, setting the edited field to its rebuilt text, and drops
-  `edits`. Every later rule (§5, the `updated` stamp, document validation, the
-  length advisory of §5.7) sees an ordinary `fields` update, and `edits` is never
-  stored. A call that re-sends an op it has already expanded does not meet its own
+- **How it applies.** After the call-shape checks, the caller's lane check and the
+  one-source-per-call check, and before every other check, the tool expands each
+  edit into the op's `fields`, setting the edited field to its rebuilt text, and
+  drops `edits`. Every later rule (§5, the `updated` stamp, document validation)
+  sees an ordinary `fields` update; the length advisory follows §5.7. `edits` is
+  never stored. A call that re-sends an op it has already expanded does not meet its own
   expansion as a collision.
 - **Both fields together.** An edit to a field counts exactly as setting it in
   `fields`, for the `narrativeAndSearchSummaryTogether` rule (§5) and for the
@@ -1462,7 +1463,8 @@ rides `validation.warnings` and never touches `ok`.
   edit is what takes it over its budget: a narrative already over the budget before
   the edit, a sentence fix to it included, draws no warning, so the caller is not
   told to rewrite a summary it only corrected. A write that also sets `vehicle` is
-  judged in full.
+  judged in full. A narrative rewritten in `fields` is judged as before, even when
+  the same op edits the search summary.
 - **Why warn and not refuse.** The budgets in the agent body are approximate, and a
   narrative over one is not wrong enough to lose the write. Whether the tool should
   refuse is not decided here: it needs a replay over the committed runs first.
@@ -1648,12 +1650,12 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | `op: update` with an `entryId` that is not a string | ``` update `entryId` must be a string such as '<prefix>001', got <type> <the value, cut> ```; write nothing. Refused where it is first read, so it is an ordinary refusal and never a crash |
 | `op: update` `fields` attempting to change `id` | input error |
 | `section: plan_items` without a resolvable `planId` | input error |
-| A batch with more than one failing op (§3.3) | every failing op is reported, `ops[<i>]: …` in op order, with lines that differ only in the op collapsed into one naming the ops and the text capped; the document checks run on the ops that applied; when an op follows the first failure, or the document check blames an op that held, the line that says to fix the earliest failure first leads the errors; write nothing, and `research.json` is byte-identical. **Exception: `edits` refusals (§3.9).** They are returned before the rest of the batch is checked, so a batch with a refused edit and another failing op takes two round trips. Every op whose edits were refused is reported; when more than one is, the errors open with the line that says to fix the earliest failure first |
+| A batch with more than one failing op (§3.3) | every failing op is reported, `ops[<i>]: …` in op order, with lines that differ only in the op collapsed into one naming the ops and the text capped; the document checks run on the ops that applied; when an op follows the first failure, or the document check blames an op that held, the line that says to fix the earliest failure first leads the errors; write nothing, and `research.json` is byte-identical. **Exception: `edits` refusals (§3.9).** They are returned before the rest of the batch is checked, so a batch with a refused edit and another failing op takes two round trips. Every op whose edits were refused is reported. In a batch of more than one op, the errors open with ``` Fix the earliest failure first (ops[<i>]) and send the batch again. Only the batch's `edits` were checked, not its other ops, so the corrected batch may still be refused for something else. ``` |
 | `ops` is a string that does not parse as JSON (§3.3) | ``` `ops` must be a non-empty array, but it arrived as a string that does not parse as JSON: <the engine's parse message> ```, with ` (offset N)` added where that message holds no position and the end of the string is the offset; write nothing |
 | `edits` on an op that is not an update of `proof_summaries` (§3.9) | op-indexed hard error ``` `edits` applies only to an update of `proof_summaries`; elsewhere, pass the new value in `fields`. ```; write nothing |
 | `edits` that is not an array (§3.9) | op-indexed hard error ``` `edits` must be an array of { field, old, new }. ```; write nothing |
 | `fields` beside `edits` that is not an object (§3.9) | op-indexed hard error ``` `fields` beside `edits` must be an object of the other fields to change. ```; write nothing |
-| `edits` with a missing `entryId`, or one naming no existing proof summary (§3.9) | op-indexed hard error ``` `edits` needs `entryId` naming an existing proof summary; '<entryId>' is not one. ```, with `(none)` for a missing one; write nothing |
+| `edits` with a missing `entryId`, or one naming no proof summary that exists before the call (§3.9). An edit cannot target a summary appended earlier in the same batch | op-indexed hard error ``` `edits` needs `entryId` naming an existing proof summary; '<entryId>' is not one. ```, with `(none)` for a missing one; write nothing |
 | An edit whose `field` is not `narrative_markdown` or `exhaustive_search_summary`, or that is not an object (§3.9) | op-indexed hard error ``` edits[<j>]: `field` must be "narrative_markdown" or "exhaustive_search_summary". ```; write nothing |
 | An edit with an empty or non-string `old`, or a non-string `new` (§3.9) | op-indexed hard error ``` edits[<j>]: `old` must be a non-empty string and `new` a string. ```; write nothing |
 | An edit whose `new` equals its `old` (§3.9) | op-indexed hard error ``` edits[<j>]: `new` is the same as `old`; an edit must change the text. ```; write nothing |
@@ -1851,6 +1853,14 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   three draws nothing, including names that index the prototype. The budget map
   names exactly the vehicles the validator allows, and its numbers are the upper
   bounds in the proof-conclusion agent body.
+- **narrative edit form (§3.9)** — an `edits` update replaces the one match and
+  stores no `edits`; 0 or 2 matches, overlapping ones counted, are refused naming
+  the count; a wrong section or an append, a missing or unknown `entryId`, a bad
+  `field`, an empty `old`, a `new` equal to its `old`, a field also set in
+  `fields`, a `fields` that is not an object and a field with no text are each
+  refused; an edit counts as setting its field for
+  `narrativeAndSearchSummaryTogether`; a later op edits the text an earlier one
+  left; a refused edit makes no locality place lookup.
 
 ---
 
