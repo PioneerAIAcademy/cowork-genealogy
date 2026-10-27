@@ -1614,7 +1614,12 @@ describe("research_append (Phase 2)", () => {
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
   it("appends a question and stamps created", async () => {
-    await writeProject();
+    // q_001 is resolved first: step mode's gate refuses a second question while
+    // another is still open (E), and this test is about the `created` stamp, not
+    // about the gate — which has its own block below.
+    const research = phase2Research();
+    research.questions[0].status = "resolved";
+    await writeProject(research);
     const { id: _o, created: _c, ...q } = validQuestion("x");
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "append", entry: q });
     expect(r.ok && singleOk(r).entryId).toBe("q_002");
@@ -5412,19 +5417,6 @@ describe("research_append (Phase 3)", () => {
     expect(singleOk(r).entryId).toBe("ev_001");
     expect((await readResearch()).evaluations[0].timestamp).toMatch(/T.*:/);
   });
-
-  it("appends a known_holding and stamps `created` (date)", async () => {
-    await writeProject();
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "known_holdings",
-      op: "append",
-      entry: { holding_type: "document", description: "Family bible", confidence: "confident", promoted: false },
-    });
-    expect(r.ok && singleOk(r).entryId).toBe("kh_001");
-    const kh = (await readResearch()).known_holdings[0];
-    expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
-  });
 });
 
 describe("research_append (project singleton section)", () => {
@@ -6859,9 +6851,20 @@ describe("research_append (batch ops)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
-  // ── No new question while research is running, bar the conflict exception ──
-  // Every way the exception could be claimed without holding is its own refuse
-  // case; the accept cases are the ones that keep the gate escapable.
+  // ── No new question while another question is still open (step mode, E) ──
+  //
+  // This REPLACES the older in-flight gate, which keyed on `plan_items` standing
+  // at `in_progress` and so admitted a second question whenever the first
+  // happened to have no running item -- between two steps, or before planning
+  // had begun. Keying on the QUESTION is what makes "one question at a time"
+  // hold by rule rather than by accident of timing, and it is why several cases
+  // below now refuse what the old gate allowed.
+  //
+  // The three old escapes (a conflict's `unblocks`, a same-call resolve, a
+  // `selection_basis: "unresolved_conflict"` claim) are gone with it. Every one
+  // was a way for the model to assert its way past the gate; the single
+  // exemption that replaces them is a fact about the DOCUMENT -- a proof summary
+  // and nothing left to do -- which the model cannot claim without writing it.
   const newQ = (fields: Record<string, unknown> = {}) => {
     const { id: _i, created: _c, ...q } = validQuestion("x");
     return { projectPath: dir, section: "questions", op: "append", entry: { ...q, ...fields } } as any;
@@ -6879,82 +6882,172 @@ describe("research_append (batch ops)", () => {
     (r as any).conflicts = conflicts;
     return r;
   };
+  /** A proof summary for `questionId`, which is half of the one exemption. */
+  const summaryFor = (questionId: string) => ({
+    id: "ps_001",
+    question_id: questionId,
+    conclusion: "John Smith's parents were Thomas and Mary.",
+    tier: "not_proved",
+    supporting_assertion_ids: [],
+    created: "2026-01-02",
+  });
   const refusedFor = async (research: any, fields: Record<string, unknown>) => {
     await writeProject(research);
     const before = await readFile(join(dir, "research.json"), "utf-8");
     const r = await researchAppend(newQ(fields));
     expect(r.ok).toBe(false);
-    expect((errorsOf(r) ?? []).join("\n")).toMatch(/still running: pli_001 \(on q_001\)/);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/cannot be opened while another is still open/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   };
 
-  it("(in-flight) refuses the d01 shape: a question depending on the in-flight question", async () => {
+  it("(open-question) refuses the d01 shape: a question depending on the open one", async () => {
     await refusedFor(running(), { depends_on: ["q_001"] });
   });
-  it("(in-flight) refuses an unrelated question", async () => {
+  it("(open-question) refuses a second question appended in the same call", async () => {
+    // The gate reads the pre-call snapshot, so on a project with no question at all
+    // two appends in one batch each saw nothing open. Decision 4: one per run.
+    await writeProject(baseResearch());
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { projectPath: _p, section: _s, op: _o, entry } = newQ();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "questions", op: "append", entry },
+        { section: "questions", op: "append", entry: { ...entry, question: "A second question?" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/was opened earlier in this same call/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+  it("(open-question) one question in one call is still admitted on an empty project", async () => {
+    await writeProject(baseResearch());
+    const { projectPath: _p, section: _s, op: _o, entry } = newQ();
+    const r = await researchAppend({ projectPath: dir, ops: [{ section: "questions", op: "append", entry }] } as never);
+    expect(r.ok).toBe(true);
+  });
+  it("(open-question) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
   });
-  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+  it("(open-question) names the open question and offers the wrap-up, which is the way out", async () => {
+    // The refusal has to be actionable. "Write no question" alone leaves the
+    // model with nowhere to go; the wrap-up is what actually frees the project.
     await writeProject(running());
-    const r = await researchAppend(newQ());
-    const msg = (errorsOf(r) ?? []).join("\n");
-    expect(msg).toMatch(/as it stood before the call/);
-    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
+    const msg = (errorsOf(await researchAppend(newQ())) ?? []).join("\n");
+    expect(msg).toMatch(/q_001 \(open, pli_001 still to do\)/);
+    expect(msg).toMatch(/offer to wrap it up/);
+    expect(msg).toMatch(/disposes its remaining items and writes its proof summary/);
   });
-  it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
-    await refusedFor(running(), { unblocks: ["q_001"] });
-  });
-  it("(in-flight) refuses when the blocking conflict is resolved or moot", async () => {
+  it("(open-question) a conflict's unblocks no longer buys a way past the gate", async () => {
+    // All three old escapes were model assertions. Each is now just another
+    // refusal, and the model is sent to the wrap-up instead.
+    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: ["q_001"] });
     await refusedFor(running([conflict("resolved", ["q_001"])]), { unblocks: ["q_001"] });
     await refusedFor(running([conflict("moot", ["q_001"])]), { unblocks: ["q_001"] });
   });
-  it("(in-flight) refuses when a conflict blocks the question but unblocks does not name it", async () => {
-    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
-    await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
-  });
-  it("(in-flight) still refuses the d01 shape even when the delegation also claims selection_basis: unresolved_conflict", async () => {
+  it("(open-question) a selection_basis of unresolved_conflict no longer buys one either", async () => {
+    await refusedFor(running(), { selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] });
     await refusedFor(running(), { depends_on: ["q_001"], selection_basis: "unresolved_conflict" });
   });
+  it("(open-question) refuses an ordinary objective_decomposition question", async () => {
+    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
+  });
 
-  it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
-    await writeProject(running([conflict("unresolved", ["q_001"])]));
-    expect((await researchAppend(newQ({ depends_on: [], unblocks: ["q_001"] }))).ok).toBe(true);
-  });
-  it("(in-flight) allows a new question when the items are only planned", async () => {
+  // ── What the old gate let through and this one does not ──
+  it("(open-question) refuses when the items are only planned — the question is what blocks", async () => {
     await writeProject(attrResearch("planned", []));
-    expect((await researchAppend(newQ({ depends_on: ["q_001"] }))).ok).toBe(true);
+    const r = await researchAppend(newQ({ depends_on: ["q_001"] }));
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/q_001 \(open, pli_001 still to do\)/);
   });
-  it("(in-flight) ignores an in_progress item on a superseded plan", async () => {
+  it("(open-question) refuses on a superseded plan: no items outstanding, but no summary either", async () => {
+    // `activePlanItems` still ignores a superseded plan, so nothing is
+    // outstanding here -- and the question STILL blocks, because the exemption
+    // needs a proof summary too. Not an unrecoverable deny: wrapping up or
+    // resolving q_001 clears it.
     const research = attrResearch("in_progress", []);
     research.plans[0].status = "superseded";
     await writeProject(research);
-    expect((await researchAppend(newQ())).ok).toBe(true);
+    const r = await researchAppend(newQ());
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/q_001 \(open, no proof summary\)/);
   });
-  it("(in-flight) ignores an in_progress item left on a resolved question's plan", async () => {
+  it("(open-question) refuses with no plans at all — a question blocks before planning begins", async () => {
+    const research = attrResearch("in_progress", []);
+    research.plans = [] as any;
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(false);
+  });
+
+  // ── The accepts: what keeps the gate escapable ──
+  it("(open-question) allows one past a resolved question", async () => {
     const research = attrResearch("in_progress", []);
     research.questions[0].status = "resolved";
     await writeProject(research);
     expect((await researchAppend(newQ())).ok).toBe(true);
   });
-  it("(in-flight) does not fire on an update to an existing question", async () => {
+  it("(open-question) allows one past a concluded question with nothing left to do", async () => {
+    // The exemption, both halves present: proof-conclusion wrote a summary but
+    // had to leave the question open (an identity conflict at `not_proved`),
+    // and its plan has no outstanding item.
+    const research = attrResearch("completed", []);
+    (research as any).proof_summaries = [summaryFor("q_001")];
+    await writeProject(research);
+    const r = await researchAppend(newQ());
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(open-question) needs BOTH halves: a summary with an item still to do still blocks", async () => {
+    // E's own route can hand a concluded question fresh searches. While those
+    // are open, the next question waits.
+    const research = attrResearch("in_progress", []);
+    (research as any).proof_summaries = [summaryFor("q_001")];
+    await writeProject(research);
+    const r = await researchAppend(newQ());
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/q_001 \(open, pli_001 still to do\)/);
+  });
+  it("(open-question) needs BOTH halves: nothing to do but no summary still blocks", async () => {
+    const research = attrResearch("completed", []);
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(false);
+  });
+  it("(open-question) a resources_spent stop is not a conclusion and does not unlock the project", async () => {
+    // The "not exhaustive" choice writes one of these. Admitting a new question
+    // here would leave q_001 unconcluded without the researcher being asked.
+    const research = attrResearch("completed", []);
+    research.questions[0].search_stop = {
+      stopped_because: "resources_spent", log_entry_ids: [], stop_criteria: null, not_reached: [],
+    } as any;
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(false);
+  });
+  it("(open-question) an item waiting only on an upload does not count as work in progress", async () => {
+    // Section I: the researcher is the blocker, so the question would otherwise
+    // be locked by a hand-off nobody inside the project can close.
+    const research = attrResearch("in_progress", []);
+    (research as any).proof_summaries = [summaryFor("q_001")];
+    (research as any).log = [
+      {
+        id: "log_001",
+        performed: "2026-01-02T00:00:00Z",
+        tool: "external_site",
+        plan_item_id: "pli_001",
+        query: {},
+        results_examined: 0,
+        outcome: "partial",
+        external_site: { site: "ancestry", url_generated: "https://example.test/x", capture_received: false },
+      },
+    ];
+    await writeProject(research);
+    const r = await researchAppend(newQ());
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(open-question) does not fire on an update to an existing question", async () => {
     const research = attrResearch("in_progress", []);
     research.questions = [{ ...validQuestion("q_001") }, { ...validQuestion("q_002"), depends_on: ["q_001"] }];
     await writeProject(research);
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
     expect(r.ok).toBe(true);
-  });
-
-  // ── issue #3259: the person_warnings-contradiction exception ──
-  // Unlike the conflict exception, not scoped to `unblocks` naming the
-  // in-flight question -- a contradiction found this call need not be about
-  // whatever is already in progress.
-  it("(in-flight) allows the person_warnings-contradiction exception: selection_basis unresolved_conflict, no unblocks, no conflicts[] entry at all", async () => {
-    await writeProject(running());
-    const r = await researchAppend(newQ({ selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] }));
-    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
-  });
-  it("(in-flight) still refuses an ordinary objective_decomposition question while an item is in-flight", async () => {
-    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
   });
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
@@ -11313,6 +11406,14 @@ describe("research_append — worked examples are themselves valid", () => {
     // supporting assertions linked. Only here, so the person_evidence example
     // still appends the project's first link.
     if (section === "proof_summaries") fixture.person_evidence = liveLinks("a_013");
+    // Step mode's gate (E) refuses a new question while another is still open,
+    // and the fixture seeds q_002/q_003 open as foreign keys the other examples
+    // reference. Only the `questions` example appends one, so only it needs them
+    // closed — resolving them here rather than in the fixture keeps q_003 open for
+    // the `plans` example, which appends a plan against it.
+    if (section === "questions") {
+      for (const q of fixture.questions) q.status = "resolved";
+    }
     await writeFile(join(dir, "research.json"), JSON.stringify(fixture, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });

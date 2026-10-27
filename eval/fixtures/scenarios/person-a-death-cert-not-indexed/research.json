@@ -17,7 +17,6 @@
     ],
     "narration_guidance": "One-line preamble per skill invocation. Assume basic GPS vocabulary."
   },
-  "known_holdings": [],
   "questions": [
     {
       "id": "q_001",

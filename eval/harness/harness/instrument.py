@@ -146,7 +146,7 @@ LIVE_TOOLS: set[str] = {
 }
 
 # The compiled entry module each live handler loads, relative to the build dir.
-# Kept apart from mock_mcp's `_COMPILED_TOOLS` because five live tools are served
+# Kept apart from mock_mcp's `_COMPILED_TOOLS` because six live tools are served
 # by dedicated handlers that never consult that table.
 LIVE_MODULES: dict[str, str] = {
     "validate_research_schema": "tools/validate-research-schema.js",

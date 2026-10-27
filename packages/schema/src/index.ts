@@ -19,8 +19,8 @@
 // entry is a compile error, not silent drift.
 export * from './enums.generated.js'
 import type {
-  ConflictStatus, ConflictType, DateCertainty, RecordBasis, HoldingConfidence,
-  HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
+  ConflictStatus, ConflictType, DateCertainty, RecordBasis,
+  HypothesisStatus, InformantProximity, InformationQuality,
   LogOutcome, NotReachedKind, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
@@ -243,6 +243,7 @@ export interface Conflict {
   competing_assertion_ids: string[]
   independence_analysis?: string | null
   weighing_analysis?: string | null
+  weighed_log_entry_ids?: string[]
   preferred_assertion_id?: string | null
   resolution_rationale?: string | null
   resolution_kind?: ResolutionKind | null
@@ -325,17 +326,6 @@ export interface ProofSummary {
   narrative_markdown: string
   updated?: string
   claims?: ProofClaim[]
-}
-
-export interface KnownHolding {
-  id: string
-  holding_type: HoldingType
-  description: string
-  relevant_facts?: string | null
-  relates_to_person_ids?: string[]
-  confidence: HoldingConfidence
-  promoted: boolean
-  created: string
 }
 
 export interface EvaluationEntry {
@@ -442,7 +432,6 @@ export interface Namesake {
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
-  known_holdings?: KnownHolding[]
   questions: Question[]
   plans: Plan[]
   log: LogEntry[]
