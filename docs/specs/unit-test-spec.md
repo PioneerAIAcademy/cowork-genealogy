@@ -754,6 +754,8 @@ On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
   conversion doc's acceptance check made literal;
+- runs the main thread on the harness default model, never on the agent's
+  `model:`. The agent runs as a subagent on its own `model:` and `effort:` (§11);
 - sends the main thread a harness-owned dispatcher prompt whose only instruction
   is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`. The
   agent's name is the test's `skill`; a direct test whose skill has no
@@ -969,6 +971,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
+| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/plan/research-step-mode.md`). Omitted means no boundary, which is what every committed test runs under |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
@@ -2223,6 +2226,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 | Role | Model | Rationale |
 |------|-------|-----------|
 | Skill execution | Sonnet (pinned version) | Matches what Cowork uses. Needed for genealogical reasoning. |
+| Agent-keyed suite: dispatching main thread | Harness default (`DEFAULT_MODEL`) | The main thread only relays or routes; production's lead runs the default whatever a helper declares. |
+| Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent. The model matches every surface. The effort matches Cowork, but on the hosted alpha `ORCHESTRATOR_EFFORT` makes `real_agent.spawn_effort` write `high` onto every spawn, which outranks the agent's `effort:`. |
 | LLM judge | Haiku | Grading against a structured rubric is a classification task, not a reasoning task. ~20x cheaper than Sonnet. Upgrade selectively if specific dimensions prove unreliable. |
 
 **Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.

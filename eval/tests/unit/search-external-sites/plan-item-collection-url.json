@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_pcu",
+    "skill": "search-external-sites",
+    "name": "Build the Ancestry URL from the plan item's collection_url",
+    "type": "positive",
+    "description": "The plan item names the curated collection it targets (collection_url: Ancestry 1870 census, collection 7163, a row of the project's stored external-collections.json). The agent must use it as build_external_search_url's baseUrl and must not fetch the curated list again: the place is already stored. Single-turn, URL-generation phase only.",
+    "tags": [
+      "ancestry",
+      "external-site",
+      "census",
+      "1870",
+      "url-generation",
+      "log-site-ancestry",
+      "collection-url",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Work plan item pli_007 — the 1870 US census for Patrick Flynn on Ancestry.\n\nuserPresent: yes\nplanItemId: pli_007\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-collections"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "external-links-search-schuylkill-1870-census",
+    "collections-search-schuylkill",
+    "place-search-united-states",
+    "place-search-pennsylvania",
+    "collections-search-pennsylvania"
+  ],
+  "judge_context": [
+    "The plan item pli_007 carries collection_url https://www.ancestry.com/search/collections/7163/ (the 1870 census). The generated URL should search that collection, with parameters derived from the subject: name 'Patrick Flynn', birth year ~1845, and a birthplace. Grade the birthplace VALUE against the rubric's URL generation rule on conflicts[] — the objective text is not the authority on that field.",
+    "Whether the agent re-fetched the curated list, and whether baseUrl equals collection_url, are checked by a deterministic validator; do not grade them from the transcript.",
+    "Should provide capture-workflow instructions for the 1870 census household entry, and should not invent record content."
+  ]
+}

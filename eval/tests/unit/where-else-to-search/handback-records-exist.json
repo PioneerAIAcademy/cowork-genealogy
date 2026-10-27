@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_where_else_to_search_008",
+    "skill": "where-else-to-search",
+    "name": "What records exist for a place — hand back to locality-guide",
+    "type": "negative",
+    "description": "The delegation asks what records exist for a place: a locality survey. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back) and test_no_tool_outside_the_three (no-search-no-write).",
+    "tags": [
+      "hand-back",
+      "no-search-no-write",
+      "handback-to-locality-guide",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "What records exist for Schuylkill County, Pennsylvania in the 1860s?"
+  },
+  "negative": {
+    "correct_skill": [
+      "locality-guide"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "A records-availability survey for a place is locality-guide's job."
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "The correct reply is a one-line hand-back naming locality-guide. Calling any tool is a fail."
+  ]
+}

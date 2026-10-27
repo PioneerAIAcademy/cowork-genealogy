@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_where_else_to_search_006",
+    "skill": "where-else-to-search",
+    "name": "Named Ancestry search inside a project — hand back to search-external-sites",
+    "type": "negative",
+    "description": "The delegation names one site and carries a projectPath: a logged GPS search, search-external-sites' job. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back) and test_no_tool_outside_the_three (no-search-no-write).",
+    "tags": [
+      "hand-back",
+      "no-search-no-write",
+      "handback-to-search-external-sites",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Search Ancestry for Patrick Flynn in the 1880 census.\n\nuserPresent: yes\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [
+      "search-external-sites"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "A named external-site search inside a project is logged and triaged by search-external-sites."
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "The correct reply is a one-line hand-back naming search-external-sites. Building a URL or calling any tool is a fail."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_init_project_013",
+    "skill": "init-project",
+    "name": "A stated father where the read already has one gets no stub: the difference is reported and recorded",
+    "type": "positive",
+    "description": "The family fixture holds Patrick Flynn's father Michael Flynn (Male). The user states Patrick's father was Martin Flynn. The father slot is filled, so init-project adds no stub even though the name differs, reports the difference, and records the statement as oral_knowledge (lead ruling on #3384, 2026-10-20: slot before name). Tagged expects-no-stub.",
+    "tags": [
+      "initialization",
+      "stubs",
+      "single-turn-decomposition",
+      "direct-arm",
+      "expects-no-stub"
+    ]
+  },
+  "input": {
+    "delegation": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to identify his parents. My grandmother always said Patrick's father was Martin Flynn.\n\nprojectPath: <workspace>",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "person-read-flynn-family"
+  ],
+  "judge_context": [
+    "The read (person-read-flynn-family, read by project_create on the host) already holds a father for Patrick: Michael Flynn, recorded Male. Adding Martin as a second father would be wrong, whatever his name: no stub is correct.",
+    "The researcher paragraph should report the difference plainly — the user said Martin, the tree lists Michael — and say both need verification, without framing the user's information as an error.",
+    "The statement should be recorded as an oral_knowledge holding relating to the existing father, saying what differs.",
+    "tree.gedcomx.json should hold exactly the six persons the read holds."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "judge_reads_files": true
+}

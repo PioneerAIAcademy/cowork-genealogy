@@ -107,6 +107,7 @@ export interface PlanItem {
   status: PlanItemStatus
   skip_category?: SkipCategory
   skip_reason?: string
+  collection_url?: string
 }
 
 export interface Plan {
@@ -242,6 +243,7 @@ export interface Conflict {
   competing_assertion_ids: string[]
   independence_analysis?: string | null
   weighing_analysis?: string | null
+  weighed_log_entry_ids?: string[]
   preferred_assertion_id?: string | null
   resolution_rationale?: string | null
   resolution_kind?: ResolutionKind | null

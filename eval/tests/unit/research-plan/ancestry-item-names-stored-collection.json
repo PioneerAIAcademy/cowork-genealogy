@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_research_plan_csc",
+    "skill": "research-plan",
+    "name": "An Ancestry plan item names its stored curated collection",
+    "type": "positive",
+    "description": "The project already stores FamilySearch's curated external collections for Schuylkill County and Pennsylvania (external-collections.json; project_context shows per-place counts by record type). The user asks for the 1870 census on Ancestry to be part of the plan. research-plan must read the stored list (project_context, then research_query section external_collections) and write the Ancestry item's collection_url as a stored row's url — not fetch the list again and not recall a collection id from memory. research_append refuses an unstored url, so the deterministic check is that the field is written at all.",
+    "tags": [
+      "planning",
+      "first-plan",
+      "parentage",
+      "collection-url",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create a research plan for the parentage question. Include the 1870 census on Ancestry.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-first-plan-surveyed"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "collections-search-us-national",
+    "external-links-search-schuylkill-1870-census",
+    "volume-search-schuylkill",
+    "wiki-read-ireland-military-records"
+  ],
+  "judge_context": [
+    "The project's stored curated list already holds Ancestry's 1870 census for Pennsylvania (collection 7163). The Ancestry 1870 census item should carry collection_url set to that stored url; a deterministic validator checks that a non-FamilySearch item carries a stored collection_url — do not grade the url's value from the transcript.",
+    "Grade the plan as a parentage plan otherwise: it should read loc_001, sequence free FamilySearch sources before the paid Ancestry item where both cover the same record, and give each item a rationale."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 1200,
+    "max_turns": 30,
+    "sdk_message_silence_seconds": 360
+  }
+}

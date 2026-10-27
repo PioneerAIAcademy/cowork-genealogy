@@ -149,6 +149,21 @@ export async function isHostedMode(principal: Principal): Promise<boolean> {
   return config.hosted === true;
 }
 
+/** The desktop text for a token FamilySearch rejected (401). */
+export const REJECTED_TOKEN_MESSAGE =
+  "FamilySearch rejected the access token (401). The session may have " +
+  "expired or been revoked — call the login tool to re-authenticate.";
+
+/** What a tool throws when FamilySearch answers 401: in hosted mode the app's
+ *  Reconnect button, as for a missing session, since `login` is a dead end there;
+ *  on the desktop, the tool's own `desktopText`. */
+export async function rejectedTokenMessage(
+  principal: Principal,
+  desktopText: string = REJECTED_TOKEN_MESSAGE,
+): Promise<string> {
+  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : desktopText;
+}
+
 export async function getWikiApiUrl(principal: Principal): Promise<string> {
   const config = await loadConfig(principal);
   const url = config.wikiApiUrl?.trim().replace(/\/$/, "");
