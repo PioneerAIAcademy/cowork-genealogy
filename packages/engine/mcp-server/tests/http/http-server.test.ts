@@ -641,9 +641,10 @@ describe("tool server over Streamable HTTP", () => {
       probe = () => new Promise<ReadyReport>(() => {});
       const t0 = Date.now();
       const [hung, other] = await Promise.all([healthz(), fetch(`${url}/nope`)]);
-      // One more deadline of slack: under a parallel suite the event loop lags past a
-      // half second, and a probe the deadline did not cut would hang to the 10 s test timeout.
-      expect(Date.now() - t0).toBeLessThan(2 * HEALTHZ_TIMEOUT_MS);
+      // Answered at all is the property: a probe the deadline did not cut never answers
+      // and hits the 10 s test timeout. Under a parallel suite the event loop lags close
+      // to 3 s past the 2 s deadline, so the bound sits between the two.
+      expect(Date.now() - t0).toBeLessThan(8_000);
       expect(hung.status).toBe(503);
       expect(hung.body).toEqual({ ok: false, tools: allToolSchemas.length });
       // The other routes are not held behind the probe.
