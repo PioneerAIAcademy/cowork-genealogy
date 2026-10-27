@@ -98,6 +98,18 @@ Only evaluate a question whose **active** plan's items are all `completed` or
 recommend finishing the outstanding items first. Items on a non-active plan are
 audit trail and never block.
 
+**An item waiting only on the researcher's upload does not block.** That is an
+`in_progress` item whose latest log entry is an `external_site` hand-off with
+`capture_received: false` that no later entry closes. Never declare exhaustive
+while one waits: decline, list each under `not_reached` as `handed_to_user`
+with its URL, and say so — "2 searches are still waiting on your upload.
+Upload them, or conclude without them."
+
+**Under `wrapUp: yes`** skip: the exhaustiveness-evaluation confirmation above,
+this active-plan check when the question has no plan, and Step 0's
+`person_evidence` and tentative-value blocks. Keep the already-declared stop.
+Write the stop as §"Wrap it up" says.
+
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
 depends on have not been identified in the tree. Before assessing the stop
@@ -126,9 +138,11 @@ criteria, run two checks over the assertions tied to this question
   For each, ask explicitly: does the uncertainty stem from (a) genuine source
   inaccessibility — the one source that would resolve it cannot be reached by any
   available tool — or (b) a single source's data quality issue that a *different*
-  record type might independently resolve? If (b), stop here: route to
-  research-plan with a specific new plan item targeting the alternative record
-  type — while the value stays tentative on a (b) path, `evidence_class` and
+  record type might independently resolve? If (b), stop here: write the decline
+  stop (§"The decline") and offer the choice; under `wrapUp: yes` record the
+  alternative record type as a `deferred` `not_reached` entry and never route
+  to research-plan — while the value stays tentative on a (b) path,
+  `evidence_class` and
   `independent_verification` assess nothing. The inaccessibility exception in
   Step 3 applies only when (a) is confirmed; on an (a) path assess both
   criteria against the accessible evidence.
@@ -222,15 +236,45 @@ named in `justification`.
     bride's maiden surname when the marriage certificate image is unreadable —
     the exception does not apply. That alternative avenue is unsearched, not
     unavailable, and must be planned before declaration.
-- **Early termination — resources spent** — the session's time, budget, or
-  capability was spent before finishing the planned search scope and unsearched
-  sources remain. Set `stopped_because: "resources_spent"`, `stop_criteria: null`.
-  **Do not change `status`** — leave it `"in_progress"`. Routes to `research-plan`
-  to continue from where the search left off.
+- **Early termination — resources spent** — unsearched sources remain. Set
+  `stopped_because: "resources_spent"`, `stop_criteria: null`. **Do not change
+  `status`** — leave it `"in_progress"`. Write it as §"The decline" says.
 - **Early termination — blocked by conflict** — an unresolvable contradiction
   in the evidence prevents a confident conclusion. Set `stopped_because:
   "blocked_by_conflict"`, `stop_criteria: null`. **Do not change `status`** —
   leave it `"in_progress"`. Routes to `conflict-resolution`.
+
+## The decline
+
+Every active-plan item is closed or waiting only on an upload, and a genuinely
+unsearched source remains. Also reached from a `premise_invalidated` verdict
+and the tentative-value (b) path. Write:
+
+- `stopped_because: "resources_spent"`, `stop_criteria: null`, `status` unchanged;
+- `log_entry_ids`: the log entries of **every** plan of the question, not just
+  the active one — after "Search more" a question has two plans by design;
+- `justification`: open with the verdict, `Overturn risk: low` or
+  `Overturn risk: high — <sources>`;
+- `not_reached`: one `deferred` entry per unsearched source that was never
+  planned (film, image or URL in `description`), and one `handed_to_user` entry
+  per item waiting on an upload.
+
+Then recommend from the verdict:
+
+- **low** — a sentence naming what was left unsearched, naming "search more" as
+  the alternative, then "Continue with writing the conclusion?";
+- **high** — a sentence naming the sources that could change the answer and why,
+  naming "wrap it up" as the alternative, then "Continue with planning the
+  searches?".
+
+## Wrap it up
+
+Reached with `wrapUp: yes`. Record the stop and nothing else — no routing, no
+recommendation. Write `resources_spent`, with `not_reached` carrying: the items
+dispose skipped as `skipped_plan_item`, items waiting on an upload as
+`handed_to_user`, and any never-planned gaps as `deferred`. A question with no
+plan and no assertions is a valid wrap-up: write the stop naming the searches
+not run. End with no "Continue with …?" line.
 
 ## Build `not_reached`
 
@@ -385,10 +429,12 @@ the offending field — do not blindly retry the same payload.
 
 ## Edge cases
 
-- **User wants to stop early:** Set `stopped_because: "resources_spent"` with
-  an honest explanation. Do not inflate exhaustiveness to justify stopping.
+- **User wants to stop early:** §"Wrap it up". Do not inflate exhaustiveness
+  to justify stopping.
 - **Plan items still in progress:** Refuse to declare when an **active**
   plan item is `in_progress`; recommend completing the in-flight work first.
+  An item waiting only on an upload is not in-flight — it goes in
+  `not_reached` as `handed_to_user`.
 
 ## Re-invocation behavior
 

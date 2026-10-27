@@ -486,8 +486,8 @@ distance, and that no bridge or corridor accounts for it. Every record
 beyond the same unexplained move shares the cap: a later record in the new
 place continues the move, it does not explain it. This is not a
 `core_identifier_conflict` and does not take `speculative` (an unexplained
-move is an unfinished argument, and `speculative` is a no-link in an
-autonomous run). If the page could not be retrieved, only a documentary
+move is an unfinished argument, and `speculative` is a no-link under
+`userPresent: no`). If the page could not be retrieved, only a documentary
 bridge in the project lifts the cap. When a corridor or record does bridge
 it, quote it in the entry's `move_bridge` field: `research_append` refuses
 `confident` across a move between countries without one. Distance alone
@@ -549,16 +549,17 @@ score should pull a tentative Strong back to Moderate. But:
   refuses the link for a missing score, the persona was reachable and
   the call is the fix, not a lower tier.
 
-**Autonomous mode (no user to pause with).** This resolution applies
-**only** to an autonomous run where no user can ever confirm (an
-autonomous `/research` run). **When a user is present** — a request that
-names an assertion to link, an interactive session — the pause rows
-above apply unchanged: present the evidence, disclose the score and the
+**No user to pause with (`userPresent: no`).** This resolution applies
+**only** when your delegation says `userPresent: no` — an autonomous
+`/research` run, a "Keep going." turn, or a wrap-up. **When the field is
+absent, or says `yes`,** a user is present: the pause rows above apply
+unchanged: present the evidence, disclose the score and the
 conflict, and create the `speculative` link or leave it for the user's
 confirmation. A high score capped at `speculative` by a qualitative
 conflict is still a pause-for-user, **not** a no-link — do not convert
-it into a hard rejection when a user can adjudicate. In an autonomous
-run, by contrast, the two pause rows resolve **downward, never upward**:
+it into a hard rejection when a user can adjudicate. Under
+`userPresent: no`, by contrast, the two pause rows resolve **downward,
+never upward**:
 a **Weak** match — or any match whose correlation caps confidence at
 `speculative` — becomes a **no-link**. Do
 not create the pe_ entry, and do not record a rejection: only the

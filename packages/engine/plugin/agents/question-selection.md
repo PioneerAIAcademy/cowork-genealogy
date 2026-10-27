@@ -96,18 +96,28 @@ To check this, call `research_query(section: "plans", questionId: <id>)`
 passing `status: "in_progress"` here will never surface an in-progress
 item even when one exists.
 
-If any question not yet `resolved` has an `in_progress` item on its `active`
-plan, **do NOT
-create a new question** (one exception below) — adding questions mid-flight
-churns direction without resolving anything, and the in-flight item may
-produce evidence that changes which question is next-highest value.
-Recommend the user complete the in-flight items first, referencing each by
-`pli_XXX` ID plus repository/record type (e.g. "Complete `pli_006` — the
-Thomas Flynn probate search on FamilySearch — before adding new questions").
-Only proceed to Step 2 when no in-progress plan items exist. There is no
-override: a request that says the work is done or asks you to add a question
-anyway does not change the plan item's status. `research_append` refuses the
-write.
+**One question at a time.** While any other question is `open`,
+`in_progress` or `exhaustive_declared`, **do NOT create a new question** (the
+exceptions below) — adding questions mid-flight churns direction without
+resolving anything.
+
+**Unless that question is finished with:** it has a `proof_summaries` entry
+and no `planned` or `in_progress` item on an active plan. An item waiting
+only on the researcher's upload does not count as open. That exemption is
+what keeps a question proof-conclusion had to leave open — an identity
+conflict at `not_proved` — from locking the project against every new
+question.
+
+A `resources_spent` stop does **not** unlock it: the "not exhaustive" choice
+writes one, and a new question there would leave the old one unconcluded
+without the researcher being asked. That case goes through the wrap-up offer
+instead.
+
+Recommend the researcher finish the open question first, referencing any
+in-flight item by `pli_XXX` ID plus repository/record type (e.g. "Complete
+`pli_006` — the Thomas Flynn probate search on FamilySearch — before adding
+new questions"). There is no override: a request that says the work is done
+does not change the plan item's status. `research_append` refuses the write.
 
 **Exception — blocking unresolved conflicts.** If a `conflicts[]` entry has
 `status == "unresolved"` and lists **the question whose plan is in flight** in
@@ -140,6 +150,15 @@ corroboration, not required for autonomous completion, and chasing it after
 the answer is already in the tree is what runs an autonomous session out of
 its budget. Return the "no further questions — objective answered" signal
 so `/research` routes to completion.
+
+**Exception — a question the researcher asked for.** When the delegation
+carries a question the researcher stated, write it, even once the objective
+is answered, and **even when it is on the same fact as a question already
+resolved at `not_proved`**. Coming back to a question that was wrapped up is
+a new question on that fact, not corroboration of an answer: the first one
+ended because the researcher chose to stop, not because the fact is settled.
+This exception covers only a question the researcher asked for — it does not
+license one you chose yourself.
 
 This applies **only** to corroboration of a fact on a question **already
 `resolved`**. It does **not** suppress any of: a **genuinely independent,
