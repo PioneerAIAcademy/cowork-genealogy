@@ -720,8 +720,8 @@ export default function ChatPane({
           ) : options.length > 0 && !busy && !expired ? (
             // Step mode: the turn ended by offering a next step, so the researcher
             // chooses one. Each button sends its phrase VERBATIM -- the server reads
-            // it back with `step_mode(text)`, which is exact-phrase only, so sending
-            // the friendly label would be an ordinary message that starts no run.
+            // it back with `step_mode(text)`, which matches whole phrases (ignoring
+            // case and trailing punctuation), so the server's phrase is what is sent.
             // `send` is the same path a typed reply takes, so the worker learns
             // nothing new, and it clears the row the instant it is answered rather
             // than leaving a spent choice on screen.

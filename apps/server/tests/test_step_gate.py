@@ -55,11 +55,19 @@ def test_a_skill_call_names_the_skill(boundary):
         "genealogy-research:research"
 
 
-def test_a_spawn_with_no_name_is_not_treated_as_a_step(boundary):
-    """Better to let an unreadable call through than to deny every call in the turn."""
-    assert boundary.step_candidate("Task", {}) is None
-    assert boundary.step_candidate("Task", {"subagent_type": "   "}) is None
-    assert boundary.step_candidate("Task", None) is None
+def test_a_spawn_with_no_name_is_a_general_purpose_step(boundary):
+    """The runtime runs an unnamed spawn as a general-purpose agent, which can do any
+    step's work, so letting it through ungated let a second step run in any turn. It
+    does not deny every call: as a turn's first step it is allowed, it may repeat
+    itself, and it is refused only where any other step would be -- as a second,
+    different step. A `Skill` call naming nothing starts nothing."""
+    for tool_input in ({}, {"subagent_type": "   "}, None):
+        assert boundary.step_candidate("Task", tool_input) == boundary.UNNAMED_SPAWN
+    assert boundary.step_candidate("Skill", {}) is None
+    g = gate(boundary)
+    assert g.check("Task", {}, subagent=False) is None
+    assert g.check("Task", {"prompt": "again"}, subagent=False) is None
+    assert g.check(*spawn("research-plan"), subagent=False)[0] == "deny"
 
 
 # ── the boundary ────────────────────────────────────────────────────────────────

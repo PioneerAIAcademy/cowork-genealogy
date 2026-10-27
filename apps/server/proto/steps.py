@@ -97,21 +97,21 @@ def percentile(values: list[float], q: float) -> float | None:
 def classify(text: str | None, boundary) -> str:
     """Which reply phrase a message is, or `typed`/`none`.
 
-    Exact-phrase, through the boundary's own constants, because that is what
-    `step_mode` reads on the way in: a message that merely CONTAINS "keep going"
-    started no job turn, and counting it as one would overstate how often the
-    host's own replies carried a run.
+    Exact-phrase, through the boundary's own constants and its own normalizer,
+    because that is what `step_mode` reads on the way in: a message that merely
+    CONTAINS "keep going" started no job turn, and counting it as one would
+    overstate how often the host's own replies carried a run.
     """
     if text is None:
         return "none (run ended)"
-    stripped = text.strip().casefold().rstrip(".!")
+    said = boundary.normalize_reply(text)
     for phrase in (
         boundary.REPLY_CONTINUE,
         boundary.REPLY_KEEP_GOING,
         boundary.REPLY_WRAP_UP,
         boundary.REPLY_SEARCH_MORE,
     ):
-        if stripped == phrase.strip().casefold().rstrip(".!"):
+        if said == boundary.normalize_reply(phrase):
             return phrase
     return "typed (something else)"
 
@@ -147,7 +147,9 @@ def main() -> int:
             waits[step].append(float(wait_s))
         spends[step].append(usd)
         label = classify(next_text, boundary)
-        if next_auto == "true" and label == boundary.REPLY_KEEP_GOING:
+        # Any reply the host sent, not only "Keep going.": it also sends "Wrap it up."
+        # at a second planning round, and that is not the researcher's choice.
+        if next_auto == "true":
             label += " (host)"
         replies[step][label] += 1
 

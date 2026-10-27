@@ -155,6 +155,13 @@ def home_group(step: str) -> str | None:
     return None
 
 
+def normalize_reply(text: str | None) -> str:
+    """A message as the reply phrases are compared: case and trailing punctuation
+    ignored. One normalizer, so `step_mode` and every report that classifies a reply
+    agree on what "Keep going!" is."""
+    return str(text or "").strip().lower().rstrip(".!? \t\n")
+
+
 def step_mode(text: str) -> str:
     """`job`, `wrapup` or `step`, from the researcher's message.
 
@@ -162,12 +169,23 @@ def step_mode(text: str) -> str:
     "Keep going!" starts the same thing on every plane. Anything else is a step
     turn -- a steer, a question and an upload all run one step.
     """
-    t = str(text or "").strip().lower().rstrip(".!? \t\n")
+    t = normalize_reply(text)
     if t == "keep going":
         return "job"
     if t == "wrap it up":
         return "wrapup"
     return "step"
+
+
+def gate_mode(turn_mode: str) -> str:
+    """The mode a hosted plane's `StepGate` enforces for a turn of `turn_mode`.
+
+    On the hosted planes a `job` message runs as a STEP turn: "Keep going" means
+    the host answers each boundary, not that the boundary goes away. Only Cowork,
+    which has no host to answer, runs a turn in mode `job`. `turn_mode` itself
+    stays `job`, because that is what `next_auto_reply` keys a reply on.
+    """
+    return "step" if turn_mode == "job" else (turn_mode or "step")
 
 
 def _wrapup_allowed(steps: list[str], name: str, ctx: dict | None) -> bool:
@@ -225,10 +243,17 @@ def step_allowed(
     return True
 
 
-def deny_reason(candidate: str, mode: str = "step") -> str:
-    """What the denied call is told, naming the step it was about to start."""
+def deny_reason(candidate: str, mode: str = "step", steps: list[str] | None = None) -> str:
+    """What the denied call is told, naming the step it was about to start.
+
+    In a wrap-up turn the offer is to wrap up only while the wrap-up is still under
+    way. Once proof-conclusion has run the wrap-up is done, and a refusal names the
+    step the model was reaching for, as any other turn's does -- offering "wrapping
+    up" there would re-run a wrap-up on a question already concluded.
+    """
     name = bare_name(candidate)
-    key = "wrap-up" if mode == "wrapup" else (home_group(name) or name)
+    done = "proof-conclusion" in [bare_name(s) for s in (steps or [])]
+    key = "wrap-up" if mode == "wrapup" and not done else (home_group(name) or name)
     return _DENY_REASON.format(label=STEP_LABELS.get(key, "the next step"))
 
 
@@ -249,7 +274,7 @@ def _closes_hand_off(entry: dict, url: str) -> bool:
 def awaiting_upload_item_ids(research: dict) -> set[str]:
     """Plan items waiting only on a capture the researcher owes us.
 
-    The Python mirror of `awaitingUserHandOffs` (`project-context.ts`): an
+    The Python mirror of `awaitingUserHandOffs` (`src/utils/awaiting-hand-offs.ts`): an
     `external_site` entry with `outcome: "partial"` and `capture_received: false`
     that no LATER entry closes. Keyed on `partial`, not on `capture_received`
     alone -- a `positive` entry logged with `capture_received: false` already had
@@ -357,8 +382,15 @@ def _has_proof_summary(research: dict, question_id) -> bool:
     return False
 
 
+# The verdict research-exhaustiveness opens a `resources_spent` justification with.
+# Only "low" recommends concluding; "high -- <sources>" and older free prose both
+# recommend planning. Mirrors `lowOverturnRisk` in `question-state.ts`.
+_LOW_OVERTURN_RISK = re.compile(r"^\s*overturn risk:\s*low\b", re.IGNORECASE)
+
+
 def _is_low_risk_choice(question, research: dict) -> bool:
-    """The decline that recommends concluding: a `resources_spent` stop, not yet concluded.
+    """The decline that recommends concluding: a `resources_spent` stop whose verdict
+    is "Overturn risk: low", not yet concluded.
 
     Read from the STATE, not from the step this turn ran, so a question between
     steps that repeats the offer keeps its button (section J).
@@ -367,6 +399,9 @@ def _is_low_risk_choice(question, research: dict) -> bool:
         return False
     stop = question.get("search_stop")
     if not isinstance(stop, dict) or stop.get("stopped_because") != "resources_spent":
+        return False
+    justification = stop.get("justification")
+    if not isinstance(justification, str) or not _LOW_OVERTURN_RISK.match(justification):
         return False
     return not _has_proof_summary(research, question.get("id"))
 
@@ -521,8 +556,18 @@ STEP_TOOLS = frozenset({"Agent", "Task", "Skill"})
 _STEP_NAME_KEYS = ("subagent_type", "skill", "command", "name")
 
 
+# What a spawn naming no agent starts. The runtime runs it as a general-purpose
+# agent, which is in no group, so it may open a turn and may follow nothing.
+UNNAMED_SPAWN = "general-purpose"
+
+
 def step_candidate(tool_name: str, tool_input: Any) -> str | None:
-    """The agent or skill this call would START, or None when it is not a step."""
+    """The agent or skill this call would START, or None when it is not a step.
+
+    An `Agent`/`Task` call naming no agent is still a spawn: the runtime falls back to
+    a general-purpose agent, which can do any step's work. Read as no step at all it
+    would run a second step inside any turn with no deny.
+    """
     if tool_name not in STEP_TOOLS:
         return None
     data = tool_input if isinstance(tool_input, dict) else {}
@@ -530,7 +575,7 @@ def step_candidate(tool_name: str, tool_input: Any) -> str | None:
         raw = data.get(key)
         if isinstance(raw, str) and raw.strip():
             return raw.strip()
-    return None
+    return UNNAMED_SPAWN if tool_name != "Skill" else None
 
 
 class StepGate:
@@ -620,7 +665,7 @@ class StepGate:
             return None
 
         self.denials += 1
-        reason = self._b.deny_reason(name, self.mode)
+        reason = self._b.deny_reason(name, self.mode, self.steps)
         decision = "halt" if self.denials > 1 else "deny"
         if self._log is not None:
             # Rider 2: log EVERY halt. The router prose is identical on both planes,

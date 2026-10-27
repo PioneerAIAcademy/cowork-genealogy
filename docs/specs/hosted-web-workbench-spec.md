@@ -643,6 +643,15 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   browser as a `user_msg` frame with `auto: true` and is drawn as the
 >   researcher's own message, marked "sent automatically".
 >
+>   **Stop and typing win over a held reply.** Neither tier's claim releases a
+>   held `auto` row while Stop is set, and neither clears Stop for one
+>   (`turn_message.CLAIM_HELD_SQL`). The researcher's own message closes any held
+>   reply as `superseded` before it is admitted, so their words are the next turn.
+>   The SSE banner's `has_queued` leaves `auto` rows out. Claiming an open turn
+>   the researcher sent clears `sessions.auto_reply`, so a new "Keep going." never
+>   inherits a spent budget. A `job` turn is still bounded on this plane: the gate
+>   enforces `step` (`step_boundary.gate_mode`) while the turn records `job`.
+>
 >   `AUTO_CONTINUE_MAX_STEPS` is replaced by `MAX_AUTO_REPLIES` (30) in
 >   `step_boundary.py`, which every plane loads. The literal `Next: <step>.
 >   Continue?` and `AutoContinue` stay until the alpha moves over.

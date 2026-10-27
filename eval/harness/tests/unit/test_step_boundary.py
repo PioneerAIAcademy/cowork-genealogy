@@ -381,8 +381,12 @@ def test_a_wrap_up_turn_offering_the_next_question_still_gets_buttons():
     assert sb.REPLY_CONTINUE in options and sb.REPLY_KEEP_GOING in options
 
 
+_LOW = {"stopped_because": "resources_spent", "justification": "Overturn risk: low. Two sources agree."}
+_HIGH = {"stopped_because": "resources_spent", "justification": "Overturn risk: high - the probate is unsearched."}
+
+
 def test_search_more_only_at_a_low_risk_choice():
-    low = _with_question(search_stop={"stopped_because": "resources_spent"})
+    low = _with_question(search_stop=_LOW)
     assert sb.REPLY_SEARCH_MORE in sb.reply_options("proof-conclusion", low)
     # No stop recorded: an ordinary conclude offer.
     assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", _with_question())
@@ -390,8 +394,17 @@ def test_search_more_only_at_a_low_risk_choice():
     assert sb.REPLY_SEARCH_MORE not in sb.reply_options("research-plan", low)
 
 
+def test_search_more_is_not_offered_on_a_high_risk_or_unstated_stop():
+    """Only the LOW verdict recommends concluding (section B), so only it gets the
+    button beside a conclude offer. Mirrors `lowOverturnRisk` in question-state.ts."""
+    for stop in (_HIGH, {"stopped_because": "resources_spent"},
+                 {"stopped_because": "resources_spent", "justification": "Ran out of budget."}):
+        research = _with_question(search_stop=stop)
+        assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", research), stop
+
+
 def test_search_more_goes_once_the_question_is_concluded():
-    research = _with_question(search_stop={"stopped_because": "resources_spent"})
+    research = _with_question(search_stop=_LOW)
     research["proof_summaries"] = [{"id": "ps_001", "question_id": "q_001"}]
     assert sb.REPLY_SEARCH_MORE not in sb.reply_options("proof-conclusion", research)
 
@@ -582,3 +595,23 @@ def test_the_reply_functions_read_an_agent_name_and_its_key_the_same_way():
                        ("question-selection", "setup"), ("search-records", "search")):
         assert sb.reply_options(agent, research) == sb.reply_options(key, research), agent
         assert _reply(offer=agent)["reply"] == _reply(offer=key)["reply"], agent
+
+
+def test_a_spawn_naming_no_agent_is_still_a_step():
+    """The runtime runs an unnamed Task as a general-purpose agent, which can do any
+    step's work. Read as no step, it ran a second step inside any turn with no deny."""
+    assert sb.step_candidate("Task", {"prompt": "do the searches"}) == sb.UNNAMED_SPAWN
+    assert sb.step_candidate("Agent", {}) == sb.UNNAMED_SPAWN
+    assert sb.step_candidate("Skill", {}) is None
+    gate = sb.StepGate(boundary=sb, mode="step")
+    assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
+    assert gate.check("Task", {"prompt": "now run the searches"}, subagent=False)[0] == "deny"
+
+
+def test_a_wrap_up_that_has_concluded_names_the_next_step_not_wrapping_up():
+    """After proof-conclusion the wrap-up is done. Offering "wrapping up" again would
+    re-run it on a question already concluded."""
+    under_way = sb.deny_reason("question-selection", "wrapup", ["research-plan"])
+    assert "wrapping up" in under_way
+    done = sb.deny_reason("question-selection", "wrapup", ["research-plan", "proof-conclusion"])
+    assert "wrapping up" not in done and sb.STEP_LABELS["setup"] in done

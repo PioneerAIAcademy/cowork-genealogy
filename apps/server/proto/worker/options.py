@@ -405,8 +405,6 @@ def _deny(reason: str) -> dict[str, Any]:
 # executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
-# U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
-# checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
 # ── The step boundary (decision 25) ──────────────────────────────────────────────
 #
 # `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, the way
@@ -441,6 +439,8 @@ def load_step_boundary(path: Path | None = None):
     return module
 
 
+# U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
+# checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
 STORE_UNAVAILABLE_REASON = (
     "A server problem is keeping this run from checking for a Stop or its spend limit, so "
     "it is stopping here and will pick up again shortly. Findings already written to the "
@@ -618,8 +618,10 @@ def make_pretool_hook(
         step_verdict = None
         try:
             if step_gate is not None:
+                # Truthiness, as both harnesses read it: a main-thread call carrying
+                # `agent_id: null` is still the router's, and must still be gated.
                 step_verdict = step_gate.check(
-                    tool_name, tool_input, subagent="agent_id" in data
+                    tool_name, tool_input, subagent=bool(data.get("agent_id"))
                 )
         except Exception as exc:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
             step_verdict = None
@@ -779,7 +781,8 @@ def make_posttool_hook(
 RESUME_CONTINUE_TEXT = (
     "Your previous attempt at this message was interrupted while work was in "
     "progress (the worker restarted). Re-read research.json and continue the same "
-    "task from where it stopped; do not start over, and do not ask the user anything."
+    "task from where it stopped; do not start over. Finish the step that was running "
+    "and end with its \"Continue with ...?\" line, as the step would have."
 )
 
 

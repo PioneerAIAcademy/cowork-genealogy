@@ -74,6 +74,7 @@ import json
 import pathlib
 import re
 import shutil
+import types
 import socket
 import stat
 import sys
@@ -95,6 +96,7 @@ from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage
 
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
+from proto import turn_message  # noqa: E402
 
 #: Windows chmod only toggles read-only, so a file mode never reads back as 0o600 there.
 POSIX_MODES = sys.platform != "win32"
@@ -287,7 +289,11 @@ def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
     conn = FakeConn()
     claimed = worker.claim(conn, TURN, 3)
     assert claimed == worker.Claim(TURN["message"], 2)
-    [(sql, params)] = conn.executed
+    # The claim, plus section A2's reset of a stale "Keep going" state when the turn is
+    # the researcher's own -- which is not an insert either.
+    [(sql, params)] = [e for e in conn.executed if e[0].startswith("UPDATE turns")]
+    assert not [e for e in conn.executed if e[0].startswith("INSERT")]
+    assert [e[0] for e in conn.executed[1:]] == [worker.RESET_AUTO_REPLY_ON_CLAIM_SQL]
     assert sql.startswith("UPDATE turns SET claimed_at = now(), receive_count = %s")
     assert ("FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
             "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id") in sql
@@ -346,8 +352,9 @@ def test_the_claim_unmarks_a_held_row_that_is_running(message):
     still marked held, invisible to TURN_ACTIVE_SQL. test_proto_queue_pg.py runs it."""
     conn = FakeConn()
     worker.claim(conn, {**TURN, "message": message}, 1)
+    claim_sql = next(e[0] for e in conn.executed if e[0].startswith(("UPDATE turns", "INSERT INTO turns")))
     assert ("outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
-            "ELSE turns.outcome END") in conn.executed[-1][0]
+            "ELSE turns.outcome END") in claim_sql
 
 
 def test_claim_takes_the_entries_high_water_mark_on_the_first_claim_only():
@@ -2072,10 +2079,12 @@ def test_the_claim_takes_the_oldest_held_message_and_only_a_live_one():
     flipping `ORDER BY enqueued_at` to DESC, and widening the outcome predicate. Each
     recreates a failure the branch guards elsewhere -- a completed turn re-enqueued as if
     it were waiting, or the patron's messages answered in the wrong order."""
-    src = " ".join(
-        (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
-        .split("def take_queued_turn", 1)[1].split("\ndef ", 1)[0].split()
-    )
+    body = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8") \
+        .split("def take_queued_turn", 1)[1].split("\ndef ", 1)[0]
+    # The statement is shared with the web tier's `_claim_held` (section A2), so the
+    # predicates are asserted where it lives, and the worker must still run it.
+    assert "turn_message.CLAIM_HELD_SQL" in body
+    src = " ".join(turn_message.CLAIM_HELD_SQL.split())
     assert "AND outcome = %s" in src, "a claim must only match a HELD row"
     assert "AND completed_at IS NULL" in src, \
         "without this a turn that already RAN can be claimed and re-enqueued"
@@ -6405,19 +6414,35 @@ def test_search_more_appears_only_at_the_low_risk_choice(turn_env):
     searching more is the alternative."""
     turn_env["conn"].research = {"questions": [
         {"id": "q_1", "status": "in_progress", "question": "Who?",
-         "search_stop": {"stopped_because": "resources_spent"}}]}
+         "search_stop": {"stopped_because": "resources_spent",
+                         "justification": "Overturn risk: low. Two sources agree."}}]}
     _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
     assert "Search more." in _turn_done_payload(turn_env["conn"])["options"]
 
 
-def test_a_step_turn_that_finished_the_project_closes_completed(turn_env):
+def test_a_step_turn_that_finished_the_project_closes_completed(turn_env, monkeypatch):
     """At cap 0 no plane binds the Stop hook, so a step turn has no Stop verdict to
     report the project finishing. Without this read the browser would render the
     honest `completed` label on no step turn at all."""
     turn_env["conn"].research = {"project": {"status": "completed"}}
+    monkeypatch.setattr(worker, "completed_already_labelled", lambda *a: False)
     summary = _run(turn_env, _good())
     assert summary["outcome"] == "completed"
     assert _turn_done_payload(turn_env["conn"])["outcome"] == "completed"
+
+
+def test_a_turn_on_an_already_finished_project_closes_ok(turn_env, monkeypatch):
+    """Only the turn that COMPLETES the project is labelled so. A finished project that
+    took a follow-up question would otherwise read `completed` on every later turn."""
+    turn_env["conn"].research = {"project": {"status": "completed"}}
+    monkeypatch.setattr(worker, "completed_already_labelled", lambda *a: True)
+    assert _run(turn_env, _good())["outcome"] == "ok"
+
+
+def test_the_label_check_asks_for_an_earlier_completed_turn_of_the_project():
+    """The query behind both cases above: another turn, same project, closed `completed`."""
+    sql = worker.COMPLETED_LABELLED_SQL
+    assert "project_id = %s" in sql and "turn_id <> %s" in sql and "outcome = %s" in sql
 
 
 def test_an_unfinished_project_still_closes_ok(turn_env):
@@ -6472,3 +6497,35 @@ def test_a_step_turn_the_host_did_not_answer_still_offers_its_options(turn_env):
     _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
     assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
     assert not [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
+
+
+def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatch):
+    """On the hosted planes "Keep going" means the HOST answers each boundary, not that
+    the boundary goes away (plan, mode detection). So the gate enforces `step` while the
+    turn itself stays `job` -- the mode `next_auto_reply` keys the reply on, and the one
+    a redelivered attempt must read back from `turns.mode`."""
+    real = worker.load_step_boundary()
+    built: list[dict] = []
+
+    class Recording(real.StepGate):
+        def __init__(self, **kwargs):
+            built.append(kwargs)
+            super().__init__(**kwargs)
+
+    module = types.SimpleNamespace(**{k: getattr(real, k) for k in dir(real) if not k.startswith("__")})
+    module.StepGate = Recording
+    monkeypatch.setattr(worker, "load_step_boundary", lambda: module)
+    recorded: list[tuple] = []
+    monkeypatch.setattr(worker, "record_turn_step", lambda conn, tid, step, mode: recorded.append((step, mode)))
+
+    turn_env["conn"].research = _RESEARCH
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+
+    assert built and built[0]["mode"] == "step", built
+    gate = real.StepGate(**built[0])
+    assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
+    assert recorded == [("research-plan", "job")], recorded
+    assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"

@@ -59,3 +59,49 @@ def is_auto(body: Any) -> bool:
     a message read back from the row is whatever was written, possibly by an
     older build."""
     return bool(isinstance(body, dict) and body.get(AUTO_KEY) is True)
+
+
+# ── Stop and typing win over a held host reply (section A2) ──────────────────────
+#
+# The SQL both tiers run against `turns`, so the claim the worker makes after a close
+# and the rescue the web tier makes on a post cannot disagree about which held row is
+# the host's. Kept here beside `AUTO_KEY` because the predicate IS that key.
+
+#: A row whose message the host sent, as a SQL predicate on `turns.message`. COALESCEd:
+#: a typed message carries no key, and a bare comparison would be NULL there, which
+#: `NOT` leaves NULL -- dropping the researcher's own rows from every filter below.
+AUTO_ROW_SQL = f"COALESCE((message ->> '{AUTO_KEY}') = 'true', false)"
+
+#: What a held host reply is closed as when the researcher's own message supersedes it.
+SUPERSEDED_OUTCOME = "superseded"
+
+#: Close every held host reply on a session. Run by `admit_message` before it decides
+#: whether the researcher's message is held: their words are the next turn, so a reply
+#: the host queued for a run they have just interrupted must not go out ahead of them.
+#: Params: (superseded outcome, session_id, queued outcome).
+DROP_HELD_AUTO_SQL = (
+    "UPDATE turns SET outcome = %s, completed_at = now() WHERE session_id = %s "
+    f"AND outcome = %s AND completed_at IS NULL AND {AUTO_ROW_SQL}"
+)
+
+#: The claim of a session's oldest held message, shared by the worker's
+#: `take_queued_turn` and the web tier's `_claim_held`. A host reply is never released
+#: while Stop is set: the researcher ended the run, and claiming would clear their Stop.
+#: Params: (session_id, queued outcome, session_id).
+CLAIM_HELD_SQL = (
+    "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
+    "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
+    "  AND completed_at IS NULL "
+    f"  AND NOT ({AUTO_ROW_SQL} AND EXISTS (SELECT 1 FROM sessions s "
+    "      WHERE s.session_id = %s AND s.stop_requested_at IS NOT NULL)) "
+    "  ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
+    ") RETURNING message, claimed_at"
+)
+
+#: The SSE stream's "a message is waiting" check. Leaves host replies out: a held
+#: reply is the run moving, not the researcher's words waiting behind a turn.
+#: Params: (session_id, queued outcome).
+HAS_TYPED_QUEUED_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND completed_at IS NULL "
+    f"AND outcome = %s AND NOT {AUTO_ROW_SQL}) AS queued"
+)

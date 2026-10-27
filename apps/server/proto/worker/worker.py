@@ -622,6 +622,12 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | N
             cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
                                          turn["session_id"], turn["project_id"]))
             row = cur.fetchone()
+            if row and not turn_message.is_auto(row[0]):
+                # Section A2: a message the researcher sent starts a new run, so a
+                # "Keep going" state left by an earlier one (a close by the sweep, a lost
+                # reply) must not carry its spent budget into it. Only on an OPEN row:
+                # a duplicate delivery of a closed turn leaves the state alone.
+                cur.execute(RESET_AUTO_REPLY_ON_CLAIM_SQL, (turn["session_id"], turn["turn_id"]))
         conn.commit()
         return Claim(row[0], int(row[1])) if row else None
     with conn.cursor() as cur:
@@ -870,6 +876,17 @@ def complete(
             # message is the next turn and the run is over anyway.
             conn.rollback()
             log(ev="auto_reply_lock_timeout", turn_id=turn["turn_id"], session_id=turn["session_id"])
+            seq = _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
+                            duration_ms=duration_ms, sdk_session_id=sdk_session_id, nudges=nudges,
+                            outcome=outcome, detail=detail, only_if_open=only_if_open,
+                            claim_epoch=claim_epoch, auto_reply=None, max_nudges=max_nudges,
+                            lock_timeout=lock_timeout)
+            # The run ended with its reply lost, so its state goes too: the next "Keep
+            # going." must start a fresh budget. One row, no queue lock needed.
+            with conn.cursor() as cur:
+                cur.execute(AUTO_REPLY_WRITE_SQL, (None, turn["session_id"]))
+            conn.commit()
+            return seq
     return _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
                      duration_ms=duration_ms, sdk_session_id=sdk_session_id, nudges=nudges,
                      outcome=outcome, detail=detail, only_if_open=only_if_open,
@@ -1046,6 +1063,10 @@ PREV_STEP_SQL = (
     "ORDER BY completed_at DESC LIMIT 1"
 )
 AUTO_REPLY_READ_SQL = "SELECT auto_reply FROM sessions WHERE session_id = %s"
+RESET_AUTO_REPLY_ON_CLAIM_SQL = (
+    "UPDATE sessions SET auto_reply = NULL WHERE session_id = %s AND auto_reply IS NOT NULL "
+    "AND EXISTS (SELECT 1 FROM turns WHERE turn_id = %s AND completed_at IS NULL)"
+)
 AUTO_REPLY_WRITE_SQL = "UPDATE sessions SET auto_reply = %s WHERE session_id = %s"
 
 
@@ -1087,6 +1108,30 @@ def close_context(
         log(ev="close_context_unavailable", project_id=project_id,
             error=f"{type(exc).__name__}: {exc}")
         return (None, None)
+
+
+# Whether an earlier turn of this project already closed `completed`. Asked at the close
+# rather than by reading research.json at the turn's start, which every turn would then
+# pay and which a down store must not be asked again.
+COMPLETED_LABELLED_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns WHERE project_id = %s AND turn_id <> %s "
+    "AND outcome = %s) AS labelled"
+)
+
+
+def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_id: str, log: Any) -> bool:
+    """Whether the `completed` label already went to an earlier turn (plan, PR 1): only
+    the turn that completes the project gets it, so a finished project that took a
+    follow-up question is not re-completed by every later turn. A failed read answers
+    True, which costs one label rather than repeating it."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute(COMPLETED_LABELLED_SQL, (project_id, turn_id, TERMINAL_COMPLETED))
+            row = cur.fetchone()
+        return bool(row and row[0])
+    except Exception as exc:  # noqa: BLE001 - a label never fails a finished turn
+        log(ev="completed_label_check_failed", project_id=project_id, error=f"{type(exc).__name__}: {exc}")
+        return True
 
 
 def plan_auto_reply(
@@ -1283,16 +1328,14 @@ def take_queued_turn(
         active = cur.fetchone()
         if active and active[0]:
             return None
-        cur.execute(
-            "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
-            "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
-            "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
-            ") RETURNING message, claimed_at",
-            (session_id, QUEUED_OUTCOME),
-        )
+        cur.execute(turn_message.CLAIM_HELD_SQL, (session_id, QUEUED_OUTCOME, session_id))
         row = cur.fetchone()
         body = row[0] if row else None
-        if body is not None:
+        # A host reply never clears Stop (section A2). The claim above skips one while
+        # Stop is set; this covers a Stop pressed between that claim and this clear,
+        # since `request_stop` does not take the queue lock. No test can time that
+        # window, so it is the one A2 rule nothing here fails without.
+        if body is not None and not turn_message.is_auto(body):
             cur.execute(CLEAR_STOP_SQL, (session_id,))
     return (body, row[1]) if isinstance(body, dict) else None
 
@@ -2721,8 +2764,9 @@ async def _run_turn(
             step_gate = boundary.StepGate(
                 boundary=boundary,
                 # A redelivery keeps the mode the first attempt ran under; the
-                # researcher's message is the source only on the first.
-                mode=turn_mode,
+                # researcher's message is the source only on the first. A `job`
+                # turn is still bounded here: the host answers each boundary.
+                mode=boundary.gate_mode(turn_mode),
                 # No research.json yet means no ctx, and the one gated follower is
                 # denied: a needless pause, never an unasked plan.
                 # Lazy: only a research-plan candidate consults it, so most turns
@@ -2733,7 +2777,9 @@ async def _run_turn(
                 ),
                 steps=[seeded_step] if seeded_step else None,
                 log=log, turn_id=turn_id,
-                on_first_step=lambda step, mode: record_turn_step(conn, turn_id, step, mode),
+                # The TURN's mode, not the gate's: a redelivered `job` turn must still
+                # read back as `job`, or the host's reply would be lost.
+                on_first_step=lambda step, _gate: record_turn_step(conn, turn_id, step, turn_mode),
             )
         except Exception as exc:  # noqa: BLE001 - a broken boundary must not deny the researcher their turn
             log(ev="step_gate_unavailable", turn_id=turn_id, session_id=session_id,
@@ -2954,8 +3000,11 @@ async def _run_turn(
             # cap 0 no plane binds the Stop hook -- so the honest `completed` label would
             # never reach the browser on a step turn without this. Only where the close
             # was an ordinary `ok`: a stop, a cap or a lost transcript each say something
-            # the project's own status does not override.
-            if outcome == OK_OUTCOME and project_completed(research):
+            # the project's own status does not override. And only on the turn that
+            # COMPLETED it: a finished project that took a follow-up question is not
+            # re-completed by every later turn.
+            if (outcome == OK_OUTCOME and project_completed(research)
+                    and not completed_already_labelled(conn, project_id, turn_id, log)):
                 outcome = TERMINAL_COMPLETED
             # A stopped turn is NOT a zero-progress attempt, and the order matters twice
             # over. A turn killed at the ceiling (or by a crash, a deploy or SIGTERM)

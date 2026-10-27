@@ -31,8 +31,8 @@ their own nudge budget.
 
 Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
 
-  session_events.kind = 'user_msg', payload {text, turn_id}
-      -> {"type": "user_msg", "text", "turn_id", "seq"}
+  session_events.kind = 'user_msg', payload {text, turn_id[, auto]}
+      -> {"type": "user_msg", "text", "turn_id", "seq"[, "auto": true]}
   session_events.kind = <any map_message kind>, payload = the event's fields
       -> {"type": "agent_event", "event": {**payload, "kind": kind}, "seq"}
   session_activity.payload
@@ -395,12 +395,17 @@ def sse_frame(data: dict[str, Any], *, seq: int | None = None) -> str:
 
 def row_to_wire(row: EventRow) -> dict[str, Any]:
     if row.kind == "user_msg":
-        return {
+        frame = {
             "type": "user_msg",
             "text": str(row.payload.get("text", "")),
             "turn_id": row.payload.get("turn_id"),
             "seq": row.seq,
         }
+        # The host's own reply under "Keep going" (section A2). Passed through only
+        # when set, so a typed message's frame is the same bytes it always was.
+        if turn_message.is_auto(row.payload):
+            frame["auto"] = True
+        return frame
     return {"type": "agent_event", "event": {**row.payload, "kind": row.kind}, "seq": row.seq}
 
 
@@ -905,6 +910,11 @@ class PgStore:
                 cur = await conn.execute(RETIRED_SQL, (session.session_id,))
                 if (await cur.fetchone())["retired"]:
                     raise SessionRetired(session.session_id)
+                # Section A2: typing wins. The researcher's words are the next turn, so a
+                # reply the host queued for the run they just interrupted is closed first,
+                # and their message is held only behind a turn or a message of their own.
+                await conn.execute(turn_message.DROP_HELD_AUTO_SQL,
+                                   (turn_message.SUPERSEDED_OUTCOME, session.session_id, QUEUED_OUTCOME))
                 held = (await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active")
                         or await self._exists(conn, HAS_QUEUED_SQL, session.session_id, "queued"))
                 turn = await self._insert_turn(conn, session, text, queued=held)
@@ -1002,7 +1012,8 @@ class PgStore:
         """Whether a message is held for this session (1b) -- what the SSE stream renders
         as `turn_queued`, so a reload or a second tab still shows it waiting."""
         async with await self._connect() as conn:
-            cur = await conn.execute(HAS_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
+            # Not a host reply (section A2): that is the run moving, not a message waiting.
+            cur = await conn.execute(turn_message.HAS_TYPED_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
             return bool((await cur.fetchone())["queued"])
 
     @staticmethod
@@ -1014,16 +1025,11 @@ class PgStore:
         tier rescuing a stranded row cannot both enqueue the same message -- exactly one
         UPDATE finds the row with ``outcome = 'queued'`` and the other returns nothing.
         That is the whole reason this is not a SELECT followed by an UPDATE."""
-        cur = await conn.execute(
-            "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
-            "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
-            "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
-            ") RETURNING message",
-            (session_id, QUEUED_OUTCOME),
-        )
+        cur = await conn.execute(turn_message.CLAIM_HELD_SQL, (session_id, QUEUED_OUTCOME, session_id))
         row = await cur.fetchone()
         body = row["message"] if row else None
-        if body is not None:
+        # Never for a host reply (section A2): the claim skips one while Stop is set.
+        if body is not None and not turn_message.is_auto(body):
             # Claiming IS enqueuing, so the Stop flag clears here for the same reason
             # it clears in the worker's `take_queued_turn`. `_insert_turn` deliberately
             # does not clear it for a held message, so without this the rescued turn

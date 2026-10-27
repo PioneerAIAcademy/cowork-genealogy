@@ -137,6 +137,21 @@ def test_the_reply_each_boundary_got_is_counted_per_step(pg_steps_dsn):
     assert r["replies"]["proof-conclusion"] == {"none (run ended)": 1}
 
 
+def test_a_host_wrap_up_is_the_host_s_and_a_typed_phrase_reads_as_step_mode_reads_it(pg_steps_dsn):
+    """The host also sends "Wrap it up." (a second planning round), and that was being
+    counted as the researcher's choice. And `step_mode` ignores case and trailing
+    punctuation, so "Continue?" typed by hand is the Continue reply, not something else."""
+    dsn = pg_steps_dsn
+    sid, pid = _session(dsn)
+    _turn(dsn, sid, pid, "go", seq=1, step="research-plan", wait_s=5)
+    _turn(dsn, sid, pid, "Wrap it up.", seq=2, step="search-records", wait_s=5, auto=True)
+    _turn(dsn, sid, pid, "continue?", seq=3, step="person-evidence", wait_s=5)
+
+    r = _report(dsn)
+    assert r["replies"]["research-plan"] == {"Wrap it up. (host)": 1}, r["replies"]
+    assert r["replies"]["search-records"] == {"Continue.": 1}, r["replies"]
+
+
 def test_a_typed_message_is_not_counted_as_a_reply_phrase(pg_steps_dsn):
     """Exact-phrase only, as `step_mode` reads it on the way in. A message that
     merely contains "keep going" started no job turn."""

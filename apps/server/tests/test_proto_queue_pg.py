@@ -512,15 +512,22 @@ def auto_rows(dsn: str, sid: str) -> list[str]:
     return [r[0] for r in rows]
 
 
+def superseded(dsn: str, sid: str) -> list[str]:
+    """Host replies a researcher's message closed before they ran."""
+    rows = sql(dsn, "SELECT message->>'text' FROM turns WHERE session_id = %s AND outcome = 'superseded' "
+                    "AND completed_at IS NOT NULL ORDER BY enqueued_at", (sid,))
+    return [r[0] for r in rows]
+
+
 def stored_state(dsn: str, sid: str):
     return sql(dsn, "SELECT auto_reply FROM sessions WHERE session_id = %s", (sid,))[0][0]
 
 
-async def test_a_message_posted_while_the_host_queues_its_reply_waits_its_turn(pg_dsn):
+async def test_a_message_posted_while_the_host_queues_its_reply_goes_out_instead_of_it(pg_dsn):
     """The turn is closing and about to queue "Keep going."; the patron posts C in the
-    window. Unserialized both land unheld and the release starts two turns on one
-    session -- the same D8 failure, arriving through the new writer. Serialized, C is
-    held behind the reply."""
+    window. Serialized by the queue lock, the reply lands first -- and then C, the
+    researcher's own words, supersedes it (section A2, "typing wins"): exactly one turn
+    starts on the session, and it is C."""
     row = session(pg_dsn, running=True)
     open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
                     (row.session_id,))[0][0]
@@ -540,13 +547,10 @@ async def test_a_message_posted_while_the_host_queues_its_reply_waits_its_turn(p
         go.set()
     await worker_side
     admitted = await web_side
-    # One turn starts, and it is the older message -- the reply. The web tier then
-    # finds no turn running and RESCUES it (the stranded-held-row recovery), which is
-    # why it is no longer `queued`; C is held behind it.
-    started = web_sends(admitted)
-    assert started == ["Keep going."], f"one turn starts on the session, not {started}"
-    assert running(pg_dsn, row.session_id) == ["Keep going."]
-    assert held(pg_dsn, row.session_id) == ["C"], "C overtook the reply"
+    assert web_sends(admitted) == ["C"], f"the researcher's message goes out, not {web_sends(admitted)}"
+    assert running(pg_dsn, row.session_id) == ["C"]
+    assert held(pg_dsn, row.session_id) == []
+    assert superseded(pg_dsn, row.session_id) == ["Keep going."], "the reply must be closed, not left held"
 
 
 async def test_a_reply_is_not_queued_behind_a_message_the_patron_just_posted(pg_dsn):
@@ -588,6 +592,9 @@ async def test_a_close_behind_a_stuck_queue_lock_still_closes_without_its_reply(
     row = session(pg_dsn, running=True)
     open_turn = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
                     (row.session_id,))[0][0]
+    sql(pg_dsn, "UPDATE sessions SET auto_reply = %s WHERE session_id = %s",
+        (json.dumps({"replies": 3, "planning_rounds": 1, "answered": [["research-plan", "search"]]}),
+         row.session_id))
     holder = psycopg.connect(pg_dsn)
     try:
         with holder.cursor() as cur:  # hold the session's queue lock open
@@ -600,6 +607,9 @@ async def test_a_close_behind_a_stuck_queue_lock_still_closes_without_its_reply(
     assert sql(pg_dsn, "SELECT completed_at IS NOT NULL FROM turns WHERE turn_id = %s",
                (open_turn,))[0][0], "the turn is still open"
     assert auto_rows(pg_dsn, row.session_id) == []
+    # The reply was lost, so the run is over: a spent budget left here would end the
+    # researcher's next "Keep going." after a single turn.
+    assert stored_state(pg_dsn, row.session_id) is None
 
 
 async def test_a_run_that_ends_clears_the_state_so_the_next_keep_going_starts_fresh(pg_dsn):
@@ -641,3 +651,95 @@ async def test_the_queued_reply_is_what_release_next_held_sends(pg_dsn, sent):
     assert [b["text"] for b in sent] == ["Keep going."]
     assert sent[0]["auto"] is True, "the worker's own reply must be marked as the host's"
     assert held(pg_dsn, row.session_id) == [], "the reply is claimed, not left held"
+
+
+def queued_reply(dsn: str) -> SessionRow:
+    """A session whose last turn closed and queued the host's "Keep going." -- the state
+    between `complete()` committing and `release_next_held` running."""
+    row = session(dsn, running=True)
+    open_turn = sql(dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NULL",
+                    (row.session_id,))[0][0]
+    close_with_reply(dsn, row, open_turn)
+    assert auto_rows(dsn, row.session_id) == ["Keep going."]
+    return row
+
+
+def stop_set(dsn: str, sid: str) -> bool:
+    return sql(dsn, "SELECT stop_requested_at IS NOT NULL FROM sessions WHERE session_id = %s", (sid,))[0][0]
+
+
+async def test_a_held_reply_is_not_released_while_stop_is_set_and_stop_survives(pg_dsn, sent):
+    """Stop lands after the close queued the reply but before the release. Claiming it
+    would start the turn the researcher just stopped AND clear their Stop."""
+    row = queued_reply(pg_dsn)
+    sql(pg_dsn, "UPDATE sessions SET stop_requested_at = now() WHERE session_id = %s", (row.session_id,))
+    assert await asyncio.to_thread(release, pg_dsn, row.session_id) is None
+    assert sent == []
+    assert stop_set(pg_dsn, row.session_id), "a host reply must never clear Stop"
+    assert auto_rows(pg_dsn, row.session_id) == ["Keep going."]
+    # The web tier's rescue takes the same statement.
+    async with await psycopg.AsyncConnection.connect(pg_dsn, autocommit=True) as conn:
+        assert await PgStore._claim_held(conn, row.session_id) is None
+    assert stop_set(pg_dsn, row.session_id)
+
+
+async def test_a_researcher_s_held_message_still_releases_and_clears_stop(pg_dsn, sent):
+    """The other direction: the Stop rule is about host replies only. A message the
+    researcher typed while stopping is how a stopped session resumes."""
+    row = session(pg_dsn, held=("C",))
+    sql(pg_dsn, "UPDATE sessions SET stop_requested_at = now() WHERE session_id = %s", (row.session_id,))
+    assert await asyncio.to_thread(release, pg_dsn, row.session_id) is not None
+    assert [b["text"] for b in sent] == ["C"]
+    assert not stop_set(pg_dsn, row.session_id)
+
+
+async def test_typing_after_stop_supersedes_the_held_reply(pg_dsn):
+    """Stop, then the researcher types: their message is the next turn and the stranded
+    reply is closed, so it can never run later behind them."""
+    row = queued_reply(pg_dsn)
+    sql(pg_dsn, "UPDATE sessions SET stop_requested_at = now() WHERE session_id = %s", (row.session_id,))
+    admitted = await PgStore(pg_dsn).admit_message(row, "Continue.")
+    assert web_sends(admitted) == ["Continue."]
+    assert auto_rows(pg_dsn, row.session_id) == []
+    assert superseded(pg_dsn, row.session_id) == ["Keep going."]
+
+
+async def test_a_held_reply_does_not_show_as_a_message_waiting(pg_dsn):
+    """`has_queued` is the SSE stream's "A message is waiting" banner. A held reply is the
+    run moving, not the researcher's words waiting; `admit_message`'s own hold still
+    counts it, which the race tests above cover."""
+    row = queued_reply(pg_dsn)
+    assert await PgStore(pg_dsn).has_queued(row.session_id) is False
+    typed = session(pg_dsn, held=("C",))
+    assert await PgStore(pg_dsn).has_queued(typed.session_id) is True
+
+
+def test_claiming_a_typed_open_turn_clears_a_stale_run_state(pg_dsn):
+    """A run closed by any path but the normal close (the sweep, a lost reply) leaves its
+    state behind. The researcher's next message starts a new run, so its claim clears it."""
+    row = session(pg_dsn)
+    sql(pg_dsn, "UPDATE sessions SET auto_reply = %s WHERE session_id = %s",
+        (json.dumps({"replies": 9, "planning_rounds": 1, "answered": []}), row.session_id))
+    turn_id = turn(pg_dsn, row.session_id, row.project_id, "keep going.")
+    assert claim_as(pg_dsn, turn_id, row.session_id, row.project_id) is not None
+    assert stored_state(pg_dsn, row.session_id) is None
+
+
+def test_claiming_the_host_s_own_reply_keeps_the_run_state(pg_dsn):
+    """The run's own turns must carry the state forward, or no budget ever accrues."""
+    row = queued_reply(pg_dsn)
+    turn_id = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND outcome = 'queued'",
+                  (row.session_id,))[0][0]
+    before = stored_state(pg_dsn, row.session_id)
+    assert before is not None
+    assert claim_as(pg_dsn, turn_id, row.session_id, row.project_id) is not None
+    assert stored_state(pg_dsn, row.session_id) == before
+
+
+def test_a_duplicate_delivery_of_a_closed_turn_leaves_the_state_alone(pg_dsn):
+    row = session(pg_dsn)
+    closed = turn(pg_dsn, row.session_id, row.project_id, "keep going.", completed=True, outcome="ok")
+    state = {"replies": 2, "planning_rounds": 0, "answered": []}
+    sql(pg_dsn, "UPDATE sessions SET auto_reply = %s WHERE session_id = %s", (json.dumps(state), row.session_id))
+    claim_as(pg_dsn, closed, row.session_id, row.project_id)
+    assert stored_state(pg_dsn, row.session_id) == state
