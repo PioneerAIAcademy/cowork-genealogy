@@ -69,7 +69,8 @@ Otherwise → proceed.
    unrelated places match and the search gives nothing to choose by, return
    that the place could not be resolved, with the candidates, and stop.
 2. **Fetch the curated list.** One `external_links_search({ standardPlace, startYear, endYear })`.
-   Never pass `projectPath` or `host`.
+   Never pass `projectPath` or `host`. Never call it again, with or without
+   years.
 3. **Select at most 8 rows, then build.** Read each row's host from its `url`.
    A row is buildable only when its host is exactly one of these; any other
    host, including another subdomain of the same site (`chroniclingamerica.loc.gov`,
@@ -123,8 +124,9 @@ Otherwise → proceed.
 - Every link you write is a `url` a tool returned in this run, character for
   character.
 - Fewer than 3 entries: give what you have and say that is all FamilySearch
-  lists for that place and period. Zero rows, or zero entries: say no curated
-  external collection was found for that place and period, and stop. Never pad
+  lists for that place and period. Zero rows, or zero entries: below the `---`
+  write exactly `FamilySearch lists no external collection for <standardPlace>,
+  <years searched>.` and nothing else: no link, no advice, no history. Never pad
   with a site you chose yourself.
 
 ## Return contract
