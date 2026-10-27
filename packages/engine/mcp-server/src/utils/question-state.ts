@@ -96,6 +96,19 @@ function pendingExtraction(research: any, logs: any[]): any[] {
 }
 
 /** The lowest-sequence `planned`/`in_progress` item on a plan that is still active. */
+/** Which search destination a plan item wants, by its repository.
+ *
+ *  Lifted so section E's conflict-evidence arm and the ladder's own dispatch arm
+ *  cannot disagree. They would: the plan writes E's arm as "the next step is
+ *  search-records", which is right for the FamilySearch item it had in mind and
+ *  wrong for a conflict whose decisive record is on Ancestry -- the router would
+ *  spawn the wrong agent. */
+function searchStepFor(item: any): string {
+  const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
+  if (!repo || /familysearch/i.test(repo)) return "search-records";
+  return `search-external-sites — ${item.id} (${repo})`;
+}
+
 function nextUnexecutedItem(plans: any[]): any | null {
   const items = plans
     .filter((p) => p?.status === undefined || p?.status === "active")
@@ -465,6 +478,30 @@ function ownedLogEntries(research: any, itemIds: Set<any>): any[] {
  *  evidence reaches and leaves it open (decision 12). A log entry the weighed
  *  list does not cover -- a later upload, a steer's search -- is new evidence,
  *  and sends it back to conflict-resolution. */
+/** Section E: every open conflict is analysed, and the question has open items
+ *  that could settle it.
+ *
+ *  The open-items complement of `unsettledConflictWeighed`: that one fires when
+ *  nothing is left to search, this one when something is. Without it the
+ *  conflict rung below sends every pass back to conflict-resolution and the
+ *  items the route PRs ask research-plan to write never run.
+ *
+ *  `independence_analysis` is the marker because conflict-resolution fills it on
+ *  every analysis, resolved or not. A conflict not yet analysed still goes to
+ *  conflict-resolution first, even beside an analysed one. */
+function conflictEvidenceWanted(
+  research: any,
+  openConflictIds: string[],
+  plans: any[],
+): boolean {
+  if (openConflictIds.length === 0) return false;
+  if (!hasOpenWork(research, plans)) return false;
+  const open = new Set(openConflictIds);
+  return arr(research?.conflicts)
+    .filter((c) => open.has(c?.id))
+    .every((c) => Boolean(c?.independence_analysis));
+}
+
 function unsettledConflictWeighed(
   research: any,
   openConflictIds: string[],
@@ -556,6 +593,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       : `proof-conclusion — unsettled conflict ${openConflictIds.join(", ")} has weighed every ` +
         "log entry and nothing is left to search: conclude at the tier the evidence reaches " +
         "and leave the question open";
+  } else if (conflictEvidenceWanted(research, openConflictIds, plans)) {
+    // Section E: a conflict that needs new evidence becomes plan items on this
+    // question rather than a helper question. Routing to conflict-resolution
+    // again would hand it the evidence it has already weighed.
+    const item = nextUnexecutedItem(plans);
+    nextStep = item ? searchStepFor(item) : "search-records";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
@@ -610,10 +653,8 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
     const item = nextUnexecutedItem(plans);
-    const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
     if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
-    else if (!repo || /familysearch/i.test(repo)) nextStep = "search-records";
-    else nextStep = `search-external-sites — ${item.id} (${repo})`;
+    else nextStep = searchStepFor(item);
   }
 
   // Copied verbatim, never re-mapped or re-validated: this tool skips malformed

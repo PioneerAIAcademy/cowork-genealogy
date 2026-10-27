@@ -977,8 +977,12 @@ describe("questionStatus — ending on an unsettled conflict (section E, decisio
   });
 
   it("does not fire while a plan item is still open", () => {
+    // With the conflict already analysed this is section E's OTHER arm: there
+    // is something left to search, so go run it rather than weigh again.
     const d = doc({ plans: [plan("planned")], log, conflicts: [conflict()] });
-    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+    const step = questionStatus(d, question()).nextStep;
+    expect(step).not.toMatch(/unsettled conflict/);
+    expect(step).toBe("search-records");
   });
 
   it("does not fire on a conflict never analysed, or one with no weighed list", () => {
@@ -998,5 +1002,83 @@ describe("questionStatus — ending on an unsettled conflict (section E, decisio
   it("the same holds for a question already exhaustive_declared", () => {
     const s = questionStatus(settled(), question({ status: "exhaustive_declared" }));
     expect(s.nextStep).toMatch(/^proof-conclusion — unsettled conflict/);
+  });
+});
+
+describe("questionStatus — a conflict that wants new evidence (section E)", () => {
+  const openPlan = (repository = "FamilySearch") => ({
+    id: "pl_1",
+    question_id: Q,
+    status: "active",
+    items: [{ id: "pli_1", status: "planned", sequence: 1, repository }],
+  });
+  const analysed = (extra: Record<string, unknown> = {}) => ({
+    id: "cf_1",
+    status: "unresolved",
+    blocks_question_ids: [Q],
+    independence_analysis: "Both trace to the same compiled abstract.",
+    ...extra,
+  });
+
+  it("routes to the search once every open conflict has been analysed", () => {
+    // Without this the conflict rung fires forever and the items the route PRs
+    // ask research-plan to write never run -- the loop they would introduce.
+    const d = doc({ plans: [openPlan()], log: [], conflicts: [analysed()] });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("names search-external-sites when the decisive item is not FamilySearch", () => {
+    // The plan writes this arm as "the next step is search-records", right for
+    // a FamilySearch item and wrong for an Ancestry one: the router would spawn
+    // the wrong agent. The item is asked, as the dispatch arm already does.
+    const d = doc({ plans: [openPlan("Ancestry")], log: [], conflicts: [analysed()] });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "search-external-sites — pli_1 (Ancestry)",
+    );
+  });
+
+  it("an unanalysed conflict goes to conflict-resolution first, even beside an analysed one", () => {
+    const d = doc({
+      plans: [openPlan()],
+      log: [],
+      conflicts: [analysed(), analysed({ id: "cf_2", independence_analysis: null })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "conflict-resolution — unresolved cf_1, cf_2",
+    );
+  });
+
+  it("does not fire with no open item — that is the unsettled arm's case", () => {
+    const d = doc({
+      plans: [{ ...openPlan(), items: [{ id: "pli_1", status: "completed", repository: "FamilySearch" }] }],
+      log: [],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).not.toBe("search-records");
+  });
+
+  it("an item waiting only on an upload is not an open item here either", () => {
+    // Section I. Counting it would route forever to a search nobody can run.
+    const d = doc({
+      plans: [{
+        ...openPlan("Ancestry"),
+        items: [{ id: "pli_1", status: "in_progress", repository: "Ancestry" }],
+      }],
+      log: [{
+        id: "log_9",
+        plan_item_id: "pli_1",
+        tool: "external_site",
+        outcome: "partial",
+        external_site: {
+          site: "ancestry",
+          url_generated: "https://example.test/s?q=9",
+          capture_received: false,
+        },
+      }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).not.toBe(
+      "search-external-sites — pli_1 (Ancestry)",
+    );
   });
 });
