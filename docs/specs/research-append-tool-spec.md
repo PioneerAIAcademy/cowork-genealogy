@@ -206,11 +206,11 @@ camelCase convenience fields the same way `research_log_append` does.
   `narration_guidance` and `intended_audience`, stamps **nothing** (its schema is
   `additionalProperties: false` with no timestamp field), and is **not**
   set-once — a researcher who picked the wrong experience level needs a route
-  that is not starting the project over. It is also the one section created **on
-  first write when absent**: the schema makes it optional, and an agent must
-  never fabricate a profile, so the object appears when init-project writes the
-  fixed profile (or a caller corrects a field) rather than being seeded by any
-  other writer.
+  that is not starting the project over. `project_create` seeds it on every
+  create (`HOUSE_RESEARCHER_PROFILE`: the fixed house default, never a claim about
+  the researcher). It is also the one section created **on first write when
+  absent**: the schema makes it optional, so a project created before that seed
+  gets the object when a caller first writes a field.
 
   Making another field settable later = extend that section's `allowedFields`.
 

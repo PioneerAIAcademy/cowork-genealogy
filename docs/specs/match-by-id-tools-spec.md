@@ -330,7 +330,7 @@ Mapped output:
 | `minConfidence` out of `[1, 5]`          | Throws "minConfidence must be 1..5."                                                          |
 | `count` out of `[1, 50]`                 | Throws "count must be 1..50."                                                                 |
 | `status[]` contains unknown value        | Throws "Unknown status `<value>`. Expected `accepted`, `pending`, or `rejected`."             |
-| Upstream 401                             | Re-throws as "FamilySearch match API rejected the request: 401 Unauthorized. Call the login tool to authenticate." |
+| Upstream 401                             | Re-throws as "FamilySearch match API rejected the request: 401 Unauthorized. Call the login tool to authenticate." In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | Upstream 400 (bad ARK)                   | Re-throws as "FamilySearch rejected the id `<value>` as a malformed ARK."                     |
 | Upstream non-2xx                         | Re-throws as "FamilySearch match API error: `<status> <statusText>`."                         |
 | Upstream 200 carrying a `not-found` link | Throws "FamilySearch has no record persona / tree person at `<ark>` …" — see "Unresolvable ids" |

@@ -10,6 +10,7 @@ import type {
   SourceAttachmentsResult,
   AttachedPerson,
 } from "../types/source-attachments.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const URL =
   "https://www.familysearch.org/service/tree/links/sources/attachments";
@@ -46,9 +47,7 @@ async function fetchAttachmentMap(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate.",
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       let body: unknown = null;

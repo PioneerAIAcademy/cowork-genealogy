@@ -7,8 +7,9 @@
  *       # also stages the read under /tmp/p/results/.staging/ (an existing
  *       # folder) and checks the staged document equals the printed result
  *   npx tsx dev/try-person-read.ts KNDX-MKG --project /tmp/p --build
- *       # then builds the starting tree from the staged read (`project_create`
- *       # with `personReadRef` and a fixed objective) and prints how many edges
+ *       # then creates the project the way init-project does (`project_create`
+ *       # with `personId` and a fixed objective, which reads the person again),
+ *       # prints its summary, its size and how long it took, and how many edges
  *       # carry a source other than the FamilySearch-tree one. /tmp/p must hold
  *       # no project yet: `project_create` never overwrites one.
  *
@@ -75,20 +76,31 @@ if (projectPath) {
         `${edgeRefs.filter((r) => !sourceIds.has(r.ref)).length} unresolved`,
     );
 
-    const created = await projectCreate({
-      projectPath,
-      objective: "Smoke test: build the starting tree from the staged person_read.",
-      personReadRef: result.staged.resultsRef,
-    });
+    const startedAt = Date.now();
+    const created = await projectCreate(
+      {
+        projectPath,
+        objective: "Smoke test: create the project from the FamilySearch person.",
+        personId,
+      },
+      LOCAL,
+    );
+    const elapsed = Date.now() - startedAt;
     if (!created.ok) {
       console.error(`NOT BUILT: ${created.errors.join("; ")}`);
       process.exit(1);
     }
+    console.error(JSON.stringify(created, null, 2));
+    console.error(
+      `project_create took ${(elapsed / 1000).toFixed(1)} s; its answer is ` +
+        `${JSON.stringify(created).length} characters`,
+    );
     // The tree's side: a ref other than the FamilySearch-tree source (`S1`), which every
     // edge carries. `remapRefs` drops an unresolved ref silently, so this count is the
     // check that the refs survived the build.
     const tree = JSON.parse(await getProjectStore().readText(projectPath, "tree.gedcomx.json"));
-    const fsTree = created.idMap.familySearchTreeSource;
+    // `S1` is the FamilySearch-tree source of every tree built from a read.
+    const fsTree = "S1";
     const treeEdges: Array<{ sources?: Array<{ ref: string }> }> = tree.relationships;
     const own = treeEdges.filter((r) => (r.sources ?? []).some((x) => x.ref !== fsTree));
     console.error(

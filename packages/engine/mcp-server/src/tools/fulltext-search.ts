@@ -22,6 +22,7 @@ import {
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
@@ -233,9 +234,7 @@ export async function fulltextSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session expired; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session expired; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
