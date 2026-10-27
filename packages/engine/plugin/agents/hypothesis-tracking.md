@@ -448,7 +448,7 @@ Competing hypotheses:
 
 Next steps:
   - h_001 is ready for proof-conclusion
-  - h_003 needs more evidence — suggest question-selection
+  - h_003 needs more evidence — suggest research-plan
 ```
 
 Name every `h_` id you created or changed and its new status, and the
