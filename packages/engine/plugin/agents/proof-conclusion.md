@@ -144,7 +144,7 @@ record. Report the failing IDs and route.
 **Except under `wrapUp: yes`, for step 3 only.** Proceed, conclude at
 `not_proved` with `shortfall: "gap"`, name who is unidentified and what
 identifying them would take, and resolve the question (§7). A question with no
-assertions at all is this case. Step 2's conflict IDs still stop you under
+assertions at all is this case. Step 4's conflict IDs still stop you under
 `wrapUp: yes` — see §7.
 
 **If step 4 produces failing IDs, do not conclude the question — but do record
@@ -328,7 +328,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 **A blocking conflict still holds the question open, `wrapUp: yes` or not.** Write or refresh the `not_proved` summary with `shortfall: "conflict"`, leave `status` as it is, and name the conflict. Do not rely on the writer tool to stop you: it builds its blocking set from the summary's `supporting_assertion_ids`, so a summary citing none resolves straight over an open conflict.
 
-**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9, which routes it to research-plan as plan items on this question.
+**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9, which names research-plan as where it would be planned.
 
 `resolution_assertion_ids` are the `a_` ids the conclusion rests on — the same ones in the summary's `supporting_assertion_ids`.
 
@@ -336,8 +336,8 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
-- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`. That write is refused while a blocking conflict is unresolved.
-- **Unless the delegation passed `newQuestion: yes`:** do not write `completed`. Call `research_append({ section: "project", op: "update", fields: {} })` instead and say the new question is next. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
+- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`. That write is refused while a blocking conflict is unresolved, on a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
+- **If the delegation passed `newQuestion: yes`, do not write `completed`.** Call `research_append({ section: "project", op: "update", fields: {} })` instead and say the new question is next.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and fewer than two hypotheses for the question is refused — decline, and name hypothesis-tracking as the next step.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
@@ -352,8 +352,8 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — in this order, first that applies: the question is still open → the step that unblocks it; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**. Never question-selection for an advanceable tier.
-- **What would advance the tier**, when it is below `proved`: one line, naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo). Say it even when the project is complete, as what more would take rather than as the next step.
+- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with choosing the next question?"; the question is still open → the step that unblocks it; another question is still open → question-selection; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **What would advance the tier**, when it is `probable`, `possible` or `not_proved`: one line naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo) — and naming **research-plan** as where that search would be planned. Never question-selection: advancing a tier is a search on the question already answered. Say it even when the project is complete, where it is what more would take rather than the next step.
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.

@@ -24,8 +24,9 @@
     "Must RESOLVE q_001 in the same batch as the summary: `status: \"resolved\"` with `resolved` and `resolution_assertion_ids` (an empty list is correct here, since no assertion supports it). Declining to resolve is the failure this test exists for — under `wrapUp: yes` the researcher's decision is the reason the question closes, not the evidence.",
     "Must NOT decline, route to research-plan, or ask for more searching. The body's normal routing applies when the agent is choosing what to do next; here the researcher has already chosen.",
     "The summary should say plainly what identifying the parents would take — the planned census search that was never run — so the researcher can see what they are setting aside. A summary that merely states there is no evidence is thinner than the rule asks for.",
-    "Do NOT charge the agent for leaving `project.status` alone. Resolving the only open question would normally complete the project, and completing it here is acceptable; neither choice is the point of this test.",
-    "`search_stop` is research-exhaustiveness's field. The agent must not write it, and must not be charged for leaving `stopped_because` null."
+    "`search_stop` is research-exhaustiveness's field. The agent must not write it, and must not be charged for leaving `stopped_because` null.",
+    "q_001 is the project's only question, so resolving it means every question is `resolved`: §8 writes `project.status: \"completed\"`. The delegation passes no `newQuestion`, so nothing holds it open. Leaving the status alone is a miss, not an allowance.",
+    "The next-step line then says the project is complete. Naming research-plan there is the fall-through §9's ordered arms exist to prevent."
   ],
   "judge_reads_files": true,
   "execution": {

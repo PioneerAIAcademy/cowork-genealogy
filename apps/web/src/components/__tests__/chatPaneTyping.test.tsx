@@ -220,7 +220,7 @@ describe('1c: Stop', () => {
     conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'ok' } })
     // Derived from the labels themselves: the old regex could not match the
     // reworded `completed` label, so this could no longer fail on a leak.
-    for (const label of Object.values(TURN_OUTCOME_LABELS)) expect(screen.queryByText(label)).toBeNull()
+    for (const label of [...Object.values(TURN_OUTCOME_LABELS), SPEND_CAP_LABEL]) expect(screen.queryByText(label)).toBeNull()
   })
 })
 

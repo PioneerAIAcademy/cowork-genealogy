@@ -4,7 +4,7 @@
     "skill": "proof-conclusion",
     "name": "A tier that could advance routes to research-plan, not question-selection (E)",
     "type": "positive",
-    "description": "The richardson-parentage-not-exhaustive scenario concludes at probable with searches still outstanding, so the tier could advance. Section E moves that route: it used to read 'question-selection or research-plan' and now names research-plan alone. A tier that could advance is a SEARCH, and sending it to question-selection asks for a NEW question while the current one is unfinished — which under step mode starts the next step on the wrong agent.",
+    "description": "Plan section E's route line. On this scenario the single question resolves at `probable` and the project completes, so §9's next-step line correctly says so -- that is NOT what this grades. What it grades is the other half of the line: when the agent names what would advance the tier, it must name research-plan and never question-selection, because advancing a tier is a search on the question already answered rather than a new question. An earlier version of this test asserted the question was unfinished, which the body does not produce here and which would have failed a correct run.",
     "tags": [
       "proof",
       "parentage",
