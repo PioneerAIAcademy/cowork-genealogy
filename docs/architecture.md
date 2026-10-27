@@ -222,15 +222,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **30** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-nine agents are `gps-mentor`, `record-structurer`,
+The thirty agents are `gps-mentor`, `record-structurer`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `search-records`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`,
 `timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project`, `tree-survey` and `research-plan`.
+`init-project`, `tree-survey`, `research-plan` and `where-else-to-search`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -1471,16 +1471,15 @@ broadcasts a `sidecar_updated` naming a log id that does not exist.
 The two documents and the sidecars are **written by different mechanisms**, and
 conflating them is the easy mistake. The documents go through validating writer
 tools called by the model. A **sidecar is staged host-side by the search tool
-that produced it** — `record_search`, `fulltext_search`, and
-`external_links_search` write their payload into `results/.staging/` and return a
+that produced it** — `record_search` and `fulltext_search` write their payload
+into `results/.staging/` and return a
 handle plus a **reduced** inline copy, which `research_log_append` later
 finalizes. The reduction differs by tool: `record_search` drops `gedcomx`,
 `collectionUrl`, and empty `treeMatches`, hoists `collectionTitle` into a
 response-level map, and de-duplicates `events`; `fulltext_search` drops
 `textDocument`; both leave
-name/date/place stubs for triage. `external_links_search` reduces differently —
-it caps the *number* of inline rows and leaves each row intact, because its
-payload is curated third-party URLs with nothing to triage on. **The full payload travels
+name/date/place stubs for triage. `external_links_search` stages nothing since
+2026-10: its durable copy is `external-collections.json` (above). **The full payload travels
 search tool → disk → log-append and never round-trips through the model**
 (`search-result-staging-spec.md`).
 

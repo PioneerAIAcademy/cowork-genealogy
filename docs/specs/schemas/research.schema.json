@@ -580,7 +580,8 @@
         },
         "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" },
         "skip_category": { "$ref": "enums.schema.json#/$defs/skip_category" },
-        "skip_reason": { "type": "string" }
+        "skip_reason": { "type": "string" },
+        "collection_url": { "type": "string", "minLength": 1 }
       }
     },
     "log_entry": {
