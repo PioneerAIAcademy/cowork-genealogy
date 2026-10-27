@@ -1424,7 +1424,10 @@ def test_same_person_attests_on_the_project_relative_arm(tmp_path):
     entry = rec["scores"]["a_001|I1"]
     assert entry["record_id"] == "1:1:ABCD-123"
     assert entry["tree_person_id"] == "I1"
-    assert entry["score"] == 0.005            # the fixture's own number
+    fixture = json.loads(
+        (FIXTURES_DIR / "same-person-flynn-degenerate.json").read_text(encoding="utf-8")
+    )
+    assert entry["score"] == fixture["response"]["score"]   # the fixture's own number
     assert entry["record_source"] == "record_read"   # persona id present
     assert call_log[-1]["attested"] is True
 

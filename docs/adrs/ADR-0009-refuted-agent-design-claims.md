@@ -303,9 +303,12 @@ a graduation, must satisfy all six:
    (`docs/specs/guardrail-enforcement-spec.md` §5, "Prefer this shape") with
    defined handling for an assertion and its link arriving in one batch.
 5. **Demand the call, not a score threshold.** A thin tree person — one name
-   and one fact — legitimately scores near zero against everything, because the
-   match engine scores on document content (`same-person-flynn-degenerate`), so
-   a threshold would block a correct link. Having no FamilySearch ARK is not such
+   and one fact — scores the right record in the weak band, because the match
+   engine scores on document content: 0.24 against the matching 1850 census,
+   0.44 once two facts are added (`same-person-flynn-degenerate`, measured
+   2026-10-24). A threshold would block that correct link. The "near zero
+   against everything" first written here came from scoring the record's first
+   persona, not its focus person, which PR #3555 fixed. Having no FamilySearch ARK is not such
    a case: the person is still scored on content (constraint 6's probe).
 6. **Satisfiability.** State **which call shape satisfies the gate, and how often
    agents actually produce that shape.** A constraint an agent cannot practically
