@@ -794,7 +794,18 @@ describe("questionStatus — the researcher's choice (section B)", () => {
     );
   });
 
-  it("defaults to proof-conclusion when the stop names an overturn risk", () => {
+  it("defaults to research-plan when the overturn risk is high — a named source could change the answer", () => {
+    for (const justification of [
+      "Overturn risk: high — the 1880 probate packet is unsearched.",
+      "overturn risk: HIGH",
+      "Overturn risk: lowish? no — high",
+    ]) {
+      const s = questionStatus(doc(settled()), spent({ justification }));
+      expect(s.nextStep, justification).toMatch(/\(default research-plan\)$/);
+    }
+  });
+
+  it("defaults to proof-conclusion when the overturn risk is low", () => {
     const s = questionStatus(
       doc(settled()),
       spent({ justification: "Overturn risk: low — two independent sources agree." }),
@@ -900,5 +911,92 @@ describe("questionStatus — the researcher's choice (section B)", () => {
     };
     const d = doc(oneItem("completed", [handOff(true), elsewhere]));
     expect(questionStatus(d, spent()).nextStep).toMatch(/researcher's choice/);
+  });
+});
+
+describe("questionStatus — ending on an unsettled conflict (section E, decision 12)", () => {
+  // Once a conflict cannot be settled and nothing is left to search, re-running
+  // conflict-resolution weighs the same evidence forever. `weighed_log_entry_ids`
+  // is what tells "already weighed" from "new evidence to weigh".
+  const plan = (status: string) => ({
+    id: "pl_1", question_id: Q, status: "active",
+    items: [{ id: "pli_1", status }],
+  });
+  const log = [
+    { id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+    { id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" },
+  ];
+  const conflict = (extra: Record<string, unknown> = {}) => ({
+    id: "c_1", status: "unresolved", blocks_question_ids: [Q],
+    independence_analysis: "Both trace to the same informant.",
+    weighed_log_entry_ids: ["log_1", "log_2"],
+    ...extra,
+  });
+  const settled = (extra: Record<string, unknown> = {}) =>
+    doc({ plans: [plan("completed")], log, conflicts: [conflict()], ...extra });
+
+  it("an analysed conflict that has weighed every entry, nothing open, routes to proof-conclusion", () => {
+    const s = questionStatus(settled(), question());
+    expect(s.nextStep).toMatch(/^proof-conclusion — unsettled conflict c_1/);
+  });
+
+  it("once the not_proved conflict summary exists, nothing further is due", () => {
+    const d = settled({
+      proof_summaries: [{ id: "ps_1", question_id: Q, tier: "not_proved", shortfall: "conflict" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toBeNull();
+  });
+
+  it("a summary of another shortfall is not the terminal marker", () => {
+    const d = settled({
+      proof_summaries: [{ id: "ps_1", question_id: Q, tier: "not_proved", shortfall: "gap" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^proof-conclusion/);
+  });
+
+  it("one log entry the weighed list does not cover sends it back to conflict-resolution", () => {
+    const d = settled({
+      log: [...log, { id: "log_3", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution — unresolved c_1/);
+  });
+
+  it("a researcher's upload closing a hand-off is evidence the list must cover too", () => {
+    const url = "https://example.org/search?q=x";
+    const d = settled({
+      log: [
+        ...log,
+        { id: "log_3", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+          external_site: { site: "ancestry", url_generated: url, capture_received: false } },
+        { id: "log_4", tool: "external_site", outcome: "positive",
+          external_site: { site: "ancestry", url_generated: url, capture_received: true } },
+      ],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_1", "log_2", "log_3"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("does not fire while a plan item is still open", () => {
+    const d = doc({ plans: [plan("planned")], log, conflicts: [conflict()] });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("does not fire on a conflict never analysed, or one with no weighed list", () => {
+    for (const c of [conflict({ independence_analysis: null }), conflict({ weighed_log_entry_ids: undefined })]) {
+      const d = doc({ plans: [plan("completed")], log, conflicts: [c] });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+    }
+  });
+
+  it("an unanalysed conflict beside an analysed one still goes to conflict-resolution first", () => {
+    const d = settled({
+      conflicts: [conflict(), conflict({ id: "c_2", independence_analysis: "" })],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("the same holds for a question already exhaustive_declared", () => {
+    const s = questionStatus(settled(), question({ status: "exhaustive_declared" }));
+    expect(s.nextStep).toMatch(/^proof-conclusion — unsettled conflict/);
   });
 });

@@ -5138,6 +5138,28 @@ const PLAN_ITEM_OUTSTANDING = [...VALIDATOR_ENUMS.plan_item_status].filter(
  *  `proof_summaries[].question_id`, `plans[].items[].status` and `log[]` — so
  *  ADR-0011 puts it here rather than in a skill body.
  */
+/** The same rule for a batch: the gate above reads the pre-call snapshot, so a
+ *  question appended by an EARLIER op of this call is invisible to it, and one
+ *  `ops` batch could open several questions at once (decision 4: one question per
+ *  run). Any question in the working document that the snapshot lacks, other than
+ *  this op's own, was opened in this call and blocks this one. */
+function secondQuestionInOneCallInvariants(entry: any, research: any, preCallResearch: any): string[] {
+  const before = new Set<string>(
+    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+      .map((q: any) => q?.id)
+      .filter((id: unknown): id is string => typeof id === "string"),
+  );
+  const openedThisCall = (Array.isArray(research?.questions) ? research.questions : [])
+    .map((q: any) => q?.id)
+    .filter((id: unknown): id is string => typeof id === "string" && !before.has(id) && id !== entry?.id);
+  if (openedThisCall.length === 0) return [];
+  return [
+    `a new question cannot be opened while another is still open: ${openedThisCall.sort().join(", ")} ` +
+      "was opened earlier in this same call. Open one question at a time: write the first, " +
+      "and offer the next one when the first is concluded.",
+  ];
+}
+
 function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: any): string[] {
   const concluded = new Set<string>(
     (Array.isArray(preCallResearch?.proof_summaries) ? preCallResearch.proof_summaries : [])
@@ -7096,6 +7118,7 @@ function applyOne(
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");

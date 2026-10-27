@@ -635,7 +635,7 @@ Array of question objects.
 
 `paywalled` is for a paywalled hit that was never handed to the user. `wiki_named_untouched` entries come from the `guide_markdown` of a locality the project already holds. `wiki_title` is the page title from `pages_read[].url` (the segment after `/wiki/`), never the `pages_read[].section` enum, which the validator would also accept.
 
-`deferred` is the one kind that names a source the agent **chose** not to reach rather than one it could not, which is why this field reads "not reached" and not "unreachable". Step mode's "not exhaustive" choice (decision 21) writes one entry per source this question never planned, so the declaration states what it is leaving instead of omitting it, and the researcher being offered the choice can see what searching on would cover. The film, image or URL goes in `description`.
+`deferred` is the one kind that names a source the agent **chose** not to reach rather than one it could not, which is why this field reads "not reached" and not "unreachable". Step mode's "not exhaustive" choice (decision 21) writes one entry per source this question never planned, so the declaration states what it is leaving instead of omitting it, and the researcher being offered the choice can see what searching on would cover. The film, image or URL goes in `description`, which a `deferred` entry must carry non-blank (validator and schema both): "Search more" plans from these entries, and one with no description names nothing to plan.
 
 ### 5.3 `plans`
 

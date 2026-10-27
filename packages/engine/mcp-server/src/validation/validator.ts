@@ -1014,6 +1014,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           if (nr.kind === "wiki_named_untouched" && (nr.wiki_title === null || nr.wiki_title === undefined)) {
             addError(report, nrp, "wiki_title is required (non-null) when kind is 'wiki_named_untouched'");
           }
+          // A `deferred` entry is the only record of a source this question chose
+          // not to plan, and "Search more" plans from it (step mode, section B): the
+          // film, image or URL lives in `description`, so one with none names nothing.
+          if (nr.kind === "deferred" && (typeof nr.description !== "string" || nr.description.trim() === "")) {
+            addError(report, nrp, "description is required (non-blank) when kind is 'deferred': name the source left unsearched");
+          }
         }
       }
     }
@@ -1522,8 +1528,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     // The question's log entries conflict-resolution has weighed. Optional,
     // and it mirrors search_stop.log_entry_ids, so it is checked the same
-    // way: an array whose every id resolves to a real log entry.
-    if ("weighed_log_entry_ids" in c && c.weighed_log_entry_ids !== null) {
+    // way: an array whose every id resolves to a real log entry. Absent is
+    // allowed; null is not, because the JSON Schema has no null branch.
+    if ("weighed_log_entry_ids" in c) {
       const weighed = c.weighed_log_entry_ids;
       if (!Array.isArray(weighed)) {
         addError(report, cp, "weighed_log_entry_ids must be an array");

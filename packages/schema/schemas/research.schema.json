@@ -318,7 +318,7 @@
       }
     },
     "search_stop": {
-      "description": "Why searching stopped on this question and what could not be reached. `stopped_because` is null on a newly created question (no stop decision yet). The three stop-gate values (`question_answered`, `record_exhausted`, `nothing_further_reachable`) permit status `exhaustive_declared` and a proof tier; the two non-gate values keep status `in_progress`. Renamed from `exhaustive_declaration` (issue #2539, 2026-10-07).",
+      "description": "Why searching stopped on this question and what could not be reached. `stopped_because` is null on a newly created question (no stop decision yet). The three stop-gate values (`question_answered`, `record_exhausted`, `nothing_further_reachable`) permit status `exhaustive_declared` and the two CONCLUSIVE tiers, `proved` and `disproved`; the two non-gate values keep status `in_progress`. Renamed from `exhaustive_declaration` (issue #2539, 2026-10-07).",
       "type": "object",
       "required": [
         "stopped_because",
@@ -403,7 +403,7 @@
       ]
     },
     "not_reached_entry": {
-      "description": "One source, collection, or record type that could not be reached. Built from things the agent already produces: nil searches, browse-only collections, over-cap images, paywalled hits, handed-to-user items, privacy-sealed records, skipped plan items, and wiki-named record types never touched.",
+      "description": "One source, collection, or record type that could not be reached. Built from things the agent already produces: nil searches, browse-only collections, over-cap images, paywalled hits, handed-to-user items, privacy-sealed records, skipped plan items, wiki-named record types, and `deferred` sources this question chose not to plan (step mode's \"not exhaustive\" choice) never touched.",
       "type": "object",
       "required": [
         "kind",
@@ -454,6 +454,26 @@
             },
             "required": [
               "wiki_title"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "deferred"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "description": {
+                "type": "string",
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "description"
             ]
           }
         }

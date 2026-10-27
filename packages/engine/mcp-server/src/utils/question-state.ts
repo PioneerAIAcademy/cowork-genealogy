@@ -391,19 +391,14 @@ export function whyConflictBlocksCompletion(conflict: any, research: any): strin
   return reasons.length > 0 ? reasons.join("; ") : "unresolved";
 }
 
-/**
- * The state of one question plus the step it is waiting on.
- *
- * The state ladder is monotonic on what was PRODUCED, not on tidiness: a
- * question with a proof summary is `concluded` even if its plan is thin,
- * because the artifact is what any downstream check joins on.
- */
-/** Whether a `resources_spent` stop carries an "Overturn risk:" justification,
- *  which is what makes concluding the safer default rather than searching on.
- *  An older stop wrote no such prefix, so it defaults to research-plan. */
-function overturnRisk(question: any): boolean {
+/** Whether a `resources_spent` stop's justification opens with the verdict
+ *  "Overturn risk: low", which is what makes concluding the default (section B).
+ *  "Overturn risk: high — <sources>" names a source that could change the
+ *  answer, so it defaults to searching it; an older stop wrote free prose and
+ *  defaults to research-plan too. Only the low verdict concludes. */
+function lowOverturnRisk(question: any): boolean {
   const justification = question?.search_stop?.justification;
-  return typeof justification === "string" && /^\s*overturn risk:/i.test(justification);
+  return typeof justification === "string" && /^\s*overturn risk:\s*low\b/i.test(justification);
 }
 
 /** Section B's choice: a question whose search stopped on RESOURCES, with
@@ -427,31 +422,74 @@ function researcherChoice(research: any, question: any, plans: any[], itemIds: S
   const stop = question?.search_stop;
   if (stop?.stopped_because !== "resources_spent") return false;
   if (arr(research?.proof_summaries).some((s) => s?.question_id === question?.id)) return false;
+  if (hasOpenWork(research, plans)) return false;
+  // Every entry the question owns must be named by the stop.
+  const listed = new Set(arr(stop?.log_entry_ids));
+  return ownedLogEntries(research, itemIds).every((e) => listed.has(e?.id));
+}
 
+/** Whether the question's active plan still has work the agent can do: a
+ *  `planned` or `in_progress` item, not counting one waiting only on an upload
+ *  (section I), since the researcher is the blocker there. */
+function hasOpenWork(research: any, plans: any[]): boolean {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
-  const stillOpen = plans
+  return plans
     .filter((p) => p?.status === "active")
     .flatMap((p) => arr(p?.items))
     .some(
       (i) =>
         (i?.status === "planned" || i?.status === "in_progress") && !waitingOnUpload.has(i?.id),
     );
-  if (stillOpen) return false;
+}
 
-  // Every entry the question owns must be named by the stop. "Owns" is its
-  // items' entries PLUS the later entries that close one of their hand-offs.
-  const listed = new Set(arr(stop?.log_entry_ids));
+/** The log entries a question owns: its items' entries PLUS each later entry
+ *  that closes one of their external-site hand-offs. The closing entry is the
+ *  researcher's upload and carries no `plan_item_id`, so a plain filter would
+ *  never see it; it is matched by URL with the same `closesHandOff` rule
+ *  `awaitingUserHandOffs` uses. Section B's coverage set, and section E's. */
+function ownedLogEntries(research: any, itemIds: Set<any>): any[] {
   const handOffUrls = arr(research?.log)
     .filter((e) => itemIds.has(e?.plan_item_id))
     .map((e) => externalSiteOf(e)?.url_generated)
     .filter((u): u is string => typeof u === "string");
-  const owned = arr(research?.log).filter(
-    (e) =>
-      itemIds.has(e?.plan_item_id) || handOffUrls.some((url) => closesHandOff(e, url)),
+  return arr(research?.log).filter(
+    (e) => itemIds.has(e?.plan_item_id) || handOffUrls.some((url) => closesHandOff(e, url)),
   );
-  return owned.every((e) => listed.has(e?.id));
 }
 
+/** Section E's ending on an unsettled conflict: every open conflict has been
+ *  analysed (`independence_analysis`) over every log entry the question owns
+ *  (`weighed_log_entry_ids`), and nothing is left to search. Re-running
+ *  conflict-resolution there weighs the same evidence again, forever, so the
+ *  question goes to proof-conclusion instead, which concludes at the tier the
+ *  evidence reaches and leaves it open (decision 12). A log entry the weighed
+ *  list does not cover -- a later upload, a steer's search -- is new evidence,
+ *  and sends it back to conflict-resolution. */
+function unsettledConflictWeighed(
+  research: any,
+  openConflictIds: string[],
+  plans: any[],
+  itemIds: Set<any>,
+): boolean {
+  if (openConflictIds.length === 0 || hasOpenWork(research, plans)) return false;
+  const owned = ownedLogEntries(research, itemIds).map((e) => e?.id);
+  const open = new Set(openConflictIds);
+  return arr(research?.conflicts)
+    .filter((c) => open.has(c?.id))
+    .every((c) => {
+      const analysed = typeof c?.independence_analysis === "string" && c.independence_analysis.trim() !== "";
+      const weighed = new Set(arr(c?.weighed_log_entry_ids));
+      return analysed && Array.isArray(c?.weighed_log_entry_ids) && owned.every((id) => weighed.has(id));
+    });
+}
+
+/**
+ * The state of one question plus the step it is waiting on.
+ *
+ * The state ladder is monotonic on what was PRODUCED, not on tidiness: a
+ * question with a proof summary is `concluded` even if its plan is thin,
+ * because the artifact is what any downstream check joins on.
+ */
 export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
   const qid = question?.id;
 
@@ -508,7 +546,17 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   // user asks for one — so `critiqued` never gates what comes next.
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
-  if (openConflictIds.length > 0) {
+  if (unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
+    // Section E. The summary is the terminal marker: once proof-conclusion has
+    // written a `not_proved` with `shortfall: "conflict"`, the research has ended
+    // on the conflict and nothing further is due.
+    const ended = summaries.some((s) => s?.tier === "not_proved" && s?.shortfall === "conflict");
+    nextStep = ended
+      ? null
+      : `proof-conclusion — unsettled conflict ${openConflictIds.join(", ")} has weighed every ` +
+        "log entry and nothing is left to search: conclude at the tier the evidence reaches " +
+        "and leave the question open";
+  } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
     // Ahead of the disagreement rung because that rung reads links: with none,
@@ -532,7 +580,7 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // wrong — and only the researcher can say which. Above the concluded arm
     // because it fires only when there is no summary, so the two never contend.
     nextStep = `researcher's choice: research-plan or proof-conclusion (default ${
-      overturnRisk(question) ? "proof-conclusion" : "research-plan"
+      lowOverturnRisk(question) ? "proof-conclusion" : "research-plan"
     })`;
   } else if (summaries.length > 0 && !resolved) {
     // A summary on a question still open was written while the preconditions

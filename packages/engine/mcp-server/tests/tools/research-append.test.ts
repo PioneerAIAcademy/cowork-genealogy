@@ -6583,6 +6583,29 @@ describe("research_append (batch ops)", () => {
   it("(open-question) refuses the d01 shape: a question depending on the open one", async () => {
     await refusedFor(running(), { depends_on: ["q_001"] });
   });
+  it("(open-question) refuses a second question appended in the same call", async () => {
+    // The gate reads the pre-call snapshot, so on a project with no question at all
+    // two appends in one batch each saw nothing open. Decision 4: one per run.
+    await writeProject(baseResearch());
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { projectPath: _p, section: _s, op: _o, entry } = newQ();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "questions", op: "append", entry },
+        { section: "questions", op: "append", entry: { ...entry, question: "A second question?" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/was opened earlier in this same call/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+  it("(open-question) one question in one call is still admitted on an empty project", async () => {
+    await writeProject(baseResearch());
+    const { projectPath: _p, section: _s, op: _o, entry } = newQ();
+    const r = await researchAppend({ projectPath: dir, ops: [{ section: "questions", op: "append", entry }] } as never);
+    expect(r.ok).toBe(true);
+  });
   it("(open-question) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
   });

@@ -19,7 +19,7 @@
  */
 
 /** The five `stopped_because` values. The first three are stop-gate values
- *  that permit `status: "exhaustive_declared"` and a proof tier. */
+ *  that permit `status: "exhaustive_declared"` and the two conclusive tiers. */
 export type StoppedBecause =
   | "question_answered"
   | "record_exhausted"
