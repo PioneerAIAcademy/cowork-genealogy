@@ -176,9 +176,11 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 
 - `research_query({ section: "assertions", questionId })` — every assertion
   linked via `extracted_for_question_ids`.
-- `research_query({ section: "person_evidence", personId })` — per person the
-  question concerns (one call per person; `person_evidence` has no
+- `research_query({ section: "person_evidence", personId: [ … ] })` — every
+  person the question concerns, in one call (`person_evidence` has no
   `questionId` filter, so key off the persons the assertions above name).
+- `research_query({ section: "sources", sourceId: [ … ] })` — every source
+  those assertions cite, in one call.
 - `research_query({ section: "conflicts", questionId })` — conflicts that name
   this question in `blocks_question_ids` or dispute one of its assertions;
   check `status` for which are already resolved.
