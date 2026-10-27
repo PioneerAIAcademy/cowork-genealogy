@@ -95,7 +95,6 @@ function pendingExtraction(research: any, logs: any[]): any[] {
   );
 }
 
-/** The lowest-sequence `planned`/`in_progress` item on a plan that is still active. */
 /** Which search destination a plan item wants, by its repository.
  *
  *  Lifted so section E's conflict-evidence arm and the ladder's own dispatch arm
@@ -109,11 +108,20 @@ function searchStepFor(item: any): string {
   return `search-external-sites — ${item.id} (${repo})`;
 }
 
-function nextUnexecutedItem(plans: any[]): any | null {
+/** The lowest-sequence `planned`/`in_progress` item on a plan that is still
+ *  active, **skipping one that waits only on the researcher's upload**.
+ *
+ *  `hasOpenWork` decides WHETHER a search is due from the set without those
+ *  items; this picks WHICH one. Reading different sets let the ladder name a
+ *  hand-off `awaitingUser` already lists — a link the router is told never to
+ *  raise again — so the question stalled until the upload arrived. */
+function nextUnexecutedItem(research: any, plans: any[]): any | null {
+  const waitingOnUpload = awaitingUploadItemIds(research?.log);
   const items = plans
     .filter((p) => p?.status === undefined || p?.status === "active")
     .flatMap((p) => arr(p?.items))
-    .filter((i) => i?.status === "planned" || i?.status === "in_progress")
+    .filter((i) => (i?.status === "planned" || i?.status === "in_progress")
+      && !waitingOnUpload.has(i?.id))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
 }
@@ -478,6 +486,16 @@ function ownedLogEntries(research: any, itemIds: Set<any>): any[] {
  *  evidence reaches and leaves it open (decision 12). A log entry the weighed
  *  list does not cover -- a later upload, a steer's search -- is new evidence,
  *  and sends it back to conflict-resolution. */
+/** Whether conflict-resolution has analysed this conflict.
+ *
+ *  One definition for both rungs. `Boolean(c.independence_analysis)` accepted
+ *  `"   "`, which the unsettled rung rejected — so a whitespace analysis routed
+ *  to a search from one rung and to conflict-resolution from its complement. */
+function isAnalysed(conflict: any): boolean {
+  return typeof conflict?.independence_analysis === "string"
+    && conflict.independence_analysis.trim() !== "";
+}
+
 /** Section E: every open conflict is analysed, and the question has open items
  *  that could settle it.
  *
@@ -499,7 +517,7 @@ function conflictEvidenceWanted(
   const open = new Set(openConflictIds);
   return arr(research?.conflicts)
     .filter((c) => open.has(c?.id))
-    .every((c) => Boolean(c?.independence_analysis));
+    .every((c) => isAnalysed(c));
 }
 
 function unsettledConflictWeighed(
@@ -514,7 +532,7 @@ function unsettledConflictWeighed(
   return arr(research?.conflicts)
     .filter((c) => open.has(c?.id))
     .every((c) => {
-      const analysed = typeof c?.independence_analysis === "string" && c.independence_analysis.trim() !== "";
+      const analysed = isAnalysed(c);
       const weighed = new Set(arr(c?.weighed_log_entry_ids));
       return analysed && Array.isArray(c?.weighed_log_entry_ids) && owned.every((id) => weighed.has(id));
     });
@@ -597,8 +615,18 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // Section E: a conflict that needs new evidence becomes plan items on this
     // question rather than a helper question. Routing to conflict-resolution
     // again would hand it the evidence it has already weighed.
-    const item = nextUnexecutedItem(plans);
-    nextStep = item ? searchStepFor(item) : "search-records";
+    // Extraction first: a record this question already found and nobody has
+    // extracted is the evidence the conflict needs, and re-running the search
+    // that found it would find it again. The `pendingExtraction` rung below is
+    // unreachable while a conflict is open, so it is asked here.
+    const item = nextUnexecutedItem(research, plans);
+    nextStep = pendingExtraction(research, logs).length > 0
+      ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
+      : item
+        ? searchStepFor(item)
+        // Reachable now that the picker skips upload-waiting items as
+        // `hasOpenWork` does: every open item can be one of those.
+        : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
@@ -652,7 +680,7 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   } else {
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
-    const item = nextUnexecutedItem(plans);
+    const item = nextUnexecutedItem(research, plans);
     if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
     else nextStep = searchStepFor(item);
   }

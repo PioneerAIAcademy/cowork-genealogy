@@ -208,9 +208,15 @@ research ended on the conflict. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.
 
 **A conflict that wants evidence already planned routes to the search** (step
-mode, section E). The route agents send a conflict needing new evidence to
+mode, section E). conflict-resolution sends a conflict needing new evidence to
 research-plan, which writes plan items on the SAME question rather than opening
-a helper one. When every open conflict carries an `independence_analysis` and
+a helper one; hypothesis-tracking, timeline and proof-conclusion gain the same
+route in their own PRs.
+
+**Nothing acts on this rung until the router follows `nextStep`.** The field is
+advisory, and the router's conflict row still sends any conflict straight to
+conflict-resolution until step mode's PR 2 lands. Until then this rung and the
+router disagree, which `make e2e-routing-agreement` counts. When every open conflict carries an `independence_analysis` and
 the question's active plan still has an open item (one waiting only on an
 upload aside), `nextStep` names that item's search — `search-records`, or
 `search-external-sites — <pli> (<repo>)` when its repository is not
@@ -218,9 +224,19 @@ FamilySearch. Without this rung the conflict rung below fires on every pass and
 the items those agents just asked for never run.
 
 `independence_analysis` is the marker because conflict-resolution fills it on
-every analysis, resolved or not. A conflict not yet analysed still goes to
-conflict-resolution first, even beside an analysed one. Once the items close,
-the rung above decides whether anything is left to weigh.
+every analysis, resolved or not — non-blank, so a whitespace value is not an
+analysis. A conflict not yet analysed still goes to conflict-resolution first,
+even beside an analysed one. Once the items close, the rung above decides
+whether anything is left to weigh.
+
+**It reads neither the conflict's type nor which item was planned for it.** An
+identity conflict routes to the search like any other, and any open item on the
+active plan satisfies it, not only one planned for the conflict. Both are
+deliberate: the rung's job is to stop the conflict rung firing while work is
+outstanding, not to choose the work. A record already found and not yet
+extracted outranks the search — re-running the search that found it would find
+it again — and an item waiting only on the researcher's upload is skipped, as
+it is everywhere else in this ladder.
 
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no

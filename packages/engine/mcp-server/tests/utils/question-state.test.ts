@@ -977,12 +977,59 @@ describe("questionStatus — ending on an unsettled conflict (section E, decisio
   });
 
   it("does not fire while a plan item is still open", () => {
-    // With the conflict already analysed this is section E's OTHER arm: there
-    // is something left to search, so go run it rather than weigh again.
+    // With the conflict already analysed this is section E's OTHER arm. Here it
+    // asks for EXTRACTION, not the search: `log_1` is a positive entry no
+    // assertion cites, so the record that may settle the conflict is already in
+    // hand. Re-running the search that found it would find it again.
     const d = doc({ plans: [plan("planned")], log, conflicts: [conflict()] });
     const step = questionStatus(d, question()).nextStep;
     expect(step).not.toMatch(/unsettled conflict/);
-    expect(step).toBe("search-records");
+    expect(step).toMatch(/^extraction /);
+  });
+
+  it("routes to the search once nothing is left to extract", () => {
+    const d = doc({
+      plans: [plan("planned")],
+      log: [{ id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" }],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_2"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("never names a search that is waiting on the researcher's upload", () => {
+    // The rung DECIDED to fire from the set that skips upload-waiting items
+    // (`hasOpenWork`) and then PICKED from one that did not, so it named a
+    // hand-off `awaitingUser` already lists -- a link the router is told never
+    // to raise again, which stalled the question until the upload arrived.
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "in_progress", sequence: 1, repository: "Ancestry" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [{
+        id: "log_9", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+        external_site: {
+          site: "ancestry", url_generated: "https://example.test/s?q=1",
+          capture_received: false,
+        },
+      }],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_9"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a blank independence_analysis is not analysed, for either rung", () => {
+    // `Boolean("   ")` is true. One rung used that and its complement required a
+    // trimmed string, so a whitespace analysis routed to a search from one and
+    // to conflict-resolution from the other.
+    const blank = conflict({ independence_analysis: "   " });
+    const open = doc({ plans: [plan("planned")], log, conflicts: [blank] });
+    expect(questionStatus(open, question()).nextStep).toMatch(/^conflict-resolution/);
+    const closed = doc({ plans: [plan("completed")], log, conflicts: [blank] });
+    expect(questionStatus(closed, question()).nextStep).toMatch(/^conflict-resolution/);
   });
 
   it("does not fire on a conflict never analysed, or one with no weighed list", () => {

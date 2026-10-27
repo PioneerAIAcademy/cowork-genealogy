@@ -368,11 +368,8 @@ and **which specific record types would be decisive** (e.g., an
 naturalization papers, a marriage or probate record). Naming "we
 can't know" without writing the analysis and the decisive-evidence
 path is under-delivering. Then recommend **research-plan**, to plan
-searches for those record types on the question already open. The
-evidence that would settle a conflict is a SEARCH, not a new
-question: opening one would leave the current question unfinished
-while a second competes with it. A conclusion depending on this
-conflict cannot be proved until it is resolved — this is acceptable
+searches for those record types on the question already open. A
+conclusion depending on this conflict cannot be proved until it is resolved — this is acceptable
 and honest.
 
 **If the conflict is moot:** Set `status: "moot"` when subsequent

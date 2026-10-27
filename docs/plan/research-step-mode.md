@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep PR (#3682) is merged, proof-conclusion's (#3889) is open, PR 1 is #3883, and the route PRs, PR 2 and the conflict PR follow it. Its answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep PR (#3682) is merged, proof-conclusion's (#3889) is open, PR 1 is #3883, the route PRs are #3914-#3916, PR 2 is #3917, and the conflict PR follows them. Its answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
