@@ -453,3 +453,42 @@ def test_step_offer_wins_over_the_retired_literal_where_they_overlap():
     assert classify_hand_back(both) == "step_offer"
     # And the retired literal alone still reads as `step`, unchanged.
     assert classify_hand_back("Next: research-plan. Continue?") == "step"
+
+# --- external_collection_keys (#2995) ----------------------------------------
+
+
+def _write_collections(tmp_path: Path, doc) -> None:
+    (tmp_path / "external-collections.json").write_text(
+        doc if isinstance(doc, str) else json.dumps(doc), encoding="utf-8"
+    )
+
+
+def test_external_collection_keys_are_the_sorted_ancestry_keys_per_place(tmp_path: Path):
+    from e2e.stop_checker import read_external_collection_keys
+
+    _write_collections(tmp_path, {"places": {
+        "Pennsylvania, United States": {"rows": [
+            {"key": "ancestry:7163"}, {"key": "https://www.hsp.org/"}, {"key": "ancestry:1276"},
+        ]},
+        "Venango, Pennsylvania, United States": {"rows": []},
+    }})
+    assert read_external_collection_keys(tmp_path) == {
+        "Pennsylvania, United States": ["ancestry:1276", "ancestry:7163"],
+        "Venango, Pennsylvania, United States": [],
+    }
+
+
+def test_external_collection_keys_is_empty_when_missing_or_unusable(tmp_path: Path):
+    from e2e.stop_checker import read_external_collection_keys
+
+    assert read_external_collection_keys(tmp_path) == {}
+    for bad, expected in (
+        ("{not json", {}),
+        ("[1]", {}),
+        (json.dumps({"places": []}), {}),
+        (json.dumps({"places": {"P": {"rows": "x"}}}), {"P": []}),
+        (json.dumps({"places": {"P": "x"}}), {"P": []}),
+        (json.dumps({"places": {"P": {"rows": ["x", {"key": 7}, {"key": "ancestry:1"}]}}}), {"P": ["ancestry:1"]}),
+    ):
+        _write_collections(tmp_path, bad)
+        assert read_external_collection_keys(tmp_path) == expected, bad

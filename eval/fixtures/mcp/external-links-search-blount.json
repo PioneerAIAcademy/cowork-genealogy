@@ -29,5 +29,37 @@
         "host": "findagrave.com"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/locations/blount-county-alabama",
+      "linkText": "Blount County, Alabama - Ancestry.com",
+      "record_type": "Genealogy",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Blount, Alabama, United States"
+    },
+    {
+      "url": "https://archives.alabama.gov/blount-county",
+      "linkText": "Alabama Department of Archives and History - Blount County records",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Blount, Alabama, United States"
+    },
+    {
+      "url": "https://www.findagrave.com/cemetery/county/blount-alabama",
+      "linkText": "Blount County, Alabama - Find A Grave",
+      "record_type": "Cemeteries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Blount, Alabama, United States"
+    }
+  ]
 }

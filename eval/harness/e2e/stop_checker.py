@@ -69,6 +69,36 @@ def read_tree_json(workspace: Path) -> dict[str, Any] | None:
     return parsed if isinstance(parsed, dict) else None
 
 
+
+def read_external_collection_keys(workspace: Path) -> dict[str, list[str]]:
+    """The run's stored curated Ancestry collections: place -> sorted
+    `ancestry:<id>` keys from `external-collections.json` (#2995).
+
+    A place stored with no Ancestry row maps to `[]`, which is different from a
+    place never fetched (absent). Missing or unusable file -> `{}`, never a raise:
+    this runs at the end of a paid run, before its result file is written."""
+    path = Path(workspace) / "external-collections.json"
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return {}
+    places = parsed.get("places") if isinstance(parsed, dict) else None
+    if not isinstance(places, dict):
+        return {}
+    out: dict[str, list[str]] = {}
+    for place, entry in places.items():
+        rows = entry.get("rows") if isinstance(entry, dict) else None
+        keys = {
+            row["key"]
+            for row in (rows if isinstance(rows, list) else [])
+            if isinstance(row, dict)
+            and isinstance(row.get("key"), str)
+            and row["key"].startswith("ancestry:")
+        }
+        out[str(place)] = sorted(keys)
+    return out
+
+
 def project_completed(research: dict[str, Any] | None) -> bool:
     """Whether research.json says the project is done."""
     if not research:
