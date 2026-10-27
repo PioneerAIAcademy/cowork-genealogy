@@ -131,7 +131,7 @@ def _python_answer(log: list) -> list[str]:
 
 def _typescript_answer(log: list) -> list[str]:
     script = (
-        f'import {{ awaitingUploadItemIds }} from "{_TS_BUILD.as_posix()}";\n'
+        f'import {{ awaitingUploadItemIds }} from "{_TS_BUILD.as_uri()}";\n'
         "let input = '';\n"
         "process.stdin.on('data', (d) => (input += d));\n"
         "process.stdin.on('end', () => {\n"
