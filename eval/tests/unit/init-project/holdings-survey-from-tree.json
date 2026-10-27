@@ -4,7 +4,7 @@
     "skill": "init-project",
     "name": "Initialize from a tree person; volunteered holdings are named, not recorded",
     "type": "positive",
-    "description": "Single-turn decomposition: the user gives a FamilySearch person ID AND volunteers what they already have on hand (a death certificate and a typed family history). The agent seeds the tree from person_read. research.json has no section for items the researcher holds (issue #2069), so the volunteered items are named in the report and written nowhere — in particular never as a `sources` entry, which would assert a document was examined.",
+    "description": "Single-turn decomposition: the user gives a FamilySearch person ID AND volunteers what they already have on hand (a death certificate and a typed family history). The agent seeds the tree with project_create (which reads the person). research.json has no section for items the researcher holds (issue #2069), so the volunteered items are named in the report and written nowhere — in particular never as a `sources` entry, which would assert a document was examined.",
     "tags": [
       "initialization",
       "volunteered-holdings",

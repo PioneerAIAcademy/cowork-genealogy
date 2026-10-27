@@ -441,10 +441,11 @@ describe("plugin agent/skill bodies", () => {
 // Widening one of these is ordinary work. Editing the snapshot is how you say
 // you meant it.
 const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> = {
+  // gps-mentor reviews and must not write: `external_links_search` stores the
+  // list it fetches, so the mentor reads the stored list instead (#2995).
   "gps-mentor.md": {
     tools: [
       "collections_search",
-      "external_links_search",
       "place_distance",
       "place_search",
       "project_context",
@@ -678,7 +679,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // locality-guide (issue #2117) holds the eleven MCP tools the skill it
   // replaced declared, plus `catalog_search` (issue #3107), plus `Read`:
   // Step 6 persists only when research.json exists at the project path, and
-  // the narration line reads it.
+  // the narration line reads it. Plus `research_query`, to read the stored
+  // collections list past the inline cap (#2995).
   "locality-guide.md": {
     tools: [
       "Read",
@@ -689,6 +691,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "place_search",
       "place_search_all",
       "research_append",
+      "research_query",
       "volume_search",
       "wiki_place_page",
       "wiki_read",
@@ -729,6 +732,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "tree-survey.md": {
     tools: [
       "tree_gaps",
+    ],
+    denies: [],
+  },
+
+  // New agent (issue #3521), one-shot and project-free: after a FamilySearch
+  // records search it lists curated external collections with prefilled links.
+  // No `Read`, no `project_context` and no writer, so "writes nothing" is
+  // structural. `build_external_search_url` logs only when given a `projectPath`,
+  // which the body never passes.
+  "where-else-to-search.md": {
+    tools: [
+      "place_search",
+      "external_links_search",
+      "build_external_search_url",
     ],
     denies: [],
   },
@@ -957,10 +974,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // so no spawn tool.
   "init-project.md": {
     tools: [
-      "Read",
-      "person_read",
+      "project_context",
       "project_create",
       "research_append",
+      "tree_edit",
     ],
     denies: [],
   },

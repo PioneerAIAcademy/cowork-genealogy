@@ -341,6 +341,18 @@ describe("the rendered plan examples teach a call the tool accepts", () => {
     expect(exampleFor("plan_items", "append") ?? "").toMatch(/highest existing pl_/);
   });
 
+  it("a `proof_summaries` update shows `edits` only for a refusal over the narrative fields", () => {
+    for (const named of [["edits"], ["narrative_markdown"], ["exhaustive_search_summary", "tier"]]) {
+      expect(exampleFor("proof_summaries", "update", named) ?? "", named.join()).toContain("edits: [");
+    }
+    // A tier-only refusal taught `edits` would hand a payload for a field it never named.
+    for (const named of [["tier"], []]) {
+      const ex = exampleFor("proof_summaries", "update", named) ?? "";
+      expect(ex, named.join()).not.toContain("edits: [");
+      expect(ex, named.join()).toContain("fields: {");
+    }
+  });
+
   it("every rendered append example is the call shape its section requires", () => {
     // A one-way guard against the reverse mistake: a section whose example
     // needs the batch form silently reverting to the single-op form. `plans` is

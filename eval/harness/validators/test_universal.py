@@ -1749,6 +1749,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     An empty `correct_skill` means the owner is not a skill (extraction is a
     tool call and an agent; genealogist ruling 2026-09-30, option B), so the
     reply must carry a `Hand-back:` line without a name to look for.
+
+    The 'project-context-guard' tag admits one call: a `project_context` that
+    opens the run, which is how init-project learns a project already exists
+    (it writes nothing). Any second call, or any other tool, still fails.
     """
     from harness.skill_runner import subject_reply_text
 
@@ -1756,10 +1760,17 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         pytest.skip("not a hand-back test")
     owners = (test.get("negative") or {}).get("correct_skill") or []
 
-    assert (tool_calls or []) == [], (
+    calls = list(tool_calls or [])
+    if (
+        "project-context-guard" in test.get("tags", [])
+        and calls
+        and _bare_tool_name(calls[0].get("tool") or "") == "project_context"
+    ):
+        calls = calls[1:]
+    assert calls == [], (
         "a hand-back makes no tool call; got "
-        f"{len(tool_calls or [])} call(s): "
-        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
+        f"{len(calls)} call(s): "
+        + ", ".join(c.get("tool", "?") for c in calls)
     )
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
     if not owners:

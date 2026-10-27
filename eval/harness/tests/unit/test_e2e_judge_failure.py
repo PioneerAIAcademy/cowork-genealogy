@@ -59,7 +59,7 @@ def _fixture(tmp_path: Path):
     return load_fixture(fixture_dir)
 
 
-def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None, aborted=None):
+def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None, aborted=None, workspace_files=None):
     """Run `run_e2e_test` with everything but the judge branch stubbed out.
 
     `judge` is installed as `judge_module.run_judge` — pass a callable that
@@ -67,11 +67,14 @@ def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None, aborted=None
     (agent-crashed) case the `skipped` verdict exists for. `usage` is what the
     fake `_run_agent` returns as its usage dict (default empty). `aborted` is the
     SDK abort reason it returns (default None); pass `"host_slept"` to exercise
-    the slept-run judge-skip + commit path (issue #2974).
+    the slept-run judge-skip + commit path (issue #2974). `workspace_files` maps
+    a name to text written into the workspace before the run ends.
     """
     fixture = _fixture(tmp_path)
     workspace = tmp_path / "ws"
     workspace.mkdir()
+    for name, text in (workspace_files or {}).items():
+        (workspace / name).write_text(text, encoding="utf-8")
     entry = tmp_path / "index.js"  # only `.exists()` is checked
     entry.write_text("", encoding="utf-8")
 
@@ -158,3 +161,19 @@ def test_every_run_leaves_a_readable_report_with_the_grade_hidden(tmp_path, monk
     text = report.read_text(encoding="utf-8")
     assert "grade hidden until this run is graded" in text
     assert "verdict" not in text and "recall" not in text
+
+
+def test_the_runs_stored_ancestry_keys_reach_the_committed_result(tmp_path, monkeypatch):
+    """`external_collection_keys` is read from the run's workspace and written to
+    the result §9.1 reads (#2995). Each half has its own test; this is the hop
+    between them, which deleting the kwarg left untested."""
+    listing = {"places": {"Pennsylvania, United States": {"rows": [
+        {"key": "ancestry:7163"}, {"key": "https://www.hsp.org/"}]}}}
+    _result, paths = _drive(
+        tmp_path, monkeypatch,
+        judge=lambda **kwargs: {"verdict": "pass", "per_finding": {}},
+        final_tree={"persons": []},
+        workspace_files={"external-collections.json": json.dumps(listing)},
+    )
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+    assert payload["external_collection_keys"] == {"Pennsylvania, United States": ["ancestry:7163"]}

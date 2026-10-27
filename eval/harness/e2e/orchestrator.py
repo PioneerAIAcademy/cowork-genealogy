@@ -101,6 +101,7 @@ from e2e.stop_checker import (
     derive_stop_reason,
     hand_back_key,
     project_completed,
+    read_external_collection_keys,
     read_research_json,
     read_tree_json,
     should_continue_run,
@@ -181,6 +182,12 @@ BASELINE_ALLOWED_TOOLS = [
 #       missing a standardized date for {originalDate}"), so a stripped date or
 #       place can come back verbatim. Committed e2e runs made 39 such calls
 #       across 20 fixtures before this was blocked.
+#   project_create
+#       given `personId`, reads the person off the live tree and returns their
+#       relatives by name (issue #3384). An e2e run always starts in an existing
+#       project, which `project_create` refuses, so no legitimate e2e call exists;
+#       blocking it by name, rather than on `personId`, keeps the block one the
+#       hosted proto worker can mirror (it blocks by bare name only).
 #
 # NOT blocked (legitimate research): record_search / record_read /
 # fulltext_search / image_* / collections_search (the agent must find
@@ -199,6 +206,7 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_record_matches",
         "person_person_matches",
         "person_quality",
+        "project_create",
     }
 )
 
@@ -225,6 +233,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
 # it. Currently empty — kept for the next tool whose block depends on an argument.
+# The hosted proto worker blocks by bare name only, so a tool added here needs a
+# worker port first (`apps/server/tests/test_proto_demo.py` holds this empty).
 LIVE_TREE_ARG_TOOLS = {}
 
 
@@ -3834,6 +3844,7 @@ async def run_e2e_test(
 
         final_research = read_research_json(workspace)
         final_tree = read_tree_json(workspace)
+        external_collection_keys = read_external_collection_keys(workspace)
         stop_reason = derive_stop_reason(
             sdk_aborted_reason=aborted, research=final_research
         )
@@ -4066,6 +4077,7 @@ async def run_e2e_test(
             subagent_capture_status=subagent_capture_status,
             git_sha=run_git_sha,
             skills_hash=run_skills_hash,
+            external_collection_keys=external_collection_keys,
         )
 
         runlog_dir = runlog_root / fixture.id
