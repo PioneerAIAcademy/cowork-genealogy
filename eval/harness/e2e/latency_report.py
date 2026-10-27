@@ -448,9 +448,10 @@ def per_step_wait(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
     Steps come back in the order the RUN first reached them, not alphabetically
     and not in the canonical pipeline order. Alphabetical scrambles a reader's
-    expectation (`conclude` printed above `setup`), and the canonical order would
-    need `step_boundary`, which only `orchestrator.py` loads -- and with it the
-    SDK, which `e2e/result.py` explains these reports must stay clear of. First
+    expectation (`conclude` printed above `setup`). The canonical order is not read
+    because a REPORT should describe the run it has rather than an ideal one --
+    not because `step_boundary` is hard to reach: it is stdlib-only, and
+    `harness/skill_runner.py` loads it without the SDK. First
     appearance also describes a run that revisited a step, which a fixed pipeline
     order would silently flatten.
     """
@@ -507,8 +508,9 @@ def format_per_step(bd_test_id: str, rows: list[dict[str, Any]]) -> str:
     table = per_step_wait(rows)
     lines = [
         f"=== {bd_test_id} — per-step wait and spend ({len(rows)} turn(s)) ===",
-        "  (wait is enqueue-to-last-message for ONE turn, which is what a researcher",
-        "   actually waits; a whole-run figure cannot answer that)",
+        "  (wait is query-to-last-message for ONE turn -- there is no queue here, so",
+        "   it is not the prototype's enqueue-to-close figure; a whole-run figure",
+        "   cannot answer either question)",
         f"  {'step':<26}{'n':>4}{'p50':>9}{'p90':>9}{'$':>9}",
     ]
     for step, fig in table.items():

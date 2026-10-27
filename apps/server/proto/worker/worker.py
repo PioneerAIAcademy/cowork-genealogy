@@ -1129,10 +1129,20 @@ COMPLETED_LABELLED_SQL = (
 
 
 def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_id: str, log: Any) -> bool:
-    """Whether the `completed` label already went to an earlier turn (plan, PR 1): only
-    the turn that completes the project gets it, so a finished project that took a
-    follow-up question is not re-completed by every later turn. A failed read answers
-    True, which costs one label rather than repeating it."""
+    """Whether the `completed` label already went to an earlier turn.
+
+    The implemented rule is the first `ok` turn that SEES a completed project, when no other turn of the project carries the label. NOT "the turn during
+    which it became completed", which the plan first asked for: that needs the
+    project's status at the turn's START, a read every turn would pay and a down
+    store must not be asked twice.
+
+    Two consequences, both recorded in docs/plan/research-step-mode.md. When the
+    completing turn closed `stopped`, `budget` or `delivered`, the NEXT ordinary
+    turn carries the label -- which is right, since the project is complete and
+    the researcher should be told. And a project completed a SECOND time is never
+    labelled again; that gap is open, with its fix sized in the plan.
+
+    A failed read answers True, which costs one label rather than repeating it."""
     try:
         with conn.cursor() as cur:
             cur.execute(COMPLETED_LABELLED_SQL, (project_id, turn_id, TERMINAL_COMPLETED))
@@ -3009,9 +3019,10 @@ async def _run_turn(
             # cap 0 no plane binds the Stop hook -- so the honest `completed` label would
             # never reach the browser on a step turn without this. Only where the close
             # was an ordinary `ok`: a stop, a cap or a lost transcript each say something
-            # the project's own status does not override. And only on the turn that
-            # COMPLETED it: a finished project that took a follow-up question is not
-            # re-completed by every later turn.
+            # the project's own status does not override. And only on the FIRST such
+            # turn: a finished project that took a follow-up question is not
+            # re-completed by every later turn. See `completed_already_labelled` for
+            # why this is not the plan's original "became completed during the turn".
             if (outcome == OK_OUTCOME and project_completed(research)
                     and not completed_already_labelled(conn, project_id, turn_id, log)):
                 outcome = TERMINAL_COMPLETED

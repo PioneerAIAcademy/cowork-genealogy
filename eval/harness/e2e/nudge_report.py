@@ -368,8 +368,10 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
         ),
         "  (step should be 0 on runs since PR #2870 retired the line, 2026-09-27;"
         " earlier runs carry it from init-project and question-selection)",
-        "  (step_offer is step mode's LIVE line, so on a step-mode run it should be"
-        " most of them; on a pre-step-mode run it should be 0)",
+        "  (step_offer is the offer line itself. It is 0 on a --step-mode run:"
+        " that run returns from the Stop hook before any hand-back is classified,"
+        " and this report counts continue-nudges, which a step run never gets."
+        " It counts a run WITHOUT --step-mode that was vetoed at the new line)",
         "",
         "By seam — which artifact had just been written:",
     ]

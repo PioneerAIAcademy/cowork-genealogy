@@ -675,7 +675,8 @@ proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884
 # autonomous /research run yields after each sub-skill step; the worker's Stop hook
 # (AUTONOMOUS_MAX_NUDGES > 0) vetoes that yield the way the e2e harness's does, bounded by
 # the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
-# runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
+# ran to project.status == "completed" in one turn. Under step mode it cannot:
+# a turn is one step, and the keep-going driver the plan owes is not built yet. `AUTONOMOUS_MAX_NUDGES=5 make
 # proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
 # is now a whole run, so the run spans SEVERAL attempts rather than fitting in one. The
 # per-attempt ceiling is the pinned 1800 s -- the 7200 s override of 2026-09-20 was a

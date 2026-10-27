@@ -170,7 +170,7 @@ OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
 # conflict writing only the schema's required fields, and a section route denies
 # every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
 # on one field set to one value; the conflict's analytical product is spread over
-# six fields and a status. So the rule keys on the PRODUCT: an op that sets
+# seven fields and a status. So the rule keys on the PRODUCT: an op that sets
 # `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
 # a re-open that sets `status: "unresolved"` and clears the analysis, claim
 # nothing and pass. `resolution_kind` and `resolved_value` are listed so a write

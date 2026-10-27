@@ -1313,11 +1313,10 @@ def _env_float(name: str, default: float) -> float:
     return value if value > 0 else default
 
 
-# PR #2870 item 1a. Sized on STEP count, not on the nudge histogram: over the 189
-# committed e2e runs, Skill/Task/Agent steps per run are median 15, p90 25, p99 51,
-# max 76, so this clears p99 with margin. The nudge histogram (median 1, p90 4) describes
-# runs under a harness that FORBIDS yielding and does not describe this regime; the plan
-# puts the floor at 30. test_proto_config re-derives the p99 from the corpus.
+# 0 under step mode (decision 25): a turn is one step and ends at its boundary on
+# purpose, so there is nothing for a Stop veto to re-open. The earlier 60 was sized
+# on step count per run to clear a p99 under a harness that FORBADE yielding; that
+# regime is gone, and the test that re-derived the p99 from the corpus went with it.
 DEFAULT_MAX_NUDGES = 0
 
 

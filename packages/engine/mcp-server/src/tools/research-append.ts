@@ -5043,11 +5043,14 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *  `statuses`, read from the given snapshot. Shared by the in-flight gates so
  *  which plans and items count is decided once.
  *
- *  `statuses` defaults to `in_progress` alone, which is what the new-question
- *  gate below asks for. `planCompleteInvariants` additionally passes `planned`
- *  (issue #1830): an undisposed item leaves the record unable to say whether it
- *  was answered by what is already held or simply never run. The two gates ask
- *  different questions of the same plan, so the status set is the caller's. */
+ *  `statuses` defaults to `in_progress` alone. No caller takes that default any
+ *  more: `planCompleteInvariants` passes `planned` too (issue #1830) -- an
+ *  undisposed item leaves the record unable to say whether it was answered by
+ *  what is already held or simply never run -- and the new-question gate passes
+ *  `PLAN_ITEM_OUTSTANDING`, every status but `completed` and `skipped`, because
+ *  step mode's rule is about a question with work left rather than work running.
+ *  The two gates ask different questions of the same plan, so the status set is
+ *  the caller's. */
 export function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,

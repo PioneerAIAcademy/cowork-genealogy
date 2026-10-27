@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the prep PRs for research-plan (#3682) and proof-conclusion (#3889) are done, PR 1 is #3883, and the route PRs, PR 2 and the conflict PR follow it. Its answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep PR (#3682) is merged, proof-conclusion's (#3889) is open, PR 1 is #3883, and the route PRs, PR 2 and the conflict PR follow it. Its answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -1210,9 +1210,10 @@ in parallel with PR 2.
     of `next_auto_reply`, its `ctx` read, and its host-hook and chain tests are all out of
     this PR. Only the cap-0 Stop-veto change above touches it;
   - decision 12's three contract sites (E);
-  - the worker's turn-close `completed`, set only when `project.status` became `completed`
-    during the turn, so later turns on a finished project that took a new question are not
-    labelled `completed`;
+  - the worker's turn-close `completed`, set on the first `ok` turn that SEES a completed
+    project when no other turn of the project carries the label (amended from "became
+    completed during the turn" -- see Outcomes above for why, and for the one gap it
+    leaves);
   - `ownership.json`'s stale `search_stop` note (E);
   - **writer and ladder rules:** E's rule replacing `newQuestionWhileSearchInFlightInvariants`,
     with its exemption (a proof summary and no open item) and the 11 rewritten tests; two
@@ -1367,8 +1368,8 @@ in parallel with PR 2.
      reply, and no held reply is released while Stop is set;
    - the alpha's chain replies to "Continue with …?" only while "Keep going" is on;
    - `turn_done` carries `reply_follows` on both hosted planes when a reply will follow;
-   - the worker sets `completed` at turn close when a step finished the project, and not on a
-     later turn of a project that was already `completed` before the turn;
+   - the worker sets `completed` at turn close on the first `ok` turn that sees a completed
+     project, and not again on any later turn of that project;
    - a turn that ran no step leaves `prev_step` unchanged, on the prototype by reading the last
      closed turn with a non-null `turns.step`;
    - `reply_options`: nothing for no offer; Continue, Keep going and Wrap it up for an ordinary
