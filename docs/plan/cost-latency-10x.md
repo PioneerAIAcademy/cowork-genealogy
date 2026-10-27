@@ -2,7 +2,9 @@
 
 **Status:** In progress — T1.3 (PR #3194), T1.4 (PR #3195), T1.11 (PR #3256) and
 T2.1 (PR #3230) landed; T2.3's tool half (`research_query` takes a list of ids,
-`make replay-collapse RULE=plural-id`, PR #3428) landed; agents adopting it is PR 2. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
+`make replay-collapse RULE=plural-id`, PR #3428) landed; agents adopting it is PR 2 (#3713,
+branch `3713-batch-lookups`): person-evidence and proof-conclusion pass ids as lists, and
+`person_warnings` takes a list too (§4). Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
 **No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 
@@ -168,6 +170,29 @@ And `image_transcribe`'s one-image-per-call limit is a **spec** constraint that 
 **Not a prompt change.** Per `CLAUDE.md`'s lane rule, a prose instruction to batch has
 no scope and a tool's shape binds everywhere.
 
+`person_warnings` was the test of that rule (#3713). Telling person-evidence to put one
+call per person in a single message held for 2–4 persons (6 of 6 tries) but split in 2 of
+4 tries at 5 persons, so the tool took a list instead (one shared place-lookup budget, a
+per-id `error`, and a problem two anchors both see reported once —
+`person-warnings-tool-spec.md`, "List form"). After it: one `person_warnings` call in 14
+of 14 runs that checked anyone, 2–5 persons per list.
+
+**Adoption, measured on the #3713 unit runs (2026-10-25)** — a *walk* is adjacent one-id
+`research_query` calls to one section through one filter, the shape a list replaces:
+
+| helper | before | after |
+|---|---|---|
+| person-evidence, all filters (24 runs) | 9 walks (20 calls) | 2 walks (4 calls) |
+| person-evidence `assertions × recordId` | 0 list calls | 1 |
+| proof-conclusion `person_evidence × personId` (25 runs) | 0 list, 17 walks (37 calls) | 24 list, 0 walks |
+| proof-conclusion `sources × sourceId` | 2 list, 7 walks (23 calls) | 25 list, 0 walks |
+
+Before is `person-evidence/v3.json` and `proof-conclusion/v6_2026-10-21_14-44-28.json`.
+Cost and time per run did **not** fall on these runs, and are not comparable across
+them: the after runs are on Claude Code 2.1.308 (#3762), under which helper agents write
+about twice the output tokens per turn on suites #3713 does not touch as well. Compare
+`cli_version` before reading any cost delta across 2026-10-23.
+
 ## 5. Wave 2 — tool output shaping
 
 Lever 1's other half: what comes back. Tool-result carry is **24%** of the bill.
@@ -324,8 +349,10 @@ the first time it is pulled.
   `effort=`, and `_pretool_hook` writes the helper level onto each Agent call (CLI 2.1.294's
   per-spawn `effort`). Measured locally on 2.1.294 (`dev/probe_effort_capture.py`): main
   `medium` with the helper held at `high`; a per-agent `low` reaching `person-evidence`
-  under both its bare and namespaced names. Still owed: the fresh-E2B-sandbox check (a
-  resumed sandbox keeps its create-time env), and the lead's call on turning the alpha down.
+  under both its bare and namespaced names. The lead set the alpha's main thread to `low` on
+  2026-10-21 (`ORCHESTRATOR_EFFORT` in `deploy/fly.toml`), and fresh sandboxes picked it up:
+  the proxy logged 574 main-thread calls at `low` in the 14 days to 2026-10-25
+  (`make alpha-costs`). The helpers' level is still the lead's call.
 - **`EFFORT_LEVEL` is not wired into `eval/RunE2E.bat`** — it threads `DENY_SHELL`
   and `DENY_PROJECT_READS` only, so the Windows genealogists cannot run an arm.
   **Wire it with a paired CI guard** (`check_added_runlogs_effort_high`, modelled on

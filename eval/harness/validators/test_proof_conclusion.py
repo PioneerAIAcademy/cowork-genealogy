@@ -794,7 +794,10 @@ def test_completion_summary_offers_second_opinion(
 
 _STALE_PROOF_ID = "ps_002"
 _STALE_PROOF_QUESTION = "q_002"
-_SEARCHED_MARKER = re.compile(r"Walworth|Hyde Genealogy", re.I)
+# The book's title, not the author: a still-to-search item can name Walworth only to
+# exclude him ("Hyde families not covered by Walworth", ut_proof_conclusion_g9j
+# 2026-10-26), while every stale listing names the book itself.
+_SEARCHED_MARKER = re.compile(r"Hyde Genealogy", re.I)
 _STILL_TO_SEARCH_CUE = re.compile(
     r"could (?:still )?(?:resolve|advance|name|settle)|not yet (?:examined|searched)"
     r"|remain(?:s|ing)? unsearched|still (?:to search|unsearched)|unexamined|next step",
@@ -810,12 +813,17 @@ def _footnote_number(line):
 
 
 def _still_to_search_text(text):
-    """Each section's text, split at heading lines, from its first
-    still-to-search cue to its end. A footnote there counts only when that
-    text cites it: the footnotes gather every citation in the narrative,
-    those of records it reports as searched too."""
+    """Each section's text, split at heading lines and at a `---` rule, from
+    its first still-to-search cue to its end. The rule is where footnotes start:
+    a footnote citing the Hyde Genealogy as searched is not a to-do item. A
+    footnote inside that text counts only when the text cites it: the footnotes
+    gather every citation in the narrative, those of records it reports as
+    searched too."""
     parts = []
-    for para in re.split(r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$))", text or "", flags=re.M):
+    for para in re.split(
+        r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$|(?:-{3,}|\*{3,}|_{3,})[ \t]*$))",
+        text or "", flags=re.M,
+    ):
         m = _STILL_TO_SEARCH_CUE.search(para)
         if m:
             lines = para[m.start():].split("\n")

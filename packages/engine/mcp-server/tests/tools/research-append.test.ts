@@ -3108,29 +3108,30 @@ describe("research_append (Phase 3)", () => {
       expect(errors.some((e) => e.includes("claims[0]"))).toBe(false);
     });
 
+    // ut_proof_conclusion_022: a not_proved maternity claim sent without its
+    // relationship was dropped when told to leave "a claim of any other kind" out.
+    it("a parentage claim with no relationship is told to add it, not to drop it", async () => {
+      for (const extra of [{}, { relationship: null }]) {
+        for (const label of ["maternity", "paternity", "Mother", "parentage"]) {
+          const errors = await refusal([
+            relationshipClaim(),
+            { ...factClaim(extra), claim: label, proof_tier: "not_proved" },
+          ]);
+          const line = errors.find((e) => e.includes("claims[1]"));
+          expect(line, errors.join("\n")).toBeDefined();
+          expect(line).toContain(`claim '${label}' is a parentage claim`);
+          expect(line).toContain('type: "ParentChild"');
+          expect(line).toContain("not_proved included. Do not drop it.");
+          expect(line).not.toContain("leave a claim of any other kind out");
+        }
+      }
+    });
+
     it("a fact claim whose relationship is null", async () => {
       const errors = await refusal([factClaim({ relationship: null })]);
       const line = errors.find((e) => e.includes("claims[0]"));
       expect(line, errors.join("\n")).toBeDefined();
       expect(line).toContain("required field 'relationship' is null");
-      carriesTheReason(line!);
-    });
-
-    // The other way the text failed: a parentage claim tiered below `probable`
-    // went out with no `relationship`, and the refusal, which names only fact
-    // claims as the ones to leave out, was answered by dropping the claim and its
-    // tier with it (ut_proof_conclusion_022, 2026-10-26).
-    it.each([
-      ["missing", {}, "missing required field 'relationship'"],
-      ["null", { relationship: null }, "required field 'relationship' is null"],
-    ])("a parentage claim below probable whose relationship is %s is told to add it and keep the claim", async (_label, extra, opening) => {
-      const maternity = { claim: "maternity", proof_tier: "not_proved", supporting_assertion_ids: ["a_001"], ...extra };
-      const errors = await refusal([relationshipClaim(), maternity]);
-      const line = errors.find((e) => e.includes("claims[1]"));
-      expect(line, errors.join("\n")).toBeDefined();
-      expect(line).toContain(opening);
-      expect(line).toContain("at every proof_tier, possible and not_proved included");
-      expect(line).toContain("Add it and keep the claim");
       carriesTheReason(line!);
     });
 
@@ -3146,8 +3147,6 @@ describe("research_append (Phase 3)", () => {
       expect(fact).toContain("relationship.type must be 'ParentChild'");
       carriesTheReason(fact!);
       carriesTheReason(couple!);
-      // A claim of another type is left out, so it is never told to keep itself.
-      expect(couple).not.toContain("Add it and keep the claim");
     });
 
     it.each([["an empty string", ""], ["false", false], ["zero", 0]])(

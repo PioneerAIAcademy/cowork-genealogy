@@ -11,6 +11,9 @@ Honors the execution caps from unit-test-spec.md §15:
 - max_tool_calls: counted in the PreToolUse hook. The hook denies the
   over-limit call and signals stop. The run aborts with reason
   "max_tool_calls".
+- sdk_message_silence_seconds: asyncio.wait_for around each message, widened
+  to SUBAGENT_TASK_SILENCE_SECONDS while a subagent task is open. On timeout,
+  aborts with "sdk_stream_silence", which the orchestrator retries.
 - max_input_tokens_per_turn: **post-hoc.** Checked on each AssistantMessage's
   `usage.input_tokens` after the turn returned. The offending turn has
   already been billed by the time we abort — this catches runaway context
@@ -35,7 +38,11 @@ from claude_agent_sdk import (
     HookMatcher,
     RateLimitEvent,
     ResultMessage,
+    TERMINAL_TASK_STATUSES,
     SystemMessage,
+    TaskNotificationMessage,
+    TaskStartedMessage,
+    TaskUpdatedMessage,
     TextBlock,
     ToolResultBlock,
     ToolUseBlock,
@@ -95,6 +102,15 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 # requires longer thinking should also bump `execution.max_wall_clock_
 # seconds` (see eval/tests/unit/record-extraction/*.json).
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
+
+# The window while a subagent task is open (between its `task_started` and a
+# terminal `task_notification` / `task_updated`). CLI 2.1.294 forwards a
+# subagent's tool calls but nothing of a turn that makes none, so its final
+# report streams no message at all until the task ends. Measured on
+# ut_locality_guide_027 (#3251, 2026-10-23): last tool call at 80s, then 334s
+# of silence for a 16,308-token final turn, against 7,485 tokens on 2.1.139.
+# A test's own `sdk_message_silence_seconds` still applies when larger.
+SUBAGENT_TASK_SILENCE_SECONDS = 600
 
 
 # When the harness abandons a run mid-stream (wall-clock / silence abort or
@@ -1364,9 +1380,10 @@ async def run_skill(
     # The open_query() async generator, hoisted so the finally below can close
     # it deterministically on every exit path (see that finally for why).
     iterator: Any = None
+    silence_window: float = sdk_message_silence_seconds
 
     async def _consume_messages():
-        nonlocal usage, error, aborted_reason, iterator
+        nonlocal usage, error, aborted_reason, iterator, silence_window
         # Manual iteration so each `__anext__()` can be wrapped in a
         # per-message silence watchdog. The SDK has no internal
         # generation-side timeout — once the control-channel
@@ -1376,16 +1393,29 @@ async def run_skill(
         # a distinguishable `sdk_stream_silence` reason that the
         # orchestrator retries.
         iterator = open_query(prompt=user_message, options=options).__aiter__()
+        open_tasks: set[str] = set()
         while True:
+            silence_window = (
+                max(sdk_message_silence_seconds, SUBAGENT_TASK_SILENCE_SECONDS)
+                if open_tasks
+                else sdk_message_silence_seconds
+            )
             try:
                 message = await asyncio.wait_for(
                     iterator.__anext__(),
-                    timeout=sdk_message_silence_seconds,
+                    timeout=silence_window,
                 )
             except StopAsyncIteration:
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            if isinstance(message, TaskStartedMessage):
+                open_tasks.add(message.task_id)
+            elif isinstance(message, TaskNotificationMessage) or (
+                isinstance(message, TaskUpdatedMessage)
+                and message.status in TERMINAL_TASK_STATUSES
+            ):
+                open_tasks.discard(message.task_id)
             if (
                 isinstance(message, SystemMessage)
                 and getattr(message, "subtype", None) == "init"
@@ -1766,7 +1796,7 @@ async def run_skill(
         if e.reason == "sdk_stream_silence":
             error = (
                 f"no SDK message received within "
-                f"{sdk_message_silence_seconds}s — likely an upstream "
+                f"{silence_window}s — likely an upstream "
                 f"API stall mid-generation"
             )
         else:

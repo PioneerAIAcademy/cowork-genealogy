@@ -1557,3 +1557,160 @@ def test_namesake_copy_gate_lowers_untied_link(before_state, after_state, test):
         if e.get("person_id") == "I1" and e.get("assertion_id") in ("a_001", "a_008")
     ]
     assert not strong, f"the untied census link to I1 still stands above speculative: {strong}"
+
+
+# --- Identity links follow their persona (#3713) ---
+
+# A persona's OWN facts, as FOLDED keys (`_fold`): the facts that describe that
+# one person's body and life. An allow-list, not an exclusion list, because
+# `fact_type` is an open enum and the facts that rightly link to SEVERAL people
+# arrive spelled many ways (`will_children`, `household_composition`,
+# `mother_birthplace`, `father`, `spouse`, `filiation`, `couple`, ...): every
+# new spelling would slip past an exclusion list and false-fire this check on a
+# correct both-sided link. `residence` and `occupation` are left off on purpose:
+# a household shares a residence.
+_IDENTITY_FACT_KEYS = frozenset(
+    {
+        "name",
+        "surname",
+        "sex",
+        "gender",
+        "birth",
+        "birthdate",
+        "birthplace",
+        "christening",
+        "baptism",
+        "death",
+        "burial",
+        "age",
+    }
+)
+
+
+def _record_key(record_id) -> str:
+    """A record id compared across its spellings: the bare id after `1:1:`."""
+    text = str(record_id or "").strip()
+    return text.split("1:1:")[-1].split("?")[0].strip("/").upper()
+
+
+def _persona_of(record_id, record_role) -> tuple | None:
+    if not record_id or not record_role:
+        return None
+    return (_record_key(record_id), str(record_role).strip().lower())
+
+
+def _materialized_targets(tool_calls: list[dict]) -> dict[tuple, set]:
+    """Each persona this run's `materialize_facts` wrote onto a person, and onto whom.
+
+    Read from the RESPONSE, never the request: an op may omit `personId` and let
+    the tool pick or mint the target, and a refused call wrote nothing even when
+    its op names one. Batch results carry no record keys -- one result per op, in
+    `ops` order -- so the op at index i owns `results[i]`. A named-party op
+    (`assertionId`) writes onto ANOTHER party, so it is skipped inside the loop,
+    never filtered out before indexing, which would shift every later position.
+    """
+    targets: dict[tuple, set] = {}
+    for tc in tool_calls:
+        if "materialize_facts" not in str(tc.get("tool") or ""):
+            continue
+        response = tc.get("response")
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except ValueError:
+                continue
+        if not isinstance(response, dict) or response.get("ok") is not True:
+            continue
+        args = tc.get("args") or {}
+        results = response.get("results")
+        if isinstance(results, list):
+            pairs = [
+                (op, results[i] if i < len(results) else None)
+                for i, op in enumerate(_ops_arg(args))
+            ]
+        else:
+            pairs = [(args, response)]
+        for op, result in pairs:
+            if op.get("assertionId") or not isinstance(result, dict):
+                continue
+            persona = _persona_of(op.get("recordId"), op.get("recordRole"))
+            person = result.get("personId")
+            if persona and person:
+                targets.setdefault(persona, set()).add(person)
+    return targets
+
+
+def identity_links_by_persona(before: dict, after: dict) -> dict[tuple, dict[str, list[str]]]:
+    """The new identity links this check judges, grouped persona -> person -> link
+    labels. Shared with `scripts/replay_person_evidence_link_validator.py`, so the
+    replay's judged count is the check's own: a check that stopped looking would
+    drop that count below the replay's floor rather than pass vacuously."""
+    assertions = _assertions_by_id(after)
+    persona_ids: dict[tuple, set] = {}
+    for a in assertions.values():
+        persona = _persona_of(a.get("record_id"), a.get("record_role"))
+        if persona and a.get("record_persona_id"):
+            persona_ids.setdefault(persona, set()).add(a["record_persona_id"])
+
+    linked: dict[tuple, dict[str, list[str]]] = {}
+    for link in _new_person_evidence(before, after):
+        a = assertions.get(link.get("assertion_id")) or {}
+        if _fold(str(a.get("fact_type") or "")) not in _IDENTITY_FACT_KEYS:
+            continue
+        persona = _persona_of(a.get("record_id"), a.get("record_role"))
+        if not persona or len(persona_ids.get(persona, ())) > 1:
+            continue
+        person = link.get("person_id")
+        if person:
+            linked.setdefault(persona, {}).setdefault(person, []).append(
+                f"{link.get('id')}:{a.get('id')}:{a.get('fact_type')}"
+            )
+    return linked
+
+
+def test_identity_links_follow_their_persona(before_state, after_state, tool_calls):
+    """A persona's own facts must all be credited to one person -- the one it
+    was written onto.
+
+    A list answer from `research_query` puts several people's results on one
+    page, which makes crediting Patrick's birth to his father Thomas an easy
+    slip, and a silent one: the tree then says something false about Thomas and
+    nothing errors. Two arms, over NEW `pe_` links of identity facts only:
+
+    1. one persona's identity links name more than one person;
+    2. this run's `materialize_facts` wrote the persona onto person X, and one of
+       its identity links names someone else.
+
+    Stands down on a persona whose role covers several record personas, and on
+    an assertion with no record id or role. Cannot catch a persona credited
+    wholly and consistently to the wrong person and never materialized: nothing
+    in the state says who is right, which stays the judge's call.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    linked = identity_links_by_persona(before, after)
+    targets = _materialized_targets(tool_calls)
+    problems = []
+    for persona, by_person in sorted(linked.items()):
+        if len(by_person) > 1:
+            problems.append(
+                f"persona {persona[0]}/{persona[1]}: its own facts are linked to "
+                f"{len(by_person)} different people: {by_person}"
+            )
+            continue
+        wrote_onto = targets.get(persona, set())
+        person = next(iter(by_person))
+        if len(wrote_onto) == 1 and person not in wrote_onto:
+            problems.append(
+                f"persona {persona[0]}/{persona[1]}: materialize_facts wrote it onto "
+                f"{next(iter(wrote_onto))}, but its own facts are linked to {person}: "
+                f"{by_person[person]}"
+            )
+    assert not problems, (
+        "a persona's own facts (name, birth, death, ...) must be linked to the one "
+        "person that persona is -- check the list answers for a mixed-up id:\n  "
+        + "\n  ".join(problems)
+    )

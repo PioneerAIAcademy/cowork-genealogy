@@ -44,6 +44,15 @@ DORMANT: dict[str, str] = {
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"
     ),
+    "no-wiki-no-write": (
+        "its only test, ut_search_wikipedia_008, was deleted by PR #3871: the bench "
+        "ran its dispatching lead on Haiku, which refused the request itself; "
+        "issue #3870 restores it"
+    ),
+    "scope-decline": (
+        "in search-wikipedia, its only test was ut_search_wikipedia_008, deleted by "
+        "PR #3871; issue #3870 restores it"
+    ),
 }
 
 

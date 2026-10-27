@@ -28,6 +28,7 @@ import type {
   JsonWrite,
   ProjectDirState,
   ProjectEntry,
+  ProjectListing,
   ProjectPathClass,
   ProjectStore,
   WriteJsonBothOptions,
@@ -373,5 +374,10 @@ export class FsProjectStore implements ProjectStore {
 
   async remove(projectPath: string, ref: string): Promise<void> {
     await unlink(this.abs(projectPath, ref)).catch(() => {});
+  }
+
+  /** Each project is a folder the caller names, so there is nothing to list. */
+  async listProjects(): Promise<ProjectListing> {
+    return { mode: "folder" };
   }
 }
