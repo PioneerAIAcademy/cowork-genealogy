@@ -1710,7 +1710,6 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "person_warnings": ("person-warnings.js", "personWarningsTool"),
     "project_context": ("project-context.js", "projectContext"),
     "research_query": ("research-query.js", "researchQuery"),
-    "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
     "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
@@ -1758,6 +1757,8 @@ def _make_live_handler(
     """Return an async handler for a live tool."""
     if tool_name == "extraction_append":
         return _make_extraction_append_handler(workspace, call_log, manifest or {})
+    if tool_name == "project_create":
+        return _make_project_create_handler(workspace, call_log, manifest or {}, place_predicated or [])
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1769,13 +1770,7 @@ def _make_live_handler(
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        place_table = (
-            (lambda args: _place_table(place_predicated or [], args))
-            if tool_name == "project_create" else None
-        )
-        return _make_compiled_tool_handler(
-            tool_name, js_file, export_name, workspace, call_log, place_table=place_table
-        )
+        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -2423,6 +2418,119 @@ def _make_extraction_append_handler(
             }
         )
         return _tool_envelope("extraction_append", response)
+
+    return handler
+
+
+def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:
+    """Which of a canned read's sources are memories, and what kind, for
+    `project_create`'s memory sources (#3384).
+
+    Production knows each memory's media type; a canned `person_read` does not
+    carry it (the response has no memory discriminator, and
+    `mcp-fixture.schema.json` is closed). So the mock reads it off the shape: a
+    source carrying `artifact_url` is a memory, a story when it came back with
+    `text` and no retained scan (`image_ref`), a document otherwise. A
+    transcribed PDF document is therefore mislabelled a story here: production
+    retains no scan for a PDF either.
+    """
+    kinds: dict[str, str] = {}
+    for src in read.get("sources") or []:
+        if not isinstance(src, dict) or not isinstance(src.get("id"), str) or "artifact_url" not in src:
+            continue
+        story = isinstance(src.get("text"), str) and src["text"].strip() != "" and not src.get("image_ref")
+        kinds[src["id"]] = "story" if story else "document"
+    return kinds
+
+
+def _make_project_create_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+    place_predicated: list,
+):
+    """The live `project_create`, reading the person from the test's
+    `person_read` fixtures instead of FamilySearch (#3384).
+
+    With `personId` the tool reads the person itself. Here the id is matched
+    against the loaded `person_read` fixtures, and `runProjectCreate`'s injected
+    `readPerson` serves the canned response, resolved to its first person (the
+    subject, as `readPerson` guarantees), with `_mock_memory_kinds`. Every other
+    step (the refusals, the build, the profile, the memory sources, the summary)
+    is the compiled production code. An id with no fixture is a failed read,
+    never a request. The test's place table is installed, so no place lookup
+    reaches the network. The call-log entry records the canned read as
+    `served_read`, so a validator can grade what reached the project against
+    what the read held. Principal is `LOCAL`: the harness is one user per process.
+    """
+    tool_js = _MCP_BUILD / "tools" / "project-create.js"
+
+    async def handler(args, _ws=workspace):
+        served: dict[str, Any] | None = None
+        if _ws is None or not tool_js.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {tool_js}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"project_create: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            pid = args.get("personId")
+            read = None
+            if isinstance(pid, str) and pid.strip():
+                predicated = (manifest.get("person_read") or {}).get("predicated") or []
+                hit = next(
+                    ((resp, src) for pred, resp, src in predicated if matches(pred, {"personId": pid.strip()})),
+                    None,
+                )
+                if hit is not None:
+                    read = hit[0]
+                    served = {"fixture": hit[1], "response": hit[0]}
+            payload = {
+                "input": input_obj,
+                "placeTable": _place_table(place_predicated, args),
+                "read": read,
+                "kinds": _mock_memory_kinds(read) if isinstance(read, dict) else {},
+            }
+            script = (
+                f"import {{ runProjectCreate }} from '{_node_module_url(tool_js)}';"
+                f" import {{ LOCAL }} from '{_node_module_url(_MCP_BUILD / 'auth' / 'principal.js')}';"
+                f" import {{ __usePlaceTableForTests }} from '{_node_module_url(_MCP_BUILD / 'utils' / 'place-resolver.js')}';"
+                " import { readFileSync } from 'node:fs';"
+                " const payload = JSON.parse(readFileSync(0, 'utf-8'));"
+                " __usePlaceTableForTests(payload.placeTable);"
+                " const deps = { readPerson: async (personId) => {"
+                "   if (!payload.read) throw new Error(`no person_read fixture for ${personId}`);"
+                "   const first = (payload.read.persons || [])[0];"
+                "   return { result: structuredClone(payload.read),"
+                "     resolvedId: first && typeof first.id === 'string' ? first.id : personId,"
+                "     memoryKinds: payload.kinds };"
+                " } };"
+                " const r = await runProjectCreate(payload.input, deps, LOCAL);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"project_create: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"project_create: {e}"]}
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__project_create",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:project_create",
+            "response": response,
+        }
+        if served is not None:
+            entry["served_read"] = served
+        call_log.append(entry)
+        return _tool_envelope("project_create", response)
 
     return handler
 

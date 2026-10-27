@@ -470,7 +470,7 @@ Mirrors `person_read`'s status handling (shared host contract).
 | **Current-user lookup** other non-OK | Throw: `"FamilySearch could not read your current user: HTTP ${status}."` |
 | API returns 204 (no body) | Return `{ persons: [] }`. |
 | API returns 301 (person merged) | Follow the `Location` header to the new ID and re-fetch, capped at **1** redirect. Missing `Location` or a second redirect → throw a `"redirect loop"` / `"missing Location"` error. |
-| API returns 401 | Throw: `"FamilySearch rejected the access token (401). The session may have expired or been revoked — call the login tool to re-authenticate."` |
+| API returns 401 | Throw: `"FamilySearch rejected the access token (401). The session may have expired or been revoked — call the login tool to re-authenticate."` In hosted mode (`isHostedMode`), the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, since `login` cannot open a sign-in page there (`rejectedTokenMessage`). |
 | API returns 403 | Throw: `"Person ${personId} is restricted and cannot be viewed."` |
 | API returns 404 | Throw: `"Person ${personId} not found in the FamilySearch Family Tree."` |
 | API returns 410 (deleted) | Throw: `"Person ${personId} has been deleted from the FamilySearch Family Tree."` |
