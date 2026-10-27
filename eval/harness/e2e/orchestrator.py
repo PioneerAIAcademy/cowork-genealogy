@@ -14,6 +14,7 @@ running tests).
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import posixpath
@@ -2350,9 +2351,8 @@ async def _run_agent(
             # `next_auto_reply` keys on the step a turn ran, and the gate is the
             # only thing that knows: by the time the turn ends, the spawn is just
             # another tool call among dozens.
-            _candidate = _boundary.step_candidate(tool_name, input_data.get("tool_input") or {})
-            if _candidate and _step_turns and _step_turns[-1].step is None:
-                _step_turns[-1].step = _boundary.bare_name(_candidate)
+            if _step_turns and _step_turns[-1].step is None and _gate.first_step:
+                _step_turns[-1].step = _gate.first_step
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
@@ -2765,6 +2765,12 @@ async def _run_agent(
     async def stop_hook(_input_data, _tool_use_id, _ctx):
         # A single ask is one turn: whatever stop ends it is the answer.
         if single_ask:
+            return {}
+        # A step-mode turn ends at its boundary on purpose; the host's reply
+        # continues the run, and `next_auto_reply`'s cap replaces
+        # `max_continue_nudges` (section F). Its own statement, not folded into
+        # the one above: `test_e2e_single_ask.py` pins that one's exact shape.
+        if _boundary is not None:
             return {}
         # The agent is ending its turn. In an autonomous e2e run the only
         # valid end is project.status == "completed"; an earlier yield is the
@@ -3591,6 +3597,16 @@ async def _run_agent(
         elif live["it"] is not None:
             await _shutdown(live["it"])
         live["it"] = live["closing"] = None
+        # Closing the generator does not close the session it streamed from, so
+        # a step run's CLI and its MCP server sat idle through the whole judge
+        # phase, until the SDK's atexit reaper got to them. Shielded and capped:
+        # teardown must not be the thing that fails a run that already finished.
+        if live.get("client") is not None:
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(
+                    asyncio.shield(live["client"].disconnect()), timeout=15
+                )
+            live["client"] = None
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
