@@ -865,14 +865,21 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
 def _agent_spawns(builtin_tool_calls) -> list[dict]:
     """Main-thread ``Agent`` spawns, read from the hook records.
 
-    Keyed on ``args.subagent_type``, not the tool name: the recorded name is
-    ``None`` for an Agent spawn in this harness, so a name-based match finds
-    nothing and any assertion over the result passes vacuously
-    (``_spawn_prompts`` above carries the same note).
+    Keyed on ``args.subagent_type`` rather than the tool name. The recorded name
+    varies -- committed logs carry both ``"Agent"`` and ``None`` -- so a
+    name-based match would miss some runs entirely and pass vacuously.
+
+    ``agent_id``'s ABSENCE is what marks the main thread: it is present only
+    when the hook fired inside a subagent. Membership, never truthiness, which
+    is the same rule ``harness.skill_runner.spawned_agents`` applies. A
+    general-purpose spawn carries no ``subagent_type`` and is skipped: it spawned
+    no named agent, so there is nothing here to hold to the rule.
     """
     return [
         call for call in builtin_tool_calls or []
         if (call.get("args") or {}).get("subagent_type")
+        and "agent_id" not in call
+
     ]
 
 
@@ -912,6 +919,12 @@ def test_every_agent_spawn_runs_in_the_foreground(test, builtin_tool_calls):
 
     An absent field fails: the SDK's default is background, so saying nothing is
     saying background.
+
+    **What the committed corpus says.** Recent `research` logs already carry
+    ``"False"`` on nearly every spawn (v33 47/47, v35 42/42, v36 46/46; two
+    absent in each of v32 and v34), so this is not a check that today's router
+    fails wholesale -- it is one that pins behaviour the prose now requires.
+    Replayed over the older v9 it does fail.
     """
     spawns = _agent_spawns(builtin_tool_calls)
     if not spawns:

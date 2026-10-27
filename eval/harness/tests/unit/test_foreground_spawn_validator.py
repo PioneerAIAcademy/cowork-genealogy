@@ -105,6 +105,22 @@ def test_the_validator_reads_spawns_the_recorder_actually_writes():
     assert "research-plan" in _expect_fail([_spawn(run_in_background=True)])
 
 
+def test_the_recorded_tool_name_does_not_matter():
+    """Committed logs carry both `"Agent"` and `None` here, so a name-based match
+    would miss whole runs and pass vacuously. `subagent_type` is the key."""
+    assert "research-plan" in _expect_fail(
+        [{"tool": "Agent", "args": {"subagent_type": "research-plan"}}]
+    )
+
+
+def test_a_subagent_s_own_spawn_is_not_the_main_thread_s():
+    """`agent_id` is present only when the hook fired INSIDE a subagent, so its
+    absence is what marks the main thread. The rule is the router's; a nested
+    spawn is not the router's to answer for."""
+    _expect_skip([{"tool": None, "args": {"subagent_type": "search-records"},
+                   "agent_id": "sub-1"}])
+
+
 def test_a_run_with_no_spawn_is_skipped_not_passed():
     """A vacuous pass here would read as coverage on every non-routing run."""
     _expect_skip([])

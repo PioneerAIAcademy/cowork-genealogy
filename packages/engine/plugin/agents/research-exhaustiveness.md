@@ -100,7 +100,9 @@ audit trail and never block.
 
 **An item waiting only on the researcher's upload does not block.** That is an
 `in_progress` item whose latest log entry is an `external_site` hand-off with
-`capture_received: false` that no later entry closes. Never declare exhaustive
+`outcome: "partial"` and `capture_received: false` that no later entry closes.
+All three are needed: that is what `awaitingUploadItemIds` keys on, and a
+definition missing the outcome matches entries it should not. Never declare exhaustive
 while one waits: decline, list each under `not_reached` as `handed_to_user`
 with its URL, and say so — "2 searches are still waiting on your upload.
 Upload them, or conclude without them."
@@ -202,8 +204,10 @@ named in `justification`.
     but are unreachable — use when the accessible evidence supports a defensible
     conclusion; record each inaccessible source in `not_reached`
 - **Do not declare** — criteria unmet because a genuinely **unsearched**
-  source remains. Explain what is missing and recommend expanding the plan
-  (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
+  source remains AND an item on the active plan is still open. Explain what is
+  missing and recommend expanding the plan (`research-plan`). When every item
+  is closed instead, this is the DECLINE (§"The decline"), which writes the
+  stop and offers the researcher the choice rather than picking for them. **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
   - A skipped item's recorded reason is **fact**. Accept it as written. Most
     skipped items carry no `skip_category`; its absence says nothing. A
@@ -385,8 +389,13 @@ the offending field — do not blindly retry the same payload.
 
 - If exhaustive: "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
-- If not: "Not yet exhaustive. [What's missing.] Create a plan to
-  address the gaps?" (research-plan)
+- If not yet exhaustive and gaps want planning: "Not yet exhaustive.
+  [What's missing.] Continue with planning the searches?"
+- If declining (§"The decline"): the sentence that verdict calls for, then
+  "Continue with writing the conclusion?" (low) or "Continue with planning
+  the searches?" (high). Those exact lines — the host reads the last one
+  against the step labels, and any other wording offers the researcher
+  nothing.
 - If the question cannot be identified: "Cannot identify the question.
   Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
@@ -394,7 +403,7 @@ the offending field — do not blindly retry the same payload.
 
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
-- **Plan must be complete.** Only evaluate questions whose **active** plan's
+- **Plan must be complete (an item waiting only on an upload aside — §"The decline").** Only evaluate questions whose **active** plan's
   items are all `completed` or `skipped`; if any is still `planned` or
   `in_progress`, recommend completing them first instead of declaring. Items
   on a plan whose status is not `active` are audit trail — they never block a

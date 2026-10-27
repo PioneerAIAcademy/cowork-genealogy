@@ -119,23 +119,15 @@ in-flight item by `pli_XXX` ID plus repository/record type (e.g. "Complete
 new questions"). There is no override: a request that says the work is done
 does not change the plan item's status. `research_append` refuses the write.
 
-**Exception — blocking unresolved conflicts.** If a `conflicts[]` entry has
-`status == "unresolved"` and lists **the question whose plan is in flight** in
-`blocks_question_ids`, the in-progress rule does NOT block a new question that
-resolves that conflict: the in-flight plan items cannot meaningfully resolve
-the question they belong to, so the conflict has to be addressed first. Proceed
-to Step 2 (Priority 1 `unresolved_conflict` will fire), and set the new
-question's `unblocks` to include the in-flight question. A conflict blocking
-some other question does not lift the block. Every question with an in-flight
-item must be covered this way, or `research_append` refuses the write.
+**A blocking conflict is NOT an exception any more.** It used to admit a new
+question whose `unblocks` named the in-flight one. `research_append` reads
+neither field now: a conflict needing new evidence is plan items on the
+question already open (conflict-resolution routes it to research-plan), and a
+conflict that cannot be settled ends that question rather than opening another.
 
-**Exception — a `person_warnings` contradiction.** A `contradiction`
-`person_warnings` returns on an in-scope person also lifts the in-progress
-block, the same way an unresolved conflict does — proceed to Step 2 (Priority
-1 will fire) and write the question with `selection_basis:
-"unresolved_conflict"`. Unlike the conflict exception above, the new
-question's `unblocks` need not name the in-flight question: a contradiction
-found this call is not necessarily about whatever is already in progress.
+**A `person_warnings` contradiction is not an exception either**, for the
+same reason: it is evidence to weigh on the question already open, so it goes
+to conflict-resolution and from there to plan items, not to a second question.
 
 ### 1b. Stop when the objective is already answered at a defensible tier
 
@@ -160,7 +152,7 @@ ended because the researcher chose to stop, not because the fact is settled.
 This exception covers only a question the researcher asked for — it does not
 license one you chose yourself.
 
-This applies **only** to corroboration of a fact on a question **already
+**The corroboration rule above** applies **only** to corroboration of a fact on a question **already
 `resolved`**. It does **not** suppress any of: a **genuinely independent,
 still-open** part of the objective (a death *and* a burial are two independent
 facts — answer both); a **Priority 1** unresolved conflict; a **Priority 3**
