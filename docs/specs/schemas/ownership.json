@@ -205,8 +205,8 @@
         "research_append",
         "extraction_append"
       ],
-      "enforceableAt": [],
-      "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny.",
+      "enforceableAt": ["tool"],
+      "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny. The `tool` plane is claimed for content preconditions only, not for caller routing: `research_append` refuses a `skipped` item with no `skip_category`, a `completed` item no log entry names, and a `collection_url` that is not a row of `external-collections.json` (since 2026-10), whoever calls it.",
       "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`, and `extraction_append` completes an `in_progress` item once a record its search found is extracted.",
       "failure": "A deny on this section refuses the status flip that the plans row explicitly blesses.",
       "remedy": "Same as `plans`.",
@@ -229,7 +229,12 @@
         "agent:survey-surname",
         "agent:search-wikipedia",
         "agent:search-familysearch-wiki",
-        "agent:historical-context"
+        "agent:historical-context",
+        "agent:source-evaluation",
+        "agent:check-warnings",
+        "agent:translation",
+        "agent:convert-dates",
+        "agent:validate-schema"
       ],
       "agentCallers": [
         {
@@ -282,9 +287,45 @@
           ]
         },
         {
+          "agent": "agent:source-evaluation",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:check-warnings",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:translation",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:convert-dates",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:validate-schema",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
           "agent": "agent:search-records",
           "tools": [
             "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:where-else-to-search",
+          "tools": [
+            "build_external_search_url"
           ]
         }
       ],
@@ -297,7 +338,7 @@
         "unit",
         "tool"
       ],
-      "notes": "Enforced at the tool plane since 2026-08-31, and the claim is narrower than the plane's definition: `record_search`, `fulltext_search` and `external_links_search` carry an ADVISORY note naming staged search responses that have no log entry, and refuse nothing. The plane's own text describes a writer-tool precondition that constrains the write; this constrains nothing, so read the row as coverage of DETECTION only. The unit plane cannot see the failure it addresses: it grades a single skill's own run, and the reported alpha-feedback case answered a research question with 11 record_search calls while invoking no skill at all. The hook plane cannot take it either: this section's callers are five SKILLS, which run on the main thread with no `agent_id`, and that is the hook's only discriminator. Measured over all 362 committed research.json files (fixtures plus eval/runlogs/e2e final states): of 1242 non-nil staging-capable entries, 126 logged results with no `results_ref`, so their staged file outlives the entry documenting it, which is why the check pairs each staged file against at most one such entry instead of subtracting counts. A nil search stages nothing and is invisible to the pairing; that half is a separate note, gated on the search's upstream total rather than its returned rows for `record_search` and `fulltext_search`, and on the pre-host-filter link set for `external_links_search`, whose shape has no upstream total to read, and is not detection either. What the notes hand back is the unpaired staged refs, not a bare count, so the obligation is satisfiable by a session that has lost them.",
+      "notes": "Enforced at the tool plane since 2026-08-31, and the claim is narrower than the plane's definition: `record_search` and `fulltext_search` carry an ADVISORY note naming staged search responses that have no log entry, and refuse nothing. The plane's own text describes a writer-tool precondition that constrains the write; this constrains nothing, so read the row as coverage of DETECTION only. The unit plane cannot see the failure it addresses: it grades a single skill's own run, and the reported alpha-feedback case answered a research question with 11 record_search calls while invoking no skill at all. The hook plane cannot take it either: this section's callers are five SKILLS, which run on the main thread with no `agent_id`, and that is the hook's only discriminator. Measured over all 362 committed research.json files (fixtures plus eval/runlogs/e2e final states): of 1242 non-nil staging-capable entries, 126 logged results with no `results_ref`, so their staged file outlives the entry documenting it, which is why the check pairs each staged file against at most one such entry instead of subtracting counts. A nil search stages nothing and is invisible to the pairing; that half is a separate note, gated on the search's upstream total rather than its returned rows, and is not detection either. `external_links_search` carried both notes until 2026-10, when its staging was removed: its durable copy is `external-collections.json`. What the notes hand back is the unpaired staged refs, not a bare count, so the obligation is satisfiable by a session that has lost them.",
       "requires": "Append only. Existing entries are never modified or deleted — checked separately by the append-only validator, which this row does not duplicate.",
       "failure": "The log is what makes a search reconstructible, including nil results. A skill that rewrites entries destroys the one record that says what was already tried.",
       "remedy": "Append a new entry. Correct a wrong one by appending the correction, never by editing in place.",
@@ -447,18 +488,20 @@
       ],
       "writerTools": [
         "research_append",
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "timeline_build"
       ],
       "toolAuthorized": [
-        "merge_tree_persons"
+        "merge_tree_persons",
+        "timeline_build"
       ],
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to it. Enforced on the unit plane, where the agent has a suite.",
-      "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry.",
+      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to it. Enforced on the unit plane, where the agent has a suite. `timeline_build` writes a person's own timeline (no `hypothesis_id`) by tool identity, composing every event and gap in code from live `person_evidence` links; it never touches a hypothesis timeline.",
+      "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry. A person timeline is regenerated by `timeline_build`, which recomputes it whole and updates it in place.",
       "failure": "A partially-edited timeline reads as a complete one, and the gaps it exists to expose are hidden.",
-      "remedy": "Regenerate through the timeline agent.",
+      "remedy": "Regenerate a person timeline with `timeline_build`, and a hypothesis timeline through the timeline agent.",
       "override": "none"
     },
     {
@@ -562,7 +605,7 @@
         "merge_tree_persons"
       ],
       "enforceableAt": [],
-      "notes": "The section ships before its writer: search-records records a row when a search turns up a different person with the subject's name in the subject's place and time, and that write lands in a later change. Until then no committed document carries the section, so research_append's namesake cap and warning, merge_tree_persons' namesake checks and materialize_facts' copy gate refuse and warn about nothing. merge_tree_persons re-keys a row onto the merge survivor through the person-id walker. Not enforceable on the unit plane: no suite writes the section yet.",
+      "notes": "The section ships before its writer: search-records records a row when a search turns up a different person with the subject's name in the subject's place and time, and that write lands in a later change. Until then no committed document carries the section, so research_append's namesake cap and warning, merge_tree_persons' namesake checks, materialize_facts' copy gate and the tree_edit and tree_correct citation check refuse and warn about nothing. merge_tree_persons re-keys a row onto the merge survivor through the person-id walker. Not enforceable on the unit plane: no suite writes the section yet.",
       "requires": "One row per namesake, never retired. An update may change the descriptive fields but never `person_id`, the tree person the namesake is not; research_append refuses that update.",
       "failure": "A row on the wrong person caps that person's links at speculative and leaves the namesake's records free to be linked to the subject.",
       "remedy": "Record namesakes through search-records.",

@@ -7,9 +7,9 @@ usage() {
   cat <<'EOF'
 Usage: setup-feedback-case.sh <path-to-feedback.zip> [<dest-dir>] [--force]
 
-Unzips a feedback submission into a case directory, initializes a git
+Extracts a feedback submission into a case directory, initializes a git
 baseline, writes .feedback-repo-root, wires per-skill symlinks, and
-prints the user's prompt for first-paste.
+prints the user's prompt for first-paste. Needs python3 (or python).
 
 Arguments:
   <path-to-feedback.zip>  The zip file downloaded from the feedback Drive.
@@ -19,6 +19,25 @@ Arguments:
 
 See docs/specs/feedback-case-spec.md §3 for the full contract.
 EOF
+}
+
+# Print the first of python3, python that actually runs. On Windows,
+# `command -v python3` succeeds even with no usable interpreter: Windows ships
+# an App Execution Alias stub at AppData/Local/Microsoft/WindowsApps/python3
+# that exists but fails when run (it exists to launch the Store), and on some
+# builds prints its Store message on stdout. So each candidate is run with its
+# output discarded, and only the chosen name reaches stdout. Git for Windows
+# installs expose the real interpreter as `python`. `-I` also rules out
+# Python 2, which has no such flag.
+find_python() {
+  local cand
+  for cand in python3 python; do
+    if "$cand" -I -c "import zipfile" >/dev/null 2>&1; then
+      echo "$cand"
+      return 0
+    fi
+  done
+  return 1
 }
 
 # --- Parse args ---
@@ -58,6 +77,14 @@ if ! REPO_ROOT="$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel 2>/dev/null)
   exit 1
 fi
 
+# --- Find a Python to extract with ---
+# Before --force removes anything. The `if !` form matters: under `set -e` a
+# bare `PY="$(find_python)"` exits here, silently, when none runs.
+if ! PY="$(find_python)"; then
+  echo "Error: python3 (or python) is required to extract the bundle" >&2
+  exit 1
+fi
+
 # --- Derive slug ---
 ZIP_BASENAME="$(basename "$ZIP_PATH")"
 SLUG="${ZIP_BASENAME%.zip}"
@@ -78,25 +105,20 @@ if [[ -e "$DEST_DIR" ]] && [[ -n "$(ls -A "$DEST_DIR" 2>/dev/null || true)" ]]; 
   rm -rf "$DEST_DIR"
 fi
 
-# --- Unzip ---
-# unzip exits 1 for warnings that still extracted everything, and a zip
-# submitted from Windows stores backslash path separators — exactly such a
-# warning ("appears to use backslashes as path separators"). Under `set -e`
-# that aborted here on every win32 submission, after extraction but before the
-# marker file, the git baseline and the skill symlinks, and with no output at
-# all. Fail only on a real error (>= 2).
-#
-# But exit 1 is NOT only that warning: Info-ZIP returns it equally for
-# "zipfiles where one or more files was skipped due to unsupported compression
-# method or encryption with an unknown password". Accepting 1 blind would let a
-# partially-extracted case through to the git baseline and the symlinks with no
-# error at all, so the contents are verified below rather than inferred from the
-# exit code.
+# --- Extract ---
+# Not `unzip` (#3706): macOS's fails on the non-ASCII names report titles
+# carry. The extractor reads UTF-8 names, and rewrites `\` to `/` because on
+# POSIX `zipfile` keeps a Windows bundle's `results\log_006.json` as one
+# literal root-level name. Python fails the whole extraction on an encrypted
+# member or an unsupported compression method rather than skipping it; the
+# contents are still verified below rather than inferred from the exit code.
+# `-I` because the bundle is untrusted input.
 mkdir -p "$DEST_DIR"
-UNZIP_STATUS=0
-unzip -q "$ZIP_PATH" -d "$DEST_DIR" || UNZIP_STATUS=$?
-if [[ "$UNZIP_STATUS" -ge 2 ]]; then
-  echo "Error: unzip failed (exit $UNZIP_STATUS): $ZIP_PATH" >&2
+# Absolute from here on: the script later cds into it and still reads files
+# through it, which a relative path would resolve a second time.
+DEST_DIR="$(cd "$DEST_DIR" && pwd)"
+if ! "$PY" -I "$SCRIPT_DIR/extract_feedback_zip.py" "$ZIP_PATH" "$DEST_DIR"; then
+  echo "Error: extraction failed: $ZIP_PATH" >&2
   exit 1
 fi
 
@@ -109,10 +131,6 @@ for required in research.json tree.gedcomx.json _feedback/feedback.json; do
 done
 if [[ ${#MISSING[@]} -gt 0 ]]; then
   echo "Error: extraction incomplete — missing: ${MISSING[*]}" >&2
-  if [[ "$UNZIP_STATUS" -eq 1 ]]; then
-    echo "unzip exited 1, which also covers members skipped for an unsupported" >&2
-    echo "compression method or unknown password. Re-download the zip." >&2
-  fi
   exit 1
 fi
 
@@ -217,41 +235,34 @@ if [[ -f "$FB_JSON" ]] && [[ -n "$(tr -d '[:space:]' < "$FB_JSON" 2>/dev/null)" 
       PROMPT_READ_OK=1
     fi
   fi
-  # Try python3 then python. On Windows, `command -v python3` succeeds even with
-  # no usable interpreter: Windows ships an App Execution Alias stub at
-  # AppData/Local/Microsoft/WindowsApps/python3 that exists but fails when run
-  # (it exists to launch the Store). Probing only python3 therefore reports
-  # success, the run fails, and the prompt silently degrades to the
-  # "see feedback.json" fallback. Git for Windows installs expose the real
-  # interpreter as `python`.
+  # The Python reader, with the interpreter find_python chose, so the Windows
+  # Store stub never runs here. Take the output only when it exited 0: a
+  # failed run's stdout is not a prompt.
   #
-  # Take the output only when the interpreter exited 0. That stub prints its
-  # Store message and exits nonzero, and on some Windows builds the message
-  # lands on stdout — so trusting a failed run's stdout would print the advert
-  # under "User's prompt to issue first:" for the genealogist to paste.
-  for PY in python3 python; do
-    # Gate on the flag, not on emptiness: a successful jq read of "" is an
-    # answer, and re-running python would only overwrite it with the same "".
-    if [[ "$PROMPT_READ_OK" -eq 1 ]]; then break; fi
-    if command -v "$PY" >/dev/null 2>&1; then
-      # `or ''` because .get returns None for an explicit JSON null, and
-      # print(None) emits the literal string "None" — which the triager would
-      # paste into the issue as the tester's own words. Git for Windows ships
-      # no jq, so this reader is the genealogist team's default path.
-      #
-      # sys.exit(1), not pass: a handler that swallows the error exits 0 while
-      # printing nothing, which is indistinguishable from a successful read of
-      # an empty prompt. That is the whole distinction this block exists to make.
-      if PY_OUT="$("$PY" -c "import json,sys
+  # Gate on the flag, not on emptiness: a successful jq read of "" is an
+  # answer, and re-running python would only overwrite it with the same "".
+  if [[ "$PROMPT_READ_OK" -eq 0 ]]; then
+    # `or ''` because .get returns None for an explicit JSON null, and
+    # print(None) emits the literal string "None" — which the triager would
+    # paste into the issue as the tester's own words. Git for Windows ships
+    # no jq, so this reader is the genealogist team's default path.
+    #
+    # sys.exit(1), not pass: a handler that swallows the error exits 0 while
+    # printing nothing, which is indistinguishable from a successful read of
+    # an empty prompt. That is the whole distinction this block exists to make.
+    #
+    # -I because this runs inside the case directory: without it a json.py
+    # from the bundle shadows the stdlib module and runs here. -X utf8 because
+    # -I also ignores PYTHONIOENCODING, and the prompt may be non-ASCII.
+    if PY_OUT="$("$PY" -I -X utf8 -c "import json,sys
 try:
     print(json.load(open(sys.argv[1], encoding='utf-8')).get('user_prompt') or '')
 except Exception:
     sys.exit(1)" "$FB_JSON" 2>/dev/null)"; then
-        USER_PROMPT="$PY_OUT"
-        PROMPT_READ_OK=1
-      fi
+      USER_PROMPT="$PY_OUT"
+      PROMPT_READ_OK=1
     fi
-  done
+  fi
 fi
 
 # --- Print "next steps" ---

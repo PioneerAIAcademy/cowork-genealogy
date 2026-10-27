@@ -49,12 +49,14 @@ import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
 import { censusChildrenGapSchema } from "./tools/census-children-gap.js";
+import { timelineBuildSchema } from "./tools/timeline-build.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
 import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { treeForgetSchema } from "./tools/tree-forget.js";
 import { researchAppendSchema } from "./tools/research-append.js";
 import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 import { projectContextSchema } from "./tools/project-context.js";
+import { projectListSchema } from "./tools/project-list.js";
 import { materializeFactsSchema } from "./tools/materialize-facts.js";
 import { extractionAppendSchema } from "./tools/extraction-append.js";
 import { researchQuerySchema } from "./tools/research-query.js";
@@ -68,6 +70,7 @@ import { getNameVariantsSchema } from "./tools/name-variants.js";
 export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "research_query", // loaded by the first genealogy ToolSearch of 34/34 runs
   "project_context", // loaded beside research_query in that same first ToolSearch
+  "project_list", // the router's first call in every conversation that names no projectPath
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
   "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
@@ -109,6 +112,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "place_search",
   "place_search_all",
   "project_context",
+  "project_list",
   "rank_search_matches",
   "record_person_matches",
   "record_read",
@@ -168,12 +172,14 @@ export const allToolSchemas = [
   researchLogAppendSchema,
   convertCalendarSchema,
   censusChildrenGapSchema,
+  timelineBuildSchema,
   treeEditSchema,
   treeCorrectSchema,
   treeForgetSchema,
   researchAppendSchema,
   rankSearchMatchesSchema,
   projectContextSchema,
+  projectListSchema,
   materializeFactsSchema,
   extractionAppendSchema,
   researchQuerySchema,

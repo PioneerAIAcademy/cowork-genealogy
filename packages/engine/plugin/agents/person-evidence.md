@@ -278,12 +278,17 @@ the user changed assertions/links since you last saw them — use
 **`research_query`, not a whole-file `Read`** of research.json (which
 grows all session):
 
-- `research_query({ section: "assertions", recordId, recordRole })` — the
-  personas you're about to link, one call per persona.
-- `research_query({ section: "person_evidence", assertionId })` — whether a
-  given `a_` is already linked (an empty result IS the answer: unlinked).
-- `research_query({ section: "person_evidence", personId })` — the existing
-  links for a candidate person, when checking for revisions.
+- `research_query({ section: "assertions", recordId: [ … ] })` — every persona
+  of every record you are about to link, in one call; group the items by
+  `record_id` + `record_role`.
+- `research_query({ section: "person_evidence", assertionId: [ … ] })` — which
+  of those `a_` are already linked; `countById[id]` of 0 means unlinked.
+- `research_query({ section: "person_evidence", personId: [ … ] })` — the
+  existing links for every candidate person, when checking for revisions.
+
+A list takes at most 50 ids, and only one filter per call may be a list. While
+`truncated` is true, re-query with `offset` at 50, then 100, until you hold
+`count` items.
 
 **Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
@@ -580,21 +585,19 @@ tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
 search-records uses for triage. Treat that as corroboration of the
 correlation assessment, not a replacement for it.
 
-**Thin-subject scores.** A subject that is a sparse local stub — few facts,
-such as a not-yet-in-FS tree person added from earlier research — can score
-uniformly near-zero against every candidate. The cause is **thin content in
-the subject document**, not an unresolvable id or a missing ARK. When the
-same-person engine has very little to match on (a name stub with no birth
-year, no place, no family context), it correctly returns a low score because
-it genuinely cannot distinguish candidates. In that situation a low score is
-uninformative, not negative evidence: the qualitative correlation analysis
-carries the decision. A strong qualitative match on name, generation, and
-family position should still link at `probable` even if the score is near
-zero; the score may improve once `materialize_facts` lands more facts on
-the stub. **Call `same_person` even for a thin-subject stub** — you call
-it to obtain the score, not to confirm in advance that it will be high. The
-low score is the information you then explain in the rationale; do not skip
-the call because you expect a near-zero result.
+**Thin-subject scores.** A sparse tree person — a name and a fact or two —
+scores lower against the right record than a fuller person would, often in the
+weak band. Read its score against the other records scored for the same person,
+not against the bands alone: the right record still scores far above an
+unrelated person, and a record that conflicts on a core fact scores far below
+the right one. A thin subject never makes a low score uninformative. When one
+record scores far below the others, find the fact that disagrees and treat it as
+a conflict (Step 3) before linking. When every record scores weak, nothing
+conflicts and the correlation is strong, the correlation carries the decision;
+name the thin subject and the score in the rationale. **Call `same_person` even
+for a thin-subject stub** — you call it to obtain the score, not to confirm in
+advance that it will be high; the score may rise once `materialize_facts` lands
+more facts on the stub.
 
 **Never auto-merge persons.** person-evidence creates LINKS (pe_
 entries), not merges. If two GedcomX persons are determined to be
@@ -603,9 +606,11 @@ reach and tree-edit to execute.
 
 ### 4. Create person_evidence entries
 
-Persist all assertion → person links in ONE batched `research_append({
-ops: [...] })` call — one `append` op per assertion-person pair (still one
-`pe_` entry per pair; batching changes the call count, not the links).
+Persist links one source at a time: as soon as one source's links are
+decided, write them in ONE batched `research_append({ ops: [...] })` call —
+one `append` op per assertion-person pair, every party of that source in the
+same call — then score the next source. The tool refuses appends from more
+than one source in a call.
 Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
 the ids and validates the whole batch, writing NOTHING on a per-op failure
 (`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
@@ -914,15 +919,16 @@ Present the materialized household plainly.
 
 ### 8. Check the persons you linked to, then present
 
-`person_warnings` takes one `personId` per call, so call it only where the
-writer tools cannot see: each person you linked to that **already existed in
-the tree before this invocation**. Not a stub you minted this run — its facts
+After your last link, call `person_warnings` once, with `personId` set to the
+list of every person you linked to that **already existed in the tree before
+this invocation**. Not a stub you minted this run — its facts
 went through `materialize_facts`, which refuses a write that introduces an
 unjustified warning. A `pe_` link does not go through a writer tool, so an
 imported relative's pre-existing impossibility is surfaced by nothing else.
 
-Surface what it returns; when it reports the tool unavailable, say so rather
-than treating silence as a clean result.
+Surface what it returns, per person in `results`; an entry's `error`, a
+`birthplaceCheck` of `not_checked`, or the tool reported unavailable is a check
+that did not run — say so rather than treating it as a clean result.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
@@ -1000,8 +1006,8 @@ When multiple candidates share the same name in the same area:
   language is a potential match. Read the equivalence from the naming page
   Step 2 fetched, and note the mapping in the rationale.
 - **Multiple records, same repository session:** When a single search
-  returns multiple records about the same person, link them in one
-  batch but evaluate each independently. Do not let one record's
+  returns multiple records about the same person, link each record's
+  source in its own call and evaluate each independently. Do not let one record's
   strong match inflate confidence for a weaker one.
 - **Person already linked by another assertion:** When a new assertion
   from a different record matches the same person, still evaluate it

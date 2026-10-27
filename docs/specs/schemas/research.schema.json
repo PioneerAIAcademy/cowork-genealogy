@@ -580,7 +580,8 @@
         },
         "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" },
         "skip_category": { "$ref": "enums.schema.json#/$defs/skip_category" },
-        "skip_reason": { "type": "string" }
+        "skip_reason": { "type": "string" },
+        "collection_url": { "type": "string", "minLength": 1 }
       }
     },
     "log_entry": {
@@ -633,6 +634,10 @@
             "string",
             "null"
           ]
+        },
+        "staged_ref": {
+          "type": "string",
+          "description": "The results/.staging/ file this entry's sidecar was finalized from. Lets research_log_append answer a re-sent, already-logged staged ref with this entry."
         },
         "results_available": {
           "anyOf": [
@@ -1706,6 +1711,20 @@
                   "string",
                   "null"
                 ]
+              },
+              "person_count": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "record_count": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
               }
             }
           }
@@ -1743,6 +1762,132 @@
               },
               "found": {
                 "type": "boolean"
+              },
+              "outcome": {
+                "$ref": "enums.schema.json#/$defs/locality_page_outcome"
+              }
+            }
+          }
+        },
+        "registration_start": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "event",
+              "level",
+              "year",
+              "source_url"
+            ],
+            "properties": {
+              "event": {
+                "$ref": "enums.schema.json#/$defs/registration_event"
+              },
+              "level": {
+                "$ref": "enums.schema.json#/$defs/registration_level"
+              },
+              "year": {
+                "type": "integer"
+              },
+              "source_url": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "volume_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "total_volumes",
+            "complete",
+            "by_record_type",
+            "untyped"
+          ],
+          "properties": {
+            "start_year": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "end_year": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "total_volumes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "complete": {
+              "type": "boolean"
+            },
+            "by_record_type": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "group",
+                  "volumes",
+                  "browse_only",
+                  "fulltext_only"
+                ],
+                "properties": {
+                  "group": {
+                    "type": "string"
+                  },
+                  "volumes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "browse_only": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "fulltext_only": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "untyped": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "volumes",
+                "browse_only",
+                "fulltext_only"
+              ],
+              "properties": {
+                "volumes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "browse_only": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "fulltext_only": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
               }
             }
           }

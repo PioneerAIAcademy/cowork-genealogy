@@ -89,6 +89,8 @@ from typing import Any
 
 import pytest
 import yaml
+
+from psycopg.types.json import Jsonb
 from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage, SystemMessage, TextBlock
 
 from proto.worker import deny, options, worker
@@ -109,7 +111,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema", "where-else-to-search"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -836,7 +838,10 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
     assert out == {}
     assert rows == [{"turn_id": "turn-1", "session_id": "sess-1", "agent_id": None, "agent_type": None,
                      "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow",
-                     "tool_use_id": "tu-1"}]
+                     "tool_use_id": "tu-1",
+                     # convert_calendar is a READ, so it wrote nothing. The key is carried
+                     # on every recorded row so the shape does not vary by tool.
+                     "wrote": None}]
 
 
 @pytest.mark.parametrize("tool_name", ["Agent", "Task"])
@@ -1121,6 +1126,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.resume is None and opts.session_id is None
     assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     [matcher] = opts.hooks["PreToolUse"]
@@ -1211,6 +1217,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
     on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
     assert on.env["ENABLE_TOOL_SEARCH"] == "true"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
@@ -1248,6 +1255,90 @@ def test_every_shipped_agent_model_has_a_gateway_id():
     unmapped = sorted(m for m in models
                       if m not in options.GATEWAY_AGENT_MODELS and not m.startswith(("us.", "global.")))
     assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
+
+
+def _bedrock_or_inherit(model: str | None) -> bool:
+    return model is None or model.startswith(("us.", "global."))
+
+
+def test_gateway_plugin_copy_gives_every_namespaced_agent_a_bedrock_id(tmp_path):
+    """plugins= registers each agent again as genealogy-research:<agent> from its file; a
+    bare id there reached the gateway and got a 400 (handoff F4, 2026-10-24)."""
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    dest = options.gateway_plugin_copy(str(PLUGIN_DIR), str(tmp_path / "copy"))
+    source, copied = load_agent_definitions(PLUGIN_DIR), load_agent_definitions(Path(dest))
+    assert set(copied) == set(source) == AGENTS
+    assert any(not _bedrock_or_inherit(a.model) for a in source.values()), "the source keeps its bare ids"
+    wrong = sorted(n for n, a in copied.items() if not _bedrock_or_inherit(a.model))
+    assert not wrong, f"still a bare model id in the copy: {wrong}"
+    assert {n: a.model for n, a in copied.items()} == {
+        n: a.model for n, a in options.gateway_agent_models(source).items()}, "the same ids as agents="
+    for name, agent in copied.items():
+        assert (agent.prompt, agent.description, agent.tools) == (
+            source[name].prompt, source[name].description, source[name].tools), f"{name}: only the model changes"
+    rest = [p.relative_to(PLUGIN_DIR) for p in PLUGIN_DIR.rglob("*") if p.is_file() and p.parent.name != "agents"]
+    assert rest and all((Path(dest) / r).read_bytes() == (PLUGIN_DIR / r).read_bytes() for r in rest)
+
+
+def test_gateway_plugin_copy_rewrites_the_frontmatter_only(tmp_path):
+    agents = tmp_path / "src" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "mapped.md").write_text("---\nname: mapped\nmodel: claude-sonnet-5\n---\nmodel: claude-sonnet-5\n", encoding="utf-8")
+    (agents / "inherit.md").write_text("---\nname: inherit\n---\nmodel: claude-sonnet-4-6\n", encoding="utf-8")
+    (agents / "custom.md").write_text("---\nname: custom\nmodel: us.anthropic.claude-opus-5\n---\nbody\n", encoding="utf-8")
+    dest = Path(options.gateway_plugin_copy(str(tmp_path / "src"), str(tmp_path / "dest"))) / "agents"
+    assert (dest / "mapped.md").read_text(encoding="utf-8") == (
+        "---\nname: mapped\nmodel: us.anthropic.claude-sonnet-5\n---\nmodel: claude-sonnet-5\n")
+    assert (dest / "inherit.md").read_text(encoding="utf-8") == "---\nname: inherit\n---\nmodel: claude-sonnet-4-6\n"
+    assert (dest / "custom.md").read_text(encoding="utf-8") == "---\nname: custom\nmodel: us.anthropic.claude-opus-5\n---\nbody\n"
+    assert (agents / "mapped.md").read_text(encoding="utf-8").count("model: claude-sonnet-5") == 2, "source untouched"
+
+
+def test_prepare_passes_the_gateway_copy_as_the_plugin_dir(monkeypatch, tmp_path):
+    monkeypatch.setattr(worker, "log", lambda **f: None)
+    monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
+    monkeypatch.setattr(worker, "load_plugin_agents", lambda plugin_dir: ({}, None))
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+        monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
+    stale = tmp_path / "plugin-gateway-stale"
+    stale.mkdir()
+    monkeypatch.setenv("MODEL_PROVIDER", "gateway")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gw.example/bedrock")
+    worker.prepare()
+    copy = Path(worker._PLUGIN_DIR)
+    assert copy.parent == tmp_path and copy.name.startswith("plugin-gateway-") and worker._AGENTS_ERROR is None
+    assert not stale.exists(), "an earlier start's copy is removed"
+    if POSIX_MODES:
+        assert stat.S_IMODE(copy.stat().st_mode) == 0o755, "slot users read it"
+    assert (copy / "agents" / "search-wikipedia.md").read_text(encoding="utf-8").count("model: us.anthropic.") == 1
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    worker.prepare()
+    assert worker._PLUGIN_DIR == str(PLUGIN_DIR), "the Anthropic API takes the bare ids"
+    assert worker.attempt_plugin_dir() == str(PLUGIN_DIR)
+
+
+def test_an_attempt_rebuilds_a_copy_the_tmp_cleanup_has_thinned(monkeypatch, tmp_path):
+    """Amazon Linux 2023 clears /tmp files untouched for 10 days, and a skill's other files
+    are read only when it runs: a copy can lose single files while the worker serves turns."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(worker, "_PLUGIN_DIR", worker.new_gateway_plugin_copy())
+    first = worker._PLUGIN_DIR
+    assert worker.attempt_plugin_dir() == first and not logged, "a whole copy is reused"
+    lost = next(p for p in Path(first).rglob("*") if p.is_file() and p.parent.name != "agents")
+    lost.unlink()
+    second = worker.attempt_plugin_dir()
+    assert second != first and Path(first).is_dir(), "a fresh copy; the old one stays for attempts still reading it"
+    assert options.plugin_copy_missing(str(PLUGIN_DIR), second) == []
+    assert (Path(second) / "agents" / "search-wikipedia.md").read_text(encoding="utf-8").count("model: us.anthropic.") == 1
+    [rebuilt] = [f for f in logged if f.get("ev") == "plugin_copy"]
+    assert rebuilt["missing"] == 1 and rebuilt["first"] == str(lost.relative_to(first))
+    assert worker.attempt_plugin_dir() == second
 
 
 # ── the container ─────────────────────────────────────────────────────────────────
@@ -1324,7 +1415,7 @@ def test_worker_dockerfile_shape():
     # mode (test_proto_config checks the export is current and the install shape).
     assert re.search(r"^COPY apps/server/proto/worker/requirements\.txt\s", body, re.M)
     requirements = (PROTO / "worker" / "requirements.txt").read_text(encoding="utf-8")
-    assert re.search(r"^claude-agent-sdk==0\.2\.128 ", requirements, re.M)
+    assert re.search(r"^claude-agent-sdk==0\.2\.172", requirements, re.M)
     assert re.search(r"^psycopg==", requirements, re.M) and re.search(r"^psycopg-binary==", requirements, re.M)
     # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
     assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"
@@ -1618,6 +1709,17 @@ def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
     assert "cost_usd = COALESCE" in update and "output_tokens = COALESCE" in update
     assert summary["cost_usd"] == 0.01 and summary["num_turns"] == 1 and summary["resumed"] is False
     assert summary["events"] == 1 and summary["sdk_session_id"] == SID and summary["seq"] == 2, "text event, then turn_done"
+
+
+def test_run_turn_passes_a_whole_gateway_copy_as_plugins(turn_env, monkeypatch, tmp_path):
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(worker, "_PLUGIN_DIR", worker.new_gateway_plugin_copy())
+    thinned = worker._PLUGIN_DIR
+    next(p for p in Path(thinned).rglob("*") if p.is_file()).unlink()
+    _run(turn_env, _good())
+    used = turn_env["options"]["plugin_dir"]
+    assert used != thinned and options.plugin_copy_missing(str(PLUGIN_DIR), used) == []
 
 
 def test_run_turn_resumes_when_the_store_already_holds_the_session(turn_env):
@@ -2156,7 +2258,9 @@ def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row(
     worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
                                    "tool_use_id": "toolu_9"})
     sql, params = conn.executed[-1]
-    assert "tool_use_id" in sql and params[-1] == "toolu_9"
+    # `wrote` binds LAST now (it is the column the writer-record migration added), so
+    # the tool_use_id is the second-from-last param rather than the last.
+    assert "tool_use_id" in sql and params[-2] == "toolu_9"
     worker.finish_tool_call(conn, "t", "toolu_9")
     sql, params = conn.executed[-1]
     assert sql.startswith("UPDATE tool_calls SET duration_ms") and "now() - ts" in sql
@@ -6180,3 +6284,84 @@ def test_the_zero_progress_counter_is_fenced_to_the_attempt_s_epoch():
 
     with pytest.raises(worker.Superseded, match="zero-progress count left alone"):
         worker.bump_zero_progress(NoRow(), "turn-1", 4)
+
+
+# ── `wrote`: the shape of what a call changed (tool_calls.wrote) ──────────────
+
+
+# One representative writer call: a research_append UPDATE, which is the shape the
+# change-review scan most needs to tell from a read.
+_APPEND = {"tool_name": "mcp__genealogy__research_append",
+           "tool_input": {"section": "person_evidence", "op": "update", "entryId": "pe_1"}}
+
+
+
+def test_a_DENIED_writer_records_no_write(tmp_path):
+    """A denied call never runs. Recording a shape would put a write that never happened
+    into the change-review scan, which the `WHERE wrote IS NOT NULL` index cannot filter
+    out — it has no decision clause."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+        config_root=str(tmp_path / "cfg"), record=rows.append,
+        blocked={"research_append"},
+    )
+    _call(hook, {**_APPEND, "tool_use_id": "tu-2"})
+    assert rows and rows[-1]["decision"] == "deny"
+    assert rows[-1]["wrote"] is None, "a denied write was recorded as a write"
+
+
+def test_a_HALTED_call_records_no_write(tmp_path):
+    """The halt arm records and then returns `_halt(...)`, so the tool body never runs. A
+    Stop pressed while a research_append is in flight must not leave a row claiming it
+    happened."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+        config_root=str(tmp_path / "cfg"), record=rows.append,
+        halt=lambda **_: "stopped by the researcher",
+    )
+    _call(hook, {**_APPEND, "tool_use_id": "tu-3"})
+    assert rows and rows[-1]["decision"] == "halt"
+    assert rows[-1]["wrote"] is None, "a halted call was recorded as a write"
+
+
+def test_an_allowed_writer_records_what_it_wrote(tmp_path):
+    rows: list[dict] = []
+    _call(_hook(rows, str(tmp_path), str(tmp_path / "cfg")), {**_APPEND, "tool_use_id": "tu-1"})
+    assert rows and rows[-1]["decision"] == "allow"
+    assert rows[-1]["wrote"] is not None, "an allowed write recorded nothing"
+    assert rows[-1]["wrote"]["ids"] == ["pe_1"]
+
+
+def test_a_read_stores_null_not_an_empty_json_document(tmp_path):
+    """The column is sparse by design and its index is `WHERE wrote IS NOT NULL`. A
+    `Jsonb(None)` would be indexed and read as a write that touched nothing."""
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read",
+                                   "decision": "allow"})
+    _, params = conn.executed[-1]
+    assert params[-1] is None
+
+
+def test_a_writer_call_stores_the_shape_as_jsonb(tmp_path):
+    conn = FakeConn()
+    shape = {"section": "person_evidence", "op": "update", "ids": ["pe_1"]}
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "x",
+                                   "decision": "allow", "wrote": shape})
+    _, params = conn.executed[-1]
+    assert isinstance(params[-1], Jsonb), f"wrote must bind as Jsonb, got {type(params[-1])}"
+
+
+def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
+    """The load-bearing one. `insert_tool_call` runs on every tool call, so a column/param
+    mismatch breaks every write path at once."""
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "x",
+                                   "decision": "allow", "wrote": {"section": "a", "op": "append", "ids": []}})
+    sql, params = conn.executed[-1]
+    cols = [c.strip() for c in sql.split("(", 1)[1].split(")", 1)[0].split(",")]
+    assert "wrote" in cols, "the INSERT does not name the column the migration added"
+    assert cols[-1] == "wrote", "wrote must stay LAST — _tool_call_decisions reads p[6] positionally"
+    assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
+

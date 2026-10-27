@@ -17,7 +17,7 @@ live `person_read` is ~115–121 KB, which the model would re-type on every
 audit. The project lives in the session's own folder (`/project` on the hosted
 path), and init-project, not
 source-evaluation, creates it: `project_create` keeps its single caller and
-source-evaluation stays read-only. Where the working folder's project does not
+source-evaluation creates no project and adds no person to one. Where the working folder's project does not
 hold the audited person, the tool answers "not found" and source-evaluation
 says so in one line rather than adding the person to a project the user did not
 ask to change.
@@ -59,7 +59,7 @@ The relative-variant tags in § Warning Definitions are the evidence.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `projectPath` | string | Yes | Absolute path to the directory containing `tree.gedcomx.json`. |
-| `personId` | string | Yes | The anchor person to check: a tree person id, or a FamilySearch id a tree person's `ark` links to. Names the target; warnings are evaluated over this person and their one-hop relatives |
+| `personId` | string \| string[] | Yes | The anchor person to check: a tree person id, or a FamilySearch id a tree person's `ark` links to. Names the target; warnings are evaluated over this person and their one-hop relatives. A list (or a JSON-array string) of up to 50 ids is the list form — see § List form |
 
 Example:
 ```json
@@ -100,6 +100,69 @@ id, which a tree keyed `I1` refused. `person_quality` resolves the other way
 > LLM), `warningCount` is a plain deterministic count produced in code
 > (`warnings.length`), so it belongs in the tool output. The per-warning
 > `message` field below also survives (see the warning-list note).
+
+### List form
+
+`personId` may be a list of up to 50 ids — a real array, or a string that
+parses as a JSON array of strings, the same two spellings `research_query`
+accepts. Duplicate ids are dropped; an empty list, a non-string member, a
+malformed array string, or more than 50 ids throws before any work. A single
+id — including a plain string — gets exactly the single-id output above; the
+list form never changes it.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `warningCount` | number | Distinct warnings across every entry — the sum of the entries' `warningCount` |
+| `results` | object[] | One entry per id, in request order |
+
+Each entry is either `{ personId, error }` — the id resolved to nothing, or to
+two persons (the same message the single-id call throws) — or:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `personId` | string | The id as asked |
+| `warningCount` | number | `warnings.length` |
+| `warnings` | object[] | This anchor's warnings that no earlier entry already reported |
+| `alreadyReported` | number | This anchor's warnings left out because an earlier entry reported the same problem |
+| `birthplaceCheck` | `"checked"` \| `"not_checked"` \| `"not_applicable"` | The far-birthplace check (§ Birthplace far from the parents' residence): ran to an answer; could not, because a place did not resolve in the budget; or the anchor's circle had no birth/residence pair to check |
+
+Why a list needs more than a loop over the single call — these are the four
+protections, each pinned in `tests/tools/person-warnings-list.test.ts` and each
+proven by breaking it:
+
+- **One id cannot sink the batch.** The single call throws on an unknown id; in
+  a list that id answers its own `error` and every other id still answers. The
+  person-evidence agent passes every pre-existing person it linked, and one
+  stale id would otherwise cost it every check.
+- **One place-lookup budget for the call.** Every anchor's birthplace and
+  residence names are pooled, each name looked up once, under the single
+  `PLACE_LOOKUP_BUDGET_MS` (30 s). A budget per anchor would let a long list
+  run past Cowork's 60 s per-call cap. Because the budget is shared, an anchor
+  can lose its lookups to its neighbours, so `birthplaceCheck` says
+  `not_checked` rather than leaving the check silently absent.
+- **A problem is reported once.** Overlapping circles see the same problem
+  from both ends under different tags: a father who died before his son's birth
+  is `hasDeathBeforeChildBirth30_10` from the father and
+  `relativesHasDeathBeforeChildBirth30_10` from the son, and the 14-year
+  parenthood pair even swaps `personId` and `relatedPersonId`
+  (`earliestChildBirthToBirthMale14` vs
+  `maleRelativesEarliestChildBirthToBirth14`). `problemKey` matches on the tag
+  with its relatives prefix and gender word dropped, the two people in either
+  order, and the fact ids — all three. The first entry to see a problem carries
+  it; later ones count it in `alreadyReported`. Order decides who carries it,
+  never whether it is counted.
+- **The single-id call is unchanged**, so every existing caller — check-warnings,
+  source-evaluation, the merge tools' own warnings — is untouched.
+
+Example — son `I1` born 1850 to father `I2` who died 1845 and has an 1870
+residence:
+
+```json
+{ "warningCount": 5, "results": [
+  { "personId": "I1", "warningCount": 4, "warnings": [ "…" ], "alreadyReported": 0, "birthplaceCheck": "not_applicable" },
+  { "personId": "I2", "warningCount": 1, "warnings": [ { "issueType": "hasEventAfterDeath1", "…": "…" } ], "alreadyReported": 4, "birthplaceCheck": "not_applicable" }
+] }
+```
 
 ### Warning Object
 
@@ -179,9 +242,16 @@ implementation is checked against.
           "Absolute path to the directory containing tree.gedcomx.json.",
       },
       personId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description:
-          "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
+          "The anchor person to check: a tree person id (e.g. I1), or a " +
+          "FamilySearch id (e.g. KWCJ-RN4) that a tree person's ark links to. " +
+          "Warnings are evaluated over this person and their one-hop relatives. " +
+          "A list of up to 50 ids checks each in one call and answers `results`, " +
+          "one entry per id: its warnings (a warning an earlier id already " +
+          "reported is counted in `alreadyReported`, not repeated), " +
+          "`birthplaceCheck`, or an `error` for an id not in the tree.",
       },
     },
     required: ["personId", "projectPath"],
@@ -887,14 +957,17 @@ diagnostic-field alternative to throwing was not adopted.
 
 ### `packages/engine/mcp-server/src/types/person-warnings.ts`
 
-- `PersonWarningsInput` — `{ projectPath: string; personId: string }`
+- `PersonWarningsInput` — `{ projectPath: string; personId: string | string[] }`
 - `PersonWarning` — the warning object shape
-- `PersonWarningsResult` — the output shape
+- `PersonWarningsList`, `PersonWarningsListEntry`, `BirthplaceCheck` — the list form's output
+- `PersonWarningsResult` — the output shape, single or list
 
 ### `packages/engine/mcp-server/src/tools/person-warnings.ts`
 
 - `personWarningsTool(input)` — main function.
 - `personWarningsToolSchema` — MCP tool schema
+- `personIdsOf(value)`, `MAX_PERSONS`, `problemKey(warning)` — the list form's
+  input parsing, its 50-id cap, and its de-duplication key
 - `ALL_WARNING_TAGS` — the array of every `issueType` tag the tool emits;
   imported by the drift lint as the shipped source of truth
 - `getPersonName(person)` — display-name resolution, exported for tests
@@ -927,6 +1000,11 @@ Unit tests (see Testing section below).
 
 `hasBirthFarFromParentsResidence`, driven through `personWarningsTool` with an
 injected place resolver, so no test reaches the network.
+
+### `packages/engine/mcp-server/tests/tools/person-warnings-list.test.ts`
+
+The list form and its four protections (§ List form), with an injected place
+resolver.
 
 ---
 

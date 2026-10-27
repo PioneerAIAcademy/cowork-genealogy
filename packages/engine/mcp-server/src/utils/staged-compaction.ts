@@ -116,7 +116,7 @@ export function compactStagedRecordSearch(
  * result has neither of). It is NOT unreachable, though: staging serializes the
  * response before this strip runs, so the transcript is on disk at
  * `staged.resultsRef`, and `Read` is not gated by the plugin hook (its matcher
- * is Write|Edit|NotebookEdit|.*device_commit_files|.*research_append). Reading
+ * is Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task). Reading
  * it pulls the whole page back into context, which is the reason to triage from
  * the stubs — not an inability to reach it. Say the cost, not "impossible", or
  * the next reader plans around a wall that is not there. The
@@ -135,6 +135,26 @@ export function compactStagedFulltextSearch(
   for (const r of out.results) {
     delete r.textDocument;
   }
+  return out;
+}
+
+/**
+ * Drop `image_transcribe`'s inline `transcription` once the page is staged
+ * (issue #2490, lead ruling 2026-10-16): the caller triages on `digest` and
+ * `found`, reads the page with `sidecar_read` only when it needs it, and hands
+ * `staged.resultsRef` to record-structurer. A null `staged` keeps the text,
+ * because then it is the only copy (`stagingError` says why).
+ *
+ * Applied at the MCP boundary only (`imageTranscribeMcpTool`), never inside
+ * `imageTranscribeTool`: person_read's memories leg calls that function
+ * in-process and needs the text.
+ *
+ * Mutates and returns `out`.
+ */
+export function compactStagedImageTranscribe<T extends { transcription?: string; staged?: unknown }>(
+  out: T,
+): T {
+  if (out.staged) delete out.transcription;
   return out;
 }
 

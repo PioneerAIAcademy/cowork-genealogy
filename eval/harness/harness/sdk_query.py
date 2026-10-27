@@ -16,7 +16,7 @@ SDK's own teardown; ``close_query`` is that close, shared by both harnesses.
 
 Delete this module, and call ``query()`` again, once
 anthropics/claude-agent-sdk-python#1377 ships and the harness's exact
-``claude-agent-sdk`` pin moves to a release carrying it (0.2.165 does not). The
+``claude-agent-sdk`` pin moves to a release carrying it (0.2.172 does not). The
 import of the private ``_internal.client`` is acceptable only under that pin.
 """
 

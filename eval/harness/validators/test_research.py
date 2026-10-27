@@ -15,6 +15,8 @@ what is / is not covered.
 from __future__ import annotations
 
 import re
+import json
+
 import pytest
 
 from validators_lib import bare_tool_name
@@ -749,11 +751,16 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
 
     Deliberately narrow. A blanket "questions[] must not change" would
     false-fail the legitimate routes — `question-selection` may append a
-    follow-on question, which is one of this test's `correct_skill` answers.
+    follow-on question, which the explanation names as a legitimate answer.
     So this names the specific deltas that are never legitimate here: the
     target question's `status` and `search_stop`, and
     `project.status`. Same shape as
     `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
+
+    Only a writer the test lets run can trip it: every agent spawn a test does
+    not name in `execution.run_agents` is denied. ut_research_rpn runs
+    `research-plan` and `question-selection`, so a reopen by `proof-conclusion`
+    is not observable there.
     """
     if "no-plan-writes-when-resolved" not in test.get("tags", []):
         pytest.skip("not a no-plan-writes-when-resolved scenario")
@@ -826,7 +833,9 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     research/SKILL.md's Second-opinion section requires both on the gps-mentor
     delegation. Both sit verbatim in the recorded spawn args, so they are read
     from the hook records rather than left to the judge, which cannot see them
-    and has scored a spawn 3/3 on prose alone.
+    and has scored a spawn 3/3 on prose alone. Matched case-insensitively: the
+    agent reads "Focus: on-demand. Target_id: project." as both named, and a
+    case-sensitive match failed exactly that spawn.
     """
     if _DELEGATION_FOCUS_TAG not in (test.get("tags") or []):
         pytest.skip("not a delegation-focus test")
@@ -844,10 +853,208 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
     missing = [
         field
         for field in ("focus:", "target_id:")
-        if not any(field in p for p in prompts)
+        if not any(field in p.lower() for p in prompts)
     ]
     assert not missing, (
         f"The '{expected}' delegation omits {missing}. research/SKILL.md "
         f"requires the delegation message to name the focus and the target_id. "
         f"Prompts seen: {[p[:160] for p in prompts]}"
     )
+
+
+def _hosted_listing(tool_calls) -> dict:
+    """The hosted answer ``project_list`` gave the router, read from the call log."""
+    for call in tool_calls or []:
+        if bare_tool_name(str(call.get("tool") or "")) == "project_list":
+            response = call.get("response")
+            if isinstance(response, dict) and response.get("mode") == "hosted":
+                return response
+    return {}
+
+
+def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
+    """The first main-thread hand-off to ``callee``, a ``Skill`` call or a spawn,
+    as JSON text; None when there is none."""
+    from harness.skill_runner import read_skill_tool_input
+
+    for call in builtin_tool_calls or []:
+        if "agent_id" in call:
+            continue
+        args = call.get("args") or {}
+        name = read_skill_tool_input(args)[0] if call.get("tool") == "Skill" else args.get("subagent_type")
+        if name == callee:
+            return json.dumps(args)
+    return None
+
+
+def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_calls):
+    """Tag-gated (``uses-new-project-path``). The hosted ``project_list`` answer
+    lists no project about the message's person, so the first hand-off names
+    ``newProjectPath`` and no listed project's path."""
+    if "uses-new-project-path" not in (test.get("tags") or []):
+        pytest.skip("not a new-project-path test")
+    listing = _hosted_listing(tool_calls)
+    new_path = listing.get("newProjectPath")
+    assert new_path, f"the router never received a hosted project_list answer with a newProjectPath: {listing}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None, f"no hand-off to '{callee}' to read a projectPath from"
+    assert new_path in handoff, f"the '{callee}' hand-off must name newProjectPath {new_path!r}; got {handoff[:300]}"
+    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
+    named = [p for p in listed if p in handoff]
+    assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
+
+
+def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_tool_calls, text_response):
+    """Tag-gated (``uses-listed-project``). The message names the one listed
+    project's subject, so the router reads that project, the first hand-off names
+    its ``projectPath``, and the reply that ends the turn ends with its
+    ``projectUrl``."""
+    if "uses-listed-project" not in (test.get("tags") or []):
+        pytest.skip("not a listed-project test")
+    projects = _hosted_listing(tool_calls).get("projects") or []
+    assert len(projects) == 1, f"expected a hosted project_list answer listing one project; got {projects}"
+    path, url = projects[0].get("projectPath"), projects[0].get("projectUrl")
+    read_paths = [
+        (c.get("args") or {}).get("projectPath")
+        for c in tool_calls or []
+        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
+    ]
+    assert path in read_paths, f"project_context was never called with the listed projectPath {path!r}: {read_paths}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None and path in handoff, (
+        f"the '{callee}' hand-off must name {path!r}; got {(handoff or '')[:300]}"
+    )
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    assert lines and url in lines[-1], f"the reply that ends the turn must end with {url!r}; its last line: {lines[-1:]}"
+
+
+def test_bounded_transcription_is_delivered_in_place(
+    skills_invoked, builtin_tool_calls, tool_calls, test
+):
+    """Tag-gated (``transcribes-in-place``). Since #2490 retired the image-reader
+    agent, a bounded transcription is the router's own deliverable: it calls
+    ``image_transcribe`` with a ``projectPath``, and reads the staged page with
+    ``sidecar_read`` on the ``staged.resultsRef`` that call returned, before
+    showing it. No hand-off is a transcription hand-off, so on a single bounded
+    ask (no ``delivers:`` tag) there must be none at all."""
+    from harness.skill_runner import handoffs
+
+    if "transcribes-in-place" not in test.get("tags", []):
+        pytest.skip("not an in-place transcription test")
+    transcribes = [
+        c for c in (tool_calls or [])
+        if bare_tool_name(c.get("tool", "")) == "image_transcribe"
+    ]
+    assert transcribes, "the bounded transcription never called image_transcribe"
+    assert all((c.get("args") or {}).get("projectPath") for c in transcribes), (
+        "image_transcribe was called without a projectPath, so nothing was staged"
+    )
+    refs = {
+        ((c.get("response") or {}).get("staged") or {}).get("resultsRef")
+        for c in transcribes
+    } - {None}
+    assert refs, "no image_transcribe call staged its page (no staged.resultsRef came back)"
+    read = [
+        c for c in (tool_calls or [])
+        if bare_tool_name(c.get("tool", "")) == "sidecar_read"
+        and ((c.get("args") or {}).get("ref") in refs
+             or set((c.get("args") or {}).get("refs") or []) & refs)
+    ]
+    assert read, (
+        f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
+        "the reply cannot have shown the transcription"
+    )
+    if not any(t.startswith(_DELIVERS_PREFIX) for t in test.get("tags") or []):
+        skill_under_test = test.get("skill")
+        delegations = [
+            s for s in handoffs(skills_invoked, builtin_tool_calls) if s != skill_under_test
+        ]
+        assert not delegations, (
+            f"a single bounded transcription hands off to nothing; got {delegations}"
+        )
+
+
+_HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
+
+
+def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-records`` carries a ``plan_item:`` block
+    that parses to exactly the plan item research.json holds for the item named.
+
+    research/SKILL.md has the router hand over the plan item it already queried,
+    verbatim and unread, so the agent can skip its own research_query (issue
+    #3581). Equality of the parsed block against the scenario's own item is what
+    separates "verbatim" from "summarised" or "judged"; the judge sees neither.
+    """
+    if _HANDS_PLAN_ITEM_TAG not in (test.get("tags") or []):
+        pytest.skip("not a delegation-plan-item test")
+    expected = _expected_skill(test)
+    assert expected == "search-records", (
+        f"{_HANDS_PLAN_ITEM_TAG} needs routes-to:search-records; got {expected!r}"
+    )
+    prompts = _spawn_prompts(builtin_tool_calls, expected)
+    assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
+    research = before_state.get("research_json") or {}
+    items = []
+    plan_of = {}
+    for plan in research.get("plans", []):
+        if plan.get("status") != "active":
+            continue
+        for item in plan.get("items", []):
+            if item.get("status") in ("planned", "in_progress"):
+                items.append(item)
+                plan_of[item["id"]] = plan["id"]
+    assert items, "Scenario drift: no active plan item to hand over."
+    decoder = json.JSONDecoder()
+    problems = []
+    for prompt in prompts:
+        named = [i for i in items if i["id"] in prompt]
+        if not named:
+            problems.append(f"names no plan item id: {prompt[:120]!r}")
+            continue
+        item = named[0]
+        if plan_of[item["id"]] not in prompt:
+            problems.append(
+                f"does not hand the parent plan id {plan_of[item['id']]} for {item['id']}"
+            )
+        marker = prompt.find("plan_item")
+        brace = prompt.find("{", marker) if marker != -1 else -1
+        if brace == -1:
+            problems.append(f"no plan_item JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            handed, _ = decoder.raw_decode(prompt[brace:])
+        except ValueError:
+            problems.append(f"plan_item block for {item['id']} is not valid JSON")
+            continue
+        if handed != item:
+            missing = object()  # a dropped key whose value was null must still be named
+            diff = sorted(
+                k for k in set(item) | set(handed)
+                if item.get(k, missing) != handed.get(k, missing)
+            )
+            problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
+        tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+            (research.get("project") or {}).get("subject_person_ids") or []
+        )
+        match = re.search(r"subject:\s*", prompt)
+        sbrace = prompt.find("{", match.end()) if match else -1
+        if sbrace == -1:
+            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+            continue
+        try:
+            subject, _ = decoder.raw_decode(prompt[sbrace:])
+        except ValueError:
+            problems.append("subject block is not valid JSON")
+            continue
+        if subject.get("subjectId") not in subject_ids:
+            problems.append(
+                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
+                f"tree {subject_ids}"
+            )
+        if not subject.get("names"):
+            problems.append("subject block carries no names")
+    assert not problems, "; ".join(problems)

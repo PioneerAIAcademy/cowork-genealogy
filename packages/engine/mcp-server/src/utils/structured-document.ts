@@ -257,6 +257,123 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
         if (!isStr(a.name)) errs.push(`${at}.name: required`);
       });
   }
+  if (errs.length === 0) errs.push(...validateDocumentRoles(doc as unknown as StructuredDocument, path));
+  return errs;
+}
+
+// ─── roles and couples read from the text's own words ───────────────────────
+
+const normRelation = (s: string | undefined) => (s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/** A stated relation that makes its bearer the other party's spouse. "wife's
+ *  mother", "daughter-in-law" and "wife of the deceased's son" name someone else. */
+export function isSpouseRelation(rel: string | undefined): boolean {
+  const r = normRelation(rel);
+  if (/'s\b|-in-law/.test(r)) return false;
+  return /\b(wife|husband|widow|widower|spouse|consort|relict)\b/.test(r);
+}
+
+/** Which side of a deed a party is on, read from `statedRelation`. A spouse word
+ *  with a `couple` edge to a party on a side puts the spouse on that side
+ *  (a wife releasing dower is a grantor). */
+export function landSides(doc: StructuredDocument): Map<string, "grantor" | "grantee"> {
+  const sides = new Map<string, "grantor" | "grantee">();
+  for (const p of doc.persons) {
+    const r = normRelation(p.statedRelation);
+    if (/^(co-?)?grantors?$/.test(r)) sides.set(p.id, "grantor");
+    else if (/^(co-?)?grantees?$/.test(r)) sides.set(p.id, "grantee");
+  }
+  const explicit = new Map(sides);
+  for (const p of doc.persons) {
+    if (sides.has(p.id) || !isSpouseRelation(p.statedRelation)) continue;
+    for (const r of doc.relationships ?? []) {
+      if (r.type !== "couple" || (r.person1 !== p.id && r.person2 !== p.id)) continue;
+      const side = explicit.get(r.person1 === p.id ? r.person2 : r.person1);
+      if (side) {
+        sides.set(p.id, side);
+        break;
+      }
+    }
+  }
+  return sides;
+}
+
+/** Land roles for a document: `grantor_N`, and `grantee` (`grantee_N` when
+ *  several). A party on neither side is left out, so the extractor numbers it
+ *  by its own stated relation (`witness_1`, `justice_of_the_peace_1`). */
+export function landRoles(doc: StructuredDocument): Map<string, string> {
+  const sides = landSides(doc);
+  const grantees = doc.persons.filter((p) => sides.get(p.id) === "grantee").length;
+  const roles = new Map<string, string>();
+  let grantor = 0;
+  let grantee = 0;
+  for (const p of doc.persons) {
+    const side = sides.get(p.id);
+    if (side === "grantor") roles.set(p.id, `grantor_${++grantor}`);
+    else if (side === "grantee") roles.set(p.id, grantees > 1 ? `grantee_${++grantee}` : "grantee");
+  }
+  return roles;
+}
+
+/** The decedent or testator of a probate document: the party carrying the
+ *  `probate` fact, else `will`, else `death`; a flagged principal breaks a tie,
+ *  then the first in order. Undefined when no party carries any. */
+export function probateDecedentId(doc: StructuredDocument): string | undefined {
+  for (const re of [/^probate$/, /^will$/, /^death$/]) {
+    const carriers = doc.persons.filter((p) => p.facts.some((f) => re.test(f.type.trim().toLowerCase())));
+    if (carriers.length > 0) return (carriers.find((p) => p.principal) ?? carriers[0]).id;
+  }
+  return undefined;
+}
+
+const PETITIONER_RELATION = /\b(administrat(?:or|rix)|executor|executrix)\b/;
+
+/** The refusals that read a structured document's own words. Each runs before
+ *  anything is written: after the log entry, a refusal would orphan it. */
+function validateDocumentRoles(doc: StructuredDocument, path: string): string[] {
+  const errs: string[] = [];
+  const nameOf = (id: string) => {
+    const n = doc.persons.find((p) => p.id === id)?.names[0];
+    return `${id} (${[n?.given, n?.surname].filter(Boolean).join(" ")})`;
+  };
+
+  if (doc.recordType === "land") {
+    const sides = new Set(landSides(doc).values());
+    const missing = (["grantor", "grantee"] as const).filter((s) => !sides.has(s));
+    if (missing.length > 0) {
+      errs.push(
+        `${path}.persons: a land document must state who is the grantor and who is the grantee, ` +
+          `by \`statedRelation\` ("grantor", "grantee"; a wife releasing dower is "wife" with a couple to the grantor). ` +
+          `No party is stated as ${missing.join(" or ")}. The principal flag and the order of the parties choose no land role.`,
+      );
+    }
+  }
+
+  if (doc.recordType === "probate") {
+    const id = probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
+    const rel = normRelation(doc.persons.find((p) => p.id === id)?.statedRelation);
+    if (id !== undefined && PETITIONER_RELATION.test(rel)) {
+      errs.push(
+        `${path}.persons: ${nameOf(id)} would be written as the decedent or testator but is stated as "${rel}". ` +
+          `Put the probate, will or death fact on the decedent or testator, ` +
+          `even where the letters name the administrator or executor.`,
+      );
+    }
+  }
+
+  if (doc.recordType === "land" || doc.recordType === "probate") {
+    (doc.relationships ?? []).forEach((r, i) => {
+      if (r.type !== "couple") return;
+      const stated = [r.person1, r.person2].some((id) => isSpouseRelation(doc.persons.find((p) => p.id === id)?.statedRelation));
+      if (!stated) {
+        errs.push(
+          `${path}.relationships[${i}]: couple ${nameOf(r.person1)} and ${nameOf(r.person2)} is not stated. ` +
+            `Send a couple only where the text calls one of them the other's wife, husband, widow or widower ` +
+            `(that word is the \`statedRelation\`).`,
+        );
+      }
+    });
+  }
   return errs;
 }
 
@@ -269,11 +386,15 @@ export interface DocumentMode {
   censusStates?: boolean | null;
   /** Probate: the file holds a will (testator) rather than an intestate petition (decedent). */
   hasWill?: boolean;
+  /** Probate: the party carrying the probate, will or death fact. */
+  decedentId?: string;
+  /** Land: person id -> `grantor_N` / `grantee`, read from `statedRelation`. */
+  landRoles?: Map<string, string>;
   informantName?: string;
   /** person id -> the text's own relation word. */
   statedRelations: Map<string, string>;
   /** `${personId}#${factIndex}` -> the fact's marks. */
-  factMarks: Map<string, { computed: string[]; note?: string }>;
+  factMarks: Map<string, { computed: string[]; note?: string; uncertain?: true }>;
   /** person id -> a note on the name reading. */
   nameNotes: Map<string, string>;
   /** The year of the event the source is about (the death on an obituary). */
@@ -287,6 +408,11 @@ const PRINCIPAL_EVENT: Partial<Record<RecordType, RegExp>> = {
   newspaper_announcement: /^(birth|marriage|engagement|anniversary)$/,
   probate: /^death$/,
 };
+
+/** `uncertain: true` on a name means the reading keeps its `[?]`; an agent that
+ *  sets the flag and drops the marker still gets one. A fact's flag rides
+ *  `factMarks` and is applied to the assertion's value in the extractor. */
+const markDoubted = (s: string) => `${s} [?]`;
 
 const yearOf = (v: string | undefined) => {
   const m = String(v ?? "").match(/\d{4}/);
@@ -304,7 +430,7 @@ export function documentToExtract(
   censusStatedRelationships: (place: string | undefined, year: number | undefined) => boolean | null,
 ): { extract: ExtractDocument; mode: DocumentMode } {
   const statedRelations = new Map<string, string>();
-  const factMarks = new Map<string, { computed: string[]; note?: string }>();
+  const factMarks = new Map<string, { computed: string[]; note?: string; uncertain?: true }>();
   const nameNotes = new Map<string, string>();
   const indexFields: Record<string, PersonaIndexFields> = {};
 
@@ -313,8 +439,12 @@ export function documentToExtract(
     const nameNote = p.names.map((n) => n.note).filter(Boolean).join("; ");
     if (nameNote) nameNotes.set(p.id, nameNote);
     p.facts.forEach((f, j) => {
-      if ((f.computed && f.computed.length) || f.note) {
-        factMarks.set(`${p.id}#${j}`, { computed: [...(f.computed ?? [])], ...(f.note ? { note: f.note } : {}) });
+      if ((f.computed && f.computed.length) || f.note || f.uncertain) {
+        factMarks.set(`${p.id}#${j}`, {
+          computed: [...(f.computed ?? [])],
+          ...(f.note ? { note: f.note } : {}),
+          ...(f.uncertain ? { uncertain: true as const } : {}),
+        });
       }
     });
     const fields: PersonaIndexFields = {
@@ -333,7 +463,13 @@ export function documentToExtract(
       id: p.id,
       ...(p.principal ? { principal: true } : {}),
       ...(gender ? { gender: gender === "male" ? "Male" : "Female" } : {}),
-      names: p.names.map((n) => ({ ...(n.given ? { given: n.given } : {}), ...(n.surname ? { surname: n.surname } : {}) })),
+      names: p.names.map((n) => {
+        const doubted = n.uncertain && ![n.given, n.surname].some((s) => s?.includes("[?]"));
+        return {
+          ...(n.given ? { given: doubted && !n.surname ? markDoubted(n.given) : n.given } : {}),
+          ...(n.surname ? { surname: doubted ? markDoubted(n.surname) : n.surname } : {}),
+        };
+      }),
       facts: p.facts.map((f) => ({
         type: f.type,
         ...(f.value !== undefined ? { value: f.value } : {}),
@@ -369,9 +505,18 @@ export function documentToExtract(
     relationships,
   } as unknown as SimplifiedGedcomX;
 
-  const principal = doc.persons.find((p) => p.principal) ?? doc.persons[0];
+  const principals = doc.persons.filter((p) => p.principal);
+  const principal = principals[0] ?? doc.persons[0];
   const eventRe = PRINCIPAL_EVENT[doc.recordType];
-  const eventFact = eventRe ? principal?.facts.find((f) => eventRe.test(f.type.toLowerCase())) : undefined;
+  const events = eventRe ? principal?.facts.filter((f) => eventRe.test(f.type.toLowerCase())) ?? [] : [];
+  // A pair event beats a birth, for any number of principals: a wedding notice
+  // that also gives the groom's birthplace is not a birth announcement, so the
+  // order the agent sent the facts in does not decide it. Among pair events,
+  // the one every principal carries wins.
+  const allCarry = (f: (typeof events)[number]) =>
+    principals.slice(1).every((o) => o.facts.some((g) => g.type.toLowerCase() === f.type.toLowerCase()));
+  const pairs = events.filter((f) => f.type.toLowerCase() !== "birth");
+  const eventFact = pairs.find(allCarry) ?? pairs[0] ?? events[0];
   const eventYear = yearOf(eventFact?.date);
 
   const hasWill =
@@ -388,6 +533,8 @@ export function documentToExtract(
         ? { censusStates: censusStatedRelationships(doc.census?.jurisdiction, doc.census?.year) }
         : {}),
       ...(hasWill !== undefined ? { hasWill } : {}),
+      ...(doc.recordType === "probate" && probateDecedentId(doc) ? { decedentId: probateDecedentId(doc) } : {}),
+      ...(doc.recordType === "land" ? { landRoles: landRoles(doc) } : {}),
       ...(doc.informant?.name ? { informantName: doc.informant.name } : {}),
       statedRelations,
       factMarks,

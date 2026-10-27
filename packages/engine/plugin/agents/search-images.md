@@ -8,7 +8,7 @@ description: >-
   but NOT indexed and NOT full-text searchable, so the only way in is to open the
   volume and read images one at a time. volume_search finds which image groups
   cover a place and date range, image_search lists the image IDs inside one
-  group, and image_transcribe reads a page host-side as text. FamilySearch
+  group, and image_transcribe reads a page host-side and stages it. FamilySearch
   digitized images only. Do NOT use for indexed name/date/place search (use
   search-records), full-text transcript search (use search-full-text), external
   repositories like Ancestry (use search-external-sites), planning what to browse
@@ -36,6 +36,9 @@ tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
 ---
 
 # Search Images
@@ -140,7 +143,8 @@ transcribed use search-full-text (both are faster than reading pages).
 |----------|-------|---------|
 | `volume_search` | `standardPlace`, year range | Find image groups covering a place/period; returns `imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`, `coverages[]` |
 | `image_search` | `imageGroupNumber` (a volume id) | List every image ID inside ONE group |
-| `image_transcribe` | `imageId` | OCR ONE page host-side and return it as text |
+| `image_transcribe` | `imageId`, `projectPath` | OCR ONE page host-side; returns `staged.resultsRef`, `digest` and `found`, not the text |
+| `sidecar_read` | `projectPath`, `ref` | Read a staged page's text by its `staged.resultsRef` |
 
 **`image_search` takes an `imageGroupNumber`, never an `imageId`.** Passing an
 `imageId` (e.g. `004567123_00058`) to `image_search` is the single most common
@@ -223,16 +227,22 @@ full list to the caller.
 
 ### 4. Read pages with `image_transcribe`
 
-Call `image_transcribe({ imageId })` — one call per page — adding `lookingFor`
-when you were given a `looking_for`, and `projectPath` so the scan is saved
-under `images/` and returns an `imageRef` a retained source can cite. It OCRs
-the scan host-side and returns the page as **text**; the bytes never enter your
-context, so there is nothing to accumulate or overflow.
+Call `image_transcribe({ imageId, projectPath })` — one call per page — adding
+`lookingFor` when you were given a `looking_for`. It OCRs the scan host-side,
+stages the page, and returns `staged.resultsRef`, a `digest` (length and a
+300-character excerpt), `found` when `lookingFor` was given, and an `imageRef`
+a retained source can cite. The page text is not in the response.
 
-Browsing is manual: read a likely page, triage the returned transcription, and
-step forward or back by reading the next page (the trailing 5-digit number is
-page order). For a volume with a register or table of contents, read that first
-to jump to the right range.
+Triage on `found` and the `digest` excerpt. Call
+`sidecar_read({ projectPath, ref: staged.resultsRef })` only for a page you need
+to read: a `FOUND` page, a register or table of contents, or a page whose
+excerpt you cannot place. If `staged` is null the text came back inline as
+`transcription`; use that.
+
+Browsing is manual: read a likely page, triage it, and step forward or back by
+reading the next page (the trailing 5-digit number is page order). For a volume
+with a register or table of contents, read that first to jump to the right
+range.
 
 **The transcription is faithful OCR, not an answer to the question.** It is a
 transcription of every genealogically relevant entry on the page, not only the
@@ -243,7 +253,8 @@ suppress what the page actually says.
 **One `image_transcribe` call per page — never re-read the same image.** A
 second read is no more trustworthy than the first and you have no way to tell
 which is right; a single hard scan has cost whole runs dozens of wasted turns
-this way. If the returned text is **substantially `[illegible]`** — faded ink, a
+this way. To see a page again, `sidecar_read` its `staged.resultsRef`. If the
+page text is **substantially `[illegible]`** — faded ink, a
 difficult hand, Kurrentschrift — do not thrash. Keep the partial transcription,
 say plainly which parts were unreadable, and move on.
 
@@ -271,8 +282,9 @@ perfectly.
 
 ### 5. Triage what you find
 
-For each page's transcription, judge whether the target record appears and
-whether the place and approximate date are consistent. Present the promising
+For each page, judge from `found`, the `digest` and any page you read whether
+the target record appears and whether the place and approximate date are
+consistent. Present the promising
 images with the image ID and what each shows; let the user confirm which to
 examine in detail. Never fabricate the contents of a page — report only what
 `image_transcribe` actually returned.
@@ -345,9 +357,10 @@ audit trail is the point. The step-6 append must have returned `ok` before you
 hand off — rely on that return value; you do not need to re-read `research.json`
 to confirm.
 
-You do not extract. Name each promising image and what you observed, and report
-that it is ready for extraction: its page text through `@plugin:image-reader`,
-then `@plugin:record-structurer`. You
+You do not extract. For each promising image, return its `imageId`, the
+`staged.resultsRef` from the read you already made, its `imageRef`, and which
+entry on the page is the target, and report that it is ready for
+`@plugin:record-structurer`. Never read the page again to hand it off. You
 never write to `sources` or `assertions`.
 
 ### 9. Present results
@@ -381,7 +394,10 @@ Return **≤10 lines** to the caller, in this order:
 
 - the volume(s) browsed — `imageGroupNumber`, `imageCount`, and why this group
 - the image range examined, and the count actually read
-- what was found, by image ID — or the nil result and its scope
+- what was found, by image ID with its `staged.resultsRef` and `imageRef` — or
+  the nil result and its scope
+- every page that could not be read, as `NOT READ: <imageId>` with the tool's
+  error quoted
 - the `log` id created, and the plan item's new `status` if one moved
 - next-step hint (e.g. "image 00058 ready for extraction", "film 2 of 2
   still to browse", "no digitized volume — try search-external-sites")

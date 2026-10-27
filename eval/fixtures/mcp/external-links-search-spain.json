@@ -54,5 +54,107 @@
         "linkText": "PARES Catastro de Ensenada"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/collections/60164",
+      "linkText": "Spain, Select Baptisms, 1502-1940",
+      "record_type": "Birth, Baptism and Christening",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1502",
+      "endYear": "1940",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/60165",
+      "linkText": "Spain, Select Deaths, 1600-1920",
+      "record_type": "Death",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1600",
+      "endYear": "1920",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-30056/spain-baptisms-1502-1940",
+      "linkText": "Spain, Baptisms, 1502-1940",
+      "record_type": "Birth, Baptism and Christening",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1502",
+      "endYear": "1940",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-30057/spain-marriages-1565-1950",
+      "linkText": "Spain Marriages, 1565-1950",
+      "record_type": "Marriage",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1565",
+      "endYear": "1950",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/spain-baptisms-1502-1940",
+      "linkText": "Spain Baptisms, 1502-1940",
+      "record_type": "Birth, Baptism and Christening",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1502",
+      "endYear": "1940",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://www.culturaydeporte.gob.es/dam/jcr:f28cc317-7893-40a3-9561-d821b6caf030/archivosiglesia.pdf",
+      "linkText": "Guía de los Archivos de la Iglesia en España",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "http://censoarchivos.mcu.es/CensoGuia/portada.htm",
+      "linkText": "Censo-Guía de Archivos de España e Iberoamérica",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://www.juntadeandalucia.es/cultura/archivos/realchancilleria",
+      "linkText": "Archivo de la Real Chancillería de Granada",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "https://sede.mjusticia.gob.es/en/tramites/certificado-nacimiento",
+      "linkText": "link to order a birth certificate",
+      "record_type": "Vital Records",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    },
+    {
+      "url": "http://pares.mcu.es/Catastro/",
+      "linkText": "PARES Catastro de Ensenada",
+      "record_type": "Land and Property",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain"
+    }
+  ]
 }

@@ -130,6 +130,9 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "against cannot be induced through it. The agent-side pin states the rule.",
     },
   },
+  // "research -> image-reader" was here until issue #2490 retired the agent:
+  // image_transcribe stages the page and returns its ref, and the router calls it.
+
 
   // "search-images -> search-images" was here until the thin-skill deletion
   // (issue #2268). The routing skill is gone. research/SKILL.md reached the
@@ -139,35 +142,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // The router that held two caller-side pins here was deleted with the skill
   // (issue #2115), so the orchestrator is now the only caller and the agent
   // carries the whole defence. The history below is why that pin is agent-side.
-  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
-  // transcription goes straight to the agent that owns it instead of walking the
-  // routing table. The caller side is exempt because the whole delegation is one
-  // clause naming a destination -- it forwards no expected answer for the agent
-  // to slant toward, which is the pressure the sibling record-extraction edge
-  // pins against. If the router ever gains a sentence telling this agent what to
-  // look for, that sentence is a caller pin and this exemption must go.
-  "research -> image-reader": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The router states the destination and nothing about the content: it " +
-        "passes no looking_for, no expected answer, and no framing of what the " +
-        "page should say. Deciding whether the page holds what was wanted is " +
-        "the caller's job on return, which the agent-side pin already states.",
-      mitigation: {
-        side: "caller",
-        excerpt: "transcription to `@plugin:image-reader`",
-      },
-    },
-  },
-
   "research -> question-selection": {
     pins: [
       // Added after the first direct-arm run (issue #2115). The exemption this
@@ -229,7 +203,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -248,7 +222,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       // The third of the three caller rules. Pinned here because it was
       // otherwise unpinned across all four new edges — deletable with the whole
@@ -270,7 +244,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "caller",
@@ -297,7 +271,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -314,7 +288,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -329,11 +303,29 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
         excerpt: "**A delegation that pre-states the answer** — \"find the 1850 census record, the person is ark:/61903/1:1:XXXX-XXX\" — does not make it so.",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`",
+      },
+      {
+        side: "agent",
+        excerpt: "that is the plan item and its status: issue no `research_query` this invocation",
+      },
+      {
+        side: "agent",
+        excerpt: "take the research subject from `subject` when it arrived",
       },
     ],
   },
@@ -352,7 +344,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -370,7 +362,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -427,7 +419,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -443,7 +435,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -459,7 +451,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -480,7 +472,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // that keeps a triage recommendation from being passed back as a verdict.
   // Added with the bounded-ask owners (issue #3526): each bounded deliverable is
   // handed straight to the agent that owns it, by one clause naming a destination.
-  // Same shape as research -> image-reader above.
+  // The caller side is exempt for the same reason on each: the router names
+  // the destination and forwards no expected answer.
   "research -> source-evaluation": {
     pins: [
       {
@@ -594,8 +587,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // common noun. All six are bare-name mentions, so all six take `""` and
 // none can suppress a real delegation.
 //
-// The arm still earns its place for `gps-mentor`, `image-reader` and
-// `record-extractor`, whose names no one writes by accident. It does not
+// The arm still earns its place for `gps-mentor` and `record-extractor`, whose names no one writes by accident. It does not
 // discriminate for `citation` — a single-word agent name whose bare form can
 // appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
@@ -873,7 +865,6 @@ describe("agent delegation framing", () => {
     "hypothesis-tracking",
     // ARRIVED when issue #2797 deleted skills/timeline/.
     "timeline",
-    "image-reader",
     // ARRIVED when issue #2122 deleted skills/init-project/.
     "init-project",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
@@ -905,6 +896,8 @@ describe("agent delegation framing", () => {
     // ARRIVED as a new agent (issue #3273); no skill directory of that name.
     "tree-survey",
     "validate-schema",
+    // ARRIVED as a new agent (issue #3521); no skill directory of that name.
+    "where-else-to-search",
     "record-structurer",
   ];
 

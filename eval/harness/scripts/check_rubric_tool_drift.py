@@ -120,6 +120,34 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 # say it is not there); only "quotes" is held to the file.
 SUPPRESSIONS: list[dict[str, str]] = [
     {
+        "file": "packages/engine/plugin/agents/search-external-sites.md",
+        "tool": "catalog_search",
+        "quotes": [
+            "A `catalog_search` of the place \u2014 hand it to search-records",
+        ],
+        "reason": (
+            "cross-owner - the agent names the tool only to hand the check "
+            "BACK to search-records, which holds catalog_search in its "
+            "allowed-tools. Granting it here was considered and rejected "
+            "(issue #3185): the agent's ROUTING gate already sends catalog "
+            "work to search-records, so a second site deciding when to "
+            "search the Catalog would contradict the gate."
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/negative-record-extraction-request.json",
+        "tool": "extraction_append",
+        "quotes": [
+            "The correct action is a hand-back naming extraction (`extraction_append`, or the record-structurer agent), with no plan item written and no tool called.",
+        ],
+        "reason": (
+            "cross-owner mention: a routing-negative test naming where the "
+            "work belongs, not a call research-plan is expected to make. The "
+            "same sentence says 'with no plan item written and no tool "
+            "called', so it grades the hand-back, not the call."
+        ),
+    },
+    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
@@ -588,38 +616,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "negative mention, the canonical shape - 'You do NOT have "
             "search tools (`record_search`, `fulltext_search`, "
             "`person_read`)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/image-reader.md",
-        "tool": "record_read",
-        "quotes": [
-            "The pivot recommendation: read the **indexed** record for this image",
-            "Do NOT use for indexed records (use record_read / record_search)",
-        ],
-        "reason": (
-            "cross-owner: named as the pivot the agent RECOMMENDS to its "
-            "caller, never calls - 'The pivot recommendation: read the "
-            "**indexed** record for this image (`record_read` / "
-            "`record_search` / `search-full-text`)'; its description line "
-            "says 'Do NOT use for indexed records (use record_read / "
-            "record_search)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/image-reader.md",
-        "tool": "record_search",
-        "quotes": [
-            "The pivot recommendation: read the **indexed** record for this image",
-            "Do NOT use for indexed records (use record_read / record_search)",
-        ],
-        "reason": (
-            "cross-owner: named as the pivot the agent RECOMMENDS to its "
-            "caller, never calls - 'The pivot recommendation: read the "
-            "**indexed** record for this image (`record_read` / "
-            "`record_search` / `search-full-text`)'; its description line "
-            "says 'Do NOT use for indexed records (use record_read / "
-            "record_search)'"
         ),
     },
     {

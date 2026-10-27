@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_z3n",
+    "skill": "source-evaluation",
+    "name": "With no project in the working folder, the audit is returned and nothing is written",
+    "type": "positive",
+    "description": "Issue #3524. Inside a project the agent logs its report as one source_evaluation entry; outside one it writes nothing. The working folder holds no research.json, so the audit is the whole output: research.json must not be created, and the report is returned in full. A research_log_append call answered reason: \"no_project\" is correct behaviour, not an error.",
+    "tags": [
+      "no-project",
+      "census-variance-trap",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me whether they are right.\n\nprojectPath: <workspace>",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
+  ],
+  "judge_context": [
+    "The working folder holds no project. The agent should audit the sources and return the report; it must not create a project or suggest starting one to hold this audit. A research_log_append call answered reason: \"no_project\" is correct and must not be deducted, and (no file changes) is the correct outcome.",
+    "A person_warnings call, if made, errors because there is no project tree; the reply should say in one line that impossible-date checks run only on a project that holds this person, and must not invent warnings.",
+    "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted.",
+    "The Hole profile carries SD-HOLE-D, a memory with an `artifact_url` and no record-persona ARK. It IS in the audit list — the rule keeps an entry carrying `artifact_url`, because no person entry references a memory — so the reply must name it among the sources it could not check, by what it is. A reply that omits it has silently dropped an audit-list entry; a reply that says only a generic \"some sources could not be checked\" has not identified it.",
+    "The Hole profile also carries SD-HOLE-E, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all — not as a finding, and not among the sources it could not check. Naming it either way is wrong: it was never in scope.",
+    "`source_attachments` shows HOLE-003 is also attached to KD96-WX7, and `person_read` on KD96-WX7 returns Christian Hole, born 1852, residence Aurdal, Otter Tail, Minnesota in 1885, died 1919. A reply that reads KD96-WX7 and then names him as the record's true subject, or says he fits the 1885 record on name, birth year and residence, is stating what the tool responses carry and is CORRECT; it is not a fabrication. Naming him WITHOUT having read him is the error.",
+    "Ground truth for the 1885 Minnesota State Census (HOLE-003): it is about a different Christian Hole — born 1852 against the profile's 1875, Otter Tail County rather than Polk, with a wife Bergit and children who appear nowhere in this family. A reply that recommends detaching it is CORRECT and must not be deducted under Correctness or Remediation doctrine."
+  ]
+}

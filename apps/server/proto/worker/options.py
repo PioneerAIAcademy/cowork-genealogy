@@ -31,7 +31,8 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
   ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
   CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
-  every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
+  every agent (``gateway_agent_models``, and ``gateway_plugin_copy`` for the plugin's own
+  namespaced registration of them), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
@@ -49,8 +50,10 @@ import dataclasses
 import json
 import os
 import re
+import shutil
 import sys
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Any
 
 from app.agent.continue_policy import (
@@ -80,6 +83,7 @@ from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
+from proto.worker.writer_record import writer_record
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
@@ -96,6 +100,8 @@ GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 GATEWAY_AGENT_MODELS = {
     "claude-sonnet-4-6": "us.anthropic.claude-sonnet-4-6",
     "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
+    # Not yet served through TAP's gateway: first seen there at U14's check.
+    "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
 }
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
@@ -228,7 +234,8 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
         # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
-        # (tap-gateway) runs 1.6.0, where tool search is unverified (handoff U14).
+        # (tap-gateway) runs 1.6.0: tool search passes on a local copy of its route
+        # (2026-10-24) and is unverified on the deployed gateway (handoff U14).
         "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
     }
 
@@ -243,6 +250,40 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
             agent = dataclasses.replace(agent, model=GATEWAY_AGENT_MODELS[model])
         out[name] = agent
     return out
+
+
+_FRONTMATTER_MODEL_RE = re.compile(r"^model:[ \t]*(\S+)[ \t]*$", re.MULTILINE)
+
+
+def gateway_plugin_copy(plugin_dir: str, dest: str) -> str:
+    """``plugin_dir`` copied to ``dest`` with each ``agents/*.md`` frontmatter ``model`` in
+    ``GATEWAY_AGENT_MODELS`` replaced by its Bedrock id; returns ``dest``. ``plugins=``
+    registers every agent a second time, as ``genealogy-research:<agent>`` straight from
+    its file, which ``gateway_agent_models`` never sees: a delegation by that name sent
+    the bare id and the gateway answered 400, and the main thread did the work itself
+    (handoff F4, 2026-10-24). Only the frontmatter is rewritten, never the body."""
+    shutil.copytree(plugin_dir, dest, dirs_exist_ok=True)
+    for path in sorted(Path(dest, "agents").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        if not text.startswith("---\n"):
+            continue
+        end = text.find("\n---", 4)
+        if end < 0:
+            continue
+        head = _FRONTMATTER_MODEL_RE.sub(
+            lambda m: f"model: {GATEWAY_AGENT_MODELS.get(m.group(1), m.group(1))}", text[:end])
+        if head != text[:end]:
+            path.write_text(head + text[end:], encoding="utf-8")
+    return dest
+
+
+def plugin_copy_missing(plugin_dir: str, dest: str) -> list[str]:
+    """The files of ``plugin_dir`` that ``dest`` lacks, as relative paths. A copy under
+    ``/tmp`` loses files on Amazon Linux 2023, whose tmpfiles cleanup removes any not
+    touched for 10 days; the CLI reads a skill's other files only when that skill runs."""
+    src = Path(plugin_dir)
+    return sorted(str(p.relative_to(src)) for p in src.rglob("*")
+                  if p.is_file() and not (Path(dest) / p.relative_to(src)).is_file())
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
@@ -460,6 +501,10 @@ def make_pretool_hook(
                     "tool_name": tool_name or "unknown",
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                    # Explicitly None: this arm returns `_halt(...)` below, so the tool
+                    # body never runs. A Stop pressed while a research_append is in
+                    # flight must not leave a row claiming the append happened.
+                    "wrote": None,
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
                 if log is not None:
@@ -493,6 +538,9 @@ def make_pretool_hook(
                     "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     "decision": "delivered",
+                    # `research_delivered` is not a writer, so this is always None; the
+                    # key is carried so every recorded row has the same shape.
+                    "wrote": writer_record(tool_name, tool_input),
                     "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
@@ -546,6 +594,12 @@ def make_pretool_hook(
                 "input_path": input_path(tool_name, tool_input, cwd=cwd),
                 "decision": decision,
                 "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                # ONLY on an allow. A denied writer never runs -- `_BLOCKED` comes from
+                # BLOCKED_TOOLS and the e2e tree-read block is exactly this -- so
+                # recording a shape here would put a write that never happened into the
+                # "what changed this session" scan, which the migration's
+                # `WHERE wrote IS NOT NULL` index has no decision filter to exclude.
+                "wrote": writer_record(tool_name, tool_input) if decision == "allow" else None,
             })
         except Exception as exc:  # noqa: BLE001 - the log must not change the decision
             if log is not None:
@@ -814,6 +868,9 @@ def build_worker_options(
     project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
+        # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
+        # main thread's context and tools, not a plugin agent's `tools:` list.
+        "CLAUDE_CODE_FORK_SUBAGENT": "0",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

@@ -12,9 +12,7 @@ import { writerToolResult } from "../../src/tool-result.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
 import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
-
-/** The CLI spills any tool result longer than this to a file (spec §4). */
-const CLI_SPILL_CHARS = 50_000;
+import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 
 /** A ProjectStore stub whose readText returns `text` and records its calls. */
 function storeReturning(text: string, calls: Array<[string, string]> = []): ProjectStore {
@@ -39,6 +37,7 @@ function storeReturning(text: string, calls: Array<[string, string]> = []): Proj
     writeBytes: async () => {},
     appendText: async () => {},
     remove: async () => {},
+    listProjects: async () => ({ mode: "folder" }),
   };
 }
 

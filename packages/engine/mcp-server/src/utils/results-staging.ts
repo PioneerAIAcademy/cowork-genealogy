@@ -33,7 +33,6 @@ const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
 export const STAGING_SEARCH_TOOLS = new Set([
   "record_search",
   "fulltext_search",
-  "external_links_search",
 ]);
 
 /**
@@ -61,9 +60,10 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * staging producer added is treated as persona-less until it is listed here,
  * which fails safe rather than silently matching nothing on a `recordId` field
  * it does not carry (#2038). `record_search` and `record_read` results key on
- * `recordId`; the persona-less producers (`fulltext_search`,
- * `external_links_search`) key on `id`. Mirrors `personaReachable` in
- * research-append.ts and `_persona_reachable` in the eval harness.
+ * `recordId`; the persona-less producer `fulltext_search` keys on `id`, as do
+ * legacy `external_links_search` sidecars from before #2995. Mirrors
+ * `personaReachable` in research-append.ts and `_persona_reachable` in the eval
+ * harness.
  *
  * `record_read` was MISSING here until issue #2937, and both mirrors already
  * counted it — `personaReachable` returns true on `logEntry.tool ===
@@ -280,6 +280,32 @@ export async function finalizeStagedResults(args: {
 }
 
 /**
+ * The log entry a staged ref was already finalized into, found through the
+ * `staged_ref` the entry records, or undefined. A scan of the research.json the
+ * caller already holds, with no sidecar reads: on a hosted store each sidecar is
+ * an object fetch of a full payload, and the missing-ref path (expired refs
+ * included) would pay one per logged search. Consulted only when the staged file
+ * is gone, since a live staged file has not been logged. An entry written before
+ * `staged_ref` existed never matches, so its re-log keeps the refusal.
+ */
+export async function findLoggedStagedRef(
+  projectPath: string,
+  stagedResultsRef: string,
+  log: readonly { id?: unknown; results_ref?: unknown; staged_ref?: unknown }[],
+): Promise<{ logId: string; resultsRef: string | null } | undefined> {
+  let ref: string;
+  try {
+    ref = projectRelativeRef(projectPath, stagedResultsRef);
+    if (await getProjectStore().exists(projectPath, ref)) return undefined;
+  } catch {
+    return undefined;
+  }
+  const entry = log.find((e) => e?.staged_ref === ref && typeof e.id === "string");
+  if (!entry) return undefined;
+  return { logId: entry.id as string, resultsRef: typeof entry.results_ref === "string" ? entry.results_ref : null };
+}
+
+/**
  * Remove staged files a committed research_log_append finalized. Called only
  * after the research.json write succeeds. Best-effort by the store's own
  * contract (an absent ref or a lost race is not an error), and deliberately NOT
@@ -317,8 +343,9 @@ export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | unde
 }
 
 /**
- * Read a staged handle's producing tool and its plumbing-stripped echoed query,
- * without consuming it. Only a handle under `results/.staging/` is read, by the
+ * Read a staged handle's producing tool, its plumbing-stripped echoed query, its
+ * row count and the producer's `totalMatches` (undefined when absent or not a
+ * non-negative integer), without consuming it. Only a handle under `results/.staging/` is read, by the
  * same resolved-path test `finalizeStagedResults` applies; anything else, a
  * missing file or invalid JSON returns undefined, because a bad ref is
  * finalize's error to report.
@@ -326,7 +353,15 @@ export function stripQueryPlumbing(raw: unknown): Record<string, unknown> | unde
 export async function readStagedEnvelopeQuery(
   projectPath: string,
   stagedResultsRef: string,
-): Promise<{ tool: string; query: Record<string, unknown> | undefined } | undefined> {
+): Promise<
+  | {
+      tool: string;
+      query: Record<string, unknown> | undefined;
+      returnedCount: number;
+      totalMatches: number | undefined;
+    }
+  | undefined
+> {
   try {
     const abs = assertInsideProject(projectPath, stagedResultsRef);
     if (!isInsideProject(join(projectPath, STAGING_SUBDIR), abs)) return undefined;
@@ -334,7 +369,14 @@ export async function readStagedEnvelopeQuery(
       await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
     );
     if (typeof envelope?.tool !== "string") return undefined;
-    return { tool: envelope.tool, query: stripQueryPlumbing(envelope.payload?.query) };
+    const results = envelope.payload?.results;
+    const total = envelope.payload?.totalMatches;
+    return {
+      tool: envelope.tool,
+      query: stripQueryPlumbing(envelope.payload?.query),
+      returnedCount: Array.isArray(results) ? results.length : 0,
+      totalMatches: Number.isInteger(total) && total >= 0 ? total : undefined,
+    };
   } catch {
     return undefined;
   }
@@ -470,9 +512,11 @@ export async function unloggedStagedSearches(
     const ref = entry.ref;
     try {
       const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
-      // An acquisition read is logged as `user_provided` or under the search that
-      // found it, never under its own tool name, so it can never pair here.
-      if (STAGING_CAPABLE_TOOLS.has(envelope.tool) && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
+      // Only a search producer's file can be owed a log entry. An acquisition read
+      // is logged as `user_provided` or under the search that found it, and a
+      // legacy `external_links_search` file (that tool stopped staging in #2995)
+      // can no longer pair, so either would nag until the TTL.
+      if (typeof envelope.tool === "string" && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({

@@ -223,6 +223,8 @@ from proto.worker.options import (  # noqa: E402
     build_worker_options,
     check_registration,
     cli_env_blanks,
+    gateway_plugin_copy,
+    plugin_copy_missing,
     hook_path,
     make_posttool_hook,
     make_pretool_hook,
@@ -283,7 +285,6 @@ EXPECTED_AGENTS = frozenset({
     "gps-mentor",
     "historical-context",
     "hypothesis-tracking",
-    "image-reader",
     "init-project",
     "locality-guide",
     "person-evidence",
@@ -306,6 +307,7 @@ EXPECTED_AGENTS = frozenset({
     "tree-edit",
     "tree-survey",
     "validate-schema",
+    "where-else-to-search",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
 # the directory the SDK loads the plugin from shrinks with it -- an image shipping 1
@@ -317,6 +319,11 @@ _stdout_lock = threading.Lock()
 # Parsed once at start (prepare); a real turn refuses to run without them.
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
+# The directory every attempt passes as plugins=: ENGINE_PLUGIN_DIR, or on the gateway
+# provider its copy with Bedrock agent models (gateway_plugin_copy), rebuilt by
+# attempt_plugin_dir when the tmpfiles cleanup has taken any of it.
+_PLUGIN_DIR: str = ENGINE_PLUGIN_DIR
+_PLUGIN_COPY_LOCK = threading.Lock()
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
 # AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap for a message WITHOUT max_nudges
 # (turn_max_nudges); 0 = no Stop hook for those. The web tier stamps its own cap on every
@@ -845,8 +852,13 @@ def choose_sdk_session_id(conn: psycopg.Connection, session_id: str, candidate: 
 def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
     with conn.cursor() as cur:
         cur.execute(
+            # `wrote` is appended LAST and must stay last: `_tool_call_decisions` in
+            # test_proto_worker.py reads the decision param positionally as p[6], so
+            # inserting a column before it silently corrupts that helper rather than
+            # failing.
             "INSERT INTO tool_calls (turn_id, session_id, agent_id, agent_type, tool_name, "
-            "input_path, decision, tool_use_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            "input_path, decision, tool_use_id, wrote) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 row["turn_id"],
                 row["session_id"],
@@ -856,6 +868,11 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
                 row.get("input_path"),
                 row["decision"],
                 row.get("tool_use_id"),
+                # The SHAPE of what this call wrote, for change review. None for a read,
+                # for a denied call and for a halted one -- the column is sparse by
+                # design, and the migration's index is `WHERE wrote IS NOT NULL`, so a
+                # row here IS a claim that a write was attempted.
+                Jsonb(row["wrote"]) if row.get("wrote") else None,
             ),
         )
     conn.commit()
@@ -1499,12 +1516,26 @@ def prepare() -> None:
     """Everything a real turn needs that touches no network, done once; a failure is
     logged, fails only the real turns (the stub arms keep working) and fails /healthz.
     The schema is checked after listen, by ``start_schema_thread``."""
-    global _AGENTS, _AGENTS_ERROR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
+    global _AGENTS, _AGENTS_ERROR, _PLUGIN_DIR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
         log(ev="prepare", step="cwd", error=f"{type(exc).__name__}: {exc}", cwd=WORKER_CWD)
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
+    _PLUGIN_DIR = ENGINE_PLUGIN_DIR
+    try:
+        gateway = model_provider(os.environ) == "gateway"
+    except ProviderError:
+        gateway = False  # refused at start by require_start_config
+    if gateway and _AGENTS_ERROR is None:
+        try:
+            # One worker per instance, so an earlier start's copy is stale.
+            for old in Path(tempfile.gettempdir()).glob("plugin-gateway-*"):
+                shutil.rmtree(old, ignore_errors=True)
+            _PLUGIN_DIR = new_gateway_plugin_copy()
+        except OSError as exc:
+            _AGENTS_ERROR = f"gateway plugin copy: {type(exc).__name__}: {exc}"
+            log(ev="prepare", step="plugin_copy", error=_AGENTS_ERROR)
     _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
     try:
         _AUTONOMOUS_MAX_NUDGES = parse_max_nudges(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
@@ -1519,9 +1550,34 @@ def prepare() -> None:
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
         blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
-        error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR,
+        error=_AGENTS_ERROR, plugin_dir=_PLUGIN_DIR,
         cli_version=cli_version,
     )
+
+
+def new_gateway_plugin_copy() -> str:
+    """A fresh gateway copy of ENGINE_PLUGIN_DIR under TMPDIR, which every slot user can
+    reach (setup_turn_users); mkdtemp is 0700, so it is opened to 0755."""
+    dest = tempfile.mkdtemp(prefix="plugin-gateway-")
+    os.chmod(dest, 0o755)
+    return gateway_plugin_copy(ENGINE_PLUGIN_DIR, dest)
+
+
+def attempt_plugin_dir() -> str:
+    """The plugins= directory for one attempt. On the gateway provider, a copy that has
+    lost any file is replaced by a fresh one; the old one is left to attempts still
+    reading it. A failed rebuild raises, so the attempt answers 500 and is redelivered."""
+    global _PLUGIN_DIR
+    if _PLUGIN_DIR == ENGINE_PLUGIN_DIR:
+        return _PLUGIN_DIR
+    with _PLUGIN_COPY_LOCK:
+        missing = plugin_copy_missing(ENGINE_PLUGIN_DIR, _PLUGIN_DIR)
+        if missing:
+            stale = _PLUGIN_DIR
+            _PLUGIN_DIR = new_gateway_plugin_copy()
+            log(ev="plugin_copy", step="rebuilt", missing=len(missing), first=missing[0],
+                stale=stale, plugin_dir=_PLUGIN_DIR)
+        return _PLUGIN_DIR
 
 
 def require_agents() -> dict[str, Any]:
@@ -2457,6 +2513,8 @@ async def _run_turn(
                 # normal path -- median two attempts, longest six.
                 nudges_used=nudges_so_far(conn, turn_id) if receive_count > 1 else 0,
             )
+        # Before a slot is taken, so a failed rebuild holds none.
+        plugin_dir = attempt_plugin_dir()
         # U3: this attempt's CLI runs as a slot user that owns its config dir and home and
         # nothing of any other turn's.
         if TURN_POOL is not None:
@@ -2471,7 +2529,7 @@ async def _run_turn(
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
-            plugin_dir=ENGINE_PLUGIN_DIR,
+            plugin_dir=plugin_dir,
             agents=agents,
             store=store,
             config_dir=config_dir,

@@ -203,6 +203,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // The stdio smoke runs the file store, which lists nothing; over HTTP the
+    // bound store lists the project the create above wrote.
+    tool: "project_list",
+    offline: true,
+    args: () => ({}),
+    expect: (res, ctx) => {
+      const listed =
+        Array.isArray(res.body?.projects) && res.body.projects.some((p: any) => p?.projectPath === ctx.projectPath);
+      return {
+        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed)),
+        detail: brief(res, 300),
+      };
+    },
+  },
+  {
     tool: "research_query",
     label: "research_query (log)",
     offline: true,
@@ -347,6 +362,14 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    // Nothing in this plan links P1, so this reaches `no_linked_evidence`: the
+    // transport and the read, not the event logic (Vitest covers that).
+    tool: "timeline_build",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, personId: "P1" }),
+    expect: okTrue,
+  },
+  {
     tool: "merge_warnings",
     offline: true,
     args: (ctx) => ({
@@ -484,9 +507,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   tokenStep("image_read", { imageId: REAL_IMAGE_ID }),
   {
-    // getOpenRouterApiKey runs before the FamilySearch fetch.
+    // getOpenRouterApiKey runs before the FamilySearch fetch. projectPath is
+    // required (#2490): without it the call stops at the project check and
+    // never reaches the key or the token this row exists to smoke.
     tool: "image_transcribe",
-    args: () => ({ imageId: REAL_IMAGE_ID }),
+    args: (ctx) => ({ imageId: REAL_IMAGE_ID, projectPath: ctx.projectPath }),
     expect: (res, ctx) => {
       if (ctx.openRouterKeyConfigured === false) return keyMissing(res);
       if (ctx.openRouterKeyConfigured === null) {

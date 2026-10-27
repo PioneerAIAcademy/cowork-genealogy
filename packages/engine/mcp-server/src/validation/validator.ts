@@ -104,6 +104,9 @@ const CLOSED_ENUMS = {
   locality_page_section: new Set([
     "home", "getting_started", "online_records", "research_tips",
   ]),
+  locality_page_outcome: new Set(["unreachable"]),
+  registration_event: new Set(["birth", "marriage", "death"]),
+  registration_level: new Set(["town", "parish", "county", "state", "national"]),
 };
 
 // Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
@@ -126,6 +129,52 @@ export const PROOF_TIER_RANK = new Map<string, number>([
   ["probable", 3],
   ["proved", 4],
 ]);
+
+/** How much of a non-string narrative an error message quotes. */
+const NARRATIVE_VALUE_PREFIX_CHARS = 60;
+
+/** `value` as JSON, cut to `max` characters, for an error message that has to
+ *  name a value without quoting all of it. */
+function clipJson(value: unknown, max: number): string {
+  let text: string;
+  try {
+    text = JSON.stringify(value) ?? String(value);
+  } catch {
+    text = String(value);
+  }
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+}
+
+// What a refused claim is told. `claims[]` holds ParentChild relationship claims
+// only, so a claim that cannot carry one (a fact claim in practice) is refused,
+// and the reported failure was the agent answering that refusal by dropping
+// `claims` altogether: a scalar-only summary has nothing to check `tier`
+// against. So the refusal says why, says what to keep, and states the rule that
+// is already enforced below (`tier` equals the strongest claim's tier, never
+// the weakest), which keeping the relationship claims keeps in force.
+const CLAIM_NOT_A_RELATIONSHIP =
+  "claims[] holds ParentChild relationship claims only. Fact claims are not supported yet " +
+  "(issues #3213 and #3032 own them): leave a claim of any other kind out and keep the ParentChild " +
+  "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
+  "so it cannot rise above them.";
+
+// A parentage claim that left its relationship off is not a fact claim, and told
+// to "leave a claim of any other kind out" the agent dropped a not_proved
+// maternity claim in 2 of 4 tries of ut_proof_conclusion_022 (2026-10-25). So a
+// claim whose label names a parent relationship is told to add it instead.
+const PARENTAGE_CLAIM_LABEL = /patern|matern|parent|father|mother/i;
+
+function claimRelationshipMissing(claim: any): string {
+  if (typeof claim?.claim !== "string" || !PARENTAGE_CLAIM_LABEL.test(claim.claim)) {
+    return CLAIM_NOT_A_RELATIONSHIP;
+  }
+  return (
+    `claim '${claim.claim}' is a parentage claim, so it is a ParentChild relationship claim: add ` +
+    `relationship: { type: "ParentChild", parent: "<the parent's tree person id>", child: ` +
+    `"<the child's tree person id>" } and keep it in claims[] at its own proof_tier, not_proved ` +
+    `included. Do not drop it.`
+  );
+}
 
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
@@ -158,6 +207,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // Browse sites (issue #2802): German church books, reached through the
   // parish page rather than a name search.
   "archion", "matricula",
+  // Open Archieven (issue #3185): the Dutch archives aggregator, searchable
+  // by name.
+  "openarch",
 ]);
 
 /**
@@ -632,12 +684,12 @@ export const RESEARCH_SHAPES = {
   plan_item: new Set([
     "id", "sequence", "record_type", "jurisdiction", "date_range",
     "repository", "rationale", "fallback_for", "status",
-    "skip_category", "skip_reason",
+    "skip_category", "skip_reason", "collection_url",
   ]),
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site",
+    "external_site", "staged_ref",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -708,8 +760,8 @@ export const RESEARCH_SHAPES = {
   ]),
   locality: new Set([
     "id", "place", "for_place", "time_period", "jurisdictions",
-    "collections", "quirks", "guide_markdown", "pages_read", "source",
-    "created", "updated",
+    "collections", "quirks", "guide_markdown", "pages_read",
+    "registration_start", "volume_summary", "source", "created", "updated",
   ]),
   warning_justification: new Set([
     "warning_id", "justification", "person_ids", "tool", "recorded_at",
@@ -1063,6 +1115,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if ("skip_category" in item) {
         checkEnum(item.skip_category, "skip_category", ip, report);
       }
+      // Optional. Whether it names a stored collection is research_append's
+      // precondition (it reads external-collections.json); here only the type.
+      if ("collection_url" in item) {
+        const url = item.collection_url;
+        if (typeof url !== "string" || url === "") {
+          addError(report, ip, "collection_url must be a non-empty string (a url from external-collections.json), or omitted");
+        }
+      }
     }
   }
 
@@ -1117,6 +1177,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if (!isNonNegativeInteger(n)) {
         addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
       }
+    }
+    if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
+      addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
     }
 
     const ext = entry.external_site;
@@ -1583,6 +1646,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("updated" in ps && (typeof ps.updated !== "string" || !ISO_DATETIME_PATTERN.test(ps.updated))) {
       addError(report, psp, `'updated' must be an ISO 8601 date-time with a timezone, got '${ps.updated}'`);
     }
+    // The narrative is the one required field here that is TEXT, and `checkRequired`
+    // knows only that it is present and not null, so a number, a boolean, a list or an
+    // object validated clean. Both JSON Schemas declare it a string. The message names
+    // the type AND a short prefix of the value, the way `resolved_conflict_ids` names
+    // its value: `introduced-errors.ts` keys an error on its path plus its message, so
+    // a message that named only the type made an update replacing one non-string with
+    // another of the same type read as an error already in the project, and it was
+    // written. The prefix is bounded because a narrative can be long. Null is
+    // `checkRequired`'s, and an empty string is a string.
+    if (
+      "narrative_markdown" in ps &&
+      ps.narrative_markdown !== null &&
+      typeof ps.narrative_markdown !== "string"
+    ) {
+      const kind = Array.isArray(ps.narrative_markdown) ? "array" : typeof ps.narrative_markdown;
+      addError(
+        report,
+        psp,
+        `'narrative_markdown' must be a string, got ${kind} ${clipJson(ps.narrative_markdown, NARRATIVE_VALUE_PREFIX_CHARS)}`,
+      );
+    }
 
     // resolved_conflict_ids -> conflicts[].id, and that conflict must be
     // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
@@ -1727,8 +1811,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         // with a TypeError naming no field instead of a repairable error.
         if (!isObjectEntry(claim, clp, report)) continue;
         checkRequired(claim, [
-          "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+          "claim", "proof_tier", "supporting_assertion_ids",
         ], clp, report, NULLABLE_FIELDS);
+        // Required like the three above, worded for what a missing one means.
+        if (!("relationship" in claim)) {
+          addError(report, clp, `missing required field 'relationship' — ${claimRelationshipMissing(claim)}`);
+        } else if (claim.relationship === null) {
+          addError(report, clp, `required field 'relationship' is null — ${claimRelationshipMissing(claim)}`);
+        }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
         // Optional here (unlike the scalar above) but still closed: an
         // out-of-enum value is rejected wherever it is written.
@@ -1746,14 +1836,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           const rank = PROOF_TIER_RANK.get(claim.proof_tier);
           if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
         }
-        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
+        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship !== null) {
           const rel = claim.relationship;
           const relp = `${clp}/relationship`;
           if (!isObjectEntry(rel, relp, report)) continue;
           checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
           checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
           if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
-            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}'`);
+            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}' — ${CLAIM_NOT_A_RELATIONSHIP}`);
           }
         }
       }
@@ -1907,6 +1997,27 @@ function validateEvaluations(
   }
 }
 
+/** Each named count, when present, is a non-negative integer; `nullable` ones may also be null. */
+function checkCounts(
+  obj: any,
+  fields: string[],
+  nullable: string[],
+  path: string,
+  report: ValidationReport,
+): void {
+  if (!obj || typeof obj !== "object") return;
+  for (const f of fields) {
+    if (!(f in obj) || (obj[f] === null && nullable.includes(f))) continue;
+    if (!isNonNegativeInteger(obj[f])) {
+      const or = nullable.includes(f) ? " or null" : "";
+      addError(report, path, `${f} must be a non-negative integer${or}; got ${JSON.stringify(obj[f])}`);
+    }
+  }
+}
+
+const BUCKET_COUNTS = ["volumes", "browse_only", "fulltext_only"];
+const BUCKET_NULLABLE = ["browse_only", "fulltext_only"];
+
 function validateLocalities(
   data: any,
   path: string,
@@ -1942,6 +2053,40 @@ function validateLocalities(
       if ("section" in pr) {
         checkEnum(pr.section, "locality_page_section", `${lp}/pages_read[${j}]`, report);
       }
+      if ("outcome" in pr) {
+        checkEnum(pr.outcome, "locality_page_outcome", `${lp}/pages_read[${j}]`, report);
+      }
+    }
+    // The fields research-plan reads instead of re-running the survey. Counts
+    // must be what the schema says, or a plan decides on a NaN or a fraction.
+    const cols = Array.isArray(loc.collections) ? loc.collections : [];
+    for (let j = 0; j < cols.length; j++) {
+      checkCounts(cols[j], ["person_count", "record_count"], ["person_count", "record_count"], `${lp}/collections[${j}]`, report);
+    }
+    const regs = Array.isArray(loc.registration_start) ? loc.registration_start : [];
+    for (let j = 0; j < regs.length; j++) {
+      const rs = regs[j];
+      const rp = `${lp}/registration_start[${j}]`;
+      if (!rs || typeof rs !== "object") continue;
+      checkRequired(rs, ["event", "level", "year", "source_url"], rp, report, NULLABLE_FIELDS);
+      if ("event" in rs) checkEnum(rs.event, "registration_event", rp, report);
+      if ("level" in rs) checkEnum(rs.level, "registration_level", rp, report);
+      if ("year" in rs && !Number.isInteger(rs.year)) {
+        addError(report, rp, `year must be an integer; got ${JSON.stringify(rs.year)}`);
+      }
+    }
+    const vs = loc.volume_summary;
+    if (vs && typeof vs === "object") {
+      const vp = `${lp}/volume_summary`;
+      checkRequired(vs, ["total_volumes", "complete", "by_record_type", "untyped"], vp, report, NULLABLE_FIELDS);
+      if ("total_volumes" in vs && !isNonNegativeInteger(vs.total_volumes)) {
+        addError(report, vp, `total_volumes must be a non-negative integer; got ${JSON.stringify(vs.total_volumes)}`);
+      }
+      const buckets = Array.isArray(vs.by_record_type) ? vs.by_record_type : [];
+      for (let j = 0; j < buckets.length; j++) {
+        checkCounts(buckets[j], BUCKET_COUNTS, BUCKET_NULLABLE, `${vp}/by_record_type[${j}]`, report);
+      }
+      checkCounts(vs.untyped, BUCKET_COUNTS, BUCKET_NULLABLE, `${vp}/untyped`, report);
     }
   }
 
@@ -2475,8 +2620,8 @@ async function validateSidecars(
       continue;
     }
 
-    // A non-persona producer (fulltext_search, external_links_search) stages a
-    // sidecar but no GedcomX personas, so a record_persona_id on such an
+    // A non-persona producer (fulltext_search, or a legacy external_links_search
+    // sidecar from before #2995) has a sidecar but no GedcomX personas, so a record_persona_id on such an
     // assertion is invalid regardless of record_id. Say why, rather than the
     // misleading "does not match any result's recordId" the recordId-only match
     // produced for these sidecars — they key on `id`, never `recordId` (#2038).
