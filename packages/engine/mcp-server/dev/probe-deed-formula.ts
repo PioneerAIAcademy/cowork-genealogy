@@ -12,7 +12,9 @@ const strings = (o: unknown, out: string[] = []): string[] => {
 
 for (const f of process.argv.slice(2)) {
   let texts: string[] = [];
-  try { texts = strings(JSON.parse(readFileSync(f, "utf8"))); } catch { console.log(`${f}\tUNREADABLE`); continue; }
+  try { texts = strings(JSON.parse(readFileSync(f, "utf8"))); } catch { console.log(`${f}	UNREADABLE`); continue; }
   const found = texts.flatMap((t) => formulaPhrases(t));
-  console.log(`${f}\tstrings=${texts.length}\tphrases=${found.length}\t${found.slice(0, 3).map((h) => `${h.formula}:${JSON.stringify(h.region.slice(0, 40))}`).join(" | ")}`);
+  const by: Record<string, number> = {};
+  for (const h of found) if (h.names.length > 0) by[h.formula] = (by[h.formula] ?? 0) + 1;
+  console.log(`${f}	strings=${texts.length}	phrases-with-names=${JSON.stringify(by)}	${found.filter((h) => h.names.length).slice(0, 2).map((h) => JSON.stringify(h.phrase.slice(0, 90))).join(" | ")}`);
 }

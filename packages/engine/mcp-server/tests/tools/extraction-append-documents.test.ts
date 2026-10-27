@@ -1166,6 +1166,11 @@ describe("extraction_append: documents", () => {
         expect((await rolesOf("capture:deed-indenture"))["Paul Meacham"]).toBe("grantee");
       });
 
+      it("checks nothing when the transcription cannot be read", async () => {
+        const r = await run([{ recordId: "capture:deed-gone", document: swappedDeed(), transcriptionRef: "results/.staging/pruned-after-24h.json" }]);
+        expect((r.errors ?? []).join(" ")).not.toMatch(/the transcription says/);
+      });
+
       it("checks nothing for a pasted-text document with no transcriptionRef", async () => {
         expect((await run([{ recordId: "capture:deed-pasted", document: swappedDeed() }])).ok).toBe(true);
       });

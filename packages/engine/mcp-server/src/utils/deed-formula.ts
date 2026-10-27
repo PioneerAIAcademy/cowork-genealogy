@@ -1,135 +1,193 @@
 // deed-formula — checks a land or probate document's role labels against the
 // transcription's own formula (spec §11.7). record-structurer labels the
 // parties; the page says who the grantor, grantee, witnesses and administrator
-// are in fixed phrases, so a label the phrase contradicts is refused.
+// are in a few fixed phrases, and a label such a phrase contradicts is refused.
 //
-// Silent by design: a form the phrases do not recognise (an indenture "between X
-// of the one part and Y of the other", a quitclaim, an abstract), a phrase whose
-// names match no party, and an unreadable text all refuse nothing. A phrase
-// that matches wrongly refuses a correct write, so the list stays short and each
-// pattern is built from transcriptions in the corpus.
+// Built for precision over recall, because a pattern that matches wrongly
+// refuses a correct write and the agent has no way to write that deed. So:
+//   - a phrase anchors on its own words, then names are read as a strict list of
+//     capitalized words (2-4 per name, split by a comma, "and" or "&"), never as
+//     "whatever follows up to a period";
+//   - a name that matches no party, or more than one (a father and son, Johnson
+//     and Johnston), is dropped, and a phrase left with no name refuses nothing;
+//   - a formula that matches several times refuses only when every occurrence
+//     that names a party contradicts the labels;
+//   - the witness clause is read only to the end of its own line, so a signature
+//     block on the next lines is never a witness.
+// A form the phrases do not recognise (an indenture "between X of the one part",
+// a quitclaim, an abstract) and an unreadable text refuse nothing.
 
 import type { DocumentPerson, StructuredDocument } from "./structured-document.js";
-import { landSides, probateDecedentId } from "./structured-document.js";
+import { landSides, partyName, probateDecedentOrDefault } from "./structured-document.js";
+import { levenshteinDistance } from "./string-similarity.js";
 
-const words = (s: string) => s.toLowerCase().replace(/[^a-z\s'-]/g, " ").split(/\s+/).filter(Boolean);
+const str = (v: unknown): string => (typeof v === "string" ? v : "");
+const lower = (s: string) => s.toLowerCase().replace(/[^a-z'-]/g, "");
 
-/** Edit distance <= 1, for OCR and spelling drift (Ingersoll / Ingersol). */
-function near(a: string, b: string): boolean {
-  if (a === b) return true;
-  if (a.length < 5 || b.length < 5 || Math.abs(a.length - b.length) > 1) return false;
+/** Abbreviations whose period is not the end of a sentence. */
+const ABBREVIATION = new Set(["jno", "wm", "thos", "chas", "geo", "jas", "robt", "saml", "benj", "jr", "sr", "esq", "st", "mr", "mrs", "dr"]);
+
+const NAME_TOKEN = /^[A-Z][A-Za-z'’-]*\.?$/;
+
+/**
+ * Names read off the start of `rest`: a list of names, each 2-4 capitalized
+ * words, split by a comma, "and" or "&". A lowercase word ends a name; so does a
+ * sentence-ending period. Returns the names and the text they were read from.
+ */
+function readNames(rest: string): { names: string[][]; text: string } {
+  const tokens = rest.trim().split(/\s+/);
   let i = 0;
-  while (i < a.length && i < b.length && a[i] === b[i]) i++;
-  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
-  const [s, l] = a.length < b.length ? [a, b] : [b, a];
-  return s.slice(i) === l.slice(i + 1);
+  if (/^the$/i.test(tokens[0] ?? "") && /^said$/i.test(tokens[1] ?? "")) i = 2;
+  else if (/^said$/i.test(tokens[0] ?? "")) i = 1;
+  const names: string[][] = [];
+  for (;;) {
+    const cur: string[] = [];
+    let end: "comma" | "sentence" | null = null;
+    while (i < tokens.length && cur.length < 4) {
+      const raw = tokens[i];
+      const core = raw.replace(/[,;:]+$/, "");
+      if (!NAME_TOKEN.test(core)) break;
+      cur.push(core.replace(/\.$/, ""));
+      i++;
+      if (/[,;:]$/.test(raw)) { end = "comma"; break; }
+      if (core.endsWith(".") && core.length > 2 && !ABBREVIATION.has(lower(core))) { end = "sentence"; break; }
+    }
+    if (cur.length < 2) break;
+    names.push(cur);
+    if (end === "sentence") break;
+    if (end !== "comma") {
+      if (!/^(and|&)$/i.test(tokens[i] ?? "")) break;
+      i++;
+    }
+  }
+  return { names, text: tokens.slice(0, i).join(" ") };
 }
 
-/** Whether the party's first given name and surname both appear in `region`. */
-function named(p: DocumentPerson, region: string): boolean {
-  const w = words(region);
-  const n = p.names[0];
-  const given = words(n?.given ?? "")[0];
-  const surname = words(n?.surname ?? "").pop();
-  if (!surname) return false;
-  const has = (t: string) => w.some((x) => near(x, t));
-  return has(surname) && (!given || has(given));
+/** The 2-4 capitalized words ending just before the end of `before`. */
+function readNameBefore(before: string): string[] | undefined {
+  const tokens = before.trim().split(/\s+/);
+  const cur: string[] = [];
+  for (let j = tokens.length - 1; j >= 0 && cur.length < 4; j--) {
+    const core = tokens[j].replace(/[,;:]+$/, "");
+    if (!NAME_TOKEN.test(core) || (j < tokens.length - 1 && /[,;:]$/.test(tokens[j]))) break;
+    cur.unshift(core.replace(/\.$/, ""));
+  }
+  return cur.length >= 2 ? cur : undefined;
 }
 
-const label = (p: DocumentPerson) => {
-  const n = p.names[0];
-  return `${p.id} (${[n?.given, n?.surname].filter(Boolean).join(" ")})`;
-};
+/** Equal, or one edit apart for words of 5+ letters (Ingersol / Ingersoll). */
+const near = (a: string, b: string) => a === b || (a.length >= 5 && b.length >= 5 && levenshteinDistance(a, b) <= 1);
 
-// A run of names ends at the first of these.
-const END = String.raw`(?=\s+(?:of|in\s+consideration|for\s+and|for\s+the\s+sum|have|hath|do|being|late|the\s+receipt|before|at\s+and|signed|sealed|know)\b|[,;]|$)`;
-
-const GRANTOR = new RegExp(String.raw`\bKnow\s+(?:ye|all\s+men)(?:\s+by\s+these\s+presents)?[,:]?\s+(?:that\s+)?(?:(?:I|we)\b[,:]?\s+)?(.{3,120}?)${END}`, "gi");
-const GRANTEE = [
-  new RegExp(String.raw`\b(?:paid|received)\b.{0,120}?\bby\s+(?:the\s+said\s+)?(.{3,120}?)${END}`, "gi"),
-  new RegExp(String.raw`\bunto\s+(?:the\s+said\s+)?(.{3,120}?)${END}`, "gi"),
-];
-const WITNESS = new RegExp(String.raw`\bin\s+(?:the\s+)?presence\s+of\s+(.{3,160}?)(?=\s+(?:before|signed|sealed|know)\b|[.;]|$)`, "gi");
-const ADMINISTRATOR = new RegExp(
-  String.raw`(\S[^,.;]{2,80}?),?\s+Administrat(?:or|rix)\s+(?:on|of)\s+the\s+Estate\s+of\s+(.{3,100}?)(?=\s+(?:late|deceased|of)\b|[,;.]|$)`,
-  "gi",
-);
+/** The one party a name matches (given name and surname both), or undefined when
+ *  it matches none or several. */
+function partyFor(doc: StructuredDocument, name: string[]): DocumentPerson | undefined {
+  const w = name.map(lower).filter(Boolean);
+  const found = doc.persons.filter((p) => {
+    const n = p.names[0];
+    const given = lower(str(n?.given).split(/\s+/)[0] ?? "");
+    const surname = lower(str(n?.surname).split(/\s+/).filter(Boolean).pop() ?? "");
+    return !!surname && w.some((x) => near(x, surname)) && (!given || w.some((x) => near(x, given)));
+  });
+  return found.length === 1 ? found[0] : undefined;
+}
 
 interface Hit {
   phrase: string;
-  region: string;
+  parties: DocumentPerson[];
 }
 
-function hits(re: RegExp, text: string, group = 1): Hit[] {
-  return [...text.matchAll(new RegExp(re.source, re.flags))].map((m) => ({ phrase: m[0].trim(), region: m[group] }));
+const GRANTOR = /\bKnow\s+(?:ye|all\s+men)(?:\s+by\s+these\s+presents)?[,:]?\s+(?:that\s+)?(?:(?:I|we)\b[,:]?\s+)?/gi;
+const PAID_BY = /\bpaid\b(?:[,\s]+(?:to\s+me|me|in\s+hand|at|or|before|the|ensealing|and|delivery|of|these|presents|hereof)){0,10}?[,\s]+by\s+/gi;
+const IN_PRESENCE = /\bin\s+(?:the\s+)?presence\s+of[ \t]+/gi;
+const ADMINISTRATOR = /\bAdministrat(?:or|rix)\s+(?:on|of)\s+the\s+Estate\s+of\s+/gi;
+
+function hitsAfter(doc: StructuredDocument, text: string, anchor: RegExp, lineOnly = false): Hit[] {
+  return [...text.matchAll(new RegExp(anchor.source, anchor.flags))].map((m) => {
+    const start = m.index! + m[0].length;
+    const rest = text.slice(start, start + 240);
+    const { names, text: read } = readNames(lineOnly ? rest.split(/\r?\n/)[0] : rest);
+    const parties = [...new Set(names.map((n) => partyFor(doc, n)).filter((p): p is DocumentPerson => !!p))];
+    return { phrase: `${m[0]}${read}`.replace(/\s+/g, " ").trim(), parties };
+  });
 }
 
-/** Every formula phrase `text` carries, for auditing the patterns against a corpus. */
-export function formulaPhrases(rawText: string): { formula: string; phrase: string; region: string }[] {
+/** Every formula phrase `rawText` carries, for auditing the patterns against a corpus. */
+export function formulaPhrases(rawText: string): { formula: string; phrase: string; names: string[] }[] {
   const text = rawText.replace(/\s+/g, " ");
+  const read = (formula: string, source: string, anchor: RegExp, lineOnly = false) =>
+    [...source.matchAll(new RegExp(anchor.source, anchor.flags))].map((m) => {
+      const rest = source.slice(m.index! + m[0].length, m.index! + m[0].length + 240);
+      const r = readNames(lineOnly ? rest.split(/\r?\n/)[0] : rest);
+      return { formula, phrase: `${m[0]}${r.text}`.replace(/\s+/g, " ").trim(), names: r.names.map((n) => n.join(" ")) };
+    });
   return [
-    ...hits(GRANTOR, text).map((h) => ({ formula: "grantor", ...h })),
-    ...GRANTEE.flatMap((re) => hits(re, text)).map((h) => ({ formula: "grantee", ...h })),
-    ...hits(WITNESS, text).map((h) => ({ formula: "witness", ...h })),
-    ...hits(ADMINISTRATOR, text, 2).map((h) => ({ formula: "administrator", ...h })),
+    ...read("grantor", text, GRANTOR),
+    ...read("grantee", text, PAID_BY),
+    ...read("witness", rawText, IN_PRESENCE, true),
+    ...read("administrator", text, ADMINISTRATOR),
   ];
 }
 
 /**
- * Errors for a document whose labels a phrase in `text` contradicts. A formula
- * matched more than once (a page holding two deeds) refuses only when every
- * match that names a party contradicts the labels.
+ * Errors for a document whose labels a phrase in `rawText` contradicts. Land: the
+ * grantor, the payer and the witnesses. Probate: the administrator and the
+ * estate's owner. Nothing else is read.
  */
 export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path: string): string[] {
   const text = rawText.replace(/\s+/g, " ");
   const errs: string[] = [];
 
-  // `agrees(hit)` is true when the phrase names a party and the labels agree; a
-  // hit naming no party is not evidence either way.
-  const verdict = (hs: Hit[], agrees: (named: DocumentPerson[]) => boolean) => {
-    const informative = hs
-      .map((h) => ({ h, who: doc.persons.filter((p) => named(p, h.region)) }))
-      .filter((x) => x.who.length > 0);
-    return informative.length > 0 && informative.every((x) => !agrees(x.who)) ? informative[0] : undefined;
-  };
-  const refuse = (what: string, h: Hit, who: DocumentPerson[], found: string) =>
+  const informative = (hs: Hit[]) => hs.filter((h) => h.parties.length > 0);
+  const refuseIf = (hs: Hit[], contradicts: (h: Hit) => boolean, what: string) => {
+    const inf = informative(hs);
+    if (inf.length === 0 || !inf.every(contradicts)) return;
+    const h = inf[0];
     errs.push(
-      `${path}: the transcription says "${h.phrase}", which names ${who.map(label).join(" and ")} as ${what}, ` +
-        `but the document ${found}. Relabel the parties by that phrase and resend.`,
+      `${path}: the transcription says "${h.phrase}", which names ${h.parties.map((p) => partyName(doc, p.id)).join(" and ")} as ${what}, ` +
+        `but the document labels ${h.parties.length > 1 ? "them" : "that party"} otherwise. Relabel the parties by that phrase and resend.`,
     );
+  };
 
   if (doc.recordType === "land") {
     const sides = landSides(doc);
-    const side = (p: DocumentPerson) => sides.get(p.id);
-
-    const g = verdict(hits(GRANTOR, text), (who) => who.some((p) => side(p) === "grantor") && !who.some((p) => side(p) === "grantee"));
-    if (g) refuse("the grantor", g.h, g.who, `labels ${g.who.map((p) => `${p.id} as ${side(p) ?? "neither grantor nor grantee"}`).join(" and ")}`);
-
-    const e = verdict(GRANTEE.flatMap((re) => hits(re, text)), (who) => who.some((p) => side(p) === "grantee") && !who.some((p) => side(p) === "grantor"));
-    if (e) refuse("the grantee", e.h, e.who, `labels ${e.who.map((p) => `${p.id} as ${side(p) ?? "neither grantor nor grantee"}`).join(" and ")}`);
-
-    const w = verdict(hits(WITNESS, text), (who) => who.every((p) => !side(p)));
-    if (w) refuse("witnesses", w.h, w.who, `labels ${w.who.map((p) => `${p.id} as ${side(p) ?? "a witness"}`).join(" and ")}`);
+    const kind = (p: DocumentPerson): "grantor" | "grantee" | "witness" | "other" => {
+      const s = sides.get(p.id);
+      if (s) return s;
+      return /^(witness|justice of the peace|register|notary|clerk)\b/.test(str(p.statedRelation).trim().toLowerCase()) ? "witness" : "other";
+    };
+    refuseIf(
+      hitsAfter(doc, text, GRANTOR),
+      (h) => !h.parties.some((p) => kind(p) === "grantor") && h.parties.some((p) => kind(p) === "grantee" || kind(p) === "witness"),
+      "the grantor",
+    );
+    refuseIf(hitsAfter(doc, text, PAID_BY), (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "witness"), "the one paying (the grantee's side)");
+    refuseIf(
+      hitsAfter(doc, rawText, IN_PRESENCE, true),
+      (h) => h.parties.some((p) => kind(p) === "grantor" || kind(p) === "grantee"),
+      "witnesses",
+    );
   }
 
   if (doc.recordType === "probate") {
-    const id = probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
-    const decedent = doc.persons.find((p) => p.id === id);
-    if (decedent) {
-      const bad = hits(ADMINISTRATOR, text)
-        .map((h) => {
-          const m = new RegExp(ADMINISTRATOR.source, "i").exec(h.phrase);
-          return { h, administrator: m?.[1] ?? "", estate: m?.[2] ?? "" };
-        })
-        .filter((x) => named(decedent, x.administrator) || doc.persons.some((p) => named(p, x.estate) && p.id !== decedent.id));
-      const consistent = hits(ADMINISTRATOR, text).length > bad.length;
-      if (bad.length > 0 && !consistent) {
-        errs.push(
-          `${path}: the transcription says "${bad[0].h.phrase}", so the decedent is the estate's owner, ` +
-            `but the document makes ${label(decedent)} the decedent. Put the probate, will or death fact ` +
-            `on the estate's owner and resend.`,
-        );
-      }
+    const decedent = probateDecedentOrDefault(doc);
+    const hs = [...text.matchAll(new RegExp(ADMINISTRATOR.source, ADMINISTRATOR.flags))].map((m) => {
+      const admin = readNameBefore(text.slice(0, m.index));
+      const estate = readNames(text.slice(m.index! + m[0].length, m.index! + m[0].length + 240));
+      return {
+        phrase: `${admin ? `${admin.join(" ")} ` : ""}${m[0]}${estate.text}`.replace(/\s+/g, " ").trim(),
+        administrator: admin ? partyFor(doc, admin) : undefined,
+        owners: [...new Set(estate.names.map((n) => partyFor(doc, n)).filter((p): p is DocumentPerson => !!p))],
+      };
+    });
+    const inf = hs.filter((h) => h.administrator || h.owners.length > 0);
+    const bad = (h: (typeof hs)[number]) =>
+      h.administrator?.id === decedent || (h.owners.length > 0 && !h.owners.some((p) => p.id === decedent));
+    if (decedent !== undefined && inf.length > 0 && inf.every(bad)) {
+      errs.push(
+        `${path}: the transcription says "${inf[0].phrase}", so the decedent is the estate's owner, ` +
+          `but the document makes ${partyName(doc, decedent)} the decedent. Put the probate, will or death fact ` +
+          `on the estate's owner and resend.`,
+      );
     }
   }
   return errs;
