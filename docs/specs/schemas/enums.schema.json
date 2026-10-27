@@ -325,6 +325,30 @@
         "research_tips"
       ]
     },
+    "registration_event": {
+      "description": "Which vital event a locality's registration_start[] entry dates (localities section).",
+      "enum": [
+        "birth",
+        "marriage",
+        "death"
+      ]
+    },
+    "registration_level": {
+      "description": "The jurisdiction level at which a locality's registration_start[] entry says civil registration of that event began (localities section); a place can have an early town series and a later statewide one.",
+      "enum": [
+        "town",
+        "parish",
+        "county",
+        "state",
+        "national"
+      ]
+    },
+    "locality_page_outcome": {
+      "description": "Why a locality's pages_read[] entry has found: false when the cause was not a missing page (localities section). unreachable: the wiki server failed (5xx or no connection) after a retry, so the page may exist.",
+      "enum": [
+        "unreachable"
+      ]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",

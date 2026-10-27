@@ -402,3 +402,41 @@ def test_nil_fires_on_a_search_capture_cut_mid_document(tmp_path):
     calls = [{"tool": "mcp__genealogy__record_search", "response_summary": raw[:40] + "..."},
              _log_append(outcome="negative")]
     assert _states(scan([_write_run(tmp_path, calls)]).rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+# --- external_links_search stopped staging (2026-10) -------------------------
+
+
+def _write_run_with(tmp_path, tool_calls, **extra):
+    slug = tmp_path / "some-fixture"
+    slug.mkdir(parents=True, exist_ok=True)
+    p = slug / f"run-{RECENT}.json"
+    p.write_text(json.dumps({"captured_at": RECENT, "tool_calls": tool_calls, **extra}), encoding="utf-8")
+    return p
+
+
+def test_a_links_fetch_in_a_run_after_the_change_is_neither_an_emitter_nor_a_search(tmp_path):
+    """A run that records `external_collection_keys` ran the non-staging engine.
+    The response is truncated, as most committed captures are, so it cannot be
+    read for `staged`; the run is what decides."""
+    fetch = {"tool": "mcp__genealogy__external_links_search", "args": {"projectPath": "/p"},
+             "response_summary": '[{"type": "text", "text": "{\\"query\\": {\\"standardPlace\\": \\"Penn'}
+    result = scan([_write_run_with(tmp_path, [fetch], external_collection_keys={})])
+    assert [r for r in result.rows if r.field in ("nilSearchNeedsLog", "unloggedSearches")] == []
+    assert all(r.searches == 0 for r in result.ratios)
+
+
+def test_a_record_search_in_a_run_after_the_change_still_counts(tmp_path):
+    nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "A nil search is a finding…"}
+    rows = scan([_write_run_with(tmp_path, [_search(nil_doc), _log_append(outcome="negative")],
+                                 external_collection_keys={})]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+def test_a_links_fetch_in_a_run_before_the_change_scores_as_before(tmp_path):
+    """No `external_collection_keys`: an old run, whatever its response shows."""
+    fetch = _search({"results": [], "totalForPlace": 0, "nilSearchNeedsLog": "A nil search is a finding…"},
+                    tool="mcp__genealogy__external_links_search", args={})
+    result = scan([_write_run(tmp_path, [fetch, _log_append(outcome="negative")])])
+    assert _states(result.rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+    assert sum(r.searches for r in result.ratios) == 1

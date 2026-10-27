@@ -38,6 +38,11 @@
   background: var(--badge-amber-bg);
 }
 
+.unreachable {
+  color: var(--badge-red-text);
+  background: var(--badge-red-bg);
+}
+
 .missing {
   color: var(--badge-gray-text);
   background: var(--badge-gray-bg);

@@ -257,6 +257,123 @@ export function validateStructuredDocument(doc: unknown, path = "document"): str
         if (!isStr(a.name)) errs.push(`${at}.name: required`);
       });
   }
+  if (errs.length === 0) errs.push(...validateDocumentRoles(doc as unknown as StructuredDocument, path));
+  return errs;
+}
+
+// ─── roles and couples read from the text's own words ───────────────────────
+
+const normRelation = (s: string | undefined) => (s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/** A stated relation that makes its bearer the other party's spouse. "wife's
+ *  mother", "daughter-in-law" and "wife of the deceased's son" name someone else. */
+export function isSpouseRelation(rel: string | undefined): boolean {
+  const r = normRelation(rel);
+  if (/'s\b|-in-law/.test(r)) return false;
+  return /\b(wife|husband|widow|widower|spouse|consort|relict)\b/.test(r);
+}
+
+/** Which side of a deed a party is on, read from `statedRelation`. A spouse word
+ *  with a `couple` edge to a party on a side puts the spouse on that side
+ *  (a wife releasing dower is a grantor). */
+export function landSides(doc: StructuredDocument): Map<string, "grantor" | "grantee"> {
+  const sides = new Map<string, "grantor" | "grantee">();
+  for (const p of doc.persons) {
+    const r = normRelation(p.statedRelation);
+    if (/^(co-?)?grantors?$/.test(r)) sides.set(p.id, "grantor");
+    else if (/^(co-?)?grantees?$/.test(r)) sides.set(p.id, "grantee");
+  }
+  const explicit = new Map(sides);
+  for (const p of doc.persons) {
+    if (sides.has(p.id) || !isSpouseRelation(p.statedRelation)) continue;
+    for (const r of doc.relationships ?? []) {
+      if (r.type !== "couple" || (r.person1 !== p.id && r.person2 !== p.id)) continue;
+      const side = explicit.get(r.person1 === p.id ? r.person2 : r.person1);
+      if (side) {
+        sides.set(p.id, side);
+        break;
+      }
+    }
+  }
+  return sides;
+}
+
+/** Land roles for a document: `grantor_N`, and `grantee` (`grantee_N` when
+ *  several). A party on neither side is left out, so the extractor numbers it
+ *  by its own stated relation (`witness_1`, `justice_of_the_peace_1`). */
+export function landRoles(doc: StructuredDocument): Map<string, string> {
+  const sides = landSides(doc);
+  const grantees = doc.persons.filter((p) => sides.get(p.id) === "grantee").length;
+  const roles = new Map<string, string>();
+  let grantor = 0;
+  let grantee = 0;
+  for (const p of doc.persons) {
+    const side = sides.get(p.id);
+    if (side === "grantor") roles.set(p.id, `grantor_${++grantor}`);
+    else if (side === "grantee") roles.set(p.id, grantees > 1 ? `grantee_${++grantee}` : "grantee");
+  }
+  return roles;
+}
+
+/** The decedent or testator of a probate document: the party carrying the
+ *  `probate` fact, else `will`, else `death`; a flagged principal breaks a tie,
+ *  then the first in order. Undefined when no party carries any. */
+export function probateDecedentId(doc: StructuredDocument): string | undefined {
+  for (const re of [/^probate$/, /^will$/, /^death$/]) {
+    const carriers = doc.persons.filter((p) => p.facts.some((f) => re.test(f.type.trim().toLowerCase())));
+    if (carriers.length > 0) return (carriers.find((p) => p.principal) ?? carriers[0]).id;
+  }
+  return undefined;
+}
+
+const PETITIONER_RELATION = /\b(administrat(?:or|rix)|executor|executrix)\b/;
+
+/** The refusals that read a structured document's own words. Each runs before
+ *  anything is written: after the log entry, a refusal would orphan it. */
+function validateDocumentRoles(doc: StructuredDocument, path: string): string[] {
+  const errs: string[] = [];
+  const nameOf = (id: string) => {
+    const n = doc.persons.find((p) => p.id === id)?.names[0];
+    return `${id} (${[n?.given, n?.surname].filter(Boolean).join(" ")})`;
+  };
+
+  if (doc.recordType === "land") {
+    const sides = new Set(landSides(doc).values());
+    const missing = (["grantor", "grantee"] as const).filter((s) => !sides.has(s));
+    if (missing.length > 0) {
+      errs.push(
+        `${path}.persons: a land document must state who is the grantor and who is the grantee, ` +
+          `by \`statedRelation\` ("grantor", "grantee"; a wife releasing dower is "wife" with a couple to the grantor). ` +
+          `No party is stated as ${missing.join(" or ")}. The principal flag and the order of the parties choose no land role.`,
+      );
+    }
+  }
+
+  if (doc.recordType === "probate") {
+    const id = probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
+    const rel = normRelation(doc.persons.find((p) => p.id === id)?.statedRelation);
+    if (id !== undefined && PETITIONER_RELATION.test(rel)) {
+      errs.push(
+        `${path}.persons: ${nameOf(id)} would be written as the decedent or testator but is stated as "${rel}". ` +
+          `Put the probate, will or death fact on the decedent or testator, ` +
+          `even where the letters name the administrator or executor.`,
+      );
+    }
+  }
+
+  if (doc.recordType === "land" || doc.recordType === "probate") {
+    (doc.relationships ?? []).forEach((r, i) => {
+      if (r.type !== "couple") return;
+      const stated = [r.person1, r.person2].some((id) => isSpouseRelation(doc.persons.find((p) => p.id === id)?.statedRelation));
+      if (!stated) {
+        errs.push(
+          `${path}.relationships[${i}]: couple ${nameOf(r.person1)} and ${nameOf(r.person2)} is not stated. ` +
+            `Send a couple only where the text calls one of them the other's wife, husband, widow or widower ` +
+            `(that word is the \`statedRelation\`).`,
+        );
+      }
+    });
+  }
   return errs;
 }
 
@@ -269,6 +386,10 @@ export interface DocumentMode {
   censusStates?: boolean | null;
   /** Probate: the file holds a will (testator) rather than an intestate petition (decedent). */
   hasWill?: boolean;
+  /** Probate: the party carrying the probate, will or death fact. */
+  decedentId?: string;
+  /** Land: person id -> `grantor_N` / `grantee`, read from `statedRelation`. */
+  landRoles?: Map<string, string>;
   informantName?: string;
   /** person id -> the text's own relation word. */
   statedRelations: Map<string, string>;
@@ -412,6 +533,8 @@ export function documentToExtract(
         ? { censusStates: censusStatedRelationships(doc.census?.jurisdiction, doc.census?.year) }
         : {}),
       ...(hasWill !== undefined ? { hasWill } : {}),
+      ...(doc.recordType === "probate" && probateDecedentId(doc) ? { decedentId: probateDecedentId(doc) } : {}),
+      ...(doc.recordType === "land" ? { landRoles: landRoles(doc) } : {}),
       ...(doc.informant?.name ? { informantName: doc.informant.name } : {}),
       statedRelations,
       factMarks,
