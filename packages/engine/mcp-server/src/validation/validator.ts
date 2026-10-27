@@ -525,6 +525,19 @@ function checkIsoDate(
  */
 export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
 
+/** Whether a `conflicts[]` entry is settled: `resolved` or `moot` (issue #2359).
+ *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
+ *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
+ *  disputing its sources. Not every status read asks that question:
+ *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
+ *  this on any document the validator accepts. The harness keeps a Python copy,
+ *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
+ *  `test_settled_conflict_parity.py` runs both over the same conflicts. */
+export function isSettledConflict(c: any): boolean {
+  return SETTLED_CONFLICT_STATUSES.has(c?.status);
+}
+
 function checkRefExists(
   refId: string,
   validIds: Set<string>,
@@ -1516,7 +1529,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // Collected here, and read by the proof_summaries block below. Safe
       // because validateResearch is a single sequential pass and conflicts
       // precede proof_summaries in it.
-      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+      if (isSettledConflict(c) && typeof c.id === "string") {
         ids.settled_conflicts.add(c.id);
       }
     }

@@ -4461,6 +4461,38 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    // `moot` settles a conflict exactly as `resolved` does (issue #2359): a
+    // conflict that no longer bears on the question disputes nothing.
+    it("does NOT fire once the conflict is moot", async () => {
+      const state = conflicted();
+      state.conflicts[0].status = "moot";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the question resolve when the only conflict on its sources is moot", async () => {
+      const state = conflicted() as any;
+      state.conflicts[0].status = "moot";
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004", "a_013"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
 
     it("refuses an update that leaves a forbidden tier standing, without naming tier", async () => {
       // The 2026-08-21 escape, replayed. The agent updated the summary's other

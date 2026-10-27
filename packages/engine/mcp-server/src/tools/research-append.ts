@@ -22,7 +22,7 @@ import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
-import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -1043,8 +1043,7 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
         (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
           (aid: string) => linked.has(aid),
         ) &&
-        c.status !== "resolved" &&
-        c.status !== "moot",
+        !isSettledConflict(c),
     )
     .map((c: any) => c.id);
   if (unresolved.length > 0) {
@@ -4253,7 +4252,9 @@ function questionResolvedInvariants(
  *
  *  A conflict names the assertions that compete; each assertion names the
  *  source it came from. Those sources are the ones whose reliability is
- *  currently in question. */
+ *  currently in question. A `moot` conflict disputes nothing: it is settled
+ *  like a `resolved` one, so both refusals built on this name only conflicts
+ *  that really are unresolved (issue #2359). */
 function disputedSourceIds(research: any): Map<string, string[]> {
   const assertionSource = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
@@ -4261,7 +4262,7 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   }
   const bySource = new Map<string, string[]>();
   for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
-    if (!c || c.status === "resolved") continue;
+    if (!c || isSettledConflict(c)) continue;
     for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
       const src = assertionSource.get(aid);
       if (!src) continue;
@@ -4373,7 +4374,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
     if (!c || typeof c !== "object") continue;
     const key = conflictKey(c.id);
     if (key) recorded.add(key);
-    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+    if (isSettledConflict(c)) {
       if (key) settled.add(key);
       for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
     }

@@ -1919,6 +1919,19 @@ _CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I | re.ASCII)
 _SETTLED_CONFLICT_STATUSES = frozenset({"resolved", "moot"})
 
 
+def is_settled_conflict(conflict: Any) -> bool:
+    """The Python copy of the engine's `isSettledConflict` (validator.ts).
+
+    `tests/unit/test_settled_conflict_parity.py` runs both over the same
+    statuses; change one and that test makes you change the other.
+    """
+    if not isinstance(conflict, dict):
+        return False
+    status = conflict.get("status")
+    # A non-string status (a list, say) is unhashable here; TS Set.has returns false.
+    return isinstance(status, str) and status in _SETTLED_CONFLICT_STATUSES
+
+
 def find_unpersisted_conflict_resolutions(
     research: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -2005,8 +2018,7 @@ def find_unpersisted_conflict_resolutions(
     settled_conflict_ids = {
         _cid(c.get("id"))
         for c in conflicts
-        if isinstance(c, dict)
-        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        if is_settled_conflict(c)
         and _cid(c.get("id"))
     }
     # A resolved conflict can back a question WITHOUT being cited on the
@@ -2019,8 +2031,7 @@ def find_unpersisted_conflict_resolutions(
     settled_blocked_qids = {
         q
         for c in conflicts
-        if isinstance(c, dict)
-        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        if is_settled_conflict(c)
         and isinstance(c.get("blocks_question_ids"), list)
         for q in c["blocks_question_ids"]
     }
