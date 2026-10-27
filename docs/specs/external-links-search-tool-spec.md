@@ -53,6 +53,8 @@ window," not "URLs of a specific record category."
 | `standardPlace` | string | Yes | Standard place name (the `standardPlace` field from `place_search`, e.g. `"France"`). Resolved to a FamilySearch place ID internally. |
 | `startYear` | number (integer, 1500–2100) | No | Earliest year of interest (inclusive). When omitted, the lower bound widens to −infinity. |
 | `endYear` | number (integer, 1500–2100) | No | Latest year of interest (inclusive). When omitted, the upper bound widens to +infinity. Must be `>= startYear` when both are given. |
+| `host` | string | No | Target-site host substring (e.g. `"ancestry.com"`). Filters the inline `results[]` to links whose URL contains it (case-insensitive). The stored list is never filtered. |
+| `projectPath` | string | No | Absolute path to the active project directory. When given, the tool stores the place's full list in `external-collections.json` (see "Stored list"). Omit only outside a project. |
 
 Validation:
 
@@ -84,13 +86,18 @@ Examples:
 |-------|------|-------------|
 | `query` | object | Echo of the input: `{ standardPlace, startYear?, endYear? }`. Only includes the years that were actually provided. |
 | `totalForPlace` | number | Distinct curated resources for the fetch (after dedupe, below), **before** the date filter. The only non-derivable count. |
-| `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory; serialized before `results`. Contract and rationale: `record-search-tool-spec-v2.md`. |
-| `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the **pre-filter** link set was empty. Keyed on the pre-filter set deliberately: `results` below is host-filtered and capped, so a `host:` search whose links all sit on other hosts returns an empty `results` with a non-null `staged` — claiming a nil there would order a negative finding for a place that has records. |
 | `results` | `{ url, linkText, startYear?, endYear? }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
 | `returned` | number | How many links `results` holds, after the year and host filters and the 200 cap. |
-| `inlineCapped` | `true` \| undefined | Present when the 200 cap cut `results`. The stored list and the staged sidecar hold the full set. |
+| `inlineCapped` | `true` \| undefined | Present when the 200 cap cut `results`. The stored list holds the full set. |
 | `stored` | `{ file, places }` \| undefined | Present when `projectPath` names a project: `external-collections.json` and the places whose entries this fetch wrote. See "Stored list". |
 | `collectionsError` | string \| undefined | Why the stored list was not written — a write failure, or a `projectPath` that is not a project folder. The search itself succeeded. |
+
+**No result staging (removed 2026-10).** The tool no longer writes a
+`results/.staging/` file and returns no `staged`, `stagingError`,
+`unloggedSearches` or `nilSearchNeedsLog`. The stored list is the durable copy,
+and a staged sidecar nobody logged set off the unlogged-search note on the next
+search. Sidecars staged before the change stay readable and finalizable; nothing
+migrates them.
 
 Each `results[]` item:
 
@@ -161,36 +168,59 @@ back as several disagreeing rows). The tool collapses them to one row per
 {
   name: "external_links_search",
   description:
-    "Return FamilySearch-curated third-party genealogy resource URLs for a place and optional year range. " +
-    "Use when the user wants links to external record collections (Ancestry, MyHeritage, FindMyPast, " +
-    "national archives, etc.) covering a specific place by standard place name and (optionally) time period. " +
-    "When years are given, returns every collection whose date range overlaps [startYear, endYear], plus " +
-    "undated wiki/website resources. When years are omitted, returns all resources for that place. " +
-    "Pass the standard place name (the `standardPlace` field from place_search).",
+    "Return FamilySearch-curated third-party genealogy resource URLs for a place, " +
+    "optionally filtered by year range. Use when the user wants links to external " +
+    "record collections (Ancestry, MyHeritage, FindMyPast, national archives, etc.) " +
+    "covering a specific place by standard place name. Pass a standardPlace from " +
+    "place_search; add startYear/endYear to keep only collections whose date range " +
+    "overlaps that window. Undated wiki/website resources for the place are always " +
+    "included. With no years, every resource for the place is returned. " +
+    "Pass `host` to filter to a single target site (e.g. 'ancestry.com'); the " +
+    "response returns only matching links plus `returned` (their count). Pass " +
+    "`projectPath` to store the place's full list (every year, every host) in the " +
+    "project for research_query({section: 'external_collections'}). Inline `results[]` is " +
+    "deduplicated and capped at 200 (`inlineCapped`). A whole country such as the United " +
+    "States is too large: ask for a state.",
   inputSchema: {
     type: "object",
-    required: ["standardPlace"],
     properties: {
       standardPlace: {
         type: "string",
         description:
           "The standard place name (the `standardPlace` field from place_search, e.g. 'France'). " +
-          "The tool resolves it to a FamilySearch place ID internally."
+          "The tool resolves it to a FamilySearch place ID internally.",
       },
       startYear: {
         type: "integer",
         minimum: 1500,
         maximum: 2100,
-        description: "Optional. Earliest year of interest (inclusive). When omitted, the lower bound widens to -infinity."
+        description: "Earliest year of interest (inclusive). Omit for all periods.",
       },
       endYear: {
         type: "integer",
         minimum: 1500,
         maximum: 2100,
-        description: "Optional. Latest year of interest (inclusive). When omitted, the upper bound widens to +infinity. Must be >= startYear when both are given."
-      }
-    }
-  }
+        description:
+          "Latest year of interest (inclusive). Must be >= startYear. Omit for all periods.",
+      },
+      host: {
+        type: "string",
+        description:
+          "Optional target-site host substring (e.g. 'ancestry.com', 'findagrave.com'). " +
+          "When supplied, the inline `results[]` is filtered to links whose URL contains it — " +
+          "returning the small exact set you need instead of every curated site for the place. " +
+          "The stored list is never filtered.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute path to the active project directory. When supplied, the tool stores the " +
+          "place's full list in external-collections.json, read back with " +
+          "research_query({section: 'external_collections'}). Omit only outside a project.",
+      },
+    },
+    required: ["standardPlace"],
+  },
 }
 ```
 
@@ -442,9 +472,12 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 | 10 | Rejects endYear < startYear without hitting the network | Handler-level guard + no fetch |
 | 11 | Returns all resources when both years are omitted | Optional-years path; `query` omits years; `totalForPlace` set |
 | 12 | Rejects empty standardPlace without hitting the network | Handler-level guard + no fetch |
-| 13 | No negative-log note when the host filter emptied `results` but links were staged | The note keys on the pre-filter set, not on `results` |
-| 14 | Negative-log note when the place itself has no links at all | Genuine nil for that place and year window |
-| 15 | Carries `unloggedSearches`, ordered before `results` | Staged-backlog note + key order |
+| 13 | Host filter narrows the inline results to the target site | `host` filters `results[]` only |
+
+`tests/tools/external-links-search-store.test.ts` ("no result staging") checks
+that a call with `projectPath` stores the list but returns no `staged`,
+`stagingError`, `unloggedSearches` or `nilSearchNeedsLog` and writes no
+`results/` folder, including for a place with no links.
 
 ### Smoke-test script
 
