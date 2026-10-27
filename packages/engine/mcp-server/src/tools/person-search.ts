@@ -20,6 +20,7 @@ import type {
   PersonSearchResult,
   PersonSearchToolResponse,
 } from "../types/person-search.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const FS_TREE_SEARCH_URL = "https://api.familysearch.org/platform/tree/search";
 const ACCEPT_HEADER = "application/x-gedcomx-atom+json";
@@ -288,9 +289,7 @@ export async function personSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 400) {
       let detail: string | null = null;

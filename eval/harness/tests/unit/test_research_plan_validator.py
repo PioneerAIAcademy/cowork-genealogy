@@ -35,7 +35,10 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_rationale_identifiers_traceable as check_v1,
     test_research_plan_reads_question_person_profile as check_profile,
     report_survey_surfaces_already_attached_fan_facts as check,
+    test_written_collection_urls_are_stored_collections as check_coll,
+    report_external_items_missing_a_stored_collection as count_missing,
 )
+import json  # noqa: E402
 
 QUAL = "mcp__genealogy__"
 
@@ -1423,3 +1426,89 @@ def test_death_route_map_entry_without_its_tag_fails_before_the_skip():
     b, a = _plan_states([BAPTISM, BURIAL])
     with pytest.raises(AssertionError, match="no 'pre-register-birth'"):
         check_death_route(b, a, {"id": "ut_research_plan_dth", "tags": ["planning"]})
+
+
+# --- V1 grounds a cited collection id in the stored curated list (#2995) ------
+
+# Five digits: V1 checks 5+ digit runs only, so a 4-digit id would pass for nothing.
+_STORED_FILE = json.dumps({"places": {"Pennsylvania, United States": {"rows": [
+    {"key": "ancestry:7163", "url": "https://www.ancestry.com/search/collections/7163/"},
+    {"key": "ancestry:61749", "url": "https://www.ancestry.com/search/collections/61749/"}]}}})
+
+
+def test_v1_grounds_an_id_from_a_research_query_response():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 61749 covers 1870.")])
+    served = [_call("research_query", {"ok": True, "section": "external_collections",
+                                       "items": [{"url": "https://www.ancestry.com/search/collections/61749/"}]})]
+    check_v1(before, after, served)
+
+
+def test_v1_grounds_an_id_from_the_starting_stored_list():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 61749 covers 1870.")])
+    before["files"] = {"external-collections.json": _STORED_FILE}
+    check_v1(before, after, [])
+
+
+def test_v1_still_fires_on_an_id_in_neither():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 60207 covers 1870.")])
+    before["files"] = {"external-collections.json": _STORED_FILE}
+    with pytest.raises(AssertionError, match="60207"):
+        check_v1(before, after, [])
+
+
+# --- a new external item names a stored collection (#2995) --------------------
+
+STORED_URL = "https://www.ancestry.com/search/collections/7163/"
+
+
+def _ext(item_id, collection_url=None, **over):
+    item = _item(item_id)
+    item["repository"] = "Ancestry"
+    item.update(over)
+    if collection_url is not None:
+        item["collection_url"] = collection_url
+    return item
+
+
+def _coll_states(new_items, stored=_STORED_FILE):
+    before, after = _states(new_items)
+    if stored is not None:
+        after["files"] = {"external-collections.json": stored}
+    return before, after
+
+
+def test_collection_url_passes_on_a_stored_url_in_either_spelling():
+    check_coll(*_coll_states([_item("pli_010"), _ext("pli_011", STORED_URL)]))
+    check_coll(*_coll_states([_ext("pli_011", "https://search.ancestry.com/search/db.aspx?dbid=7163")]))
+
+
+def test_collection_url_fires_on_an_unstored_url():
+    with pytest.raises(AssertionError, match="not a stored"):
+        check_coll(*_coll_states([_ext("pli_011", "https://www.ancestry.com/search/collections/9093/")]))
+
+
+def test_collection_url_fires_when_nothing_is_stored():
+    with pytest.raises(AssertionError, match="not a stored"):
+        check_coll(*_coll_states([_ext("pli_011", STORED_URL)], stored=None))
+
+
+def test_collection_url_skips_when_no_item_writes_one():
+    with pytest.raises(pytest.skip.Exception):
+        check_coll(*_coll_states([_ext("pli_011")]))
+
+
+_TYPED_FILE = json.dumps({"places": {"Pennsylvania, United States": {"rows": [
+    {"key": "ancestry:7163", "url": STORED_URL, "record_types": ["Census"]}]}}})
+
+
+def test_report_counts_an_external_item_missing_a_fitting_collection():
+    with pytest.raises(AssertionError, match=r"1 of 2 .*\['pli_011'\]"):
+        count_missing(*_coll_states([_ext("pli_011"), _ext("pli_012", STORED_URL)], stored=_TYPED_FILE))
+
+
+def test_report_quiet_when_nothing_fits_or_the_item_names_one():
+    count_missing(*_coll_states([_ext("pli_011", record_type="probate")], stored=_TYPED_FILE))
+    count_missing(*_coll_states([_ext("pli_011", jurisdiction="Hordaland, Norway")], stored=_TYPED_FILE))
+    count_missing(*_coll_states([_ext("pli_011", STORED_URL)], stored=_TYPED_FILE))
+    with pytest.raises(pytest.skip.Exception):
+        count_missing(*_coll_states([_ext("pli_011")], stored=None))

@@ -844,7 +844,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "project_create") {
       try {
         const args = request.params.arguments as unknown as ProjectCreateInput;
-        const result = await projectCreate(args);
+        const result = await projectCreate(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

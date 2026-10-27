@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, writeFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -148,13 +148,33 @@ describe("person_warnings list form", () => {
       await tree(twoChildren());
       let started = 0;
       const never: PlaceCoordsResolver = () => { started++; return new Promise(() => {}); };
-      const t0 = Date.now();
-      const r = (await personWarningsTool(
-        { projectPath: dir, personId: ["I1", "I4"] }, { placeCoords: never, lookupBudgetMs: 300 },
-      )) as PersonWarningsList;
-      expect(r.results.map((e) => e.birthplaceCheck)).toEqual(["not_checked", "not_checked"]);
-      // ONE budget for the call: a budget per anchor would take two of them, 600 ms+.
-      expect(Date.now() - t0).toBeLessThan(550);
+      // Fake time, so a loaded machine cannot blur one budget into two. Only the
+      // timers are faked: the tree is still read from disk.
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        let settled = false;
+        const call = personWarningsTool(
+          { projectPath: dir, personId: ["I1", "I4"] }, { placeCoords: never, lookupBudgetMs: 300 },
+        ).then((r) => { settled = true; return r as PersonWarningsList; });
+        // Waits on real time (Date is not faked), so a loaded machine only makes them longer.
+        const until = async (done: () => boolean) => {
+          const end = Date.now() + 5_000;
+          while (!done() && Date.now() < end) await new Promise((resolve) => setImmediate(resolve));
+        };
+        // The budget's timer starts with the lookups, so once all three are open it is running.
+        await until(() => started === 3);
+        await vi.advanceTimersByTimeAsync(299);
+        expect(settled).toBe(false);
+        // ONE budget for the call: 300 ms settles both anchors; a budget per anchor would
+        // still be waiting on a second timer the frozen clock never reaches.
+        await vi.advanceTimersByTimeAsync(1);
+        await until(() => settled);
+        expect(settled).toBe(true);
+        const r = await call;
+        expect(r.results.map((e) => e.birthplaceCheck)).toEqual(["not_checked", "not_checked"]);
+      } finally {
+        vi.useRealTimers();
+      }
       // The father's residence is shared, and each name is looked up once.
       expect(started).toBe(3);
     });

@@ -410,3 +410,85 @@ def test_every_shipped_hand_back_literal_classifies():
         f"literal. PR #2870 retired it — the Stop hook is the mechanism now, and "
         f"a body that stops to ask is a stall."
     )
+
+
+# ── step mode's offer line (section F) ──────────────────────────────────────────
+
+
+def test_classify_hand_back_reads_step_modes_offer():
+    """Every step turn ends on this line, and the host reads it to pick the next
+    reply, so a run log that miscounts it misreports the whole mechanism."""
+    assert classify_hand_back("The report.\n\nContinue with running the searches?") == "step_offer"
+    assert classify_hand_back("Continue with wrapping up?") == "step_offer"
+    # Normalised first, so a line split across the TextBlock still matches.
+    assert classify_hand_back("report\n  Continue with   writing the conclusion?") == "step_offer"
+
+
+def test_an_ordinary_closing_question_is_not_an_offer():
+    """The lead is what discriminates. Without it every step that ended by asking
+    the researcher something would be counted as an offer, and the host would
+    reply to a question only they can answer."""
+    for text in (
+        "What was her maiden name?",
+        "I found three records. Which should I follow?",
+        "Shall I continue?",
+        "Continue?",
+    ):
+        assert classify_hand_back(text) == "silent", text
+
+
+def test_a_completion_claim_still_wins_over_an_offer():
+    assert classify_hand_back("Continue with the conclusion? Research complete.") == "completion_claim"
+
+
+def test_step_offer_wins_over_the_retired_literal_where_they_overlap():
+    """`_STEP_OFFER_TAIL` is bare "?", which every ". Continue?" also ends with, so
+    a text carrying both leads matches both arms. The live line wins; the
+    "Next: " literal is retired and kept only as telemetry."""
+    # A GENUINE overlap: ends with ". Continue?" (the retired tail) AND carries
+    # "Continue with " (the live lead). An earlier version of this test used a
+    # text ending "...the searches?", which matches only the live arm, so
+    # swapping the arms left it passing and it proved nothing.
+    both = "Next: research-plan. Continue with planning. Continue?"
+    assert classify_hand_back(both) == "step_offer"
+    # And the retired literal alone still reads as `step`, unchanged.
+    assert classify_hand_back("Next: research-plan. Continue?") == "step"
+
+# --- external_collection_keys (#2995) ----------------------------------------
+
+
+def _write_collections(tmp_path: Path, doc) -> None:
+    (tmp_path / "external-collections.json").write_text(
+        doc if isinstance(doc, str) else json.dumps(doc), encoding="utf-8"
+    )
+
+
+def test_external_collection_keys_are_the_sorted_ancestry_keys_per_place(tmp_path: Path):
+    from e2e.stop_checker import read_external_collection_keys
+
+    _write_collections(tmp_path, {"places": {
+        "Pennsylvania, United States": {"rows": [
+            {"key": "ancestry:7163"}, {"key": "https://www.hsp.org/"}, {"key": "ancestry:1276"},
+        ]},
+        "Venango, Pennsylvania, United States": {"rows": []},
+    }})
+    assert read_external_collection_keys(tmp_path) == {
+        "Pennsylvania, United States": ["ancestry:1276", "ancestry:7163"],
+        "Venango, Pennsylvania, United States": [],
+    }
+
+
+def test_external_collection_keys_is_empty_when_missing_or_unusable(tmp_path: Path):
+    from e2e.stop_checker import read_external_collection_keys
+
+    assert read_external_collection_keys(tmp_path) == {}
+    for bad, expected in (
+        ("{not json", {}),
+        ("[1]", {}),
+        (json.dumps({"places": []}), {}),
+        (json.dumps({"places": {"P": {"rows": "x"}}}), {"P": []}),
+        (json.dumps({"places": {"P": "x"}}), {"P": []}),
+        (json.dumps({"places": {"P": {"rows": ["x", {"key": 7}, {"key": "ancestry:1"}]}}}), {"P": ["ancestry:1"]}),
+    ):
+        _write_collections(tmp_path, bad)
+        assert read_external_collection_keys(tmp_path) == expected, bad
