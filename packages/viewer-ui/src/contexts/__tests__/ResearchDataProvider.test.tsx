@@ -565,7 +565,9 @@ describe('ResearchDataProvider — external collections', () => {
               research: null,
               gedcomx: null,
               collections: snapshot as never,
-              label: '/p',
+              // No label: hydration then changes nothing but `collections`, so
+              // a value memo missing it in its deps leaves the old value.
+              label: null,
               notice: null
             })
         }),
