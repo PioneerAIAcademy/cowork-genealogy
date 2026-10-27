@@ -108,4 +108,52 @@ describe('LocalitiesSection', () => {
     render(<LocalitiesSection />)
     expect(screen.getByTitle(/Research Tips: no page for this place/)).toBeInTheDocument()
   })
+
+  it('shows registration starts, volume counts and collection counts when the card is expanded', async () => {
+    mockResearch({
+      localities: [
+        makeLocality({
+          collections: [{ id: 'c1', title: 'PA Deaths', date_range: '1906-1968', person_count: 6542331, record_count: null }],
+          registration_start: [
+            { event: 'birth', level: 'state', year: 1906, source_url: 'https://wiki/Pennsylvania_Vital_Records' }
+          ],
+          volume_summary: {
+            start_year: 1840,
+            end_year: 1880,
+            total_volumes: 31,
+            complete: false,
+            by_record_type: [{ group: 'Probate', volumes: 12, browse_only: 9, fulltext_only: null }],
+            untyped: { volumes: 2, browse_only: 2, fulltext_only: 0 }
+          }
+        })
+      ]
+    })
+    render(<LocalitiesSection />)
+    await userEvent.click(screen.getByText(/Pennsylvania, United States/))
+    expect(screen.getByText(/6,542,331 people/)).toBeInTheDocument()
+    expect(screen.queryByText(/records$/)).not.toBeInTheDocument()
+    expect(screen.getByText('birth: 1906')).toBeInTheDocument()
+    expect(screen.getByText('state level')).toBeInTheDocument()
+    expect(screen.getByText(/Digitized volumes \(1840–1880\): 31 — partial count/)).toBeInTheDocument()
+    expect(screen.getByText('Probate: 12')).toBeInTheDocument()
+    expect(screen.getByText('9 browse-only · unknown full-text only')).toBeInTheDocument()
+    expect(screen.getByText('No record type: 2')).toBeInTheDocument()
+  })
+
+  it('marks a found:false section with outcome unreachable as an outage, not a 404', () => {
+    mockResearch({
+      localities: [
+        makeLocality({
+          pages_read: [
+            { section: 'home', url: null, found: false, outcome: 'unreachable' },
+            { section: 'getting_started', url: null, found: false }
+          ]
+        })
+      ]
+    })
+    render(<LocalitiesSection />)
+    expect(screen.getByTitle(/Overview: wiki unreachable/)).toBeInTheDocument()
+    expect(screen.queryByTitle(/Overview: no page for this place/)).not.toBeInTheDocument()
+    expect(screen.getByTitle(/Getting Started: no page for this place/)).toBeInTheDocument()
+  })
 })
