@@ -723,6 +723,16 @@ function evictionTier(rel: string): number {
   return 2
 }
 
+/**
+ * A project-relative path as a zip entry name (#3706). The zip format requires
+ * `/` separators, and the case extractor splits on `\` anyway, so every `\`
+ * becomes `/` on every OS. Paths stay native until this boundary because
+ * `isProtected` and `evictionTier` split on `path.sep`.
+ */
+export function toZipEntryName(rel: string): string {
+  return rel.replace(/\\/g, '/')
+}
+
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {
   const { folderPath, includeMedia, includeSessionLog, report, viewerVersion, buildDate, gitSha } =
     options
@@ -784,7 +794,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
 
   const redactedLiving = redactLivingPersons(selected)
 
-  for (const s of selected) zip.file(s.relativePath, s.buf)
+  for (const s of selected) zip.file(toZipEntryName(s.relativePath), s.buf)
   const fileCount = selected.length
 
   const timestamp = new Date().toISOString()
