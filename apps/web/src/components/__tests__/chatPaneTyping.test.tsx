@@ -218,7 +218,9 @@ describe('1c: Stop', () => {
     const { conn } = mount()
     startTurn(conn)
     conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'ok' } })
-    expect(screen.queryByText(/research complete|stopped|budget|no progress/i)).toBeNull()
+    // Derived from the labels themselves: the old regex could not match the
+    // reworded `completed` label, so this could no longer fail on a leak.
+    for (const label of [...Object.values(TURN_OUTCOME_LABELS), SPEND_CAP_LABEL]) expect(screen.queryByText(label)).toBeNull()
   })
 })
 
