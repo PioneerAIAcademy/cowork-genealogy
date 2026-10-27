@@ -101,6 +101,7 @@ from e2e.stop_checker import (
     derive_stop_reason,
     hand_back_key,
     project_completed,
+    read_external_collection_keys,
     read_research_json,
     read_tree_json,
     should_continue_run,
@@ -3834,6 +3835,7 @@ async def run_e2e_test(
 
         final_research = read_research_json(workspace)
         final_tree = read_tree_json(workspace)
+        external_collection_keys = read_external_collection_keys(workspace)
         stop_reason = derive_stop_reason(
             sdk_aborted_reason=aborted, research=final_research
         )
@@ -4066,6 +4068,7 @@ async def run_e2e_test(
             subagent_capture_status=subagent_capture_status,
             git_sha=run_git_sha,
             skills_hash=run_skills_hash,
+            external_collection_keys=external_collection_keys,
         )
 
         runlog_dir = runlog_root / fixture.id

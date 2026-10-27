@@ -402,7 +402,7 @@ const PROJECT_MODULES = new Set([
  *   without one.
  * - `record_read`: stages the read when inside a project; the read works
  *   without one.
- * - `external_links_search`: stages results optionally.
+ * - `external_links_search`: stores external-collections.json optionally.
  * - `same_person`: reads project context optionally for enrichment.
  * - `rank_search_matches`: reads project context optionally for scoring.
  * - `person_quality`: reads tree optionally for quality scoring.

@@ -1476,16 +1476,15 @@ broadcasts a `sidecar_updated` naming a log id that does not exist.
 The two documents and the sidecars are **written by different mechanisms**, and
 conflating them is the easy mistake. The documents go through validating writer
 tools called by the model. A **sidecar is staged host-side by the search tool
-that produced it** — `record_search`, `fulltext_search`, and
-`external_links_search` write their payload into `results/.staging/` and return a
+that produced it** — `record_search` and `fulltext_search` write their payload
+into `results/.staging/` and return a
 handle plus a **reduced** inline copy, which `research_log_append` later
 finalizes. The reduction differs by tool: `record_search` drops `gedcomx`,
 `collectionUrl`, and empty `treeMatches`, hoists `collectionTitle` into a
 response-level map, and de-duplicates `events`; `fulltext_search` drops
 `textDocument`; both leave
-name/date/place stubs for triage. `external_links_search` reduces differently —
-it caps the *number* of inline rows and leaves each row intact, because its
-payload is curated third-party URLs with nothing to triage on. **The full payload travels
+name/date/place stubs for triage. `external_links_search` stages nothing since
+2026-10: its durable copy is `external-collections.json` (above). **The full payload travels
 search tool → disk → log-append and never round-trips through the model**
 (`search-result-staging-spec.md`).
 

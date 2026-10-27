@@ -684,7 +684,7 @@ export const RESEARCH_SHAPES = {
   plan_item: new Set([
     "id", "sequence", "record_type", "jurisdiction", "date_range",
     "repository", "rationale", "fallback_for", "status",
-    "skip_category", "skip_reason",
+    "skip_category", "skip_reason", "collection_url",
   ]),
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
@@ -1114,6 +1114,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // plan item written before the field existed.
       if ("skip_category" in item) {
         checkEnum(item.skip_category, "skip_category", ip, report);
+      }
+      // Optional. Whether it names a stored collection is research_append's
+      // precondition (it reads external-collections.json); here only the type.
+      if ("collection_url" in item) {
+        const url = item.collection_url;
+        if (typeof url !== "string" || url === "") {
+          addError(report, ip, "collection_url must be a non-empty string (a url from external-collections.json), or omitted");
+        }
       }
     }
   }
@@ -2612,8 +2620,8 @@ async function validateSidecars(
       continue;
     }
 
-    // A non-persona producer (fulltext_search, external_links_search) stages a
-    // sidecar but no GedcomX personas, so a record_persona_id on such an
+    // A non-persona producer (fulltext_search, or a legacy external_links_search
+    // sidecar from before #2995) has a sidecar but no GedcomX personas, so a record_persona_id on such an
     // assertion is invalid regardless of record_id. Say why, rather than the
     // misleading "does not match any result's recordId" the recordId-only match
     // produced for these sidecars — they key on `id`, never `recordId` (#2038).
