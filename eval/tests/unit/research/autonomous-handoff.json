@@ -17,7 +17,8 @@
   },
   "judge_context": [
     "`--autonomous` is a listed trigger for the research orchestrator and still routes here",
-    "Should proceed without pausing for clarifying questions. Since S2 that is the default for every research request, not a mode the flag switches on — so a reply that stops to ask is a stall whether or not the flag is present"
+    "Should proceed without pausing for CLARIFYING questions — that is the default for every research request, not a mode the flag switches on. Ending the turn at the step boundary with \"Continue with <label>?\" is not a stall: it is the step boundary, and under `--autonomous` the host answers it rather than the researcher.",
+    "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
   "execution": {
     "max_turns": 30,

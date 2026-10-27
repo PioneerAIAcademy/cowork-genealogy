@@ -438,20 +438,18 @@ _DELIVERS_PREFIX = "delivers:"
 def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_calls, test):
     """Tag-gated (``delivers:<skill>``, one per deliverable). Issue #2813 item 1.
 
-    ``routes-to:`` asserts the FIRST hand-off and permits only one tag, so on a
-    COMPOUND bounded ask it grades nothing about the second deliverable: a turn
-    that delivers the first and silently drops the second passes it. That is the
-    exact pre-change behaviour this rule exists to remove, which is why a separate
-    assertion is needed rather than a second ``routes-to:``.
+    **Reversed by step mode (plan section H).** This used to require EVERY
+    deliverable in one turn. A compound ask now runs the FIRST deliverable and
+    OFFERS the second as the next step, so handing off both is the violation and
+    handing off one is the rule. The closing offer line is prose the judge reads;
+    what is deterministic here is how many hand-offs happened.
 
-    Order-independent among the deliverables, because the body imposes none ("two
-    hand-offs, each to the step that owns it ... ends when the last one is met").
-    What it does forbid is the FIRST hand-off being something off the list, which is
-    how the job path shows up. WHICH step that is depends on the project: with no
-    questions it is ``question-selection``; with a question and no localities entry
-    it is ``locality-guide``; with a localities entry it is ``research-plan``. A
-    scenario whose job-path head is itself a ``delivers:`` target cannot
-    discriminate, so pick one where it is not.
+    What it still forbids is the first hand-off being something off the list,
+    which is how the job path shows up. WHICH step that is depends on the
+    project: with no questions it is ``question-selection``; with a question and
+    no localities entry it is ``locality-guide``; with a localities entry it is
+    ``research-plan``. A scenario whose job-path head is itself a ``delivers:``
+    target cannot discriminate, so pick one where it is not.
     """
     from harness.skill_runner import handoffs
 
@@ -473,16 +471,17 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
     skill_under_test = test.get("skill")
     delegations = [s for s in handed if s != skill_under_test]
 
-    missing = [e for e in expected if e not in delegations]
-    assert not missing, (
-        "a compound bounded ask must hand off for EVERY deliverable it names. "
-        f"Never handed off: {missing}. Hand-offs seen: {delegations}. Delivering one and "
-        "dropping the rest is the behaviour the one-or-more rule replaced."
-    )
     assert delegations and delegations[0] in expected, (
         f"the first hand-off must be one of the deliverables {expected}, got "
         f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
         "path, which a bounded request must not enter."
+    )
+    delivered = [d for d in delegations if d in expected]
+    assert len(delivered) == 1, (
+        f"a compound bounded ask runs ONE deliverable per turn and offers the rest "
+        f"(plan section H). Handed off {delivered} in this turn; expected exactly one of "
+        f"{expected}. Before step mode this assertion was the opposite -- every "
+        f"deliverable in one turn -- and the reversal is the point."
     )
 
 # ---------------------------------------------------------------------------

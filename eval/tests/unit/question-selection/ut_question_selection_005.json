@@ -25,6 +25,7 @@
     "Should propose a FAN (Family/Associates/Neighbors) question — examples: 'Who were Thomas Flynn's neighbors in the 1850 census?', 'Who witnessed Thomas Flynn's land deed transactions?', 'Who else from the same Irish emigrant community appears in Schuylkill County records?'",
     "The new question's `selection_basis` must be `fan_pivot`",
     "The new question's `depends_on` should reference the question(s) that identified Thomas Flynn — either `['q_001']`, `['q_002']`, or both are acceptable. An empty `depends_on: []` is not acceptable since FAN research presupposes knowing which Thomas Flynn to research.",
-    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial."
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial.",
+    "**A FAN pivot is plan items, not a new question** (step mode, section E). The tool ADMITS a write here — q_001 carries a proof summary and has nothing open, which is the exemption — so this one is not refused; it is the prose that changed. Pivoting to an associate is a search on the question already open, so it routes to `research-plan`. Writing a second question is the failure this test now grades."
   ]
 }

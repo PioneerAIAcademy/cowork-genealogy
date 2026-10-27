@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_research_j1",
+    "skill": "research",
+    "name": "A question between steps is answered, runs no step, and re-offers",
+    "type": "positive",
+    "description": "Plan section J. The researcher asks something rather than answering the offer. The turn answers from what the router can read, spawns NOTHING, and ends with the same offer the last turn made — so the run has not moved and the researcher's place is kept. The failure is treating the question as a steer and spawning research-plan, or answering and then running a step anyway.",
+    "tags": [
+      "routing",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "Before we go on — which census did the 1850 entry come from?",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      }
+    ]
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "NO agent is spawned. A question is not a steer: a steer asks for work ('did you check the 1850 census?' is a plan item), a question asks for something the router already knows.",
+    "The answer comes from the project — `project_context` or a narrow `research_query` is fine, and reading is not running a step.",
+    "The turn ends with the SAME \"Continue with …?\" line the previous turn offered, so the researcher's place is kept. Ending with no line, or with a different one, both lose it.",
+    "Do not charge the reply for the genealogy content of the answer; this test is about whether a question moves the run."
+  ]
+}

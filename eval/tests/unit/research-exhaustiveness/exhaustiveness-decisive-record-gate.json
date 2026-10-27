@@ -14,14 +14,16 @@
   },
   "input": {
     "scenario": "flynn-decisive-record-unsearched",
-    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and declining without a write if they are not. The researcher reports every plan item for the parentage question complete and asks for the declaration.\n\nquestionId: q_001\nprojectPath: <workspace>"
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not. The researcher reports every plan item for the parentage question complete and asks for the declaration.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
-    "Should NOT set `q_001.search_stop.stopped_because` to any non-null value and should NOT set the question status to `exhaustive_declared`, despite the user's explicit request and despite every plan item being `completed` — completed plan items do not by themselves satisfy reasonably exhaustive research.",
+    "A decline WRITES the stop now (step mode, section B): every item on the active plan is closed and an unsearched source remains, so `stopped_because` becomes `resources_spent` with `stop_criteria: null` and `status` left `in_progress`. What must NOT appear is a stop-GATE value (`question_answered`, `record_exhausted`, `nothing_further_reachable`) or `exhaustive_declared`. Writing nothing is a miss; it used to be the requirement.",
     "Should name at least one decisive record type for a parentage question that was never searched — the subject's death record, baptism/church registers, or a parent's probate. The searches so far are census-only (1850/1860 era censuses), which cannot by themselves gate a parentage declaration under the 'named decisive records' rule.",
     "Noticing that the tree already cites Patrick Flynn's 1908 Schuylkill County death certificate (tree source S5) that was never examined in this project is the strongest form of the answer, but naming the death record as an unsearched decisive record type without spotting S5 still passes.",
     "Should recommend extending the plan (research-plan) to search the missing decisive record types — not an early termination, since the records are accessible, and not a declaration.",
-    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema."
+    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema.",
+    "`justification` must open with `Overturn risk: high — <sources>`: a decisive record nobody has searched is exactly the case where the answer could still move. The ladder reads that prefix to pick the default, so free prose without it is a miss.",
+    "On the high-risk verdict the reply names the sources that could change the answer, names \"wrap it up\" as the alternative, and its LAST line is exactly \"Continue with planning the searches?\". The host parses only that line against the step labels."
   ],
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"

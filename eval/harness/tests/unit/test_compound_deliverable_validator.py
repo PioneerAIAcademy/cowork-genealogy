@@ -2,8 +2,13 @@
 
 A blind review proved the compound-ask eval test could not fail for the
 regression it names: `test_routes_to_expected_skill` grades only `delegations[0]`,
-so "deliver the transcription, drop the plan" (the pre-change behaviour) passed.
-These pin the new validator against that exact shape.
+so "deliver the transcription, drop the plan" passed.
+
+**Step mode reversed the rule the validator then enforced** (plan section H): a
+compound ask runs ONE deliverable per turn and offers the rest, so handing off
+every deliverable in one turn is now the violation and handing off one is
+correct. These pin the reversed rule, including the shape that used to be the
+regression and is now the expected behaviour.
 """
 
 from __future__ import annotations
@@ -30,19 +35,23 @@ def _skill_calls(*names):
     return list(names)
 
 
-def test_both_deliverables_handed_off_passes():
-    validator(_skill_calls("image-reader", "research-plan"), [], TAGS)
+def test_one_deliverable_per_turn_passes():
+    """What used to be THE regression is now the rule: the turn runs the first
+    deliverable and offers the second."""
+    validator(_skill_calls("image-reader"), [], TAGS)
 
 
-def test_the_other_order_also_passes():
+def test_either_deliverable_may_be_the_one():
     """The body imposes no ordering, so grading one would fail a correct run."""
-    validator(_skill_calls("research-plan", "image-reader"), [], TAGS)
+    validator(_skill_calls("research-plan"), [], TAGS)
 
 
-def test_dropping_the_second_deliverable_fails():
-    """THE regression. routes-to: passed this shape, which is why it exists."""
-    with pytest.raises(AssertionError, match="Never handed off"):
-        validator(_skill_calls("image-reader"), [], TAGS)
+def test_both_deliverables_in_one_turn_fails():
+    """The reversal. A turn that produces both ran two steps, which is the
+    behaviour step mode removed -- and the researcher never got the chance to
+    say they only wanted one."""
+    with pytest.raises(AssertionError, match="ONE deliverable per turn"):
+        validator(_skill_calls("image-reader", "research-plan"), [], TAGS)
 
 
 def test_the_job_path_fails():
@@ -65,7 +74,7 @@ def test_the_skill_under_test_is_stripped_from_the_front():
     handed[0] is the router itself and the first-hand-off assertion would fail on
     every real run. A claim audit caught this before a paid run did."""
     tagged = dict(TAGS, skill="research")
-    validator(_skill_calls("research", "image-reader", "research-plan"), [], tagged)
+    validator(_skill_calls("research", "image-reader"), [], tagged)
 
 
 def test_the_job_path_still_fails_after_the_strip():
@@ -80,4 +89,4 @@ def test_the_filter_handles_the_router_appearing_later_too():
     filter remains, so pin a shape where the router is NOT first. A slice would
     have kept everything before `research` and failed here."""
     tagged = dict(TAGS, skill="research")
-    validator(_skill_calls("image-reader", "research", "research-plan"), [], tagged)
+    validator(_skill_calls("image-reader", "research"), [], tagged)

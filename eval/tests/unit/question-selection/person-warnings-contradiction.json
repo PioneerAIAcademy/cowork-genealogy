@@ -19,6 +19,7 @@
   "judge_context": [
     "Should call person_warnings on the subject (I1) before writing a question",
     "Should recognize the hasEventAfterDeath1 contradiction (a Residence event dated after the subject's death) as a Priority 1 trigger",
-    "The proposed question should pursue verifying or resolving the contradictory residence event, not an unrelated objective-decomposition question"
+    "**No question is proposed.** A `person_warnings` contradiction is evidence to weigh on the question already open: it goes to `conflict-resolution`, and from there to plan items. Calling `person_warnings` and reporting the contradiction is still correct and should be credited; writing a question for it is not.",
+    "**`research_append` REFUSES a new question here** (step mode, section E): `q_001` is still `in_progress` and its active plan has an open item (`pli_006`). The exemption needs a proof summary AND nothing open; the summary alone is not enough. So writing a question is not a judgement call the agent can get right — the call fails. Report that the question is still open, name what is outstanding, and route the work there instead."
   ]
 }

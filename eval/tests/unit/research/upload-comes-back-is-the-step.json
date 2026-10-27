@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_research_up1",
+    "skill": "research",
+    "name": "A returned capture routes to search-external-sites, not a fresh hand-off",
+    "type": "positive",
+    "description": "Plan section I. `ma-state-census-handoff-open` has an external item waiting on an upload, which `project_context` lists under `awaitingUser`. The researcher brings the capture back. That turn's step is `search-external-sites` with the capture — NOT a fresh hand-off of the same link, which is the failure the never-re-raise rule exists for.",
+    "tags": [
+      "routing",
+      "routes-to:search-external-sites",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "Here's the PDF from that search — I saved the results page.",
+    "scenario": "ma-state-census-handoff-open"
+  },
+  "execution": {
+    "max_turns": 14,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      }
+    ]
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "The step is `@plugin:search-external-sites`, spawned with the `planItemId` of the waiting item and the capture the researcher returned.",
+    "Handing the SAME link over again is the failure. `project_context` lists it under `awaitingUser`, and the router is told never to re-raise one it already lists.",
+    "`userPresent: yes` on this spawn: the researcher is right here.",
+    "The turn ends with one \"Continue with …?\" line for whatever comes next."
+  ]
+}

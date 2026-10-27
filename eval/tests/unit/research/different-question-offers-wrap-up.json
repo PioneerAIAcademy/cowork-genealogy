@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_dq1",
+    "skill": "research",
+    "name": "A different question mid-run offers to wrap the current one up",
+    "type": "positive",
+    "description": "Plan section E: one question at a time. `mid-research-flynn` has q_001 `in_progress` with an open item, so `research_append` refuses a new question outright. The router must not spawn question-selection into that refusal; it names the current question, says the new one can start once it is wrapped up, and offers the wrap-up. The failure is spawning question-selection and reporting its refusal as a result.",
+    "tags": [
+      "routing",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "Actually, I want to find out where Patrick Flynn is buried instead.",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_turns": 16,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      }
+    ]
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "No agent is spawned. q_001 is `in_progress` with an open plan item, so `research_append` refuses a `questions` append — spawning question-selection only produces that refusal, and reporting it as a result is the failure.",
+    "The reply names the CURRENT question, says the new one can start once it is wrapped up, and its LAST line is exactly \"Continue with wrapping up?\". The host parses only the last line against the step labels, and `wrap-up` is the only reply that line admits.",
+    "Offering \"Continue with setting up the project?\" or any other label is wrong: the researcher has not agreed to abandon the current question yet.",
+    "Do not charge the reply for declining to research the burial now. Declining is the point."
+  ]
+}
