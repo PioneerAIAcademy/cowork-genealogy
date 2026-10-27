@@ -2,7 +2,7 @@ name: Check e2e fixtures + grading + annotation validation
 
 # The e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py) —
 # four blocking run-log gates (grading, 1M window, tool search off, credentials),
-# blocking annotation validation, and two warns. The run-log gates:
+# blocking annotation validation, and three warns. The run-log gates:
 #
 # Grading gate (BLOCKING): every run log added or renamed into the corpus in
 # this PR that produced a final tree must ship its run-<ts>.ann.json in the
