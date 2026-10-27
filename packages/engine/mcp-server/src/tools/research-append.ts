@@ -4559,9 +4559,10 @@ function narrativeAndSearchSummaryTogether(
       `\`${missing}\`, and question ${qid} has been searched since this summary was last ` +
       `written (${later.join(", ")}). Both fields say what was searched and what could still ` +
       "resolve the question, so read those log entries, rewrite both, and pass both in this one " +
-      `update. If \`${missing}\` is still accurate after you check it against them, pass its ` +
-      "current text unchanged. Leaving one stale is how a narrative ends up recommending records " +
-      "its own summary says were searched.",
+      `update. A small change to either can go in \`edits\` rather than re-sending the field. If ` +
+      `\`${missing}\` is still accurate after you check it against them, pass its current text ` +
+      "unchanged. Leaving one stale is how a narrative ends up recommending records its own " +
+      "summary says were searched.",
   ];
 }
 
@@ -5676,7 +5677,15 @@ export interface ResearchAppendOp {
   entry?: Record<string, unknown>; // op = append (no id — the tool assigns it)
   entryId?: string; // op = update
   fields?: Record<string, unknown>; // op = update (shallow-merged; id immutable)
+  edits?: NarrativeEdit[]; // op = update of proof_summaries: exact-match edits, expanded into `fields`
   planId?: string; // required for section = "plan_items"
+}
+
+/** One exact-match edit to a proof summary's narrative or search summary. */
+export interface NarrativeEdit {
+  field: string;
+  old: string;
+  new: string;
 }
 
 /** The tree `S` entry payload for the composite persist. camelCase param at the
@@ -5695,8 +5704,9 @@ export interface ResearchAppendInput {
   entry?: Record<string, unknown>;
   entryId?: string;
   fields?: Record<string, unknown>;
+  edits?: NarrativeEdit[];
   planId?: string;
-  // Batch form — supply ops; when present the single-op fields above are ignored.
+  // Batch form — supply ops; when present the single-op fields above (edits included) are ignored.
   // Every op applies to one in-memory document; the tool validates once and
   // writes once (all-or-nothing). Ids assigned earlier in the batch are visible
   // to later ops (the allocators scan the live document).
@@ -6965,6 +6975,8 @@ function applyOne(
   let arrayIndex: number | undefined;
   // The entry's own timestamp as it stood before this op restamped it.
   let priorStamp: unknown;
+  // A proof summary's narrative before this op's fields merge.
+  let priorNarrative: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
   let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
@@ -7071,6 +7083,7 @@ function applyOne(
     }
 
     priorStamp = config.stampTimestamp ? existing[config.stampTimestamp.field] : undefined;
+    priorNarrative = existing.narrative_markdown;
 
     // A completed plan item stays completed. search-records writes
     // `in_progress` after every search it logs, and extraction_append completes
@@ -7675,12 +7688,17 @@ function applyOne(
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
-    // a summary already over budget is not told again.
-    if (
+    // a summary already over budget is not told again, and neither is a narrative
+    // changed through `edits` unless the edit is what took it over.
+    const setsBudgetInput =
       op.op === "append" ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
-      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle")
-    ) {
+      Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle");
+    const overBudgetBeforeEdit =
+      NARRATIVE_EDITED_OPS.has(op) &&
+      !Object.prototype.hasOwnProperty.call(op.fields ?? {}, "vehicle") &&
+      narrativeLengthWarnings({ ...resultEntry, narrative_markdown: priorNarrative }).length > 0;
+    if (setsBudgetInput && !overBudgetBeforeEdit) {
       opWarnings.push(...narrativeLengthWarnings(resultEntry));
     }
   }
@@ -8891,6 +8909,130 @@ function decodeArg(value: unknown): unknown {
   return coerceJsonArg(value);
 }
 
+/** The fields an `edits` op may change: the two long prose fields of a proof
+ *  summary. Every other field is short enough to re-send in `fields`. */
+const EDITABLE_NARRATIVE_FIELDS = new Set(["narrative_markdown", "exhaustive_search_summary"]);
+
+/** Ops whose `narrative_markdown` an `edits` expansion wrote, so the length budget
+ *  can tell a sentence edit from a narrative write. */
+const NARRATIVE_EDITED_OPS = new WeakSet<object>();
+
+/** Every start index of `needle` in `text`, overlapping ("--" is twice in "---"). */
+function occurrences(text: string, needle: string): number[] {
+  const at: number[] = [];
+  for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) at.push(i);
+  return at;
+}
+
+/**
+ * Expand each op's `edits` into `fields`, in place, and return every refusal.
+ *
+ * A one-sentence change to a proof summary used to re-send the whole 6-17k
+ * narrative (issue #3542, lead 2c). Each edit names a field, an `old` that must
+ * occur exactly once in the field's current text, and its replacement. The text an
+ * edit applies to is the field as an earlier op in this batch left it, else the
+ * stored entry. Once expanded, every later guard (the narrative-and-search-summary
+ * rule, the `updated` stamp, validation) sees an ordinary `fields` update.
+ */
+function expandNarrativeEdits(
+  ops: ResearchAppendOp[],
+  research: any,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const errors: string[] = [];
+  const pending = new Map<string, unknown>();
+  const key = (id: string, field: string) => `${id}\u0000${field}`;
+  const stored = (id: string) =>
+    (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).find((ps: any) => ps?.id === id);
+  ops.forEach((op, i) => {
+    if (!op || typeof op !== "object") return;
+    // A null or empty `edits` is absent, as a null `entry` or `planId` is.
+    if (op.edits == null || (Array.isArray(op.edits) && op.edits.length === 0)) delete op.edits;
+    const fields = op.fields && typeof op.fields === "object" && !Array.isArray(op.fields) ? op.fields : undefined;
+    if (!Object.prototype.hasOwnProperty.call(op, "edits")) {
+      if (op.section === "proof_summaries" && op.op === "update" && typeof op.entryId === "string" && fields) {
+        for (const f of EDITABLE_NARRATIVE_FIELDS) {
+          if (Object.prototype.hasOwnProperty.call(fields, f)) pending.set(key(op.entryId, f), fields[f]);
+        }
+      }
+      return;
+    }
+    const refuse = (msg: string) => errors.push(fmt(i, msg));
+    if (op.section !== "proof_summaries" || op.op !== "update") {
+      refuse("`edits` applies only to an update of `proof_summaries`; elsewhere, pass the new value in `fields`.");
+      return;
+    }
+    if (op.fields !== undefined && !fields) {
+      refuse("`fields` beside `edits` must be an object of the other fields to change.");
+      return;
+    }
+    const edits = op.edits;
+    if (!Array.isArray(edits)) {
+      refuse("`edits` must be an array of { field, old, new }.");
+      return;
+    }
+    const entry = typeof op.entryId === "string" ? stored(op.entryId) : undefined;
+    if (!entry) {
+      refuse(`\`edits\` needs \`entryId\` naming an existing proof summary; '${op.entryId ?? "(none)"}' is not one.`);
+      return;
+    }
+    const before = errors.length;
+    const next = new Map<string, string>();
+    edits.forEach((e: any, j: number) => {
+      const at = `edits[${j}]`;
+      if (!e || typeof e !== "object" || !EDITABLE_NARRATIVE_FIELDS.has(e.field)) {
+        refuse(`${at}: \`field\` must be "narrative_markdown" or "exhaustive_search_summary".`);
+        return;
+      }
+      if (typeof e.old !== "string" || e.old === "" || typeof e.new !== "string") {
+        refuse(`${at}: \`old\` must be a non-empty string and \`new\` a string.`);
+        return;
+      }
+      if (e.new === e.old) {
+        refuse(`${at}: \`new\` is the same as \`old\`; an edit must change the text.`);
+        return;
+      }
+      if (fields && Object.prototype.hasOwnProperty.call(fields, e.field)) {
+        refuse(`${at}: \`${e.field}\` is also set in \`fields\`; pass it one way, not both.`);
+        return;
+      }
+      const k = key(op.entryId as string, e.field);
+      const text = next.has(k) ? next.get(k) : pending.has(k) ? pending.get(k) : entry[e.field];
+      if (typeof text !== "string") {
+        refuse(`${at}: ${op.entryId} has no \`${e.field}\` text to edit.`);
+        return;
+      }
+      const found = occurrences(text, e.old);
+      if (found.length !== 1) {
+        refuse(
+          `${at}: \`old\` occurs ${found.length} times in ${op.entryId}'s \`${e.field}\`; it must occur ` +
+            "exactly once. " +
+            (found.length === 0
+              ? "Copy it character for character from the field's current text."
+              : "Include more of the surrounding text so it matches one place."),
+        );
+        return;
+      }
+      next.set(k, text.slice(0, found[0]) + e.new + text.slice(found[0] + e.old.length));
+    });
+    if (errors.length > before) return;
+    const merged: Record<string, unknown> = { ...(fields ?? {}) };
+    for (const f of EDITABLE_NARRATIVE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(merged, f)) pending.set(key(op.entryId as string, f), merged[f]);
+    }
+    for (const [k, text] of next) {
+      merged[k.split("\u0000")[1]] = text;
+      pending.set(k, text);
+    }
+    op.fields = merged;
+    // A caller that re-sends the same op object must not meet its own expansion
+    // as a `fields` collision.
+    delete op.edits;
+    if (next.has(key(op.entryId as string, "narrative_markdown"))) NARRATIVE_EDITED_OPS.add(op);
+  });
+  return errors;
+}
+
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
@@ -8949,6 +9091,7 @@ export async function researchAppend(
   input.ops = decodeArg(input.ops) as ResearchAppendOp[] | undefined;
   input.entry = decodeArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = decodeArg(input.fields) as Record<string, unknown> | undefined;
+  input.edits = decodeArg(input.edits) as NarrativeEdit[] | undefined;
   input.sourceDescription = decodeArg(input.sourceDescription) as SourceDescriptionInput | undefined;
   input.verdict = decodeArg(input.verdict) as Record<string, unknown> | undefined;
 
@@ -9021,6 +9164,7 @@ export async function researchAppend(
           entry: input.entry,
           entryId: input.entryId,
           fields: input.fields,
+          ...(input.edits != null ? { edits: input.edits } : {}),
           planId: input.planId,
         },
       ];
@@ -9066,6 +9210,18 @@ export async function researchAppend(
     if (!options.attachmentLink) {
       const sources = personEvidenceAppendSources(ops, research);
       if (sources.size > 1) return fail([oneSourcePerCallError(sources)]);
+    }
+
+    // Before prepareOps: a call refused here must not reach its network lookups,
+    // and every guard after this sees an ordinary `fields` update.
+    const editErrors = expandNarrativeEdits(ops, research, fmt);
+    if (editErrors.length > 0) {
+      // A refused op keeps its `edits`; one that expanded cleanly does not.
+      const refused = ops.flatMap((op, i) => (op && Object.prototype.hasOwnProperty.call(op, "edits") ? [i] : []));
+      return fail(
+        [...(ops.length > 1 ? [editsCheckedOnlyLine(refused[0])] : []), ...boundErrors(editErrors)],
+        refused.map((i) => ({ ...failedOpHint(ops[i], []), fields: ["edits"] })),
+      );
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
@@ -9120,7 +9276,7 @@ export async function researchAppend(
     if (firstFailure !== undefined) {
       const { index, errors } = firstFailure;
       /** What this call said before it looked past the first failure. */
-      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index])]);
+      const firstOnly = () => fail(errors.map((m) => fmt(index, m)), [failedOpHint(ops[index], errors)]);
       if (ops.length === 1 || options.firstFailureOnly === true) return firstOnly();
       try {
         const every = await everyOpFailure({
@@ -9380,15 +9536,22 @@ interface OpFailure {
 
 type ExampleHint = { section: string; op: "append" | "update"; fields?: readonly string[] };
 
-/** The worked-example hint for an op that failed. */
-function failedOpHint(op: ResearchAppendOp): ExampleHint {
+/** The worked-example hint for an op that failed with `errors`. */
+function failedOpHint(op: ResearchAppendOp, errors: readonly string[]): ExampleHint {
+  let fields = Object.keys(op.fields ?? op.entry ?? {});
+  // A proof summary's narrative fields select the `edits` example, so they are
+  // dropped unless a refusal names one: a tier refusal on an op that also edits
+  // the narrative is not taught a narrative edit.
+  if (op.section === "proof_summaries" && !errors.some((m) => [...EDITABLE_NARRATIVE_FIELDS].some((f) => m.includes(f)))) {
+    fields = fields.filter((f) => !EDITABLE_NARRATIVE_FIELDS.has(f));
+  }
   return {
     section: String(op.section),
     op: op.op === "update" ? "update" : "append",
     // The field names the failing op actually set. The worked example
     // is keyed on these so a caller refused on one field is not handed
     // a payload for another — see exampleFor.
-    fields: Object.keys(op.fields ?? op.entry ?? {}),
+    fields,
   };
 }
 
@@ -9404,6 +9567,15 @@ interface ApplyContext {
 
 /** `applyOne` with this call's context bound, so both passes apply an op the same way. */
 type ApplyOp = (doc: any, op: ResearchAppendOp, opIndex: number, ctx: ApplyContext) => AppliedOp;
+
+/** The lead line of a batch refused on its `edits`, which are checked before anything else
+ *  in the batch: unlike `checkedWithoutLine`, nothing else was checked. */
+function editsCheckedOnlyLine(firstIndex: number): string {
+  return (
+    `Fix the earliest failure first (ops[${firstIndex}]) and send the batch again. Only the batch's ` +
+    "`edits` were checked, not its other ops, so the corrected batch may still be refused for something else."
+  );
+}
 
 /** The line a refusal leads with when it looked past its first failure. It leads, and
  *  says what to do, because the errors after the first were found WITHOUT the failed
@@ -9659,7 +9831,7 @@ async function everyOpFailure(c: {
   }
 
   const lines = failures.flatMap((f) => f.errors.map((m) => fmt(f.index, m)));
-  const hints = failures.map((f) => failedOpHint(ops[f.index]));
+  const hints = failures.map((f) => failedOpHint(ops[f.index], f.errors));
   let documentLines: string[] = [];
   if (applied.some((a) => !a.noop)) {
     const validation = await validateIntroduced(
@@ -9720,6 +9892,25 @@ export const RESEARCH_APPEND_SECTIONS = [
   "researcher_profile",
 ] as const;
 
+/** `edits` on the top-level call and on each batch op. */
+const EDITS_SCHEMA = {
+  type: "array",
+  description:
+    "update of proof_summaries: change part of `narrative_markdown` or " +
+    "`exhaustive_search_summary` without re-sending it. Each `old` is copied " +
+    "exactly from the field's current text and must occur in it once; it is " +
+    "replaced by `new`. Do not also set that field in `fields`.",
+  items: {
+    type: "object",
+    properties: {
+      field: { type: "string", enum: [...EDITABLE_NARRATIVE_FIELDS] },
+      old: { type: "string" },
+      new: { type: "string" },
+    },
+    required: ["field", "old", "new"],
+  },
+};
+
 export const researchAppendSchema = {
   name: "research_append",
   description:
@@ -9739,8 +9930,12 @@ export const researchAppendSchema = {
     "assertion, to record a re-reading or a doubt. Any other assertions write is " +
     "refused, and a disputed reading belongs in a conflict.\n" +
     "\n" +
+    "To change a sentence or two of a proof summary's `narrative_markdown` or " +
+    "`exhaustive_search_summary`, pass `edits: [{ field, old, new }]` on its update " +
+    "instead of re-sending the whole field.\n" +
+    "\n" +
     "To apply several mutations in one call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`). Batches are " +
+    "`{ section, op, entry?/entryId?/fields?/edits?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
@@ -9776,6 +9971,7 @@ export const researchAppendSchema = {
         type: "object",
         description: "update: the fields to shallow-merge onto the existing entry (the id is immutable).",
       },
+      edits: EDITS_SCHEMA,
       planId: {
         type: "string",
         description: "Required for section 'plan_items' — the pl_ id of the parent plan to write into.",
@@ -9785,7 +9981,7 @@ export const researchAppendSchema = {
         description:
           "Batch form: apply many mutations in one validate-once/write-once call " +
           "(all-or-nothing). When present, the top-level section/op/entry/entryId/" +
-          "fields/planId are ignored. Use this to persist a whole record at once.",
+          "fields/edits/planId are ignored. Use this to persist a whole record at once.",
         items: {
           type: "object",
           properties: {
@@ -9803,6 +9999,7 @@ export const researchAppendSchema = {
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },
             fields: { type: "object", description: "update: fields to shallow-merge (the id is immutable)." },
+            edits: EDITS_SCHEMA,
             planId: { type: "string", description: "Required when section is 'plan_items' — the parent pl_ id." },
           },
           required: ["section", "op"],
