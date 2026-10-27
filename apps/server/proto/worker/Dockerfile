@@ -46,6 +46,7 @@ COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
 COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
 # U3: the grant custody the web tier shares -- the lock keys, the grant SQL, the decryption.
 COPY apps/server/proto/grants.py   /opt/genealogy/server/proto/grants.py
+COPY apps/server/proto/turn_message.py /opt/genealogy/server/proto/turn_message.py
 # U9: the one schema applier. compose's one-shot `migrate` service runs it from this image
 # (`python3 proto/migrate.py` in WORKDIR); the worker imports it read-only for the ledger.
 COPY apps/server/proto/migrate.py  /opt/genealogy/server/proto/migrate.py

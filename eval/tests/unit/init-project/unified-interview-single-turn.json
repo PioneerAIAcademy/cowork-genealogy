@@ -11,7 +11,8 @@
       "single-turn-decomposition",
       "issue-1510",
       "fixed-profile",
-      "direct-arm"
+      "direct-arm",
+      "objective-names-subject"
     ]
   },
   "input": {
@@ -19,17 +20,16 @@
     "scenario": null
   },
   "mcp_fixtures": [
-    "person-read-flynn"],
+    "person-read-flynn"
+  ],
   "judge_context": [
-    "The stored objective should reflect 'identify his parents' -- a specific, user-stated objective, not the generic default.",
+    "The stored objective should reflect 'identify his parents' -- a specific, user-stated objective, not the generic default. The user gave only the ID, so `project_create` stores the subject's name in its place ('Identify the parents of Patrick Flynn'); that the objective and title name him and carry no bare ID is checked by deterministic validators (test_objective_names_the_subject, test_objective_and_title_name_the_subject_not_their_id) -- do not re-derive the wording.",
     "`researcher_profile.experience_level` should be `novice` and `narration_guidance` the fixed house-style string. Both are validator-checked verbatim; do not re-derive them.",
     "The user's 'About me: I'm experienced.' must NOT be persisted as `experienced`: the profile is fixed and never asked (lead ruling 2026-09-18); a later user setting owns the level.",
     "Should not ask the user anything about themselves -- no experience question, no access question -- and should not mention a default for the objective, since the user stated it.",
     "Should create both research.json and tree.gedcomx.json in this single pass, seeding the Patrick Flynn stub from person-read-flynn.",
     "`researcher_profile.subscriptions` should be **absent** — site access is never asked, and the field is left unwritten rather than defaulted."
   ],
-  "execution": {
-    
-  },
+  "execution": {},
   "judge_reads_files": true
 }

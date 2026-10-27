@@ -128,16 +128,11 @@ def test_a_negative_test_is_skipped():
         check([], NO_PROFILE, {"type": "negative"}, NO_ASK)
 
 
-def test_a_profile_that_arrived_without_research_append_fails():
-    """`project_create` never writes a profile, so one in the output that no
-    `research_append` call explains came in by a route the lockdown denies.
-
-    Reachable in the harness specifically because it grants `Write` to every
-    skill — which is why the state-shaped checks cannot see it.
-    """
-    calls = [call("project_create", projectPath="/p", objective="x")]
-    e = must_fail(check, calls, WITH_PROFILE, POSITIVE, NO_ASK)
-    assert "researcher_profile" in str(e)
+def test_a_profile_written_by_project_create_alone_passes():
+    """`project_create` writes the house profile itself (issue #3384), so a
+    profile with no `research_append` call is the normal case, not a raw write."""
+    calls = [call("project_create", projectPath="/p", objective="x", personId="LZNY-BRF")]
+    check(calls, WITH_PROFILE, POSITIVE, NO_ASK)
 
 
 def test_a_profile_written_through_research_append_passes():

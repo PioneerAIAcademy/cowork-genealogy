@@ -25,6 +25,7 @@ import type {
   CatalogSearchInput,
   CatalogSearchResult,
 } from "../types/catalog-search.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const SEARCH_URL =
   "https://www.familysearch.org/service/search/catalog/v3/search";
@@ -808,8 +809,10 @@ export async function catalogSearchTool(
       // fsFetch has already re-read tokens.json once; a 401 still here means
       // the session is genuinely not accepted, which is the user's to fix.
       throw new Error(
-        "FamilySearch session not accepted; call the login tool to " +
-          "re-authenticate." + (detail ? ` Upstream said: ${detail}` : ""),
+        (await rejectedTokenMessage(
+          principal,
+          "FamilySearch session not accepted; call the login tool to re-authenticate.",
+        )) + (detail ? ` Upstream said: ${detail}` : ""),
       );
     }
     if (res.status === 403) {

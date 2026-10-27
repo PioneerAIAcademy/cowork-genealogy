@@ -58,9 +58,9 @@ empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 a shorthand for "empty". The other six are optional and may be absent
 entirely:
 
-- `researcher_profile` — written by `init-project` as a fixed profile at
-  project creation, in the same non-blocking opening turn that asks the
-  project's research objective (Section 5.1.1).
+- `researcher_profile` — seeded by `project_create` on every create, as the
+  fixed house profile (`HOUSE_RESEARCHER_PROFILE`); `init-project` adds
+  `subscriptions` only when the researcher volunteers site access (Section 5.1.1).
 - `known_holdings` — written by `init-project` from the holdings survey: what
   the researcher already has (documents, prior research, living-relative
   knowledge) before any new research begins (Section 5.1.2).
@@ -125,10 +125,10 @@ flagged. (One row below is the exception, and says so.)
 | `locality_page_outcome` | `unreachable` | localities' optional `pages_read[].outcome` (Section 5.13) — set beside `found: false` when the wiki server failed (5xx or no connection) after a retry, so the page may exist; absent when `found: false` means a real 404. Checked at every `pages_read[]` item that carries it |
 | `registration_event` | `birth`, `marriage`, `death` | localities' optional `registration_start[].event` (Section 5.13) — which vital event the entry dates |
 | `registration_level` | `town`, `parish`, `county`, `state`, `national` | localities' optional `registration_start[].level` (Section 5.13) — the jurisdiction level at which registration of that event began. A place can carry an early town series and a later statewide one, so one event can have two entries |
-| `stopped_because` | `question_answered`, `record_exhausted`, `nothing_further_reachable`, `resources_spent`, `blocked_by_conflict` | questions' `search_stop.stopped_because` (Section 5.2). The first three are stop-gate values that permit `status: "exhaustive_declared"` and a proof tier; the last two (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Replaces `exhaustive_declaration.declared` (2026-10-07) |
+| `stopped_because` | `question_answered`, `record_exhausted`, `nothing_further_reachable`, `resources_spent`, `blocked_by_conflict` | questions' `search_stop.stopped_because` (Section 5.2). The first three are stop-gate values that permit `status: "exhaustive_declared"` and the two CONCLUSIVE tiers, `proved` and `disproved`; `probable`, `possible` and `not_proved` are writable on a non-gate stop too, which is what lets the "not exhaustive" choice offer concluding at all; the last two (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Replaces `exhaustive_declaration.declared` (2026-10-07) |
 | `stopped_because_gate` | `question_answered`, `record_exhausted`, `nothing_further_reachable` | Strict subset of `stopped_because`; the gate condition in `search_stop.allOf` that permits `status: "exhaustive_declared"`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum (ADR-0008 policy: no inline enums in `research.schema.json`) |
 | `stopped_because_non_gate` | `resources_spent`, `blocked_by_conflict` | The two non-gate values of `stopped_because` that keep status `in_progress`. Complement of `stopped_because_gate` within `stopped_because`; the non-gate `if` condition in `search_stop.allOf` that sets `stop_criteria: null`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum |
-| `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
+| `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched`, `deferred` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
 
 **Where these live in the machine-readable schemas.** All of them are defined in
 `enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
@@ -601,7 +601,7 @@ Array of question objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `stopped_because` | `stopped_because` or null | yes | Why searching stopped; null on a newly created question. The three stop-gate values permit `status: "exhaustive_declared"` and a proof tier; the two non-gate values keep `in_progress` |
+| `stopped_because` | `stopped_because` or null | yes | Why searching stopped; null on a newly created question. The three stop-gate values permit `status: "exhaustive_declared"` and the two CONCLUSIVE tiers, `proved` and `disproved`; `probable`, `possible` and `not_proved` are writable on a non-gate stop too, which is what lets the "not exhaustive" choice offer concluding at all; the two non-gate values keep `in_progress` |
 | `justification` | string or null | no | Prose explaining why the search stopped |
 | `log_entry_ids` | string[] | yes | Log entry IDs supporting the stop claim (required non-empty when `stopped_because` is a gate value) |
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
@@ -634,6 +634,8 @@ Array of question objects.
 - A `research_append` precondition refusing a `search_stop` that omits an uncaptured hand-off: engine work for 1 agent-closed hand-off in 209 committed e2e runs. This is the escalation if an e2e run shows the agent missing entries.
 
 `paywalled` is for a paywalled hit that was never handed to the user. `wiki_named_untouched` entries come from the `guide_markdown` of a locality the project already holds. `wiki_title` is the page title from `pages_read[].url` (the segment after `/wiki/`), never the `pages_read[].section` enum, which the validator would also accept.
+
+`deferred` is the one kind that names a source the agent **chose** not to reach rather than one it could not, which is why this field reads "not reached" and not "unreachable". Step mode's "not exhaustive" choice (decision 21) writes one entry per source this question never planned, so the declaration states what it is leaving instead of omitting it, and the researcher being offered the choice can see what searching on would cover. The film, image or URL goes in `description`, which a `deferred` entry must carry non-blank (validator and schema both): "Search more" plans from these entries, and one with no description names nothing to plan.
 
 ### 5.3 `plans`
 
@@ -887,6 +889,7 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 | `competing_assertion_ids` | string[] | yes | `a_` references. At least 2 for `fact` conflicts (two assertions disagree). At least 1 for `identity` conflicts (a single assertion whose person linkage is uncertain). |
 | `independence_analysis` | string or null | no | Analysis of whether the competing sources are independent |
 | `weighing_analysis` | string or null | no | Application of the preponderance hierarchy |
+| `weighed_log_entry_ids` | string[] | no | `log_` references: the question's log entries conflict-resolution has weighed, written on every analysis. Mirrors `search_stop.log_entry_ids`. Absent on conflicts analysed before the field existed |
 | `preferred_assertion_id` | string or null | no | `a_` reference to the favored assertion. Required, and one of `competing_assertion_ids`, when `resolution_kind` is `competitor` |
 | `resolution_rationale` | string or null | no | Why the conflict was settled as it was. When `resolution_kind` is `synthesis` it cites at least two distinct `src_`/`a_` ids — the records the value is built from |
 | `resolution_kind` | `resolution_kind` or null | no | How a `resolved` conflict was settled: `competitor` (one competing assertion wins, named in `preferred_assertion_id`), `tree` (the tree's existing conclusion stands against the competing records), or `synthesis` (no single assertion wins; the value is built from several). Required on a resolve by `research_append` (research-append-tool-spec.md §5); absent on conflicts resolved before it existed |
@@ -895,6 +898,8 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 | `blocks_question_ids` | string[] | yes | Question IDs blocked by this unresolved conflict (may be empty) |
 
 `independence_analysis` and `weighing_analysis` are kept as separate fields because source independence is a distinct analytical step from evidence weighing per the GPS.
+
+`weighed_log_entry_ids` exists because nothing in the documents tells *new evidence to weigh* from *evidence already weighed*: conflict-resolution fills both analysis fields on every pass, and conflicts carry no timestamp. Without it a question whose conflict cannot be settled loops — the same evidence is re-weighed and the run never reaches a conclusion. The set it records is the same coverage set `search_stop.log_entry_ids` uses: the entries on the question's plans' items, plus the closing entries that answer a hand-off.
 
 `resolution_kind` exists because a resolved conflict's winner is not always one of the competing assertions. A genealogist's reading of the eleven committed conflicts resolved without a winner found two where the tree's pre-existing value stood, five where the winning value was built from several records, three where a competitor did win but was not named, and one that was not resolved at all. Before the field, the schema could record only the first shape, so a resolve naming no winner said nothing about which of the others it was. Both new fields are optional in the schema and nullable, so a conflict resolved before they existed stays valid; the writer tool requires the kind on each new resolve.
 

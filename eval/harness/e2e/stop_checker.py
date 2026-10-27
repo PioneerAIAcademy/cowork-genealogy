@@ -160,9 +160,19 @@ _HAND_BACK_STEP_TAIL = ". Continue?"
 _HAND_BACK_STEP_LEAD = "Next: "
 _HAND_BACK_COMPLETE = "Research complete."
 
+# Step mode's offer (decision 25). Unlike the literal above this one is LIVE: every
+# step turn ends on it, and the host reads it to decide the next reply. Matched on
+# FORM only, which is all this function is about -- `step_boundary.offered_step`
+# resolves WHICH step the label names, and that needs the label table, which this
+# module deliberately does not import (stdlib-only, pure, shared with
+# `nudge_report.py`). Same strictness as the retired pair above: a lead and a tail,
+# so an ordinary closing question ending in "?" is not mistaken for an offer.
+_STEP_OFFER_TAIL = "?"
+_STEP_OFFER_LEAD = "Continue with "
+
 
 def classify_hand_back(text: str | None) -> str:
-    """Classify an agent's closing words: "step" | "silent" | "completion_claim".
+    """Classify an agent's closing words: "step_offer" | "step" | "silent" | "completion_claim".
 
     Pure, stdlib-only, text in / class out, and takes NO `research` argument: whether
     a completion claim is true is `hand_back_key`'s question, not this one's.
@@ -171,8 +181,11 @@ def classify_hand_back(text: str | None) -> str:
     orchestrator passes a whole TextBlock, `nudge_report` passes narration text, and a
     predicate anchored to the end would otherwise behave differently on each.
 
-    `completion_claim` is tested first; order between the two `endswith` arms is
-    arbitrary, since no normalised string can end with both.
+    `completion_claim` is tested first. The order of the two step arms is now
+    DELIBERATE, where it used to be arbitrary: `_STEP_OFFER_TAIL` is bare `"?"`,
+    which every `". Continue?"` also ends with, so the two arms overlap on any text
+    carrying both leads. `step_offer` wins because step mode's line is the live one
+    and the `"Next: "` literal is retired.
 
     NOTE the class is about FORM, not truth. A `completion_claim` is not by itself a
     false completion — the caller decides that by reading project.status. And a run
@@ -182,6 +195,8 @@ def classify_hand_back(text: str | None) -> str:
     t = " ".join((text or "").split())
     if t.endswith(_HAND_BACK_COMPLETE):
         return "completion_claim"
+    if t.endswith(_STEP_OFFER_TAIL) and _STEP_OFFER_LEAD in t:
+        return "step_offer"
     if t.endswith(_HAND_BACK_STEP_TAIL) and _HAND_BACK_STEP_LEAD in t:
         return "step"
     return "silent"
