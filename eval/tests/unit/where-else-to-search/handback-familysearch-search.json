@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_where_else_to_search_007",
+    "skill": "where-else-to-search",
+    "name": "A FamilySearch records search — hand back to search-records",
+    "type": "negative",
+    "description": "The delegation asks to search FamilySearch itself. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back) and test_no_tool_outside_the_three (no-search-no-write).",
+    "tags": [
+      "hand-back",
+      "no-search-no-write",
+      "handback-to-search-records",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Search FamilySearch for Mary Hood's 1860 census record in Blount County, Alabama."
+  },
+  "negative": {
+    "correct_skill": [
+      "search-records"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "Searching FamilySearch's indexed records is search-records' job."
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "The correct reply is a one-line hand-back naming search-records. Calling any tool is a fail."
+  ]
+}

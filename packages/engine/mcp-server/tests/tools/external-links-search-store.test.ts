@@ -479,3 +479,25 @@ describe("stored-list edges", () => {
     expect(Object.keys(ec[PA].byRecordType)).toEqual(["Census", "Wills"]);
   });
 });
+
+describe("no result staging (#2995 PR 2)", () => {
+  it("stores the list but stages nothing and carries no staging notes", async () => {
+    mockFetch.mockResolvedValueOnce(response(paRows));
+    const result = await externalLinksSearchTool({ standardPlace: PA, projectPath: project });
+
+    expect(result.stored).toEqual({ file: "external-collections.json", places: [PA] });
+    for (const key of ["staged", "stagingError", "unloggedSearches", "nilSearchNeedsLog"]) {
+      expect(result).not.toHaveProperty(key);
+    }
+    expect(await readdir(project)).not.toContain("results");
+  });
+
+  it("asks for no log entry when the place has no links at all", async () => {
+    mockFetch.mockResolvedValueOnce(response([]));
+    const result = await externalLinksSearchTool({ standardPlace: PA, projectPath: project });
+
+    expect(result.returned).toBe(0);
+    expect(result).not.toHaveProperty("nilSearchNeedsLog");
+    expect(await readdir(project)).not.toContain("results");
+  });
+});
