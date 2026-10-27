@@ -20,5 +20,27 @@
         "linkText": "1850 United States Federal Census - Schuylkill County"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/collections/7667/",
+      "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801",
+      "record_type": "Taxation",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1768",
+      "endYear": "1801",
+      "place": "Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/1276/",
+      "linkText": "1850 United States Federal Census - Schuylkill County",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1850",
+      "endYear": "1850",
+      "place": "Schuylkill, Pennsylvania, United States"
+    }
+  ]
 }

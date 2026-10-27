@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_e1k",
+    "skill": "proof-conclusion",
+    "name": "A one-sentence correction is made with edits, not by re-sending the narrative",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario already has ps_001. The user asks for one wording change in its narrative and gives the exact replacement. The agent must update ps_001 with `edits` on research_append and leave the rest of the narrative byte-identical, rather than regenerating and re-sending the whole narrative_markdown (issue #3542, lead 2c).",
+    "tags": [
+      "proof",
+      "parentage",
+      "no-new-proof-expected",
+      "narrative-edit-form",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "In ps_001's narrative, the parenthetical in the sentence about the 1860 census reads \"(the relationship column was not introduced until 1880)\". Change it to \"(the relationship-to-head column first appears in the 1880 census)\". Make only that change; nothing else in the proof summary changes.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Must change only the one parenthetical in ps_001's narrative_markdown, to exactly the replacement the user gave; the rest of the narrative and every other field of ps_001 stay as they were.",
+    "The words 'the relationship column was not introduced until 1880' also appear in the tier-justification paragraph ('relationships not stated — the relationship column was not introduced until 1880'); that copy stays unchanged. Only the 1860 sentence's parenthetical changes.",
+    "Must not create a second proof summary for q_001.",
+    "Score `Tree encoding` NULL (N/A) on this test: it is a wording correction with no change to the conclusion, and the concluded parentage is already encoded in the scenario's pre-state (R1, ParentChild I2 to I1)."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  }
+}
