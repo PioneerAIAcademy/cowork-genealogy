@@ -55,6 +55,7 @@ import {
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
 import { rankSearchMatches, subjectTooThinNow } from "./rank-search-matches.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -1015,9 +1016,7 @@ export async function recordSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
