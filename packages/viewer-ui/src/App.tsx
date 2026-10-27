@@ -18,6 +18,7 @@ import HypothesesSection from './components/sections/HypothesesSection'
 import TimelinesSection from './components/sections/TimelinesSection'
 import ProofSummariesSection from './components/sections/ProofSummariesSection'
 import EvaluationsSection from './components/sections/EvaluationsSection'
+import CollectionsSection from './components/sections/CollectionsSection'
 import SidecarPanel from './components/shared/SidecarPanel'
 import ErrorBoundary from './components/ErrorBoundary'
 import styles from './App.module.css'
@@ -28,6 +29,7 @@ export const sectionComponents: Record<string, React.ComponentType> = {
   questions: QuestionsSection,
   plans: PlansSection,
   localities: LocalitiesSection,
+  external_collections: CollectionsSection,
   log: ResearchLogSection,
   sources: SourcesSection,
   assertions: AssertionsSection,

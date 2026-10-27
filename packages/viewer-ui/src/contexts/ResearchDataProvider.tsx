@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { ResearchData, GedcomxData, SidecarFile } from '../lib/schema'
 import type { ResearchTransport } from '../transport'
 import { setOpenExternal, setOpenFamilySearch } from '../lib/external'
+import { parseExternalCollections, type ExternalCollectionsData } from '../lib/externalCollections'
 import {
   ResearchDataContext,
   buildIndex,
@@ -32,6 +33,7 @@ export function ResearchDataProvider({
 }: ResearchDataProviderProps): React.JSX.Element {
   const [research, setResearch] = useState<ResearchData | null>(null)
   const [gedcomx, setGedcomx] = useState<GedcomxData | null>(null)
+  const [collections, setCollections] = useState<ExternalCollectionsData | null>(null)
   const [error, setError] = useState<string | null>(null)
   // Separate from `error`: a research load must NOT clear the notice (that was
   // the #1317 bug — the folder-in-subfolder heads-up vanished on the next
@@ -113,6 +115,9 @@ export function ResearchDataProvider({
         setLastUpdated(new Date())
       }
       if (state.gedcomx) setGedcomx(state.gedcomx)
+      // Guarded like the others: on the hosted path the socket can deliver the
+      // file before REST /state resolves with `collections: null`.
+      if (state.collections) setCollections(parseExternalCollections(state.collections))
       // A notice is push-delivered, so a renderer that mounts after the send
       // would never see it without this replay (issue #1899).
       if (state.notice) setNotice(state.notice)
@@ -127,6 +132,10 @@ export function ResearchDataProvider({
       },
       onGedcomx: (data) => {
         setGedcomx(data)
+        setLastUpdated(new Date())
+      },
+      onCollections: (data) => {
+        setCollections(parseExternalCollections(data))
         setLastUpdated(new Date())
       },
       onError: (err) => {
@@ -262,6 +271,7 @@ export function ResearchDataProvider({
     () => ({
       research,
       gedcomx,
+      collections,
       error,
       clearError,
       notice,
@@ -287,6 +297,7 @@ export function ResearchDataProvider({
     [
       research,
       gedcomx,
+      collections,
       error,
       clearError,
       notice,

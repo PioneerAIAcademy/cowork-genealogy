@@ -390,7 +390,10 @@ later, so the package holds **13** today.
 > path in Electron, session title on the web) and a **required** `notice` (the
 > folder-in-subfolder heads-up, replayed to a late-mounting renderer through the
 > hydration snapshot); a `SubscriptionHandlers.onNotice` handler carries that
-> same heads-up as a push; and three **optional** methods were added rather than
+> same heads-up as a push; a **required** `collections` (the project-root
+> `external-collections.json`, `null` when absent) with a
+> `SubscriptionHandlers.onCollections` push carries the stored collection lists
+> to the Collections section; and three **optional** methods were added rather than
 > dropped — `selectFolder?`, `getFeedbackContext?`, `getSourceImage?` — each
 > optional precisely because one host cannot serve it.
 >
@@ -591,6 +594,11 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   server) are never deduped and pass through unchanged.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
+> - **`document_updated` was added** for `external-collections.json`:
+>   `{type:"document_updated", name:"external-collections.json", data}`, sent at
+>   connect and when that file changes, never on a `research.json` write. It is
+>   the frame the proto tier already sends for any root document other than the
+>   two above, so one client case serves both tiers.
 > - **Lay mode: the server answers the hand-back itself (lead
 >   ruling 2026-09-18).** Every hand-back the prompts produce ends with the
 >   literal `Next: <step>. Continue?` (terminal `Research complete.`).

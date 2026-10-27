@@ -76,6 +76,13 @@ def _read_json(path: Path):
         return None
 
 
+COLLECTIONS_FILE = "external-collections.json"
+
+
+def _collections_frame(data) -> dict:
+    return {"type": "document_updated", "name": COLLECTIONS_FILE, "data": data}
+
+
 def _ts() -> str:
     return time.strftime("%H:%M:%S")
 
@@ -404,6 +411,12 @@ class Hub:
             d = _read_json(PROJECT_DIR / rel)
             if d is not None:
                 await self.broadcast({"type": "gedcomx_updated", "data": d})
+        elif rel == COLLECTIONS_FILE:
+            # Sent only when this file changes, never on a research.json write
+            # (lead ruling 2026-10-06), in the frame the proto tier already uses.
+            d = _read_json(PROJECT_DIR / rel)
+            if d is not None:
+                await self.broadcast(_collections_frame(d))
         elif rel.startswith("results/") and rel.endswith(".json"):
             log_id = rel[len("results/"): -len(".json")]
             try:
@@ -421,6 +434,9 @@ class Hub:
         gedcomx = _read_json(PROJECT_DIR / "tree.gedcomx.json")
         if gedcomx is not None:
             await self.send_one(ws, {"type": "gedcomx_updated", "data": gedcomx})
+        collections = _read_json(PROJECT_DIR / COLLECTIONS_FILE)
+        if collections is not None:
+            await self.send_one(ws, _collections_frame(collections))
         results = PROJECT_DIR / "results"
         if results.is_dir():
             for f in sorted(results.glob("*.json")):

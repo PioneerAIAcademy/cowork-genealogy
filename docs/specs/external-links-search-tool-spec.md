@@ -344,6 +344,10 @@ them.
 - **Read back** by `research_query({section: "external_collections", place,
   recordType})` and as per-place counts in `project_context`'s
   `externalCollections`.
+- **Shown** in the viewer's Collections section, per place and grouped by
+  record type. It reaches the viewer only when the file itself changes: Electron
+  `project:collections-updated`; hosted and proto
+  `{type: "document_updated", name: "external-collections.json"}`.
 - **Not validated.** It is API data, not a `research.json` section: no schema,
   validator, `ownership.json` or `packages/schema` entry.
 

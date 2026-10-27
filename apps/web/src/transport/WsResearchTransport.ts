@@ -8,7 +8,8 @@ import type {
   FeedbackResult,
   FeedbackContext,
   ResearchData,
-  GedcomxData
+  GedcomxData,
+  ExternalCollectionsData
 } from '@genealogy/viewer-ui'
 import type { SessionConnection } from './SessionConnection'
 
@@ -24,11 +25,13 @@ export class WsResearchTransport implements ResearchTransport {
 
   async getProjectState(): Promise<ProjectStateSnapshot> {
     const res = await fetch(`/api/sessions/${this.sessionId}/state`, { credentials: 'include' })
-    if (!res.ok) return { research: null, gedcomx: null, label: null, notice: null }
+    if (!res.ok) return { research: null, gedcomx: null, collections: null, label: null, notice: null }
     const s = await res.json()
     return {
       research: (s.research as ResearchData | null) ?? null,
       gedcomx: (s.gedcomx as GedcomxData | null) ?? null,
+      // Not served by /state: both web tiers send the document at connect.
+      collections: null,
       label: s.label ?? null,
       // Always null: the hosted path pins the project to `/project`, so no
       // folder notice is ever fired and the control plane has none to serve
@@ -45,6 +48,13 @@ export class WsResearchTransport implements ResearchTransport {
           break
         case 'gedcomx_updated':
           handlers.onGedcomx(msg.data as GedcomxData)
+          break
+        // The proto tier sends every other root document this way too, so the
+        // name is what selects the file.
+        case 'document_updated':
+          if (msg.name === 'external-collections.json') {
+            handlers.onCollections((msg.data as ExternalCollectionsData | null) ?? null)
+          }
           break
         case 'sidecar_updated':
           handlers.onSidecar({ logId: msg.logId as string, mtime: msg.mtime as number })

@@ -56,7 +56,7 @@ function installApiMock(readSidecar: LooseMock): void {
 // readSidecar delegates to whatever the test installed.
 function makeMockTransport(): ResearchTransport {
   return {
-    getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
+    getProjectState: async () => ({ research: null, gedcomx: null, collections: null, label: null, notice: null }),
     subscribe: (handlers) => {
       sidecarUpdatedHandler = handlers.onSidecar
       noticeHandler = handlers.onNotice
@@ -408,7 +408,7 @@ const emptyResearch = {
 function makeHydratingTransport(notice: string | null): ResearchTransport {
   return {
     ...makeMockTransport(),
-    getProjectState: async () => ({ research: null, gedcomx: null, label: '/p', notice })
+    getProjectState: async () => ({ research: null, gedcomx: null, collections: null, label: '/p', notice })
   }
 }
 
@@ -522,5 +522,103 @@ describe('ResearchDataProvider — hasId', () => {
     h.ctx().hasId('q_404')
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
+  })
+})
+
+describe('ResearchDataProvider — external collections', () => {
+  const doc = {
+    places: {
+      'Schuylkill, Pennsylvania, United States': {
+        rows: [
+          {
+            key: 'ancestry:7163',
+            url: 'https://www.ancestry.com/search/collections/7163/',
+            link_text: '1870 United States Federal Census',
+            record_types: ['Census'],
+            place: 'Schuylkill, Pennsylvania, United States',
+            cost: 'Subscription',
+            content_type: 'Index',
+            start_year: '1870',
+            end_year: '1870'
+          }
+        ]
+      }
+    }
+  }
+
+  // A transport the test drives by hand: it resolves hydration only when told
+  // to, so the hosted ordering (socket frame first, REST /state second) can be
+  // reproduced.
+  function makeCollectionsTransport(snapshot: unknown): {
+    transport: ResearchTransport
+    fire: (data: unknown) => void
+    resolveState: () => void
+  } {
+    let onCollections: ((data: unknown) => void) | null = null
+    let resolve: (() => void) | null = null
+    const transport: ResearchTransport = {
+      ...makeMockTransport(),
+      getProjectState: () =>
+        new Promise((r) => {
+          resolve = () =>
+            r({
+              research: null,
+              gedcomx: null,
+              collections: snapshot as never,
+              label: '/p',
+              notice: null
+            })
+        }),
+      subscribe: (handlers) => {
+        onCollections = handlers.onCollections as (d: unknown) => void
+        return () => {}
+      }
+    }
+    return {
+      transport,
+      fire: (data) => onCollections!(data),
+      resolveState: () => resolve!()
+    }
+  }
+
+  it('hydrates collections from the snapshot', async () => {
+    const t = makeCollectionsTransport(doc)
+    const h = makeHarness(t.transport)
+    h.render()
+    await act(async () => t.resolveState())
+    await waitFor(() =>
+      expect(Object.keys(h.ctx().collections?.places ?? {})).toEqual([
+        'Schuylkill, Pennsylvania, United States'
+      ])
+    )
+  })
+
+  it('updates on onCollections and clears on null', async () => {
+    const t = makeCollectionsTransport(null)
+    const h = makeHarness(t.transport)
+    h.render()
+    act(() => t.fire(doc))
+    expect(h.ctx().collections?.places['Schuylkill, Pennsylvania, United States'].rows).toHaveLength(1)
+    act(() => t.fire(null))
+    expect(h.ctx().collections).toBeNull()
+  })
+
+  it('turns a malformed document into null', () => {
+    const t = makeCollectionsTransport(null)
+    const h = makeHarness(t.transport)
+    h.render()
+    act(() => t.fire({ places: ['not', 'an', 'object'] }))
+    expect(h.ctx().collections).toBeNull()
+  })
+
+  // Hosted path: the socket can send the file before REST /state resolves with
+  // `collections: null`. The late snapshot must not wipe what the socket sent.
+  it('keeps a socket-delivered document when a later snapshot carries none', async () => {
+    const t = makeCollectionsTransport(null)
+    const h = makeHarness(t.transport)
+    h.render()
+    act(() => t.fire(doc))
+    await act(async () => t.resolveState())
+    expect(h.ctx().collections?.places['Schuylkill, Pennsylvania, United States'].rows).toHaveLength(1)
   })
 })

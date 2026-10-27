@@ -154,6 +154,7 @@ src/
 | `project:select-folder` | renderer to main | Response: folder path or null |
 | `project:research-updated` | main to renderer | Parsed research.json |
 | `project:gedcomx-updated` | main to renderer | Parsed tree.gedcomx.json |
+| `project:collections-updated` | main to renderer | Parsed external-collections.json, or `null` when it was deleted |
 | `project:watch-error` | main to renderer | Error message string |
 | `open-file` | renderer to main | Response: file content or null |
 | `open-external` | renderer to main | HTTPS URL to open in browser |

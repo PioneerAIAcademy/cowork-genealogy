@@ -42,7 +42,7 @@ describe('section empty states', () => {
       // Every <p>, not `querySelector('p')`. The first paragraph is not
       // necessarily the empty state: a section that renders a subtitle above a
       // BLANK empty state passed the single-selector version, which is exactly
-      // the future case this guard exists to catch. All 14 sections render one
+      // the future case this guard exists to catch. All 15 sections render one
       // <p> today, so this is the same assertion for them.
       const paragraphs = Array.from(container.querySelectorAll('p'))
       expect(paragraphs.length).toBeGreaterThan(0)

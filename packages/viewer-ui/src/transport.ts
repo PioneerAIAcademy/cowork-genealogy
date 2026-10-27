@@ -4,6 +4,7 @@
 // talks only to this interface; it never reaches for window.api or a socket
 // directly.
 import type { ResearchData, GedcomxData } from '@genealogy/schema'
+import type { ExternalCollectionsData } from './lib/externalCollections'
 
 export interface FeedbackPayload {
   includeMedia: boolean
@@ -45,6 +46,9 @@ export interface FeedbackContext {
 export interface ProjectStateSnapshot {
   research: ResearchData | null
   gedcomx: GedcomxData | null
+  /** The project-root `external-collections.json`; `null` when there is none.
+   *  Required so every transport has to answer. */
+  collections: ExternalCollectionsData | null
   /**
    * A human label for the open project. In Electron this is the folder path;
    * in the web client it is the session/project title. `null` means "no
@@ -75,6 +79,9 @@ export interface SidecarRead {
 export interface SubscriptionHandlers {
   onResearch: (data: ResearchData) => void
   onGedcomx: (data: GedcomxData) => void
+  /** `external-collections.json` changed; `null` when it was removed. Sent only
+   *  when that file itself changes, never on a research.json write. */
+  onCollections: (data: ExternalCollectionsData | null) => void
   onSidecar: (event: { logId: string; mtime: number }) => void
   onError: (message: string) => void
   /** A non-error heads-up (e.g. research.json found in a subfolder). Unlike
