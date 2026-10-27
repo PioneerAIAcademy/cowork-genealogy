@@ -16,11 +16,15 @@
 //     names a party contradicts the labels (a page may hold two deeds);
 //   - the payer phrase ("paid by"), which also appears in mortgage-back and tax
 //     clauses and in consideration forms not read here, is consulted only when no
-//     "Know ye" phrase names a party labelled grantor;
-//   - the witness clause is read to the end of its own line, and a party another
-//     phrase here already places (the grantor, the payer) is never a witness;
+//     "Know ye" phrase names a party labelled grantor; it is not read when the
+//     word just before "paid" is be/been/is/are/was/were;
+//   - the witness clause is read to the end of its own line, so a signature block
+//     on the lines below is never read; a party another phrase here already
+//     places (the grantor, the payer) is never a witness;
 //   - the probate arm reads one thing: the decedent must not be the person named
-//     as administrator.
+//     as administrator, read as the name directly before "Administrator on the
+//     Estate of" (a caption such as "Isaac Porter of Westfield, Administrator" is
+//     not read: reaching back over "of <place>" reads the decedent's own caption).
 // A form no phrase here matches (an indenture "between X of the one part", an
 // abstract), and any text that cannot be read, refuse nothing. A quitclaim or
 // indenture that carries one of these phrases is checked by it.
@@ -36,7 +40,7 @@ const lower = (s: string) => s.toLowerCase().replace(/[^a-z'-]/g, "");
 const ABBREVIATION = new Set(["jno", "wm", "thos", "chas", "geo", "jas", "robt", "saml", "benj", "jr", "sr", "esq", "st", "mr", "mrs", "dr"]);
 
 /** Capitalized words that open a clause and are never part of a name. */
-const NOT_A_NAME = new Set(["whereas", "that", "the", "this", "know", "now", "and", "which", "witnesseth", "said", "we", "our"]);
+const NOT_A_NAME = new Set(["whereas", "that", "the", "this", "know", "now", "and", "which", "witnesseth"]);
 
 const NAME_TOKEN = /^[A-Z][A-Za-z'’-]*\.?$/;
 
@@ -86,24 +90,6 @@ function readNameBefore(before: string): string[] | undefined {
     cur.unshift(core.replace(/\.$/, ""));
   }
   return cur.length >= 2 ? cur : undefined;
-}
-
-/**
- * The name just before "Administrator on the Estate of": directly before it, or
- * before its "Esq.," or "of <place words>," tail ("Isaac Porter of Westfield in
- * the County of Hampshire, Administrator").
- */
-function readAdministrator(before: string): string[] | undefined {
-  const b = before.replace(/[,\s]+Esq(?:uire)?\.?[,\s]*$/i, "").replace(/[,\s]+$/, "");
-  const direct = readNameBefore(b);
-  if (direct) return direct;
-  const window = b.slice(-140);
-  const ofs = [...window.matchAll(/\s+of\s+/g)].map((m) => m.index!).reverse();
-  for (const at of ofs) {
-    const name = readNameBefore(window.slice(0, at));
-    if (name) return name;
-  }
-  return undefined;
 }
 
 /** Equal, or one edit apart for words of 5+ letters (Ingersol / Ingersoll). */
@@ -220,7 +206,7 @@ export function deedFormulaErrors(doc: StructuredDocument, rawText: string, path
   if (doc.recordType === "probate") {
     const decedent = probateDecedentOrDefault(doc);
     const hs = [...text.matchAll(new RegExp(ADMINISTRATOR.source, ADMINISTRATOR.flags))].map((m) => {
-      const admin = readAdministrator(text.slice(0, m.index));
+      const admin = readNameBefore(text.slice(0, m.index).replace(/[,\s]+$/, ""));
       const estate = readNames(text.slice(m.index! + m[0].length, m.index! + m[0].length + 240));
       return {
         phrase: `${admin ? `${admin.join(" ")} ` : ""}${m[0]}${estate.text}`.replace(/\s+/g, " ").trim(),

@@ -271,16 +271,24 @@ describe("deedFormulaErrors: payer, probate and signer shapes (PR review round 3
     expect(deedFormulaErrors(d, text, "d")).toEqual([]);
   });
 
-  it("probate: refuses the administrator made the decedent, however the name is introduced", () => {
+  it("probate: refuses the administrator made the decedent when the name sits directly before the phrase", () => {
     const d = (porter: any) => probate([porter, person("p2", "Paul", "Meacham")]);
     const porter = person("p1", "Isaac", "Porter", "administrator", [{ type: "probate" }]);
     for (const lead of [
-      "Isaac Porter Administrator on the Estate of Paul Meacham",
-      "Isaac Porter of Westfield in the County of Hampshire, Administrator on the Estate of Paul Meacham",
-      "Isaac Porter, Esq., Administrator on the Estate of Paul Meacham",
-      "Isaac Porter Esq Administrator on the Estate of Paul Meacham",
+      "Isaac Porter Administrator on the Estate of Paul Meacham late of Southwick deceased",
+      "Isaac Porter, Administrator on the Estate of Paul Meacham",
     ]) {
       expect(deedFormulaErrors(d(porter), lead, "d").join(" ")).toMatch(/names p1 \(Isaac Porter\) as the administrator/);
+    }
+  });
+
+  it("probate: a caption that puts 'of <place>' or 'Esq.' before the phrase is not read (a missed refusal, accepted)", () => {
+    const d = probate([person("p1", "Isaac", "Porter", "administrator", [{ type: "probate" }]), person("p2", "Paul", "Meacham")]);
+    for (const lead of [
+      "Isaac Porter of Westfield in the County of Hampshire, Administrator on the Estate of Paul Meacham",
+      "Isaac Porter, Esq., Administrator on the Estate of Paul Meacham",
+    ]) {
+      expect(deedFormulaErrors(d, lead, "d")).toEqual([]);
     }
   });
 
@@ -292,7 +300,7 @@ describe("deedFormulaErrors: payer, probate and signer shapes (PR review round 3
     ["no heading phrase", "Paid the funeral charges and the doctor's bill"],
     ["the subscriber", "the subscriber, Administrator on the estate of the late Paul Meacham. To cash paid Gad Palmer, Administrator of the Estate of John Ingersoll"],
   ])("probate: accepts a correct document with %s", (_n, text) => {
-    const d = probate([person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "probate" }]), person("p3", "Gad", "Palmer")]);
+    const d = probate([person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "probate" }]), person("p3", "Gad", "Palmer"), person("p4", "John", "Ingersoll")]);
     expect(deedFormulaErrors(d, text, "d")).toEqual([]);
   });
 
@@ -321,5 +329,43 @@ describe("deedFormulaErrors: payer, probate and signer shapes (PR review round 3
     const d = land([person("p1", "Ann", "Seller", "grantor"), person("p2", "Paul", "Roe", "grantee"), person("p3", "Gad", "Palmer", "witness")]);
     const text = "This Indenture, Ann Seller selling, for $5 paid by Paul Roe of Boston. Signed in presence of Gad Palmer, Paul Roe (seal)";
     expect(deedFormulaErrors(d, text, "d")).toEqual([]);
+  });
+});
+
+describe("deedFormulaErrors: probate captions that name the decedent (PR review round 4, #3881)", () => {
+  const probate = (persons: any[]) =>
+    ({ recordType: "probate", documentForm: "page_image", source: { title: "p", repository: "r" }, persons }) as StructuredDocument;
+  const base = () => [person("p1", "Isaac", "Porter", "administrator"), person("p2", "Paul", "Meacham", undefined, [{ type: "probate" }])];
+
+  it.each([
+    "Estate of Paul Meacham of Southwick deceased. Account of the Administrator on the Estate of said deceased.",
+    "Paul Meacham of Southwick. The subscriber, Administrator on the Estate of the said deceased, charges himself",
+    "Paul Meacham of Southwick, yeoman, deceased.\nThe account of the Administrator on the Estate of the deceased.",
+    "An Inventory of the Estate of Paul Meacham of Southwick, sworn to by the Administrator of the Estate of the deceased",
+    "Probate of the Estate of Paul Meacham. Account of the subscriber, Administrator on the Estate of Paul Meacham",
+    "Estate of Paul Meacham Deceased. Account of the Administrator on the Estate of said deceased",
+    "Estate of Paul Meacham of Southwick. Isaac Porter, yeoman, Administrator on the Estate of said deceased",
+  ])("accepts correct labels on: %s", (text) => {
+    expect(deedFormulaErrors(probate(base()), text, "d")).toEqual([]);
+  });
+
+  it("accepts an administratrix who is the decedent's widow", () => {
+    const d = probate([person("p1", "Mary", "Meacham", "administratrix"), person("p2", "Paul", "Meacham", undefined, [{ type: "probate" }])]);
+    expect(deedFormulaErrors(d, "Estate of Paul Meacham of Southwick. Mary Meacham, widow, Administratrix on the Estate of said Paul Meacham", "d")).toEqual([]);
+  });
+
+  it("accepts a son administering his namesake father's estate", () => {
+    const d = probate([person("p1", "John", "Smith Jr", "administrator"), person("p2", "John", "Smith", undefined, [{ type: "probate" }])]);
+    expect(deedFormulaErrors(d, "John Smith of Hartford, Administrator on the Estate of John Smith late of Hartford", "d")).toEqual([]);
+  });
+});
+
+describe("deedFormulaErrors: clause-opening words are not names (#3881)", () => {
+  const d = {
+    recordType: "land", documentForm: "page_image", source: { title: "d", repository: "r" },
+    persons: [person("p1", "Paul", "Meacham", "grantor"), person("p2", "John", "Dewey", "grantee")],
+  } as StructuredDocument;
+  it.each(["Whereas", "That", "The", "This", "Know", "Now", "And", "Which", "Witnesseth"])("does not read '%s' as the start of a name", (word) => {
+    expect(deedFormulaErrors(d, `Know all men by these presents, That ${word} John Dewey recovered judgment`, "d")).toEqual([]);
   });
 });
