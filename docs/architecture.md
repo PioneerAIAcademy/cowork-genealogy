@@ -880,6 +880,15 @@ There **is** an orchestrator, and it is a skill:
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 
+   **Step mode inverts this** (decision 25, `docs/plan/research-step-mode.md`).
+   On the FS prototype a turn runs ONE step, reports it, and ends with
+   "Continue with &lt;label&gt;?" — so finishing a sub-skill is exactly where the
+   turn stops, and the stop conditions above describe the *job*, not the turn.
+   The boundary is enforced by `packages/engine/plugin/hooks/step_boundary.py`,
+   loaded as a library by the prototype worker and both eval harnesses. Cowork
+   and the hosted alpha get no such hook and keep the loop described here, so
+   both readings are live at once and which one applies depends on the plane.
+
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
 through `extraction_append` — `recordIds` for FamilySearch records, one
