@@ -1,7 +1,8 @@
 """The validator's copy of the narration string must equal the one that ships.
 
-`agents/init-project.md` tells the agent to store one `narration_guidance` string
-"verbatim", and `validators/test_init_project.py` holds its own copy as
+`project_create` writes one `narration_guidance` string on every create, from the
+engine constant `HOUSE_RESEARCHER_PROFILE` (issue #3384; it moved there from
+`agents/init-project.md`), and `validators/test_init_project.py` holds its own copy as
 `_HOUSE_STYLE` and asserts exact equality against what a run actually wrote --
 "stored verbatim, not paraphrased".
 
@@ -14,7 +15,7 @@ on a run. A phase-5 plan draft proposed exactly that edit and priced no such
 cost, because nothing free was there to say it existed.
 
 This closes that with a string comparison. It is deliberately dumb: no
-normalisation beyond stripping the blockquote marker, because "verbatim" is the
+normalisation beyond joining the constant's string literals, because "verbatim" is the
 property under test and a comparison that forgives whitespace would forgive the
 drift too.
 """
@@ -35,37 +36,34 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_init_project import _HOUSE_STYLE  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
-#: init-project became an AGENT and its skill dir was deleted (issue #2122). The
-#: narration house style moved with the body, so this follows it rather than
-#: asserting against a path that no longer exists.
-SKILL = REPO / "packages" / "engine" / "plugin" / "agents" / "init-project.md"
+#: The string ships in the engine: `project_create` writes the profile itself
+#: (issue #3384), so the agent body no longer carries a copy.
+ENGINE = REPO / "packages" / "engine" / "mcp-server" / "src" / "tools" / "project-create.ts"
 
 
 def _shipped_guidance() -> str:
-    """The blockquote immediately after the line that introduces it.
+    """`HOUSE_RESEARCHER_PROFILE.narration_guidance`: its double-quoted literals,
+    joined as the `+` concatenation joins them.
 
-    Anchored on the introducing sentence rather than on a line number, which
-    moves, or on "the first blockquote", which would silently start matching a
-    different one if a quote were added above it.
+    Anchored on the constant and its field, so a second string elsewhere in the
+    file is never read. Every literal up to the field's closing comma counts:
+    reading only the first would leave this green while a later line drifted.
     """
-    text = SKILL.read_text(encoding="utf-8")
-    # EVERY blockquote line, not just the first. `> (.+?)\n` stopped at the first
-    # newline, so appending a second line to the shipped string left this test green
-    # while the two copies had already diverged -- the exact drift it exists to catch.
+    text = ENGINE.read_text(encoding="utf-8")
     m = re.search(
-        r"this `narration_guidance`, stored verbatim:\s*\n((?:>[^\n]*\n)+)",
+        r"export const HOUSE_RESEARCHER_PROFILE = \{.*?narration_guidance:\s*((?:\"[^\"\\]*\"\s*\+?\s*)+),",
         text,
+        re.DOTALL,
     )
     assert m, (
-        "could not find the narration_guidance blockquote in SKILL.md. If the "
-        "surrounding wording changed, fix THIS locator -- do not delete the test, "
+        "could not find HOUSE_RESEARCHER_PROFILE.narration_guidance in project-create.ts. "
+        "If the declaration changed, fix THIS locator -- do not delete the test, "
         "which is the only free check that the two copies agree."
     )
-    lines = [ln.lstrip("> ").rstrip() for ln in m.group(1).splitlines()]
-    return " ".join(x for x in lines if x).strip()
+    return "".join(re.findall(r"\"([^\"\\]*)\"", m.group(1)))
 
 
-def test_the_skill_still_carries_a_narration_guidance_blockquote():
+def test_the_engine_still_carries_the_narration_guidance():
     """A zero-length find proves nothing, so the locator is asserted separately
     from the comparison: a test that silently matched nothing would pass forever."""
     shipped = _shipped_guidance()
@@ -78,8 +76,8 @@ def test_house_style_is_byte_identical_to_the_shipped_string():
     `ut_init_project_*` run is about to go red at $8-12 a time."""
     assert _shipped_guidance() == _HOUSE_STYLE, (
         "validators/test_init_project.py::_HOUSE_STYLE and "
-        "agents/init-project.md's narration_guidance have diverged.\n"
-        f"  SKILL.md:      {_shipped_guidance()!r}\n"
+        "HOUSE_RESEARCHER_PROFILE.narration_guidance have diverged.\n"
+        f"  engine:        {_shipped_guidance()!r}\n"
         f"  _HOUSE_STYLE:  {_HOUSE_STYLE!r}\n"
         "Change BOTH, and see docs/plan/research-as-a-job-phase5-prose.md for the "
         "four other verbatim copies that also have to move."

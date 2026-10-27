@@ -33,6 +33,7 @@ import type {
   QualityFactSourceOut,
   QualityIssueOut,
 } from "../types/person-quality.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 export type {
   PersonQualityInput,
@@ -94,10 +95,7 @@ async function fetchScores(
     });
 
     if (res.status === 401) {
-      throw new Error(
-        "FamilySearch rejected the access token (401). The session may have " +
-          "expired or been revoked — call the login tool to re-authenticate.",
-      );
+      throw new Error(await rejectedTokenMessage(principal));
     }
     if (res.status === 400) {
       // Malformed ID: the body is empty; the detail is in a `warning` header.

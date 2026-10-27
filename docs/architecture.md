@@ -67,7 +67,7 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 | **assertion** | One evidence claim extracted from one source, persisted in `research.json`. |
 | **proof summary / `ps_id`** | The written argument resolving one research question, carrying a confidence **tier**: `proved`, `probable`, `possible`, `not_proved`, or `disproved` (a closed enum — `enums.schema.json`). "Tier ≥ probable" in §4 means `proved` or `probable`. |
 | **sidecar** | A raw search payload stored at `results/<log_id>.json` instead of inside `research.json`, so the co-edited file stays small (§6.1). |
-| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read `project_create` takes by reference (`personReadRef`) and builds the starting tree from, instead of the model re-typing it. |
+| **staging** | The host-side write of a sidecar into `results/.staging/` by the search tool that produced it, later finalized by `research_log_append` (§6.1). Acquisition tools stage through the same envelope: `record_read` and `image_transcribe` (which `research_log_append` can finalize, though no shipped flow logs one with its ref), and `person_read`, whose staged read is evidence only: `project_create` reads the person itself (`personId`) and builds the starting tree from that read, and checks a hand-entered fact against staged reads before citing it to the FamilySearch Family Tree. |
 | **projection** | A compact, filtered read of a large document — what `project_context` and `research_query` return instead of the whole file (§6.3). |
 | **compaction** | When a long session's context is summarized to fit the window. Skill bodies can be evicted by it — the reason §3.1 exists. |
 | **fixture** | Two different things. `eval/fixtures/mcp/` holds **mocked tool responses** for unit runs; `eval/tests/e2e/<slug>/` holds a **benchmark case** (a starting project plus expected findings). |
@@ -879,6 +879,15 @@ There **is** an orchestrator, and it is a skill:
    status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
+
+   **Step mode inverts this** (decision 25, `docs/plan/research-step-mode.md`).
+   On the FS prototype a turn runs ONE step, reports it, and ends with
+   "Continue with &lt;label&gt;?" — so finishing a sub-skill is exactly where the
+   turn stops, and the stop conditions above describe the *job*, not the turn.
+   The boundary is enforced by `packages/engine/plugin/hooks/step_boundary.py`,
+   loaded as a library by the prototype worker and both eval harnesses. Cowork
+   and the hosted alpha get no such hook and keep the loop described here, so
+   both readings are live at once and which one applies depends on the plane.
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
