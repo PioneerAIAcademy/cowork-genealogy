@@ -439,6 +439,10 @@ def _live_args_omitted(args: Any) -> Any:
 _WRITER_TOOLS = frozenset(
     {
         "research_append",
+        # `research_append` scoped to `evaluations` by tool identity (issue
+        # #1491); a refused gps-mentor verdict is a conclusion it did not reach,
+        # so its draft is blanked like research_append's.
+        "evaluation_append",
         "extraction_append",
         "tree_edit",
         "tree_correct",
