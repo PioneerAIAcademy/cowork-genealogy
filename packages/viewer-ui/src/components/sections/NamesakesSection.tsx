@@ -14,8 +14,8 @@ export default function NamesakesSection(): React.JSX.Element {
         <h2 className={styles.sectionTitle}>Namesakes</h2>
         <p className={styles.empty}>
           No namesakes recorded. A same-named person a search rules out is recorded
-          here, and a link to the person he is not then needs something in its
-          record tying it to that person.
+          here during the search-records step, and a link to the person he is not
+          then needs something in its record tying it to that person.
         </p>
       </div>
     )
