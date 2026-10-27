@@ -509,7 +509,9 @@ describe("retired schema identifiers (known_holdings deleted, #2069)", () => {
       "packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts":
         "this file — it names the deleted identifiers in order to ban them",
       "packages/engine/mcp-server/tests/validation/validator.test.ts":
-        "plants a stale known_holdings key to prove the validator rejects it at the document root",
+        "plants a stale known_holdings key to prove the validator warns on it rather than failing",
+      "packages/engine/mcp-server/src/validation/validator.ts":
+        "downgrades a leftover known_holdings key on a pre-#2069 project to a warning",
       "docs/specs/guardrail-enforcement-spec.md":
         "dated measurement history (owner audit and research_query coverage) of the corpus as it stood then",
       "docs/specs/hosted-web-workbench-spec.md":

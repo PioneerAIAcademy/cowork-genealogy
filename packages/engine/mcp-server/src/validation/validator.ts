@@ -797,7 +797,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, path, `missing top-level section '${section}'`);
     }
   }
-  checkAllowedKeys(data, RESEARCH_SHAPES.document, "research documents", path, report);
+  // Projects created before #2069 still carry the deleted known_holdings
+  // section, and no tool can remove a top-level key, so it warns instead of
+  // failing every later validation.
+  const { known_holdings: retiredHoldings, ...current } = data;
+  if (retiredHoldings !== undefined) {
+    addWarning(
+      report,
+      path,
+      "retired section 'known_holdings' is ignored: it was deleted from the schema (#2069) and nothing reads it. No action needed."
+    );
+  }
+  checkAllowedKeys(current, RESEARCH_SHAPES.document, "research documents", path, report);
 
   if (typeof data.project !== "object" || data.project === null) {
     addError(report, path, "project must be an object");

@@ -3173,19 +3173,33 @@ describe("Research closed shapes", () => {
     ).toBe(true);
   });
 
-  // Issue #2069 deleted the section; a project still carrying it fails at the
-  // root through the existing closed-shape check, not a check of its own.
-  it("rejects a retired known_holdings key at the document root", async () => {
+  // Issue #2069 deleted the section. Projects created before it still carry the
+  // key and no tool can remove it, so it warns rather than failing validation.
+  it("warns on, but accepts, a retired known_holdings key at the document root", async () => {
     const research = maximalResearch();
     const clean = await validateParsed(research, maximalTree);
     expect(clean.valid, JSON.stringify(clean.errors)).toBe(true);
+    expect(clean.warnings.some((w) => w.message.includes("known_holdings"))).toBe(false);
 
-    research.known_holdings = [];
+    research.known_holdings = [{ holding_id: "kh_001", description: "Family Bible" }];
+    const result = await validateParsed(research, maximalTree);
+    expect(result.valid, JSON.stringify(result.errors)).toBe(true);
+    expect(
+      result.warnings.some(
+        (w) => w.path === "research.json" && w.message.includes("retired section 'known_holdings'")
+      ),
+      JSON.stringify(result.warnings)
+    ).toBe(true);
+  });
+
+  it("still rejects any other unknown key at the document root", async () => {
+    const research = maximalResearch();
+    research.known_holding = [];
     const result = await validateParsed(research, maximalTree);
     expect(result.valid).toBe(false);
     expect(
       result.errors.some(
-        (e) => e.path === "research.json" && e.message.includes("unexpected property 'known_holdings'")
+        (e) => e.path === "research.json" && e.message.includes("unexpected property 'known_holding'")
       ),
       JSON.stringify(result.errors)
     ).toBe(true);
