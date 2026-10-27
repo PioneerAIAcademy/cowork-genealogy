@@ -38,7 +38,7 @@ judgement is the genealogists'.
 San Juan de Dios**, Desamparados, legitimate son of **Juan García** and **Manuela Abarca**.
 His **baptism** two days later (`ark:/61903/1:1:NQ2L-5MY`, 24 Oct 1899, San Luis de Asserrí)
 and his **death** as an infant (`ark:/61903/1:1:7XRW-KN6Z`, 28 Feb 1901, San José, residence
-San Juan de Dios) name the same parents and give his surname as "García Abarca". The couple's
+San Juan de Dios) name the same parents; the death record gives his surname as "García Abarca", the baptism index as "García" only. The couple's
 **marriage** — church **14 January 1891** at Aserrí (`ark:/61903/1:1:66DM-DGK8` /
 `ark:/61903/1:1:66DM-DGK4`) and civil, marriage stated **14 January 1892** and **registered
 15 January 1892** at San José (`ark:/61903/1:1:6KJJ-CFF4` / `ark:/61903/1:1:6KJJ-CFF3`) —
