@@ -6409,6 +6409,39 @@ def test_a_turn_that_makes_no_offer_carries_no_options_key(turn_env):
     assert "options" not in _turn_done_payload(turn_env["conn"])
 
 
+def test_a_turn_the_host_answers_says_so_and_offers_no_buttons(turn_env):
+    """`reply_follows` (plan A2). The browser keeps ChatPane busy and renders no
+    buttons on a turn the host answers for the researcher, and this frame is how
+    it knows. It was described in a worker comment and in the workbench spec and
+    emitted nowhere, so the browser had no way to tell this turn from one that
+    ended with nothing coming.
+
+    The two fields have to agree: a host-answered turn carries `reply_follows`
+    and NO `options`, because the choice has already been made. Buttons there
+    would flicker for the moment between this frame and the reply landing, and a
+    researcher quick enough to click one would send a second message into a run
+    already moving."""
+    turn_env["conn"].research = _RESEARCH
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    payload = _turn_done_payload(turn_env["conn"])
+    assert payload.get("reply_follows") is True, payload
+    assert "options" not in payload, payload
+
+
+def test_a_turn_nobody_answers_for_carries_no_reply_follows_key(turn_env):
+    """Left OUT rather than false, as `options` is. A frame with neither field is
+    a turn that ended with nothing further coming -- which is what the browser
+    needs to stop being busy."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("the report"), _result(text=f"the report\n\n{_CONCLUDE}")])
+    payload = _turn_done_payload(turn_env["conn"])
+    assert "reply_follows" not in payload, payload
+    assert payload["options"] == ["Continue.", "Keep going."], payload
+
+
 def test_search_more_appears_only_at_the_low_risk_choice(turn_env):
     """A `resources_spent` stop with no proof summary yet: concluding is the default and
     searching more is the alternative."""

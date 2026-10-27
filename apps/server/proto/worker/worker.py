@@ -3054,6 +3054,12 @@ async def _run_turn(
                        else boundary.reply_options(offered, research))
             if options:
                 detail["options"] = options
+            # Section A2. The browser keeps ChatPane busy and renders no buttons on a
+            # turn the host answers for the researcher, and this is how it knows. Left
+            # OUT rather than false, as `options` is, so the two agree: a frame with
+            # neither field is a turn that ended with nothing further coming.
+            if answered_by_host:
+                detail["reply_follows"] = True
             try:
                 detail["spend_estimate_usd"] = round(session_spend_usd(conn, sdk_session_id), 4)
             except Exception as exc:  # noqa: BLE001 - a calibration figure never fails a turn
