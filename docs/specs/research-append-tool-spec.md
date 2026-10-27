@@ -381,6 +381,23 @@ no more expensive (decision from the e2e research-runtime speedup review, §6 Q1
   batch of only no-ops writes nothing (`filesWritten: []`). `results` still echoes a
   row for every op (no-ops included), and any per-op no-op note is surfaced in
   `validation.warnings`; the `results` rows do not themselves flag which op was a no-op.
+- **One source per `person_evidence` call.** A call whose `person_evidence`
+  **append** ops link assertions from more than one source is refused before
+  `prepareOps`, and writes nothing. The source is the assertion's `source_id`, else
+  its `record_id` compared bare (`capSource`; the schema requires `source_id`, so the
+  fallback serves only a document that fails it), so a document that keeps each party
+  on its own record id (groom and bride) is one source. The message lists each
+  source with its op indices. Not counted: `person_evidence` `update` ops, an
+  assertion not in `research.json` before the call (including one the same call
+  appends), and extraction_append's attachment links (`attachmentLink`, §11.8).
+  Measured before the rule, over the person-evidence agent's e2e calls since
+  2026-09-10: 87 of 191 spanned sources; 55% of those were refused against 33% of
+  single-source calls, and in all 48 refused ones the failing op sat in one source,
+  so 1,045 links from error-free sources were discarded with it. All-or-nothing is
+  kept within the call; committing a batch source by source is not done. One
+  consequence for §5's namesake occupation tie: two sources' links can no longer be
+  appended in one call, so a link that cannot vouch in its own call is reached
+  through `update` raises (`research-append-namesake.test.ts` C7).
 - **Section invariants (§5) hold across the batch** — e.g. two `append`s of an active
   plan for the same question in one batch are rejected at the second op, because the
   first is already in the live `research.plans` when the second's invariant runs.
@@ -1657,6 +1674,15 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   record → `updated_existing` (source count unchanged, tree unchanged); mixed
   batch (appends + updates) → only appends drive detection; update op setting
   `source_id` → detection does not engage.
+- **one source per `person_evidence` call (§3.3)** —
+  `research-append-one-source.test.ts`. Refused, nothing written: two sources,
+  three sources interleaved, a source-less assertion keyed by its bare record id.
+  Accepted: a first batch per source on a project with no links, one source whose
+  parties sit on separate record ids, one record under two ARK spellings, `update`
+  ops across sources, attachment links, a mixed-section call. An unscored link to a
+  stub minted from its record passes, and is refused once another record has been
+  materialized onto the stub. Writing one source's links in the pass that mints
+  its stub keeps that order out of reach.
 - **namesake cap (§5)** — `research-append-namesake.test.ts`, end to end through
   `researchAppend`. **U1**: a row appends as `ns_001` with `created` stamped; an
   update setting `person_id`, alone or beside allowed fields, is refused and
@@ -2597,6 +2623,8 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | census column | `census.jurisdiction`, `census.year` | `censusStatedRelationships`, unchanged. When the table says the schedule had no column, every `statedRelation` is **ignored and named in `notes`**. A model cannot bring a relationship in through a column the schedule did not have. |
 | order | array order of `persons` | Replaces `FS_SORT_KEY`. |
 | roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
+| land and probate roles | `statedRelation`, `couple` edges, facts | **Land:** a party's `statedRelation` is their part in the deed, the principal's included: grantor → `grantor_N`; grantee → `grantee` (`grantee_N` if several); witness and officer words fall through to the row above. A spouse word with a `couple` edge to a grantor is `grantor_N` (a wife releasing dower); to a grantee, a grantee. Position and `principal` choose no land role in document mode. A land document with no grantor or no grantee is **refused** before anything is written. **Probate:** the decedent or testator is the party carrying the `probate` fact, else `will`, else `death`; a flagged principal breaks a tie, then the first in order. A document whose chosen decedent is stated as administrator, administratrix, executor or executrix is **refused**. |
+| couples | `relationships`, `statedRelation` | On a `land` or `probate` document a `couple` is **refused** unless one of its two parties has a spouse-word `statedRelation` (wife, husband, widow, widower, spouse; not "wife's mother" or "daughter-in-law"). Scoped to these two types: an obituary sends "John (Mary) Smith" as a couple with no spouse word, and marriage and newspaper principals carry no `statedRelation`. The indexed land path stays positional. |
 | `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
 | `date_certainty` | `computed` includes `date` | `approximate`. |
 | information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |

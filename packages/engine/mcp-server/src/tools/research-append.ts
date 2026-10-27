@@ -2755,6 +2755,40 @@ function capSource(a: any): unknown {
   return typeof a?.source_id === "string" && a.source_id !== "" ? a.source_id : (a?.record_id ?? null);
 }
 
+/** The sources a call's person_evidence appends link from, each with the op
+ *  indices under it. Keyed by `capSource`, so a document that keeps each party
+ *  on its own record id is one source; a record id is compared bare and shown
+ *  as first written. An assertion not in research.json before the call is not
+ *  counted. */
+export function personEvidenceAppendSources(
+  ops: readonly ResearchAppendOp[],
+  research: any,
+): Map<string, { shown: string; ops: number[] }> {
+  const byId = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) if (typeof a?.id === "string") byId.set(a.id, a);
+  const out = new Map<string, { shown: string; ops: number[] }>();
+  ops.forEach((op, i) => {
+    if (op?.section !== "person_evidence" || op.op !== "append") return;
+    const a = byId.get((op.entry as any)?.assertion_id);
+    const src = capSource(a);
+    if (typeof src !== "string" || src === "") return;
+    const key = src === a.source_id ? src : arkToBareId(src);
+    const seen = out.get(key);
+    if (seen) seen.ops.push(i);
+    else out.set(key, { shown: src, ops: [i] });
+  });
+  return out;
+}
+
+function oneSourcePerCallError(sources: Map<string, { shown: string; ops: number[] }>): string {
+  const listed = [...sources.values()].map((s) => `'${s.shown}' (ops ${s.ops.join(", ")})`).join("; ");
+  return (
+    `these person_evidence appends link assertions from ${sources.size} sources: ${listed}. ` +
+    "Send one research_append call per source, written as soon as that source's links are decided; " +
+    "nothing in this call was written."
+  );
+}
+
 /** A record party: the bare record id with the party `recordPartyKeyer` reads
  *  across that record's assertions. Under one source, two personas that share a
  *  role on separate records stay apart. */
@@ -9024,6 +9058,16 @@ export async function researchAppend(
         }
       }
       if (outsideLane.length > 0) return fail(boundErrors(outsideLane));
+    }
+
+    // ─── One source per call (#3544) ─────────────────────────────────────────
+    // All-or-nothing over several sources throws away every source's links for
+    // one source's error: in the e2e corpus, 1,045 links from error-free sources
+    // went with 48 refused multi-source calls. Refusing the shape keeps the call
+    // atomic; it never commits part of a batch.
+    if (!options.attachmentLink) {
+      const sources = personEvidenceAppendSources(ops, research);
+      if (sources.size > 1) return fail([oneSourcePerCallError(sources)]);
     }
 
     // Before prepareOps: a call refused here must not reach its network lookups,
