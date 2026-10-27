@@ -1035,6 +1035,12 @@ In an autonomous run the harness **denies these tools for the entire run**
   live profile; several issue sentences interpolate values off that profile
   (`{originalDate}`, `{originalPlace}`), so a stripped date or place can be
   returned verbatim
+- `project_create` — given `personId`, reads the person off the live tree and
+  returns their relatives by name. An e2e run always starts in an existing
+  project, which `project_create` refuses, so no legitimate call exists, but a
+  call naming a fresh folder would get past that refusal. Blocked by name, not
+  on `personId`, so the hosted proto worker, which blocks by bare name only,
+  mirrors the same block
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,

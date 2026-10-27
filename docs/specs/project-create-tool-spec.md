@@ -67,13 +67,17 @@ Taking both in one call removes it. The pair is validated against each other in
 one pass, written atomically, and there is no window in which the project is
 inconsistent.
 
-**The tree from a FamilySearch person is built here, not by the caller.**
-Re-typing a `person_read` into `tree` cost about 51 KB of model output on a
-15-person pedigree, and on a 12-person read with 104 relationships the model
-spent its whole 32,000-token output cap rewriting the tree in thinking and never
-made the call (alpha feedback, 2026-09-29). `person_read` stages the read on the
-host (`person-read-tool-spec.md`, "Staging the read"), and `personReadRef` names
-it; the build is `src/utils/person-read-tree.ts` (§4).
+**A FamilySearch person is read here, not by the caller.** Re-typing a
+`person_read` into `tree` cost about 51 KB of model output on a 15-person
+pedigree, and on a 12-person read with 104 relationships the model spent its
+whole 32,000-token output cap rewriting the tree in thinking and never made the
+call (alpha feedback, 2026-09-29). Passing a staged read's ref instead failed on
+any read over the client's result limit: the model saw a truncated preview, lost
+the ref, and spent 16–28 minutes guessing paths before hand-typing a stub tree
+(hosted feedback, 2026-10-05 to 10-18). Given `personId`, this tool reads the
+person through `readPerson` (`person-read-tool-spec.md`), the code behind
+`person_read`, and the read never passes through the model. The build is
+`src/utils/person-read-tree.ts` (§4).
 
 **Accepted cost:** the model no longer reviews the read field by field before it
 is written. An observed agent once caught FamilySearch auto-standardizing a
@@ -88,13 +92,34 @@ and in this build's place retry.
 | Input | Required | Notes |
 |---|---|---|
 | `projectPath` | yes | Absolute path to the project directory |
-| `objective` | yes | Non-empty after trimming. Stored trimmed |
-| `title` | no | Omitted from the document when absent, never written empty |
-| `personReadRef` | no | The `staged.resultsRef` `person_read` returned. When set, the starting tree is built from that staged read, and `tree` holds only additions |
-| `subjectPersonIds` | no | With `personReadRef`: FamilySearch PIDs from the read (the requested id of a merged person included) or addition labels, mapped to tree ids; defaults to the person read. Without: local tree ids that must exist in `tree`; defaults to `[]` |
-| `tree` | no | With `personReadRef`: ADDITIONS (stub persons and their relationships). Without: the whole starting tree, simplified GedcomX. Defaults to `{persons: [], relationships: [], sources: []}` |
+| `objective` | yes | Non-empty after trimming. Stored trimmed. With `personId`, each mention of the subject by FamilySearch ID is stored as the subject's name ("Naming the subject" below) |
+| `title` | no | Omitted from the document when absent, never written empty. Named as `objective` is |
+| `personId` | no | A FamilySearch person ID, trimmed. When set, this tool reads the person (needs a FamilySearch login) and builds the starting tree from the read; `tree` is refused beside it |
+| `subjectPersonIds` | no | With `personId`: FamilySearch PIDs from the read (the requested id of a merged person included), mapped to tree ids; defaults to the person read. Without: local tree ids that must exist in `tree`; defaults to `[]` |
+| `tree` | no | Only without `personId`: the whole starting tree, simplified GedcomX. Defaults to `{persons: [], relationships: [], sources: []}` |
+| `personReadRef` | — | Removed. Refused by name, so a caller built against the old contract is told to pass `personId` rather than falling into the hand-built path |
 
-**Building from `personReadRef`** (`buildFromStagedRead`):
+**Reading the person.** Every refusal that needs no network (below) runs first,
+so a refused call never spends the read, and a create aimed at an existing project
+never reads anyone. The read is `readPerson(personId, { projectPath, deadline },
+principal)`: the tree read, the subject first, the relatives' and the edges'
+sources, and the subject's memories with their transcription, exactly as
+`person_read` returns them, plus each memory's kind (`story` or `document`), which
+`person_read`'s own response does not carry. The principal is the call's, as for
+every FamilySearch tool. An error from the read (no login, a person FamilySearch
+does not hold) is returned as the create's refusal, and nothing is written.
+
+**Time.** One call stays under the Cowork device bridge's 60 s abort on the
+typical path: the read gets `OCR_PHASE_BUDGET_MS` (40 s) from the call's start,
+and the place retry gets what `CALL_BUDGET_MS` (55 s) leaves, at most
+`PLACE_RETRY_BUDGET_MS` (20 s) and never below zero. Three legs of the read are
+not bounded by that clock: the subject's own fetch (bounded by its 30 s timeout,
+which the 40 s budget already covers at the start), the memories and portrait
+fetches (cutting them short would drop the memories with no note, so they keep
+their own timeout), and the converter's place standardization, which is capped by
+count, not time.
+
+**Building from the read** (`buildFromStagedRead`):
 
 - **Persons** get `I` ids, the subject first (so it is `I1`), then the read's
   order; each keeps `living` and carries `ark: "ark:/61903/4:1:<PID>"`. Names
@@ -118,40 +143,37 @@ and in this build's place retry.
   the same resolver `person_read` uses, once more (`standardizePlaces`): the
   read leaves a place unresolved after a transient failure or past its
   100-place soft cap, both of which a retry can recover. Anonymous, and a no-op
-  when every fact has one. Bounded at 20s (the Cowork bridge aborts any call at
-  60s), and run on copies, so an answer that arrives after the budget never
-  reaches a tree that is already being written. A place nothing resolves keeps
-  `place` alone. An addition's place is hand-entered and is resolved as below, in
-  the same budget. The build does not run it: `project_create` runs it after every refusal below
+  when every fact has one. Bounded by what the call budget leaves (Time, above),
+  and run on copies, so an answer that arrives after the budget never reaches a
+  tree that is already being written. A place nothing resolves keeps `place`
+  alone. The build does not run it: `project_create` runs it after every refusal below
   and after validation, just before the write, so a refused call never waits on
   the network. It only adds a `standard_place` string, which validation admits.
 
-**Additions, and the PID rule.** In ref mode the caller cannot see the ids the
-build assigns, so every id in `tree` is a **label**: re-minted after the staged
-ids, with the label → id map returned. A relationship endpoint or a
-`subjectPersonIds` entry must name a staged person **by FamilySearch PID** or an
-addition by its label. A PID is matched trimmed and case-insensitively in every
-one of these checks, and an addition's `ark` names a tree person when it is a
-`4:1:` ark (`ark:/61903/4:1:<PID>`, in a resolver URL or bare, each `%XX`
-decoded) or a familysearch.org tree person or pedigree URL, the PID taken from
-whichever path segment holds one; neither form is ever read from a query string (a record or image ark,
-or another site's URL, names none). An addition source keeps the fields it was given, so a field the tree
-does not allow is refused by validation rather than dropped. Name-level `sources` on an addition are re-pointed exactly as its fact
-sources are. Anything
-else is refused: an `I2` the caller wrote would
-otherwise land on whichever staged person got `I2`, and no validator can tell
-because that person exists. An addition's fact or relationship with no source of
-its own is cited `{ref, quality: 1}` to one "Researcher's statement" source,
-created only when needed — unless a staged read holds it (see "Citing what a
-staged read holds" below), when it is cited to a generic FamilySearch-tree source
-recorded as `idMap.additionsTreeSource`. Never to `S1`: `S1` names the page of
-the read's subject, and an addition is by construction not on that read. Additions are merged **before** validation and the
-single atomic write, so a stub is in `starting-tree.gedcomx.json` from the
-start: a person added afterwards with `tree_edit` would be absent from that
-baseline, and `research_append`'s starting-tree gates would treat it as minted
-this session (lead ruling, 2026-09-29).
+**People the researcher names beside a read.** `tree` is refused beside
+`personId`. The caller never sees the read, so it cannot tell whether a person
+the researcher names (the parent a stated maiden name implies, say) is already in
+it, and a stub it wrote blind could duplicate a relative straight into the
+opening baseline. Such a person is added after the create, with `tree_edit`, by
+init-project, and only when the person is not already there (lead ruling,
+2026-10-20): for a parent, a filled slot (the summary's `father` / `mother` /
+`parent`, or a relative's parents in `project_context`) means no stub even when
+the name differs; for a spouse, child or sibling, a match is the same first given
+name within that relationship, whatever the surname. When no stub is added the
+researcher's statement is reported and recorded as an `oral_knowledge` holding.
+A stub is linked by the relative's tree id, and its edge is cited to a
+"Researcher's statement" source. A wrong stub can be undone only by
+`merge_tree_persons` into the right person; `tree_correct` cannot remove one.
 
-**Without `personReadRef`** (the objective-only build) the caller's ids are
+**The 2026-09-29 rule is retired.** That ruling merged stubs into the create so
+they sat in `starting-tree.gedcomx.json` from the start. It was retired by lead
+ruling 2026-10-20, and the cost is accepted: a stub added after the create is
+absent from that baseline, so `treeEncodingCompletionWarnings` counts it, and the
+relative it links to, as structure gained this session (`tree-diff.ts`,
+`personsWithNewStructure`), and that warning cannot fire for them. A `subjectPersonIds` PID is matched trimmed and case-insensitively, and the
+requested id of a merged person names the same person.
+
+**Without `personId`** (the objective-only build) the caller's ids are
 kept, since it names `subjectPersonIds` and later `relates_to_person_ids` by
 them. Only an absent id is minted (any other value is left for validation),
 skipping every id the tree defines **or references** (relationship endpoints,
@@ -162,11 +184,10 @@ to a generic FamilySearch-tree source recorded as `idMap.familySearchTreeSource`
 A `tree` that is not an object is refused.
 
 **Citing what a staged read holds.** A hand-built tree is often a
-retyping of a `person_read` (the stub path, when the agent could not pass the
-ref), and citing every unsourced fact on it to the researcher's statement credits
-the researcher with FamilySearch's claims. So a hand-entered fact or relationship
-with no source of its own — the whole tree without a ref, or an addition with one —
-is checked against every `person_read` staged in this project and inside the 24h
+retyping of a `person_read` (an agent that typed the read out by hand), and
+citing every unsourced fact on it to the researcher's statement credits the
+researcher with FamilySearch's claims. So a hand-entered fact or relationship with
+no source of its own is checked against every `person_read` staged in this project and inside the 24h
 TTL (`listStagedEnvelopes`):
 
 - **A fact** on a person whose `ark` names a FamilySearch person
@@ -196,56 +217,101 @@ The generic source is `{title: "FamilySearch Family Tree", citation:
 "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed <date>).",
 url}`; it names no page, since each person's `ark` is the page. When anything was
 cited to it, `validation.warnings` says how many facts and relationships, so the
-caller can see the inference. The staging folder is listed only when something
-needs it: the fallback below, or a hand-entered person carrying a FamilySearch
-`ark`. A hand-built tree with none (the objective-only build), or ref-mode
-additions that are all unarked stubs, never touch it, so a new edge between two
-staged persons with no arked addition stays the researcher's statement — an
-under-claim. A staged file already past the TTL by its write time is never
-opened.
+caller can see the inference. The staging folder is listed only when a
+hand-entered person carries a FamilySearch `ark`; a hand-built tree with none
+(the objective-only build) never touches it. A staged file already past the TTL
+by its write time is never opened.
 
-**Hand-entered places** — every fact on the objective-only build, and every fact
-an addition brings in ref mode — are the tool's to standardize, never the
-caller's. Every such fact, on a person or a relationship, has any
+**Hand-entered places** — every fact on the objective-only build — are the
+tool's to standardize, never the caller's. Every such fact, on a person or a relationship, has any
 caller-supplied `standard_place` cleared, including a fact with no `place`. Each
 one with a `place` is then resolved with the same resolver `person_read` and
 `tree_edit` use, after every refusal and validation, in the same call and budget
-as the ref path's retry. A person or fact entry that is not an object is skipped
+as the read's retry. A person or fact entry that is not an object is skipped
 here and left for validation to refuse at its own index. A resolved value is
 reported in `placesFilled`. A caller-supplied value that the resolver replaced or
 could not confirm, or that sat on a fact with no `place`, is named in
 `validation.warnings`; one that did not resolve — no match, a failed lookup, or
 the budget running out — is left unset, never kept.
 
-**The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
-`sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
-`familySearchTreeSource` (`S1` with a ref; without one, the generic source when
-something was cited to it), `additionsTreeSource` (ref mode, the same),
-and `statementSource` when one was created. It also
-carries `placesFilled`, `[{place, standardPlace}]`, for each place this create
-standardized — one the read had left unresolved, or one entered by hand (absent
-when none). One resolution is listed once, in the spelling first met, however
-else the same place was written (trimmed, case-folded, spaces collapsed), so the caller can tell the
-researcher which places it standardized without being asked.
-`personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). A ref that still names no staged `person_read` — a guessed path such as `results/.staging/<PID>`, a ref another tool staged, a file holding no result — falls back to the **newest** staged `person_read` (by its envelope's `retrieved`, inside the 24h TTL) whose requested or resolved id is `subjectPersonIds[0]`, matched trimmed and case-insensitively, and the substitution is named in `validation.warnings`. An agent that lost the ref to a truncated response passed the subject's PID and guessed the path, and every such create was refused. There is no fallback without a stated `subjectPersonIds[0]`, never to another person's read (which read seeds the project is an identity decision), and none past a fault in the file the ref names: unreadable, holding invalid JSON, or a store error of any kind the refusal does not recognise. Only the refusals that mean "this ref names no staged `person_read`" fall back. A near-copy correction is reported only when the file it names is the one used. In ref mode a refusal raised
-after the build (a forged `assertion_id`, a validation error) names which minted
-id and `persons[i]` index each addition label became, since no `idMap` comes
-back with a refusal. A relationship is described by its type, endpoints and subtype. A later
-step that writes `research.json` names tree ids from it.
+**The result, with `personId`,** is a summary, never the tree, held under
+`SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
+`familySearchId`, `name`, and `birth` / `death` as "date, place" when the read
+has them), `objective` and `title` as stored, `relatives` (each other person's `id`, `name`, and `relationship` to
+the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
+`parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
+`relationships`, `sources`, `memorySources`), `memories` (the titles of the
+subject's memories that were and were not transcribed), the read's own `notes`,
+and `validation.warnings`. Over the cap, whole entries are dropped, the last
+first, in this order: `warnings`, `notes`, the untranscribed titles, the
+transcribed titles, then relatives, and among relatives only a child, sibling or
+other relative. A parent or a spouse is never dropped, since those are the slots
+a caller checks before adding anyone, so a pathological family can leave the
+summary over the cap. `omitted` counts each list's loss; an entry is never cut,
+and every person stays findable afterwards in the project tree.
+`idMap` is not returned: its `sources` map runs to hundreds of entries on a
+well-sourced profile, and a caller names people by the summary's tree ids.
 
-The staged file is not consumed; the 24h TTL prune removes it.
+**The result, without `personId`,** carries `idMap`: `persons` (empty),
+`sources` (empty), `familySearchTreeSource` (the generic
+source, when something was cited to it — "Citing what a staged read holds"),
+and `statementSource` when one was created. It also carries `placesFilled`,
+`[{place, standardPlace}]`, for each place this create standardized (absent when
+none). One resolution is listed once, in the spelling first met, however else
+the same place was written (trimmed, case-folded, spaces collapsed), so the
+caller can tell the researcher which places it standardized without being asked.
+
+**Naming the subject.** A caller that has only the FamilySearch ID writes the
+objective and title before the read, so it can name the subject only by that ID.
+With `personId`, each mention of the requested ID or the read's resolved ID —
+bare, or as `FamilySearch ID <id>`, `person ID <id>` or `ID <id>`, matched
+case-insensitively as a whole token — is replaced by the subject's name as the
+read gives it ("Identify the parents of LZNY-BRF" is stored as "Identify the
+parents of Patrick Flynn"). A mention inside parentheses, such as
+"Patrick Flynn (LZNY-BRF)", is an annotation beside a name the researcher wrote
+and is kept, and nothing is replaced when the read gives no name. A name is not
+a research direction, so this keeps the objective in the researcher's words; the
+generic default objective names no one and is never changed. The summary returns
+both as stored, so the caller reports what was written.
 
 **What it writes.** `project` with `id: "rp_001"`, the objective, optional title,
 `subject_person_ids`, `status: "active"`, and `created`/`updated` stamped with
-today's ISO date; every analytical section as an empty array; and the supplied
-tree.
+today's ISO date; every analytical section as an empty array, `sources` aside;
+the tree; and the house researcher profile.
 
-**What it deliberately does not write:** `researcher_profile` and
-`known_holdings`. Both are written afterwards through `research_append`, from
-what the researcher actually said. An agent must never invent a profile — a
-project was observed created with an experience level and subscriptions the user
-was never asked for, and a fabricated profile is indistinguishable downstream
-from a real one, while an absent one has a working fallback in every skill.
+- **`researcher_profile`** is `HOUSE_RESEARCHER_PROFILE`, the same on every
+  project: `experience_level: "novice"` and one house-style `narration_guidance`
+  string, whose source of truth is that engine constant. It is a default, not a
+  claim about the researcher: nothing is asked, a stated level is not
+  persisted, and it carries no `subscriptions`.
+- **`sources`**, with `personId`: one entry `src_NNN` for each of the subject's
+  memories that came back with `text`. A memory with no `text` gets none: an
+  entry would assert it was examined, and it is already in the tree with its
+  title and URL. Each entry carries `gedcomx_source_description_id` (the memory's
+  tree `S` id); a `citation` (`"<title>," story|digital image, FamilySearch
+  Memories (<url> : accessed <date>), memory <id>, uploaded to the profile of
+  <subject> (<PID>).`); `citation_detail` with `where` "FamilySearch Memories",
+  `where_within` "memory <id>", today's `when_accessed`, and, for what the
+  memory's metadata cannot supply, the citation agent's bracketed unknown-markers
+  (`MEMORY_DETAIL_UNKNOWN`: `[CREATOR NOT RECORDED]`, `[DOCUMENT TYPE NOT
+  RECORDED]`, `[DATE NOT RECORDED]`), which that agent reads as gaps to fill;
+  `repository` "FamilySearch Memories"; `access_date`; `url`; the `text` verbatim
+  as `transcription`; the retained scan as `image_filename`; and
+  `transcription_truncated: true` when the OCR read of that scan hit the cap
+  (`sourceImageCapState`, derived exactly as `research_append` derives it, never
+  asserted).
+- **The classification is a stated default.** `source_classification` is
+  `authored` for a story and `original` for a scanned document
+  (`memoryClassification`), and every memory source's `notes` says so: "Classified
+  <value> from the memory's type … its text was not examined. A transcription or
+  abstract of another record is derivative." The text is not read here, nothing
+  downstream re-classifies a source (`agents/citation.md` leaves the field
+  alone), and the conflict and proof steps read the entry, so the note travels
+  with it.
+
+**What it deliberately does not write:** `known_holdings`, and the profile's
+`subscriptions`. Both come from what the researcher actually said, and are
+written afterwards through `research_append`.
 
 **Refusals**, each leaving the directory exactly as it was:
 
@@ -256,17 +322,14 @@ from a real one, while an absent one has a working fallback in every skill.
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
-| `personReadRef` blank, missing, outside `results/.staging/`, or not staged by `person_read`, and no staged read of `subjectPersonIds[0]` to fall back to (§4 "The result"); or a fault in the file it names (unreadable, or holding invalid JSON) | Checked after the exists and nesting refusals. Worded for this tool (the staging helper's own messages speak of `research_log_append`), and every one says to call `person_read` again with `projectPath` |
-| An addition endpoint or `subjectPersonIds` entry that is neither a staged PID nor an addition label | See "Additions, and the PID rule" above |
-| An addition person whose id is a staged PID, or whose `ark` names someone in the read | Additions are new people; a staged person is linked to, not re-added. No validator rejects two persons with one ark, so a copied read would otherwise double silently. An ark for someone the read does not hold (a second `person_read`) is kept |
-| The same addition person or source label used twice | The references would bind to only one of them |
-| An addition source whose id is one of the read's FamilySearch source ids | A ref to it would be ambiguous between the two; cite the read's source by that id instead |
-| An addition ref naming neither an addition source nor one of the read's sources | Same collision as an id |
-| A `tree` collection, or an addition's `names`, `facts` or `sources`, that is present but not an array of objects | Read as empty it would be dropped, and a dropped citation would silently re-cite the fact to the researcher's statement. Applies without `personReadRef` too, for the three top-level collections. Without a ref, a non-object entry and a citation in the wrong shape are left in place for validation to refuse at their own index; only an absent or empty `sources` is cited to the researcher's statement |
+| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
+| `personId` present but not a non-empty string | — |
+| `tree` with any entry beside `personId` | "People the researcher names beside a read" above |
+| The read fails (no login, a person FamilySearch does not hold, the read holds no person with the requested id) | The read's own message, which names the remedy (log in; check the ID) |
+| A `subjectPersonIds` entry, with `personId`, that names no person in the read | The tree's `I` ids are assigned here, so a caller names the read's people by FamilySearch PID |
+| A `tree` collection that is present but not an array of objects | Read as empty it would be dropped, and a dropped citation would silently re-cite the fact to the researcher's statement. A non-object entry and a citation in the wrong shape are left in place for validation to refuse at their own index; only an absent or empty `sources` is cited to the researcher's statement |
 | `research.json` or `tree.gedcomx.json` appears while the place fill runs | Checked again after the fill, which can take seconds: another create finished first, and create never overwrites |
-| Two additions whose `ark` names the same person | The same person twice |
-| An addition relationship repeating one the build already holds — `relationshipMatches`: same type and endpoints (a Couple in either order) with subtypes that agree or either absent, so an untyped edge restating a staged Biological one IS a repeat while a Step edge beside it is a second relationship | The read's relationships are imported already; no validator rejects the duplicate |
-| An `assertion_id` on any fact, staged or added | Stamped only by `materialize_facts`; a seeding tree has no assertions to point at |
+| An `assertion_id` on any fact | Stamped only by `materialize_facts`; a seeding tree has no assertions to point at |
 
 **Ordering.** The pair is validated **before** either file is written, so a
 rejected create leaves nothing behind. This is load-bearing and tested by moving
@@ -317,23 +380,32 @@ the write ahead of the validation and watching two cases go red.
 ## 6. Enforcement
 
 > `packages/engine/mcp-server/tests/tools/project-create.test.ts` — the refusals,
-> the atomic no-write-on-failure property, and that neither `researcher_profile`
-> nor `known_holdings` is invented; the tree built from a staged
-> `person-read-flynn-family.json` (a merged-person redirect, a memory source with
-> `text`/`image_ref`/`artifact_url`, a top-level `notes`) against a committed
-> literal; additions by PID landing in the starting baseline; the label, ref,
-> source-id and repeated-relationship refusals, including lower-case PIDs, an ark
-> URL with a query string, and `Object` prototype keys as labels; each
-> `personReadRef` refusal; the objective-only build's sourcing; the fallback to
-> the stated PID's newest staged read (a guessed ref, another tool's ref, a merged
-> or lower-case id, the newer of two, none past the TTL, none to another person,
-> none past a store fault or a corrupt file, a near-copy correction reported only
-> when used, an expired file never opened); and the Family Tree citations on
-> evidence, on both paths (a copied fact, a researcher fact, a held and an unheld
-> relationship, a subtype only in the direction the read supports, a supplied
-> `standard_date` the read does not hold, a reworded marriage date, a merged
-> person's ark, nothing staged, an addition never cited to `S1`, and that a build
-> with no ark never lists staging).
+> the atomic no-write-on-failure property, the house profile on every create and
+> no `known_holdings`; with `personId` (an injected reader serving
+> `person-read-flynn-family.json`: a merged-person redirect, a memory with
+> `text`/`image_ref`/`artifact_url`, a top-level `notes`): the tree against a
+> committed literal, the memory source exactly, the summary and its 2,000-character
+> cap on a 63-relative read, a parent labelled `father` / `mother` / `parent` by
+> recorded sex, a parent and a spouse never trimmed, a scanned memory classified `original` with its note,
+> `transcription_truncated` derived and not otherwise written, the place retry
+> given no time once the read spent the budget, `personReadRef` refused by name,
+> and every network-free refusal (an existing project, no objective, `tree` beside
+> `personId`, a blank `personId`) made before the reader is called; the
+> objective-only build's sourcing; and the Family Tree citations on evidence (a
+> copied fact, a researcher fact, a held and an unheld relationship, a subtype
+> only in the direction the read supports, a supplied `standard_date` the read
+> does not hold, a reworded marriage date, a merged person's ark, nothing staged,
+> a staged read past the TTL by write time never opened, and that a build with no
+> ark never lists staging).
+
+> `packages/engine/mcp-server/tests/tools/person-read.test.ts` — `readPerson`
+> behind `person_read`; a merged parent's redirect is not followed once the read's
+> clock has run out.
+
+> `eval/harness/tests/unit/test_mock_project_create_person_id.py` — the eval mock
+> serves `personId` from the test's `person_read` fixture through the compiled
+> `runProjectCreate`, records the read as `served_read`, fails an id with no
+> fixture, and classifies memories by its documented rule.
 
 > `packages/engine/mcp-server/tests/utils/person-read-tree.test.ts` — the place
 > retry, its no-op when nothing needs it, that a refusal never waits on it, that
