@@ -27,7 +27,7 @@
     "collections-search-any"
   ],
   "judge_context": [
-    "external_links_search returns totalForPlace 0 — the skill should recognize FamilySearch curates nothing for this place and fall back to the site-wide FindMyPast template (findmypast.com/search/results) rather than inventing a curated collection URL",
+    "FamilySearch curates nothing for this place (the stored list for it is empty, so research_query returns no row) — the agent should fall back to the site-wide FindMyPast template (findmypast.com/search/results) rather than inventing a curated collection URL",
     "Generated URL should carry FindMyPast's parameter names (firstname, lastname, yearofbirth, keywordsplace or equivalent) filled from the subject: Patrick Flynn, birth about 1845, Ireland",
     "Should provide capture-workflow instructions (click, save results as PDF, upload back) and note a login may be required since FindMyPast is a paid site",
     "A research-log entry must be written in the same turn the URL is generated: site findmypast, outcome partial, capture_received false"
