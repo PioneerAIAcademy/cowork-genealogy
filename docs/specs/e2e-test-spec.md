@@ -1145,9 +1145,10 @@ answer reachable only via the tree will fail and the fixture won't validate.
 ### 6.1.1 Main-thread subagent-only tool block
 
 The same `PreToolUse` hook enforces the per-context tool policy in e2e: no
-member of `SUBAGENT_ONLY_TOOLS` — today just `image_read` — may be called
-on the main thread. It is a Task-spawned subagent's private tool (returning a
-page scan as inline base64); a main-thread call is the router substituting for a
+member of `SUBAGENT_ONLY_TOOLS` — `image_read` and `evaluation_append` — may be
+called on the main thread. Each is a subagent's private tool (`image_read`
+returns a page scan as inline base64; `evaluation_append` is the gps-mentor
+agent's verdict writer); a main-thread call is the router substituting for a
 *failed* spawn and doing the work itself — a shape observed in production.
 
 **`extraction_append` is no longer in this set.** Extraction of a
@@ -1158,10 +1159,10 @@ would refuse the shipped route on every e2e run. The guard that retired with it
 unindexed path (now `record-structurer`) — is on the `nothing-checks` register
 (`docs/architecture.md` §9.4 keeps that register as a label, not a table).
 
-The discriminator is `agent_id` alone: **no skill declares `image_read`** in its
-`allowed-tools`, so a delegated subagent is its only legitimate caller and every
+The discriminator is `agent_id` alone: **no skill declares either member** in its
+`allowed-tools`, so a delegated subagent is the only legitimate caller and every
 legitimate call carries `agent_id`. The unit harness's third clause (the skill
-declared the tool itself) can never fire for it. The block keys on
+declared the tool itself) can never fire for either. The block keys on
 `SUBAGENT_ONLY_TOOLS` membership
 (`is_main_thread_subagent_only_tool`) rather than the full per-skill
 `subagent_only_violation`, which takes a `declared_tools` argument e2e cannot
@@ -1169,13 +1170,14 @@ supply. So e2e carries no declared-tools exemption: a future skill that
 legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
-Every member is enforced. The one member, `image_read`, is
-declared by no skill and by no agent at all since
-the `image-reader-opus` agent was retired, and
-since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` from
-2026-07-17, directly since 2026-10-16) — so `agent_id`
-presence alone discriminates for it, and a second tool added to the set is
-covered here automatically.
+Every member is enforced. `image_read` is declared by no skill and by no agent at
+all since the `image-reader-opus` agent was retired, and since `search-images`
+moved to `image_transcribe` (via `@plugin:image-reader` from 2026-07-17, directly
+since 2026-10-16). `evaluation_append` is declared by the gps-mentor
+AGENT but by no skill, and gps-mentor always runs as a subagent, so its own call
+carries `agent_id` — a skill-level declaration is what the third clause reads, and
+there is none. So `agent_id` presence alone discriminates for both, and a further
+tool added to the set is covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
@@ -1194,9 +1196,10 @@ live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
 Cowork is a different loader and has no instrument but a live
 session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `bypassPermissions`). Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`: the raw
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|.*evaluation_append|Agent|Task`: the raw
 file-write tools, the device bridge's `device_commit_files`, `research_append`
-(since the caller-ownership rules shipped), and `Agent` / `Task`, for the fork deny. It still never sees an
+(since the caller-ownership rules shipped) and `evaluation_append` (the narrow
+evaluations writer the same rules route), and `Agent` / `Task`, for the fork deny. It still never sees an
 `extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the

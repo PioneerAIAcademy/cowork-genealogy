@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 56 tools.
+The MCP server exposes 57 tools.
 
 ### FamilySearch records and places
 

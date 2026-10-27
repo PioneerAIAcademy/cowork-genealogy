@@ -35,16 +35,18 @@ One scope limit (plan §4.1):
   members that no skill declared; issue #2937 changed that. `research` and
   `search-records` declare `extraction_append` in their own `allowed-tools` and
   call it from the main thread as their ordinary route, and `extraction_append` accordingly left
-  `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires). The
-  one remaining member, `image_read`, is still declared by no skill and no agent
-  — pages are read with `image_transcribe`, and the image-reader agents are
-  retired (issue #2013, #2490) — so for that member
-  `agent_id` presence alone still decides. Pinned by
-  `tests/unit/test_context_policy.py`.
+  `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires).
+  Neither current member is declared by a SKILL, so for both `agent_id`
+  presence alone decides: `image_read` is declared by no skill and no agent —
+  pages are read with `image_transcribe`, and the image-reader agents are retired
+  (issue #2013, #2490) — and `evaluation_append` (issue #1491) is declared by the
+  gps-mentor AGENT, whose own call is a subagent call the `agent_id` check
+  exempts; a skill-level declaration is what the exemption reads, and there is
+  none. Pinned by `tests/unit/test_context_policy.py`.
 
-e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — today just
-`image_read` (#1273), since `extraction_append` (#942) left the set in issue
-#2937. Because no skill declares the remaining member, `agent_id`
+e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — `image_read`
+(#1273) and `evaluation_append` (#1491), since `extraction_append` (#942) left
+the set in issue #2937. Because no skill declares either member, `agent_id`
 presence alone discriminates a legitimate subagent call from a router
 substitution, which is all e2e can see — its sub-skills run in the same session
 via the `Skill` tool with no `agent_id` to attribute them. The e2e block is
@@ -97,9 +99,20 @@ from typing import Any
 # The declared-tools exemption below is NO LONGER unreachable: `research` and
 # `search-records` declare `extraction_append`, which is exactly the case condition 3 describes.
 #
-# Keep this a plain set, not a policy engine — one entry certainly does not
-# justify machinery. Matched on the bare name, so it is transport-agnostic.
-SUBAGENT_ONLY_TOOLS = frozenset({"image_read"})
+# `evaluation_append` — the gps-mentor agent's verdict writer (issue #1491), a
+# `research_append` scoped to `evaluations` by tool identity. gps-mentor is the
+# only writer of that section and it always runs as a subagent, so a main-thread
+# call is the router grading the work itself. Unlike `image_read` this member IS
+# declared by an agent (gps-mentor's `tools:`), which is an AGENT declaration,
+# not a skill `allowed-tools` one, so the declared-tools exemption (condition 3,
+# skill-level) does not reach it and `agent_id` presence is what exempts the
+# agent's own call. The hook plane denies the same write by caller identity
+# (`guard_project_files.py` `OWNED_SECTIONS`/`owner_denied`); this is the harness
+# e2e plane's half of the same deny.
+#
+# Keep this a plain set, not a policy engine. Matched on the bare name, so it is
+# transport-agnostic.
+SUBAGENT_ONLY_TOOLS = frozenset({"image_read", "evaluation_append"})
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -183,6 +196,12 @@ _DENIAL_REASONS = {
         "run. Call image_transcribe with projectPath instead: triage on its "
         "`found` and `digest`, and read the page with "
         "sidecar_read({ projectPath, ref: staged.resultsRef }) when you need it."
+    ),
+    "evaluation_append": (
+        "evaluation_append may not be called from the main session — the "
+        "`evaluations` section is the gps-mentor agent's, which applies the "
+        "mandatory proof critique. Writing it here would grade the work itself. "
+        "Delegate: invoke `@plugin:gps-mentor` and let it append the evaluation."
     ),
 }
 

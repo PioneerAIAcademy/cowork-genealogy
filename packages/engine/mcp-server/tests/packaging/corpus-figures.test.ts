@@ -75,7 +75,7 @@ const SPECS = [
  *  fires when they were recorded — but the arm below counts CURRENT
  *  subagent-only fires, so it tracks the live policy rather than the corpus's
  *  history, and the test at the bottom binds the two. */
-const SUBAGENT_ONLY_TOOLS = new Set(["image_read"]);
+const SUBAGENT_ONLY_TOOLS = new Set(["image_read", "evaluation_append"]);
 
 const git = (...args: string[]) =>
   execFileSync("git", args, { cwd: projectRoot, encoding: "utf8", maxBuffer: 1 << 28 });

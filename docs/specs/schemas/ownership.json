@@ -8,8 +8,11 @@
     "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25) and conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "hookRouting": {
-    "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the one writer tool guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins it against the script); `treeRowsVia` maps each tree.gedcomx.json row that tool writes to the research.json section whose op writes it.",
-    "tool": "research_append",
+    "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the writer tools guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins them against the script): `research_append`, and `evaluation_append`, which is `research_append` scoped to `evaluations` by tool identity and routed the same way (issue #1491). A row's `hookCallers` counts for whichever of these tools its `writerTools` also lists. `treeRowsVia` maps each tree.gedcomx.json row `research_append` writes to the research.json section whose op writes it (evaluation_append writes no tree row).",
+    "tool": [
+      "research_append",
+      "evaluation_append"
+    ],
     "treeRowsVia": {
       "persons": "assertions",
       "sources": "sources"
@@ -535,12 +538,17 @@
       "writerTools": [
         "evaluation_append"
       ],
-      "enforceableAt": [],
-      "notes": "The owner is an agent, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it cannot express an agent owner. Since 2026-09-02 test_no_out_of_lane_section_writes does see the agent caller, and because evaluations is outside proof-conclusion's lane a write there from that agent IS denied on the unit plane — incidentally, via the lane rule, not as a declared owner check for this row. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
-      "requires": "Only the gps-mentor agent appends an evaluation. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
-      "failure": "A skill appending its own evaluation grades its own work, and the mandatory proof critique becomes self-issued.",
+      "enforceableAt": [
+        "hook"
+      ],
+      "notes": "The owner is an agent, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it cannot express an agent owner. Enforced at the hook plane since 2026-10-27 (issue #1491): the plugin PreToolUse hook routes `evaluations` to the gps-mentor agent in OWNED_SECTIONS and gates `evaluation_append` as well as `research_append`, so the main thread cannot append an evaluation and `research_append` can no longer reach the section for anyone. `hookCallers` names the agent for that plane. Since 2026-09-02 test_no_out_of_lane_section_writes also sees the agent caller, and because evaluations is outside proof-conclusion's lane a write there from that agent IS denied on the unit plane — incidentally, via the lane rule, not as a declared owner check for this row. The section stays off the unit plane (test_ownership_manifest). Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
+      "requires": "Only the gps-mentor agent appends an evaluation, through evaluation_append. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
+      "failure": "A skill or the main thread appending its own evaluation grades its own work, and the mandatory proof critique becomes self-issued.",
       "remedy": "Invoke gps-mentor and let it write the entry.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:gps-mentor"
+      ]
     },
     {
       "artifact": "research.json",

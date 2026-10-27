@@ -2353,9 +2353,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Every member is enforced here — today just
-        # `image_read`, since `extraction_append` (#942) left the set in issue
-        # #2937 — because no remaining member is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — `image_read` and
+        # `evaluation_append` (#1491), since `extraction_append` (#942) left the
+        # set in issue #2937 — because no member is declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
