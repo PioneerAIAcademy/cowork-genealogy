@@ -40,7 +40,7 @@ So the split is:
 |---|---|---|---|
 | Jurisdictions, boundary changes, register start dates, indexing quirks, record loss and substitutes | place | `locality-guide` | the `localities` entry research-plan reads |
 | Levy rolls for sons, naming conventions | subject × country | `research-plan` | `wiki_read` in the Step 3 pre-work block |
-| Which records exist for the place | place | `research-plan` | `collections_search`, `volume_search`, `external_links_search` |
+| Which records exist for the place | place | `research-plan` | `collections_search`, `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
 | Relatives, facts and attached sources the project tree lacks | the question person | `research-plan` | `person_read`, for each question person whose tree entry has an `ark`, before any plan item |
 | Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and its Appendices A and B |
 
