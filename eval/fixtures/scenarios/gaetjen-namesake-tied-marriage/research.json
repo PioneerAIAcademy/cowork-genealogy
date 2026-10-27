@@ -951,6 +951,69 @@
       ],
       "log_entry_id": "log_005",
       "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XLXS-73D",
+      "record_role": "bride",
+      "record_persona_id": "p_10727698601",
+      "fact_type": "relationship",
+      "value": "child of Hermann Gaetjen",
+      "information_quality": "secondary",
+      "informant": "bride",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      }
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XLXS-73D",
+      "record_role": "bride",
+      "record_persona_id": "p_10727698601",
+      "fact_type": "relationship",
+      "value": "child of Amelia Nichols",
+      "information_quality": "secondary",
+      "informant": "bride",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      }
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:XLXS-73D",
+      "record_role": "father_of_bride",
+      "record_persona_id": "p_10727698602",
+      "fact_type": "relationship",
+      "value": "spouse of Amelia Nichols",
+      "information_quality": "secondary",
+      "informant": "bride",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_bride"
+      }
     }
   ],
   "person_evidence": [],

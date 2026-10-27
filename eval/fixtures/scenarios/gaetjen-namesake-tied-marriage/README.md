@@ -11,7 +11,12 @@ attaches it to I1, I3 and I4 (S8, S33, S48).
 
 Assertions `a_020` (father of the bride, name), `a_021` (mother of the bride,
 name), `a_022` to `a_024` (the bride: name, birth 1884, marriage) carry the
-record's own persona ids. No `person_evidence` exists yet.
+record's own persona ids. So do `a_025` and `a_026` (the bride as child of each
+parent) and `a_027` (the father as the mother's spouse): the relationship
+assertions `extraction_append` writes from the record's ParentChild and Couple
+edges, with the values and `structured_value` it gives them. The parentage
+is stated by those three, so the parents' name assertions belong to the parents
+alone. No `person_evidence` exists yet.
 
 **What it tests.** With a namesake recorded on I1, `research_append` refuses a
 link from this record to I1 above `speculative` unless something in the record
