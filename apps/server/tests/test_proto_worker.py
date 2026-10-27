@@ -6365,3 +6365,202 @@ def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
     assert cols[-1] == "wrote", "wrote must stay LAST — _tool_call_decisions reads p[6] positionally"
     assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
 
+
+
+# ── the completion halt end to end (#3542 lead 1) ─────────────────────────────────────
+
+_POSTTOOL_DICT = json.loads(
+    (Path(__file__).parent / "fixtures" / "agent_returns" / "posttool_dict.json").read_text(encoding="utf-8")
+)["tool_response"]
+
+
+class AgentCall:
+    """A main-thread Agent call: the fake client fires the turn's REAL PreToolUse hook, sets
+    the project's status as the agent's own write would, then fires its REAL PostToolUse
+    hook with ``tool_response``."""
+
+    def __init__(self, subagent_type: str, status_after: str, tool_response: Any = None,
+                 during: list | None = None) -> None:
+        self.subagent_type = subagent_type
+        self.during = during or []  # the agent's own tool calls, fired between the two hooks
+        self.status_after = status_after
+        self.tool_response = _POSTTOOL_DICT if tool_response is None else tool_response
+        self.posttool_reply: dict | None = None
+
+
+class AgentCallClient(FakeClient):
+    def __init__(self, messages, info, env, research: dict) -> None:
+        super().__init__(messages, info, env)
+        self.research = research
+
+    async def receive_response(self):
+        for m in self.messages:
+            if isinstance(m, AgentCall):
+                opts = self.env["options"]
+                self.tool_uses += 1
+                tid = f"toolu_{self.tool_uses}"
+                data = {"tool_name": "Agent", "tool_input": {"subagent_type": m.subagent_type}}
+                self.pretool_replies.append(await opts["pretool_hook"](data, tid, None))
+                for inner in m.during:
+                    await self._fire_pretool(inner)
+                self.research["project"]["status"] = m.status_after
+                m.posttool_reply = await opts["posttool_hook"]({**data, "tool_response": m.tool_response}, tid, None)
+                continue
+            if isinstance(m, ToolCall):
+                await self._fire_pretool(m)
+                continue
+            if isinstance(m, StopDispatch):
+                await self._fire_stop()
+                continue
+            yield m
+
+
+def _text_events(conn: FakeConn) -> list[str]:
+    out = []
+    for sql, params in conn.executed:
+        if sql.startswith("INSERT INTO session_events") and params and params[2] == "text":
+            payload = getattr(params[3], "obj", params[3])
+            out.append(payload.get("text"))
+    return out
+
+
+def _run_agent_call(turn_env, monkeypatch, *, status_before: str, call: AgentCall) -> dict:
+    research = {"project": {"status": status_before}}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    return asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+
+
+def test_a_completing_proof_conclusion_call_ends_the_turn_completed_on_its_summary(turn_env, monkeypatch):
+    """End to end through the REAL hooks: the posttool-level tests cannot see the worker's
+    closure (`on_completed`), nor the text event written after the receive loop."""
+    call = AgentCall("genealogy-research:proof-conclusion", "completed")
+    summary = _run_agent_call(turn_env, monkeypatch, status_before="active", call=call)
+    from app.agent.continue_policy import summary_for_user
+
+    expected = summary_for_user(_POSTTOOL_DICT)
+    assert call.posttool_reply == {"continue_": False, "stopReason": expected}
+    assert summary["outcome"] == "completed", f"a completion halt recorded {summary['outcome']!r}"
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == "completed", "and the row says so too"
+    assert _text_events(turn_env["conn"]) == [expected], "the summary is shown as the turn's text"
+
+
+@pytest.mark.parametrize(
+    ("label", "status_before", "call"),
+    [
+        ("already completed", "completed", AgentCall("proof-conclusion", "completed")),
+        ("still open", "active", AgentCall("proof-conclusion", "active")),
+        ("another agent", "active", AgentCall("citation", "completed",
+                                              {"agentType": "citation", "content": "x\n---\ny"})),
+    ],
+)
+def test_no_completion_halt(turn_env, monkeypatch, label, status_before, call):
+    summary = _run_agent_call(turn_env, monkeypatch, status_before=status_before, call=call)
+    assert call.posttool_reply == {}, label
+    assert summary["outcome"] == "ok", f"{label}: no halt, so no terminal reason ({summary['outcome']!r})"
+    assert _text_events(turn_env["conn"]) == [], label
+
+
+def test_once_the_store_is_down_the_completion_halt_reads_nothing(turn_env, monkeypatch):
+    """The store-down discipline above, for the completion halt's two reads: a
+    proof-conclusion call after the outage neither reads the status before it nor the
+    project after it, and does not halt on a guess."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "stop_requested",
+                        _outage(worker.psycopg.OperationalError("server closed the connection"), after=0))
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), ToolCall(), call, _result(num_turns=0)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    assert reads == [], "the completion halt read the project from a down store"
+    assert call.posttool_reply == {}
+
+
+def test_an_outage_during_the_call_skips_the_read_after_it(turn_env, monkeypatch):
+    """The status before the call was read with the store up; the agent's own tool call
+    then finds it down. The read after the call is skipped, and no halt fires."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "stop_requested",
+                        _outage(worker.psycopg.OperationalError("server closed the connection"), after=1))
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "completed", during=[ToolCall(agent_id="sub-1")])
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=0)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    assert reads == [1], "read once before the call, and not again from a down store"
+    assert call.posttool_reply == {}
+
+
+def _spend_capped(monkeypatch, spent_after: list[float]) -> None:
+    """The spend clause reads `spent_after` in order: under the cap, then over it."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    spend = iter(spent_after)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: next(spend, spent_after[-1]))
+
+
+def test_a_completion_does_not_clobber_a_halt_the_agent_met(turn_env, monkeypatch):
+    """One of the agent's own calls meets the spend cap mid-call; when the call returns
+    with the project completed, the turn stays `budget` and shows no summary."""
+    _spend_capped(monkeypatch, [1.0, 40.0])
+    call = AgentCall("proof-conclusion", "completed", during=[ToolCall(agent_id="sub-1")])
+    summary = _run_agent_call(turn_env, monkeypatch, status_before="active", call=call)
+    assert summary["outcome"] == "budget", f"the spend halt was overwritten: {summary['outcome']!r}"
+    assert _text_events(turn_env["conn"]) == []
+
+
+def test_a_halted_proof_conclusion_call_reads_nothing(turn_env, monkeypatch):
+    """Over the cap before the call: the PreToolUse hook halts it, so the status is not
+    read for a call that never reaches PostToolUse."""
+    _spend_capped(monkeypatch, [40.0])
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "active")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=1)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert turn_env["client"].pretool_replies[0].get("continue_") is False, "the spend cap halted the call"
+    assert reads == [], "read the status before a call the hook had halted"
+
+
+def test_a_raising_status_read_lets_the_call_run(turn_env, monkeypatch):
+    """The reads are an optimisation: one that raises is logged, the call runs, and the
+    turn ends as it does today, with no halt."""
+    research = {"project": {"status": "active"}}
+
+    def boom(conn, project_id):
+        raise RuntimeError("documents row unreadable")
+
+    monkeypatch.setattr(worker, "read_research", boom)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert call.posttool_reply == {}
+    assert summary["outcome"] == "ok"

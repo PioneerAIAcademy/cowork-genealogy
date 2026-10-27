@@ -52,9 +52,12 @@ from .continue_policy import (
     delivered_stop_reason,
     foreground_rewrite,
     DELIVERY_GUIDANCE,
+    completion_halt_summary,
     env_int,
+    status_before_call,
     read_research_json,
     should_continue_run,
+    wants_status_before,
 )
 from .errors import UNEXPECTED, classify, log_operator
 from .mcp_health import (
@@ -269,6 +272,10 @@ _PRETOOL_MATCHER = "|".join(
         *(f".*{t}$" for t in DEVICE_WRITE_TOOLS),
     )
 )
+
+# The completion halt's matcher, on both its arms: only the delegation tools, anchored like
+# `_PRETOOL_MATCHER`, so its research.json reads never run on any other call.
+_DELEGATION_MATCHER = "^(" + "|".join(sorted(DELEGATION_TOOLS)) + ")$"
 
 # How long the CLI waits for a PreToolUse callback before giving up on it.
 #
@@ -841,7 +848,13 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     sandboxes in one process cannot read each other's progress. It is what
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
-    counter = {"tool_calls": 0, "turn_tool_calls": 0, "delivered": False, "continuations": 0}
+    counter = {
+        "tool_calls": 0, "turn_tool_calls": 0, "delivered": False, "continuations": 0,
+        # The completion halt (#3542 lead 1): the status just before each main-thread
+        # proof-conclusion call, by tool_use_id, and the summary to show.
+        "status_before": {},
+        "completion_summary": None,
+    }
     # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
     # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
     # across two stops); `delivered` is not, and the dict outlives the turn because
@@ -914,7 +927,48 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
                 _log(f"[agent] halt check failed, allowing: {type(exc).__name__}: {exc}")
         return {}
 
+    async def completion_status(_input_data, _tool_use_id, _ctx):
+        """PreToolUse, delegations only: the project's status just before a main-thread
+        proof-conclusion call, the "before" of the completion halt's transition. Reads
+        research.json for those calls and no other, which is why it is not in
+        ``count_only``. Never raises, and never changes the call."""
+        data = _input_data or {}
+        try:
+            use_id = _tool_use_id or data.get("tool_use_id")
+            if use_id and wants_status_before(data):
+                counter["status_before"][str(use_id)] = status_before_call(read_research_json(project_dir))
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            _log(f"[agent] completion status read failed: {type(exc).__name__}: {exc}")
+        return {}
+
+    async def completion_halt(_input_data, _tool_use_id, _ctx):
+        """PostToolUse: end the turn after the main-thread proof-conclusion call that
+        completes the project, on the agent's own ``summary_for_user``. The main thread's
+        next model call would only paraphrase it (#3542 lead 1). The decision is
+        ``continue_policy.completion_halt_summary``, shared with the worker. A call with no
+        status reading counts as already completed, so the halt never fires on a guess.
+        ``stopReason`` never reaches the browser on this plane, so ``handle_turn`` emits the
+        summary as the turn's text. Never raises."""
+        data = _input_data or {}
+        try:
+            use_id = str(_tool_use_id or data.get("tool_use_id"))
+            summary = completion_halt_summary(
+                data, counter["status_before"].get(use_id, "completed"),
+                lambda: read_research_json(project_dir),
+            )
+            if summary is None:
+                return {}
+            counter["completion_summary"] = summary
+            _log("[agent] project completed — ending the turn on the agent's summary")
+            return {"continue": False, "stopReason": summary}
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            _log(f"[agent] completion halt failed, allowing: {type(exc).__name__}: {exc}")
+            return {}
+
     hooks = {
+        "PostToolUse": [
+            HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_halt], timeout=_PRETOOL_TIMEOUT_S),
+        ],
         "PreToolUse": [
             HookMatcher(matcher=None, hooks=[count_only], timeout=_PRETOOL_TIMEOUT_S),
             HookMatcher(
@@ -922,6 +976,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
                 hooks=[_pretool_hook],
                 timeout=_PRETOOL_TIMEOUT_S,
             ),
+            HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_status], timeout=_PRETOOL_TIMEOUT_S),
         ]
     }
     if AUTONOMOUS_MAX_NUDGES > 0:
@@ -1589,6 +1644,10 @@ class RealAgent:
             counter["effort_seen"] = {}
             counter["effort_injected"] = 0
             counter["effort_model_chosen"] = 0
+            # The completion halt's per-turn state: the summary to show, and the statuses
+            # read before this turn's proof-conclusion calls.
+            counter["completion_summary"] = None
+            counter["status_before"] = {}
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -1834,6 +1893,11 @@ class RealAgent:
                                 "continuations": counter.get("continuations") if counter else None,
                             },
                         )
+                    # A completion halt ended the turn on the agent's summary, which the
+                    # browser never receives as `stopReason`: show it as the turn's text.
+                    hook_counter = getattr(self, "_hook_counter", None)
+                    if hook_counter and hook_counter.get("completion_summary"):
+                        yield _event("text", text=hook_counter["completion_summary"])
                     yield _event(
                         "usage",
                         cost_usd=d_cost,
