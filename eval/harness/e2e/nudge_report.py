@@ -81,6 +81,13 @@ from e2e.runlog_selection import (
 )
 from e2e.stop_checker import classify_hand_back
 
+#: Every class `classify_hand_back` can return. Listed once, because a
+#: hardcoded tuple at the print site silently DROPPED a class the predicate
+#: had gained: the counts still summed to something plausible, so nothing
+#: looked wrong. `step_offer` is step mode's live line and would have been
+#: invisible in every report.
+HAND_BACK_CLASSES = ("step_offer", "step", "silent", "completion_claim")
+
 # `**[HARNESS]** continue-nudge 1/20: agent yielded before …` in a transcript,
 # and the same text as a `narration` entry's `text`. The counter is captured so
 # a malformed line cannot silently read as a nudge.
@@ -135,7 +142,7 @@ class Nudge(NamedTuple):
     after_tool: str   # the tool call it yielded after, or "" when unknown
     excerpt: str      # the agent's last words before yielding
     seam: str
-    hand_back: str    # "step" | "silent" | "completion_claim" (classify_hand_back)
+    hand_back: str    # one of HAND_BACK_CLASSES (classify_hand_back)
 
 
 def classify(excerpt: str, after_tool: str, full_text: str | None = None) -> tuple[str, str]:
@@ -352,7 +359,7 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
                 if tool_calls_total
                 else ""
             )
-            for k in ("step", "silent", "completion_claim")
+            for k in HAND_BACK_CLASSES
         ),
         (
             f"  over {tool_calls_total} tool call(s) in the scanned runs"
@@ -361,6 +368,8 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
         ),
         "  (step should be 0 on runs since PR #2870 retired the line, 2026-09-27;"
         " earlier runs carry it from init-project and question-selection)",
+        "  (step_offer is step mode's LIVE line, so on a step-mode run it should be"
+        " most of them; on a pre-step-mode run it should be 0)",
         "",
         "By seam — which artifact had just been written:",
     ]
