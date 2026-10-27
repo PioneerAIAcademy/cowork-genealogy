@@ -73,6 +73,13 @@ the subject's first husband Mathias Maron (b. ~1805) is a different, younger man
 the 1792 groom. That 1792 record is **not** used as evidence for the subject's
 parents.
 
+The shared parental names (Antoni/Antonius Skóra and Elżbieta/Elisabeth, with
+variant Skowron–, Skowronionka–, and Skrownionka– spellings) do not establish
+that the two Lucias belonged to the same couple. If the reported birth date of
+approximately 1771 for the older Lucia is correct, she and Lucia baptized in
+1807 could not both be daughters of the same couple. This distinction does not
+change finding f1, whose stated parents come from the 1807 baptism index.
+
 **Limitations.** This is an index-based identification partly by elimination;
 `image_basis` is false. The **12 November 1832 Skrzypek–Skóra marriage entry** — the
 record that would state the bride's age, parents, and widow status directly —
