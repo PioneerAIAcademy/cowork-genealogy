@@ -447,6 +447,18 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _step_mode(spec: TestSpec) -> str | None:
+    """`execution.step_mode`: the mode this test's turn runs under (decision 25).
+
+    None -- the default, and every test in the corpus today -- means NO boundary, so
+    the test measures what it always measured. A test opts in by naming `step`, `job`
+    or `wrapup`. Enforcing by default would change what every existing test measures,
+    and the only place that would show is a paid run.
+    """
+    mode = (spec.execution or {}).get("step_mode")
+    return mode if isinstance(mode, str) and mode.strip() else None
+
+
 def _stop_at_stub(spec: TestSpec) -> bool:
     """Whether a positive test ends at its first stubbed hand-off (#3119).
 
@@ -653,6 +665,7 @@ async def _execute_single_run(
         stub_agents=_stub_agents(spec, paths.skills_dir),
         live_agents=_live_agents(spec),
         stop_at_stub=_stop_at_stub(spec),
+        step_mode=_step_mode(spec),
         tool_search=tool_search,
     )
 
@@ -1108,6 +1121,7 @@ async def _execute_skill_with_retry(
     stub_agents: dict[str, str | None] | None = None,
     live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
+    step_mode: str | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
     tool_search: bool = True,
@@ -1201,6 +1215,7 @@ async def _execute_skill_with_retry(
                         stub_agents=stub_agents,
                         live_agents=live_agents,
                         stop_at_stub=stop_at_stub,
+                        step_mode=step_mode,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.

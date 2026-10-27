@@ -788,6 +788,10 @@ describe("the guard script's decisions", () => {
     ["resolution_rationale alone", { resolution_rationale: "..." }],
     ["resolution_kind alone", { resolution_kind: "tree" }],
     ["resolved_value alone", { resolved_value: "1850" }],
+    // What moves a question from conflict-resolution to ending on an unsettled
+    // conflict. Unrouted, the main thread could stamp it onto an analysed
+    // conflict and end the research without a weighing.
+    ["weighed_log_entry_ids alone", { weighed_log_entry_ids: ["log_1"] }],
     // The only moot the tool accepts carries a rationale, so a moot is the
     // agent's too. Pinned so nobody "fixes" the hook to let one through.
     ["a moot, with the rationale the tool requires", { status: "moot", resolution_rationale: "a different Patrick" }],
@@ -898,11 +902,10 @@ describe("the guard script's decisions", () => {
   it.each([
     ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
-    ["known_holdings", { section: "known_holdings", op: "append", entry: {} }],
     ["both in one batch", {
       ops: [
+        { section: "project", op: "update", fields: { objective: "x" } },
         { section: "researcher_profile", op: "update", fields: {} },
-        { section: "known_holdings", op: "append", entry: {} },
       ],
     }],
   ])("permits the init-project agent its own lane — %s", (_label, tool_input) => {

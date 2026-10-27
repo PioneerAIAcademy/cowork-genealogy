@@ -32,6 +32,12 @@ Caveats, review before committing:
   stop field #2539 retired on 2026-10-07, marked declared exhaustive; it is
   converted here to `search_stop`. The
   assertions carry the current `record_basis`.
+- **One volunteered note was moved out.** The run recorded the researcher's
+  statement "There's a Jonathan Barker who died earlier with the same name; he
+  isn't mine" — confirmed 20 Oct 2026 as the Jonathan Barker d. 28 Mar 1863,
+  buried Vicksburg, Warren Co., MS (Find a Grave index QVG2-WD9K, memorial
+  128559372) — in a section issue #2069 later deleted. It is kept here, not in
+  `research.json`.
 - **Names are real.** Everyone named is deceased and public in the Family Tree,
   as in the other MHGK-WT7 scenarios.
 - `results/` holds every sidecar the log references, because the validator

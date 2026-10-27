@@ -44,6 +44,7 @@ RUN pip install --require-hashes -r requirements.txt
 
 COPY apps/server/proto/enqueue.py ./
 COPY apps/server/proto/grants.py ./
+COPY apps/server/proto/turn_message.py ./
 COPY apps/server/proto/migrate.py ./
 COPY apps/server/proto/sql ./sql
 COPY apps/server/proto/web ./web
