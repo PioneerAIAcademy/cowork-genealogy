@@ -26,12 +26,6 @@
     "researcher_profile": {
       "$ref": "#/$defs/researcher_profile"
     },
-    "known_holdings": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/known_holding"
-      }
-    },
     "questions": {
       "type": "array",
       "items": {
@@ -192,52 +186,6 @@
             "null"
           ],
           "description": "Free text naming who the finished write-ups are for (e.g. \"my cousins, none of them researchers\"; \"submission to NGSQ\"). Read by gps-mentor's narrative-craft checks (gps-mentor-agent-spec.md §6.4) so audience calibration is judged against a stated audience rather than guessed from the prose. Not written by init-project — set by hand, or leave absent and the mentor infers the audience and states which one it assumed."
-        }
-      }
-    },
-    "known_holding": {
-      "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions once the document itself is extracted and cited, which sets 'promoted' to true; the entry is never deleted.",
-      "type": "object",
-      "required": [
-        "id",
-        "holding_type",
-        "description",
-        "confidence",
-        "promoted",
-        "created"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^kh_"
-        },
-        "holding_type": {
-          "$ref": "enums.schema.json#/$defs/holding_type"
-        },
-        "description": {
-          "type": "string"
-        },
-        "relevant_facts": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "relates_to_person_ids": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "confidence": {
-          "$ref": "enums.schema.json#/$defs/holding_confidence"
-        },
-        "promoted": {
-          "type": "boolean"
-        },
-        "created": {
-          "$ref": "enums.schema.json#/$defs/iso_date"
         }
       }
     },

@@ -17,20 +17,6 @@
     ],
     "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
   },
-  "known_holdings": [
-    {
-      "id": "kh_001",
-      "holding_type": "oral_knowledge",
-      "description": "There's a Jonathan Barker who died earlier with the same name; he isn't mine.",
-      "relevant_facts": "A same-named Jonathan Barker who died earlier is a different man and must not be conflated with the subject. Researcher confirmed (20 Oct 2026) this is the Jonathan Barker d. 28 Mar 1863, buried Vicksburg, Warren Co., MS (Find a Grave index QVG2-WD9K, memorial 128559372).",
-      "relates_to_person_ids": [
-        "I1"
-      ],
-      "confidence": "confident",
-      "promoted": false,
-      "created": "2026-10-20"
-    }
-  ],
   "questions": [
     {
       "id": "q_001",
