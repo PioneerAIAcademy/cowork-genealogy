@@ -1449,13 +1449,15 @@ e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-nar
 	cd eval/harness && uv run python -m e2e.narration_figures_report ../runlogs/e2e
 
 .PHONY: e2e-latency
-e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | BY_STEP=1 for per-step wait+spend | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
-	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+	# BY_STEP reads usage.per_turn, which only a step-mode run has; every other
+	# run reports "no per-step data" rather than a table of zeroes.
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(BY_STEP),--by-step,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-cache-window
 e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e2e runs: make e2e-cache-window | TEST=<slug> | MD=1 for a Markdown table | SINCE=all|N|YYYY-MM-DD

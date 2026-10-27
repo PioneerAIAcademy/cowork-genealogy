@@ -423,6 +423,98 @@ def format_skill_phases(bd: LatencyBreakdown) -> str:
     return "\n".join(lines)
 
 
+
+def step_turns(result: dict[str, Any]) -> list[dict[str, Any]]:
+    """A step-mode run's per-turn rows, or [] for every other run.
+
+    `usage.per_turn` is written by `turn_loop.accumulate_usage` (step mode,
+    section F). Absent on every run before it and on every non-step run, which
+    is the normal case rather than a defect, so callers say "no per-step data"
+    rather than reporting zeroes.
+    """
+    usage = result.get("usage")
+    rows = usage.get("per_turn") if isinstance(usage, dict) else None
+    return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
+
+
+def per_step_wait(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """p50 and p90 of `wall_ms`, grouped by the step each turn ran.
+
+    The headline step mode is measured on is how long a researcher waits for ONE
+    response, so this groups by step rather than averaging the run. A turn that
+    ran no step is grouped under `(no step)` rather than dropped: it still cost
+    the researcher the wait, and dropping it would make the run's turns and the
+    table's counts disagree.
+
+    Steps come back in the order the RUN first reached them, not alphabetically
+    and not in the canonical pipeline order. Alphabetical scrambles a reader's
+    expectation (`conclude` printed above `setup`), and the canonical order would
+    need `step_boundary`, which only `orchestrator.py` loads -- and with it the
+    SDK, which `e2e/result.py` explains these reports must stay clear of. First
+    appearance also describes a run that revisited a step, which a fixed pipeline
+    order would silently flatten.
+    """
+    by_step: dict[str, list[float]] = {}
+    costs: dict[str, list[float]] = {}
+    order: list[str] = []
+    for row in rows:
+        step = row.get("step") or "(no step)"
+        if step not in order:
+            order.append(step)
+        wall = row.get("wall_ms")
+        if isinstance(wall, (int, float)) and not isinstance(wall, bool):
+            by_step.setdefault(step, []).append(float(wall) / 1000.0)
+        cost = row.get("total_cost_usd")
+        if isinstance(cost, (int, float)) and not isinstance(cost, bool):
+            costs.setdefault(step, []).append(float(cost))
+    out: dict[str, dict[str, Any]] = {}
+    for step in order:
+        waits = by_step.get(step, [])
+        spend = costs.get(step, [])
+        out[step] = {
+            "n": max(len(waits), len(spend)),
+            "p50_s": _percentile(waits, 0.5),
+            "p90_s": _percentile(waits, 0.9),
+            "cost_usd": round(sum(spend), 4) if spend else None,
+        }
+    return out
+
+
+def _percentile(values: list[float], q: float) -> float | None:
+    """Nearest-rank, the same definition `proto/steps.py` uses on the prototype
+    side, so an e2e figure and a prototype figure mean the same thing."""
+    if not values:
+        return None
+    ordered = sorted(values)
+    idx = max(0, min(len(ordered) - 1, round(q * (len(ordered) - 1))))
+    return ordered[idx]
+
+
+def format_per_step(bd_test_id: str, rows: list[dict[str, Any]]) -> str:
+    """A per-run block: what each step cost the researcher in wait and in money."""
+    if not rows:
+        return (
+            f"=== {bd_test_id} — no per-step data "
+            "(not a step-mode run, or predates usage.per_turn) ==="
+        )
+    table = per_step_wait(rows)
+    lines = [
+        f"=== {bd_test_id} — per-step wait and spend ({len(rows)} turn(s)) ===",
+        "  (wait is enqueue-to-last-message for ONE turn, which is what a researcher",
+        "   actually waits; a whole-run figure cannot answer that)",
+        f"  {'step':<26}{'n':>4}{'p50':>9}{'p90':>9}{'$':>9}",
+    ]
+    for step, fig in table.items():
+        p50 = f"{fig['p50_s']:.0f}s" if fig["p50_s"] is not None else "-"
+        p90 = f"{fig['p90_s']:.0f}s" if fig["p90_s"] is not None else "-"
+        cost = f"{fig['cost_usd']:.2f}" if fig["cost_usd"] is not None else "-"
+        lines.append(f"  {step:<26}{fig['n']:>4}{p50:>9}{p90:>9}{cost:>9}")
+    replies = [r.get("reply") for r in rows if r.get("reply")]
+    if replies:
+        counted = ", ".join(f"{k} x{v}" for k, v in Counter(replies).most_common())
+        lines.append(f"  replies the host sent: {counted}")
+    return "\n".join(lines)
+
 # --- Run discovery + CLI ----------------------------------------------------
 
 def latest_run_for(test_slug: str) -> Path | None:
@@ -497,6 +589,12 @@ def main(argv: list[str] | None = None) -> int:
         help="per-skill wall-clock phase breakdown instead of the whole-run summary "
         "(needs a run committed after 2026-07-26's timeline tool-name tagging)",
     )
+    ap.add_argument(
+        "--by-step",
+        action="store_true",
+        help="per-step wait (p50/p90) and spend instead of the whole-run summary "
+        "(step-mode runs only -- needs usage.per_turn)",
+    )
     args = ap.parse_args(argv)
 
     paths: list[Path] = [Path(f) for f in args.files]
@@ -527,6 +625,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.by_skill:
         for bd in [_load(p) for p in paths]:
             print(format_skill_phases(bd))
+            print()
+        return 0
+
+    if args.by_step:
+        # Reads the raw result rather than a `LatencyBreakdown`: `usage.per_turn`
+        # is per-TURN and the breakdown is one row per run. It skips
+        # `exclusion_reason` for the same reason `--by-skill` does -- that guard
+        # is about the whole-run summary's fields, and these are not those.
+        for path in paths:
+            result = json.loads(path.read_text(encoding="utf-8"))
+            print(format_per_step(result.get("test_id") or path.stem, step_turns(result)))
             print()
         return 0
 
