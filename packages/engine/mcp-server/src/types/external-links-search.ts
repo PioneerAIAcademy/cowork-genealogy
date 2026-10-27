@@ -27,6 +27,9 @@ export interface FSPlaceExternalResponse {
 export interface PlaceExternalLink {
   url: string;
   linkText: string;
+  /** Absent on an undated collection; both present otherwise. */
+  startYear?: number;
+  endYear?: number;
 }
 
 export interface ExternalLinksSearchResult {
