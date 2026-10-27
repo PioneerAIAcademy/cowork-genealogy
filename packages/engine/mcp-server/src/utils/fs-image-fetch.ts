@@ -206,8 +206,9 @@ function kindOf(value: unknown): string {
  * The `ark` a caller meant, settled before the input forms are counted.
  * `imageArk` is record_read's name for a page image and the key
  * research_log_append logs an image entry under, so callers carry it forward;
- * nothing refuses an unknown key, so without this fold the value was dropped
- * and the call failed as if no image had been named. When both name the same
+ * server.ts's unknown-argument guard accepts it as an alias on image_read and
+ * image_transcribe, and without this fold the value would be dropped and the
+ * call fail as if no image had been named. When both name the same
  * image, sameImageChoice says which is read; two that do not are refused
  * rather than one being picked, and so is an `ark` that is not a string, which
  * would otherwise be dropped for `imageArk` without a word. The resulting

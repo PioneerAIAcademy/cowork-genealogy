@@ -33,8 +33,10 @@ carrying them is used, whichever key it came in on: on a multi-image waypoint
 ARK `i=` picks the page, so the bare side could read another image. Two that
 both carry those params and differ, and any other pair, are refused before any
 fetch, and so is an `ark` that is not a string. An empty `imageArk` is not
-folded, so the no-input error names it. Like
-`memoryArtifactUrl`, it is accepted without being advertised on the schema.
+folded, so the no-input error names it. It is accepted without being advertised
+on the schema: `server.ts`'s unknown-argument guard lists it as an accepted
+alias for this tool (`ACCEPTED_ALIASES`, `src/utils/unknown-args.ts`), unlike
+`memoryArtifactUrl`, which the guard refuses here.
 
 **`memoryArtifactUrl` is not advertised, and over MCP it is refused.**
 `server.ts` refuses every argument key a tool's schema does not list
@@ -230,8 +232,8 @@ The tool returns two content blocks:
 | Condition | Message |
 |-----------|---------|
 | Not logged in | "Not authenticated. Call the login tool first." |
-| More than one of imageId, ark and memoryArtifactUrl provided | "Provide exactly one of imageId, ark, or memoryArtifactUrl." (`imageArk` counts as `ark`) |
-| None of them provided | "image_read requires one of imageId, ark, or memoryArtifactUrl. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
+| More than one of imageId, ark and memoryArtifactUrl provided (a direct call; over MCP `server.ts` refuses `memoryArtifactUrl` first) | "Provide exactly one of imageId or ark." (`imageArk` counts as `ark`) |
+| None of them provided | "image_read requires one of imageId or ark. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
 | `ark` and `imageArk` both given, and they do not name the same image (see Input) | "image_read was given both ark ('{ark}') and imageArk ('{imageArk}'), which do not name the same image. imageArk is another name for ark: pass only one." — thrown before any fetch |
 | `ark` is not a string | "image_read was given an ark that is not a string ({null, a number, an array, …}). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given." — thrown before any fetch, with or without `imageArk` |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |

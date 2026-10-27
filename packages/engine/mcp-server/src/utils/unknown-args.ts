@@ -1,4 +1,4 @@
-// The one guard on argument NAMES (issue #3736). The server does not validate
+// The one guard on argument NAMES (issue #3736). Before it, nothing checked
 // arguments against a tool's `inputSchema`, so a key that is not a parameter was
 // dropped and the tool ran as if it had never been sent: `record_search` with
 // `marriageYear` ran with no year filter, and with `collection` / `country` it
@@ -8,6 +8,8 @@
 
 import { allToolSchemas } from "../tool-schemas.js";
 import { RECORD_TYPE_GROUP_NAMES } from "./record-type-groups.js";
+import { RETIRED_EXTRACTION_KEYS, retiredExtractionMessage } from "../tools/extraction-append.js";
+import { SECTIONS_NEAR_MISS } from "../tools/research-query.js";
 import { levenshteinDistance } from "./string-similarity.js";
 
 const NEAREST = 3;
@@ -17,6 +19,16 @@ const PARAMETERS: ReadonlyMap<string, readonly string[]> = new Map(
     (t) => [t.name, Object.keys(t.inputSchema?.properties ?? {})],
   ),
 );
+
+/** Keys a handler reads that its schema deliberately does not advertise. Every
+ *  entry needs a reason; a key that is not read belongs on the schema or is
+ *  refused. */
+const ACCEPTED_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  // `foldImageArkInput` (fs-image-fetch.ts) reads it as `ark`: record_read hands
+  // page images out under this name, and callers carry it forward.
+  image_read: ["imageArk"],
+  image_transcribe: ["imageArk"],
+};
 
 /** A tool's own wording for some of its unknown keys: the message, and the keys
  *  it covers. Keys it leaves out get the generic line. */
@@ -28,12 +40,9 @@ const firstOf = (unknown: ReadonlyArray<[string, unknown]>, keys: readonly strin
   unknown.find(([k]) => keys.includes(k))?.[0];
 
 const HINTS: Readonly<Record<string, Hint>> = {
-  // A key whose name looks like an address, or whose value is a number, was
-  // meant to pick one item of the film.
+  // A key whose name reads as a place in the film was meant to pick one item.
   image_search: (unknown) => {
-    const key = unknown.find(
-      ([k, v]) => /item|image/i.test(k) || typeof v === "number" || (typeof v === "string" && /^\s*\d+\s*$/.test(v)),
-    )?.[0];
+    const key = unknown.find(([k]) => /item|image|page|frame/i.test(k))?.[0];
     if (key === undefined) return null;
     return {
       message:
@@ -63,22 +72,15 @@ const HINTS: Readonly<Record<string, Hint>> = {
       covers: [alias],
     };
   },
-  // The hand-built forms, in both spellings (`ops` with its `sourceDescription`,
-  // and one flat op), and the one-record extractor mode (`logEntryId` + `recordId`).
   extraction_append: (unknown) => {
-    const retiredKeys = ["ops", "sourceDescription", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId"];
-    const retired = retiredKeys.filter((k) => unknown.some(([u]) => u === k));
+    const retired = RETIRED_EXTRACTION_KEYS.filter((k) => unknown.some(([u]) => u === k));
     if (retired.length === 0) return null;
-    return {
-      message:
-        `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
-        "classifications are decided in code, so there is nothing for a caller to compose. Send " +
-        "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
-        "any other source, or `absences` for people a search did not find. Correcting an " +
-        "existing assertion is not an extraction and is not done here.",
-      covers: retired,
-    };
+    return { message: retiredExtractionMessage(retired), covers: [...retired] };
   },
+  research_query: (unknown) =>
+    unknown.some(([k]) => k === "sections")
+      ? { message: `research_query has no parameter \`sections\`. ${SECTIONS_NEAR_MISS}`, covers: ["sections"] }
+      : null,
 };
 
 /** The `NEAREST` parameters closest to `key` by edit distance, case folded;
@@ -99,7 +101,10 @@ export function rejectUnknownArgs(toolName: string, args: unknown): string | nul
   const parameters = PARAMETERS.get(toolName);
   if (parameters === undefined) return null;
   if (args === null || typeof args !== "object" || Array.isArray(args)) return null;
-  const unknown = Object.entries(args as Record<string, unknown>).filter(([k]) => !parameters.includes(k));
+  const accepted = ACCEPTED_ALIASES[toolName] ?? [];
+  const unknown = Object.entries(args as Record<string, unknown>).filter(
+    ([k]) => !parameters.includes(k) && !accepted.includes(k),
+  );
   if (unknown.length === 0) return null;
 
   const lines: string[] = [];
@@ -108,7 +113,11 @@ export function rejectUnknownArgs(toolName: string, args: unknown): string | nul
   for (const [key] of unknown) {
     if (hint?.covers.includes(key)) continue;
     const nearest = nearestParameters(key, parameters).map((p) => `\`${p}\``).join(", ");
-    lines.push(`${toolName} has no parameter \`${key}\`; the nearest are ${nearest}.`);
+    lines.push(
+      nearest === ""
+        ? `${toolName} takes no parameters; drop \`${key}\`.`
+        : `${toolName} has no parameter \`${key}\`; the nearest are ${nearest}.`,
+    );
   }
   lines.push("Nothing was run: an argument the tool does not take would have been ignored, not applied.");
   return lines.join(" ");

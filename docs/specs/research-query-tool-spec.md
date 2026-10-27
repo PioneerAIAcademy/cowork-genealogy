@@ -357,7 +357,9 @@ so that rule would be accepted and match nothing, ever.
 - **Plural ids, not plural sections (2026-10-14, T2.3; ruling 2026-10-10,
   Promise).** `section` stays one string — a call that bundles sections makes
   the answer's shape depend on the arguments, the reason T2.1's nested
-  `include` was rejected — and the `sections` near-miss message is unchanged.
+  `include` was rejected — and the `sections` near-miss message is unchanged
+  (`SECTIONS_NEAR_MISS`; over MCP `server.ts`'s unknown-argument guard answers
+  it before the handler, a direct call gets it from the handler).
   What is plural is the id: `personId`, `assertionId`, `sourceId`, `recordId`.
   - *The demand.* All 11 recorded plural attempts (1 in the e2e corpus, 10 in
     unit logs, counted for the T2.3 plan) asked for several **sections** and

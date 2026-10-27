@@ -183,6 +183,15 @@ describe("extraction_append: only the three call shapes", () => {
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
   });
 
+  it("still refuses a retired form called directly, as the unit harness calls it", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await extractionAppend({ projectPath: dir, recordIds: ["MZGS-1BH"], ops: [] } as any, LOCAL);
+    expect(r.ok).toBe(false);
+    expect((r.errors ?? []).join(" ")).toMatch(/no longer takes `ops`/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   it("refuses no call shape at all, and two current shapes together, naming them", async () => {
     await writeProject(withNilSearch());
     const none = await extractionAppend({ projectPath: dir } as any, LOCAL);

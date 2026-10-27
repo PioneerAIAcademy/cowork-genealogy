@@ -128,11 +128,11 @@ not be the Catalog's item.
 **Misspelled parameters are errors, never ignored.** `server.ts` refuses
 every key other than the three above (`rejectUnknownArgs`,
 `src/utils/unknown-args.ts`), so an unrecognised key never silently returns
-the whole film. A key whose name matches `/item|image/i` (`itemNumber`,
-`item_number`, `imageNumber`, `imageId`) or whose value is a number or
-all-digit string (`page: 10`, `frame: "632"`) gets this tool's own message,
-pointing to `item` / `itemImage`; any other key, `lookingFor` included, gets the
-generic one naming the nearest parameters.
+the whole film. A key whose name matches `/item|image|page|frame/i`
+(`itemNumber`, `item_number`, `imageNumber`, `imageId`, `page`, `frame`) gets
+this tool's own message, pointing to `item` / `itemImage`; any other key,
+`lookingFor` and `maxResults` included, gets the generic one naming the
+nearest parameters.
 
 ---
 

@@ -381,7 +381,8 @@ consistent across schema, manifest, and skill.)*
   `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
   `dgs:.../dist.jpg`).
 - `imageArk` — the field `record_read` returns a page image under, and the key
-  `research_log_append` logs an image entry by — is read as `ark`, and a query
+  `research_log_append` logs an image entry by — is read as `ark` (not on the
+  schema; `server.ts`'s unknown-argument guard accepts it as an alias), and a query
   string never decides an `ark`'s shape. Both are `foldImageArkInput`'s job, run
   first, before the forms are counted; the rules are `image-read-spec.md`'s
   (Input, and "ark format"), shared unchanged. Among them: when `ark` and

@@ -453,6 +453,12 @@ function disagreementsInScope(
     : found.filter((d) => assertionIds.some((id) => d.assertionIds.includes(id)));
 }
 
+/** The plural near-miss: `sections` is the mistake the model actually makes.
+ *  server.ts answers it at dispatch with this text; the handler, for a caller
+ *  that reaches it directly. */
+export const SECTIONS_NEAR_MISS =
+  "The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'.";
+
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
   const { projectPath, section } = input;
 
@@ -472,7 +478,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
           ? " Plan items live under section 'plans'."
           : section === undefined &&
               (input as unknown as Record<string, unknown>).sections !== undefined
-            ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+            ? ` ${SECTIONS_NEAR_MISS}`
             : "";
       throw new ResearchQueryError(
         `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +

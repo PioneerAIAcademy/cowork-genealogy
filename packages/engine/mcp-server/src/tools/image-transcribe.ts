@@ -201,8 +201,8 @@ export async function imageTranscribeTool(
     // the host check, unchanged.
     //
     // This resolution lives HERE, not in resolveFsImageInput, on purpose.
-    // `ImageReadInput extends FsImageInput`, so image_read already accepts
-    // memoryArtifactUrl without advertising it — lifting the resolve into the
+    // `ImageReadInput extends FsImageInput`, so a direct image_read call can
+    // carry memoryArtifactUrl (server.ts refuses it over MCP) — lifting the resolve into the
     // shared resolver would quietly give image_read page-URL support, against
     // the image_transcribe-only ruling (lead, 2026-09-29; placement confirmed
     // 2026-09-30). image_read would also mostly pay the lookup and then refuse

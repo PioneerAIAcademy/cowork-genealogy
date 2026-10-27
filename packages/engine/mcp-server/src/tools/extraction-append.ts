@@ -83,6 +83,24 @@ export async function extractionAppend(
   return runExtractionAppend(input, DEFAULT_DEPS, principal);
 }
 
+/** The hand-built forms, in both spellings (`ops` with its `sourceDescription`,
+ *  and one flat op), and the one-record extractor mode (`logEntryId` +
+ *  `recordId`). server.ts refuses them at dispatch with this message; the
+ *  handler refuses them too, for a caller that reaches it directly. */
+export const RETIRED_EXTRACTION_KEYS = [
+  "ops", "sourceDescription", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId",
+] as const;
+
+export function retiredExtractionMessage(retired: readonly string[]): string {
+  return (
+    `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
+    "classifications are decided in code, so there is nothing for a caller to compose. Send " +
+    "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
+    "any other source, or `absences` for people a search did not find. Correcting an " +
+    "existing assertion is not an extraction and is not done here."
+  );
+}
+
 /** `extractionAppend` with its record reader injected. The harness and the tests
  *  call this; production goes through `extractionAppend`. */
 export async function runExtractionAppend(
@@ -92,6 +110,10 @@ export async function runExtractionAppend(
 ): Promise<ExtractionBatchResult> {
   const MODES = ["recordIds", "documents", "absences", "personId"] as const;
   const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
+  const retired = RETIRED_EXTRACTION_KEYS.filter((k) => (input as any)?.[k] !== undefined);
+  if (retired.length > 0) {
+    return { ok: false, records: [], errors: [retiredExtractionMessage(retired)] };
+  }
   if (got.length !== 1) {
     return {
       ok: false,
