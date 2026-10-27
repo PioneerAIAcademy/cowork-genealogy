@@ -89,8 +89,8 @@ def test_person_warnings_runs_live_when_no_fixture_declared(tmp_path):
 
 
 def test_a_declared_fixture_beats_the_live_handler(tmp_path):
-    """`person_warnings` is the only tool in both LIVE_TOOLS and the fixture
-    corpus. The check-warnings suite drives it from fixtures tuned to specific
+    """`person_warnings` is in both LIVE_TOOLS and the fixture corpus, as
+    `project_list` is. The check-warnings suite drives it from fixtures tuned to specific
     tag combinations, so the test's own declaration must win — otherwise going
     live for everyone else would silently retune that suite. Registering both
     would define the name twice and the second would shadow the first, so the
@@ -1425,7 +1425,10 @@ def test_same_person_attests_on_the_project_relative_arm(tmp_path):
     entry = rec["scores"]["a_001|I1"]
     assert entry["record_id"] == "1:1:ABCD-123"
     assert entry["tree_person_id"] == "I1"
-    assert entry["score"] == 0.005            # the fixture's own number
+    fixture = json.loads(
+        (FIXTURES_DIR / "same-person-flynn-degenerate.json").read_text(encoding="utf-8")
+    )
+    assert entry["score"] == fixture["response"]["score"]   # the fixture's own number
     assert entry["record_source"] == "record_read"   # persona id present
     assert call_log[-1]["attested"] is True
 
