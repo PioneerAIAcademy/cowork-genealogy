@@ -15,15 +15,16 @@
     ]
   },
   "input": {
-    "delegation": "Resolve conflict c_001 on Patrick Flynn's birthplace, then say what happens next.",
-    "scenario": "flynn-unresolved-conflict"
+    "delegation": "Work conflict c_001 on the mother's name, then say what happens next.\n\nprojectPath: <workspace>",
+    "scenario": "dutch-mother-name-disputed"
   },
   "judge_context": [
-    "The next-step recommendation must name **research-plan**, and should name the record type that would settle the conflict so the plan has something to act on.",
-    "Naming **question-selection**, or recommending a new research question, is the failure this test exists for. q_001 is still open and the conflict blocks it, so a second question would compete with the one already being worked.",
-    "Leaving c_001 `unresolved` with `preferred_assertion_id: null` is CORRECT here and must not be charged. A census birthplace against a death-certificate birthplace, with no further record, does not settle it. This test is about where the agent routes afterwards, not about whether it should have resolved.",
-    "The analysis fields (`independence_analysis`, `weighing_analysis`) should still be written even though the conflict stays unresolved. That is `ut_conflict_resolution_007`'s subject and is only noted here so a thin analysis is not read as this test passing.",
-    "Do not charge the agent for mentioning timeline as a way to test identity if it also names research-plan as the next step. The identity route is a different row of the same table and is unchanged."
+    "The next-step recommendation must name **research-plan**, and should name the record type that would settle the name — a different record carrying the mother's name, such as the marriage act itself or a baptism.",
+    "Naming **question-selection**, or recommending a new research question, is the failure this test exists for. q_001 is still open, and the evidence that would settle this is a SEARCH on that question, not a second question competing with it. This is the routing section E changed.",
+    "**The last line must be the offer**, written exactly as \"Continue with planning the searches?\". The host parses only the last line, against the step labels, so a reply that names research-plan mid-text and ends some other way offers the researcher nothing.",
+    "Leaving c_001 `unresolved` with `preferred_assertion_id: null` is CORRECT here and must not be charged. Three readings of one name — an OCR pass carrying [?], a ten-year index, and the researcher's own reading of the image — cannot be settled from what is on file; `ut_conflict_resolution_016` pins the same thing on this scenario.",
+    "The analysis fields (`independence_analysis`, `weighing_analysis`) should still be written even though the conflict stays unresolved.",
+    "Do not charge the agent for also acknowledging the researcher's reading; that is `_016`'s subject, not this test's."
   ],
   "judge_reads_files": true,
   "execution": {
