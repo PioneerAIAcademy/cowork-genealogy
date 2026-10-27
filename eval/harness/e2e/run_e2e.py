@@ -363,6 +363,19 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--step-mode",
+        choices=("step", "job"),
+        default=None,
+        help=(
+            "Run under step mode (docs/plan/research-step-mode.md section F): one "
+            "persistent session, one step per turn, each boundary answered by the "
+            "host's own next_auto_reply. `job` opens as a \"Keep going\" run, which "
+            "is what a fixture that should reach a proof wants; `step` runs one step "
+            "and stops. Default off: the one long turn every committed run used. "
+            "Recorded in the runlog's usage block as `step_mode`."
+        ),
+    )
+    parser.add_argument(
         "--deny-shell",
         action="store_true",
         help=(
@@ -481,6 +494,7 @@ def main(argv: list[str] | None = None) -> int:
         "deny_project_reads": args.deny_project_reads,
         "context_1m": args.context_1m,
         "tool_search": args.tool_search,
+        "step_mode": args.step_mode,
     }
 
     results: list[E2eResult] = []

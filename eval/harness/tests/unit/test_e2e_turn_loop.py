@@ -9,6 +9,7 @@ two caps -- the reply DECISION is injected and belongs to
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import sys
 from pathlib import Path
 
@@ -18,13 +19,8 @@ REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO / "eval" / "harness"))
 
 from e2e.turn_loop import (  # noqa: E402
-    STOP_ABORTED,
-    STOP_NO_REPLY,
-    STOP_REPLY_CAP,
-    STOP_SILENCE,
     Turn,
     accumulate_usage,
-    run_turns,
     stream_turns,
 )
 
@@ -60,21 +56,46 @@ class FakeClient:
         return stream()
 
 
-def drive(client, replies, **kw):
-    """`run_turns` with a canned reply per turn index, then None."""
+#: How a driven run ended: no reply was due, or the reply cap stopped it.
+STOP_NO_REPLY = "no_reply"
+STOP_REPLY_CAP = "reply_cap"
+
+
+@dataclass
+class Run:
+    turns: list
+    stop: str
+
+    @property
+    def replies_sent(self) -> int:
+        return max(0, len(self.turns) - 1)
+
+
+def drive(client, replies, *, decide_reply=None, on_message=None, max_replies=30):
+    """`stream_turns`, the loop production runs, with a canned reply per turn index.
+
+    `on_message` sees each message with the turn it belongs to, the way the
+    orchestrator's own message loop stamps `turns[-1]` before the reply is decided.
+    """
     def decide(turn):
         return replies[turn.index] if turn.index < len(replies) else None
 
-    return asyncio.run(
-        run_turns(
+    turns: list = []
+
+    async def go():
+        async for message in stream_turns(
             client=client,
             first_message="find his parents",
-            decide_reply=kw.pop("decide_reply", decide),
-            max_replies=kw.pop("max_replies", 30),
-            timeout_s=kw.pop("timeout_s", 30),
-            **kw,
-        )
-    )
+            decide_reply=decide_reply or decide,
+            turns=turns,
+            max_replies=max_replies,
+        ):
+            if on_message is not None:
+                on_message(message, turns[-1])
+
+    asyncio.run(go())
+    stop = STOP_NO_REPLY if not turns or turns[-1].reply is None else STOP_REPLY_CAP
+    return Run(turns=turns, stop=stop)
 
 
 def test_one_turn_with_no_reply_due_is_the_whole_run():
@@ -151,22 +172,6 @@ def test_the_cap_is_checked_before_sending_so_it_never_buys_an_extra_turn():
     out = drive(client, ["Keep going."] * 5, max_replies=0)
     assert out.stop == STOP_REPLY_CAP
     assert client.sent == ["find his parents"], "a cap of 0 still runs the fixture's own turn"
-
-
-def test_silence_inside_a_turn_ends_the_run_with_the_stall_reason():
-    client = FakeClient([["a"], []], stall_on=1)
-    out = drive(client, ["Keep going."], timeout_s=0.05)
-    assert out.stop == STOP_SILENCE
-    # The stalled turn is still recorded, with the time it burned.
-    assert len(out.turns) == 2 and out.turns[-1].sent == "Keep going."
-
-
-def test_a_raising_turn_is_recorded_rather_than_swallowed():
-    client = FakeClient([["a"], []], raise_on=1)
-    out = drive(client, ["Keep going."])
-    assert out.stop == STOP_ABORTED
-    assert isinstance(out.error, RuntimeError) and "CLI died" in str(out.error)
-    assert len(out.turns) == 2
 
 
 def test_wall_time_is_recorded_per_turn_not_per_run():
@@ -318,14 +323,29 @@ def test_the_top_level_figures_are_the_whole_run_not_the_last_turn():
     these as the run's figures and the spend cap was sized from them."""
     turns = [
         _turn(0, duration_ms=1000, duration_api_ms=800, num_turns=3, total_cost_usd=1.5),
-        _turn(1, duration_ms=2000, duration_api_ms=1500, num_turns=4, total_cost_usd=2.5),
-        _turn(2, duration_ms=500, duration_api_ms=400, num_turns=1, total_cost_usd=0.25),
+        _turn(1, duration_ms=2000, duration_api_ms=2300, num_turns=4, total_cost_usd=4.0),
+        _turn(2, duration_ms=500, duration_api_ms=2700, num_turns=1, total_cost_usd=4.25),
     ]
     out = accumulate_usage(turns)
+    # Running totals on a persistent session (the CLI's own field doc): the latest
+    # is the run's. Summing these would report 9.75 for a 4.25 run.
     assert out["total_cost_usd"] == 4.25
-    assert out["duration_ms"] == 3500
     assert out["duration_api_ms"] == 2700
+    # Per-turn quantities are summed.
+    assert out["duration_ms"] == 3500
     assert out["num_turns"] == 8
+
+
+def test_each_turn_s_cost_is_its_step_over_the_previous_running_total():
+    """Decision 28 wants cost per step, and the CLI reports a running total."""
+    turns = [
+        _turn(0, step="research-plan", total_cost_usd=1.5),
+        _turn(1, step="search-records", total_cost_usd=4.0),
+        _turn(2, step="person-evidence"),  # killed before its ResultMessage
+        _turn(3, step="research-exhaustiveness", total_cost_usd=4.25),
+    ]
+    out = accumulate_usage(turns)
+    assert [p.get("total_cost_usd") for p in out["per_turn"]] == [1.5, 2.5, None, 0.25]
 
 
 def test_the_ending_fields_come_from_the_last_turn_not_the_sum():
@@ -367,7 +387,7 @@ def test_the_per_turn_breakdown_carries_step_and_wall_time():
         _turn(0, step="search-records", wall_ms=1000, sent="go", reply="Keep going.",
               total_cost_usd=1.5, num_turns=3),
         _turn(1, step="person-evidence", wall_ms=2000, sent="Keep going.",
-              total_cost_usd=2.5, num_turns=4),
+              total_cost_usd=4.0, num_turns=4),
     ]
     out = accumulate_usage(turns)
     assert [(p["step"], p["wall_ms"], p["total_cost_usd"]) for p in out["per_turn"]] == [
@@ -424,7 +444,7 @@ def test_a_boolean_is_never_summed_as_a_number():
         "usage": {"input_tokens": 100, "cache_hit": True},  # a token field carrying one
     }
     sane = Turn(index=1, sent="Keep going.")
-    sane.usage = {"num_turns": 3, "total_cost_usd": 1.0, "usage": {"input_tokens": 50}}
+    sane.usage = {"num_turns": 3, "total_cost_usd": 3.0, "usage": {"input_tokens": 50}}
 
     out = accumulate_usage([malformed, sane])
     # The bool is not counted as 1: the sum is the one real figure.

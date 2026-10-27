@@ -115,9 +115,10 @@ def test_the_schema_admits_the_three_modes_and_nothing_else():
 
 
 def test_all_three_planes_load_the_same_boundary_file():
-    """The worker, the unit harness and the e2e orchestrator each load the plugin's
-    `step_boundary.py` with importlib. Three loaders, ONE file -- which is the whole
-    reason StepGate lives in the plugin rather than in the worker.
+    """The worker and the harness each load the plugin's `step_boundary.py` with
+    importlib -- two loaders, because the worker image carries no eval harness, and
+    the e2e orchestrator uses the unit harness's. ONE file either way, which is the
+    whole reason StepGate lives in the plugin rather than in the worker.
 
     A plane that grew its own copy would drift exactly as the write-lockdown's three
     copies did, one of which was a silent no-op on Windows for two releases (#1228).
@@ -128,7 +129,7 @@ def test_all_three_planes_load_the_same_boundary_file():
 
     expected = REPO / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
     assert skill_runner._STEP_BOUNDARY == expected
-    assert orchestrator._STEP_BOUNDARY == expected
+    assert orchestrator.load_step_boundary is skill_runner.load_step_boundary
     # The worker resolves its path through ENGINE_PLUGIN_DIR, so compare what it loads.
     assert options._default_plugin_dir() / "hooks" / "step_boundary.py" == expected
 
@@ -143,3 +144,71 @@ def test_each_plane_gets_a_module_carrying_the_gate():
         module = load()
         assert callable(module.step_allowed), load
         assert hasattr(module, "StepGate"), load
+
+
+# ── Section F: the e2e persistent-session path ────────────────────────────────────
+
+import ast as _ast  # noqa: E402
+
+from e2e import orchestrator as _e2e  # noqa: E402
+from e2e.turn_loop import Turn as _Turn  # noqa: E402
+
+
+def _calls_in(func_name: str, callee: str) -> list[_ast.Call]:
+    tree = _ast.parse(Path(_e2e.__file__).read_text(encoding="utf-8"))
+    for node in _ast.walk(tree):
+        if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)) and node.name == func_name:
+            return [c for c in _ast.walk(node) if isinstance(c, _ast.Call)
+                    and isinstance(c.func, _ast.Name) and c.func.id == callee]
+    raise AssertionError(f"{func_name} not found")
+
+
+def test_run_e2e_test_hands_its_step_mode_to_the_agent_run():
+    """The step path was once reachable from nowhere: no caller passed `step_mode`, so
+    `--step-mode` would have run the old one long turn and reported it as step mode."""
+    calls = _calls_in("run_e2e_test", "_run_agent")
+    assert calls, "run_e2e_test no longer calls _run_agent"
+    for call in calls:
+        passed = {k.arg: k.value for k in call.keywords}
+        if "single_ask" in passed:
+            continue  # the one-message ask is its own path, one turn by definition
+        assert isinstance(passed.get("step_mode"), _ast.Name) and passed["step_mode"].id == "step_mode", \
+            "run_e2e_test must pass its own step_mode through"
+
+
+def test_the_cli_flag_reaches_run_e2e_test():
+    from e2e import run_e2e
+
+    source = Path(run_e2e.__file__).read_text(encoding="utf-8")
+    assert '"--step-mode"' in source and '"step_mode": args.step_mode' in source
+
+
+def test_each_turn_runs_under_the_mode_of_the_message_that_started_it():
+    boundary = orchestrator_boundary()
+    assert _e2e.step_turn_mode(boundary, "job", _Turn(index=0, sent="Find her parents.")) == "job"
+    assert _e2e.step_turn_mode(boundary, "job", _Turn(index=1, sent="Keep going.")) == "job"
+    assert _e2e.step_turn_mode(boundary, "job", _Turn(index=2, sent="Wrap it up.")) == "wrapup"
+
+
+def test_the_host_does_not_answer_a_wrap_up_turn():
+    """The parity the fixed mode broke: on the worker a "Wrap it up." turn is a wrapup
+    turn and the run ends after it. Read with the opening `job` mode, e2e replied again."""
+    boundary = orchestrator_boundary()
+    mode = _e2e.step_turn_mode(boundary, "job", _Turn(index=3, sent=boundary.REPLY_WRAP_UP))
+    decision = boundary.next_auto_reply({}, mode, "research-plan", "research-plan",
+                                        "Continue with planning the searches?", "ok")
+    assert decision["reply"] is None
+
+
+def test_a_keep_going_turn_is_still_one_step_per_turn():
+    """`gate_mode`: a job turn on a hosted plane is a STEP turn the host answers."""
+    boundary = orchestrator_boundary()
+    gate = boundary.StepGate(boundary=boundary, mode=boundary.gate_mode("job"))
+    assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
+    assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"
+    assert boundary.gate_mode("wrapup") == "wrapup"
+    assert boundary.gate_mode("step") == "step"
+
+
+def orchestrator_boundary():
+    return _e2e.load_step_boundary()

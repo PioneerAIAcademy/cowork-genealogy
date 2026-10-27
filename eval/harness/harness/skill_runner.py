@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import json
 import re
 import sys
 import time
@@ -1008,6 +1009,28 @@ async def run_skill(
     # (non-aborted) termination.
     routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
+    # The step boundary (decision 25), OPT-IN per test via `execution.step_mode`.
+    #
+    # None means no gate, which is every test in the corpus today: PR 1 ships the
+    # mechanism, and a test opts in by declaring the mode its turn runs under. Enforcing
+    # by default would change what every existing test measures, and the only place that
+    # would show is a paid run -- so the default is the one that cannot surprise anyone.
+    #
+    # `ctx` is read from the workspace's own research.json, lazily, as the worker reads
+    # it: research-plan is gated on it in `step` (after research-exhaustiveness) and in
+    # `wrapup` (dispose, the order's first member), so without it a `wrapup` test could
+    # never dispose. A workspace with no research.json reads as no open items.
+    _step_gate = None
+    if step_mode:
+        _boundary = load_step_boundary()
+
+        def _step_ctx() -> dict:
+            path = workspace / "research.json"
+            data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+            return _boundary.step_ctx(data if isinstance(data, dict) else {})
+
+        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode, ctx=_step_ctx)
+
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
     # the negative-test short-circuit above: that one DENIES AND STOPS, because
     # a negative test's verdict is sealed the moment routing happens. A positive
@@ -1018,21 +1041,6 @@ async def run_skill(
     # is its first stubbed hand-off: there the stub denies and stops (#3119).
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
-    # The step boundary (decision 25), OPT-IN per test via `execution.step_mode`.
-    #
-    # None means no gate, which is every test in the corpus today: PR 1 ships the
-    # mechanism, and a test opts in by declaring the mode its turn runs under. Enforcing
-    # by default would change what every existing test measures, and the only place that
-    # would show is a paid run -- so the default is the one that cannot surprise anyone.
-    #
-    # `ctx` is None here: the unit workspace has a research.json, but the one gated
-    # follower (research-plan after research-exhaustiveness) is denied without it, which
-    # is the safe side. A test that needs that arm declares mode `job`.
-    _step_gate = None
-    if step_mode:
-        _boundary = load_step_boundary()
-        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode, ctx=None)
-
     _stub_skills = stub_skills or {}
     # The same stub for a callee converted to an agent: a main-thread spawn of
     # one of these names is denied and continued the same way (issue #2825).

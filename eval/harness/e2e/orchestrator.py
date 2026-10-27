@@ -14,7 +14,6 @@ running tests).
 from __future__ import annotations
 
 import asyncio
-import importlib.util
 import json
 import os
 import posixpath
@@ -44,6 +43,7 @@ from claude_agent_sdk import (
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
 from e2e.turn_loop import Turn as TurnRecord, accumulate_usage, stream_turns
+from harness.skill_runner import load_step_boundary  # one loader for both harness planes
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
@@ -592,21 +592,15 @@ def project_read_denied(
     )
 
 
-_STEP_BOUNDARY = (
-    Path(__file__).resolve().parents[3]
-    / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
-)
+def step_turn_mode(boundary, opening_mode: str, turn) -> str:
+    """The mode a step-mode turn RAN under (section F).
 
-
-def load_step_boundary():
-    """The plugin's step boundary, loaded as a library -- the SAME file the worker and
-    the unit harness load, so the three planes cannot drift apart (rider 3)."""
-    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", _STEP_BOUNDARY)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load the step boundary at {_STEP_BOUNDARY}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    The first turn takes the run's own `--step-mode`, standing in for the researcher's
+    opening choice. Every later one is read from the message the host sent, with
+    production's own `step_mode`, so a "Wrap it up." reply is a wrapup turn here exactly
+    as it is on the worker, and the run ends after it as production's does.
+    """
+    return opening_mode if turn.index == 0 else boundary.step_mode(turn.sent)
 
 
 def _pretool_deny(reason: str) -> dict[str, Any]:
@@ -2297,7 +2291,26 @@ async def _run_agent(
     _reply_state: dict[str, Any] = {}
     if step_mode:
         _boundary = load_step_boundary()
-        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode)
+    #: The gate for the CURRENT turn. Rebuilt when a turn starts, as the worker builds
+    #: one per turn: a gate carried across turns would judge turn 2's first step against
+    #: turn 1's group, deny it, and halt the retry.
+    _gate_turn: dict[str, Any] = {"index": None}
+
+    def _turn_mode(turn) -> str:
+        return step_turn_mode(_boundary, step_mode, turn)
+
+    def _current_gate():
+        nonlocal _step_gate
+        if _boundary is None or not _step_turns:
+            return None
+        turn = _step_turns[-1]
+        if _gate_turn["index"] != turn.index:
+            _gate_turn["index"] = turn.index
+            _step_gate = _boundary.StepGate(
+                boundary=_boundary, mode=_boundary.gate_mode(_turn_mode(turn)),
+                ctx=lambda: _boundary.step_ctx(read_research_json(workspace) or {}),
+            )
+        return _step_gate
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
@@ -2319,9 +2332,9 @@ async def _run_agent(
         # The boundary sits AFTER attribution and the activity count, so a denied
         # crossing is still attributed and still counts as progress -- a turn that
         # tried to take a second step plainly did work.
-        if _step_gate is not None:
+        if (_gate := _current_gate()) is not None:
             try:
-                _verdict = _step_gate.check(
+                _verdict = _gate.check(
                     tool_name, input_data.get("tool_input") or {},
                     subagent=bool(input_data.get("agent_id")),
                 )
@@ -3022,7 +3035,7 @@ async def _run_agent(
         # entry is a stall resume, which a persistent session has no answer for
         # (see the stall arm below).
         step_client = None
-        if _step_gate is not None:
+        if _boundary is not None:
             step_client = ClaudeSDKClient(options=options)
             await step_client.connect(None)  # None = streaming input
             live["client"] = step_client
@@ -3052,7 +3065,7 @@ async def _run_agent(
                 outcome = str((turn.usage or {}).get("stop_reason") or "error")
             decision = _boundary.next_auto_reply(
                 _reply_state,
-                step_mode,
+                _turn_mode(turn),
                 previous,
                 turn.step,
                 _boundary.offered_step(_last_text(turn)),
@@ -3511,15 +3524,7 @@ async def _run_agent(
                             f">= inactivity cap {fixture.caps.inactivity_seconds}s"
                         )
                         return
-                    # Step mode ends the run on a stall rather than resuming
-                    # (lead, 2026-10-26: "if ending the run is a lot simpler,
-                    # build that first and see how often a stall really
-                    # happens"). It IS a lot simpler: resume re-opens a one-shot
-                    # query with `resume=<session_id>`, which a persistent
-                    # session has no answer for -- it needs a disconnect, a new
-                    # client, a reconnect and a ruling on the interrupted turn's
-                    # partial messages. The turn goes in the error text so the
-                    # frequency is measurable from the committed runs.
+                    # Step mode ends the run here too: see the inactivity arm above.
                     if step_client is not None:
                         aborted_reason = "no_progress_stall"
                         error = (
@@ -3940,6 +3945,7 @@ async def run_e2e_test(
     deny_project_reads: bool = False,
     context_1m: bool = False,
     tool_search: bool = True,
+    step_mode: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -4013,6 +4019,7 @@ async def run_e2e_test(
             deny_project_reads=deny_project_reads,
             context_1m=context_1m,
             tool_search=tool_search,
+            step_mode=step_mode,
         )
 
         final_research = read_research_json(workspace)
@@ -4203,6 +4210,10 @@ async def run_e2e_test(
             # corpus — every schema is loaded up front — and CI rejects a run
             # with either one False committed under eval/runlogs/e2e/.
             "tool_search": tool_search,
+            # Section F: the mode the run OPENED in, or None for the one long turn every
+            # committed run used. A step run is many turns on one session answered by
+            # `next_auto_reply`, so it is not comparable to a run without it.
+            "step_mode": step_mode,
         }
 
         # Summarize any subagent transcripts (record-structurer, search-images, …)

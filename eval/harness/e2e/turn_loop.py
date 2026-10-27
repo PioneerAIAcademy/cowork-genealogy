@@ -12,9 +12,9 @@ prototype worker calls. That is the whole point of section F: e2e exercises
 production's mechanism rather than a harness-shaped imitation of it. What lives
 here is only the sequencing: send, consume one turn, ask, repeat.
 
-**Two caps, both runaway guards and neither a result.** `max_replies` bounds one
-run's replies; the per-message `timeout_s` bounds silence inside a turn. Hitting
-either is a harness-side stop, recorded as such, and is not the fixture failing.
+**`max_replies` is a runaway guard, not a result.** It bounds one run's replies.
+Silence inside a turn is the orchestrator's to detect, with its existing
+`inactivity_seconds` cap, so this module applies no timeout of its own.
 
 The client contract is three methods of `ClaudeSDKClient` (SDK 0.2.172):
 `connect(None)` for streaming input, `query(text)` to send, and
@@ -26,16 +26,9 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Awaitable, Callable, Iterable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
-
-#: Why the loop stopped. Only `no_reply` is the run ending on its own terms.
-STOP_NO_REPLY = "no_reply"
-STOP_REPLY_CAP = "reply_cap"
-STOP_SILENCE = "sdk_stream_silence"
-STOP_ABORTED = "aborted"
-
 
 @dataclass
 class Turn:
@@ -63,84 +56,6 @@ class Turn:
     usage: dict[str, Any] | None = None
 
 
-@dataclass
-class TurnLoopResult:
-    turns: list[Turn]
-    stop: str
-    #: Set when `stop` is `aborted`: the exception that ended the run.
-    error: BaseException | None = None
-
-    @property
-    def replies_sent(self) -> int:
-        """Replies the HOST sent — the first message is the fixture's, not a reply."""
-        return max(0, len(self.turns) - 1)
-
-
-async def run_turns(
-    *,
-    client: Any,
-    first_message: str,
-    decide_reply: Callable[[Turn], Awaitable[str | None] | str | None],
-    on_message: Callable[[Any, Turn], Any] | None = None,
-    max_replies: int,
-    timeout_s: float,
-) -> TurnLoopResult:
-    """Drive turns until nothing more is due, and return every turn.
-
-    `decide_reply` is called once per turn with that turn, and returns the next
-    message or None to stop. It may be sync or async — the orchestrator's reads
-    `research.json`, and forcing that to be sync would push a blocking read onto
-    the event loop.
-
-    `on_message` sees every message as it arrives, so the caller can fold it and
-    stamp `turn.step` from its own step gate before `decide_reply` runs.
-
-    The caller owns `connect()` and `disconnect()`: a loop that connected its own
-    client could not be handed one already carrying the run's hooks and options.
-    """
-    turns: list[Turn] = []
-    pending: str | None = first_message
-    stop = STOP_NO_REPLY
-
-    while pending is not None:
-        if len(turns) > max_replies:
-            # Checked before sending, so the cap bounds replies SENT rather than
-            # turns finished -- one more turn than the cap would be one more paid
-            # turn, which is what the guard exists to prevent.
-            stop = STOP_REPLY_CAP
-            break
-        turn = Turn(index=len(turns), sent=pending)
-        turns.append(turn)
-        started = time.monotonic()
-        try:
-            await client.query(pending)
-            async for message in _with_timeout(client.receive_response(), timeout_s):
-                turn.messages.append(message)
-                if on_message is not None:
-                    outcome = on_message(message, turn)
-                    if asyncio.iscoroutine(outcome):
-                        await outcome
-        except asyncio.TimeoutError:
-            turn.wall_ms = int((time.monotonic() - started) * 1000)
-            return TurnLoopResult(turns=turns, stop=STOP_SILENCE)
-        except BaseException as exc:  # noqa: BLE001 - recorded, never swallowed
-            turn.wall_ms = int((time.monotonic() - started) * 1000)
-            return TurnLoopResult(turns=turns, stop=STOP_ABORTED, error=exc)
-        turn.wall_ms = int((time.monotonic() - started) * 1000)
-
-        decided = decide_reply(turn)
-        if asyncio.iscoroutine(decided):
-            decided = await decided
-        # Falsy, not just None. An empty or whitespace-only reply would otherwise
-        # start a turn carrying no instruction -- and be billed for it -- which is
-        # indistinguishable downstream from the host deciding to continue.
-        decided = decided if (decided or "").strip() else None
-        turn.reply = decided
-        pending = decided
-
-    return TurnLoopResult(turns=turns, stop=stop)
-
-
 async def stream_turns(
     *,
     client: Any,
@@ -149,12 +64,12 @@ async def stream_turns(
     turns: list[Turn],
     max_replies: int,
 ) -> Any:
-    """The same sequencing as `run_turns`, as ONE flat stream of messages.
+    """Drive turns until nothing more is due, as ONE flat stream of messages.
 
     This is the shape the e2e orchestrator needs. Its message loop is ~300 lines
     of folding -- narration, tool calls, usage, timeline, the guardrail shadow --
     plus a per-message inactivity timeout and a stall-resume path. Inverting that
-    into `run_turns`' `on_message` callback would move all of it; consuming a
+    into an `on_message` callback would move all of it; consuming a
     generator instead leaves every line of it where it is, and the only thing
     that changes is where `StopAsyncIteration` comes from: the end of the RUN
     rather than the end of the first turn.
@@ -192,26 +107,17 @@ async def stream_turns(
         pending = decided
 
 
-async def _with_timeout(stream: Iterable[Any] | Any, timeout_s: float):
-    """`stream`, with `timeout_s` applied to each message rather than to the turn.
-
-    Per message, because a step legitimately runs for many minutes while
-    streaming: a whole-turn deadline would kill a healthy long search, and the
-    thing worth detecting is SILENCE, which is what the orchestrator's existing
-    `inactivity_seconds` cap measures too.
-    """
-    iterator = stream.__aiter__()
-    while True:
-        try:
-            message = await asyncio.wait_for(iterator.__anext__(), timeout=timeout_s)
-        except StopAsyncIteration:
-            return
-        yield message
-
-#: Fields of a `ResultMessage` that are a QUANTITY of the run, so a multi-turn
-#: run's value is the sum. Anything not listed describes how the run ENDED and
-#: is taken from the last turn instead.
-_SUMMED = ("duration_ms", "duration_api_ms", "num_turns", "total_cost_usd")
+#: Fields of a `ResultMessage` that are a QUANTITY of ONE turn, so a multi-turn
+#: run's value is the sum.
+_SUMMED = ("duration_ms", "num_turns")
+#: Fields the CLI already reports as a RUNNING TOTAL on a persistent session, so
+#: the run's value is the latest one and summing would count early turns again.
+#: The pinned CLI (2.1.308, SDK 0.2.172) documents `total_cost_usd` as
+#: "cumulative across turns in streaming-input sessions -- read the latest result
+#: rather than summing", and builds `duration_api_ms` from the same session-wide
+#: cost ledger (`costLedger.totalAPIDuration()`). `usage` is the opposite: its own
+#: field doc says "per-turn in streaming-input sessions", so it is summed below.
+_CUMULATIVE = ("total_cost_usd", "duration_api_ms")
 #: Fields describing the ending, not a quantity.
 _LAST = ("is_error", "stop_reason")
 
@@ -252,8 +158,9 @@ def accumulate_usage(turns: list[Turn]) -> dict[str, Any]:
     committed ones. `per_turn` is additive, and a reader wanting cost per step
     (decision 28) reads that instead.
 
-    Quantities are summed; `is_error` and `stop_reason` describe the ENDING and
-    come from the last turn. A run with no usage at all returns `{}` rather than
+    Per-turn quantities are summed; running totals (`_CUMULATIVE`) take the latest
+    value, and each turn's breakdown carries its step over the one before;
+    `is_error` and `stop_reason` describe the ENDING and come from the last turn. A run with no usage at all returns `{}` rather than
     a skeleton of zeroes, which would be indistinguishable from a real run that
     cost nothing.
     """
@@ -263,10 +170,13 @@ def accumulate_usage(turns: list[Turn]) -> dict[str, Any]:
     per_turn_usage = [t.usage or {} for t in stamped]
     out: dict[str, Any] = {}
     for key in _SUMMED:
-        values = [u[key] for u in per_turn_usage if isinstance(u.get(key), (int, float))
-                  and not isinstance(u.get(key), bool)]
+        values = [u[key] for u in per_turn_usage if _is_number(u.get(key))]
         if values:
             out[key] = sum(values)
+    for key in _CUMULATIVE:
+        values = [u[key] for u in per_turn_usage if _is_number(u.get(key))]
+        if values:
+            out[key] = values[-1]
     for key in _LAST:
         for usage in reversed(per_turn_usage):
             if key in usage:
@@ -278,6 +188,19 @@ def accumulate_usage(turns: list[Turn]) -> dict[str, Any]:
     # The breakdown decision 28 asks for: what each step cost and how long the
     # researcher waited for it. `step` and `wall_ms` come from the turn, not the
     # ResultMessage, which is why this is built here rather than by summing.
+    # A cumulative field's per-turn figure is its step over the previous turn that
+    # reported one: that is what this turn cost.
+    deltas: dict[int, dict[str, Any]] = {}
+    previous: dict[str, float] = {}
+    for t in stamped:
+        row: dict[str, Any] = {}
+        for key in _CUMULATIVE:
+            value = (t.usage or {}).get(key)
+            if _is_number(value):
+                before = previous.get(key, 0)
+                row[key] = value - before if value >= before else value
+                previous[key] = value
+        deltas[t.index] = row
     out["per_turn"] = [
         {
             "index": t.index,
@@ -286,7 +209,12 @@ def accumulate_usage(turns: list[Turn]) -> dict[str, Any]:
             "sent": t.sent,
             "reply": t.reply,
             **{k: (t.usage or {}).get(k) for k in _SUMMED if (t.usage or {}).get(k) is not None},
+            **deltas.get(t.index, {}),
         }
         for t in turns
     ]
     return out
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
