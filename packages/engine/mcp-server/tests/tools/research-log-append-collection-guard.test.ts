@@ -4,6 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { awaitingUserHandOffs } from "../../src/utils/awaiting-hand-offs.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 // An `external_site` url that names a collection must name one in
 // external-collections.json (issue #2995). A url already in the log is not
@@ -117,6 +118,7 @@ describe("research_log_append: a collection url must be a stored collection", ()
   });
 
   it("refuses when the stored list cannot be read, naming the re-fetch", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await project([], "{ not json");
     const r = await researchLogAppend({ projectPath: dir, ...handOff(INVENTED_9093) });
     expect(r.ok).toBe(false);
