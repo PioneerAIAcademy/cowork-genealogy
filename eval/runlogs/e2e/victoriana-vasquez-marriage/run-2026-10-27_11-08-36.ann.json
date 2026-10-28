@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "No Velacion fact, no Marriage fact, no new persons -- the tree is completely unchanged from the starting tree. The run never recognized the 1875 index hit as a velacion; it spent the entire run chasing New Mexico collections instead of opening the actual Jalisco, Mexico register image. proof_summaries is empty.",
+    "f2": "Same as f1 -- nothing written. The run showed brief awareness that a Mexican state bordering New Mexico (Chihuahua) might be the real origin if New Mexico came up empty, and briefly started a Chihuahua search in parallel, but never substantively pursued it (and Chihuahua would still have been the wrong Mexican state -- the real answer is Jalisco). It hit tool_cap still deep in New Mexico parish-register browsing (Penasco, then Taos), including explicitly confirming one lead (a 1944 Penasco confirmation register hit) as an unrelated false positive, without ever reaching Jalisco or the ~1859 marriage."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "55ab1c26fd3b0b2adb191889ea6dfe061c1f907cf83f76ee8ad62c249f92f06a",
+  "blind_bundle_digest": "5aa2cec1db71a4e6f518f9a700cbcc14f20ffbc6fb1bb8bffa263f6ed14b5e4c"
+}
