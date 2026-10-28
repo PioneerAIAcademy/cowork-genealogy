@@ -28,6 +28,7 @@ import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   competingParentSets,
   conflictBlocksCompletion,
+  conflictCoverageLogIds,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
@@ -6769,6 +6770,25 @@ function validateRelationshipDirection(entry: Record<string, unknown>): void {
   ]);
 }
 
+/** The fields an analysis writes: conflict-resolution fills both on every
+ *  pass, resolved or not. */
+const CONFLICT_ANALYSIS_FIELDS = ["independence_analysis", "weighing_analysis"] as const;
+
+/** Section E. `weighed_log_entry_ids` is the coverage set the ladder compares
+ *  with the question's log to tell new evidence from evidence already weighed,
+ *  so it is computed here, from the helper the ladder reads, on every write that
+ *  carries an analysis. A caller's own value is replaced: by hand the set misses
+ *  the uploads matched to their hand-offs by URL. Only an unresolved conflict is
+ *  stamped, the one state the field is read in. */
+function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any): void {
+  const written: Record<string, unknown> = (op.op === "append" ? op.entry : op.fields) ?? {};
+  const analysed = CONFLICT_ANALYSIS_FIELDS.some(
+    (k) => typeof written[k] === "string" && (written[k] as string).trim() !== "",
+  );
+  if (!analysed || entry?.status !== "unresolved") return;
+  entry.weighed_log_entry_ids = conflictCoverageLogIds(research, entry);
+}
+
 function applyOne(
   research: any,
   op: ResearchAppendOp,
@@ -7212,6 +7232,7 @@ function applyOne(
   } else {
     throw new ResearchAppendError(`unknown op '${op.op}' (expected 'append' or 'update')`);
   }
+  if (section === "conflicts") stampWeighedLogEntryIds(resultEntry, op, research);
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];

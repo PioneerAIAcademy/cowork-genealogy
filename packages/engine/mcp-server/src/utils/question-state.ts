@@ -478,6 +478,34 @@ function ownedLogEntries(research: any, itemIds: Set<any>): any[] {
   );
 }
 
+/** The log entries an unresolved `conflict` has weighed when it is analysed
+ *  now: every entry owned by a question it blocks. `research_append` stamps
+ *  this as `weighed_log_entry_ids` on each analysis write, so the writer and
+ *  `unsettledConflictWeighed` below read one coverage set. A conflict blocking
+ *  no question weighs nothing. */
+export function conflictCoverageLogIds(research: any, conflict: any): string[] {
+  const ids = new Set<string>();
+  for (const q of arr(research?.questions)) {
+    const qid = q?.id;
+    if (typeof qid !== "string") continue;
+    const assertionIds = new Set<string>(
+      arr(research?.assertions)
+        .filter((a) => arr(a?.extracted_for_question_ids).includes(qid))
+        .map((a) => a?.id),
+    );
+    if (!conflictBlocksQuestion(conflict, qid, assertionIds)) continue;
+    const itemIds = new Set(
+      arr(research?.plans)
+        .filter((p) => p?.question_id === qid)
+        .flatMap((p) => arr(p?.items).map((i) => i?.id)),
+    );
+    for (const e of ownedLogEntries(research, itemIds)) {
+      if (typeof e?.id === "string") ids.add(e.id);
+    }
+  }
+  return [...ids].sort();
+}
+
 /** Section E's ending on an unsettled conflict: every open conflict has been
  *  analysed (`independence_analysis`) over every log entry the question owns
  *  (`weighed_log_entry_ids`), and nothing is left to search. Re-running

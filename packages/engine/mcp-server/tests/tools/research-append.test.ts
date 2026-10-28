@@ -1852,6 +1852,120 @@ describe("research_append (Phase 2)", () => {
     expect((await readResearch()).conflicts[0].status).toBe("resolved");
   });
 
+  // Section E. `weighed_log_entry_ids` tells the ladder new evidence from
+  // evidence already weighed, so the tool computes it from the helper the
+  // ladder reads instead of trusting a hand-built list: the set includes the
+  // upload that closes a hand-off, which carries no `plan_item_id`.
+  describe("stamps weighed_log_entry_ids on every analysis (section E)", () => {
+    const URL = "https://example.test/ancestry-search";
+    const log = (id: string, extra: Record<string, unknown>) => ({
+      id,
+      performed: "2026-01-02T00:00:00Z",
+      tool: "record_search",
+      plan_item_id: null,
+      query: {},
+      results_examined: 0,
+      outcome: "negative",
+      ...extra,
+    });
+    function weighedResearch() {
+      const research = phase2Research();
+      research.plans = [
+        validPlan("pl_001", "q_001", "completed", [{ ...seededPlanItem("pli_001"), status: "completed" }]),
+        validPlan("pl_009", "q_009", "completed", [{ ...seededPlanItem("pli_009"), status: "completed" }]),
+      ];
+      research.questions.push({ ...validQuestion("q_009") });
+      research.log = [
+        log("log_001", { plan_item_id: "pli_001" }),
+        log("log_002", {
+          tool: "external_site",
+          plan_item_id: "pli_001",
+          outcome: "partial",
+          external_site: { site: "ancestry", url_generated: URL, capture_received: false },
+        }),
+        // The researcher's upload: no plan_item_id, matched to its hand-off by URL.
+        log("log_003", {
+          tool: "external_site",
+          outcome: "positive",
+          external_site: { site: "ancestry", url_generated: URL, capture_received: true },
+        }),
+        // Another question's search: not evidence this conflict weighed.
+        log("log_009", { plan_item_id: "pli_009" }),
+      ];
+      research.conflicts = [{ ...validConflict(), id: "c_001", blocks_question_ids: ["q_001"] }];
+      return research;
+    }
+    const ANALYSIS = {
+      independence_analysis: "Both readings trace to the same informant.",
+      weighing_analysis: "Neither side outweighs the other.",
+      resolution_rationale: "Nothing on file can settle it.",
+    };
+    const update = (fields: Record<string, unknown>) =>
+      researchAppend({ projectPath: dir, section: "conflicts", op: "update", entryId: "c_001", fields });
+
+    it("stamps every log entry the blocked question owns, the closing upload included", async () => {
+      await writeProject(weighedResearch());
+      const r = await update(ANALYSIS);
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
+    });
+
+    it("replaces a caller's own list, which misses the upload", async () => {
+      await writeProject(weighedResearch());
+      const r = await update({ ...ANALYSIS, weighed_log_entry_ids: ["log_001", "log_002"] });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
+    });
+
+    it("stamps on append too, when the new conflict carries its analysis", async () => {
+      const research = weighedResearch();
+      research.conflicts = [];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "append",
+        entry: { ...validConflict(), blocks_question_ids: ["q_001"], ...ANALYSIS },
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
+    });
+
+    it("leaves the field alone on a write that carries no analysis", async () => {
+      const research = weighedResearch();
+      research.conflicts[0].weighed_log_entry_ids = ["log_001"];
+      await writeProject(research);
+      const r = await update({ description: "Two different birth years, reworded" });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001"]);
+    });
+
+    it("does not stamp a conflict the write settles", async () => {
+      await writeProject(weighedResearch());
+      const r = await update({ ...ANALYSIS, status: "resolved", preferred_assertion_id: "a_001", resolution_kind: "competitor" });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toBeUndefined();
+    });
+
+    it("the ladder reads the stamp: proof-conclusion next, then no step once the summary ends it", async () => {
+      await writeProject(weighedResearch());
+      expect((await update(ANALYSIS)).ok).toBe(true);
+      const research = await readResearch();
+      const q = research.questions.find((x: any) => x.id === "q_001");
+      expect(questionStatus(research, q).nextStep).toMatch(/^proof-conclusion — unsettled conflict c_001/);
+      research.proof_summaries = [{ question_id: "q_001", tier: "not_proved", shortfall: "conflict" }];
+      expect(questionStatus(research, q).nextStep).toBeNull();
+    });
+
+    it("a later upload is evidence the stamp does not cover, until the next analysis", async () => {
+      const research = weighedResearch();
+      research.log = research.log.filter((e: any) => e.id !== "log_003");
+      await writeProject(research);
+      expect((await update(ANALYSIS)).ok).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002"]);
+    });
+  });
+
   // `moot` settles a conflict for every gate that reads `status`, including the
   // completion gate — and it was the one settling write with no precondition at
   // all, so a bare `{status: "moot"}` cleared that gate while asserting nothing.
@@ -15357,4 +15471,5 @@ describe("research_append: a localities first place must be in the place standar
     expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
     expect((await readResearch()).localities ?? []).toHaveLength(0);
   });
-});
+});import { questionStatus } from "../../src/utils/question-state.js";
+

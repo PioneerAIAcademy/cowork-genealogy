@@ -1113,7 +1113,7 @@
         "weighed_log_entry_ids": {
           "type": "array",
           "items": { "type": "string", "pattern": "^log_" },
-          "description": "The question's log entries conflict-resolution has weighed, written on every analysis. Mirrors search_stop.log_entry_ids. Lets the ladder tell new evidence to weigh from evidence already weighed, which the documents otherwise cannot say."
+          "description": "The question's log entries conflict-resolution has weighed, stamped by research_append on every write that carries an analysis. Mirrors search_stop.log_entry_ids. Lets the ladder tell new evidence to weigh from evidence already weighed, which the documents otherwise cannot say."
         },
         "weighing_analysis": {
           "type": [
