@@ -119,6 +119,12 @@ of the most valuable things you can ask the agent, in Cowork, any time:
 - *"What would change your mind about this conclusion?"*
 - *"You haven't looked at probate — why not?"*
 
+### Taking the tree home
+
+Click **Export GEDCOM** in the **Research Viewer's** header to save the research
+tree as a `.ged` file for your own genealogy program — people, families, every
+source with its citation, the evidence notes, and the proof conclusions.
+
 ---
 
 ## Sending feedback
