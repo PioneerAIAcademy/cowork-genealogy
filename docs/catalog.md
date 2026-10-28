@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 56 tools.
+The MCP server exposes 57 tools.
 
 ### FamilySearch records and places
 
@@ -97,6 +97,7 @@ way project state changes.
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter). Requires `projectPath`: the page is staged and the tool returns `staged.resultsRef`, a `digest` and `found`, not the text — read it with `sidecar_read`, extract it by handing the ref to `record-structurer`. No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. | OpenRouter (+ OAuth for imageId/ark) |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
+| `tree_query` | Read-only filtered read of tree.gedcomx.json (persons with names, facts, ark; Couple and ParentChild edges with facts; cited sources with authors) — what agents call instead of opening the tree file | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
 | `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's projects (objective, subjects, status) and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |

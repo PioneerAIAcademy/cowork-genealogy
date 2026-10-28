@@ -72,6 +72,7 @@ LIVE_TOOLS: set[str] = {
     # because allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
+    "tree_query",
     # The bounded-delivery signal. Live rather than fixture-backed because the
     # tool IS inert by contract -- no network, no auth, no project write; it
     # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
@@ -156,6 +157,7 @@ LIVE_MODULES: dict[str, str] = {
     "person_warnings": "tools/person-warnings.js",
     "person_quality": "tools/person-quality.js",
     "project_context": "tools/project-context.js",
+    "tree_query": "tools/tree-query.js",
     "research_delivered": "tools/research-delivered.js",
     "research_query": "tools/research-query.js",
     "sidecar_read": "tools/sidecar-read.js",
