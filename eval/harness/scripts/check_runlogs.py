@@ -98,6 +98,7 @@ from harness.versioning import (  # noqa: E402
     ann_filename_for,
     classify,
     prunable_candidates,
+    select_latest_full_skill_runlog,
 )
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
 from harness.judge_render import judge_render_hash  # noqa: E402
@@ -588,25 +589,14 @@ def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
     """Return (filename, parsed_log) for the latest full-skill run log
     in `skill_dir` — preferring released v{N}.json, then candidate
     v{N}_<ts>.json. Scratch runs ignored.
-    """
-    released: list[tuple[int, str]] = []
-    candidates: list[tuple[int, str, str]] = []
-    for path in skill_dir.iterdir():
-        if not path.is_file():
-            continue
-        c = classify(path.name)
-        if c.kind == "released" and c.version is not None:
-            released.append((c.version, path.name))
-        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
-            candidates.append((c.version, c.timestamp, path.name))
 
-    if released:
-        released.sort(reverse=True)
-        filename = released[0][1]
-    elif candidates:
-        candidates.sort(reverse=True)
-        filename = candidates[0][2]
-    else:
+    Selection is `versioning.select_latest_full_skill_runlog`, shared with
+    `judge_regrade` so the file a regrade stamps is the file this gate reads.
+    """
+    filename = select_latest_full_skill_runlog(
+        p.name for p in skill_dir.iterdir() if p.is_file()
+    )
+    if filename is None:
         return None
     return filename, json.loads((skill_dir / filename).read_text(encoding="utf-8"))
 
@@ -1412,16 +1402,31 @@ def rule6_regrade_outcomes(skill: str, path: str) -> int:
     proper); here the PR did not author the run, so it is answerable for what it
     changed.
     """
+    # A read this arm could not make is announced, never swallowed. Failing
+    # closed is wrong here -- an unreadable base (a shallow clone, an unset
+    # BASE_SHA) would block every PR that prunes a log -- but a silent `return
+    # 0` is indistinguishable from "compared them, nothing moved", which is the
+    # state this rule exists to stop being invisible.
     try:
         base_text = git_show_at_merge_base(path)
-    except BaseUnreadable:
+    except BaseUnreadable as e:
+        gh_warning(
+            f"rule 6: could not read `{path}` at the merge base ({e}); "
+            "its outcomes were NOT compared."
+        )
         return 0
     if base_text is None:
+        # Absent at the merge base: this PR added it, and rule 6 proper owns
+        # added logs. Not a skipped read.
         return 0
     try:
         base_log = json.loads(base_text)
         head_log = json.loads((REPO_ROOT / path).read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+        gh_warning(
+            f"rule 6: could not parse `{path}` at the merge base or at head "
+            f"({e}); its outcomes were NOT compared."
+        )
         return 0
     was = {
         t.get("test_id"): t.get("outcome")

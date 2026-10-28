@@ -84,6 +84,18 @@ class JudgeRenderGraphError(RuntimeError):
     """
 
 
+def _is_function(node: ast.stmt | None) -> bool:
+    """A def, never a class.
+
+    `_RenderModule.funcs` also indexes ClassDef, which is right for a class
+    REACHED BY A CALL -- `Rubric(...)` builds judge input. It is wrong for a
+    bare name load, because a type annotation (`auth: AuthConfig`) is one:
+    widening this to classes pulled `harness.auth` and `harness.loader` into
+    the graph, where an unrelated field edit would have billed a regrade.
+    """
+    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+
+
 class _RenderModule:
     """One parsed harness module: its top-level defs and classes, its
     module-level bindings, and the (module, original name) each imported bound
@@ -161,7 +173,7 @@ def _render_graph_nodes(validators_dir: Path) -> list[tuple[str, str, ast.stmt]]
         if mod is None or name not in mod.funcs:
             raise JudgeRenderGraphError(
                 f"{module}.{name} no longer resolves; update _JUDGE_RENDER_ROOTS "
-                f"/ _JUDGE_RENDER_STOP in instrument.py"
+                f"/ _JUDGE_RENDER_STOP in judge_render.py"
             )
     for module in _JUDGE_RENDER_WHOLE_MODULES:
         if index(module) is None:
@@ -198,12 +210,24 @@ def _render_graph_nodes(validators_dir: Path) -> list[tuple[str, str, ast.stmt]]
                 elif called in mod.imports:
                     pending.append(mod.imports[called])
             elif isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load):
-                if sub.id in mod.assigns:
+                # A function PASSED BY VALUE is render code too. `_render` takes
+                # its live-args strategy as a parameter -- `_live_args_omitted`,
+                # `_live_args_as_is`, `_live_args_string_capped` are handed in,
+                # never called by name here -- so following only `ast.Call` left
+                # all three outside the graph. Editing the "args omitted by
+                # harness" marker changed every judge's input and moved no hash.
+                if _is_function(mod.funcs.get(sub.id)):
+                    pending.append((module, sub.id))
+                elif sub.id in mod.assigns:
                     collected[(module, sub.id)] = mod.assigns[sub.id]
                 elif sub.id in mod.imports:
                     other_mod, other_name = mod.imports[sub.id]
                     other = index(other_mod)
-                    if other is not None and other_name in other.assigns:
+                    if other is None:
+                        continue
+                    if _is_function(other.funcs.get(other_name)):
+                        pending.append((other_mod, other_name))
+                    elif other_name in other.assigns:
                         collected[(other_mod, other_name)] = other.assigns[other_name]
     return [(m, n, collected[(m, n)]) for m, n in sorted(collected)]
 

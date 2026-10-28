@@ -73,7 +73,7 @@ from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
 from harness.outcomes import aggregate_per_run_outcome
 from harness.runlog import _replace_with_retry, validate_run_log
-from harness.versioning import classify
+from harness.versioning import select_latest_full_skill_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 UNIT_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -109,29 +109,24 @@ class RegradeResult:
 
 
 def _latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict[str, Any]] | None:
-    """Return (filename, parsed_log) for the newest released or candidate log.
+    """Return (filename, parsed_log) for the skill's latest full-skill log.
 
-    Mirrors `check_runlogs.latest_full_skill_runlog` without pulling the
-    whole script in as a dependency.
+    Selection is `versioning.select_latest_full_skill_runlog`, the same call
+    the run-log gate makes. It used to be a local copy that sorted on version
+    first, so a v34 candidate beat a released v33 and a regrade stamped a file
+    the gate never read -- nine skills in the corpus.
+
+    Reading stays here: an unreadable log is skipped (this is best-effort
+    collection), where the gate raises on one.
     """
     if not skill_dir.is_dir():
         return None
-    candidates: list[tuple[tuple[int, str], Path]] = []
-    for p in skill_dir.glob("v*.json"):
-        if p.name.endswith(".ann.json"):
-            continue
-        kind, version, _ts = classify(p.name)
-        if kind == "released":
-            # Prefer released; sort to the end so it wins max().
-            candidates.append(((version, "zzz"), p))
-        elif kind == "candidate":
-            candidates.append(((version, p.name), p))
-    if not candidates:
+    names = [p.name for p in skill_dir.glob("*.json") if p.is_file()]
+    filename = select_latest_full_skill_runlog(names)
+    if filename is None:
         return None
-    candidates.sort(key=lambda c: c[0])
-    path = candidates[-1][1]
     try:
-        return (path.name, json.loads(path.read_text(encoding="utf-8")))
+        return (filename, json.loads((skill_dir / filename).read_text(encoding="utf-8")))
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 

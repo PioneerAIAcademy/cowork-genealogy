@@ -4114,3 +4114,41 @@ def test_main_runs_rule11_gate_drift_on_a_validator_edit_for_every_suite_rule11_
     _patch_diffs(monkeypatch, ["eval/tests/unit/research/rpn.json"])
     check_runlogs.main()
     assert calls == []
+
+
+def test_rule6_regrade_announces_an_unreadable_base(monkeypatch, tmp_path, capsys):
+    """Review 2026-10-26: this arm used to `return 0` silently, which reads
+    identically to "compared them, nothing moved" — the invisible pass the
+    rule exists to end. Failing closed is wrong (a shallow clone would block
+    every prune), so it warns and says the comparison did not happen."""
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tests": []}), encoding="utf-8")
+
+    def _raise(_p):
+        raise check_runlogs.BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", _raise)
+    rc = check_runlogs.rule6_regrade_outcomes("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out, "a skipped read must be announced, not swallowed"
+    assert "NOT compared" in out
+    assert "BASE_SHA/HEAD_SHA unset" in out, "the warning must name the cause"
+
+
+def test_rule6_regrade_announces_an_unparseable_log(monkeypatch, tmp_path, capsys):
+    """Same hole, other cause: a corrupt base or head log also skipped the
+    comparison silently."""
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: '{"tests": []}')
+    rc = check_runlogs.rule6_regrade_outcomes("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out and "NOT compared" in out

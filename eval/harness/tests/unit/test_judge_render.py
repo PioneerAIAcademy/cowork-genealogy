@@ -56,6 +56,22 @@ def _edit(root: Path, rel: str, old: str, new: str) -> None:
         ("skill_runner.py", "    rest = list(skills_invoked or [])", "    rest = list(skills_invoked or [])[:1]"),
         # the whole-module half
         ("scenario_brief.py", "def readme_fallback_warning(", "def _probe():\n    return 1\n\n\ndef readme_fallback_warning("),
+        # Review 2026-10-26, blocker 1: a strategy function handed to `_render`
+        # BY VALUE. Following only `ast.Call` left all three `_live_args_*`
+        # outside the graph, so editing the marker every live call renders at
+        # changed each judge's input and moved no hash.
+        (
+            "judge.py",
+            "[args omitted by harness for prompt size;",
+            "[args omitted by the harness for prompt size;",
+        ),
+        # a slot `grade()` fills: blanking one deletes evidence from every
+        # judge prompt, which is exactly what rule 2b exists to catch.
+        (
+            "judge.py",
+            "        state_observations=state_observations,\n    )\n\n    client = _make_client(auth)",
+            "        state_observations=None,\n    )\n\n    client = _make_client(auth)",
+        ),
     ],
 )
 def test_render_hash_moves_when_the_graph_moves(harness_copy, rel, old, new):
@@ -121,3 +137,34 @@ def test_render_graph_follows_an_aliased_import(harness_copy):
     _edit(harness_copy, "orchestrator.py", "empty_rubric(", "_er(")
     after = {(m, n) for m, n, _ in judge_render._render_graph_nodes(harness_copy / "validators")}
     assert ("harness.rubric", "empty_rubric") in after, "aliased import dropped the callee"
+
+
+def test_a_bare_type_annotation_does_not_drag_a_class_into_the_graph(harness_copy):
+    """The other direction of the by-value fix, and the first thing it got
+    wrong. Following every NAME a render function loads reaches `auth:
+    AuthConfig` and `spec: TestSpec` — annotations, not render code — so an
+    unrelated field edit in either module would have billed a corpus regrade.
+    A class reached by a CALL is still in, because its fields are judge input.
+    """
+    nodes = {(m, n) for m, n, _ in judge_render._render_graph_nodes(harness_copy / "validators")}
+    assert ("harness.auth", "AuthConfig") not in nodes
+    assert ("harness.loader", "TestSpec") not in nodes
+    assert ("harness.rubric", "Rubric") in nodes, "a constructed dataclass must stay in"
+    assert ("harness.scenario_brief", "ScenarioBrief") in nodes
+
+
+def test_an_edit_to_an_annotation_only_class_moves_no_hash(harness_copy):
+    """Stated as the hash, not the node set: this is what a developer pays.
+
+    Edits `AuthConfig`'s OWN body — the thing the over-broad walk hashed — so
+    the row fails if the narrowing is lost, instead of passing on a class the
+    graph never looked at.
+    """
+    before = _render_hash(harness_copy)
+    _edit(
+        harness_copy,
+        "auth.py",
+        "    detail: str  # human-readable description for logs",
+        "    detail: str  # human-readable description for logs\n    probe: int = 0",
+    )
+    assert _render_hash(harness_copy) == before

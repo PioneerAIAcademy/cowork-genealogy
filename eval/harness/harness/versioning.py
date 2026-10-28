@@ -19,6 +19,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Iterable
 from typing import Literal, NamedTuple
 
 
@@ -65,6 +66,35 @@ def classify_ann(filename: str) -> Classification:
     if m := SCRATCH_ANN_RE.match(filename):
         return Classification("scratch", None, m.group(1))
     return Classification("other", None, None)
+
+
+def select_latest_full_skill_runlog(filenames: Iterable[str]) -> str | None:
+    """The one full-skill run log a reader should treat as a skill's latest.
+
+    A **released** `v{N}.json` beats every candidate, whatever the version
+    numbers say. A `v{N+1}_<ts>.json` beside a release is an unreleased draft:
+    a reader that preferred it would stamp, grade or fingerprint a file the
+    run-log gate never reads. With no release, the newest candidate by
+    (version, timestamp) wins. Scratch and unrecognized names never win.
+
+    Shared because the two readers disagreed. `check_runlogs` preferred any
+    release; `judge_regrade` sorted on version first, so a v34 candidate beat
+    a released v33 -- nine skills in the corpus, where a regrade stamped one
+    file and the gate read another.
+    """
+    released: list[int] = []
+    candidates: list[tuple[int, str, str]] = []
+    for name in filenames:
+        c = classify(name)
+        if c.kind == "released" and c.version is not None:
+            released.append(c.version)
+        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
+            candidates.append((c.version, c.timestamp, name))
+    if released:
+        return f"v{max(released)}.json"
+    if candidates:
+        return max(candidates)[2]
+    return None
 
 
 #: How many candidate run logs to keep per skill. Nothing in the repo reads
