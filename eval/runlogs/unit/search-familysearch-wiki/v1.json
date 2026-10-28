@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "search-familysearch-wiki",
   "version": 1,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-27_23-34-19",
@@ -86,7 +86,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains two properly formatted bullets: '- [United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both follow the required format of '[page_title \u2014 section_heading](source_url)' and use the actual URLs from the tool response."
+            "rationale": "The Sources section contains two properly formatted bullets: '- [United States Census — Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census — Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both follow the required format of '[page_title — section_heading](source_url)' and use the actual URLs from the tool response."
           },
           {
             "source": "rubric",
@@ -130,7 +130,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains two properly formatted bullets: '- [United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both follow the required format of '[page_title \u2014 section_heading](source_url)' and use the actual URLs from the tool response."
+            "rationale": "The Sources section contains two properly formatted bullets: '- [United States Census — Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census — Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both follow the required format of '[page_title — section_heading](source_url)' and use the actual URLs from the tool response."
           },
           {
             "source": "rubric",
@@ -148,7 +148,7 @@
       },
       "totals": {
         "duration_ms": 22689.628703985363,
-        "duration_api_ms": 20490.0,
+        "duration_api_ms": 20490,
         "judge_duration_ms": 10917.445783008588,
         "wall_clock_ms": 33676.496267318726,
         "num_turns": 2,
@@ -171,7 +171,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22689.628703985363,
-          "duration_api_ms": 20490.0,
+          "duration_api_ms": 20490,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1436,
@@ -249,7 +249,7 @@
           },
           "skill_cost_usd": 0.12588282,
           "output": {
-            "text_response": "The FamilySearch Wiki guidance on using census records to trace your family has been found and saved to the research log, with the United States Census wiki pages cited as sources.\n\nHere's a summary of the guidance:\n\n**Using Census Records to Trace Your Family**\n\nCensus records are among the most powerful genealogical tools available. The FamilySearch Wiki recommends:\n\n1. **Start with the most recent census** and work backwards in time. This helps you follow a family from a known point into the past.\n\n2. **Key information found in census records** includes:\n   - Names, ages, and relationships of household members\n   - Birthplaces (for the individual and their parents)\n   - Occupation, marital status, and property values\n   - Later censuses (1880\u20131940) provide much richer detail than earlier ones\n\n3. **US Federal Census availability:**\n   - The most recent publicly available census is **1950** (released in 2022)\n   - Censuses are released 72 years after they are taken\n\n4. **Search strategies:**\n   - Search FamilySearch's indexed census collections by name, year, and place\n   - If a name isn't found, try spelling variants or browse county-level images\n   - Cross-reference census years to track a family across decades\n\n5. **What to do with results:**\n   - Note every member of the household\n   - Use ages and birthplaces to identify parents' origins and migration patterns\n   - Compare successive censuses to spot children who appear or disappear\n\n**Suggested next steps:** Decide which census years to search first, then use the **search-records** agent to execute searches for your specific ancestors. Let me know when you're ready!",
+            "text_response": "The FamilySearch Wiki guidance on using census records to trace your family has been found and saved to the research log, with the United States Census wiki pages cited as sources.\n\nHere's a summary of the guidance:\n\n**Using Census Records to Trace Your Family**\n\nCensus records are among the most powerful genealogical tools available. The FamilySearch Wiki recommends:\n\n1. **Start with the most recent census** and work backwards in time. This helps you follow a family from a known point into the past.\n\n2. **Key information found in census records** includes:\n   - Names, ages, and relationships of household members\n   - Birthplaces (for the individual and their parents)\n   - Occupation, marital status, and property values\n   - Later censuses (1880–1940) provide much richer detail than earlier ones\n\n3. **US Federal Census availability:**\n   - The most recent publicly available census is **1950** (released in 2022)\n   - Censuses are released 72 years after they are taken\n\n4. **Search strategies:**\n   - Search FamilySearch's indexed census collections by name, year, and place\n   - If a name isn't found, try spelling variants or browse county-level images\n   - Cross-reference census years to track a family across decades\n\n5. **What to do with results:**\n   - Note every member of the household\n   - Use ages and birthplaces to identify parents' origins and migration patterns\n   - Compare successive censuses to spot children who appear or disappear\n\n**Suggested next steps:** Decide which census years to search first, then use the **search-records** agent to execute searches for your specific ancestors. Let me know when you're ready!",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -277,7 +277,7 @@
                   "planItemId": null,
                   "outcome": "positive",
                   "resultsExamined": 2,
-                  "notes": "# FamilySearch Wiki: United States census records for tracing a family\n\nUnited States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has a census collection with an index and images for each federal census year from 1790 through 1950. Most of these censuses are also on subscription sites such as Ancestry, Findmypast, and MyHeritage, which require a paid subscription for full access. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' What a census recorded about each household member changed over time: from 1790 through 1840, only the head of household is named, and everyone else is counted only as tally marks within age and sex categories; from 1850 through 1870, every free person in the household is listed by name with age, sex, and birthplace, but relationship to the head of household is not stated; beginning in 1880, every person is listed by name together with their relationship to the head of household.\n\nBy tracing a family through multiple census years, you can watch children grow up, track a family's migration, and identify previously unknown relatives. Each census decade can point you to a new location or a maiden name. When searching, try alternate spellings of surnames and consider that ages reported in different census years may vary by several years.\n\n## Sources\n\n- [United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)\n- [United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)",
+                  "notes": "# FamilySearch Wiki: United States census records for tracing a family\n\nUnited States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has a census collection with an index and images for each federal census year from 1790 through 1950. Most of these censuses are also on subscription sites such as Ancestry, Findmypast, and MyHeritage, which require a paid subscription for full access. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' What a census recorded about each household member changed over time: from 1790 through 1840, only the head of household is named, and everyone else is counted only as tally marks within age and sex categories; from 1850 through 1870, every free person in the household is listed by name with age, sex, and birthplace, but relationship to the head of household is not stated; beginning in 1880, every person is listed by name together with their relationship to the head of household.\n\nBy tracing a family through multiple census years, you can watch children grow up, track a family's migration, and identify previously unknown relatives. Each census decade can point you to a new location or a maiden name. When searching, try alternate spellings of surnames and consider that ages reported in different census years may vary by several years.\n\n## Sources\n\n- [United States Census — Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)\n- [United States Census — Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)",
                   "tool": "wiki_search"
                 },
                 "expected_args": null,
@@ -340,7 +340,7 @@
                         "results_examined": 2,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: United States census records for tracing a family\n\nUnited States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has a census collection with an index and images for each federal census year from 1790 through 1950. Most of these censuses are also on subscription sites such as Ancestry, Findmypast, and MyHeritage, which require a paid subscription for full access. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' What a census recorded about each household member changed over time: from 1790 through 1840, only the head of household is named, and everyone else is counted only as tally marks within age and sex categories; from 1850 through 1870, every free person in the household is listed by name with age, sex, and birthplace, but relationship to the head of household is not stated; beginning in 1880, every person is listed by name together with their relationship to the head of household.\n\nBy tracing a family through multiple census years, you can watch children grow up, track a family's migration, and identify previously unknown relatives. Each census decade can point you to a new location or a maiden name. When searching, try alternate spellings of surnames and consider that ages reported in different census years may vary by several years.\n\n## Sources\n\n- [United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)\n- [United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)"
+                        "notes": "# FamilySearch Wiki: United States census records for tracing a family\n\nUnited States federal census records are among the most important genealogical sources. A census was taken every ten years beginning in 1790. FamilySearch has a census collection with an index and images for each federal census year from 1790 through 1950. Most of these censuses are also on subscription sites such as Ancestry, Findmypast, and MyHeritage, which require a paid subscription for full access. To search census records, go to FamilySearch.org, click Search, then Records, enter your ancestor's name, and filter by record type 'Census, Voter Lists.' What a census recorded about each household member changed over time: from 1790 through 1840, only the head of household is named, and everyone else is counted only as tally marks within age and sex categories; from 1850 through 1870, every free person in the household is listed by name with age, sex, and birthplace, but relationship to the head of household is not stated; beginning in 1880, every person is listed by name together with their relationship to the head of household.\n\nBy tracing a family through multiple census years, you can watch children grow up, track a family's migration, and identify previously unknown relatives. Each census decade can point you to a new location or a maiden name. When searching, try alternate spellings of surnames and consider that ages reported in different census years may vary by several years.\n\n## Sources\n\n- [United States Census — Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)\n- [United States Census — Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)"
                       }
                     ],
                     "modified": [],
@@ -567,7 +567,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains two properly formatted bullets: '- [United States Census \u2014 Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census \u2014 Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both follow the required format of '[page_title \u2014 section_heading](source_url)' and use the actual URLs from the tool response."
+                "rationale": "The Sources section contains two properly formatted bullets: '- [United States Census — Background](https://www.familysearch.org/en/wiki/United_States_Census#Background)' and '- [United States Census — Strategy](https://www.familysearch.org/en/wiki/United_States_Census#Strategy)'. Both follow the required format of '[page_title — section_heading](source_url)' and use the actual URLs from the tool response."
               },
               {
                 "source": "rubric",
@@ -639,13 +639,13 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: 'Ireland Church Records - Overview of Irish Church Records' with URL ending in '#Overview_of_Irish_Church_Records', 'Ireland Church Records - Finding Church Records on FamilySearch' with URL ending in '#Finding_Church_Records_on_FamilySearch', and 'Ireland Church Records - What Church Records Contain' with URL ending in '#What_Church_Records_Contain'. All URLs are drawn directly from the response_summary and are not fabricated."
+            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title — section_heading](source_url)' using the exact URLs from the tool response: 'Ireland Church Records - Overview of Irish Church Records' with URL ending in '#Overview_of_Irish_Church_Records', 'Ireland Church Records - Finding Church Records on FamilySearch' with URL ending in '#Finding_Church_Records_on_FamilySearch', and 'Ireland Church Records - What Church Records Contain' with URL ending in '#What_Church_Records_Contain'. All URLs are drawn directly from the response_summary and are not fabricated."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
             "score": 3,
-            "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records for Irish genealogy (from result 1), the two main denominations and their register start dates (from result 1), the 1922 Public Record Office fire and surviving copies (from result 1), FamilySearch's digitized collections (from result 1), how to search on FamilySearch (from result 2), the National Library of Ireland and Representative Church Body Library holdings (from result 2), and what church records contain\u2014baptism, marriage, burial details (from result 3). No outside facts or fabricated guidance were added; the summary stays within the bounds of the wiki content provided."
+            "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records for Irish genealogy (from result 1), the two main denominations and their register start dates (from result 1), the 1922 Public Record Office fire and surviving copies (from result 1), FamilySearch's digitized collections (from result 1), how to search on FamilySearch (from result 2), the National Library of Ireland and Representative Church Body Library holdings (from result 2), and what church records contain—baptism, marriage, burial details (from result 3). No outside facts or fabricated guidance were added; the summary stays within the bounds of the wiki content provided."
           },
           {
             "source": "rubric",
@@ -683,13 +683,13 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: 'Ireland Church Records - Overview of Irish Church Records' with URL ending in '#Overview_of_Irish_Church_Records', 'Ireland Church Records - Finding Church Records on FamilySearch' with URL ending in '#Finding_Church_Records_on_FamilySearch', and 'Ireland Church Records - What Church Records Contain' with URL ending in '#What_Church_Records_Contain'. All URLs are drawn directly from the response_summary and are not fabricated."
+            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title — section_heading](source_url)' using the exact URLs from the tool response: 'Ireland Church Records - Overview of Irish Church Records' with URL ending in '#Overview_of_Irish_Church_Records', 'Ireland Church Records - Finding Church Records on FamilySearch' with URL ending in '#Finding_Church_Records_on_FamilySearch', and 'Ireland Church Records - What Church Records Contain' with URL ending in '#What_Church_Records_Contain'. All URLs are drawn directly from the response_summary and are not fabricated."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
             "score": 3,
-            "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records for Irish genealogy (from result 1), the two main denominations and their register start dates (from result 1), the 1922 Public Record Office fire and surviving copies (from result 1), FamilySearch's digitized collections (from result 1), how to search on FamilySearch (from result 2), the National Library of Ireland and Representative Church Body Library holdings (from result 2), and what church records contain\u2014baptism, marriage, burial details (from result 3). No outside facts or fabricated guidance were added; the summary stays within the bounds of the wiki content provided."
+            "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records for Irish genealogy (from result 1), the two main denominations and their register start dates (from result 1), the 1922 Public Record Office fire and surviving copies (from result 1), FamilySearch's digitized collections (from result 1), how to search on FamilySearch (from result 2), the National Library of Ireland and Representative Church Body Library holdings (from result 2), and what church records contain—baptism, marriage, burial details (from result 3). No outside facts or fabricated guidance were added; the summary stays within the bounds of the wiki content provided."
           },
           {
             "source": "rubric",
@@ -701,7 +701,7 @@
       },
       "totals": {
         "duration_ms": 26554.526386025827,
-        "duration_api_ms": 25630.0,
+        "duration_api_ms": 25630,
         "judge_duration_ms": 12770.77286702115,
         "wall_clock_ms": 39380.276918411255,
         "num_turns": 2,
@@ -724,7 +724,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 26554.526386025827,
-          "duration_api_ms": 25630.0,
+          "duration_api_ms": 25630,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1442,
@@ -805,7 +805,7 @@
           },
           "skill_cost_usd": 0.125950165,
           "output": {
-            "text_response": "The FamilySearch Wiki guidance on finding Irish church records has been located and saved to your research log. Here's a summary of what was found:\n\n**Finding Church Records for Irish Ancestors**\n\nThe FamilySearch Wiki covers three main areas related to Ireland Church Records:\n\n1. **What Church Registers Survive** \u2014 Ireland's church records were historically kept by several denominations: Roman Catholic, Church of Ireland (Anglican), Presbyterian, Methodist, and others. Many records were lost in the 1922 Four Courts fire, but significant collections survive elsewhere.\n\n2. **Where to Find Them** \u2014 Key repositories and online sources include:\n   - **FamilySearch.org** \u2014 has digitized many Irish Catholic and Church of Ireland registers\n   - **National Library of Ireland (NLI)** \u2014 holds microfilmed Catholic parish registers, many freely available online\n   - **Representative Church Body Library (RCBL)** \u2014 holds Church of Ireland records\n   - **Public Record Office of Northern Ireland (PRONI)** \u2014 covers records for counties in Northern Ireland\n\n3. **How to Search** \u2014 The wiki recommends starting with the parish your ancestor lived in, identifying the denomination, and then locating the relevant collection on FamilySearch or the NLI's free parish register search.\n\nThe full guidance and the source wiki pages have been logged to your project's research log for future reference. Would you like help planning specific searches for a particular county or ancestor?",
+            "text_response": "The FamilySearch Wiki guidance on finding Irish church records has been located and saved to your research log. Here's a summary of what was found:\n\n**Finding Church Records for Irish Ancestors**\n\nThe FamilySearch Wiki covers three main areas related to Ireland Church Records:\n\n1. **What Church Registers Survive** — Ireland's church records were historically kept by several denominations: Roman Catholic, Church of Ireland (Anglican), Presbyterian, Methodist, and others. Many records were lost in the 1922 Four Courts fire, but significant collections survive elsewhere.\n\n2. **Where to Find Them** — Key repositories and online sources include:\n   - **FamilySearch.org** — has digitized many Irish Catholic and Church of Ireland registers\n   - **National Library of Ireland (NLI)** — holds microfilmed Catholic parish registers, many freely available online\n   - **Representative Church Body Library (RCBL)** — holds Church of Ireland records\n   - **Public Record Office of Northern Ireland (PRONI)** — covers records for counties in Northern Ireland\n\n3. **How to Search** — The wiki recommends starting with the parish your ancestor lived in, identifying the denomination, and then locating the relevant collection on FamilySearch or the NLI's free parish register search.\n\nThe full guidance and the source wiki pages have been logged to your project's research log for future reference. Would you like help planning specific searches for a particular county or ancestor?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -909,7 +909,7 @@
             "warnings": [
               {
                 "kind": "uncovered_tool_call",
-                "advisory": "1 of 3 MCP tool call(s) matched no fixture predicate \u2014 the skill ran against a fixture_not_found or denied/unknown-tool error. Add or fix an mcp_fixture whose args match the call.",
+                "advisory": "1 of 3 MCP tool call(s) matched no fixture predicate — the skill ran against a fixture_not_found or denied/unknown-tool error. Add or fix an mcp_fixture whose args match the call.",
                 "attempted": [
                   {
                     "tool": "mcp__genealogy__wiki_search",
@@ -921,7 +921,7 @@
                     "tool": "mcp__genealogy__research_log_append",
                     "args": {
                       "__unparsedToolInput": {
-                        "raw": "{\"projectPath\": \"/tmp/eval-ut_search_wiki_012-0-0-ny87ai6w\", \"ops\": [{\"tool\": \"wiki_search\", \"query\": {\"query\": \"How do I find church records for my Irish ancestors?\"}, \"planItemId\": null, \"outcome\": \"positive\", \"resultsExamined\": 3, \"notes\": \"# FamilySearch Wiki: Irish church records\\n\\nChurch records are among the most important sources for Irish genealogy research. The two main denominations that kept parish registers in Ireland were the Roman Catholic Church and the Church of Ireland (Anglican). Roman Catholic registers generally begin in the early 1800s, while Church of Ireland registers often start earlier, in the 1700s. Many original registers were destroyed in the 1922 Public Record Office fire, but microfilmed copies and transcriptions survive. FamilySearch has digitized and indexed a large collection of Irish Catholic and Church of Ireland parish registers, which are freely searchable at FamilySearch.org.\\n\\To find Irish church records on FamilySearch, go to FamilySearch.org and click Search, then Records. Enter your ancestor's name and select Ireland as the country. Filter results by record type to narrow to church records including baptisms, marriages, and burials. The National Library of Ireland also holds a large collection of Catholic parish registers on microfilm, many of which have been digitized and are available online. The Representative Church Body Library in Dublin holds Church of Ireland registers not destroyed in 1922.\\n\\nIrish church records typically contain baptism (christening) records listing the child's name, baptism date, parents' names, and sometimes the townland or parish of residence. Marriage records list the names of the bride and groom, the date and place of marriage, and witnesses. Burial records list the name of the deceased and the burial date. Earlier records may contain less detail. Some registers also include sponsor names for baptisms, which can help identify other family members.\\n\\n## Sources\\n\\n- [Ireland Church Records \u2014 Overview of Irish Church Records](https://www",
+                        "raw": "{\"projectPath\": \"/tmp/eval-ut_search_wiki_012-0-0-ny87ai6w\", \"ops\": [{\"tool\": \"wiki_search\", \"query\": {\"query\": \"How do I find church records for my Irish ancestors?\"}, \"planItemId\": null, \"outcome\": \"positive\", \"resultsExamined\": 3, \"notes\": \"# FamilySearch Wiki: Irish church records\\n\\nChurch records are among the most important sources for Irish genealogy research. The two main denominations that kept parish registers in Ireland were the Roman Catholic Church and the Church of Ireland (Anglican). Roman Catholic registers generally begin in the early 1800s, while Church of Ireland registers often start earlier, in the 1700s. Many original registers were destroyed in the 1922 Public Record Office fire, but microfilmed copies and transcriptions survive. FamilySearch has digitized and indexed a large collection of Irish Catholic and Church of Ireland parish registers, which are freely searchable at FamilySearch.org.\\n\\To find Irish church records on FamilySearch, go to FamilySearch.org and click Search, then Records. Enter your ancestor's name and select Ireland as the country. Filter results by record type to narrow to church records including baptisms, marriages, and burials. The National Library of Ireland also holds a large collection of Catholic parish registers on microfilm, many of which have been digitized and are available online. The Representative Church Body Library in Dublin holds Church of Ireland registers not destroyed in 1922.\\n\\nIrish church records typically contain baptism (christening) records listing the child's name, baptism date, parents' names, and sometimes the townland or parish of residence. Marriage records list the names of the bride and groom, the date and place of marriage, and witnesses. Burial records list the name of the deceased and the burial date. Earlier records may contain less detail. Some registers also include sponsor names for baptisms, which can help identify other family members.\\n\\n## Sources\\n\\n- [Ireland Church Records — Overview of Irish Church Records](https://www",
                         "len": 2450
                       }
                     }
@@ -1159,13 +1159,13 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: 'Ireland Church Records - Overview of Irish Church Records' with URL ending in '#Overview_of_Irish_Church_Records', 'Ireland Church Records - Finding Church Records on FamilySearch' with URL ending in '#Finding_Church_Records_on_FamilySearch', and 'Ireland Church Records - What Church Records Contain' with URL ending in '#What_Church_Records_Contain'. All URLs are drawn directly from the response_summary and are not fabricated."
+                "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title — section_heading](source_url)' using the exact URLs from the tool response: 'Ireland Church Records - Overview of Irish Church Records' with URL ending in '#Overview_of_Irish_Church_Records', 'Ireland Church Records - Finding Church Records on FamilySearch' with URL ending in '#Finding_Church_Records_on_FamilySearch', and 'Ireland Church Records - What Church Records Contain' with URL ending in '#What_Church_Records_Contain'. All URLs are drawn directly from the response_summary and are not fabricated."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records for Irish genealogy (from result 1), the two main denominations and their register start dates (from result 1), the 1922 Public Record Office fire and surviving copies (from result 1), FamilySearch's digitized collections (from result 1), how to search on FamilySearch (from result 2), the National Library of Ireland and Representative Church Body Library holdings (from result 2), and what church records contain\u2014baptism, marriage, burial details (from result 3). No outside facts or fabricated guidance were added; the summary stays within the bounds of the wiki content provided."
+                "rationale": "Every claim in the summary is traceable to chunk_text from the tool response. The summary covers: the importance of church records for Irish genealogy (from result 1), the two main denominations and their register start dates (from result 1), the 1922 Public Record Office fire and surviving copies (from result 1), FamilySearch's digitized collections (from result 1), how to search on FamilySearch (from result 2), the National Library of Ireland and Representative Church Body Library holdings (from result 2), and what church records contain—baptism, marriage, burial details (from result 3). No outside facts or fabricated guidance were added; the summary stays within the bounds of the wiki content provided."
               },
               {
                 "source": "rubric",
@@ -1231,7 +1231,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged entry contains three bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: United States Death Records (Early Death Records and Searching Death Records on FamilySearch sections) and Pennsylvania Vital Records (Death Certificates section). All URLs are present and match the tool response exactly."
+            "rationale": "The Sources section in the logged entry contains three bullets, each formatted as '- [page_title — section_heading](source_url)' using the exact URLs from the tool response: United States Death Records (Early Death Records and Searching Death Records on FamilySearch sections) and Pennsylvania Vital Records (Death Certificates section). All URLs are present and match the tool response exactly."
           },
           {
             "source": "rubric",
@@ -1275,7 +1275,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged entry contains three bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: United States Death Records (Early Death Records and Searching Death Records on FamilySearch sections) and Pennsylvania Vital Records (Death Certificates section). All URLs are present and match the tool response exactly."
+            "rationale": "The Sources section in the logged entry contains three bullets, each formatted as '- [page_title — section_heading](source_url)' using the exact URLs from the tool response: United States Death Records (Early Death Records and Searching Death Records on FamilySearch sections) and Pennsylvania Vital Records (Death Certificates section). All URLs are present and match the tool response exactly."
           },
           {
             "source": "rubric",
@@ -1293,7 +1293,7 @@
       },
       "totals": {
         "duration_ms": 29426.917110016802,
-        "duration_api_ms": 27551.0,
+        "duration_api_ms": 27551,
         "judge_duration_ms": 11920.38886298542,
         "wall_clock_ms": 41410.28904914856,
         "num_turns": 2,
@@ -1316,7 +1316,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 29426.917110016802,
-          "duration_api_ms": 27551.0,
+          "duration_api_ms": 27551,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1442,
@@ -1394,7 +1394,7 @@
           },
           "skill_cost_usd": 0.127408145,
           "output": {
-            "text_response": "I looked up how to find death records for someone who died in the 1800s on the FamilySearch Wiki. Here's a summary of what was found:\n\n**Finding 1800s Death Records \u2013 FamilySearch Wiki Guidance**\n\nThe wiki pages on **United States Death Records** and **Pennsylvania Vital Records** (as a regional example) provided the following key points:\n\n1. **Civil Registration was not universal in the 1800s.** Most U.S. states did not require mandatory death registration until the late 1800s or early 1900s. Coverage varies widely by state and county.\n\n2. **Key record types to search for 1800s deaths:**\n   - **Cemetery and gravestone records** \u2013 Often the most reliable source for pre-registration deaths\n   - **Church burial registers** \u2013 Many congregations kept death/burial records before civil registration began\n   - **Obituaries and newspapers** \u2013 Local newspapers published death notices; check digitized newspaper archives\n   - **Probate/estate records** \u2013 Filed when someone died with property; often include death date and family details\n   - **Census mortality schedules** \u2013 The 1850\u20131880 federal censuses included a mortality schedule listing people who died in the year prior to the census\n   - **Death certificates** \u2013 Available in some states from the 1860s\u20131880s onward, though many states started later\n   - **Bible records and family papers** \u2013 Family Bibles often recorded deaths\n\n3. **Where to search on FamilySearch:**\n   - Search [FamilySearch Records](https://www.familysearch.org/search/records) by name, death year, and place\n   - Browse digitized collections by state/county under the FamilySearch catalog\n   - Check the **Vital Records** and **Cemetery Records** collections for the relevant state\n\n4. **State-specific resources:** Each state has its own wiki page on FamilySearch detailing when death registration began and what records survive.\n\nThe guidance has been saved to your research log. You can now use this to plan your specific search for your ancestor's death record.",
+            "text_response": "I looked up how to find death records for someone who died in the 1800s on the FamilySearch Wiki. Here's a summary of what was found:\n\n**Finding 1800s Death Records – FamilySearch Wiki Guidance**\n\nThe wiki pages on **United States Death Records** and **Pennsylvania Vital Records** (as a regional example) provided the following key points:\n\n1. **Civil Registration was not universal in the 1800s.** Most U.S. states did not require mandatory death registration until the late 1800s or early 1900s. Coverage varies widely by state and county.\n\n2. **Key record types to search for 1800s deaths:**\n   - **Cemetery and gravestone records** – Often the most reliable source for pre-registration deaths\n   - **Church burial registers** – Many congregations kept death/burial records before civil registration began\n   - **Obituaries and newspapers** – Local newspapers published death notices; check digitized newspaper archives\n   - **Probate/estate records** – Filed when someone died with property; often include death date and family details\n   - **Census mortality schedules** – The 1850–1880 federal censuses included a mortality schedule listing people who died in the year prior to the census\n   - **Death certificates** – Available in some states from the 1860s–1880s onward, though many states started later\n   - **Bible records and family papers** – Family Bibles often recorded deaths\n\n3. **Where to search on FamilySearch:**\n   - Search [FamilySearch Records](https://www.familysearch.org/search/records) by name, death year, and place\n   - Browse digitized collections by state/county under the FamilySearch catalog\n   - Check the **Vital Records** and **Cemetery Records** collections for the relevant state\n\n4. **State-specific resources:** Each state has its own wiki page on FamilySearch detailing when death registration began and what records survive.\n\nThe guidance has been saved to your research log. You can now use this to plan your specific search for your ancestor's death record.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1425,7 +1425,7 @@
                       "planItemId": null,
                       "outcome": "positive",
                       "resultsExamined": 3,
-                      "notes": "# FamilySearch Wiki: death records for someone who died in the 1800s\n\nFor deaths in the mid-to-late 1800s, researchers should check death certificates (where available), church burial registers, cemetery records, obituaries in local newspapers, and probate records. Statewide death registration in the United States typically began between 1880 and 1920 depending on the state. FamilySearch has collections of early death records from many states and counties. To find death records on FamilySearch, go to the Search tab and select Records, enter the ancestor's name, and narrow by country, state, and date range. The FamilySearch catalog lists available collections; select a state and look under Vital Records. Some collections are indexed and fully searchable; others are browse-only and require reviewing images page by page. Pennsylvania began statewide civil registration of deaths in 1906; before that, death records are found at the county or municipal level and survive unevenly.\n\n## Sources\n\n- [United States Death Records \u2014 Early Death Records](https://www.familysearch.org/en/wiki/United_States_Death_Records#Early_Death_Records)\n- [United States Death Records \u2014 Searching Death Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Death_Records#Searching_Death_Records_on_FamilySearch)\n- [Pennsylvania Vital Records \u2014 Death Certificates (1906\u2013present)](https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Death_Records)"
+                      "notes": "# FamilySearch Wiki: death records for someone who died in the 1800s\n\nFor deaths in the mid-to-late 1800s, researchers should check death certificates (where available), church burial registers, cemetery records, obituaries in local newspapers, and probate records. Statewide death registration in the United States typically began between 1880 and 1920 depending on the state. FamilySearch has collections of early death records from many states and counties. To find death records on FamilySearch, go to the Search tab and select Records, enter the ancestor's name, and narrow by country, state, and date range. The FamilySearch catalog lists available collections; select a state and look under Vital Records. Some collections are indexed and fully searchable; others are browse-only and require reviewing images page by page. Pennsylvania began statewide civil registration of deaths in 1906; before that, death records are found at the county or municipal level and survive unevenly.\n\n## Sources\n\n- [United States Death Records — Early Death Records](https://www.familysearch.org/en/wiki/United_States_Death_Records#Early_Death_Records)\n- [United States Death Records — Searching Death Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Death_Records#Searching_Death_Records_on_FamilySearch)\n- [Pennsylvania Vital Records — Death Certificates (1906–present)](https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Death_Records)"
                     }
                   ]
                 },
@@ -1493,7 +1493,7 @@
                         "results_examined": 3,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: death records for someone who died in the 1800s\n\nFor deaths in the mid-to-late 1800s, researchers should check death certificates (where available), church burial registers, cemetery records, obituaries in local newspapers, and probate records. Statewide death registration in the United States typically began between 1880 and 1920 depending on the state. FamilySearch has collections of early death records from many states and counties. To find death records on FamilySearch, go to the Search tab and select Records, enter the ancestor's name, and narrow by country, state, and date range. The FamilySearch catalog lists available collections; select a state and look under Vital Records. Some collections are indexed and fully searchable; others are browse-only and require reviewing images page by page. Pennsylvania began statewide civil registration of deaths in 1906; before that, death records are found at the county or municipal level and survive unevenly.\n\n## Sources\n\n- [United States Death Records \u2014 Early Death Records](https://www.familysearch.org/en/wiki/United_States_Death_Records#Early_Death_Records)\n- [United States Death Records \u2014 Searching Death Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Death_Records#Searching_Death_Records_on_FamilySearch)\n- [Pennsylvania Vital Records \u2014 Death Certificates (1906\u2013present)](https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Death_Records)"
+                        "notes": "# FamilySearch Wiki: death records for someone who died in the 1800s\n\nFor deaths in the mid-to-late 1800s, researchers should check death certificates (where available), church burial registers, cemetery records, obituaries in local newspapers, and probate records. Statewide death registration in the United States typically began between 1880 and 1920 depending on the state. FamilySearch has collections of early death records from many states and counties. To find death records on FamilySearch, go to the Search tab and select Records, enter the ancestor's name, and narrow by country, state, and date range. The FamilySearch catalog lists available collections; select a state and look under Vital Records. Some collections are indexed and fully searchable; others are browse-only and require reviewing images page by page. Pennsylvania began statewide civil registration of deaths in 1906; before that, death records are found at the county or municipal level and survive unevenly.\n\n## Sources\n\n- [United States Death Records — Early Death Records](https://www.familysearch.org/en/wiki/United_States_Death_Records#Early_Death_Records)\n- [United States Death Records — Searching Death Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Death_Records#Searching_Death_Records_on_FamilySearch)\n- [Pennsylvania Vital Records — Death Certificates (1906–present)](https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Death_Records)"
                       }
                     ],
                     "modified": [],
@@ -1720,7 +1720,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged entry contains three bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' using the exact URLs from the tool response: United States Death Records (Early Death Records and Searching Death Records on FamilySearch sections) and Pennsylvania Vital Records (Death Certificates section). All URLs are present and match the tool response exactly."
+                "rationale": "The Sources section in the logged entry contains three bullets, each formatted as '- [page_title — section_heading](source_url)' using the exact URLs from the tool response: United States Death Records (Early Death Records and Searching Death Records on FamilySearch sections) and Pennsylvania Vital Records (Death Certificates section). All URLs are present and match the tool response exactly."
               },
               {
                 "source": "rubric",
@@ -1792,13 +1792,13 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": null,
-            "rationale": "N/A \u2014 the wiki search returned empty results (results=[]), so there were no sources to cite. The rubric correctly specifies that a negative-result scenario should have no notes section, making this dimension inapplicable."
+            "rationale": "N/A — the wiki search returned empty results (results=[]), so there were no sources to cite. The rubric correctly specifies that a negative-result scenario should have no notes section, making this dimension inapplicable."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
             "score": null,
-            "rationale": "N/A \u2014 no summary was generated because the wiki returned no results. The skill correctly produced no guidance text, which is the appropriate response to empty results per the negative-path handling rubric."
+            "rationale": "N/A — no summary was generated because the wiki returned no results. The skill correctly produced no guidance text, which is the appropriate response to empty results per the negative-path handling rubric."
           },
           {
             "source": "rubric",
@@ -1836,13 +1836,13 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": null,
-            "rationale": "N/A \u2014 the wiki search returned empty results (results=[]), so there were no sources to cite. The rubric correctly specifies that a negative-result scenario should have no notes section, making this dimension inapplicable."
+            "rationale": "N/A — the wiki search returned empty results (results=[]), so there were no sources to cite. The rubric correctly specifies that a negative-result scenario should have no notes section, making this dimension inapplicable."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
             "score": null,
-            "rationale": "N/A \u2014 no summary was generated because the wiki returned no results. The skill correctly produced no guidance text, which is the appropriate response to empty results per the negative-path handling rubric."
+            "rationale": "N/A — no summary was generated because the wiki returned no results. The skill correctly produced no guidance text, which is the appropriate response to empty results per the negative-path handling rubric."
           },
           {
             "source": "rubric",
@@ -1854,7 +1854,7 @@
       },
       "totals": {
         "duration_ms": 14146.976452990202,
-        "duration_api_ms": 12409.0,
+        "duration_api_ms": 12409,
         "judge_duration_ms": 8911.846527975285,
         "wall_clock_ms": 23124.260902404785,
         "num_turns": 2,
@@ -1877,7 +1877,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14146.976452990202,
-          "duration_api_ms": 12409.0,
+          "duration_api_ms": 12409,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1436,
@@ -1955,7 +1955,7 @@
           },
           "skill_cost_usd": 0.12128666999999999,
           "output": {
-            "text_response": "The FamilySearch Wiki had no guidance on **blockchain birth certificate records** \u2014 the search came back empty, and that nil result has been logged so the lookup isn't accidentally repeated.\n\nIf you'd like to continue, I can search for a broader related topic, such as:\n- How to find **birth certificate records** for a specific country or region\n- What vital records or civil registration resources FamilySearch covers\n\nJust let me know!",
+            "text_response": "The FamilySearch Wiki had no guidance on **blockchain birth certificate records** — the search came back empty, and that nil result has been logged so the lookup isn't accidentally repeated.\n\nIf you'd like to continue, I can search for a broader related topic, such as:\n- How to find **birth certificate records** for a specific country or region\n- What vital records or civil registration resources FamilySearch covers\n\nJust let me know!",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2272,13 +2272,13 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": null,
-                "rationale": "N/A \u2014 the wiki search returned empty results (results=[]), so there were no sources to cite. The rubric correctly specifies that a negative-result scenario should have no notes section, making this dimension inapplicable."
+                "rationale": "N/A — the wiki search returned empty results (results=[]), so there were no sources to cite. The rubric correctly specifies that a negative-result scenario should have no notes section, making this dimension inapplicable."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": null,
-                "rationale": "N/A \u2014 no summary was generated because the wiki returned no results. The skill correctly produced no guidance text, which is the appropriate response to empty results per the negative-path handling rubric."
+                "rationale": "N/A — no summary was generated because the wiki returned no results. The skill correctly produced no guidance text, which is the appropriate response to empty results per the negative-path handling rubric."
               },
               {
                 "source": "rubric",
@@ -2344,7 +2344,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "All three wiki results are cited in the Sources section with the required format: '- [page_title \u2014 section_heading](source_url)'. Each bullet includes the actual URLs from the tool response: Italy Civil Registration#Birth_Records, Italy Church Records#Baptisms, and Italy Civil Registration#How_to_Access_the_Records. No URLs are missing or fabricated."
+            "rationale": "All three wiki results are cited in the Sources section with the required format: '- [page_title — section_heading](source_url)'. Each bullet includes the actual URLs from the tool response: Italy Civil Registration#Birth_Records, Italy Church Records#Baptisms, and Italy Civil Registration#How_to_Access_the_Records. No URLs are missing or fabricated."
           },
           {
             "source": "rubric",
@@ -2388,7 +2388,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "All three wiki results are cited in the Sources section with the required format: '- [page_title \u2014 section_heading](source_url)'. Each bullet includes the actual URLs from the tool response: Italy Civil Registration#Birth_Records, Italy Church Records#Baptisms, and Italy Civil Registration#How_to_Access_the_Records. No URLs are missing or fabricated."
+            "rationale": "All three wiki results are cited in the Sources section with the required format: '- [page_title — section_heading](source_url)'. Each bullet includes the actual URLs from the tool response: Italy Civil Registration#Birth_Records, Italy Church Records#Baptisms, and Italy Civil Registration#How_to_Access_the_Records. No URLs are missing or fabricated."
           },
           {
             "source": "rubric",
@@ -2406,7 +2406,7 @@
       },
       "totals": {
         "duration_ms": 20059.890152013395,
-        "duration_api_ms": 16768.0,
+        "duration_api_ms": 16768,
         "judge_duration_ms": 10581.472396996105,
         "wall_clock_ms": 31100.995302200317,
         "num_turns": 2,
@@ -2429,7 +2429,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20059.890152013395,
-          "duration_api_ms": 16768.0,
+          "duration_api_ms": 16768,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1439,
@@ -2507,7 +2507,7 @@
           },
           "skill_cost_usd": 0.125168165,
           "output": {
-            "text_response": "Here is what the search-familysearch-wiki agent found and saved to your research log:\n\n---\n\n**FamilySearch Wiki Guidance: Finding Italian Birth Records**\n\nThe wiki guidance has been logged to your project's research log. Key sources consulted:\n\n- **[Italy Civil Registration \u2014 Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)**\n- **[Italy Church Records \u2014 Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)**\n- **[Italy Civil Registration \u2014 How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)**\n\nThe wiki guidance on Italian birth records has been saved to your research log (log_001). You can review it there when you're ready to begin searching for records. The FamilySearch Wiki covers both **civil registration birth records** (generally from 1866 onward) and **church baptism records** (which predate civil registration), as well as how to access those records through FamilySearch and other repositories.",
+            "text_response": "Here is what the search-familysearch-wiki agent found and saved to your research log:\n\n---\n\n**FamilySearch Wiki Guidance: Finding Italian Birth Records**\n\nThe wiki guidance has been logged to your project's research log. Key sources consulted:\n\n- **[Italy Civil Registration — Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)**\n- **[Italy Church Records — Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)**\n- **[Italy Civil Registration — How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)**\n\nThe wiki guidance on Italian birth records has been saved to your research log (log_001). You can review it there when you're ready to begin searching for records. The FamilySearch Wiki covers both **civil registration birth records** (generally from 1866 onward) and **church baptism records** (which predate civil registration), as well as how to access those records through FamilySearch and other repositories.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2535,7 +2535,7 @@
                   "planItemId": null,
                   "outcome": "positive",
                   "resultsExamined": 3,
-                  "notes": "# FamilySearch Wiki: Italian birth records\n\nCivil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, and resumed nationwide in 1866 following unification. Civil birth records (atti di nascita) are the single most useful source for Italian genealogy after 1866. They record the child's name, the date and place of birth, and the names, ages, occupations, and residence of both parents.\n\nBefore civil registration, and as a parallel source afterward, Catholic parish registers (registri parrocchiali) recorded baptisms. A baptismal record (atto di battesimo) usually gives the baptism date, the child's name, the parents' names, and the godparents. Parish registers in many Italian dioceses begin in the late 1500s following the Council of Trent.\n\nMany Italian civil registration records have been digitized and are listed in the FamilySearch Catalog, searchable by the comune (town) where the event occurred. Records less than 100 years old are generally restricted by Italian privacy law and must be requested directly from the local Ufficio dello Stato Civile.\n\n## Sources\n\n- [Italy Civil Registration \u2014 Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)\n- [Italy Church Records \u2014 Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)\n- [Italy Civil Registration \u2014 How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)",
+                  "notes": "# FamilySearch Wiki: Italian birth records\n\nCivil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, and resumed nationwide in 1866 following unification. Civil birth records (atti di nascita) are the single most useful source for Italian genealogy after 1866. They record the child's name, the date and place of birth, and the names, ages, occupations, and residence of both parents.\n\nBefore civil registration, and as a parallel source afterward, Catholic parish registers (registri parrocchiali) recorded baptisms. A baptismal record (atto di battesimo) usually gives the baptism date, the child's name, the parents' names, and the godparents. Parish registers in many Italian dioceses begin in the late 1500s following the Council of Trent.\n\nMany Italian civil registration records have been digitized and are listed in the FamilySearch Catalog, searchable by the comune (town) where the event occurred. Records less than 100 years old are generally restricted by Italian privacy law and must be requested directly from the local Ufficio dello Stato Civile.\n\n## Sources\n\n- [Italy Civil Registration — Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)\n- [Italy Church Records — Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)\n- [Italy Civil Registration — How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)",
                   "tool": "wiki_search"
                 },
                 "expected_args": null,
@@ -2575,7 +2575,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-familysearch-wiki",
-                "text": "The FamilySearch wiki guidance on Italian birth records was saved to the research log (log_001), with the wiki pages it came from listed under Sources.\n\n**Sources**\n- [Italy Civil Registration \u2014 Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)\n- [Italy Church Records \u2014 Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)\n- [Italy Civil Registration \u2014 How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)\n\n---\nI looked up your question about finding Italian birth records in the FamilySearch Wiki. The guidance it returned, along with the wiki pages it came from, is saved in your research log. The next step is for you to review it when you are ready to start searching for those records."
+                "text": "The FamilySearch wiki guidance on Italian birth records was saved to the research log (log_001), with the wiki pages it came from listed under Sources.\n\n**Sources**\n- [Italy Civil Registration — Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)\n- [Italy Church Records — Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)\n- [Italy Civil Registration — How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)\n\n---\nI looked up your question about finding Italian birth records in the FamilySearch Wiki. The guidance it returned, along with the wiki pages it came from, is saved in your research log. The next step is for you to review it when you are ready to start searching for those records."
               }
             ],
             "file_changes": {
@@ -2598,7 +2598,7 @@
                         "results_examined": 3,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: Italian birth records\n\nCivil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, and resumed nationwide in 1866 following unification. Civil birth records (atti di nascita) are the single most useful source for Italian genealogy after 1866. They record the child's name, the date and place of birth, and the names, ages, occupations, and residence of both parents.\n\nBefore civil registration, and as a parallel source afterward, Catholic parish registers (registri parrocchiali) recorded baptisms. A baptismal record (atto di battesimo) usually gives the baptism date, the child's name, the parents' names, and the godparents. Parish registers in many Italian dioceses begin in the late 1500s following the Council of Trent.\n\nMany Italian civil registration records have been digitized and are listed in the FamilySearch Catalog, searchable by the comune (town) where the event occurred. Records less than 100 years old are generally restricted by Italian privacy law and must be requested directly from the local Ufficio dello Stato Civile.\n\n## Sources\n\n- [Italy Civil Registration \u2014 Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)\n- [Italy Church Records \u2014 Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)\n- [Italy Civil Registration \u2014 How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)"
+                        "notes": "# FamilySearch Wiki: Italian birth records\n\nCivil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, and resumed nationwide in 1866 following unification. Civil birth records (atti di nascita) are the single most useful source for Italian genealogy after 1866. They record the child's name, the date and place of birth, and the names, ages, occupations, and residence of both parents.\n\nBefore civil registration, and as a parallel source afterward, Catholic parish registers (registri parrocchiali) recorded baptisms. A baptismal record (atto di battesimo) usually gives the baptism date, the child's name, the parents' names, and the godparents. Parish registers in many Italian dioceses begin in the late 1500s following the Council of Trent.\n\nMany Italian civil registration records have been digitized and are listed in the FamilySearch Catalog, searchable by the comune (town) where the event occurred. Records less than 100 years old are generally restricted by Italian privacy law and must be requested directly from the local Ufficio dello Stato Civile.\n\n## Sources\n\n- [Italy Civil Registration — Birth Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#Birth_Records)\n- [Italy Church Records — Baptisms](https://www.familysearch.org/en/wiki/Italy_Church_Records#Baptisms)\n- [Italy Civil Registration — How to Access the Records](https://www.familysearch.org/en/wiki/Italy_Civil_Registration#How_to_Access_the_Records)"
                       }
                     ],
                     "modified": [],
@@ -2835,7 +2835,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "All three wiki results are cited in the Sources section with the required format: '- [page_title \u2014 section_heading](source_url)'. Each bullet includes the actual URLs from the tool response: Italy Civil Registration#Birth_Records, Italy Church Records#Baptisms, and Italy Civil Registration#How_to_Access_the_Records. No URLs are missing or fabricated."
+                "rationale": "All three wiki results are cited in the Sources section with the required format: '- [page_title — section_heading](source_url)'. Each bullet includes the actual URLs from the tool response: Italy Civil Registration#Birth_Records, Italy Church Records#Baptisms, and Italy Civil Registration#How_to_Access_the_Records. No URLs are missing or fabricated."
               },
               {
                 "source": "rubric",
@@ -2883,7 +2883,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki search. The response accurately covers civil registration records, church records (Kirchenb\u00fccher), the importance of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present."
+            "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki search. The response accurately covers civil registration records, church records (Kirchenbücher), the importance of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present."
           },
           {
             "source": "base",
@@ -2907,13 +2907,13 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section includes three properly formatted bullets with the exact format '- [page_title \u2014 section_heading](source_url)': Germany Genealogy \u2014 Key Records for German Research, Germany Genealogy \u2014 Getting Started with German Research, and Germany Emigration and Immigration \u2014 German Emigration Records. All URLs match those from the tool response exactly."
+            "rationale": "The Sources section includes three properly formatted bullets with the exact format '- [page_title — section_heading](source_url)': Germany Genealogy — Key Records for German Research, Germany Genealogy — Getting Started with German Research, and Germany Emigration and Immigration — German Emigration Records. All URLs match those from the tool response exactly."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
             "score": 3,
-            "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three wiki results. The summary synthesizes information about civil registration records, church records, the necessity of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists\u2014all present in the returned chunks. No outside facts or fabricated guidance were added."
+            "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three wiki results. The summary synthesizes information about civil registration records, church records, the necessity of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists—all present in the returned chunks. No outside facts or fabricated guidance were added."
           },
           {
             "source": "rubric",
@@ -2927,7 +2927,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki search. The response accurately covers civil registration records, church records (Kirchenb\u00fccher), the importance of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present."
+            "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki search. The response accurately covers civil registration records, church records (Kirchenbücher), the importance of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present."
           },
           {
             "source": "base",
@@ -2951,13 +2951,13 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section includes three properly formatted bullets with the exact format '- [page_title \u2014 section_heading](source_url)': Germany Genealogy \u2014 Key Records for German Research, Germany Genealogy \u2014 Getting Started with German Research, and Germany Emigration and Immigration \u2014 German Emigration Records. All URLs match those from the tool response exactly."
+            "rationale": "The Sources section includes three properly formatted bullets with the exact format '- [page_title — section_heading](source_url)': Germany Genealogy — Key Records for German Research, Germany Genealogy — Getting Started with German Research, and Germany Emigration and Immigration — German Emigration Records. All URLs match those from the tool response exactly."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
             "score": 3,
-            "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three wiki results. The summary synthesizes information about civil registration records, church records, the necessity of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists\u2014all present in the returned chunks. No outside facts or fabricated guidance were added."
+            "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three wiki results. The summary synthesizes information about civil registration records, church records, the necessity of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists—all present in the returned chunks. No outside facts or fabricated guidance were added."
           },
           {
             "source": "rubric",
@@ -2969,7 +2969,7 @@
       },
       "totals": {
         "duration_ms": 26920.109191007214,
-        "duration_api_ms": 25214.0,
+        "duration_api_ms": 25214,
         "judge_duration_ms": 10597.564173978753,
         "wall_clock_ms": 37529.94465827942,
         "num_turns": 2,
@@ -2992,7 +2992,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 26920.109191007214,
-          "duration_api_ms": 25214.0,
+          "duration_api_ms": 25214,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1424,
@@ -3070,7 +3070,7 @@
           },
           "skill_cost_usd": 0.1300489,
           "output": {
-            "text_response": "# FamilySearch Wiki: German Ancestors\n\nGerman genealogy research typically begins with **civil registration records**, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, **church records (Kirchenb\u00fccher)** are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org.\n\n## Getting Started\n\nTo begin German genealogy research, you need to know the **specific village or town** where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin.\n\nThe FamilySearch Germany wiki page lists records available by German state.\n\n## Emigration Records\n\nGerman emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. **Hamburg passenger lists** are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy \u2014 Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy \u2014 Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration \u2014 German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)\n\n---\n\n*Note: This folder is not a research project, so the guidance could not be saved to a research log. If you'd like future findings saved, you can start a research project folder.*",
+            "text_response": "# FamilySearch Wiki: German Ancestors\n\nGerman genealogy research typically begins with **civil registration records**, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, **church records (Kirchenbücher)** are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org.\n\n## Getting Started\n\nTo begin German genealogy research, you need to know the **specific village or town** where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin.\n\nThe FamilySearch Germany wiki page lists records available by German state.\n\n## Emigration Records\n\nGerman emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. **Hamburg passenger lists** are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy — Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy — Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration — German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)\n\n---\n\n*Note: This folder is not a research project, so the guidance could not be saved to a research log. If you'd like future findings saved, you can start a research project folder.*",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3101,7 +3101,7 @@
                       "planItemId": null,
                       "outcome": "positive",
                       "resultsExamined": 3,
-                      "notes": "# FamilySearch Wiki: German ancestors research\n\nGerman genealogy research typically begins with civil registration records, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, church records (Kirchenb\u00fccher) are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org. To begin German genealogy research, you need to know the specific village or town where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin. The FamilySearch Germany wiki page lists records available by German state. German emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. Hamburg passenger lists are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy \u2014 Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy \u2014 Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration \u2014 German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)"
+                      "notes": "# FamilySearch Wiki: German ancestors research\n\nGerman genealogy research typically begins with civil registration records, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, church records (Kirchenbücher) are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org. To begin German genealogy research, you need to know the specific village or town where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin. The FamilySearch Germany wiki page lists records available by German state. German emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. Hamburg passenger lists are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy — Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy — Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration — German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)"
                     }
                   ]
                 },
@@ -3115,7 +3115,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. Nothing was saved; the answer stands, only the record of it is missing."
+                    "This folder is not a research project — there is no research.json here. Nothing was saved; the answer stands, only the record of it is missing."
                   ]
                 }
               }
@@ -3135,7 +3135,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-familysearch-wiki",
-                "text": "# FamilySearch Wiki: German ancestors\n\nGerman genealogy research typically begins with civil registration records, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, church records (Kirchenb\u00fccher) are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org. To begin German genealogy research, you need to know the specific village or town where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin. The FamilySearch Germany wiki page lists records available by German state. German emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. Hamburg passenger lists are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy \u2014 Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy \u2014 Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration \u2014 German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)\n\n---\n\nI searched the FamilySearch Wiki for guidance on researching German ancestors, and it returned guidance with its source pages. This folder is not a research project, so the guidance could not be saved to a research log; it is shown above in full instead.\n\nNothing further is needed from you. You can bring this guidance into your next research step, or start a research project folder if you want future findings saved."
+                "text": "# FamilySearch Wiki: German ancestors\n\nGerman genealogy research typically begins with civil registration records, which document births, marriages, and deaths and are held at local civil registration offices. Before civil registration began, church records (Kirchenbücher) are the primary source. Lutheran and Catholic church registers often survive from the 1600s and 1700s. FamilySearch has digitized and indexed millions of German church and civil records, freely available at FamilySearch.org. To begin German genealogy research, you need to know the specific village or town where your ancestor lived. Record-keeping varied by region, and records were kept locally, not nationally. Knowing the village is essential before searching German archives. Use family documents, naturalization records, and passenger lists to identify the German place of origin. The FamilySearch Germany wiki page lists records available by German state. German emigration records can help identify an ancestor's place of origin. Many German states kept emigration lists documenting residents who left for other countries. These records are held in state archives and some have been digitized. Hamburg passenger lists are well preserved and cover departures from the port of Hamburg over many decades. FamilySearch has indexed the Hamburg lists and they are searchable at FamilySearch.org.\n\n## Sources\n\n- [Germany Genealogy — Key Records for German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Key_Records_for_German_Research)\n- [Germany Genealogy — Getting Started with German Research](https://www.familysearch.org/en/wiki/Germany_Genealogy#Getting_Started_with_German_Research)\n- [Germany Emigration and Immigration — German Emigration Records](https://www.familysearch.org/en/wiki/Germany_Emigration_and_Immigration#German_Emigration_Records)\n\n---\n\nI searched the FamilySearch Wiki for guidance on researching German ancestors, and it returned guidance with its source pages. This folder is not a research project, so the guidance could not be saved to a research log; it is shown above in full instead.\n\nNothing further is needed from you. You can bring this guidance into your next research step, or start a research project folder if you want future findings saved."
               }
             ]
           },
@@ -3325,7 +3325,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki search. The response accurately covers civil registration records, church records (Kirchenb\u00fccher), the importance of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present."
+                "rationale": "All claims in the summary are traceable to the three chunk_text results returned by the wiki search. The response accurately covers civil registration records, church records (Kirchenbücher), the importance of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists. No fabricated information or unsupported claims are present."
               },
               {
                 "source": "base",
@@ -3349,13 +3349,13 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section includes three properly formatted bullets with the exact format '- [page_title \u2014 section_heading](source_url)': Germany Genealogy \u2014 Key Records for German Research, Germany Genealogy \u2014 Getting Started with German Research, and Germany Emigration and Immigration \u2014 German Emigration Records. All URLs match those from the tool response exactly."
+                "rationale": "The Sources section includes three properly formatted bullets with the exact format '- [page_title — section_heading](source_url)': Germany Genealogy — Key Records for German Research, Germany Genealogy — Getting Started with German Research, and Germany Emigration and Immigration — German Emigration Records. All URLs match those from the tool response exactly."
               },
               {
                 "source": "rubric",
                 "name": "Summary faithful to wiki content",
                 "score": 3,
-                "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three wiki results. The summary synthesizes information about civil registration records, church records, the necessity of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists\u2014all present in the returned chunks. No outside facts or fabricated guidance were added."
+                "rationale": "Every claim in the summary is directly traceable to the chunk_text from the three wiki results. The summary synthesizes information about civil registration records, church records, the necessity of knowing the specific village, use of family documents and naturalization records, and German emigration records including Hamburg passenger lists—all present in the returned chunks. No outside facts or fabricated guidance were added."
               },
               {
                 "source": "rubric",
@@ -3421,7 +3421,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)': Germany Church Records \u2014 Getting Started, Germany Gazetteers \u2014 Meyers Gazetteer, and Germany Church Records \u2014 Where to Find the Records. All URLs are drawn directly from the tool response and match the source_url fields exactly."
+            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title — section_heading](source_url)': Germany Church Records — Getting Started, Germany Gazetteers — Meyers Gazetteer, and Germany Church Records — Where to Find the Records. All URLs are drawn directly from the tool response and match the source_url fields exactly."
           },
           {
             "source": "rubric",
@@ -3465,7 +3465,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)': Germany Church Records \u2014 Getting Started, Germany Gazetteers \u2014 Meyers Gazetteer, and Germany Church Records \u2014 Where to Find the Records. All URLs are drawn directly from the tool response and match the source_url fields exactly."
+            "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title — section_heading](source_url)': Germany Church Records — Getting Started, Germany Gazetteers — Meyers Gazetteer, and Germany Church Records — Where to Find the Records. All URLs are drawn directly from the tool response and match the source_url fields exactly."
           },
           {
             "source": "rubric",
@@ -3483,7 +3483,7 @@
       },
       "totals": {
         "duration_ms": 22935.09420499322,
-        "duration_api_ms": 19711.0,
+        "duration_api_ms": 19711,
         "judge_duration_ms": 10637.052742997184,
         "wall_clock_ms": 34067.3770904541,
         "num_turns": 2,
@@ -3506,7 +3506,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22935.09420499322,
-          "duration_api_ms": 19711.0,
+          "duration_api_ms": 19711,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1427,
@@ -3584,7 +3584,7 @@
           },
           "skill_cost_usd": 0.126328335,
           "output": {
-            "text_response": "The FamilySearch Wiki guidance on finding German church records has been retrieved and saved to your research log (log_001). The agent referenced the **Germany Church Records** and **Germany Gazetteers** wiki pages as sources.\n\nHere's a summary of what the guidance covers:\n\n- **German church records** (Kirchenb\u00fccher) are among the most valuable genealogical sources for German ancestors, recording baptisms, marriages, and burials.\n- They are held in **state and church archives** (Landeskirchliche Archive, Bistumsarchive) across Germany, organized by region and denomination (Lutheran, Catholic, Reformed).\n- **FamilySearch** has digitized and indexed many German church records, searchable at [FamilySearch.org](https://www.familysearch.org).\n- **Archion** (for Protestant records) and **Matricula** (for Catholic records) are key online portals for browsing original church registers.\n- **Gazetteers** are essential for locating the correct parish \u2014 since civil boundaries and church jurisdictions often differed, identifying your ancestor's village and which parish it belonged to is a critical first step.\n\n**Tips to get started:**\n1. Identify the village your ancestor came from.\n2. Use a German gazetteer (e.g., *Meyers Orts- und Verkehrs-Lexikon*) to find which parish covered that village.\n3. Search FamilySearch collections for Germany, filtering by state/province.\n4. If records aren't indexed, browse digitized images on Archion or Matricula.\n\nWould you like help with any specific aspect of German church record research?",
+            "text_response": "The FamilySearch Wiki guidance on finding German church records has been retrieved and saved to your research log (log_001). The agent referenced the **Germany Church Records** and **Germany Gazetteers** wiki pages as sources.\n\nHere's a summary of what the guidance covers:\n\n- **German church records** (Kirchenbücher) are among the most valuable genealogical sources for German ancestors, recording baptisms, marriages, and burials.\n- They are held in **state and church archives** (Landeskirchliche Archive, Bistumsarchive) across Germany, organized by region and denomination (Lutheran, Catholic, Reformed).\n- **FamilySearch** has digitized and indexed many German church records, searchable at [FamilySearch.org](https://www.familysearch.org).\n- **Archion** (for Protestant records) and **Matricula** (for Catholic records) are key online portals for browsing original church registers.\n- **Gazetteers** are essential for locating the correct parish — since civil boundaries and church jurisdictions often differed, identifying your ancestor's village and which parish it belonged to is a critical first step.\n\n**Tips to get started:**\n1. Identify the village your ancestor came from.\n2. Use a German gazetteer (e.g., *Meyers Orts- und Verkehrs-Lexikon*) to find which parish covered that village.\n3. Search FamilySearch collections for Germany, filtering by state/province.\n4. If records aren't indexed, browse digitized images on Archion or Matricula.\n\nWould you like help with any specific aspect of German church record research?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3612,7 +3612,7 @@
                   "planItemId": null,
                   "outcome": "positive",
                   "resultsExamined": 3,
-                  "notes": "# FamilySearch Wiki: German church records\n\nChurch records (Kirchenb\u00fccher) are the most important source for German genealogy before civil registration. Protestant (Evangelisch) and Catholic (Katholisch) parishes recorded baptisms, marriages, and burials, with many registers beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Each register is kept by the parish, not by the town, so identifying the correct parish is the essential first step.\n\nTo find the parish that served an ancestor's village, use a gazetteer. Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs lists every place in the 1871-1918 German Empire and identifies the civil registration office and the Protestant and Catholic parishes serving it.\n\nMany German church records have been microfilmed or digitized and are listed in the FamilySearch Catalog under the parish or town name. Others remain only at the parish, the regional church archive (Landeskirchliches Archiv or Kirchenbuchamt), or on subscription sites such as Archion (Protestant) and Matricula (Catholic).\n\n## Sources\n\n- [Germany Church Records \u2014 Getting Started](https://www.familysearch.org/en/wiki/Germany_Church_Records#Getting_Started)\n- [Germany Gazetteers \u2014 Meyers Gazetteer](https://www.familysearch.org/en/wiki/Germany_Gazetteers#Meyers_Gazetteer)\n- [Germany Church Records \u2014 Where to Find the Records](https://www.familysearch.org/en/wiki/Germany_Church_Records#Where_to_Find_the_Records)",
+                  "notes": "# FamilySearch Wiki: German church records\n\nChurch records (Kirchenbücher) are the most important source for German genealogy before civil registration. Protestant (Evangelisch) and Catholic (Katholisch) parishes recorded baptisms, marriages, and burials, with many registers beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Each register is kept by the parish, not by the town, so identifying the correct parish is the essential first step.\n\nTo find the parish that served an ancestor's village, use a gazetteer. Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs lists every place in the 1871-1918 German Empire and identifies the civil registration office and the Protestant and Catholic parishes serving it.\n\nMany German church records have been microfilmed or digitized and are listed in the FamilySearch Catalog under the parish or town name. Others remain only at the parish, the regional church archive (Landeskirchliches Archiv or Kirchenbuchamt), or on subscription sites such as Archion (Protestant) and Matricula (Catholic).\n\n## Sources\n\n- [Germany Church Records — Getting Started](https://www.familysearch.org/en/wiki/Germany_Church_Records#Getting_Started)\n- [Germany Gazetteers — Meyers Gazetteer](https://www.familysearch.org/en/wiki/Germany_Gazetteers#Meyers_Gazetteer)\n- [Germany Church Records — Where to Find the Records](https://www.familysearch.org/en/wiki/Germany_Church_Records#Where_to_Find_the_Records)",
                   "tool": "wiki_search"
                 },
                 "expected_args": null,
@@ -3675,7 +3675,7 @@
                         "results_examined": 3,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: German church records\n\nChurch records (Kirchenb\u00fccher) are the most important source for German genealogy before civil registration. Protestant (Evangelisch) and Catholic (Katholisch) parishes recorded baptisms, marriages, and burials, with many registers beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Each register is kept by the parish, not by the town, so identifying the correct parish is the essential first step.\n\nTo find the parish that served an ancestor's village, use a gazetteer. Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs lists every place in the 1871-1918 German Empire and identifies the civil registration office and the Protestant and Catholic parishes serving it.\n\nMany German church records have been microfilmed or digitized and are listed in the FamilySearch Catalog under the parish or town name. Others remain only at the parish, the regional church archive (Landeskirchliches Archiv or Kirchenbuchamt), or on subscription sites such as Archion (Protestant) and Matricula (Catholic).\n\n## Sources\n\n- [Germany Church Records \u2014 Getting Started](https://www.familysearch.org/en/wiki/Germany_Church_Records#Getting_Started)\n- [Germany Gazetteers \u2014 Meyers Gazetteer](https://www.familysearch.org/en/wiki/Germany_Gazetteers#Meyers_Gazetteer)\n- [Germany Church Records \u2014 Where to Find the Records](https://www.familysearch.org/en/wiki/Germany_Church_Records#Where_to_Find_the_Records)"
+                        "notes": "# FamilySearch Wiki: German church records\n\nChurch records (Kirchenbücher) are the most important source for German genealogy before civil registration. Protestant (Evangelisch) and Catholic (Katholisch) parishes recorded baptisms, marriages, and burials, with many registers beginning in the 1600s and some Catholic registers reaching back to the mid-1500s. Each register is kept by the parish, not by the town, so identifying the correct parish is the essential first step.\n\nTo find the parish that served an ancestor's village, use a gazetteer. Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs lists every place in the 1871-1918 German Empire and identifies the civil registration office and the Protestant and Catholic parishes serving it.\n\nMany German church records have been microfilmed or digitized and are listed in the FamilySearch Catalog under the parish or town name. Others remain only at the parish, the regional church archive (Landeskirchliches Archiv or Kirchenbuchamt), or on subscription sites such as Archion (Protestant) and Matricula (Catholic).\n\n## Sources\n\n- [Germany Church Records — Getting Started](https://www.familysearch.org/en/wiki/Germany_Church_Records#Getting_Started)\n- [Germany Gazetteers — Meyers Gazetteer](https://www.familysearch.org/en/wiki/Germany_Gazetteers#Meyers_Gazetteer)\n- [Germany Church Records — Where to Find the Records](https://www.familysearch.org/en/wiki/Germany_Church_Records#Where_to_Find_the_Records)"
                       }
                     ],
                     "modified": [],
@@ -3907,7 +3907,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title \u2014 section_heading](source_url)': Germany Church Records \u2014 Getting Started, Germany Gazetteers \u2014 Meyers Gazetteer, and Germany Church Records \u2014 Where to Find the Records. All URLs are drawn directly from the tool response and match the source_url fields exactly."
+                "rationale": "The Sources section contains three bullets, each properly formatted as '- [page_title — section_heading](source_url)': Germany Church Records — Getting Started, Germany Gazetteers — Meyers Gazetteer, and Germany Church Records — Where to Find the Records. All URLs are drawn directly from the tool response and match the source_url fields exactly."
               },
               {
                 "source": "rubric",
@@ -3979,7 +3979,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' with actual URLs from the tool response: one for 'United States Immigration Records \u2014 Overview of Immigration Records' and one for 'United States Immigration Records \u2014 Finding Immigration Records on FamilySearch'. Both URLs match the source_url values returned by the wiki search tool."
+            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)' with actual URLs from the tool response: one for 'United States Immigration Records — Overview of Immigration Records' and one for 'United States Immigration Records — Finding Immigration Records on FamilySearch'. Both URLs match the source_url values returned by the wiki search tool."
           },
           {
             "source": "rubric",
@@ -4023,7 +4023,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' with actual URLs from the tool response: one for 'United States Immigration Records \u2014 Overview of Immigration Records' and one for 'United States Immigration Records \u2014 Finding Immigration Records on FamilySearch'. Both URLs match the source_url values returned by the wiki search tool."
+            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)' with actual URLs from the tool response: one for 'United States Immigration Records — Overview of Immigration Records' and one for 'United States Immigration Records — Finding Immigration Records on FamilySearch'. Both URLs match the source_url values returned by the wiki search tool."
           },
           {
             "source": "rubric",
@@ -4041,7 +4041,7 @@
       },
       "totals": {
         "duration_ms": 15321.040092007024,
-        "duration_api_ms": 12869.0,
+        "duration_api_ms": 12869,
         "judge_duration_ms": 11727.171178004937,
         "wall_clock_ms": 27630.22494316101,
         "num_turns": 2,
@@ -4064,7 +4064,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 15321.040092007024,
-          "duration_api_ms": 12869.0,
+          "duration_api_ms": 12869,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1439,
@@ -4173,7 +4173,7 @@
                       "planItemId": null,
                       "outcome": "positive",
                       "resultsExamined": 2,
-                      "notes": "# FamilySearch Wiki: Immigration records\n\nImmigration records document the arrival of individuals into a country and are a key source for tracing ancestors who moved from one country to another. For the United States, passenger arrival records (also called ship manifests or passenger lists) are the primary immigration records. These records were created at the port of arrival and typically list the passenger's name, age, occupation, country of origin, and destination. FamilySearch has a large free collection of U.S. passenger arrival records searchable by name at FamilySearch.org.\n\nTo find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name. You can filter by record type and country of origin to narrow results. Naturalization records are also useful, as they document the process by which an immigrant became a citizen and may include the immigrant's country of birth, arrival date, and port of entry. Naturalization records were kept at the local court level and FamilySearch has indexed many of them.\n\n## Sources\n\n- [United States Immigration Records \u2014 Overview of Immigration Records](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Overview_of_Immigration_Records)\n- [United States Immigration Records \u2014 Finding Immigration Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Finding_Immigration_Records_on_FamilySearch)"
+                      "notes": "# FamilySearch Wiki: Immigration records\n\nImmigration records document the arrival of individuals into a country and are a key source for tracing ancestors who moved from one country to another. For the United States, passenger arrival records (also called ship manifests or passenger lists) are the primary immigration records. These records were created at the port of arrival and typically list the passenger's name, age, occupation, country of origin, and destination. FamilySearch has a large free collection of U.S. passenger arrival records searchable by name at FamilySearch.org.\n\nTo find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name. You can filter by record type and country of origin to narrow results. Naturalization records are also useful, as they document the process by which an immigrant became a citizen and may include the immigrant's country of birth, arrival date, and port of entry. Naturalization records were kept at the local court level and FamilySearch has indexed many of them.\n\n## Sources\n\n- [United States Immigration Records — Overview of Immigration Records](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Overview_of_Immigration_Records)\n- [United States Immigration Records — Finding Immigration Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Finding_Immigration_Records_on_FamilySearch)"
                     }
                   ]
                 },
@@ -4241,7 +4241,7 @@
                         "results_examined": 2,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: Immigration records\n\nImmigration records document the arrival of individuals into a country and are a key source for tracing ancestors who moved from one country to another. For the United States, passenger arrival records (also called ship manifests or passenger lists) are the primary immigration records. These records were created at the port of arrival and typically list the passenger's name, age, occupation, country of origin, and destination. FamilySearch has a large free collection of U.S. passenger arrival records searchable by name at FamilySearch.org.\n\nTo find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name. You can filter by record type and country of origin to narrow results. Naturalization records are also useful, as they document the process by which an immigrant became a citizen and may include the immigrant's country of birth, arrival date, and port of entry. Naturalization records were kept at the local court level and FamilySearch has indexed many of them.\n\n## Sources\n\n- [United States Immigration Records \u2014 Overview of Immigration Records](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Overview_of_Immigration_Records)\n- [United States Immigration Records \u2014 Finding Immigration Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Finding_Immigration_Records_on_FamilySearch)"
+                        "notes": "# FamilySearch Wiki: Immigration records\n\nImmigration records document the arrival of individuals into a country and are a key source for tracing ancestors who moved from one country to another. For the United States, passenger arrival records (also called ship manifests or passenger lists) are the primary immigration records. These records were created at the port of arrival and typically list the passenger's name, age, occupation, country of origin, and destination. FamilySearch has a large free collection of U.S. passenger arrival records searchable by name at FamilySearch.org.\n\nTo find immigration records on FamilySearch, go to FamilySearch.org, click Search, then Records, and enter your ancestor's name. You can filter by record type and country of origin to narrow results. Naturalization records are also useful, as they document the process by which an immigrant became a citizen and may include the immigrant's country of birth, arrival date, and port of entry. Naturalization records were kept at the local court level and FamilySearch has indexed many of them.\n\n## Sources\n\n- [United States Immigration Records — Overview of Immigration Records](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Overview_of_Immigration_Records)\n- [United States Immigration Records — Finding Immigration Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Immigration_Records#Finding_Immigration_Records_on_FamilySearch)"
                       }
                     ],
                     "modified": [],
@@ -4468,7 +4468,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)' with actual URLs from the tool response: one for 'United States Immigration Records \u2014 Overview of Immigration Records' and one for 'United States Immigration Records \u2014 Finding Immigration Records on FamilySearch'. Both URLs match the source_url values returned by the wiki search tool."
+                "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)' with actual URLs from the tool response: one for 'United States Immigration Records — Overview of Immigration Records' and one for 'United States Immigration Records — Finding Immigration Records on FamilySearch'. Both URLs match the source_url values returned by the wiki search tool."
               },
               {
                 "source": "rubric",
@@ -4516,7 +4516,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill's output is factually correct. The wiki search returned one result about Irish immigration to Pennsylvania with specific, verifiable details (Philadelphia port in 1840s, Great Famine, anthracite coal regions, parish registers). The summary faithfully represents this content without fabrication or unsupported claims. The logged entry preserves the source's strength of wording\u2014'key genealogical sources' remains intact, not upgraded to superlatives."
+            "rationale": "The skill's output is factually correct. The wiki search returned one result about Irish immigration to Pennsylvania with specific, verifiable details (Philadelphia port in 1840s, Great Famine, anthracite coal regions, parish registers). The summary faithfully represents this content without fabrication or unsupported claims. The logged entry preserves the source's strength of wording—'key genealogical sources' remains intact, not upgraded to superlatives."
           },
           {
             "source": "base",
@@ -4540,7 +4540,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary exactly."
+            "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration — Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary exactly."
           },
           {
             "source": "rubric",
@@ -4560,7 +4560,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill's output is factually correct. The wiki search returned one result about Irish immigration to Pennsylvania with specific, verifiable details (Philadelphia port in 1840s, Great Famine, anthracite coal regions, parish registers). The summary faithfully represents this content without fabrication or unsupported claims. The logged entry preserves the source's strength of wording\u2014'key genealogical sources' remains intact, not upgraded to superlatives."
+            "rationale": "The skill's output is factually correct. The wiki search returned one result about Irish immigration to Pennsylvania with specific, verifiable details (Philadelphia port in 1840s, Great Famine, anthracite coal regions, parish registers). The summary faithfully represents this content without fabrication or unsupported claims. The logged entry preserves the source's strength of wording—'key genealogical sources' remains intact, not upgraded to superlatives."
           },
           {
             "source": "base",
@@ -4584,7 +4584,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary exactly."
+            "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration — Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary exactly."
           },
           {
             "source": "rubric",
@@ -4602,7 +4602,7 @@
       },
       "totals": {
         "duration_ms": 19148.293168022064,
-        "duration_api_ms": 17139.0,
+        "duration_api_ms": 17139,
         "judge_duration_ms": 10758.31540999934,
         "wall_clock_ms": 29971.07195854187,
         "num_turns": 2,
@@ -4625,7 +4625,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19148.293168022064,
-          "duration_api_ms": 17139.0,
+          "duration_api_ms": 17139,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1440,
@@ -4703,7 +4703,7 @@
           },
           "skill_cost_usd": 0.12303383500000001,
           "output": {
-            "text_response": "I looked up **Irish immigration to Pennsylvania** on the FamilySearch Research Wiki. Here's a summary of what was found and logged:\n\n- The wiki page covering **Pennsylvania Irish Immigration** was searched and its guidance has been saved to your research log for future reference.\n- The log entry cites the specific FamilySearch Wiki page as its source.\n\n**What the FamilySearch Wiki typically covers for this topic includes:**\n- Migration patterns of Irish immigrants to Pennsylvania (especially during the 18th\u201319th centuries, including the Great Famine era)\n- Key ports of entry and settlement areas in Pennsylvania\n- Record types useful for tracing Irish ancestors in Pennsylvania (church records, naturalization papers, passenger lists, etc.)\n- Repositories and collections available on FamilySearch\n\nIf you'd like to dig deeper \u2014 such as searching specific record types (passenger lists, naturalization records, Catholic church registers), or exploring a particular time period or county in Pennsylvania \u2014 just let me know!",
+            "text_response": "I looked up **Irish immigration to Pennsylvania** on the FamilySearch Research Wiki. Here's a summary of what was found and logged:\n\n- The wiki page covering **Pennsylvania Irish Immigration** was searched and its guidance has been saved to your research log for future reference.\n- The log entry cites the specific FamilySearch Wiki page as its source.\n\n**What the FamilySearch Wiki typically covers for this topic includes:**\n- Migration patterns of Irish immigrants to Pennsylvania (especially during the 18th–19th centuries, including the Great Famine era)\n- Key ports of entry and settlement areas in Pennsylvania\n- Record types useful for tracing Irish ancestors in Pennsylvania (church records, naturalization papers, passenger lists, etc.)\n- Repositories and collections available on FamilySearch\n\nIf you'd like to dig deeper — such as searching specific record types (passenger lists, naturalization records, Catholic church registers), or exploring a particular time period or county in Pennsylvania — just let me know!",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4731,7 +4731,7 @@
                   "planItemId": null,
                   "outcome": "positive",
                   "resultsExamined": 1,
-                  "notes": "# FamilySearch Wiki: Irish immigration to Pennsylvania\n\nIrish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine. Many settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties, where they found work in the mines. Parish registers from Catholic churches in these communities are key genealogical sources for tracing Irish immigrant families.\n\n## Sources\n\n- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)",
+                  "notes": "# FamilySearch Wiki: Irish immigration to Pennsylvania\n\nIrish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine. Many settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties, where they found work in the mines. Parish registers from Catholic churches in these communities are key genealogical sources for tracing Irish immigrant families.\n\n## Sources\n\n- [Pennsylvania, Irish Immigration — Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)",
                   "tool": "wiki_search"
                 },
                 "expected_args": null,
@@ -4794,7 +4794,7 @@
                         "results_examined": 1,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: Irish immigration to Pennsylvania\n\nIrish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine. Many settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties, where they found work in the mines. Parish registers from Catholic churches in these communities are key genealogical sources for tracing Irish immigrant families.\n\n## Sources\n\n- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)"
+                        "notes": "# FamilySearch Wiki: Irish immigration to Pennsylvania\n\nIrish immigrants began arriving in large numbers at the port of Philadelphia in the 1840s, driven by the Great Famine. Many settled in the anthracite coal regions of northeastern Pennsylvania, particularly Schuylkill, Luzerne, and Carbon counties, where they found work in the mines. Parish registers from Catholic churches in these communities are key genealogical sources for tracing Irish immigrant families.\n\n## Sources\n\n- [Pennsylvania, Irish Immigration — Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)"
                       }
                     ],
                     "modified": [],
@@ -4997,7 +4997,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill's output is factually correct. The wiki search returned one result about Irish immigration to Pennsylvania with specific, verifiable details (Philadelphia port in 1840s, Great Famine, anthracite coal regions, parish registers). The summary faithfully represents this content without fabrication or unsupported claims. The logged entry preserves the source's strength of wording\u2014'key genealogical sources' remains intact, not upgraded to superlatives."
+                "rationale": "The skill's output is factually correct. The wiki search returned one result about Irish immigration to Pennsylvania with specific, verifiable details (Philadelphia port in 1840s, Great Famine, anthracite coal regions, parish registers). The summary faithfully represents this content without fabrication or unsupported claims. The logged entry preserves the source's strength of wording—'key genealogical sources' remains intact, not upgraded to superlatives."
               },
               {
                 "source": "base",
@@ -5021,7 +5021,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration \u2014 Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary exactly."
+                "rationale": "The Sources section contains exactly one bullet formatted as '- [Pennsylvania, Irish Immigration — Settlement Patterns](https://www.familysearch.org/en/wiki/Pennsylvania,_Irish_Immigration)', matching the required format with page_title, section_heading, and actual source_url from the tool response. The URL is not fabricated and matches the response_summary exactly."
               },
               {
                 "source": "rubric",
@@ -5093,7 +5093,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '- [Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '- [Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match the source_url values from the tool response exactly. Format is correct and complete."
+            "rationale": "The Sources section contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '- [Pennsylvania Land Records — Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '- [Pennsylvania Land Records — Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match the source_url values from the tool response exactly. Format is correct and complete."
           },
           {
             "source": "rubric",
@@ -5137,7 +5137,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '- [Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '- [Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match the source_url values from the tool response exactly. Format is correct and complete."
+            "rationale": "The Sources section contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '- [Pennsylvania Land Records — Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '- [Pennsylvania Land Records — Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match the source_url values from the tool response exactly. Format is correct and complete."
           },
           {
             "source": "rubric",
@@ -5155,7 +5155,7 @@
       },
       "totals": {
         "duration_ms": 24267.875961988466,
-        "duration_api_ms": 22273.0,
+        "duration_api_ms": 22273,
         "judge_duration_ms": 12726.098162995186,
         "wall_clock_ms": 37054.280281066895,
         "num_turns": 2,
@@ -5178,7 +5178,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 24267.875961988466,
-          "duration_api_ms": 22273.0,
+          "duration_api_ms": 22273,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1445,
@@ -5256,7 +5256,7 @@
           },
           "skill_cost_usd": 0.12690031499999999,
           "output": {
-            "text_response": "The FamilySearch Wiki guidance on **Pennsylvania land records** has been found and saved to your research log. Here's a summary of what was retrieved:\n\n---\n\n## Finding Land Records for Pennsylvania Ancestors\n\nThe FamilySearch Wiki covers Pennsylvania land records in detail. Key points from the guidance:\n\n### Types of Land Records Available\n- **Warrant and Survey Records** \u2013 Pennsylvania used a warrant system; before land could be settled, a warrant had to be issued, followed by a survey.\n- **Patent Records** \u2013 After the survey, a patent (deed from the Commonwealth) was issued granting legal title.\n- **Deed Books** \u2013 Once land changed hands between private parties, deeds were recorded at the county level.\n\n### Where Records Are Held\n- **Pennsylvania State Archives (Harrisburg)** \u2013 Holds the original warrant and patent records (pre-1809 records are largely digitized on FamilySearch).\n- **County Courthouse / Recorder of Deeds** \u2013 Each county holds its own deed books for private land transfers.\n- **FamilySearch Collections** \u2013 Search for \"Pennsylvania Land Records\" in FamilySearch to find digitized warrant registers, survey books, and deed indexes.\n\n### How to Search\n1. Identify the **county** where your ancestor lived \u2014 land records are county-level after the initial patent stage.\n2. Search FamilySearch for the collection *Pennsylvania Land Records, 1699\u20131879*.\n3. Check the **Pennsylvania State Archives** online catalog at [phmc.pa.gov](https://www.phmc.pa.gov) for warrant and survey records.\n4. For deeds, check the county Recorder of Deeds, many of which have been microfilmed and are available on FamilySearch.\n\n### Next Steps\n- Use the **research plan** tool to map out which collections to search based on your ancestor's county and time period.\n- If you know the county, I can help you search FamilySearch for specific land record collections there.\n\nWould you like to search for a specific ancestor in Pennsylvania land records?",
+            "text_response": "The FamilySearch Wiki guidance on **Pennsylvania land records** has been found and saved to your research log. Here's a summary of what was retrieved:\n\n---\n\n## Finding Land Records for Pennsylvania Ancestors\n\nThe FamilySearch Wiki covers Pennsylvania land records in detail. Key points from the guidance:\n\n### Types of Land Records Available\n- **Warrant and Survey Records** – Pennsylvania used a warrant system; before land could be settled, a warrant had to be issued, followed by a survey.\n- **Patent Records** – After the survey, a patent (deed from the Commonwealth) was issued granting legal title.\n- **Deed Books** – Once land changed hands between private parties, deeds were recorded at the county level.\n\n### Where Records Are Held\n- **Pennsylvania State Archives (Harrisburg)** – Holds the original warrant and patent records (pre-1809 records are largely digitized on FamilySearch).\n- **County Courthouse / Recorder of Deeds** – Each county holds its own deed books for private land transfers.\n- **FamilySearch Collections** – Search for \"Pennsylvania Land Records\" in FamilySearch to find digitized warrant registers, survey books, and deed indexes.\n\n### How to Search\n1. Identify the **county** where your ancestor lived — land records are county-level after the initial patent stage.\n2. Search FamilySearch for the collection *Pennsylvania Land Records, 1699–1879*.\n3. Check the **Pennsylvania State Archives** online catalog at [phmc.pa.gov](https://www.phmc.pa.gov) for warrant and survey records.\n4. For deeds, check the county Recorder of Deeds, many of which have been microfilmed and are available on FamilySearch.\n\n### Next Steps\n- Use the **research plan** tool to map out which collections to search based on your ancestor's county and time period.\n- If you know the county, I can help you search FamilySearch for specific land record collections there.\n\nWould you like to search for a specific ancestor in Pennsylvania land records?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5284,7 +5284,7 @@
                   "planItemId": null,
                   "outcome": "positive",
                   "resultsExamined": 2,
-                  "notes": "# FamilySearch Wiki: Pennsylvania land records\n\nPennsylvania land records are among the oldest in the United States. The Pennsylvania State Archives holds the original land warrant books and patent books dating to the 1680s. For land granted under the Penn family's proprietorship, the Warrant Books list the warrant date, original warrantee name, county, and acreage. County deed books, held by county recorders of deeds, record transfers of property after the original patent was issued. FamilySearch has digitized and indexed some Pennsylvania deed collections. To find Pennsylvania land records on FamilySearch, go to the FamilySearch Catalog and search for 'Pennsylvania' under Place, then browse the 'Land and property' category. Some county deed indexes are available as browse-only images. The Pennsylvania State Archives Warrant Tract Maps are also useful for locating land within the original county boundaries, which changed frequently during the colonial and early statehood periods.\n\n## Sources\n\n- [Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)\n- [Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)",
+                  "notes": "# FamilySearch Wiki: Pennsylvania land records\n\nPennsylvania land records are among the oldest in the United States. The Pennsylvania State Archives holds the original land warrant books and patent books dating to the 1680s. For land granted under the Penn family's proprietorship, the Warrant Books list the warrant date, original warrantee name, county, and acreage. County deed books, held by county recorders of deeds, record transfers of property after the original patent was issued. FamilySearch has digitized and indexed some Pennsylvania deed collections. To find Pennsylvania land records on FamilySearch, go to the FamilySearch Catalog and search for 'Pennsylvania' under Place, then browse the 'Land and property' category. Some county deed indexes are available as browse-only images. The Pennsylvania State Archives Warrant Tract Maps are also useful for locating land within the original county boundaries, which changed frequently during the colonial and early statehood periods.\n\n## Sources\n\n- [Pennsylvania Land Records — Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)\n- [Pennsylvania Land Records — Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)",
                   "tool": "wiki_search"
                 },
                 "expected_args": null,
@@ -5347,7 +5347,7 @@
                         "results_examined": 2,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: Pennsylvania land records\n\nPennsylvania land records are among the oldest in the United States. The Pennsylvania State Archives holds the original land warrant books and patent books dating to the 1680s. For land granted under the Penn family's proprietorship, the Warrant Books list the warrant date, original warrantee name, county, and acreage. County deed books, held by county recorders of deeds, record transfers of property after the original patent was issued. FamilySearch has digitized and indexed some Pennsylvania deed collections. To find Pennsylvania land records on FamilySearch, go to the FamilySearch Catalog and search for 'Pennsylvania' under Place, then browse the 'Land and property' category. Some county deed indexes are available as browse-only images. The Pennsylvania State Archives Warrant Tract Maps are also useful for locating land within the original county boundaries, which changed frequently during the colonial and early statehood periods.\n\n## Sources\n\n- [Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)\n- [Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)"
+                        "notes": "# FamilySearch Wiki: Pennsylvania land records\n\nPennsylvania land records are among the oldest in the United States. The Pennsylvania State Archives holds the original land warrant books and patent books dating to the 1680s. For land granted under the Penn family's proprietorship, the Warrant Books list the warrant date, original warrantee name, county, and acreage. County deed books, held by county recorders of deeds, record transfers of property after the original patent was issued. FamilySearch has digitized and indexed some Pennsylvania deed collections. To find Pennsylvania land records on FamilySearch, go to the FamilySearch Catalog and search for 'Pennsylvania' under Place, then browse the 'Land and property' category. Some county deed indexes are available as browse-only images. The Pennsylvania State Archives Warrant Tract Maps are also useful for locating land within the original county boundaries, which changed frequently during the colonial and early statehood periods.\n\n## Sources\n\n- [Pennsylvania Land Records — Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)\n- [Pennsylvania Land Records — Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)"
                       }
                     ],
                     "modified": [],
@@ -5574,7 +5574,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '- [Pennsylvania Land Records \u2014 Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '- [Pennsylvania Land Records \u2014 Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match the source_url values from the tool response exactly. Format is correct and complete."
+                "rationale": "The Sources section contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '- [Pennsylvania Land Records — Overview](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Overview)' and '- [Pennsylvania Land Records — Finding Land Records on FamilySearch](https://www.familysearch.org/en/wiki/Pennsylvania_Land_Records#Finding_Land_Records_on_FamilySearch)'. Both URLs match the source_url values from the tool response exactly. Format is correct and complete."
               },
               {
                 "source": "rubric",
@@ -5646,7 +5646,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Marriage Records \u2014 Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)' and '[United States Marriage Records \u2014 Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)'. Both URLs match the tool response exactly and follow the required format."
+            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '[United States Marriage Records — Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)' and '[United States Marriage Records — Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)'. Both URLs match the tool response exactly and follow the required format."
           },
           {
             "source": "rubric",
@@ -5690,7 +5690,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Marriage Records \u2014 Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)' and '[United States Marriage Records \u2014 Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)'. Both URLs match the tool response exactly and follow the required format."
+            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '[United States Marriage Records — Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)' and '[United States Marriage Records — Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)'. Both URLs match the tool response exactly and follow the required format."
           },
           {
             "source": "rubric",
@@ -5708,7 +5708,7 @@
       },
       "totals": {
         "duration_ms": 17007.0942750026,
-        "duration_api_ms": 14843.0,
+        "duration_api_ms": 14843,
         "judge_duration_ms": 11002.964351995615,
         "wall_clock_ms": 28075.24800300598,
         "num_turns": 2,
@@ -5731,7 +5731,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 17007.0942750026,
-          "duration_api_ms": 14843.0,
+          "duration_api_ms": 14843,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1439,
@@ -5809,7 +5809,7 @@
           },
           "skill_cost_usd": 0.12260167999999998,
           "output": {
-            "text_response": "The FamilySearch Wiki has been searched for guidance on finding marriage records for your ancestors. Here's a summary of what was done:\n\n- The FamilySearch Wiki was searched for information on finding marriage records.\n- The guidance found \u2014 including which record types to look for, where they are held, and how to search for them \u2014 has been saved to your research log, with the relevant Wiki pages cited as sources.\n\n**Next steps:** You can review the saved guidance in your research log and use it to plan your search for marriage records. If you'd like help creating a research plan or executing a search for a specific ancestor's marriage records, just let me know!",
+            "text_response": "The FamilySearch Wiki has been searched for guidance on finding marriage records for your ancestors. Here's a summary of what was done:\n\n- The FamilySearch Wiki was searched for information on finding marriage records.\n- The guidance found — including which record types to look for, where they are held, and how to search for them — has been saved to your research log, with the relevant Wiki pages cited as sources.\n\n**Next steps:** You can review the saved guidance in your research log and use it to plan your search for marriage records. If you'd like help creating a research plan or executing a search for a specific ancestor's marriage records, just let me know!",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5840,7 +5840,7 @@
                       "planItemId": null,
                       "outcome": "positive",
                       "resultsExamined": 2,
-                      "notes": "# FamilySearch Wiki: United States marriage records\n\nMarriage records in the United States were typically kept by county clerks, churches, or state vital records offices depending on the time period and location. Before civil registration began (usually in the late 1800s), marriage records were often held by churches. FamilySearch has digitized and indexed millions of marriage records from county courthouse records, church registers, and state archives. To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.\n\nMarriage licenses and certificates are the most common types of marriage records. A marriage license was issued before the marriage took place, while the marriage certificate was issued after. Both may include the names of the bride and groom, the date and place of marriage, the names of witnesses, and sometimes the ages and birthplaces of the couple. In some jurisdictions, marriage bonds or banns were also recorded.\n\n## Sources\n\n- [United States Marriage Records \u2014 Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)\n- [United States Marriage Records \u2014 Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)"
+                      "notes": "# FamilySearch Wiki: United States marriage records\n\nMarriage records in the United States were typically kept by county clerks, churches, or state vital records offices depending on the time period and location. Before civil registration began (usually in the late 1800s), marriage records were often held by churches. FamilySearch has digitized and indexed millions of marriage records from county courthouse records, church registers, and state archives. To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.\n\nMarriage licenses and certificates are the most common types of marriage records. A marriage license was issued before the marriage took place, while the marriage certificate was issued after. Both may include the names of the bride and groom, the date and place of marriage, the names of witnesses, and sometimes the ages and birthplaces of the couple. In some jurisdictions, marriage bonds or banns were also recorded.\n\n## Sources\n\n- [United States Marriage Records — Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)\n- [United States Marriage Records — Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)"
                     }
                   ]
                 },
@@ -5908,7 +5908,7 @@
                         "results_examined": 2,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: United States marriage records\n\nMarriage records in the United States were typically kept by county clerks, churches, or state vital records offices depending on the time period and location. Before civil registration began (usually in the late 1800s), marriage records were often held by churches. FamilySearch has digitized and indexed millions of marriage records from county courthouse records, church registers, and state archives. To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.\n\nMarriage licenses and certificates are the most common types of marriage records. A marriage license was issued before the marriage took place, while the marriage certificate was issued after. Both may include the names of the bride and groom, the date and place of marriage, the names of witnesses, and sometimes the ages and birthplaces of the couple. In some jurisdictions, marriage bonds or banns were also recorded.\n\n## Sources\n\n- [United States Marriage Records \u2014 Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)\n- [United States Marriage Records \u2014 Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)"
+                        "notes": "# FamilySearch Wiki: United States marriage records\n\nMarriage records in the United States were typically kept by county clerks, churches, or state vital records offices depending on the time period and location. Before civil registration began (usually in the late 1800s), marriage records were often held by churches. FamilySearch has digitized and indexed millions of marriage records from county courthouse records, church registers, and state archives. To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.\n\nMarriage licenses and certificates are the most common types of marriage records. A marriage license was issued before the marriage took place, while the marriage certificate was issued after. Both may include the names of the bride and groom, the date and place of marriage, the names of witnesses, and sometimes the ages and birthplaces of the couple. In some jurisdictions, marriage bonds or banns were also recorded.\n\n## Sources\n\n- [United States Marriage Records — Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)\n- [United States Marriage Records — Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)"
                       }
                     ],
                     "modified": [],
@@ -6135,7 +6135,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Marriage Records \u2014 Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)' and '[United States Marriage Records \u2014 Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)'. Both URLs match the tool response exactly and follow the required format."
+                "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '[United States Marriage Records — Finding Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Finding_Marriage_Records)' and '[United States Marriage Records — Types of Marriage Records](https://www.familysearch.org/en/wiki/United_States_Marriage_Records#Types_of_Marriage_Records)'. Both URLs match the tool response exactly and follow the required format."
               },
               {
                 "source": "rubric",
@@ -6207,7 +6207,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match the tool response exactly and follow the required format."
+            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '[United States Civil War Records — Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records — Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match the tool response exactly and follow the required format."
           },
           {
             "source": "rubric",
@@ -6251,7 +6251,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match the tool response exactly and follow the required format."
+            "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '[United States Civil War Records — Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records — Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match the tool response exactly and follow the required format."
           },
           {
             "source": "rubric",
@@ -6269,7 +6269,7 @@
       },
       "totals": {
         "duration_ms": 22923.910465004155,
-        "duration_api_ms": 20467.0,
+        "duration_api_ms": 20467,
         "judge_duration_ms": 10880.7932260097,
         "wall_clock_ms": 34277.00400352478,
         "num_turns": 2,
@@ -6292,7 +6292,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22923.910465004155,
-          "duration_api_ms": 20467.0,
+          "duration_api_ms": 20467,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1442,
@@ -6370,7 +6370,7 @@
           },
           "skill_cost_usd": 0.12505328500000001,
           "output": {
-            "text_response": "I looked up how to find military service records for a Civil War ancestor on the FamilySearch Wiki. Here's what was found and saved to your research log:\n\nThe wiki guidance covers:\n\n- **Where Union records are held** \u2014 National Archives (NARA) holds compiled military service records (CMSRs) for Union soldiers, along with pension files, which can contain rich biographical detail.\n- **Where Confederate records are held** \u2014 Confederate CMSRs are also at NARA, though they are less complete due to wartime destruction of records. State archives in former Confederate states often hold supplementary records.\n- **What each file type contains** \u2014 Service records show enlistment, rank, unit, and sometimes physical descriptions. Pension files (especially Union ones) can include sworn statements, family information, medical history, and correspondence \u2014 making them among the most genealogically rich records available.\n\n**Key FamilySearch resources to explore:**\n- Search FamilySearch's indexed Civil War collections by name, state, and unit\n- The wiki links to guides for both Union and Confederate research paths\n\nThe full guidance with wiki source links has been saved to your research log for reference. Would you like to move on to planning a search, or do you have a specific ancestor and state in mind?",
+            "text_response": "I looked up how to find military service records for a Civil War ancestor on the FamilySearch Wiki. Here's what was found and saved to your research log:\n\nThe wiki guidance covers:\n\n- **Where Union records are held** — National Archives (NARA) holds compiled military service records (CMSRs) for Union soldiers, along with pension files, which can contain rich biographical detail.\n- **Where Confederate records are held** — Confederate CMSRs are also at NARA, though they are less complete due to wartime destruction of records. State archives in former Confederate states often hold supplementary records.\n- **What each file type contains** — Service records show enlistment, rank, unit, and sometimes physical descriptions. Pension files (especially Union ones) can include sworn statements, family information, medical history, and correspondence — making them among the most genealogically rich records available.\n\n**Key FamilySearch resources to explore:**\n- Search FamilySearch's indexed Civil War collections by name, state, and unit\n- The wiki links to guides for both Union and Confederate research paths\n\nThe full guidance with wiki source links has been saved to your research log for reference. Would you like to move on to planning a search, or do you have a specific ancestor and state in mind?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6398,7 +6398,7 @@
                   "planItemId": null,
                   "outcome": "positive",
                   "resultsExamined": 2,
-                  "notes": "# FamilySearch Wiki: Civil War military service records\n\nCivil War military records are held primarily at the National Archives in Washington, D.C. For Union soldiers, Compiled Military Service Records (CMSRs) document a soldier's service and are available through Fold3 (a subscription site) and in some cases through FamilySearch. Pension files, which may include personal statements, medical records, and family information, are also held at the National Archives and are rich genealogical sources. FamilySearch has indexed some Civil War pension indexes that can help you identify whether a pension file exists. For Confederate soldiers, records are more scattered because many Confederate records were destroyed or never created. State archives for the former Confederate states hold the most complete collections. Some Confederate pension records are available at state archives. FamilySearch has digitized and indexed several Confederate military collections. Searching by state is often more productive than a nationwide search for Confederate ancestors.\n\n## Sources\n\n- [United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)\n- [United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)",
+                  "notes": "# FamilySearch Wiki: Civil War military service records\n\nCivil War military records are held primarily at the National Archives in Washington, D.C. For Union soldiers, Compiled Military Service Records (CMSRs) document a soldier's service and are available through Fold3 (a subscription site) and in some cases through FamilySearch. Pension files, which may include personal statements, medical records, and family information, are also held at the National Archives and are rich genealogical sources. FamilySearch has indexed some Civil War pension indexes that can help you identify whether a pension file exists. For Confederate soldiers, records are more scattered because many Confederate records were destroyed or never created. State archives for the former Confederate states hold the most complete collections. Some Confederate pension records are available at state archives. FamilySearch has digitized and indexed several Confederate military collections. Searching by state is often more productive than a nationwide search for Confederate ancestors.\n\n## Sources\n\n- [United States Civil War Records — Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)\n- [United States Civil War Records — Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)",
                   "tool": "wiki_search"
                 },
                 "expected_args": null,
@@ -6461,7 +6461,7 @@
                         "results_examined": 2,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: Civil War military service records\n\nCivil War military records are held primarily at the National Archives in Washington, D.C. For Union soldiers, Compiled Military Service Records (CMSRs) document a soldier's service and are available through Fold3 (a subscription site) and in some cases through FamilySearch. Pension files, which may include personal statements, medical records, and family information, are also held at the National Archives and are rich genealogical sources. FamilySearch has indexed some Civil War pension indexes that can help you identify whether a pension file exists. For Confederate soldiers, records are more scattered because many Confederate records were destroyed or never created. State archives for the former Confederate states hold the most complete collections. Some Confederate pension records are available at state archives. FamilySearch has digitized and indexed several Confederate military collections. Searching by state is often more productive than a nationwide search for Confederate ancestors.\n\n## Sources\n\n- [United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)\n- [United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)"
+                        "notes": "# FamilySearch Wiki: Civil War military service records\n\nCivil War military records are held primarily at the National Archives in Washington, D.C. For Union soldiers, Compiled Military Service Records (CMSRs) document a soldier's service and are available through Fold3 (a subscription site) and in some cases through FamilySearch. Pension files, which may include personal statements, medical records, and family information, are also held at the National Archives and are rich genealogical sources. FamilySearch has indexed some Civil War pension indexes that can help you identify whether a pension file exists. For Confederate soldiers, records are more scattered because many Confederate records were destroyed or never created. State archives for the former Confederate states hold the most complete collections. Some Confederate pension records are available at state archives. FamilySearch has digitized and indexed several Confederate military collections. Searching by state is often more productive than a nationwide search for Confederate ancestors.\n\n## Sources\n\n- [United States Civil War Records — Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)\n- [United States Civil War Records — Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)"
                       }
                     ],
                     "modified": [],
@@ -6688,7 +6688,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title \u2014 section_heading](source_url)': '[United States Civil War Records \u2014 Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records \u2014 Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match the tool response exactly and follow the required format."
+                "rationale": "The Sources section in the logged notes contains two bullets, each formatted as '- [page_title — section_heading](source_url)': '[United States Civil War Records — Military Service Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Military_Service_Records)' and '[United States Civil War Records — Confederate Records](https://www.familysearch.org/en/wiki/United_States_Civil_War_Records#Confederate_Records)'. Both URLs match the tool response exactly and follow the required format."
               },
               {
                 "source": "rubric",
@@ -6736,7 +6736,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly searched the FamilySearch Wiki for probate and will records using an appropriate query. The two results returned contain factually accurate information about probate records\u2014what they are, where they're held (county level in the US), and how to find them on FamilySearch. The summary synthesized from the wiki chunks is accurate and contains no fabricated details. The logged entry faithfully represents the wiki content without adding unsupported claims."
+            "rationale": "The skill correctly searched the FamilySearch Wiki for probate and will records using an appropriate query. The two results returned contain factually accurate information about probate records—what they are, where they're held (county level in the US), and how to find them on FamilySearch. The summary synthesized from the wiki chunks is accurate and contains no fabricated details. The logged entry faithfully represents the wiki content without adding unsupported claims."
           },
           {
             "source": "base",
@@ -6760,7 +6760,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format of [page_title \u2014 section_heading](source_url) and uses the actual URLs from the tool response."
+            "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records — What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records — Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format of [page_title — section_heading](source_url) and uses the actual URLs from the tool response."
           },
           {
             "source": "rubric",
@@ -6780,7 +6780,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly searched the FamilySearch Wiki for probate and will records using an appropriate query. The two results returned contain factually accurate information about probate records\u2014what they are, where they're held (county level in the US), and how to find them on FamilySearch. The summary synthesized from the wiki chunks is accurate and contains no fabricated details. The logged entry faithfully represents the wiki content without adding unsupported claims."
+            "rationale": "The skill correctly searched the FamilySearch Wiki for probate and will records using an appropriate query. The two results returned contain factually accurate information about probate records—what they are, where they're held (county level in the US), and how to find them on FamilySearch. The summary synthesized from the wiki chunks is accurate and contains no fabricated details. The logged entry faithfully represents the wiki content without adding unsupported claims."
           },
           {
             "source": "base",
@@ -6804,7 +6804,7 @@
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format of [page_title \u2014 section_heading](source_url) and uses the actual URLs from the tool response."
+            "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records — What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records — Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format of [page_title — section_heading](source_url) and uses the actual URLs from the tool response."
           },
           {
             "source": "rubric",
@@ -6822,7 +6822,7 @@
       },
       "totals": {
         "duration_ms": 22943.284070002846,
-        "duration_api_ms": 20454.0,
+        "duration_api_ms": 20454,
         "judge_duration_ms": 11319.776098011062,
         "wall_clock_ms": 34747.403383255005,
         "num_turns": 2,
@@ -6845,7 +6845,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22943.284070002846,
-          "duration_api_ms": 20454.0,
+          "duration_api_ms": 20454,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1443,
@@ -6923,7 +6923,7 @@
           },
           "skill_cost_usd": 0.125099885,
           "output": {
-            "text_response": "The FamilySearch Wiki search is complete! Here's a summary of what was found:\n\n**How to Find Probate and Will Records for a Deceased Ancestor**\n\nGuidance was retrieved from the FamilySearch Wiki and saved to your research log. The wiki provides detailed information on locating probate and will records, including:\n\n- **What probate records are** \u2014 court documents filed when an estate is settled after someone's death, including wills, inventories, administrator bonds, and heir lists.\n- **Why they're valuable** \u2014 they often name a deceased person's spouse, children, and other relatives, making them excellent for breaking through brick walls.\n- **Where to find them** \u2014 probate records are typically held at the county courthouse (in the U.S.), and many have been digitized and indexed on FamilySearch.org under the historical records collections.\n- **How to search on FamilySearch** \u2014 you can search by name and location in FamilySearch's catalog or historical records, filtering by record type (probate, wills, estate files).\n\n**Next Steps:**\n1. Review the saved guidance in your research log.\n2. Identify the county and state (or country) where your ancestor died.\n3. Search FamilySearch's catalog for that jurisdiction's probate records.\n4. If records aren't digitized, contact the county courthouse or local historical society directly.\n\nWould you like help planning a specific probate search for an ancestor?",
+            "text_response": "The FamilySearch Wiki search is complete! Here's a summary of what was found:\n\n**How to Find Probate and Will Records for a Deceased Ancestor**\n\nGuidance was retrieved from the FamilySearch Wiki and saved to your research log. The wiki provides detailed information on locating probate and will records, including:\n\n- **What probate records are** — court documents filed when an estate is settled after someone's death, including wills, inventories, administrator bonds, and heir lists.\n- **Why they're valuable** — they often name a deceased person's spouse, children, and other relatives, making them excellent for breaking through brick walls.\n- **Where to find them** — probate records are typically held at the county courthouse (in the U.S.), and many have been digitized and indexed on FamilySearch.org under the historical records collections.\n- **How to search on FamilySearch** — you can search by name and location in FamilySearch's catalog or historical records, filtering by record type (probate, wills, estate files).\n\n**Next Steps:**\n1. Review the saved guidance in your research log.\n2. Identify the county and state (or country) where your ancestor died.\n3. Search FamilySearch's catalog for that jurisdiction's probate records.\n4. If records aren't digitized, contact the county courthouse or local historical society directly.\n\nWould you like help planning a specific probate search for an ancestor?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6954,7 +6954,7 @@
                       "planItemId": null,
                       "outcome": "positive",
                       "resultsExamined": 2,
-                      "notes": "# FamilySearch Wiki: probate or will records for a deceased ancestor\n\nProbate records are created when a deceased person's estate is settled through a court process. They include wills, inventories of property, letters of administration, and final settlements. Probate records can identify family members (especially heirs), provide an economic snapshot, and confirm dates and places. In the United States, probate is handled at the county level; records are held by county probate courts or surrogate courts. FamilySearch has indexed and digitized probate records from many counties across the country. To find probate records on FamilySearch, search the FamilySearch Catalog by state and county under the 'Probate records' category. Many collections are browse-only images. When a will is found, read it carefully, as testators often name children, grandchildren, and in-laws by name. Intestate records (for those who died without a will) list heirs and their relationships to the deceased, which can be equally valuable for establishing family connections.\n\n## Sources\n\n- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)\n- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)"
+                      "notes": "# FamilySearch Wiki: probate or will records for a deceased ancestor\n\nProbate records are created when a deceased person's estate is settled through a court process. They include wills, inventories of property, letters of administration, and final settlements. Probate records can identify family members (especially heirs), provide an economic snapshot, and confirm dates and places. In the United States, probate is handled at the county level; records are held by county probate courts or surrogate courts. FamilySearch has indexed and digitized probate records from many counties across the country. To find probate records on FamilySearch, search the FamilySearch Catalog by state and county under the 'Probate records' category. Many collections are browse-only images. When a will is found, read it carefully, as testators often name children, grandchildren, and in-laws by name. Intestate records (for those who died without a will) list heirs and their relationships to the deceased, which can be equally valuable for establishing family connections.\n\n## Sources\n\n- [United States Probate Records — What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)\n- [United States Probate Records — Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)"
                     }
                   ]
                 },
@@ -7022,7 +7022,7 @@
                         "results_examined": 2,
                         "external_site": null,
                         "results_ref": null,
-                        "notes": "# FamilySearch Wiki: probate or will records for a deceased ancestor\n\nProbate records are created when a deceased person's estate is settled through a court process. They include wills, inventories of property, letters of administration, and final settlements. Probate records can identify family members (especially heirs), provide an economic snapshot, and confirm dates and places. In the United States, probate is handled at the county level; records are held by county probate courts or surrogate courts. FamilySearch has indexed and digitized probate records from many counties across the country. To find probate records on FamilySearch, search the FamilySearch Catalog by state and county under the 'Probate records' category. Many collections are browse-only images. When a will is found, read it carefully, as testators often name children, grandchildren, and in-laws by name. Intestate records (for those who died without a will) list heirs and their relationships to the deceased, which can be equally valuable for establishing family connections.\n\n## Sources\n\n- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)\n- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)"
+                        "notes": "# FamilySearch Wiki: probate or will records for a deceased ancestor\n\nProbate records are created when a deceased person's estate is settled through a court process. They include wills, inventories of property, letters of administration, and final settlements. Probate records can identify family members (especially heirs), provide an economic snapshot, and confirm dates and places. In the United States, probate is handled at the county level; records are held by county probate courts or surrogate courts. FamilySearch has indexed and digitized probate records from many counties across the country. To find probate records on FamilySearch, search the FamilySearch Catalog by state and county under the 'Probate records' category. Many collections are browse-only images. When a will is found, read it carefully, as testators often name children, grandchildren, and in-laws by name. Intestate records (for those who died without a will) list heirs and their relationships to the deceased, which can be equally valuable for establishing family connections.\n\n## Sources\n\n- [United States Probate Records — What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)\n- [United States Probate Records — Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)"
                       }
                     ],
                     "modified": [],
@@ -7225,7 +7225,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly searched the FamilySearch Wiki for probate and will records using an appropriate query. The two results returned contain factually accurate information about probate records\u2014what they are, where they're held (county level in the US), and how to find them on FamilySearch. The summary synthesized from the wiki chunks is accurate and contains no fabricated details. The logged entry faithfully represents the wiki content without adding unsupported claims."
+                "rationale": "The skill correctly searched the FamilySearch Wiki for probate and will records using an appropriate query. The two results returned contain factually accurate information about probate records—what they are, where they're held (county level in the US), and how to find them on FamilySearch. The summary synthesized from the wiki chunks is accurate and contains no fabricated details. The logged entry faithfully represents the wiki content without adding unsupported claims."
               },
               {
                 "source": "base",
@@ -7249,7 +7249,7 @@
                 "source": "rubric",
                 "name": "Sources cited correctly",
                 "score": 3,
-                "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records \u2014 What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records \u2014 Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format of [page_title \u2014 section_heading](source_url) and uses the actual URLs from the tool response."
+                "rationale": "The Sources section in the logged entry contains two properly formatted bullets: '- [United States Probate Records — What Are Probate Records](https://www.familysearch.org/en/wiki/United_States_Probate_Records#What_Are_Probate_Records)' and '- [United States Probate Records — Finding Probate Records on FamilySearch](https://www.familysearch.org/en/wiki/United_States_Probate_Records#Finding_Probate_Records_on_FamilySearch)'. Each follows the required format of [page_title — section_heading](source_url) and uses the actual URLs from the tool response."
               },
               {
                 "source": "rubric",
@@ -7281,7 +7281,7 @@
   ],
   "totals": {
     "duration_ms": 284344.6402330592,
-    "duration_api_ms": 255818.0,
+    "duration_api_ms": 255818,
     "judge_duration_ms": 144751.66178197833,
     "num_turns": 26,
     "input_tokens": 18694,
