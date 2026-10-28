@@ -1,6 +1,6 @@
 {
   "id": "matej-janovsky-spouse",
-  "name": "Matěj Janovský — a wife named Marie and a son baptised in 1874, Malšice, Bohemia",
+  "name": "Matěj Janovský — wife Kateřina Votýpková and children Anna (1869) and František (1874), Malšice, Bohemia",
   "genre": "record-hint",
   "source_pid": "GMBS-DQZ",
   "captured": "2026-10-20",
@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 8, hint-samples.csv row 239, flags adds_spouse/adds_son, confidence 3). Draft transcribed from an 1874 Malšice Catholic baptism entry for a son Josef, naming the father Matěj Janovský and the mother only as Marie; unverified. The tree's only wife is Kateřina Votýpková, so a true match means a second marriage."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 8, hint-samples.csv row 239, flags adds_spouse/adds_son, confidence 3). Resolved 2026-10-28 as outcome 2: the hinted 26 Jan 1874 Malšice baptism of Josef (father Matěj Janovský, mother Marie) belongs to a different Matěj Janovský, who married Marie Sokorová in 1871. The tree person's real children found are František (bp. 5 Oct 1874, image-confirmed) and Anna (bp. 18 May 1869, index-only, not required); f3 guards against the Marie/Josef over-claim.",
+  "image_basis": true,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:657F-BZDF",
+    "identity": "different"
+  }
 }
