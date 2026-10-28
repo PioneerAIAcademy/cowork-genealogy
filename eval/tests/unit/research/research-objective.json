@@ -8,7 +8,8 @@
     "tags": [
       "core-trigger",
       "orchestrator",
-      "grade:trigger"
+      "grade:trigger",
+      "reads-project-first"
     ]
   },
   "input": {

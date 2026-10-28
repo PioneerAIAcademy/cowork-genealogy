@@ -86,6 +86,22 @@ validators that read which `projectPath` the router took from that answer. The
 mock serves every project tool from the test's one workspace, whatever path is
 passed, so each test's scenario is the project its route should open.
 
+## Reads project state first (issue #3766)
+
+Two validators catch a router that treats an existing project as new.
+`test_no_init_project_on_existing_project` is ungated: when the scenario has a
+`research.json`, no hand-off may go to `init-project` or `tree-survey`. It reads
+every hand-off, not the first, because in research v32 the router spawned
+`init-project` and only then called `project_context`.
+`test_reads_project_state_before_routing` is gated on `reads-project-first`
+(`ut_research_001`, `ut_research_004`): with a `research.json` present, the run
+must call `project_context`. It checks presence, not order, since `tool_calls` and
+the spawns in `builtin_tool_calls` are separate lists with no shared sequence. It
+is not ungated because a bounded request may skip the read. Tag only a test with
+no `run_agents`, or a subagent's `project_context` call would hide the router's
+omission. `eval/harness/tests/unit/test_research_reads_project_first_validator.py`
+replays both over committed run logs.
+
 ## Agent dispatch tests (issue #1851)
 
 Every agent the routing table spawns is the asserted first hand-off of at least
