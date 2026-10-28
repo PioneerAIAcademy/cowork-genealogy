@@ -75,12 +75,12 @@ because someone else entered it.
 
 ### Choosing the next question
 
-One question at a time, chosen against a stated priority order: an
-unresolved conflict first, then an open hypothesis to test, then a
-high-severity gap in the timeline, then decomposing the objective into its
-parts, then a pedigree gap, then a FAN pivot, then following up new
-evidence. The reason for the choice is recorded, so you can disagree with
-it.
+One question at a time, chosen against a stated priority order: an open
+hypothesis to test, then a part of the objective no question covers yet, then
+a pedigree gap. A conflict, a gap in the timeline, a FAN pivot or new evidence
+is more searching on the question already open, not a new question. When the
+objective holds several independent facts, you choose which comes first. The
+reason for the choice is recorded, so you can disagree with it.
 
 Two rules govern the loop:
 
