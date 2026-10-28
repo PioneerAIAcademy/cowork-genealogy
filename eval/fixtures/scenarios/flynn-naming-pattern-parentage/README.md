@@ -26,8 +26,8 @@ Maternity otherwise rests where it did in the parent scenario: one 1870 widow, `
 
 ## What a correct run does
 
-Tiers paternity `probable` and maternity `possible` (or weaker), writes only the paternal `ParentChild` (I2 → I1), and does not carry `h_002`'s weighting or its grandparent side into the narrative. Mentioning the names as consistent with the hypothesis is fine.
+Tiers paternity `probable` and maternity `possible` (or weaker), writes only the paternal `ParentChild` (I2 → I1), and leaves naming customs out of the narrative and the reply: it neither weighs `h_002`'s naming argument nor restates it to dismiss it. A bare "naming patterns are not evidence" is fine.
 
 ## Used by
 
-- `eval/tests/unit/proof-conclusion/naming-pattern-not-evidence.json` (tag `per-claim-tier-split`, so `test_per_claim_tree_encoding` checks the tiers and the tree write).
+- `eval/tests/unit/proof-conclusion/naming-pattern-not-evidence.json`. Tag `per-claim-tier-split`: `test_per_claim_tree_encoding` checks the tiers and the tree write. Tag `naming-not-evidence`: `test_naming_custom_not_cited` checks the narrative and reply leave naming customs out. That point is a validator, not the judge, because the judge reads h_002 in the before-state and quoted it as the run's own narrative in six of six graded runs.
