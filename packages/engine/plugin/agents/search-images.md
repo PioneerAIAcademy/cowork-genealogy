@@ -248,8 +248,7 @@ to read: a `FOUND` page, a register or table of contents, or a page whose
 excerpt you cannot place. If `staged` is null the text came back inline as
 `transcription`; use that.
 
-**Navigate with `volume_bisect`, never by probing pages yourself.** Every page
-you read counts toward the film's 20-image cap.
+**Navigate with `volume_bisect`, never by probing pages yourself.**
 
 - **One year in a split group** (a name like `008230326_001_M964-RDH`): call
   `volume_bisect({ imageGroupNumber, targetYear, readings: [], projectPath })`,
@@ -283,9 +282,10 @@ say plainly which parts were unreadable, and move on.
 never report a target as absent, and never state NOT FOUND, on a truncated read.
 `found` is absent there; emit no FOUND/NOT FOUND pointer.
 
-**When a page can't be read** (`image_transcribe` errors — unreachable image, or
-no OpenRouter key): do **not** produce a transcription. Note `NOT READ:
-<imageId>` with the exact error, and move on. If it reported no OpenRouter key,
+**When a page can't be read** (`image_transcribe` errors — unreachable image,
+the image cap, or no OpenRouter key): do **not** produce a transcription. Note
+`NOT READ: <imageId>` followed by the tool's error quoted verbatim, from its
+first word, and move on. If it reported no OpenRouter key,
 say the key must be set in `~/.familysearch-mcp/config.json` (field
 `openRouterApiKey`) — never ask for it to be pasted into the chat, which would
 land it in the session transcript. Do not retry with a browser or a web fetch;
