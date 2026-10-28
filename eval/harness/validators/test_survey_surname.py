@@ -236,7 +236,8 @@ def test_household_grouping_and_slave_schedule(before_state, after_state, test):
     """d5: in the logged table, the two stubs sharing a recordArk (Edmund and
     Mary) are one row, and the slave-schedule stub sits under its own heading.
 
-    Reads the table from the survey_surname log entry's notes."""
+    Reads the table from the survey_surname log entry's notes. A heading is any
+    non-table line, since the body asks for a sub-section, not a markdown `#`."""
     if "household-grouping" not in test.get("tags", []):
         pytest.skip("not a household-grouping test")
     text = _survey_table(before_state, after_state)
@@ -244,10 +245,10 @@ def test_household_grouping_and_slave_schedule(before_state, after_state, test):
     population, slave, heading = [], [], ""
     for line in text.lower().splitlines():
         s = line.strip()
-        if s.startswith("#"):
-            heading = s
-        elif s.startswith("|"):
+        if s.startswith("|"):
             (slave if "slave" in heading else population).append(s)
+        elif s:
+            heading = s
     assert slave, "no table rows under a heading naming the slave schedule"
     assert any("edmund" in r for r in slave), (
         "the slave-schedule stub is not under the slave-schedule heading"
