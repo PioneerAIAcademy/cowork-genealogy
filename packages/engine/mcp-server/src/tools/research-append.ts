@@ -22,7 +22,7 @@ import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
-import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -46,6 +46,7 @@ import {
   readMatchScores,
   findRecordedScore,
   type MatchScoreFile,
+  type ScoredPersona,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { normalizeString } from "../utils/string-similarity.js";
@@ -68,7 +69,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -96,6 +97,8 @@ import {
   factTypeKey,
   isTwoParty,
   recordPartyKeyer,
+  personaRolesById,
+  sameRecord,
 } from "../utils/record-persona.js";
 import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/relatives.js";
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
@@ -1042,8 +1045,7 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
         (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
           (aid: string) => linked.has(aid),
         ) &&
-        c.status !== "resolved" &&
-        c.status !== "moot",
+        !isSettledConflict(c),
     )
     .map((c: any) => c.id);
   if (unresolved.length > 0) {
@@ -2171,15 +2173,17 @@ function personEvidenceScoreInvariants(
       : research;
   if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
-  // Exact lookup on (assertion, tree person) -- the pair the writer was called
-  // with and the pair this entry carries, so the two sides cannot disagree.
-  // Keying on the PARTY instead could not see a score written by the fetched
-  // route, which resolves a real persons[].id where the assertion carries null:
-  // the gate then refused precisely the links whose call HAD been made. Persona
-  // granularity (ADR-0009 constraint 3) survives because an assertion is a
-  // (record, party) pair, so a second persona is a different assertion.
+  // Exact lookup on (assertion, tree person) first -- the pair the writer was
+  // called with and the pair this entry carries. Keying on the PARTY instead
+  // could not see a score written by the fetched route, which resolves a real
+  // persons[].id where the assertion carries null. Then the persona arm: a score
+  // that compared this assertion's verified persona with this tree person
+  // answers for every fact of that persona (#3552; match-scores.ts header). A
+  // second persona of the record is a different persona, so ADR-0009
+  // constraint 3 holds.
   const file = matchScores.get(recordId) ?? null;
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
+  const persona = scoredPersonaOf(assertion, recordId, assertions, batchAssertions);
+  if (findRecordedScore(file, entry.assertion_id, entry.person_id, persona) !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -2192,6 +2196,12 @@ function personEvidenceScoreInvariants(
     ? ` This assertion's own party is '${role}'; if '${entry.person_id}' is a DIFFERENT party ` +
       `on the same record, pass that party's recordRole so the score compares the right two ` +
       `people.`
+    : "";
+  // The persona arm is why one call is enough per persona; say so, or the agent
+  // repeats the identical call for each fact.
+  const personaHint = persona
+    ? ` One score covers every fact of persona '${persona.personaId}' on this record: score it ` +
+      `once for '${entry.person_id}' and the links for its other facts need no further call.`
     : "";
   // An assertion this same call CREATES cannot already have a score: `same_person`
   // reads research.json and throws on an assertion that is not in it, and the
@@ -2215,8 +2225,29 @@ function personEvidenceScoreInvariants(
       `'${entry.person_id}' }) first, then write the link with the score it returns. The tool ` +
       `assembles both sides itself, so this costs one call and no payload. If that call cannot ` +
       `score the pairing, or if '${entry.person_id}' was created out of this very record, do NOT ` +
-      `score it: leave match_score null and say why in the rationale.${roleHint}`,
+      `score it: leave match_score null and say why in the rationale.${roleHint}${personaHint}`,
   ];
+}
+
+/** The persona a link's assertion is about, with the roles its record gives it,
+ *  or undefined when no score can be shared: the assertion carries no persona
+ *  id; it names a second person (`isTwoParty`), so its link may be about that
+ *  other party; or the record gives the id to more than one role, so it names no
+ *  single party (`same_person` passes over such an id the same way). The
+ *  record's assertions are gathered with `sameRecord`, the rule `same_person`
+ *  scores by, from `batchAssertions` (the document plus this call's appends)
+ *  when given. */
+function scoredPersonaOf(
+  assertion: any,
+  recordId: string,
+  assertions: readonly any[],
+  batchAssertions?: Map<string, any>,
+): ScoredPersona | undefined {
+  const personaId = assertion?.record_persona_id;
+  if (typeof personaId !== "string" || personaId === "" || isTwoParty(assertion?.fact_type)) return undefined;
+  const pool = batchAssertions ? [...batchAssertions.values()] : assertions;
+  const roles = personaRolesById(pool.filter((a) => sameRecord(a?.record_id, recordId))).get(personaId);
+  return roles !== undefined && roles.size === 1 ? { personaId, roles } : undefined;
 }
 
 /** Whether a record persona `same_person` could score against is reachable for
@@ -4210,42 +4241,41 @@ function questionResolvedInvariants(
   // correlated.
   if (beforeResearch) {
     const disputed = disputedSourceIds(beforeResearch);
-    if (disputed.size > 0) {
-      const assertionSource = new Map<string, string>();
-      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
-        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    const assertionSource = new Map<string, string>();
+    for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+      if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    }
+    const blocking = new Set<string>();
+    for (const ps of summaries) {
+      if (ps?.question_id !== entry?.id) continue;
+      for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+        const src = assertionSource.get(aid);
+        for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
       }
-      const blocking = new Set<string>();
-      for (const ps of summaries) {
-        if (ps?.question_id !== entry?.id) continue;
-        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
-          const src = assertionSource.get(aid);
-          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
-        }
-      }
-      // Reaching the conflicts through the summary's cited assertions misses the
-      // case that matters most: a `not_proved` summary citing NOTHING. Its
-      // `supporting_assertion_ids` is empty, so the loop above finds nothing to
-      // dispute and the question resolves straight over an open conflict -- which
-      // is exactly what decision 12 says must not happen, and exactly the shape a
-      // wrap-up produces. A conflict naming this question in `blocks_question_ids`
-      // is blocking it by its own declaration, with no assertion needed.
-      for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
-        if (c?.status !== "unresolved" || typeof c?.id !== "string") continue;
-        const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
-        if (blocks.includes(entry?.id)) blocking.add(c.id);
-      }
-      if (blocking.size > 0) {
-        return [
-          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
-            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
-            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
-            "sources behind it have never been correlated. This is not the same as a question " +
-            "researched and found empty, which `not_proved` does close — here the work is " +
-            "unfinished rather than finished with nothing. Leave the question open, record the " +
-            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
-        ];
-      }
+    }
+    // Reaching the conflicts through the summary's cited assertions misses the
+    // case that matters most: a `not_proved` summary citing NOTHING. Its
+    // `supporting_assertion_ids` is empty, so the loop above finds nothing to
+    // dispute and the question resolves straight over an open conflict -- which
+    // is exactly what decision 12 says must not happen, and exactly the shape a
+    // wrap-up produces. A conflict naming this question in `blocks_question_ids`
+    // is blocking it by its own declaration, with no assertion needed -- so this
+    // runs even when no source is disputed at all.
+    for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
+      if (isSettledConflict(c) || typeof c?.id !== "string") continue;
+      const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
+      if (blocks.includes(entry?.id)) blocking.add(c.id);
+    }
+    if (blocking.size > 0) {
+      return [
+        `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+          `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+          "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+          "sources behind it have never been correlated. This is not the same as a question " +
+          "researched and found empty, which `not_proved` does close — here the work is " +
+          "unfinished rather than finished with nothing. Leave the question open, record the " +
+          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+      ];
     }
   }
 
@@ -4264,7 +4294,9 @@ function questionResolvedInvariants(
  *
  *  A conflict names the assertions that compete; each assertion names the
  *  source it came from. Those sources are the ones whose reliability is
- *  currently in question. */
+ *  currently in question. A `moot` conflict disputes nothing: it is settled
+ *  like a `resolved` one, so both refusals built on this name only conflicts
+ *  that really are unresolved (issue #2359). */
 function disputedSourceIds(research: any): Map<string, string[]> {
   const assertionSource = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
@@ -4272,7 +4304,7 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   }
   const bySource = new Map<string, string[]>();
   for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
-    if (!c || c.status === "resolved") continue;
+    if (!c || isSettledConflict(c)) continue;
     for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
       const src = assertionSource.get(aid);
       if (!src) continue;
@@ -4384,7 +4416,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
     if (!c || typeof c !== "object") continue;
     const key = conflictKey(c.id);
     if (key) recorded.add(key);
-    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+    if (isSettledConflict(c)) {
       if (key) settled.add(key);
       for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
     }
@@ -8195,6 +8227,7 @@ async function prepareOps(
   tree: SimplifiedGedcomX,
   projectPath: string,
   fmt: (i: number, msg: string) => string,
+  hintReads?: ReadonlyMap<string, string>,
 ): Promise<PreparedOps> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -8570,7 +8603,11 @@ async function prepareOps(
     const logId = entry.log_entry_id;
     const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
     if (logEntry) {
-      const ref = logEntry.results_ref;
+      // An accepted hint's entry stages nothing; extraction_append read the record
+      // in the same call and names that staged read, which stands in for a sidecar.
+      const hintRef = isAcceptedHint(logEntry) ? hintReads?.get(logEntry.id) : undefined;
+      const ref = hintRef ?? logEntry.results_ref;
+      const producer = hintRef ? "record_read" : logEntry.tool;
       if (!ref) {
         // Staging gap (#699): a record/full-text search that RETURNED results
         // but staged no sidecar. D2 auto-fill resolves record_persona_id from
@@ -8625,7 +8662,7 @@ async function prepareOps(
           // carry) matched nothing every time, which either rejected a persona-linked write with an empty
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
-          const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
+          const personaBearing = PERSONA_BEARING_PRODUCERS.has(producer);
           const resultId = (r: any): string | undefined => {
             const v = personaBearing ? r?.recordId : r?.id;
             return typeof v === "string" ? v : undefined;
@@ -8725,6 +8762,17 @@ async function prepareOps(
               }
             }
           }
+        } else if (hintRef && entry.record_persona_id != null) {
+          // The document validator cannot re-check a hint's persona later, so an
+          // unreadable read refuses rather than skipping enforcement.
+          errors.push(
+            fmt(
+              i,
+              `record_persona_id '${entry.record_persona_id}' cannot be verified — the record read ` +
+                `'${hintRef}' staged for hint entry '${logId}' is missing or unreadable`,
+            ),
+          );
+          continue;
         }
       }
     }
@@ -8903,6 +8951,10 @@ export interface ResearchAppendOptions {
    *  attachment shape (`isAttachmentLink`) skip the score gate. Never set by a
    *  tool caller. */
   attachmentLink?: boolean;
+  /** extraction_append's recordIds mode: accepted-hint log id -> the staged
+   *  `record_read` of that record, made in the same call. D2 verifies persona ids
+   *  under the hint's sidecar-less entry against it. Never set by a tool caller. */
+  hintReads?: ReadonlyMap<string, string>;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
   /** Report only the first failing op, and do not judge the rest of the batch.
@@ -9263,7 +9315,7 @@ export async function researchAppend(
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
-    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options.hintReads);
 
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
