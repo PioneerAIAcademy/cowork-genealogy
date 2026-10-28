@@ -11,6 +11,7 @@ import type {
   PersonAncestorsInput,
   PersonAncestorsResult,
 } from "../types/person-ancestors.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/ancestry";
 const FS_CURRENT_USER_URL =
@@ -120,10 +121,7 @@ async function getCurrentUserPersonId(principal: Principal): Promise<string> {
     },
   });
   if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
+    throw new Error(await rejectedTokenMessage(principal));
   }
   if (!res.ok) {
     throw new Error(
@@ -181,10 +179,7 @@ async function fetchAndMap(
   }
 
   if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
+    throw new Error(await rejectedTokenMessage(principal));
   }
   if (res.status === 403) {
     throw new Error(`Person ${pid} is restricted and cannot be viewed.`);

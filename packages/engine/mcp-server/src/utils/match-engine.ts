@@ -26,6 +26,7 @@ import type {
   SamePersonApiResponse,
   SamePersonResult,
 } from "../types/same-person.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const URL =
   "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples";
@@ -71,7 +72,7 @@ export async function scorePair(
   }
 
   if (!response.ok) {
-    await throwForBadStatus(response);
+    await throwForBadStatus(response, principal);
   }
 
   const body = (await response.json()) as SamePersonApiResponse;
@@ -218,11 +219,14 @@ function parseArkFromTitle(title: string): string {
   return match[0];
 }
 
-async function throwForBadStatus(response: Response): Promise<never> {
+async function throwForBadStatus(response: Response, principal: Principal): Promise<never> {
   const status = response.status;
   if (status === 401) {
     throw new Error(
-      "FamilySearch session not accepted; call the login tool to re-authenticate.",
+      await rejectedTokenMessage(
+        principal,
+        "FamilySearch session not accepted; call the login tool to re-authenticate.",
+      ),
     );
   }
   if (status === 403) {

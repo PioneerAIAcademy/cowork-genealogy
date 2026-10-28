@@ -396,10 +396,10 @@ later, so the package holds **13** today.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
-> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
-> and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
-> directly — they were never part of the migration this sentence describes. The
-> package holds 13 today; the migration moved 11.
+> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14, since
+> deleted) and `LocalitiesSection` (2026-07-15) were built afterwards, in
+> `viewer-ui` directly — they were never part of the migration this sentence
+> describes. The package holds 12 today; the migration moved 11.
 
 ---
 
@@ -620,6 +620,44 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   the web has no Continue button. Per-session on/off lands with
 >   the experience-level user setting. Cowork desktop has no control plane we
 >   own; the user clicks there.
+> - **Step mode replaces that chain (decision 25, 2026-10-21).** A turn runs one
+>   step, reports it, and ends with `Continue with <label>?` — where `<label>` is
+>   the step's `STEP_LABELS` entry in `packages/engine/plugin/hooks/step_boundary.py`,
+>   so a host can read which step is offered (`offered_step` parses it back; the
+>   round trip is pinned by `test_step_boundary.py`).
+>
+>   `turn_done` gains **`options`**: the exact phrases that turn admits, from
+>   `reply_options(offered_step, research)`. The web shows one button per phrase
+>   and nothing else, and each sends its phrase **verbatim** — `step_mode(text)`
+>   is exact-phrase only, so a button sending its friendly label would start no
+>   run. The field is left OUT when empty, as `reply_follows` is -- which the prototype sets from the reply it actually queued, not the one it planned, since `queue_auto_reply` refuses when a held row exists or Stop is set. No client reads `reply_follows` yet; a step that
+>   ended on a question for the researcher renders no buttons.
+>
+>   **"Keep going" is the host replying for the researcher**, not one long turn.
+>   `next_auto_reply` decides the reply after each turn; the prototype queues it
+>   inside `complete()`'s own transaction as a held turn row
+>   (`outcome='queued'`, `message.auto=true`) under the session's queue lock, and
+>   the existing `release_next_held` sends it. The run state lives in
+>   `sessions.auto_reply` because it spans turns. A turn the host answered itself
+>   carries no `options`: the choice is already made. The reply reaches the
+>   browser as a `user_msg` frame with `auto: true` and is drawn as the
+>   researcher's own message, marked "sent automatically".
+>
+>   **Stop and typing win over a held reply.** Neither tier's claim releases a
+>   held `auto` row while Stop is set, and neither clears Stop for one
+>   (`turn_message.CLAIM_HELD_SQL`). The researcher's own message closes any held
+>   reply as `superseded` before it is admitted, so their words are the next turn.
+>   The SSE banner's `has_queued` leaves `auto` rows out. Claiming an open turn
+>   the researcher sent clears `sessions.auto_reply`, so a new "Keep going." never
+>   inherits a spent budget. A `job` turn is still bounded on this plane: the gate
+>   enforces `step` (`step_boundary.gate_mode`) while the turn records `job`.
+>
+>   `MAX_AUTO_REPLIES` (30) in `step_boundary.py` is the prototype's and the e2e
+>   harness's reply cap. It does NOT replace `AUTO_CONTINUE_MAX_STEPS`
+>   everywhere: the alpha still reads that setting
+>   (`apps/server/app/agent/runner.py`), and neither the alpha nor Cowork loads
+>   `step_boundary.py` at all (decision 25). The literal `Next: <step>.
+>   Continue?` and `AutoContinue` stay until the alpha moves over.
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)

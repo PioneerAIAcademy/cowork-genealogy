@@ -18,6 +18,8 @@ import {
   type ChatBlock,
   type ToolChip,
   clearQueued,
+  replyLabel,
+  replyOptions,
   turnOutcomeLabel,
   COMPACTING_LABEL,
   CONNECT_SLOW_MS,
@@ -378,6 +380,10 @@ export default function ChatPane({
   // 1b: the server is holding a message for this session. Distinct from the per-bubble
   // `queued` flag, which only the tab that sent it knows about.
   const [queuedOnServer, setQueuedOnServer] = useState(false)
+  // Step mode: the replies this turn admits, from `turn_done.options`. Empty whenever
+  // the turn made no offer -- and whenever the host answered for the researcher under
+  // "Keep going", because then there is no choice left to put to them.
+  const [options, setOptions] = useState<string[]>([])
   const { detached, follow, scrollToBottom } = useStickToBottom(scrollRef)
 
   // Append agent_event content onto the last assistant message (the streaming one).
@@ -394,6 +400,7 @@ export default function ChatPane({
       setCompacting(false)
       setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
       setOutcomeKind(typeof ev.outcome === 'string' ? ev.outcome : null)
+      setOptions(replyOptions(ev.options))
       setDecisionDismissed(false)
       setSpendStopped(ev.outcome === 'budget' && ev.limit === 'spend')
       // A task killed via TaskUpdated emits no task_done on the wire, so the
@@ -457,14 +464,32 @@ export default function ChatPane({
   useEffect(() => {
     const off = conn.on((msg: WsMessage) => {
       if (msg.type === 'agent_event') applyEvent(msg.event as Record<string, unknown>)
-      else if (msg.type === 'user_msg')
+      else if (msg.type === 'user_msg') {
+        if (msg.auto === true) {
+          // The host answered for the researcher under "Keep going", so the same
+          // transition a typed reply makes applies -- and no tab sent this one, so
+          // nothing else will make it. `busy` is the single thing that retires the
+          // offer; the server also leaves `options` off a turn it answered itself,
+          // so the buttons never appear for the researcher to race.
+          setOutcome(null)
+          setOutcomeKind(null)
+          setBusy(true)
+        }
         // Replayed transcript on (re)connect — the server only sends user_msg
-        // during history replay; live input is added locally in send().
+        // during history replay; live input is added locally in send(). The one
+        // LIVE user_msg is the host's own reply (`auto`), which no tab sent and so
+        // has no local bubble: it must be drawn here, or a run of step turns shows
+        // the agent answering messages nobody can see.
         setMessages((prev) => [
           ...prev,
-          { role: 'user', text: stripOpeningTurn(String(msg.text ?? '')), tools: [] }
+          {
+            role: 'user',
+            text: stripOpeningTurn(String(msg.text ?? '')),
+            tools: [],
+            auto: msg.auto === true
+          }
         ])
-      else if (msg.type === 'status' && msg.state === 'chat_ready') {
+      } else if (msg.type === 'status' && msg.state === 'chat_ready') {
         setReady(true)
         setReplaying(false)
       }
@@ -547,7 +572,7 @@ export default function ChatPane({
     conn.send({ type: 'user_msg', text: trimmed })
     setOutcome(null) // 1c: a new message supersedes how the last turn ended
     setOutcomeKind(null)
-    setBusy(true)
+    setBusy(true) // which also retires the offer: `busy` is what hides the buttons
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
     // the user had scrolled up to compose against something further back.
@@ -603,7 +628,15 @@ export default function ChatPane({
             </div>
           )}
           {messages.map((m, i) => (
-            <div key={i} className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}>
+            <div
+              key={i}
+              className={`${m.role === 'user' ? 'msgUser' : 'msgAssistant'}${m.auto ? ' msgAuto' : ''}`}
+            >
+              {/* The host answered for the researcher under "Keep going". It keeps the
+                  user bubble -- it is their message and their run -- but a reader
+                  scrolling back must be able to tell what they chose from what the run
+                  sent on their behalf, and the bubble alone cannot say. */}
+              {m.auto && <div className="msgAutoNote">sent automatically</div>}
               {/* Chips render WHERE THEY ARRIVED, not all above the prose. `blocks`
                   carries arrival order; without it a turn stacks every chip above
                   every paragraph -- 36 in one stretch of the captured session. Older
@@ -684,6 +717,21 @@ export default function ChatPane({
               onAnswer={send}
               onSomethingElse={() => setDecisionDismissed(true)}
             />
+          ) : options.length > 0 && !busy && !expired ? (
+            // Step mode: the turn ended by offering a next step, so the researcher
+            // chooses one. Each button sends its phrase VERBATIM -- the server reads
+            // it back with `step_mode(text)`, which matches whole phrases (ignoring
+            // case and trailing punctuation), so the server's phrase is what is sent.
+            // `send` is the same path a typed reply takes, so the worker learns
+            // nothing new, and it clears the row the instant it is answered rather
+            // than leaving a spent choice on screen.
+            <div className="stepReplies">
+              {options.map((phrase) => (
+                <button key={phrase} className="stepReply" onClick={() => send(phrase)}>
+                  {replyLabel(phrase)}
+                </button>
+              ))}
+            </div>
           ) : outcome && !busy && !decisionDismissed && !expired ? (
             // `!decisionDismissed` so dismissing the card for "something else" does not
             // fall through to the very label the card replaced -- the researcher already
