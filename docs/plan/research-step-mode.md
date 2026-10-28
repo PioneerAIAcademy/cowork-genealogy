@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep PR (#3682) is merged, proof-conclusion's (#3889) is open, PR 1 is #3883, the route PRs are #3914-#3916, PR 2 is #3917, and the conflict PR follows them. Its answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889) and PR 1 (#3883) are merged; the three route PRs (#3914, #3915, #3916), PR 2 (#3917) and the conflict PR are open. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -772,7 +772,9 @@ that apply:
   because conflict-resolution fills both analysis fields on every pass and conflicts carry no
   timestamp. So:
   - **A new optional conflict field, `weighed_log_entry_ids`:** the question's log entries
-    conflict-resolution has weighed, written on every analysis. It mirrors
+    conflict-resolution has weighed. `research_append` stamps it on every analysis write, from
+    the helper the ladder reads (`conflictCoverageLogIds`), because the set includes an upload
+    matched to its hand-off by URL, which an agent building the list by hand misses. It mirrors
     `search_stop.log_entry_ids`. "The question's log entries" is B's coverage set: entries on
     its plans' items plus closing entries matched by `closesHandOff`.
   - **The ladder gains one arm, above the conflict arm.** It applies when there is at least
@@ -1231,7 +1233,9 @@ in parallel with PR 2.
   PR 1, independent of PR 2.** It needs PR 1's `weighed_log_entry_ids` field; until it lands no
   conflict carries the field, so PR 1's unsettled-conflict arm never fires and routing is
   today's.
-  - **conflict-resolution:** writes `weighed_log_entry_ids` on every analysis, and ends a pass
+  - **`research_append`:** stamps `weighed_log_entry_ids` on every write carrying an analysis
+    to an unresolved conflict (ADR-0011: decidable from the documents alone);
+  - **conflict-resolution:** ends a pass
     that settles nothing and names nothing to search without a Continue line (E);
   - **proof-conclusion:** in that state, writes or refreshes `not_proved` with
     `shortfall: "conflict"`, leaves the question open, and its report ends without a Continue
