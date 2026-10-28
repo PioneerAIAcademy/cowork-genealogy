@@ -141,17 +141,32 @@ describe('resolveFamilySearchTarget — refuses everything else', () => {
       expect(resolveFamilySearchTarget(input), input).toBeNull()
     }
   })
-  it('refuses a tree-person id that is not 4-3', () => {
-    // Every reference in the repo spells this 4-hyphen-3 — `ark.ts` ("the bare
-    // 8-character persona/tree id") and all ten
-    // `tree/person/` ids in the corpus. The pattern accepted 4-4 until the
-    // #2049 review; loosening it back is otherwise silent.
-    expect(
-      resolveFamilySearchTarget('https://www.familysearch.org/tree/person/KW7C-X9PZ')
-    ).toBeNull()
-    expect(
-      resolveFamilySearchTarget('https://www.familysearch.org/tree/person/KW7C-X9P')
-    ).not.toBeNull()
+  it('accepts a tree-person id in both 4-3 and 4-4, in either case', () => {
+    // Widened back to `{3,4}` and case-insensitive, matching the PRODUCER:
+    // `ark.ts`'s `treePidOfArk` uses `[A-Za-z0-9]{4}-[A-Za-z0-9]{3,4}`.
+    // The #2049 review narrowed this to 4-3 uppercase on the premise that
+    // "`ark.ts` ... spells this 4-hyphen-3" — which that file never did.
+    // `record_search`'s `parseTreePersonId` applies no grammar at all, so the
+    // narrow pattern silently dropped the link on any id it did not predict.
+    for (const pid of ['KW7C-X9P', 'KW7C-X9PZ', 'kw7c-x9p']) {
+      expect(resolveFamilySearchTarget(`https://www.familysearch.org/tree/person/${pid}`), pid)
+        .not.toBeNull()
+    }
+    // Still anchored: the grammar is what rejects, not the host.
+    for (const pid of ['KW7-X9P', 'KW7C-X9PZQ', 'KW7C_X9P', 'KW7C-X9P/extra']) {
+      expect(resolveFamilySearchTarget(`https://www.familysearch.org/tree/person/${pid}`), pid)
+        .toBeNull()
+    }
+  })
+
+  it('resolves a BARE tree-person id, which is all `treeMatches` carries', () => {
+    // record_search emits `treeMatches[].treePersonId` and nothing else — no
+    // ark, no URL. Without this branch the sidecar row has no link at all.
+    expect(resolveFamilySearchTarget('KW7C-X9P')).toBe(`${FS}tree/person/KW7C-X9P`)
+    expect(resolveFamilySearchTarget('KW7C-X9PZ')).toBe(`${FS}tree/person/KW7C-X9PZ`)
+    // The host is still rebuilt from FS_BASE, never taken from the input.
+    expect(resolveFamilySearchTarget('evil.com/KW7C-X9P')).toBeNull()
+    expect(resolveFamilySearchTarget('KW7C-X9P/../../evil')).toBeNull()
   })
   it('refuses a path or query appended to an otherwise valid id', () => {
     // The `$` half of the grammar. Every other rejection here attacks the host
