@@ -1391,8 +1391,8 @@ derived arm sees.
 
 What settles each refusal is not the tier guidance alone but a stricter shipped
 invariant: `conflictedSourceInvariants` refuses any tier other than `not_proved`
-or `disproved` when a non-resolved conflict disputes a source the summary relies
-on, because correlation presupposes identity. Read against it — per summary, on
+or `disproved` when an unsettled (`unresolved`) conflict disputes a source the
+summary relies on, because correlation presupposes identity. Read against it — per summary, on
 the summary's own `supporting_assertion_ids`, **not** scoped by question, which
 is how the invariant itself reads:
 
@@ -1431,7 +1431,8 @@ the gate is right for a real researcher, and the gate is not calibrated.
 **Four other readings of "a conflict blocks a question" exist and this
 subsection governs none of them.** `questionResolvedInvariants` and the
 disputed-source tier rule both read a shared `source_id` via `disputedSourceIds`
-(which counts `moot` as disputing, unlike this gate); `question-selection`'s
+(which, like this gate, treats `resolved` and `moot` alike as settled — through
+`isSettledConflict`); `question-selection`'s
 prioritization reads `blocks_question_ids` only; and the `proof-conclusion` agent
 queries conflicts through `research_query`'s `conflicts.questionId` filter, which
 matches `blocks_question_ids` or a disputed assertion of the question at any

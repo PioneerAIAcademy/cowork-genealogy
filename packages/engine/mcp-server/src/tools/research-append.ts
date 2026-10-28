@@ -22,7 +22,7 @@ import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
-import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -1042,8 +1042,7 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
         (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
           (aid: string) => linked.has(aid),
         ) &&
-        c.status !== "resolved" &&
-        c.status !== "moot",
+        !isSettledConflict(c),
     )
     .map((c: any) => c.id);
   if (unresolved.length > 0) {
@@ -4210,42 +4209,41 @@ function questionResolvedInvariants(
   // correlated.
   if (beforeResearch) {
     const disputed = disputedSourceIds(beforeResearch);
-    if (disputed.size > 0) {
-      const assertionSource = new Map<string, string>();
-      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
-        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    const assertionSource = new Map<string, string>();
+    for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+      if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    }
+    const blocking = new Set<string>();
+    for (const ps of summaries) {
+      if (ps?.question_id !== entry?.id) continue;
+      for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+        const src = assertionSource.get(aid);
+        for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
       }
-      const blocking = new Set<string>();
-      for (const ps of summaries) {
-        if (ps?.question_id !== entry?.id) continue;
-        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
-          const src = assertionSource.get(aid);
-          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
-        }
-      }
-      // Reaching the conflicts through the summary's cited assertions misses the
-      // case that matters most: a `not_proved` summary citing NOTHING. Its
-      // `supporting_assertion_ids` is empty, so the loop above finds nothing to
-      // dispute and the question resolves straight over an open conflict -- which
-      // is exactly what decision 12 says must not happen, and exactly the shape a
-      // wrap-up produces. A conflict naming this question in `blocks_question_ids`
-      // is blocking it by its own declaration, with no assertion needed.
-      for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
-        if (c?.status !== "unresolved" || typeof c?.id !== "string") continue;
-        const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
-        if (blocks.includes(entry?.id)) blocking.add(c.id);
-      }
-      if (blocking.size > 0) {
-        return [
-          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
-            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
-            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
-            "sources behind it have never been correlated. This is not the same as a question " +
-            "researched and found empty, which `not_proved` does close — here the work is " +
-            "unfinished rather than finished with nothing. Leave the question open, record the " +
-            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
-        ];
-      }
+    }
+    // Reaching the conflicts through the summary's cited assertions misses the
+    // case that matters most: a `not_proved` summary citing NOTHING. Its
+    // `supporting_assertion_ids` is empty, so the loop above finds nothing to
+    // dispute and the question resolves straight over an open conflict -- which
+    // is exactly what decision 12 says must not happen, and exactly the shape a
+    // wrap-up produces. A conflict naming this question in `blocks_question_ids`
+    // is blocking it by its own declaration, with no assertion needed -- so this
+    // runs even when no source is disputed at all.
+    for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
+      if (isSettledConflict(c) || typeof c?.id !== "string") continue;
+      const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
+      if (blocks.includes(entry?.id)) blocking.add(c.id);
+    }
+    if (blocking.size > 0) {
+      return [
+        `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+          `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+          "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+          "sources behind it have never been correlated. This is not the same as a question " +
+          "researched and found empty, which `not_proved` does close — here the work is " +
+          "unfinished rather than finished with nothing. Leave the question open, record the " +
+          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+      ];
     }
   }
 
@@ -4264,7 +4262,9 @@ function questionResolvedInvariants(
  *
  *  A conflict names the assertions that compete; each assertion names the
  *  source it came from. Those sources are the ones whose reliability is
- *  currently in question. */
+ *  currently in question. A `moot` conflict disputes nothing: it is settled
+ *  like a `resolved` one, so both refusals built on this name only conflicts
+ *  that really are unresolved (issue #2359). */
 function disputedSourceIds(research: any): Map<string, string[]> {
   const assertionSource = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
@@ -4272,7 +4272,7 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   }
   const bySource = new Map<string, string[]>();
   for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
-    if (!c || c.status === "resolved") continue;
+    if (!c || isSettledConflict(c)) continue;
     for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
       const src = assertionSource.get(aid);
       if (!src) continue;
@@ -4384,7 +4384,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
     if (!c || typeof c !== "object") continue;
     const key = conflictKey(c.id);
     if (key) recorded.add(key);
-    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+    if (isSettledConflict(c)) {
       if (key) settled.add(key);
       for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
     }
