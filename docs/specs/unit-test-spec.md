@@ -878,7 +878,7 @@ the like), plus whatever framing the twin is testing the agent's resistance to.
 Write a path argument as `<workspace>`. The harness replaces it with the run's
 folder in both the prompt the dispatcher relays and the delegation the verbatim
 assertion compares against; the judge still reads the raw text. Left literal, the
-placeholder read to a Haiku agent as "no project" (#3935).
+placeholder read to a Haiku agent as "no project".
 
 **Read a twin against its routed original over several runs, never one, and
 never write a live rate into the test file.** Measuring the first five twins
