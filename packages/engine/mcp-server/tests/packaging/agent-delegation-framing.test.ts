@@ -896,6 +896,8 @@ describe("agent delegation framing", () => {
     // ARRIVED as a new agent (issue #3273); no skill directory of that name.
     "tree-survey",
     "validate-schema",
+    // ARRIVED as a new agent (issue #3521); no skill directory of that name.
+    "where-else-to-search",
     "record-structurer",
   ];
 

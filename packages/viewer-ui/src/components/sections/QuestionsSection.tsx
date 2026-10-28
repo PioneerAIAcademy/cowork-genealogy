@@ -12,7 +12,11 @@ function stoppedBecauseLabel(value: string): string {
     question_answered: 'Question Answered',
     record_exhausted: 'Records Exhausted',
     nothing_further_reachable: 'Nothing Further Reachable',
-    resources_spent: 'Resources Spent',
+    // Step mode: this now appears on every question the researcher declined to
+    // search further at the "not exhaustive" choice, so it is read far more
+    // often than it was. "Resources Spent" describes the budget; what a reader
+    // of the question needs to know is what it means for the ANSWER.
+    resources_spent: 'Stopped — sources left unsearched',
     blocked_by_conflict: 'Blocked by Conflict',
   }
   return labels[value] ?? value.replace(/_/g, ' ')

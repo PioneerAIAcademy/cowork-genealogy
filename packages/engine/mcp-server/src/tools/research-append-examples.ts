@@ -250,16 +250,6 @@ const EXAMPLES: Record<string, string> = {
   "updated": null
 }`,
 
-  known_holdings: `{
-  "holding_type": "document",
-  "description": "Great-grandmother's family Bible with births recorded on the flyleaf",
-  "relevant_facts": "Birth dates for six children, 1868-1881",
-  "relates_to_person_ids": ["I1"],
-  "confidence": "confident",
-  "promoted": false,
-  "created": "2026-07-18"
-}`,
-
   namesakes: `{
   "person_id": "I1",
   "name": "John Smith",
@@ -440,7 +430,27 @@ export function exampleFor(
     }
     // A summary's narrative and search summary are refused one without the
     // other (`narrativeAndSearchSummaryTogether`), so the generic placeholder
-    // would contradict the refusal it is attached to.
+    // would contradict the refusal it is attached to. A refusal over either of
+    // those fields is shown `edits`, so a small change is not taught to re-send
+    // both whole fields; any other is shown the two fields themselves.
+    if (section === "proof_summaries" && fieldsNamed.some((f) => NARRATIVE_EDIT_FIELDS.has(f))) {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "update",
+  entryId: "<existing-ps_-id>",
+  /* a small change: copy each old exactly from the field's current text; it must occur once.
+     After a later search, change both fields. To rewrite a field whole, pass it in fields instead. */
+  edits: [
+    { field: "narrative_markdown",
+      old: "**What could resolve it:** the 1885 county estate file.",
+      new: "**What could resolve it:** nothing further; the 1885 county estate file was searched." },
+    { field: "exhaustive_search_summary",
+      old: "Not yet examined: the 1885 county estate file.",
+      new: "Also searched: the 1885 county estate file." }
+  ]
+})`;
+    }
     if (section === "proof_summaries") {
       return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
@@ -545,6 +555,9 @@ export function exampleHints(
   }
   return hints;
 }
+
+/** The `proof_summaries` names a refused update is shown the `edits` example for. */
+const NARRATIVE_EDIT_FIELDS = new Set(["edits", "narrative_markdown", "exhaustive_search_summary"]);
 
 /** The `conflicts` fields a resolve names; a refused update naming one is
  *  shown the three worked resolves. */

@@ -19,5 +19,17 @@
         "host": "ancestry.com"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/locations/rowan-county-north-carolina",
+      "linkText": "Rowan County, North Carolina - Ancestry.com",
+      "record_type": "Genealogy",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Rowan, North Carolina, United States"
+    }
+  ]
 }

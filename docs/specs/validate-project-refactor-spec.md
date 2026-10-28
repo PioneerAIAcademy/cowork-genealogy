@@ -109,8 +109,8 @@ so a truly in-memory call cannot run it. Two facts make the gating clean:
   sidecars is well-defined.
 - **A merge does not change anything sidecar validation inspects.** The tools
   modify `tree.gedcomx.json` and (Mode 2) remap person-id refs in `research.json`
-  (`subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`,
-  `known_holdings.relates_to_person_ids`). None of those are read by the sidecar
+  (`subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`).
+  None of those are read by the sidecar
   pass, which keys off `log[].results_ref` and `assertions[].record_persona_id /
   record_id / log_entry_id`. Sidecar results are therefore **invariant under a
   merge**.

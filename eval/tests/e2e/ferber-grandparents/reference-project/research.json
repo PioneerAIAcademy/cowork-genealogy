@@ -17,34 +17,6 @@
     ],
     "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
   },
-  "known_holdings": [
-    {
-      "id": "kh_001",
-      "holding_type": "document",
-      "description": "Obituary of Charles Ferber, Fort Lauderdale News (Fort Lauderdale, FL), 13 Dec 1967 — client-provided clipping",
-      "relevant_facts": "States Charles died at age 76 (implying birth ~1891); died 1967; had moved from Cincinnati, Ohio approximately 13 years earlier; possibly moved to that Florida residence in 1953",
-      "relates_to_person_ids": [
-        "I1"
-      ],
-      "confidence": "confident",
-      "promoted": false,
-      "created": "2026-07-06"
-    },
-    {
-      "id": "kh_002",
-      "holding_type": "document",
-      "description": "1900 U.S. Census clipping for the Ferber family household, Cincinnati, Ohio — client-provided",
-      "relevant_facts": "William Ferber listed age 31, stated born 1869 in Germany (per client's reading of the clipping); Emma Ferber listed age 29, stated born in Kentucky; couple married 10 years as of 1900; Charles Ferber listed as son, age 9",
-      "relates_to_person_ids": [
-        "I1",
-        "I2",
-        "I3"
-      ],
-      "confidence": "confident",
-      "promoted": false,
-      "created": "2026-07-06"
-    }
-  ],
   "questions": [
     {
       "id": "q_001",
@@ -369,7 +341,7 @@
       "repository": "FamilySearch",
       "access_date": "2026-07-06",
       "url": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
-      "notes": "Only the FamilySearch index was consulted via the record_read tool — no digitized census image was available to check directly. The client separately holds a clipping of this same record (known_holding kh_002) with different birthplace readings; see conflict c_001.",
+      "notes": "Only the FamilySearch index was consulted via the record_read tool — no digitized census image was available to check directly. The client separately holds a clipping of this same record (see the fixture README) with different birthplace readings; see conflict c_001.",
       "log_entry_id": "log_004"
     },
     {
@@ -406,7 +378,7 @@
       "source_classification": "original",
       "repository": "other",
       "access_date": "2026-07-06",
-      "notes": "Provided by the client as known_holding kh_001. Not yet cross-located in an online newspaper archive.",
+      "notes": "A clipping provided by the client (see the fixture README). Not yet cross-located in an online newspaper archive.",
       "log_entry_id": null
     }
   ],
@@ -566,7 +538,7 @@
       "date_certainty": "approximate",
       "place": "Germany",
       "information_quality": "indeterminate",
-      "informant": "Client's own transcription of the same 1900 census clipping (known_holding kh_002)",
+      "informant": "Client's own transcription of the same 1900 census clipping (see the fixture README)",
       "informant_proximity": "self",
       "informant_bias_notes": "This is a conflicting reading of the identical 1900 census record already captured as a_001 (FamilySearch index says Ohio). The client's clipping is a firsthand image of the same document, but neither reading has been checked against the actual census image via the tools available here — this is a transcription discrepancy on ONE record, not corroboration between independent sources.",
       "record_basis": "inferred",
@@ -589,7 +561,7 @@
       "date_certainty": "estimated",
       "place": "Kentucky, United States",
       "information_quality": "indeterminate",
-      "informant": "Client's own transcription of the same 1900 census clipping (known_holding kh_002)",
+      "informant": "Client's own transcription of the same 1900 census clipping (see the fixture README)",
       "informant_proximity": "self",
       "informant_bias_notes": "Conflicting reading of the identical record already captured as a_002 (FamilySearch index says Ohio). Same caveat as a_007 — an image-level check is needed to adjudicate.",
       "record_basis": "inferred",

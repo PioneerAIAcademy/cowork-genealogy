@@ -856,14 +856,17 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
 
 # person_read (issue #2208): the plan cites the attached-source ARKs a profile read
 # returns. wiki_read (issue #2251): a fetched record-type page links collection ids
-# (the Denmark_Military_Records fixture links collection/2243379). Both are ids "a
-# tool returned this session", so they are served, not invented.
+# (the Denmark_Military_Records fixture links collection/2243379). research_query
+# (#2995): research-plan reads collection urls back through
+# `research_query({section: "external_collections"})` instead of fetching. All are
+# ids "a tool returned this session", so they are served, not invented.
 _TRACEABLE_ID_TOOLS = {
     "collections_search",
     "volume_search",
     "external_links_search",
     "person_read",
     "wiki_read",
+    "research_query",
 }
 
 
@@ -951,8 +954,12 @@ def test_research_plan_rationale_identifiers_traceable(
     # fabrication, and _grounded_identifiers already excludes years. Both arms
     # use _grounded_identifiers so a hyphenated range (json.dumps preserves the
     # hyphen) grounds both endpoints; the CITED side below stays strict.
-    grounded = _served_identifiers(tool_calls) | _grounded_identifiers(
-        json.dumps(before)
+    grounded = (
+        _served_identifiers(tool_calls)
+        | _grounded_identifiers(json.dumps(before))
+        | _grounded_identifiers(
+            str((before_state.get("files") or {}).get("external-collections.json") or "")
+        )
     )
     errors: list[str] = []
     for plan in new_plans:
@@ -967,6 +974,108 @@ def test_research_plan_rationale_identifiers_traceable(
                     )
     assert not errors, (
         "untraceable identifier in a plan rationale:\n  - " + "\n  - ".join(errors)
+    )
+
+
+# The tool's `collectionKey` (external-collections-store.ts): two spellings of
+# one Ancestry collection (`/search/collections/7163/`, `?dbid=7163`) are one key.
+_ANCESTRY_ID = re.compile(r"ancestry\.[a-z.]+/search/collections/(\d+)/?(?:[?#]|$)|[?&]dbid=(\d+)", re.I)
+_MYHERITAGE_COLLECTION = re.compile(r"myheritage\.[a-z.]+/research/collection-\d+", re.I)
+
+
+def _collection_key(url: str) -> str:
+    m = _ANCESTRY_ID.search(url)
+    if m and re.search(r"ancestry\.", url, re.I):
+        return f"ancestry:{m.group(1) or m.group(2)}"
+    if _MYHERITAGE_COLLECTION.search(url):
+        return re.split(r"[?#]", url)[0]
+    return url
+
+
+def _stored_places(state) -> dict:
+    raw = (state.get("files") or {}).get("external-collections.json")
+    try:
+        doc = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        return {}
+    places = doc.get("places") if isinstance(doc, dict) else None
+    return places if isinstance(places, dict) else {}
+
+
+def _stored_rows(state):
+    for place, entry in _stored_places(state).items():
+        for row in ((entry or {}).get("rows") or [] if isinstance(entry, dict) else []):
+            if isinstance(row, dict) and isinstance(row.get("url"), str):
+                yield place, row
+
+
+def _stored_collection_keys(state) -> set[str]:
+    return {_collection_key(row["url"]) for _place, row in _stored_rows(state)}
+
+
+def _is_external(item) -> bool:
+    return str(item.get("repository") or "").lower() not in ("", "familysearch")
+
+
+def test_written_collection_urls_are_stored_collections(before_state, after_state):
+    """Every `collection_url` a new plan writes names a collection in the
+    project's `external-collections.json`, compared by the tool's collection key
+    (lead ruling 2026-10-23). `research_append` refuses the rest; this pins that a
+    run cannot end with one anyway."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or []) if isinstance(i, dict)]
+    written = [i for i in items if i.get("collection_url")]
+    if not written:
+        pytest.skip("no new plan item carries collection_url")
+    stored = _stored_collection_keys(after_state)
+    bad = [
+        f"{i.get('id')}: {i['collection_url']!r}"
+        for i in written
+        if _collection_key(str(i["collection_url"])) not in stored
+    ]
+    assert not bad, "collection_url is not a stored curated collection:\n  - " + "\n  - ".join(bad)
+
+
+_PLACE_NOISE = re.compile(r"\b(county|parish|co\.|township|twp\.?|city of)\b", re.I)
+
+
+def report_external_items_missing_a_stored_collection(before_state, after_state):
+    """Tier 2 — counts, never gates (lead ruling 2026-10-23, #2995).
+
+    Counts the new external-site plan items written with no `collection_url`
+    although the stored list holds a collection that fits them: a stored place
+    whose first part names a part of the item's jurisdiction, of the item's record
+    type. The same loose match `research_append`'s warning uses; good enough to
+    measure the miss rate, not to fail a run."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    rows = list(_stored_rows(after_state))
+    if not rows:
+        pytest.skip("nothing stored in external-collections.json")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or []) if isinstance(i, dict)]
+    external = [i for i in items if _is_external(i)]
+    if not external:
+        pytest.skip("no new external-site plan item")
+    missed = []
+    for i in external:
+        if i.get("collection_url"):
+            continue
+        parts = {x.strip().lower() for x in _PLACE_NOISE.sub(" ", str(i.get("jurisdiction") or "")).split(",") if x.strip()}
+        rtype = str(i.get("record_type") or "").lower()
+        if any(
+            place.split(",")[0].strip().lower() in parts
+            and (not rtype or not row.get("record_types") or rtype in [str(t).lower() for t in row["record_types"]])
+            for place, row in rows
+        ):
+            missed.append(str(i.get("id")))
+    assert not missed, (
+        f"{len(missed)} of {len(external)} new external-site plan items have no collection_url "
+        f"although a stored collection fits them: {missed}"
     )
 
 
