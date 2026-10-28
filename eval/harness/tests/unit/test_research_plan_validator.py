@@ -34,6 +34,7 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
     test_research_plan_reads_question_person_profile as check_profile,
+    test_research_plan_plans_subject_from_tree as check_subject,
     report_survey_surfaces_already_attached_fan_facts as check,
     test_written_collection_urls_are_stored_collections as check_coll,
     report_external_items_missing_a_stored_collection as count_missing,
@@ -1205,6 +1206,92 @@ def test_profile_shared_given_name_without_surname_does_not_count():
     state = {**_PROFILE_STATE, "tree_gedcomx_json": tree}
     with pytest.raises(AssertionError, match="before writing"):
         check_profile(state, [_read("ZZOT-TH9"), _write()], _PROFILE_TEST)
+
+# --- subject-from-tree (issue #3384 step 3) -----------------------------------
+
+_SUBJECT_TEST = {"tags": ["subject-from-tree"]}
+_SUBJECT_STATE = {
+    "research_json": {
+        "project": {"subject_person_ids": ["I1"]},
+        "questions": [
+            {"id": "q_001", "status": "open", "question": "When and where was Bridget Kerrigan (I1) baptized?"}
+        ],
+    },
+    "tree_gedcomx_json": _PROFILE_STATE["tree_gedcomx_json"],
+}
+
+
+def test_subject_passes_when_planned_from_the_tree():
+    check_subject(_SUBJECT_STATE, [_write()], _SUBJECT_TEST)
+
+
+def test_subject_passes_on_a_relative_read():
+    """A question naming the subject and her father: reading the father is the
+    #2208 read, and it is allowed beside planning the subject from the tree."""
+    both = {**_SUBJECT_STATE, "research_json": {**_SUBJECT_STATE["research_json"], "questions": [
+        {"id": "q_001", "status": "open",
+         "question": "Was Bridget Kerrigan (I1) the daughter of Thomas Kerrigan (I2)?"}]}}
+    check_subject(both, [_read("ZZKR-TH2"), _write()], _SUBJECT_TEST)
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        lambda: [_read("ZZKR-BR1"), _write()],
+        lambda: [_read("ZZKR-BR1", matched=False), _write()],
+        lambda: [_write(), _read(" ZZKR-BR1 ")],
+        lambda: [_read("ark:/61903/4:1:ZZKR-BR1"), _write()],
+        lambda: [_read("zzkr-br1"), _write()],
+    ],
+    ids=["matched-before-write", "unmatched-before-write", "after-write-padded", "ark-form", "lowercase"],
+)
+def test_subject_fires_on_any_subject_read(calls):
+    with pytest.raises(AssertionError, match="never re-read"):
+        check_subject(_SUBJECT_STATE, calls(), _SUBJECT_TEST)
+
+
+def test_subject_fires_on_no_plan_write():
+    with pytest.raises(AssertionError, match="no research_append wrote plans"):
+        check_subject(_SUBJECT_STATE, [_call("research_append", None, {"ops": [{"section": "log"}]})], _SUBJECT_TEST)
+
+
+def test_subject_fires_when_no_subject_has_an_ark():
+    state = {**_SUBJECT_STATE, "research_json": {**_SUBJECT_STATE["research_json"], "project": {"subject_person_ids": ["I9"]}}}
+    with pytest.raises(AssertionError, match="no project subject with an `ark`"):
+        check_subject(state, [_write()], _SUBJECT_TEST)
+
+
+def test_subject_is_checked_even_when_the_question_does_not_name_her():
+    """Subjects come from `project.subject_person_ids`, never from the question's
+    wording, so a renamed or unnamed subject stays in the check."""
+    state = {**_SUBJECT_STATE, "research_json": {**_SUBJECT_STATE["research_json"], "questions": [
+        {"id": "q_001", "status": "open", "question": "When and where was the subject (I1) baptized?"}]}}
+    with pytest.raises(AssertionError, match="never re-read"):
+        check_subject(state, [_read("ZZKR-BR1"), _write()], _SUBJECT_TEST)
+    check_subject(state, [_write()], _SUBJECT_TEST)
+
+
+def test_subject_skips_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_subject(_SUBJECT_STATE, [_read("ZZKR-BR1"), _write()], {"tags": []})
+
+
+def test_profile_does_not_count_a_subject_read_toward_a_relative():
+    """The relative check leaves subjects out: reading the subject never stands in
+    for reading the relative the question is about."""
+    state = {
+        **_PROFILE_STATE,
+        "research_json": {**_PROFILE_STATE["research_json"], "project": {"subject_person_ids": ["I1"]}},
+    }
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+    check_profile(state, [_read("ZZKR-TH2"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_when_the_only_named_person_is_a_subject():
+    with pytest.raises(AssertionError, match="names no non-subject tree person"):
+        check_profile(_SUBJECT_STATE, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
 
 def test_v1_grounds_ark_served_by_person_read():
     served = [_call("person_read", {"sources": [
