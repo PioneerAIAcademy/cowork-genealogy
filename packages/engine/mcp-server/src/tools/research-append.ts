@@ -6912,6 +6912,19 @@ function applyOne(
       if (config.singleton.createWhenAbsent && target === undefined) {
         target = {};
         research[section] = target;
+        // Placed right after `project` so an agent paging a long research.json
+        // finds it near the top. In place, because `research` is the caller's
+        // object: delete and re-add every key that follows `project`.
+        const keys = Object.keys(research);
+        const projectAt = keys.indexOf("project");
+        if (projectAt !== -1) {
+          for (const k of keys.slice(projectAt + 1)) {
+            if (k === section) continue;
+            const value = research[k];
+            delete research[k];
+            research[k] = value;
+          }
+        }
       } else {
         throw new ResearchAppendError(`research.json '${section}' is missing or not an object`);
       }
