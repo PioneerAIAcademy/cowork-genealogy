@@ -814,9 +814,8 @@ _DELEGATION_FOCUS_TAG = "asserts-delegation-focus"
 def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
     """Recorded spawn prompts for ``callee``, read from the hook records.
 
-    Keyed on ``args.subagent_type`` rather than the tool name: the recorded
-    name is ``None`` for an Agent spawn in this harness, so a name-based
-    match finds nothing and the assertion below would pass vacuously.
+    Keyed on ``args.subagent_type`` rather than the tool name: committed logs
+    record ``"Agent"``, and an older CLI named the same tool ``"Task"``.
     """
     prompts = []
     for call in builtin_tool_calls or []:
@@ -824,6 +823,40 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
         if args.get("subagent_type") == callee:
             prompts.append(args.get("prompt") or "")
     return prompts
+
+
+# tag -> (callee, field, value pattern) lines its spawn prompt must carry.
+_SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
+    "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
+    "delegates-wrap-up": (
+        ("research-plan", "planItemIds", r".*pli_\w+"),
+        ("research-exhaustiveness", "wrapUp", r"yes"),
+        ("proof-conclusion", "wrapUp", r"yes"),
+    ),
+}
+
+
+def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
+    """Tag-gated (``delegates-user-present-no``, ``delegates-wrap-up``). The
+    fields research/SKILL.md's spawn rule passes on a "Keep going." or "Wrap it
+    up." turn sit in the spawn prompt, which the judge cannot see, so they are
+    read from the hook records. A field is matched as ``name: value`` on any
+    line, case-insensitively, with optional backticks around either side."""
+    rules = [r for tag in (test.get("tags") or []) for r in _SPAWN_FIELD_TAGS.get(tag, ())]
+    if not rules:
+        pytest.skip("not a spawn-field test")
+    problems = []
+    for callee, field, value in rules:
+        prompts = _spawn_prompts(builtin_tool_calls, callee)
+        if not prompts:
+            problems.append(f"no spawn of '{callee}' to carry {field}")
+            continue
+        pattern = re.compile(
+            rf"`?{re.escape(field)}`?\s*:\s*`?(?:{value})\b", re.IGNORECASE
+        )
+        if not any(pattern.search(p) for p in prompts):
+            problems.append(f"'{callee}' spawn lacks {field}: {value}")
+    assert not problems, "; ".join(problems)
 
 
 def test_delegation_names_focus_and_target(test, builtin_tool_calls):
@@ -864,9 +897,9 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
 def _agent_spawns(builtin_tool_calls) -> list[dict]:
     """Main-thread ``Agent`` spawns, read from the hook records.
 
-    Keyed on ``args.subagent_type`` rather than the tool name. The recorded name
-    varies -- committed logs carry both ``"Agent"`` and ``None`` -- so a
-    name-based match would miss some runs entirely and pass vacuously.
+    Keyed on ``args.subagent_type`` rather than the tool name: committed logs
+    record ``"Agent"``, and an older CLI named the same tool ``"Task"``, so a
+    name-based match could miss whole runs and pass vacuously.
 
     ``agent_id``'s ABSENCE is what marks the main thread: it is present only
     when the hook fired inside a subagent. Membership, never truthiness, which

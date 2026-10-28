@@ -4,15 +4,16 @@
     "skill": "research",
     "name": "Continue on an unsettled conflict runs no step",
     "type": "positive",
-    "description": "Plan section E, decision 12. Once every open conflict has weighed every log entry the question owns and nothing is left to search, `project_context` reports a null `nextStep` with a non-empty `openConflictIds`. There is no step to run. The failure is re-spawning conflict-resolution on evidence it has already weighed, which is what every Continue did before the ladder gained its rung.",
+    "description": "Plan section E, decision 12. dutch-mother-ended-on-conflict: c_001 has weighed every log entry q_001 owns, nothing is left to search, and proof-conclusion has written ps_001 at not_proved with shortfall conflict. `project_context` reports a null `nextStep` with `openConflictIds: [\"c_001\"]`. There is no step to run. `routes-to:stop` makes any hand-off a deterministic failure; the one the test exists for is re-spawning conflict-resolution on evidence it has already weighed.",
     "tags": [
       "routing",
+      "routes-to:stop",
       "step-mode"
     ]
   },
   "input": {
     "user_message": "Continue.",
-    "scenario": "flynn-conflict-proof-block"
+    "scenario": "dutch-mother-ended-on-conflict"
   },
   "execution": {
     "max_turns": 12,
@@ -36,7 +37,6 @@
   "judge_context": [
     "Read `project_context` first and follow its `nextStep`. A null `nextStep` beside a non-empty `openConflictIds` is not 'nothing is wrong' — it means the research ended on a conflict that cannot be settled from what is on file.",
     "Re-spawning `@plugin:conflict-resolution` is the failure. It would weigh exactly the evidence it weighed last time, which is the loop the ladder's rung exists to end.",
-    "The reply says the research ended on the unsettled conflict, names it, and ends with NO \"Continue with …?\" line — nothing further will help. It may say a different question is still possible.",
-    "If `project_context` reports a step instead (the conflict is not fully weighed on this fixture), follow it and say so; do not invent the ending."
+    "The reply says the research ended on the unsettled conflict, names it, and ends with NO \"Continue with …?\" line — nothing further will help. It may say a different question is still possible."
   ]
 }

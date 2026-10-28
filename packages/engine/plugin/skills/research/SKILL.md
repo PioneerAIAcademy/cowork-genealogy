@@ -89,7 +89,7 @@ in one line that there is nothing to search more of yet and re-offer.
 
 **On a "Keep going." turn, pass `userPresent: no`** to
 `@plugin:person-evidence`. A wrap-up turn and an autonomous run pass it too.
-`@plugin:search-external-sites` takes the same field on the same rule.
+`@plugin:search-external-sites` gets `no` only in an autonomous run.
 
 **In Cowork there is no host to reply,** so "keep going." is one turn that
 runs the steps itself: plan at most one extra round, then wrap up.
@@ -135,7 +135,7 @@ destination: take it through "Hint review" below.
 
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
-**When a tool gave you the project's `projectUrl`, make it the last line of the reply that ends your turn.**
+**When a tool gave you the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line.
 
 ## Bounded request or job
 
@@ -152,9 +152,10 @@ two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
-Two or more of them in one message is still bounded: deliver each, name each,
-and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
-open-ended research is a job.
+Two or more of them in one message is still bounded: deliver the first this
+turn, name the others, and offer the next, ending on its "Continue with …?" line
+when it is a step in the label table. A message that also asks for open-ended
+research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
 
@@ -182,8 +183,8 @@ link. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
-must not go. Deliver what was asked, and stop: at least one hand-off per
-deliverable, since one deliverable can need two (a record found goes on through
+must not go. Deliver this turn's deliverable, and stop: at least one hand-off
+for it, since one deliverable can need two (a record found goes on through
 extraction), except a transcription, a records-request letter and a status
 question (answered from `project_context`), which take no hand-off at all.
 
@@ -194,7 +195,8 @@ attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
-When a bounded request is met, **end your turn by calling `research_delivered`**.
+When this turn's deliverable is produced — the only one asked for, or the first
+of several — **end your turn by calling `research_delivered`**.
 Say what you produced first: the turn ends where you stop, so anything you were
 going to add afterwards never reaches the researcher. Name what this turn saved
 and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
@@ -383,8 +385,8 @@ it by name.
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
    `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, and the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`, and the `planItemId` (plus the parish page as
-   `baseUrl` when one is known, `userPresent` on the same rule as person-evidence above — `no` on a
-   "Keep going." turn, a wrap-up, or an autonomous run, otherwise `yes`, and for a returned capture its
+   `baseUrl` when one is known, `userPresent` — `no` in an autonomous run, otherwise `yes` —
+   and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
    `@plugin:search-hints`, and the `planItemId` plus the volume's `standardPlace` (with its
@@ -664,9 +666,8 @@ not one of these. These are the conditions under which the project — or this
 line of work — has nothing more to offer, so the turn ends with no
 "Continue with …?" line at all.
 
-**A bounded request ends on its deliverable.** When everything the message
-asked for is produced — one deliverable or several — end the turn as
-§"Bounded request or job" says to.
+**A bounded request ends on its deliverable.** When this turn's deliverable is
+produced, end the turn as §"Bounded request or job" says to.
 
 
 ### Candidates, not verdicts

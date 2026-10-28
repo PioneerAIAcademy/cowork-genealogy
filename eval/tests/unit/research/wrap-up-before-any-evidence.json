@@ -8,7 +8,8 @@
     "tags": [
       "routing",
       "step-mode",
-      "wrap-up"
+      "wrap-up",
+      "delegates-wrap-up"
     ]
   },
   "input": {
@@ -45,9 +46,7 @@
   "judge_context": [
     "A wrap-up is ONE turn that runs its steps in order, not one step per turn. Ending after dispose with \"Continue with …?\" is the failure this test exists for: the researcher asked to stop, and offering them the next piece of the wrap-up hands the same decision back.",
     "The order is dispose (research-plan), then person-evidence, then conflict-resolution, then research-exhaustiveness, then proof-conclusion. Steps with nothing to do are SKIPPED, and skipping them is correct here: there are no assertions to link and no conflict.",
-    "The dispose delegation must NAME the open `pli_` ids and say the researcher is wrapping up. Without the ids research-plan runs in Review mode and disposes nothing, which leaves every item open.",
-    "`@plugin:research-exhaustiveness` and `@plugin:proof-conclusion` are passed `wrapUp: yes`. Without it the gate stops proof-conclusion on an unidentified person and no summary is written.",
-    "`@plugin:person-evidence` is passed `userPresent: no` if it is spawned at all.",
+    "The dispose delegation's `pli_` ids and the `wrapUp: yes` on research-exhaustiveness and proof-conclusion are asserted deterministically from the spawn prompts (test_spawn_carries_its_step_mode_fields). You cannot see them; do not grade them.",
     "The turn ends with NO \"Continue with …?\" line: nothing is waiting. Do not charge the reply for saying what was concluded.",
     "Every callee is STUBBED and reports it changed no project state, so describing the wrap-up as done is expected and is not a fabricated claim about the files."
   ]
