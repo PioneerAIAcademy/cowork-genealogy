@@ -1730,11 +1730,15 @@ def test_v4_agrees_with_a_second_derivation_over_the_corpus():
     )
 
 
-def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
-    """37% of the corpus signal is in the reply text. A regression that dropped
-    that field would leave the two tests above green if the persisted hits
-    survived, so the field split is asserted directly."""
-    fields = {"weighing_analysis": 0, "resolution_rationale": 0, "the reply text": 0}
+def test_v4_reports_the_persisted_fields_over_the_corpus():
+    """A regression that dropped a field would leave the two tests above green if
+    the other fields' hits survived, so the field split is asserted directly.
+
+    The reply text is not required here: the harness prunes all but the newest five
+    candidates, and on 2026-10-28 it pruned the last log with a reply-text hit, so
+    requiring one made this test fail on a routine run. That field is pinned on a
+    fixed input instead, by test_v4_fires_on_a_certainty_upgrade_in_the_REPLY_TEXT."""
+    fields = {"weighing_analysis": 0, "resolution_rationale": 0}
     for _, _, msg in _replay_v4():
         for f in fields:
             # No leading space: the reply-text observation is not prefixed with
