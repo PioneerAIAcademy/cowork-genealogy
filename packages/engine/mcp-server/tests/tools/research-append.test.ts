@@ -4461,6 +4461,88 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    // `moot` settles a conflict exactly as `resolved` does (issue #2359): a
+    // conflict that no longer bears on the question disputes nothing.
+    it("does NOT fire once the conflict is moot", async () => {
+      const state = conflicted();
+      state.conflicts[0].status = "moot";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the question resolve when the only conflict on its sources is moot", async () => {
+      const state = conflicted() as any;
+      state.conflicts[0].status = "moot";
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004", "a_013"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // A conflict that names the question in `blocks_question_ids` blocks it by
+    // declaration, whether or not any source is disputed — so a `not_proved`
+    // summary citing nothing cannot close it.
+    const declaredBlocker = (withMoot: boolean) => {
+      const state = conflicted() as any;
+      state.conflicts = [
+        ...(withMoot ? [{ ...state.conflicts[0], status: "moot" }] : []),
+        {
+          id: "c_002",
+          status: "unresolved",
+          competing_assertion_ids: ["a_999"],
+          blocks_question_ids: ["q_001"],
+        },
+      ];
+      state.proof_summaries = [{ id: "ps_001", ...summary("not_proved", []) }];
+      return state;
+    };
+
+    it.each([true, false])(
+      "refuses the question resolve while a declared blocker is unresolved (moot conflict present: %s)",
+      async (withMoot) => {
+        await writeProject(declaredBlocker(withMoot));
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved" },
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toContain("q_001 cannot be marked resolved while c_002 is unresolved");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      },
+    );
+
+    it("allows the question resolve when its declared blocker is moot", async () => {
+      const state = declaredBlocker(false);
+      state.conflicts[0].status = "moot";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
 
     it("refuses an update that leaves a forbidden tier standing, without naming tier", async () => {
       // The 2026-08-21 escape, replayed. The agent updated the summary's other
