@@ -64,11 +64,12 @@ grooms who married a Marie before 1874 are the hint's candidates.
   not licensed by the check and is not relied on.
 - **Josef's page (`3:1:3QSQ-G93W-H9LR-R`): unlicensed.** Only one other entry on the page was found
   in the index (Josefa Černá, b. 28, bp. 29 Jan 1874, father Vojtěch Černý, mother Veronika;
-  `ark:/61903/1:1:657F-BZXY`, which matched). Searches for the other three entries (Papačová,
-  Štrupková, Trnka) under several spellings found none. Unchecked, the reading gives Josef's father
-  as son of Matěj Janovský and Anna Matějíčková of Dobřejice no. 29 and the mother as Marie, daughter
-  of Vojtěch S… and Anna Heřmanová, which would make him the 1871 groom. **Nothing in the fixture
-  rests on that reading**: the rejection stands on the licensed František page and the indexes alone.
+  `ark:/61903/1:1:657F-BZXY`, which matched). The model's OCR misread the other page-mates' names
+  (a reviewer reads them as Terezie Marie Papáčová, Marie Švecová and Jan Fiala), so the searches run
+  under the OCR spellings found none, and the page was not licensed. Unchecked, the reading points at
+  the 1871 groom of Marie Sokorová. **Nothing in the fixture rests on that reading**: f3 names neither
+  of the two other grooms as the hint's father, and the rejection stands on the licensed František
+  page and the indexes alone.
 
 **The findings.**
 - **f1 (required)** is František, born 1874, mother Kateřina Votýpková, image-confirmed.
@@ -77,10 +78,12 @@ grooms who married a Marie before 1874 are the hint's candidates.
   (`ark:/61903/3:1:3QS7-L93W-H9JM-4`) was not read, so her link to this Matěj rests on him being the
   only Matěj Janovský found marrying a Kateřina at Malšice. That is why she is not required.
 - **f3 (avoid)** fails an agent that gives Matěj a wife Marie or the son Josef (1874). Its
-  `target_person` names Marie Sokorová rather than Josef, because the starting tree already holds
-  Matěj's brother **Josef Janovský** (`LZG9-NLS`); naming Josef would make the avoid-guard's name
-  matcher fire on the brother in every run. The judge still grades the Josef half from the
-  description.
+  description says only that the hint belongs to another Matěj Janovský who married a Marie at
+  Malšice before 1874; the indexes leave two such grooms (1871 and 1873) and it names neither. Its
+  `target_person` is "Marie Janovská", the wrong wife under her married name, rather than Josef,
+  because the starting tree already holds Matěj's brother **Josef Janovský** (`LZG9-NLS`); naming
+  Josef would make the avoid-guard's name matcher fire on the brother in every run. The judge still
+  grades the Josef half from the description.
 
 Other Matěj-and-Marie baptisms at Malšice belong to the same other family and are not the tree
 person's: Anna, bp. 11 Jan 1875 (`ark:/61903/1:1:657F-1SW2`), and František, bp. 12 Feb 1877

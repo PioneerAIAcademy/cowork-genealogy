@@ -44,18 +44,18 @@
       "id": "f3",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Matěj Janovský (GMBS-DQZ) had a wife named Marie, or that Josef Janovský, born 25 January 1874 and baptised 26 January 1874 at Malšice, was his son. That baptism (the FamilySearch hint) belongs to a different Matěj Janovský of Dobřejice no. 29, son of Matěj Janovský and Anna Matějčková, who married Marie Sokorová, daughter of Vojtěch Sokora and Anna Hermanová, at Malšice on 23 May 1871. The tree person was still married to Kateřina Votýpková and had a son by her in October 1874. Pass = the final tree.gedcomx.json gives Matěj no wife named Marie and no son Josef born 1874. A rejected candidate may be documented in research.json; writing one into tree.gedcomx.json, even annotated as rejected, fails this finding.",
+      "description": "The agent must NOT assert that Matěj Janovský (GMBS-DQZ) had a wife named Marie, or that Josef Janovský, born 25 January 1874 and baptised 26 January 1874 at Malšice, was his son. That baptism (the FamilySearch hint) names only a father Matěj Janovský and a mother Marie; it belongs to another Matěj Janovský who married a Marie at Malšice before 1874. The tree person was still married to Kateřina Votýpková and had a son by her in October 1874, and no burial of Kateřina or second marriage of his was found. Pass = the final tree.gedcomx.json gives Matěj no wife named Marie and no son Josef born 1874. A rejected candidate may be documented in research.json; writing one into tree.gedcomx.json, even annotated as rejected, fails this finding.",
       "details": {
         "subject_person": "Matěj Janovský (GMBS-DQZ)",
         "relation": "spouse",
         "target_person": {
-          "name": "Marie Sokorová"
+          "name": "Marie Janovská"
         },
-        "wrong_child": "Josef, born 25 January 1874, baptised 26 January 1874, Malšice — son of the other Matěj Janovský and Marie"
+        "wrong_child": "Josef, born 25 January 1874, baptised 26 January 1874, Malšice — son of another Matěj Janovský and Marie"
       },
       "supporting_sources": [
         "Czech Republic, Church Books, 1552-1981 — Malšice baptism index entry for Josef, born 25 Jan 1874, baptised 26 Jan 1874, father Matěj Janovský, mother Marie (ark:/61903/1:1:657F-BZDD; father persona ark:/61903/1:1:657F-BZDF) — the hint",
-        "Czech Republic, Church Books, 1552-1981 — Malšice marriage of Matěj Janovský, born about 1840, son of Matěj Janovský and Anna Matějčková, to Marie Sokorová, 23 May 1871 (ark:/61903/1:1:QG1P-68DD)",
+        "Czech Republic, Church Books, 1552-1981 — Malšice marriages of the two other Matěj Janovskýs who married a Marie before 1874: to Marie Sokorová, 23 May 1871 (ark:/61903/1:1:QG1P-68DD), and to Marie Fialová, 7 Jan 1873 (ark:/61903/1:1:QG1P-QKZ7)",
         "Malšice baptism of František, 5 Oct 1874, to Matěj Janovský and Kateřina daughter of Josef Votýpka and Anna Peštová (ark:/61903/1:1:657F-KZ8N; image ark:/61903/3:1:3QSQ-G93W-H9L5-B) — the disproving record",
         "No Malšice burial of a Kateřina Janovská 1866-1890 and no second marriage of the tree person in Czech Republic, Church Books, 1552-1981"
       ],
