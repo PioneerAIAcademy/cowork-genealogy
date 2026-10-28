@@ -283,7 +283,9 @@ scenario questions. The only `research` routing test among those scenarios is
 assertion cites by `log_entry_id` reports extraction. An external-site entry whose
 capture has not come back does not count, because it is an open hand-off. Otherwise
 the lowest-sequence `planned` or `in_progress` item on a plan that is still active
-decides. A repository naming FamilySearch, or none at all, reports `search-records`.
+decides, skipping any item that waits only on the researcher's upload — the same
+skip the rest of this ladder applies, so a question whose only open item is waiting
+names no search. A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.

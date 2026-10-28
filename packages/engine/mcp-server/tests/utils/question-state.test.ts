@@ -145,7 +145,12 @@ describe("questionStatus — the state ladder", () => {
       expect(s.nextStep).toMatch(/^research-exhaustiveness/);
     });
 
-    it("an external-site hand-off whose capture has not come back is not extraction", () => {
+    it("a question whose ONLY open item waits on an upload has no search left to name", () => {
+      // `url_generated` is what makes this a hand-off: `externalSiteOf` requires it, so
+      // without one the entry is not an external-site entry at all, the item is never
+      // counted as waiting, and the test passed while pinning the opposite of its name.
+      // With it, pli_1 is skipped by the picker exactly as it is by `hasOpenWork`, which is
+      // the all-items-waiting case beside the sequence-2 test below.
       const d = doc({
         plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "MyHeritage" }])],
         log: [
@@ -154,11 +159,11 @@ describe("questionStatus — the state ladder", () => {
             plan_item_id: "pli_1",
             tool: "external_site",
             outcome: "partial",
-            external_site: { capture_received: false },
+            external_site: { url_generated: "https://myheritage.example/search?q=1", capture_received: false },
           },
         ],
       });
-      expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_1 (MyHeritage)");
+      expect(questionStatus(d, question()).nextStep).toMatch(/^research-exhaustiveness/);
     });
 
     it("a returned external-site capture is extraction", () => {
