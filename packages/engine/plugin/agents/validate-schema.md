@@ -9,7 +9,8 @@ description: >-
   reports errors and suggests fixes, and never edits a file to fix one. Do NOT use for
   checking genealogical impossibilities (use check-warnings) or for checking
   GPS compliance (use proof-conclusion).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

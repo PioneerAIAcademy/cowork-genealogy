@@ -28,7 +28,8 @@ const GENERIC = [
   'shared/Linkify.tsx',
   'shared/ExternalLinksResults.tsx',
   'sections/SourcesSection.tsx',
-  'sections/ResearchLogSection.tsx'
+  'sections/ResearchLogSection.tsx',
+  'sections/CollectionsSection.tsx'
 ] as const
 
 describe('outbound link channel routing', () => {

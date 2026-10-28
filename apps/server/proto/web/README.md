@@ -112,7 +112,7 @@ the hosted runner.
 | `session_events` `kind='user_msg'`, `payload {text, turn_id}` | `id: <seq>` · `{"type":"user_msg","text","turn_id","seq"}` |
 | `session_events` `kind=<map_message kind>`, `payload` = the event's fields | `id: <seq>` · `{"type":"agent_event","event":{…payload,"kind":kind},"seq"}` |
 | `session_activity.payload` (on `updated_at` change) — the whole transient event, `kind` included (`text_delta`, `thinking_delta`, `task_progress`) | `{"type":"agent_event","event":{"kind":"task_progress",…payload}}` — the payload's own `kind` wins |
-| `documents` row (once at open, then on `version` change) | `{"type":"research_updated"\|"gedcomx_updated","name","data":<doc>}` |
+| `documents` row (once at open, then on `version` change) | `{"type":"research_updated"\|"gedcomx_updated","name","data":<doc>}`; any other root document (e.g. `external-collections.json`) is `"document_updated"` |
 | a `turns` row with `completed_at IS NULL` (at open, after the replay) | `{"type":"status","state":"turn_active"}` |
 
 The `kind` column wins over a `kind` key inside `payload`. The worker's
