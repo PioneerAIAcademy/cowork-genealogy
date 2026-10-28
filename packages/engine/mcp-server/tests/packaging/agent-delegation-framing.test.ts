@@ -505,7 +505,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
       mitigation: {
         side: "caller",
-        excerpt: "candidates rather than a verdict — and to `@plugin:check-warnings` as well when the",
+        excerpt: "candidates rather than a verdict. Add `@plugin:check-warnings` only when the",
       },
     },
   },
@@ -523,7 +523,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
       mitigation: {
         side: "caller",
-        excerpt: "counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
+        excerpt: "it. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
       },
     },
   },

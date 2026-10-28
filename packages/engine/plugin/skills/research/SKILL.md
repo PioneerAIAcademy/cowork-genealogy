@@ -141,9 +141,10 @@ to the step that owns its deliverable — a plan to `@plugin:research-plan`, a r
 to `@plugin:person-evidence`, a verdict on a hint to `@plugin:search-hints`, where
 the records are for a place and period to `@plugin:locality-guide`, and whether a
 person's children or siblings are complete to `@plugin:search-records`, returning
-candidates rather than a verdict — and to `@plugin:check-warnings` as well when the
-message gives a mother's 1900 or 1910 US census children-born and children-living
-counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
+candidates rather than a verdict. Add `@plugin:check-warnings` only when the
+message itself gives a mother's 1900 or 1910 US census children-born and
+children-living counts; without those counts, never hand a completeness ask to
+it. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
 to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
 with no hand-off. A transcription you deliver yourself: call
