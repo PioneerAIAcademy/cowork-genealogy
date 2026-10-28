@@ -732,7 +732,7 @@ that apply:
   - **"Wrap it up."** runs B2's turn, from any state: a question one step from concluded, one in
     a conflict's evidence round, or one with no evidence yet. The router passes proof-conclusion
     `newQuestion: yes`, so the project is not marked complete. The turn ends by offering the new
-    question ("Continue with choosing the next question?"), and question-selection writes it
+    question ("Continue with setting up the project?"), and question-selection writes it
     next turn under step 1b's exception (section B2).
   - **When a blocking conflict holds the question open** (decision 12), the new question
     still starts: the wrapped-up question has a summary and no open item.
