@@ -170,7 +170,7 @@ OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
 # conflict writing only the schema's required fields, and a section route denies
 # every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
 # on one field set to one value; the conflict's analytical product is spread over
-# six fields and a status. So the rule keys on the PRODUCT: an op that sets
+# seven fields and a status. So the rule keys on the PRODUCT: an op that sets
 # `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
 # a re-open that sets `status: "unresolved"` and clears the analysis, claim
 # nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
@@ -185,6 +185,10 @@ OWNED_CLAIMS = {
             "resolution_rationale",
             "resolution_kind",
             "resolved_value",
+            # What moves a question from conflict-resolution to ending on an
+            # unsettled conflict. Unrouted, the main thread could stamp it onto
+            # an analysed conflict and end the research with no weighing.
+            "weighed_log_entry_ids",
         ),
         "resolved",
     ),
@@ -274,14 +278,15 @@ AGENT_WRITABLE_SECTIONS = {
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
     "conflict-resolution": frozenset({"conflicts"}),
-    # init-project writes the fixed researcher profile, the volunteered
-    # holdings and one `sources` entry per transcribed memory, through
-    # research_append after project_create. It owns `project` (ownership.json),
-    # which project_create writes; `project.status` stays routed to
-    # proof-conclusion above. A lane, not a route: nothing is routed to this
-    # agent. It leaves out `questions`, which question-selection owns
-    # (issue #2122).
-    "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # init-project writes site subscriptions through research_append after
+    # project_create, which itself writes the
+    # project, the fixed researcher profile and one `sources` entry per
+    # transcribed memory (issue #3384). It owns `project` (ownership.json);
+    # `project.status` stays routed to proof-conclusion above. A lane, not a
+    # route: nothing is routed to this agent. It leaves out `questions`, which
+    # question-selection owns (issue #2122), and `sources`, which only
+    # project_create writes for it.
+    "init-project": frozenset({"project", "researcher_profile"}),
     # research-plan writes plans and their items and nothing else in
     # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
     # requires one for every agent granted research_append, and nothing is

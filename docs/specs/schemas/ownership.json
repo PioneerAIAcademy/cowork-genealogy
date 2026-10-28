@@ -62,6 +62,7 @@
         "agent:init-project"
       ],
       "writerTools": [
+        "project_create",
         "research_append"
       ],
       "enforceableAt": [],
@@ -69,27 +70,6 @@
       "requires": "init-project writes the profile at project creation as fixed values (novice and the house-style narration string; lead ruling 2026-09-18): nothing about the researcher is asked and the pass always completes, so the section is always written. Any caller may correct a field afterwards; this section is deliberately NOT set-once, because a researcher who picked the wrong experience level needs a route that is not starting over.",
       "failure": "Every skill reads `narration_guidance` from this section, so a fabricated profile silently changes narration across the whole project and is indistinguishable downstream from a real one. A project written with any other level or style is a fabrication the researcher cannot tell from a choice they made.",
       "remedy": "Write the fixed profile through `research_append`. Never write any other level or style at creation; a later user setting owns changes, and any caller may correct a field afterwards.",
-      "override": "none"
-    },
-    {
-      "artifact": "research.json",
-      "section": "known_holdings",
-      "owner": "agent:init-project",
-      "callers": [
-        "agent:init-project"
-      ],
-      "writerTools": [
-        "research_append",
-        "merge_tree_persons"
-      ],
-      "toolAuthorized": [
-        "merge_tree_persons"
-      ],
-      "enforceableAt": [],
-      "notes": "Recorded as unowned while the only writer was init-project's raw file write, on a measurement taken over the e2e corpus — where init-project never runs, because every fixture starts from an existing project. The unit corpus does exercise it. Now routed through `research_append` with the rest of project creation. Not enforceable on the unit plane: the section is outside the diff set that plane iterates.",
-      "requires": "init-project surveys what the researcher already holds at project creation and writes one entry per reported item, after the tree ops — `relates_to_person_ids` names tree persons, and the validator rejects a reference to a person that does not exist yet.",
-      "failure": "The survey is what stops the first research plan re-finding records the researcher already has. Written before the tree persons exist, every entry's person references dangle and the write is rejected outright.",
-      "remedy": "Write it through `research_append` after the tree batch. Whether anything downstream should also set the `promoted` flag is an open question, tracked separately.",
       "override": "none"
     },
     {
@@ -132,8 +112,8 @@
       "hookCallers": [
         "agent:research-exhaustiveness"
       ],
-      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped — the only row of that shape. `search_stop` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM — an op setting `search_stop.stopped_because` to a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) — and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A null `stopped_because` claims nothing and is not routed: that is question creation; a non-gate value (`resources_spent`, `blocked_by_conflict`) also claims nothing that triggers the route. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name. Since 2026-09-02 test_no_out_of_lane_section_writes records the hook's agent-keyed verdict on this plane, so the declaration arm binds here too. Issue #2115 folded question-selection into an agent and deleted the skill, so owner and caller are now agent:question-selection -- `writer_sets` resolves an `agent:` caller only when it is the suite's own subject, so this authorizes the agent's own writes in its own suite and nothing else. It is also in agentCallers above. Its hook lane in AGENT_WRITABLE_SECTIONS is `questions` and exists because plugin-hooks.test.ts requires a lane for every agent granted research_append -- NOT because a route points at it. The stop-gate `stopped_because` route still belongs to research-exhaustiveness and is unchanged; question creation writes `stopped_because: null`, which claims nothing and is not routed. Renamed from `exhaustive_declaration` (issue #2539, 2026-10-07).",
-      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `search_stop`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question — a writer-tool precondition, not an ownership rule. Two further preconditions on the same plane, also not ownership rules: `status: \"exhaustive_declared\"` requires `search_stop.stopped_because` to be a stop-gate value (read live — the same author's own step), and a stop-gate `stopped_because` is refused while a plan item for that question is `in_progress` or `planned` (read from the pre-call snapshot — plan-item completion is the search work's step, and this agent is not a permitted writer of `plan_items`). `planned` blocks too: the orchestrator still consults the gate before the plan is drained, and a refusal routes to `research-plan` to dispose of the leftovers. A `questions` APPEND is refused while any question not yet `resolved` has an `in_progress` item on its active plan (pre-call snapshot), unless an `unresolved` conflict lists that question in `blocks_question_ids` and the new question's `unblocks` names it; a call that resolves the in-flight question and appends a new one is refused too, so the two go in separate calls.",
+      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped — the only row of that shape. `search_stop` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM — an op setting `search_stop.stopped_because` to a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) — and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A null `stopped_because` claims nothing and is not routed: that is question creation. EVERY non-null value IS routed, the non-gate ones (`resources_spent`, `blocked_by_conflict`) included (ruling 2026-09-30; `OWNED_DECLARATIONS`' own comment in guard_project_files.py says so) — a termination is a claim about the search whether or not it opens the conclusive tiers. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: `callers` is validated against test_ownership_table, which keys on the calling skill's frontmatter name. Since 2026-09-02 test_no_out_of_lane_section_writes records the hook's agent-keyed verdict on this plane, so the declaration arm binds here too. Issue #2115 folded question-selection into an agent and deleted the skill, so owner and caller are now agent:question-selection -- `writer_sets` resolves an `agent:` caller only when it is the suite's own subject, so this authorizes the agent's own writes in its own suite and nothing else. It is also in agentCallers above. Its hook lane in AGENT_WRITABLE_SECTIONS is `questions` and exists because plugin-hooks.test.ts requires a lane for every agent granted research_append -- NOT because a route points at it. The stop-gate `stopped_because` route still belongs to research-exhaustiveness and is unchanged; question creation writes `stopped_because: null`, which claims nothing and is not routed. Renamed from `exhaustive_declaration` (issue #2539, 2026-10-07).",
+      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `search_stop`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question — a writer-tool precondition, not an ownership rule. Two further preconditions on the same plane, also not ownership rules: `status: \"exhaustive_declared\"` requires `search_stop.stopped_because` to be a stop-gate value (read live — the same author's own step), and a stop-gate `stopped_because` is refused while a plan item for that question is `in_progress` or `planned` (read from the pre-call snapshot — plan-item completion is the search work's step, and this agent is not a permitted writer of `plan_items`). `planned` blocks too: the orchestrator still consults the gate before the plan is drained, and a refusal routes to `research-plan` to dispose of the leftovers. A `questions` APPEND is refused while ANOTHER question is `open`, `in_progress` or `exhaustive_declared` (pre-call snapshot), unless that question has a proof summary and no `planned` or `in_progress` item left on its active plan, not counting an item waiting only on an upload (step mode, decision 25 — the older gate keyed on a plan item at `in_progress`, so a second question went in whenever the first happened to have none running). A conflict's `unblocks` and a `selection_basis` claim no longer exempt anything. A question appended earlier in the same call blocks too, and a call that resolves the open question and appends a new one is refused, so the two go in separate calls.",
       "failure": "`status: \"resolved\"` is the orchestrator's stop condition. A skill that flips it without concluding the question ends the project on an unanswered question.",
       "remedy": "Conclude the question through proof-conclusion, which writes the proof summary carrying `question_id` and then resolves it.",
       "override": "none"
@@ -213,7 +193,9 @@
         "research_append",
         "extraction_append"
       ],
-      "enforceableAt": ["tool"],
+      "enforceableAt": [
+        "tool"
+      ],
       "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny. The `tool` plane is claimed for content preconditions only, not for caller routing: `research_append` refuses a `skipped` item with no `skip_category`, a `completed` item no log entry names, and a `collection_url` that is not a row of `external-collections.json` (since 2026-10), whoever calls it.",
       "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`, and `extraction_append` completes an `in_progress` item once a record its search found is extracted.",
       "failure": "A deny on this section refuses the status flip that the plans row explicitly blesses.",
@@ -329,6 +311,12 @@
           "tools": [
             "research_log_append"
           ]
+        },
+        {
+          "agent": "agent:where-else-to-search",
+          "tools": [
+            "build_external_search_url"
+          ]
         }
       ],
       "writerTools": [
@@ -367,11 +355,12 @@
         {
           "agent": "agent:init-project",
           "tools": [
-            "research_append"
+            "project_create"
           ]
         }
       ],
       "writerTools": [
+        "project_create",
         "research_append",
         "extraction_append"
       ],
@@ -452,14 +441,14 @@
         "unit",
         "hook"
       ],
-      "requires": "Only conflict-resolution opens, analyses, or settles a conflict.",
+      "requires": "Only conflict-resolution opens, analyses, or settles a conflict. `weighed_log_entry_ids` is claim-routed with the analysis fields: it is what moves a question from conflict-resolution to ending on an unsettled conflict, so a main-thread write of it could end the research with no weighing.",
       "failure": "An unresolved blocking conflict is what stops a project completing. A skill that marks one resolved without adjudicating it removes the block and the project completes over contradictory evidence.",
       "remedy": "Adjudicate through conflict-resolution, which writes the analysis alongside the status.",
       "override": "none",
       "hookCallers": [
         "agent:conflict-resolution"
       ],
-      "notes": "Enforced at the hook plane since 2026-09-29, CLAIM-scoped over several fields — the guard's `OWNED_CLAIMS`, not `OWNED_SECTIONS`. Six skills legitimately open a conflict writing only the schema's required fields (53 of 218 landed corpus `conflicts` ops carry nothing more), so a section route would deny every one. The hook keys on the analytical product instead: an op setting `status: \"resolved\"`, or carrying any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind` or `resolved_value` truthy. A skeleton open and a re-open to `unresolved` claim nothing and pass. Every other agent is held off the section entirely by `AGENT_WRITABLE_SECTIONS`. `owner`/`callers` name the agent since the skill was deleted (the citation rule). The tool plane adds the resolution-kind precondition: a resolve must say how it was settled (research-append-tool-spec.md §5)."
+      "notes": "Enforced at the hook plane since 2026-09-29, CLAIM-scoped over several fields — the guard's `OWNED_CLAIMS`, not `OWNED_SECTIONS`. Six skills legitimately open a conflict writing only the schema's required fields (53 of 218 landed corpus `conflicts` ops carry nothing more), so a section route would deny every one. The hook keys on the analytical product instead: an op setting `status: \"resolved\"`, or carrying any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value` or `weighed_log_entry_ids` truthy. A skeleton open and a re-open to `unresolved` claim nothing and pass. Every other agent is held off the section entirely by `AGENT_WRITABLE_SECTIONS`. `owner`/`callers` name the agent since the skill was deleted (the citation rule). The tool plane adds the resolution-kind precondition: a resolve must say how it was settled (research-append-tool-spec.md §5)."
     },
     {
       "artifact": "research.json",
@@ -654,7 +643,8 @@
         {
           "agent": "agent:init-project",
           "tools": [
-            "project_create"
+            "project_create",
+            "tree_edit"
           ]
         }
       ],
@@ -720,7 +710,8 @@
         {
           "agent": "agent:init-project",
           "tools": [
-            "project_create"
+            "project_create",
+            "tree_edit"
           ]
         }
       ],
@@ -779,7 +770,7 @@
           "agent": "agent:init-project",
           "tools": [
             "project_create",
-            "research_append"
+            "tree_edit"
           ]
         }
       ],

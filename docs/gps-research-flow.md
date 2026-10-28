@@ -334,15 +334,24 @@ The default when in doubt is to go back and search more — a gap is usually
 unsearched rather than unobtainable.
 
 The result is stored in `search_stop.stopped_because` on the question. Three
-values allow a proof conclusion to follow: `question_answered` (the evidence
-answers the question), `record_exhausted` (all reachable sources are spent),
+values are stop-gate values: `question_answered` (the evidence answers the
+question), `record_exhausted` (all reachable sources are spent),
 `nothing_further_reachable` (accessible evidence supports a conclusion, but
-some sources cannot be reached from here). Two values do not:
-`resources_spent` (budget or time ran out with reachable sources remaining)
-and `blocked_by_conflict` (an unresolved contradiction blocks any tier).
-Either way, `not_reached` lists what could not be reached — nil searches,
-browse-only collections, privacy-sealed records — so the researcher sees
-exactly what was left on the table.
+some sources cannot be reached from here). Two are not: `resources_spent`
+(budget or time ran out with reachable sources remaining) and
+`blocked_by_conflict` (an unresolved contradiction is in the way).
+
+**What the gate actually gates is the two conclusive tiers**, `proved` and
+`disproved` (`CONCLUSIVE_TIERS` in `research-append.ts`). A non-gate stop still
+admits `probable`, `possible` and `not_proved`, and always has — the engine has
+never refused those on a non-gate stop. That matters because step mode's "not
+exhaustive" choice offers the researcher exactly this: stop here and conclude at
+the tier the evidence supports, or search on. If a non-gate stop permitted no
+conclusion at all, that offer could not be made.
+
+Either way, `not_reached` lists what was left — nil searches, browse-only
+collections, privacy-sealed records, and the sources the question never planned
+(`deferred`) — so the researcher sees exactly what is still on the table.
 
 Question type matters. A simple recall question can stop early. A
 completeness question — "did they have *any other* children?" — cannot

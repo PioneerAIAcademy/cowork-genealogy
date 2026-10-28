@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_where_else_to_search_002",
+    "skill": "where-else-to-search",
+    "name": "Marriage search in an Alabama county: mixes Ancestry, Find a Grave, MyHeritage and unsupported hosts",
+    "type": "positive",
+    "description": "A FamilySearch marriage search, Blount County, Alabama, 1855. The curated list mixes supported hosts with state-archive and county pages the URL builder cannot take. Marriage collections should rank first.",
+    "tags": [
+      "where-else",
+      "no-project",
+      "direct-arm",
+      "marriage",
+      "mixed-hosts"
+    ]
+  },
+  "input": {
+    "delegation": "Searched FamilySearch for the marriage of William Hood, Blount County, Alabama, around 1855. Nothing. Is this on Ancestry or MyHeritage?\n\ngivenName: William\nsurname: Hood\nevent: marriage\nyear: 1855\nplace: Blount County, Alabama",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "place-search-blount-alabama",
+    "external-links-search-wets-blount"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm with no project (scenario null, no projectPath). The agent holds only place_search, external_links_search and build_external_search_url; it must not look for research.json, create a project, or pass projectPath to any tool.",
+    "Grounding: each suggestion's reason may use only the row's linkText, its startYear-endYear (or 'undated'), and the access value build_external_search_url returned. A statement about a site, place or record set that no tool returned is unsupported. A startYear-endYear wider than the years in the linkText is correct: the tool reports the merged span of duplicate rows.",
+    "Every link in the reply must be a url a tool returned in this run, character for character. A hand-written or edited URL is a fail.",
+    "The return ends with the summary_for_user block: a `---` line, an opening sentence, then each suggestion in the agent's fixed three-line shape (bold linkText with site and free/subscription; its years and how they cover the search, or 'Undated collection.'; the full link), then one closing sentence. Any extra sentence about a collection, the person's name or origin, or the period's history is a fact no tool returned: score it as ungrounded.",
+    "A row whose linkText names marriages (e.g. 'Alabama County Marriage Records, 1805-1967') should rank ahead of an unrelated dated row. The marriage year and place go in marriageYear/marriagePlace."
+  ]
+}

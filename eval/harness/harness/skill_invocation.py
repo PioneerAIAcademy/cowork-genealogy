@@ -1338,6 +1338,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # asserted equal to the shipped agent files. `ownership.json` names it on
         # no row.
         "tree-survey",
+        # A new agent (issue #3521): one-shot, after a FamilySearch records search
+        # it lists curated external collections with prefilled links. It needs no
+        # project and writes nothing, so no hook routes to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json` names
+        # it on the `log` row only because `build_external_search_url` could log
+        # if handed a `projectPath`, which its body never passes.
+        "where-else-to-search",
         # Same shape as search-images and citation (issue #2120): a
         # cost-motivated conversion, no hook route. It writes `log` entries via
         # `research_log_append` and updates `plan_items` status via
@@ -1346,7 +1353,7 @@ DEDICATED_AGENT_NAMES = frozenset(
         # names `agent:search-full-text` on the `plan_items` and `log` rows.
         "search-full-text",
         # Same shape as citation (issue #2122): a converted skill. The hook lanes
-        # it to `project`, `researcher_profile`, `known_holdings` and `sources` and routes
+        # it to `project`, `researcher_profile` and `sources` and routes
         # nothing to it; `ownership.json` names `agent:init-project` on those
         # rows, the `project` row, and the three tree rows `project_create` writes.
         "init-project",

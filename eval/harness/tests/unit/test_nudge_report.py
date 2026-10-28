@@ -220,3 +220,34 @@ def test_scan_ignores_text_that_a_tool_call_landed_after(tmp_path):
     )
     (nudge,) = scan([p])
     assert nudge.hand_back == "silent"
+
+
+def test_the_report_counts_every_class_the_predicate_can_return():
+    """A hardcoded tuple at the print site silently DROPPED a class the predicate
+    had gained: `step_offer`, step mode's LIVE hand-back line, was counted
+    nowhere and the remaining counts still summed to something plausible, so
+    nothing looked wrong.
+
+    Derived from `classify_hand_back` itself rather than restated, so the two
+    cannot drift again: every class the predicate returns on a representative
+    input must appear in `HAND_BACK_CLASSES`.
+    """
+    from e2e.nudge_report import HAND_BACK_CLASSES
+    from e2e.stop_checker import classify_hand_back
+
+    reachable = {
+        classify_hand_back("Continue with running the searches?"),
+        classify_hand_back("Next: research-plan. Continue?"),
+        classify_hand_back("Research complete."),
+        classify_hand_back("I'll look at the 1900 census now."),
+    }
+    missing = sorted(reachable - set(HAND_BACK_CLASSES))
+    assert not missing, (
+        f"classify_hand_back can return {missing}, which the report never counts. "
+        "Add them to HAND_BACK_CLASSES."
+    )
+    # And the other direction: a class listed but unreachable is a stale entry
+    # that prints a permanent zero and reads as a measurement.
+    assert set(HAND_BACK_CLASSES) == reachable, (
+        f"listed but not reachable: {sorted(set(HAND_BACK_CLASSES) - reachable)}"
+    )

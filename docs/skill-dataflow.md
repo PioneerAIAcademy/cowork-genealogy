@@ -11,10 +11,10 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 2 skills and 29 agents. Besides the `research` orchestrator itself, its routing
+There are 2 skills and 30 agents. Besides the `research` orchestrator itself, its routing
 table names 14 of them, and 2 more are spawned from elsewhere in its body (`gps-mentor`,
-`search-hints`). The other 14 have no routing row: one skill,
-`forget-and-rederive`, and 13 agents reached on request or by auto-delegation from their
+`search-hints`). The other 15 have no routing row: one skill,
+`forget-and-rederive`, and 14 agents reached on request or by auto-delegation from their
 own `description` — see [Reachable only by asking](#reachable-only-by-asking).
 
 ---
@@ -120,7 +120,7 @@ ends the turn with `research_delivered` (research/SKILL.md, "Bounded request or 
 | # | Skill / agent | Gate — true before it runs | Owns | Reads | Writes |
 |---|---|---|---|---|---|
 | 0 | **`tree-survey`** (agent) | No `research.json` and the message states no objective. Spawned as `@plugin:tree-survey`, with no `projectPath`. The orchestrator relays its suggestions and stops for the researcher's pick | The holes `tree_gaps` computed, ranked by what FamilySearch has for them (`pendingHints`, `coverage`); 3-5 suggestions, one question each | `tree_gaps` | Nothing — writes no project state by design |
-| 1 | **`init-project`** (agent) | No `research.json` and the message states an objective, or the researcher picked a `tree-survey` suggestion. A guard clause refuses — reading no project file at all — if one exists | Creating both project files, the researcher profile, and the known-holdings survey | `person_read`; the user's words, as the delegation carries them | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile`, `known_holdings` and a `sources` entry per transcribed memory — `research_append`. Reports the import only; reviews nothing |
+| 1 | **`init-project`** (agent) | No `research.json` and the message states an objective, or the researcher picked a `tree-survey` suggestion. A guard clause refuses — reading no project file at all — if one exists | Creating both project files and the researcher profile | `person_read`; the user's words, as the delegation carries them | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile` and a `sources` entry per transcribed memory — `research_append`. Reports the import only; reviews nothing |
 | 2 | **`research`** (skill, orchestrator) | Entry point. `research.json` exists | Routing — plus the contracts that forbid it doing the work inline (extraction, identity links, conflict/hypothesis, exhaustiveness/proof), the tree-encoding gate, and the bounded-request stop | `project_context` first, then `research_query` slices; it bans a whole-file `Read` of `research.json` for itself. `person_read` and `source_attachments` for what a linked person already has, before any search | The `extraction_append({ recordIds })` batch for pending FamilySearch records. Nothing else — every other write is delegated, and its own `project.status` write is refused by the hook |
 | 3 | **`question-selection`** (agent) | Spawned as `@plugin:question-selection`. Objective but no questions; or exhaustiveness returned gaps and the next move is a FAN pivot; or every question is resolved and a fact the objective asks for has no question | Minting at most one `q_` per invocation with its selection basis, and the step 1b stop signal ("no further questions — objective answered"). Not a question's `status` after creation | `project_context`, `research_query`; tree `persons` by `Read` of `tree.gedcomx.json` | `questions[]` append — `research_append`. Never `project` |
 | 4 | **`locality-guide`** (agent) | A question has no plan **and** its target jurisdiction has no `localities` entry. One jurisdiction and period per spawn | The survey of what records survive for one place and period, persisted as the one `loc_` entry `research-plan` plans from | `place_search`, `place_search_all`, `place_population`, `collections_search`, `volume_search`, `catalog_search`, `external_links_search`, `wiki_search`, `wiki_read`, `wiki_place_page`, `wikipedia_search` | `localities` — one entry per jurisdiction, `research_append`; the place's curated external collections in `external-collections.json`, written by `external_links_search`. Nothing in standalone Q&A with no project |
@@ -212,7 +212,6 @@ the absorbed person's id in every section that holds person ids.
 |---|---|---|---|---|---|
 | `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append`, `merge_tree_persons` | unit + hook — the hook routes `project.status` to the proof-conclusion agent (field-scoped; the rest of the section is co-written and untouched). A diff confined to `updated` is exempt at both, so the activity ping is free to any writer |
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
-| | `known_holdings` | `init-project` | — | `research_append`, `merge_tree_persons` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the hook routes any non-null `search_stop.stopped_because` to `research-exhaustiveness`; the tool refuses a `resolved` with no proof summary, a declaration while the active plan has `in_progress` or `planned` items, and a new question while another's search is in flight |
 | | `plans` / `plan_items` | `research-plan` | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, `search-hints`, for `items[].status` only; `extraction_append`, by tool identity, for `items[].status` `in_progress` → `completed` only | `research_append`, `extraction_append` | unit on `plans` (whole-section only — it cannot tell a status flip from a rewritten plan); **nothing** on `plan_items`. The hook keeps the five search agents to `plan_items` |
 | | `log` | none by design — append-only, multi-writer | `search-records`, `search-external-sites`, `search-full-text`, `search-images`, `search-hints`, `survey-surname`, `search-wikipedia`, `search-familysearch-wiki`, `historical-context`, `source-evaluation`, `check-warnings`, `translation`, `convert-dates`, `validate-schema`; `extraction_append` for its own `record_read` entries | `research_log_append`, `build_external_search_url`, `extraction_append` | unit + tool |
@@ -220,7 +219,7 @@ the absorbed person's id in every section that holds person ids.
 | | `assertions` | none — written in code by `extraction_append`, whoever calls it | — | `extraction_append`; `research_append` only for an update setting `informant_bias_notes` alone | unit + tool |
 | | `person_evidence` | `person-evidence` | `extraction_append`, by tool identity, for unchecked attachment links only | `research_append`, `merge_tree_persons`, `extraction_append` | unit + hook — the hook denies the section to every caller but the person-evidence **agent**; `extraction_append`'s attachment links, written only in `personId` mode, never pass the hook |
 | | `rejected_links` | `person-evidence` | — | `research_append`, `merge_tree_persons` | unit + hook + tool — the hook denies the section to every caller but the person-evidence **agent**; `research_append` refuses a `person_evidence` write that creates, moves onto or revives a rejected pair |
-| | `conflicts` | `conflict-resolution` | — | `research_append` | unit + hook + tool. The hook is CLAIM-scoped: it denies a resolve, or any of the analysis fields (`independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value`), to every caller but the conflict-resolution **agent**, while a skeleton open or a re-open passes. The tool refuses a resolve that does not name its `resolution_kind` |
+| | `conflicts` | `conflict-resolution` | — | `research_append` | unit + hook + tool. The hook is CLAIM-scoped: it denies a resolve, or any of the analysis fields (`independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value`, `weighed_log_entry_ids`), to every caller but the conflict-resolution **agent**, while a skeleton open or a re-open passes. The tool refuses a resolve that does not name its `resolution_kind` |
 | | `hypotheses` | `hypothesis-tracking` | — | `research_append` | unit + tool |
 | | `timelines` | `timeline` | `timeline_build`, by tool identity, for a person's own timeline only | `research_append`, `merge_tree_persons`, `timeline_build` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append`, `merge_tree_persons` | unit + hook — the hook denies the section unless the caller is the proof-conclusion **agent** |
@@ -238,7 +237,7 @@ Three consequences worth holding onto:
   actually bind are the writer tool's own preconditions, an agent's `tools:`,
   and the `PreToolUse` hook.
 - **Only one skill holds `research_query`** — `research` — and eleven
-  of the twenty-nine agents, `search-records` among them. Everything else that needs project state does a whole-file
+  of the thirty agents, `search-records` among them. Everything else that needs project state does a whole-file
   `Read`, which is the thing the orchestrator forbids for itself because `research.json`
   reaches 100+ assertions by late run.
 - **The hook is the only plane that discriminates by caller**, in
@@ -286,9 +285,9 @@ No routing-table row names these, so an autonomous `/research` run reaches them 
 the main thread delegates on its own judgment:
 
 - **`forget-and-rederive`**, the one skill. It is operator-driven by design.
-- **13 agents**: `check-warnings`, `citation`, `convert-dates`, `historical-context`,
+- **14 agents**: `check-warnings`, `citation`, `convert-dates`, `historical-context`,
   `search-familysearch-wiki`, `search-full-text`, `search-wikipedia`, `source-evaluation`,
-  `survey-surname`, `timeline`, `translation`, `tree-edit`, `validate-schema`. An agent is
+  `survey-surname`, `timeline`, `translation`, `tree-edit`, `validate-schema`, `where-else-to-search`. An agent is
   auto-delegated from its own `description`, so a missing row does not mean it cannot
   fire. **Whether each actually fires is unmeasured** — issue #3220 tracks that nothing
   measures agent triggering.
