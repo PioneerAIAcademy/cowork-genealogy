@@ -110,6 +110,8 @@ repo's identifier-casing rule):
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
+  sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.5
+  unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.5
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -428,6 +430,33 @@ its values can sum past `total`. Places and record types are sorted. The field i
 absent when no list is stored, and also when the file cannot be read: a broken
 cache file must never fail the whole projection.
 
+### 2.5 `sectionCounts` — which sections a query would find empty
+
+```typescript
+sectionCounts: { [section: string]: number | null }   // every research.json section research_query serves
+unregisteredDisagreementCount: number
+```
+
+One key per section in `research_query`'s `RESEARCH_QUERY_SECTIONS` except
+`external_collections` (counted by §2.4), each the length of that research.json
+array. An absent section in `RESEARCH_QUERY_OPTIONAL_SECTIONS` counts 0, as
+`research_query` answers it; a section `research_query` would refuse — a required
+one absent, or any one present but not an array — is `null`. The contract is that
+a 0 matches the `count` an unfiltered `research_query` of that section would
+return, so a consumer may treat the 0 as having read the section and skip the
+call, and may never treat a `null` that way. The disagreement count comes from
+`research_query`'s own `disagreementsInScope`, so the two cannot drift.
+
+`conflicts` is the one section whose query returns more than its items: it also
+reports `unregisteredDisagreements`, project-wide when no `questionId` is given.
+`unregisteredDisagreementCount` is that list's length, so `conflicts: 0` with a
+non-zero count still needs the query.
+
+Why: question-selection reads several sections before it picks a question. In
+the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
+hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
+parallel, so the counts save tokens and calls more than wall-clock time.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -512,7 +541,13 @@ untouched.
   filtering; preferred-name rendering; `sourceRefs` unioned (distinct) across
   person/fact/name references; per-source `recordIds` (distinct, verbatim)
   and `assertionCount`; `projectStatus` echoed.
-- **empty project** — empty arrays, `ok: true`.
+- **empty project** — empty arrays, every `sectionCounts` value 0, `ok: true`.
+- **`sectionCounts`** — for every section, equal to the unfiltered
+  `research_query` `count`; `unregisteredDisagreementCount` equal to that
+  query's `conflicts` `unregisteredDisagreements` length, including on a project
+  where `conflicts` counts 0 and one disagreement is unregistered; an absent
+  optional section counts 0; an absent required section, or one that is not an
+  array, is `null` and `research_query` refuses it.
 - **truncation** — a 200-char question comes back at 140 chars ending in `…`;
   a 140-char question is untouched.
 - **missing file** — `{ ok: false, errors }`, when the folder holds the other

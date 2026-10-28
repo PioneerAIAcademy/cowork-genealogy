@@ -1007,7 +1007,7 @@ describe("agent delegation framing", () => {
     // instruction actually SHIPS to a denied caller is invisible to both arms:
     // hooks/guard_project_files.py builds "invoke `@plugin:{agent}`" in
     // OWNER_REASON and DECLARATION_REASON, with {agent} filled at runtime from
-    // OWNED_SECTIONS / OWNED_DECLARATIONS / OWNED_FIELDS. Nothing is wrong today — the text
+    // OWNED_SECTIONS / OWNED_DECLARATIONS / OWNED_FIELDS / OWNED_APPENDS. Nothing is wrong today — the text
     // carries no conclusion — but a later edit that slanted it would fire
     // nothing, and these are the same three agents the prose arm drops for the
     // name-collision reason, so for them neither arm covers that path.
@@ -1029,7 +1029,7 @@ describe("agent delegation framing", () => {
     // Agents the hook can name, read from its routing tables rather than
     // hand-listed here.
     const routed = new Set<string>();
-    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS", "OWNED_FIELDS"]) {
+    for (const table of ["OWNED_SECTIONS", "OWNED_DECLARATIONS", "OWNED_FIELDS", "OWNED_APPENDS"]) {
       const m = hook.match(new RegExp(`${table}\\s*=\\s*\\{[^}]*\\}`));
       expect(m, `${table} not found in guard_project_files.py`).not.toBeNull();
       for (const q of m![0].matchAll(/"([a-z][a-z0-9-]*)"/g)) {
@@ -1039,8 +1039,8 @@ describe("agent delegation framing", () => {
     expect(
       [...routed].sort(),
       "the hook routes to an agent set this test could not resolve. It reads " +
-        "OWNED_SECTIONS, OWNED_DECLARATIONS and OWNED_FIELDS; if the routing moved, follow it.",
-    ).toEqual(["person-evidence", "proof-conclusion", "research-exhaustiveness"]);
+        "OWNED_SECTIONS, OWNED_DECLARATIONS, OWNED_FIELDS and OWNED_APPENDS; if the routing moved, follow it.",
+    ).toEqual(["person-evidence", "proof-conclusion", "question-selection", "research-exhaustiveness"]);
 
     // Each routed callee must carry the rule on its own side.
     const undefended = [...routed].filter(

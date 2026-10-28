@@ -7097,6 +7097,34 @@ describe("research_append (batch ops)", () => {
     const r = await researchAppend(newQ());
     expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
   });
+  describe("(fan-pivot) a fan_pivot question names the open question it advances", () => {
+    const concluded = () => {
+      const research = attrResearch("completed", []);
+      (research as any).proof_summaries = [summaryFor("q_001")];
+      return research;
+    };
+    it.each([
+      ["empty unblocks", { selection_basis: "fan_pivot", depends_on: ["q_001"], unblocks: [] }],
+      ["unblocks naming no open question", { selection_basis: "fan_pivot", unblocks: ["q_009"] }],
+    ])("refuses %s — writes nothing", async (_label, fields) => {
+      await writeProject(concluded());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend(newQ(fields));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/fan_pivot.*unblocks.*\(open: q_001\)/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+    it("allows one whose unblocks names the open question", async () => {
+      await writeProject(concluded());
+      const r = await researchAppend(newQ({ selection_basis: "fan_pivot", depends_on: ["q_001"], unblocks: ["q_001"] }));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+    it("leaves other selection bases alone", async () => {
+      await writeProject(concluded());
+      const r = await researchAppend(newQ({ selection_basis: "objective_decomposition", unblocks: [] }));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+  });
   it("(open-question) needs BOTH halves: a summary with an item still to do still blocks", async () => {
     // E's own route can hand a concluded question fresh searches. While those
     // are open, the next question waits.

@@ -242,11 +242,12 @@ Three consequences worth holding onto:
   reaches 100+ assertions by late run.
 - **The hook is the only plane that discriminates by caller**, in
   `packages/engine/plugin/hooks/guard_project_files.py`. On `research_append` it carries
-  five maps: `OWNED_SECTIONS` gives `proof_summaries` to proof-conclusion and
+  six maps: `OWNED_SECTIONS` gives `proof_summaries` to proof-conclusion and
   `person_evidence` and `rejected_links` to person-evidence; `OWNED_DECLARATIONS` gives a non-null
   `search_stop.stopped_because` to research-exhaustiveness; `OWNED_FIELDS` gives
   `project.status` to proof-conclusion; `OWNED_CLAIMS` gives a conflict's resolve and
-  analysis fields to conflict-resolution; and `AGENT_WRITABLE_SECTIONS` holds every agent
+  analysis fields to conflict-resolution; `OWNED_APPENDS` gives creating a question to
+  question-selection; and `AGENT_WRITABLE_SECTIONS` holds every agent
   that has `research_append` to its own sections, which is what keeps the exhaustiveness
   agent off `plan_items` so it cannot clear its own blocker. Separately it refuses a raw
   `Write`/`Edit`/`device_commit_files` to a protected project file. Every other row above
