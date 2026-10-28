@@ -50,7 +50,20 @@ def _expect_fail(test, calls) -> str:
 
 
 @pytest.mark.parametrize(
-    "line", ["userPresent: no", "`userPresent: no`", "userpresent:no", "userPresent: `no`"]
+    "line",
+    [
+        "userPresent: no",
+        "`userPresent: no`",
+        "userpresent:no",
+        "userPresent: `no`",
+        # Spellings a router actually writes, which the first form rejected: bold
+        # markdown around the field, a JSON-ish pair, and `=` instead of `:` (a
+        # committed run writes `planItemIds=pli_001`).
+        "**userPresent:** no",
+        '"userPresent": "no"',
+        "userPresent=no",
+        "**`userPresent`**: **no**",
+    ],
 )
 def test_user_present_no_passes_in_every_spelling(line):
     validator(KEEP_GOING, [_spawn("person-evidence", f"a_001, a_002\n{line}")])
@@ -62,8 +75,17 @@ def test_user_present_yes_fails():
     )
 
 
-def test_a_value_that_only_starts_with_no_fails():
-    _expect_fail(KEEP_GOING, [_spawn("person-evidence", "userPresent: nobody")])
+@pytest.mark.parametrize("line", ["userPresent: nobody", "userPresent: yesterday"])
+def test_a_value_that_only_starts_with_the_one_wanted_fails(line):
+    """Widening the markup must not widen the VALUE: the match still ends on a word
+    boundary, so `nobody` is not `no`."""
+    _expect_fail(KEEP_GOING, [_spawn("person-evidence", line)])
+
+
+@pytest.mark.parametrize("line", ["userPresentation: no", "theUserPresent: no"])
+def test_a_field_whose_NAME_merely_contains_the_one_wanted_fails(line):
+    """The field name is anchored at both ends, so a longer name is a different field."""
+    _expect_fail(KEEP_GOING, [_spawn("person-evidence", line)])
 
 
 def test_no_person_evidence_spawn_fails_rather_than_skips():
@@ -74,12 +96,21 @@ def test_a_full_wrap_up_passes():
     validator(WRAP_UP, _wrap_up())
 
 
+def test_a_wrap_up_in_the_markup_a_router_writes_passes():
+    validator(WRAP_UP, _wrap_up(**{
+        "research-plan": "planItemIds=pli_001",
+        "research-exhaustiveness": "**wrapUp:** yes",
+        "proof-conclusion": '"wrapUp": "yes"',
+    }))
+
+
 @pytest.mark.parametrize(
     "callee,prompt",
     [
         ("research-plan", "The researcher is wrapping up."),
         ("research-exhaustiveness", "questionId: q_001"),
         ("proof-conclusion", "questionId: q_001\nwrapUp: no"),
+        ("proof-conclusion", "questionId: q_001\n**wrapUp:** no"),
         ("proof-conclusion", None),
     ],
 )

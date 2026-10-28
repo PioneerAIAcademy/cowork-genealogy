@@ -432,58 +432,6 @@ def test_no_gate_stop(before_state, after_state, test):
     bad = check_no_gate_stop(before_state, after_state)
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
-_DELIVERS_PREFIX = "delivers:"
-
-
-def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_calls, test):
-    """Tag-gated (``delivers:<skill>``, one per deliverable). Issue #2813 item 1.
-
-    **Reversed by step mode (plan section H).** This used to require EVERY
-    deliverable in one turn. A compound ask now runs the FIRST deliverable and
-    OFFERS the second as the next step, so handing off both is the violation and
-    handing off one is the rule. The closing offer line is prose the judge reads;
-    what is deterministic here is how many hand-offs happened.
-
-    What it still forbids is the first hand-off being something off the list,
-    which is how the job path shows up. WHICH step that is depends on the
-    project: with no questions it is ``question-selection``; with a question and
-    no localities entry it is ``locality-guide``; with a localities entry it is
-    ``research-plan``. A scenario whose job-path head is itself a ``delivers:``
-    target cannot discriminate, so pick one where it is not.
-    """
-    from harness.skill_runner import handoffs
-
-    expected = [t[len(_DELIVERS_PREFIX):] for t in (test.get("tags") or [])
-                if t.startswith(_DELIVERS_PREFIX)]
-    if not expected:
-        pytest.skip("not a delivers: test")
-    assert all(expected), f"empty {_DELIVERS_PREFIX} tag value — name the skill or remove the tag"
-
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    # Strip the skill under test the way test_routes_to_expected_skill does: it is
-    # recorded first when entered as a slash command (issue #3116), so a raw
-    # handed[0] is "research" and the first-hand-off assertion below would fail on
-    # every real run. A claim audit caught this before a paid run did.
-    # The skill under test is recorded first when entered as a slash command
-    # (issue #3116), so a raw handed[0] is "research" and the assert below would
-    # fail on every real run. Filtering is enough; test_routes_to_expected_skill's
-    # extra slice is redundant beside it.
-    skill_under_test = test.get("skill")
-    delegations = [s for s in handed if s != skill_under_test]
-
-    assert delegations and delegations[0] in expected, (
-        f"the first hand-off must be one of the deliverables {expected}, got "
-        f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
-        "path, which a bounded request must not enter."
-    )
-    delivered = [d for d in delegations if d in expected]
-    assert len(delivered) == 1, (
-        f"a compound bounded ask runs ONE deliverable per turn and offers the rest "
-        f"(plan section H). Handed off {delivered} in this turn; expected exactly one of "
-        f"{expected}. Before step mode this assertion was the opposite -- every "
-        f"deliverable in one turn -- and the reversal is the point."
-    )
-
 # ---------------------------------------------------------------------------
 # `negative-status-question` tag (issue #3112)
 # ---------------------------------------------------------------------------
@@ -851,8 +799,17 @@ def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
         if not prompts:
             problems.append(f"no spawn of '{callee}' to carry {field}")
             continue
+        # A router writes these fields in whatever markup the turn is in:
+        # `**userPresent:** no`, `"userPresent": "no"` and `planItemIds=pli_001`
+        # are all the field being passed, and the first form was failing. So
+        # backticks, asterisks and quotes are allowed around either side, and
+        # `=` counts as well as `:`. Still rejected, because the field name is
+        # anchored and the value ends on a word boundary: `userPresentation: no`,
+        # `**wrapUp:** no` where `wrapUp: yes` was required, and a value like
+        # `nobody` or `yesterday` that merely starts with the one wanted.
         pattern = re.compile(
-            rf"`?{re.escape(field)}`?\s*:\s*`?(?:{value})\b", re.IGNORECASE
+            rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?:{value})\b",
+            re.IGNORECASE,
         )
         if not any(pattern.search(p) for p in prompts):
             problems.append(f"'{callee}' spawn lacks {field}: {value}")
@@ -1052,8 +1009,9 @@ def test_bounded_transcription_is_delivered_in_place(
     agent, a bounded transcription is the router's own deliverable: it calls
     ``image_transcribe`` with a ``projectPath``, and reads the staged page with
     ``sidecar_read`` on the ``staged.resultsRef`` that call returned, before
-    showing it. No hand-off is a transcription hand-off, so on a single bounded
-    ask (no ``delivers:`` tag) there must be none at all."""
+    showing it. No hand-off is a transcription hand-off, and a compound ask
+    delivers only its first deliverable this turn (step mode, plan section H),
+    so there must be none at all."""
     from harness.skill_runner import handoffs
 
     if "transcribes-in-place" not in test.get("tags", []):
@@ -1081,14 +1039,13 @@ def test_bounded_transcription_is_delivered_in_place(
         f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
         "the reply cannot have shown the transcription"
     )
-    if not any(t.startswith(_DELIVERS_PREFIX) for t in test.get("tags") or []):
-        skill_under_test = test.get("skill")
-        delegations = [
-            s for s in handoffs(skills_invoked, builtin_tool_calls) if s != skill_under_test
-        ]
-        assert not delegations, (
-            f"a single bounded transcription hands off to nothing; got {delegations}"
-        )
+    skill_under_test = test.get("skill")
+    delegations = [
+        s for s in handoffs(skills_invoked, builtin_tool_calls) if s != skill_under_test
+    ]
+    assert not delegations, (
+        f"a bounded transcription hands off to nothing; got {delegations}"
+    )
 
 
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"

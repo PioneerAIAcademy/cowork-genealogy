@@ -209,8 +209,8 @@ and under step mode it delivers the first this turn and offers the next. Its
 first deliverable is a transcription, so it carries only `transcribes-in-place`,
 which also asserts that nothing is handed off: a research-plan spawn (both
 deliverables in one turn) and the job path (locality-guide first) both fail it.
-No test carries a `delivers:<skill>` tag now; `routes-to:` is still the wrong
-choice for a compound ask, because it asserts only the FIRST hand-off.
+The `delivers:<skill>` tag and its validator are gone: under step mode a compound
+ask hands off at most one deliverable, so there is nothing for them to count.
 
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock

@@ -244,10 +244,12 @@ identity assertion already on the tree
 may be tested directly (confirm-or-refute, per the next paragraph); a property
 test of a name or date may not stand in for the fact.
 
-An unverified premise gets its own verification question even when an open,
-broader question ("Who were his parents?") would also settle it: a broad
-question does not test a specific claim. Rejecting a premise is never a reason
-to select nothing — write the question that tests it.
+An unverified premise gets its own verification question **when no question is
+open, or the open one is finished with**: a broad question ("Who were his
+parents?") does not test a specific claim. While a question is open, testing its
+premise is plan items on that question, not a second question competing with it.
+Rejecting a premise is never a reason to select nothing — write the question that
+tests it, or say which plan items would.
 
 **When the objective signals the user doubts an existing assignment** —
 phrasing like "correct parents", "the right X", "not correct" — the current
@@ -297,8 +299,7 @@ do not retry the same payload blindly.
   efficient strategy relies on its specific findings (e.g. q_001 identified a
   household and the new question searches within it — include q_001 even if
   already resolved).
-- `unblocks`: questions this one's resolution would enable or advance. High
-  `unblocks` counts mark gatekeeper questions — prioritize them.
+- `unblocks`: questions this one's resolution would enable or advance.
 - A question that verifies another question's premise **unblocks** that
   question; it does not depend on it.
 - When neither applies (e.g. a first question), set both explicitly to `[]`.
@@ -597,11 +598,9 @@ important. Prioritize based on:
 
 1. **Proximity to the research objective**: Gaps directly blocking
    the project's central question take priority.
-2. **Gatekeeper potential**: Filling this gap would unblock multiple
-   downstream questions.
-3. **Likelihood of success**: Records are known to exist for the
+2. **Likelihood of success**: Records are known to exist for the
    jurisdiction and time period.
-4. **Generation depth**: Earlier generations (closer to the subject)
+3. **Generation depth**: Earlier generations (closer to the subject)
    generally take priority over more distant ancestors, since errors
    compound with each generation.
 

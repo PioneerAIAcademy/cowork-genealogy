@@ -883,9 +883,10 @@ There **is** an orchestrator, and it is a skill:
    **A turn runs ONE step** (step mode, decision 25,
    `docs/plan/research-step-mode.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
-   stops. On the FS prototype and in both eval harnesses
-   `packages/engine/plugin/hooks/step_boundary.py` enforces that boundary, loaded
-   as a library. Cowork and the hosted alpha follow the router's own text with no
+   stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
+   enforces that boundary on the FS prototype always, and in the eval harnesses
+   only where a test opts in through `execution.step_mode`, which no test sets
+   today. Cowork and the hosted alpha follow the router's own text with no
    such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
    since no host is there to reply.
 

@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889) and PR 1 (#3883) are merged; the three route PRs (#3914, #3915, #3916), PR 2 (#3917) and the conflict PR (#3937) are open. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883) and the hypothesis-tracking route PR (#3915) are merged; the route PRs #3914 and #3916, PR 2 (#3917) and the conflict PR (#3937) are open. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -589,8 +589,8 @@ that apply:
        in an autonomous run (`agents/person-evidence.md:547-558`), and it learns that from its
        delegation, which today carries only assertion ids.
        - **The router passes `userPresent: no`** to person-evidence in a turn whose message is
-         "Keep going." or "Wrap it up.", as it already does for search-external-sites
-         (`skills/research/SKILL.md:282`). e2e replies "Keep going." (section F), so it gets
+         "Keep going." or "Wrap it up.". search-external-sites gets `userPresent: no` only on an
+         autonomous run, since under "no" it logs a deferred negative and skips the item. e2e replies "Keep going." (section F), so it gets
          the same.
        - **`person-evidence.md:547-552` and `:483-485` are reworded** to key on that field, and
          an absent field means a researcher is present. Today they say the rule applies "only …
@@ -899,9 +899,8 @@ Step mode removes the runaway structurally:
   what was found and saved (PR #3235), then offers "Continue with X?".
 - **A misclassified ask costs one step, not a cycle.**
 - **A compound one-shot ask** runs its first deliverable, and offers the second as the next
-  step. That reverses `ut_research_c1k` and its validator
-  `test_every_bounded_deliverable_is_handed_off` (`eval/harness/validators/test_research.py`),
-  which require both in one turn.
+  step. That reverses `ut_research_c1k`, which required both in one turn; its `delivers:` tag
+  and that tag's validator are deleted, since no test can carry one now.
 - **A one-shot ask with a PID on a new folder** needs the project first. Once issue #3384 makes
   project creation a single `project_create` tool call, that runs inside the one-shot's turn.
   Until then, it costs one extra prompt.

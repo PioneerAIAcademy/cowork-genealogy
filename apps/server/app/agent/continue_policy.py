@@ -100,8 +100,8 @@ DELIVERED_REASON = (
 # does not. That is also why the carrier is a separate tool rather than AskUserQuestion --
 # one tool carrying both speech acts leaves the hook with no discriminator.
 DELIVERY_GUIDANCE = (
-    "When this message asked for one or more bounded things and you have produced every "
-    "one of them, WRITE YOUR "
+    "When this message asked for one or more bounded things and you have produced one — "
+    "the only one asked for, or the first of several — WRITE YOUR "
     "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
     "researcher -- then call "
     "`research_delivered` with a one-sentence summary and stop: a plan the researcher "

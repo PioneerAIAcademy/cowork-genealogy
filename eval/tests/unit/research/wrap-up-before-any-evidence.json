@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "Wrap it up.",
+    "user_message": "/research Wrap it up.",
     "scenario": "flynn-census-nil"
   },
   "execution": {

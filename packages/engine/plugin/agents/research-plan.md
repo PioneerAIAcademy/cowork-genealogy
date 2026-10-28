@@ -813,7 +813,7 @@ Ancestry (fallback), land records (fallback).
 | Situation | Action |
 |-----------|--------|
 | No `localities` entry exists for the jurisdiction you need to plan | Stop and return to the orchestrator noting the jurisdiction needs a locality survey — do **not** invoke `locality-guide` yourself. The orchestrator runs it, then re-invokes you |
-| Question is too vague to plan for | Return to `question-selection` to refine it |
+| Question is too vague to plan for | Stop and ask the researcher to restate the question — a second question cannot be opened while this one is |
 | All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — plan the gaps here as a new plan (Add-new mode); a FAN pivot is items here too, on the subject's associates, neighbours or witnesses |
 | User says "start searching" | Hand back naming `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand execution back as authorized, in this same return — do not ask "would you like me to start?" first |

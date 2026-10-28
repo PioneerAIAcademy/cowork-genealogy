@@ -240,8 +240,8 @@ don't load it explicitly.
 9. hypothesis-tracking (agent) Track competing candidates
 10. research-exhaustiveness  Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop
-                             back to step 3 (extend plan) or step 2
-                             (FAN pivot). If exhaustive, advance.
+                             back to step 3 (extend plan), a FAN pivot
+                             included. If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
     tree-edit (agent)        Merge persons, correct facts
 12. Ask "where are we?"      Answered by the main thread from the project state

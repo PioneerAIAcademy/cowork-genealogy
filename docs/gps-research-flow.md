@@ -16,7 +16,8 @@ novel; where the system takes an opinionated position, it says so.
         Define the problem, survey what's known
                         │
                         ▼
-             Choose the next question  ◀──── FAN pivot ─────┐
+             Choose the next question                       │
+                        │                   FAN pivot ──────┤
                         │                                   │
                         ▼                                   │
                   Plan the search  ◀──────────────┐         │
@@ -48,8 +49,9 @@ The plan is not a checklist to be drained. As soon as the evidence in hand
 *plausibly* answers the question, the system moves to the exhaustiveness
 test. If that test finds a gap, it returns to planning — the same question,
 with the plan extended to cover what is missing. It goes back to choosing a
-question only for a FAN pivot, when direct evidence on the current question
-is spent and the next move is a question about an associate.
+It does not go back to choosing a question for a FAN pivot: when direct
+evidence on the current question is spent, the pivot to an associate is more
+plan items on that same question, because only one question is open at a time.
 
 You can work through this two ways: step by step, with the system pausing
 for your judgment at each decision, or continuously, where it works the
@@ -86,7 +88,7 @@ Two rules govern the loop:
 
 - **Finish what's open.** If a planned search is already underway, the
   system recommends completing it rather than opening a new question —
-  unless an unresolved conflict blocks that question.
+  even when an unresolved conflict blocks that question: settling it is a step on the question already open.
 - **Stop when the objective is answered, not when everything is proved.**
   Once each independent part of the objective carries a conclusion at
   *probable* or better, research stops. The system does not invent

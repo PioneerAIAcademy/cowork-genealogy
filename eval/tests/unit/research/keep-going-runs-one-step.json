@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "Keep going.",
+    "user_message": "/research Keep going.",
     "scenario": "research-unlinked-baptism-evidence"
   },
   "execution": {
