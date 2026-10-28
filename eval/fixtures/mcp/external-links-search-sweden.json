@@ -62,5 +62,127 @@
         "linkText": "Sweden Inventory of Graves"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://sok.riksarkivet.se/kyrkoarkiv",
+      "linkText": "Kyrkoarkiv - Riksarkivet",
+      "record_type": "Church Records",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://sok.riksarkivet.se/mantalslangder",
+      "linkText": "Mantalslängder, 1642–1820",
+      "record_type": "Taxation",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "1642",
+      "endYear": "1820",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://www.arkivdigital.se/",
+      "linkText": "ArkivDigital: Störst i Sverige på släktforskning",
+      "record_type": "Archives and Libraries",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/2225",
+      "linkText": "Sweden, Church Death Records, 1451-1943",
+      "record_type": "Death",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/60362",
+      "linkText": "Sweden Select Burials, 1649-1920",
+      "record_type": "Burial",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1649",
+      "endYear": "1920",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/60363",
+      "linkText": "Sweden Select Marriages, 1630-1920",
+      "record_type": "Marriage",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1630",
+      "endYear": "1920",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-30100/sweden-burials-1649-1920",
+      "linkText": "Sweden Burials, 1649-1920",
+      "record_type": "Burial",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1649",
+      "endYear": "1920",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://www.myheritage.com/research/collection-30099/sweden-marriages-1630-1920",
+      "linkText": "Sweden Marriages, 1630-1920",
+      "record_type": "Marriage",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1630",
+      "endYear": "1920",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://search.findmypast.com/search-world-Records/sweden-burials-1649-1920",
+      "linkText": "Sweden Burials, 1649-1920",
+      "record_type": "Burial",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1649",
+      "endYear": "1920",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://wiki.genealogi.se/index.php?title=Husf%C3%B6rh%C3%B6rsl%C3%A4ngd",
+      "linkText": "Husförhörslängd, Wiki-Rötter",
+      "record_type": "Church Records",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://sok.riksarkivet.se/nad",
+      "linkText": "Nationell Arkivdatabas (NAD)",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    },
+    {
+      "url": "https://grav.rotter.se/Gravsoklist.php?cmd=reset",
+      "linkText": "Sweden Inventory of Graves",
+      "record_type": "Cemeteries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden"
+    }
+  ]
 }

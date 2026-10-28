@@ -24,5 +24,27 @@
         "host": "txgenweb.org"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/locations/hill-county-texas",
+      "linkText": "Hill County, Texas - Ancestry.com",
+      "record_type": "Genealogy",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Texas, United States"
+    },
+    {
+      "url": "https://www.txgenweb.org/smith",
+      "linkText": "Smith County, Texas - TXGenWeb",
+      "record_type": "Genealogy",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Texas, United States"
+    }
+  ]
 }

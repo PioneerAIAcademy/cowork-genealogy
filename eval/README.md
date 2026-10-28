@@ -176,7 +176,7 @@ pnpm --filter cowork-genealogy-eval-app typecheck   # tsc --noEmit
 
 ## Run log naming
 
-Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is no model dir — the model the run executed against is stored in the run-log JSON's `model` field and in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter.
+Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is no model dir. The run log's envelope `model` field is the harness default, not what ran. Each thread's model is in `runs[].main_thread.models` and `runs[].subagents[].models`. An agent suite's main thread runs the harness default and the agent its own `model:` frontmatter; a `SKILL.md` suite runs the skill's `model:` when set.
 
 Filenames classify into three kinds:
 

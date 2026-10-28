@@ -225,12 +225,16 @@ def project_completed(research: Mapping[str, Any] | None) -> bool:
 
 PROOF_CONCLUSION_AGENT = "proof-conclusion"
 
-# The closing sentence proof-conclusion's `summary_for_user` carries exactly when the
-# invocation set `project.status` to `completed` (proof-conclusion.md, `### summary_for_user`).
-# The halt requires it, so a proof-conclusion call that did NOT complete the project, running
-# beside the one that did, never ends the turn on its own summary. Pinned to the agent body
-# by `eval/harness/tests/unit/test_completion_halt_parity.py`.
-PROOF_CONCLUSION_FINISHED = "The research is finished. If you'd like a second opinion on it, just ask."
+# The closing sentences proof-conclusion's `summary_for_user` ends on exactly when the
+# invocation set `project.status` to `completed` (proof-conclusion.md, `### summary_for_user`):
+# "for now" when the question's stop record lists unsearched sources. The halt requires one,
+# so a proof-conclusion call that did NOT complete the project, running beside the one that
+# did, never ends the turn on its own summary. Pinned to the agent body, both ways, by
+# `eval/harness/tests/unit/test_completion_halt_parity.py`.
+PROOF_CONCLUSION_FINISHED = (
+    "This research is finished. If you'd like a second opinion on it, just ask.",
+    "This research is finished for now. If you'd like a second opinion on it, just ask.",
+)
 
 # The runtime's frame and trailer around a subagent's return as the MODEL sees it. The
 # PostToolUse `tool_response` came without them in the probe; they are stripped anyway so
@@ -279,8 +283,9 @@ def summary_for_user(tool_response: Any) -> str | None:
 
 
 def is_proof_conclusion_call(tool_input: Any) -> bool:
-    """Whether an Agent call went to proof-conclusion, by its `subagent_type`, which
-    arrives bare or `genealogy-research:`-prefixed (both seen in the probe)."""
+    """Whether an Agent call went to proof-conclusion, by its `subagent_type` compared
+    after the last `:`, as the step boundary's `bare_name` compares it: bare and
+    `genealogy-research:`-prefixed were both seen in the probe."""
     name = tool_input.get("subagent_type") if isinstance(tool_input, Mapping) else None
     return isinstance(name, str) and name.rsplit(":", 1)[-1] == PROOF_CONCLUSION_AGENT
 
@@ -314,16 +319,12 @@ def completion_halt_summary(
 ) -> str | None:
     """The summary to end the turn on, or None to let it run on: the ONE predicate both
     planes' PostToolUse arms call. A main-thread proof-conclusion call that moved the
-    project to `completed`, whose return carries a `summary_for_user` ending on
+    project to `completed`, whose return carries a `summary_for_user` ending on one of
     ``PROOF_CONCLUSION_FINISHED``. The transition, not the state, so a follow-up question in
     a project already completed never ends a turn. ``research_now`` is read only once every
     cheaper test has passed."""
-    name = data.get("tool_name")
     if (
-        "agent_id" in data
-        or not isinstance(name, str)
-        or name not in DELEGATION_TOOLS
-        or not is_proof_conclusion_call(data.get("tool_input"))
+        not wants_status_before(data)
         or status_before == "completed"
         or not project_completed(research_now())
     ):

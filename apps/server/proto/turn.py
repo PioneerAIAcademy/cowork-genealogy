@@ -48,7 +48,8 @@ no input column -- 004_worker.sql adds only ``tool_use_id`` -- so the selector r
 ``tool_use`` block out of ``session_entries.entry``, the SDK's own transcript. Pair it
 with ``--text-file`` (``probes/background-delegation.txt`` asks for two record
 extractions at once) and ``AUTONOMOUS_MAX_NUDGES > 0``, which ``make proto-kill`` leaves
-at 0: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
+at 0 -- the probe needs a turn that can be re-opened, and `proto-probe-resume` exports
+40 for exactly that: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
 none of the eight ``bagley-father-1884`` runs, so it has to be provoked. The two checks that are about
 the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
 ``--expect-grant-refresh`` (U3, refused with ``--kill-signal term``) proves the resumed

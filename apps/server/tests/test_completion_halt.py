@@ -23,7 +23,6 @@ from app.agent import continue_policy as cp
 from app.agent import real_agent
 
 FIXTURES = Path(__file__).parent / "fixtures" / "agent_returns"
-FINISHED = "The research is finished. If you'd like a second opinion on it, just ask."
 
 
 def _fixture(name: str):
@@ -53,7 +52,7 @@ def test_the_summary_of_a_real_completing_return_is_its_two_paragraphs(name, ope
     expected = json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8"))["expected_summary"]
     assert summary == expected, "the exact two paragraphs, read off the run log and checked by hand"
     assert summary.startswith(opening)
-    assert summary.endswith(FINISHED)
+    assert summary.endswith(cp.PROOF_CONCLUSION_FINISHED)
     assert summary.count("\n\n") == 1, "exactly two paragraphs"
     for leaked in ("agentId", "<usage>", "Subagent hand-back", "---"):
         assert leaked not in summary, leaked
@@ -452,3 +451,29 @@ def test_handle_turn_drops_the_summary_when_the_model_kept_talking(tmp_path):
     events = asyncio.run(turn_events(agent, "conclude it"))
     texts = [e["text"] for e in events if e["kind"] == "text"]
     assert texts == ["Here is my own wrap-up."], texts
+
+
+def test_handle_turn_keeps_the_summary_past_unlabelled_subagent_text(tmp_path):
+    """A subagent's text whose task is unknown (popped, or started with no tool_use_id)
+    carries no `agent` label, but it is not the main thread going on."""
+    from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+
+    from _fakes import ReplayFakeClient, attach, turn_events
+
+    agent = real_agent.RealAgent(tmp_path)
+    agent._hook_counter = {"tool_calls": 0}
+    sibling = AssistantMessage(content=[TextBlock(text="a sibling's last words")], model="m",
+                               parent_tool_use_id="toolu_sibling")
+    done = ResultMessage(subtype="success", duration_ms=1, duration_api_ms=1,
+                         is_error=False, num_turns=2, session_id="s1")
+
+    class Halted(ReplayFakeClient):
+        async def receive_response(self):
+            agent._hook_counter["completion_summary"] = "The research is finished."
+            async for message in super().receive_response():
+                yield message
+
+    attach(agent, Halted([sibling, done]))
+    events = asyncio.run(turn_events(agent, "conclude it"))
+    texts = [e["text"] for e in events if e["kind"] == "text"]
+    assert texts[-1] == "The research is finished.", texts

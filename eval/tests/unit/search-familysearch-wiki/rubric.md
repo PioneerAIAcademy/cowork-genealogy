@@ -2,6 +2,8 @@
 
 Grading dimensions for search-familysearch-wiki unit tests. Evaluated by the LLM judge alongside the base dimensions (correctness, completeness, tool arguments).
 
+**Grading note (every dimension, base dimensions included):** The scenario project's research objective (Patrick Flynn's parents) is background, not the task. The delegation is the task, and a wiki request unrelated to that objective is a normal request. Do not score Correctness or Completeness down because the answer does not serve the objective or because the agent did not question the delegation.
+
 ## Log entry saved correctly
 
 Did the agent log the guidance as one research-log entry, with the filled template in its notes?

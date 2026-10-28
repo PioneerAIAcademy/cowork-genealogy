@@ -4,12 +4,17 @@ Grading dimensions for init-project unit tests. Evaluated by the LLM judge
 alongside the base rubric (Correctness, Completeness, Tool Arguments).
 
 > **DRAFT — pending genealogist review.** Expanded from the original
-> single "Stub person quality" dimension to cover all five jobs the agent
-> performs (define problem, survey tree, survey holdings, fixed
-> profile, write + validate files). Genealogist to confirm thresholds
+> single "Stub person quality" dimension to cover all four jobs the agent
+> performs (define problem, survey tree, fixed profile, write + validate
+> files). Genealogist to confirm thresholds
 > and wording before release. Not every dimension applies to every test —
 > score `null` (N/A) when a test does not exercise it (e.g. place
 > standardization on a test with no hand-entered place).
+
+**The guard call.** Every run opens with `project_context`. On a folder with no
+project it answers `ok: false` with `reason: "no_project"`: that is the expected
+answer that lets the create go ahead, not a failed call, and it lowers no score —
+Tool Arguments included.
 
 ## Stub & tree fidelity
 
@@ -18,10 +23,10 @@ fabrication? Stub persons carry whatever facts are known (name, gender if
 known, approximate dates/places); unknown fields are omitted, not guessed.
 FamilySearch-derived facts are sourced to a tree source (`S1`) at
 `quality: 1` (questionable), and local `I` person IDs are used throughout.
-When the agent passes `person_read`'s `staged.resultsRef` as `personReadRef`,
-`project_create` builds all of that from the read: grade the written tree as
-usual, and grade the agent on what it supplies itself (the stubs its statements
-imply) and on passing the ref rather than re-typing the read into `tree`.
+`project_create({ personId })` reads the person on the host and builds all of
+that itself: grade the written tree as usual, and grade the agent on what it
+supplies itself (a stub it adds afterwards with `tree_edit`, only for a person
+the read lacks) and on creating the project with `personId` alone.
 
 - **pass:** Subject and all known relatives have known fields populated and
   unknown fields omitted; FamilySearch-derived facts are sourced to `S1` at
@@ -109,7 +114,7 @@ and unremarked on the rest. Widening this dimension to cover both sidecars, and
 so grading dates on every test, is a rubric change the genealogist should make
 deliberately rather than inherit as a side effect of a wording fix.
 
-**Tool-supplied places.** When a `person_read` fact arrives carrying a
+**Tool-supplied places.** When a fact from the read arrives carrying a
 `standard_place`, that value is **kept verbatim**. Not refining it is the
 correct behavior and must never be penalized
 as a "missed opportunity," even if the place is only country-level (e.g.
@@ -124,11 +129,11 @@ entered as stated; `project_create` standardizes it itself, so its
 `standard_place` is the tool's. The agent writes no `standard_place`.
 
 Score this dimension **N/A (null)** only when the test involves no places
-at all. A test whose places all came from `person_read` is still scored:
+at all. A test whose places all came from the read is still scored:
 there is something to check — that each returned `standard_place`
 survived into the tree unchanged, and that none was invented for a fact
-the tool left without one. A value `project_create` resolved host-side, on the
-`personReadRef` path, for a fact the read returned with a `place` and no
+the tool left without one. A value `project_create` resolved host-side, when it
+read the person (`personId`), for a fact the read returned with a `place` and no
 `standard_place` is not invented: the host retries the same place resolver.
 
 - **pass:** Every hand-entered place reaches the tree as stated, with the
@@ -143,23 +148,3 @@ the tool left without one. A value `project_create` resolved host-side, on the
   (including a `standard_place` copied from the fact's free-text `place`),
   or a tool-supplied `standard_place` is altered or dropped.
 - **N/A:** The test involves no places at all.
-
-## Known-holdings capture
-
-When the user volunteers what they already hold (documents, prior research,
-GEDCOMs, oral knowledge), is each recorded as a conforming `known_holdings`
-entry — sensible `holding_type`, `confidence`, `promoted: false`, a `kh_` id,
-and `relates_to_person_ids` linked to a real tree person where applicable —
-without fabricating holdings? When none are volunteered, is the survey
-skipped cleanly (`known_holdings: []`)?
-
-- **pass:** Every volunteered item is captured with a sensible `holding_type`
-  and `confidence`, `promoted: false`, and a person link where the item clearly
-  concerns a tree person; nothing is fabricated; holdings are not over-promoted
-  into `sources`/`assertions`. No holdings volunteered → `known_holdings: []`.
-- **partial:** Holdings captured but with a questionable `holding_type`/
-  `confidence`, a missing person link that was clearly implied, or one
-  volunteered item dropped.
-- **fail:** Volunteered holdings dropped entirely, holdings fabricated, or
-  items written as full sources/assertions instead of lightweight survey notes.
-- **N/A:** Test does not involve known holdings.

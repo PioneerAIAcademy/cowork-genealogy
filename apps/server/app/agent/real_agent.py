@@ -777,7 +777,9 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
 #: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
 #: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
 #: while the setting moved to 30 would make the two disagree exactly where nobody looks.
-_DEFAULT_MAX_NUDGES = 30
+#: 0 under step mode (decision 25): a turn that stops has finished its one step, so
+#: there is nothing to nudge it past. `_build_hooks` binds no Stop hook at 0.
+_DEFAULT_MAX_NUDGES = 0
 
 
 def _max_nudges(env=None) -> int:
@@ -1806,8 +1808,10 @@ class RealAgent:
                         error_emitted = True
                     # The completion halt's summary is for a turn that ENDED at the halt. A
                     # main-thread message after it means the turn went on, so the model's own
-                    # words are the turn's last, and the summary is not added after them.
-                    if ev.get("kind") == "text" and "agent" not in ev:
+                    # words are the turn's last, and the summary is not added after them. The
+                    # message's parent, not the event's label, which a subagent's text lacks
+                    # once its task is popped.
+                    if ev.get("kind") == "text" and not getattr(message, "parent_tool_use_id", None):
                         counter_now = getattr(self, "_hook_counter", None)
                         if counter_now and counter_now.get("completion_summary"):
                             counter_now["completion_summary"] = None

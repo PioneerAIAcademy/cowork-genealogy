@@ -24,5 +24,27 @@
         "host": "lagenweb.org"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/locations/east-feliciana-parish-louisiana",
+      "linkText": "East Feliciana Parish, Louisiana - Ancestry.com",
+      "record_type": "Genealogy",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Louisiana, United States"
+    },
+    {
+      "url": "https://www.lagenweb.org/westfeliciana",
+      "linkText": "West Feliciana Parish, Louisiana - LaGenWeb",
+      "record_type": "Genealogy",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Louisiana, United States"
+    }
+  ]
 }
