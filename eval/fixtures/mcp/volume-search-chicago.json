@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Chicago, Cook, Illinois, United States",
       "startYear": 1865,
-      "endYear": 1880
+      "endYear": 1880,
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
       {
         "imageGroupNumber": "009982110",
-        "imageGroupPrefix": "009982110",
         "imageCount": 38,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Chicago, Cook, Illinois, United States",
+            "places": ["Chicago, Cook, Illinois, United States"],
             "dateRange": "1865-1871",
             "recordType": "Pre-fire County Court Records (reconstructed copies)"
           }
@@ -29,14 +29,13 @@
       },
       {
         "imageGroupNumber": "009982111",
-        "imageGroupPrefix": "009982111",
         "imageCount": 112,
         "recordSearchablePercent": 41,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Chicago, Cook, Illinois, United States",
+            "places": ["Chicago, Cook, Illinois, United States"],
             "dateRange": "1871-1880",
             "recordType": "Post-fire Property Re-recordings"
           }
