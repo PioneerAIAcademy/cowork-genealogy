@@ -298,7 +298,8 @@
       "record_basis": "stated",
       "extracted_for_question_ids": [
         "q_001"
-      ]
+      ],
+      "log_entry_id": "log_001"
     },
     {
       "id": "a_002",
@@ -314,7 +315,8 @@
       "informant_bias_notes": "The first letter is unclear in the handwritten act; OCR read it as J but the user sees T. The groom's mother on the same act was also read as Jannetje.",
       "extracted_for_question_ids": [
         "q_001"
-      ]
+      ],
+      "log_entry_id": "log_001"
     },
     {
       "id": "a_003",
@@ -329,7 +331,8 @@
       "record_basis": "stated",
       "extracted_for_question_ids": [
         "q_001"
-      ]
+      ],
+      "log_entry_id": "log_002"
     }
   ],
   "person_evidence": [
