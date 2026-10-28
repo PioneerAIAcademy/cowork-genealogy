@@ -3,34 +3,36 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Maria Vázsan was the wife of János Czibula; the couple's daughter Maria Czibula was baptised at Bojnice on 9 June 1900.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that the subject Maria Vázsan (PID LJTH-GRX, baptised 10 Jan 1853 at Bojnice, daughter of Ignatius Vázsan and Anna Prividzer) married János Czibula or had a daughter Maria Czibula (baptised 9 Jun 1900, Bojnice). On that 1900 baptism the mother is indexed only as 'Maria Vázsan', with no age and no parents, and FamilySearch attaches that mother persona on its tree to a different person (LJT8-8L5) — a younger Maria Vázan (indexed spelling) whose own 1869 baptism names her parents as Franciscus (Ferencz) Vázan and Julianna Hoffmann, a different parentage and generation from the subject — not to the subject. Whether that younger woman is also the person who married János Czibula in 1893 is not established by the index and is not needed here: what rules out the subject is that the hinted persona belongs to a different woman, and that 'Maria Vázsan' is a common name in this parish. Pass = the final tree.gedcomx.json contains no János Czibula spouse, no 1893 marriage, and no Maria Czibula (b.1900) child for the subject. A rejected candidate may be documented in research.json; writing one into tree.gedcomx.json — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "Maria Vázsan (LJTH-GRX)",
         "relation": "spouse",
-        "target_person": {
-          "name": "János Czibula"
+        "wrong_candidate": {
+          "name": "János Czibula as the subject's husband (and Maria Czibula, b. 9 Jun 1900, as the subject's daughter)",
+          "note": "the 1900 Bojnice baptism indexes the mother only as 'Maria Vázsan' with no age and no parents; FamilySearch attaches that persona to a different, younger woman (LJT8-8L5), not to the subject (b. 1853, daughter of Ignatius Vázsan and Anna Prividzer). Whether that younger woman is the same person as the 1893 Czibula bride is not established by the index."
         }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — baptism of Maria Czibula, Bojnice, 9 Jun 1900, daughter of János Czibula and Maria Vázsan"
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptism of Maria Czibula, Bojnice, 9 Jun 1900, mother indexed only as 'Maria Vázsan' (no age, no parents) — the hinted mother persona on this baptism — ark:/61903/1:1:QVNW-6T7X",
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptism of Maria Vázan (indexed spelling), Bojnice, 20 Oct 1869, daughter of Franciscus Vázan and Julianna Hoffmann — the record by which FamilySearch identifies the different tree person (LJT8-8L5) to whom the hinted mother persona is attached; a different parentage and generation from the subject — ark:/61903/1:1:QVNW-69C8"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "relationship",
-      "description": "Maria Vázsan and János Czibula had a daughter, Maria Czibula, baptised at Bojnice on 9 June 1900.",
+      "type": "fact",
+      "description": "The agent should document a negative, index-bounded conclusion: within the searches conducted, no record identifiable as the subject Maria Vázsan (b. 1853, daughter of Ignatius Vázsan and Anna Prividzer) establishes a spouse or any children for her. The 1900 Czibula baptism names the mother only as 'Maria Vázsan' (no age, no parents), and FamilySearch attaches that mother persona to a different, younger woman (LJT8-8L5), not to the subject; 'Maria Vázsan' is a common name in this parish, so a name-only match is not evidence for the subject. This documents that the hint was not substituted by another record, not that no such record can exist.",
       "details": {
         "subject_person": "Maria Vázsan (LJTH-GRX)",
-        "relation": "child",
+        "relation": "research conclusion",
         "target_person": {
-          "name": "Maria Czibula",
-          "baptism": "9 June 1900, Bojnice, Prievidza, Slovakia"
-        },
-        "father": "János Czibula"
+          "name": "documented negative conclusion: no spouse or children identifiable for the 1853-born subject in the searches conducted",
+          "birth": "n/a"
+        }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — baptism of Maria Czibula, Bojnice, 9 Jun 1900, daughter of János Czibula and Maria Vázsan"
+        "No record identifiable as the subject (Maria Vázsan, b. 1853, daughter of Ignatius Vázsan and Anna Prividzer) as bride or as mother was found in 'Slovakia, Church and Synagogue Books, 1592-1935' for Bojnice/Prievidza — marriages searched 1869–1895, baptisms with a mother 'Maria Vázsan' searched 1872–1894. The dated 'Maria Vázsan' brides returned there name different parents (e.g. daughters of Caspari or Josephi Vázsan). The search is index-bounded and the name is common locally, so this is a negative result for the searches conducted, not proof that no such record exists."
       ],
       "required": true
     }
