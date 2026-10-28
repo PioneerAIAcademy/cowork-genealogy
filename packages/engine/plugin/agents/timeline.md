@@ -820,7 +820,8 @@ agreement. Strong confirmations include:
 ## Handoff rules
 
 - **High-severity gaps** → suggest `research-plan` to plan searches filling the
-  gap on the question already open. When no question is open, suggest
+  gap on the question already open, and end the reply with "Continue with
+  planning the searches?". When no question is open, suggest
   `question-selection` instead: research-plan writes nothing when no question
   matches.
 - **Hypothesis test fails** → suggest `hypothesis-tracking` to update the
