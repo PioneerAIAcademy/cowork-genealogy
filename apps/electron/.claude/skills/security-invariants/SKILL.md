@@ -113,12 +113,13 @@ The allowed IPC channels (update this list when adding new ones):
 | `feedback:submit` | invoke | Build + POST a feedback zip (the POST is a **main-process** `fetch`, not a renderer request) |
 | `project:research-updated` | on (push) | Parsed research.json |
 | `project:gedcomx-updated` | on (push) | Parsed tree.gedcomx.json |
+| `project:collections-updated` | on (push) | Parsed external-collections.json, or `null` when it was deleted |
 | `project:watch-error` | on (push) | Error string |
 | `project:sidecar-updated` | on (push) | A sidecar changed: `{ logId, mtime }` |
 | `project:folder-notice` | on (push) | Heads-up string: research.json found in a subfolder |
 
 If a channel exists in the preload but is not in this table, it is unauthorized.
-Push channels are sent from `src/main/watcher.ts` (the two `*-updated` file
+Push channels are sent from `src/main/watcher.ts` (the three `*-updated` file
 channels come from a hardcoded filename→channel map, not a computed name).
 
 ### 4. IPC input validation

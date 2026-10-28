@@ -129,3 +129,35 @@ def test_a_model_change_is_a_differing_setting_too():
     after = dict(_log("t2", []), model="claude-haiku-4-5-20251001")
     text = compare(before, "b", after, "a")
     assert "model 'claude-sonnet-4-6' -> 'claude-haiku-4-5-20251001'" in text
+
+
+def _models_test(tid, lead, helper, cost=0.1):
+    test = _test(tid, cost)
+    test["runs"][0]["main_thread"] = {"peak_window_tokens": 1, "compactions": [], "models": [lead]}
+    test["runs"][0]["subagents"] = [{"agent_type": "x", "models": [helper]}]
+    return test
+
+
+def test_a_log_before_per_thread_capture_reads_unknown_not_moved():
+    """Half the committed logs carry no `main_thread` models. Against a log that
+    does, that is not a model move, and it must not stand in as the cause."""
+    before = _log("t1", [_test("ut_1", 0.10)])
+    after = _log("t2", [_models_test("ut_1", "claude-sonnet-4-6", "claude-haiku-5-5")])
+    text = compare(before, "b", after, "a")
+    assert "run settings that differ: none" in text
+    assert "lead model: unknown (a log predates per-thread capture)" in text
+    assert "changed between them: nothing" in text
+    row = next(line for line in text.splitlines() if line.startswith("ut_1"))
+    assert row.endswith("--/-- -> sonnet-4-6/haiku-5-5")
+
+
+def test_a_lead_model_move_is_named_as_a_setting():
+    """The bench fix (issue #3870) moves the lead off the helper's model with no
+    file changed; the comparison must say so rather than call it wobble."""
+    before = _log("t1", [_models_test("ut_1", "claude-haiku-5-5", "claude-haiku-5-5")])
+    after = _log("t2", [_models_test("ut_1", "claude-sonnet-4-6", "claude-haiku-5-5")])
+    text = compare(before, "b", after, "a")
+    assert "lead model claude-haiku-5-5 -> claude-sonnet-4-6" in text
+    assert "helper model: claude-haiku-5-5" in text
+    assert "changed between them: no file — only the run settings above" in text
+    assert "harness default model: claude-sonnet-4-6" in text

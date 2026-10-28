@@ -79,7 +79,7 @@ from harness.ts_validator import validate_parsed
 # manifest, which is keyed on a wider vocabulary again. Keeping them on this list
 # is what left `localities` with a declared owner that was never once evaluated.
 DIFFED_SECTIONS = [
-    "project", "known_holdings", "questions", "plans", "log", "sources",
+    "project", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
     "evaluations", "localities", "rejected_links",
@@ -263,14 +263,13 @@ def test_log_append_only(before_state, after_state):
 def test_no_entries_deleted(before_state, after_state):
     """No entries should be deleted from any section. Supersede with status instead.
 
-    Covers every id-bearing section, including `localities`, `evaluations` and
-    `known_holdings` — the three the old list omitted while the prose ownership
-    table stated the no-delete rule for all three. Widening it is close to free:
-    `research_append`'s op enum is `append | update` with no delete at all, so
-    the only route to a deletion is a raw file write, which is already a
-    violation on two other counts. Nine unit tests run against a scenario
-    carrying entries in any of the three, and no run in the committed e2e corpus
-    deletes an entry from any section.
+    Covers every id-bearing section, including `localities` and `evaluations`
+    — two the old list omitted while the prose ownership table stated the
+    no-delete rule for both. Widening it is close to free: `research_append`'s
+    op enum is `append | update` with no delete at all, so the only route to a
+    deletion is a raw file write, which is already a violation on two other
+    counts. No run in the committed e2e corpus deletes an entry from any
+    section.
     """
     before_research = before_state.get("research_json")
     after_research = after_state.get("research_json")
@@ -1760,6 +1759,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     An empty `correct_skill` means the owner is not a skill (extraction is a
     tool call and an agent; genealogist ruling 2026-09-30, option B), so the
     reply must carry a `Hand-back:` line without a name to look for.
+
+    The 'project-context-guard' tag admits one call: a `project_context` that
+    opens the run, which is how init-project learns a project already exists
+    (it writes nothing). Any second call, or any other tool, still fails.
     """
     from harness.skill_runner import subject_reply_text
 
@@ -1767,10 +1770,17 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         pytest.skip("not a hand-back test")
     owners = (test.get("negative") or {}).get("correct_skill") or []
 
-    assert (tool_calls or []) == [], (
+    calls = list(tool_calls or [])
+    if (
+        "project-context-guard" in test.get("tags", [])
+        and calls
+        and _bare_tool_name(calls[0].get("tool") or "") == "project_context"
+    ):
+        calls = calls[1:]
+    assert calls == [], (
         "a hand-back makes no tool call; got "
-        f"{len(tool_calls or [])} call(s): "
-        + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
+        f"{len(calls)} call(s): "
+        + ", ".join(c.get("tool", "?") for c in calls)
     )
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
     if not owners:
@@ -2174,10 +2184,10 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
 # messages; lay-mode ruling 2026-09-18). `q_NNN` and `ps_NNN` are included
 # although #2493 left them open as navigation aids: this validator only reports.
 _INTERNAL_ID_RE = re.compile(
-    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|kh|tl)_\d{3,}\b"
+    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|tl)_\d{3,}\b"
     r"|\b(?:research\.json|tree\.gedcomx\.json)\b"
     r"|\b(?:conflicts|hypotheses|assertions|sources|questions|plans|evaluations"
-    r"|proof_summaries|person_evidence|known_holdings|timelines|log)\[\]"
+    r"|proof_summaries|person_evidence|timelines|log)\[\]"
     r"|\bmcp__[A-Za-z_]+"
     r"|\b(?:research_append|research_query|extraction_append|research_log_append"
     r"|tree_edit|tree_correct|tree_forget|project_create|materialize_facts"

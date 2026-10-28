@@ -86,7 +86,7 @@ Examples:
 |-------|------|-------------|
 | `query` | object | Echo of the input: `{ standardPlace, startYear?, endYear? }`. Only includes the years that were actually provided. |
 | `totalForPlace` | number | Distinct curated resources for the fetch (after dedupe, below), **before** the date filter. The only non-derivable count. |
-| `results` | `{ url, linkText }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
+| `results` | `{ url, linkText, startYear?, endYear? }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
 | `returned` | number | How many links `results` holds, after the year and host filters and the 200 cap. |
 | `inlineCapped` | `true` \| undefined | Present when the 200 cap cut `results`. The stored list holds the full set. |
 | `stored` | `{ file, places }` \| undefined | Present when `projectPath` names a project: `external-collections.json` and the places whose entries this fetch wrote. See "Stored list". |
@@ -105,6 +105,7 @@ Each `results[]` item:
 |-------|------|-------------|
 | `url` | string | Direct URL to the curated resource (Ancestry, MyHeritage, FindMyPast, archives, wiki page, etc.). |
 | `linkText` | string | Human-readable link text from the FS wiki. May be empty for malformed entries. |
+| `startYear`, `endYear` | integer \| undefined | The span the year filter tested, both present or both absent (absent = undated, which the filter always includes). A one-sided upstream range counts as that single year. Where duplicates merged (see "Dedupe"), the span is the **hull** of every copy's range while `linkText` is the first copy's, so the span can be wider than the text implies. The `where-else-to-search` agent cites the span as a suggestion's grounding. Output only: the tool's `description` and `inputSchema` are unchanged. |
 
 Example:
 
@@ -344,6 +345,10 @@ them.
 - **Read back** by `research_query({section: "external_collections", place,
   recordType})` and as per-place counts in `project_context`'s
   `externalCollections`.
+- **Shown** in the viewer's Collections section, per place and grouped by
+  record type. It reaches the viewer only when the file itself changes: Electron
+  `project:collections-updated`; hosted and proto
+  `{type: "document_updated", name: "external-collections.json"}`.
 - **Not validated.** It is API data, not a `research.json` section: no schema,
   validator, `ownership.json` or `packages/schema` entry.
 
@@ -420,7 +425,7 @@ input type `ExternalLinksSearchInput`.
 - `externalLinksSearchToolSchema` — MCP tool schema (hand-rolled JSON Schema,
   matching the existing tools' style).
 - `externalLinksSearchTool(input)` — main handler: validate, fetch once, refuse a
-  partial list, dedupe, store, filter by overlap, map to `{ url, linkText }`.
+  partial list, dedupe, store, filter by overlap, map to `{ url, linkText, startYear?, endYear? }`.
 - `fetchAll(placeId)` — the one HTTP call (`offset=0&count=1000`) with
   model-actionable error mapping.
 - Internal helpers: `includeCollection` (the overlap rule), `includeRow`.

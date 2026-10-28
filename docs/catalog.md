@@ -66,7 +66,7 @@ way project state changes.
 
 | Tool | Purpose | Auth |
 |------|---------|------|
-| `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being | None |
+| `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being. Given a `personId`, it reads the person from FamilySearch, builds the starting tree, writes the house profile and the transcribed memories, and returns a short summary | FamilySearch (with `personId`); none otherwise |
 | `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
 | `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/`, a text upload under `uploads/`, or a staged transcription under `results/` — one file, or several at once by `refs`. Refuses a staged search result, images, `research.json` and the tree with a pointer to the tool that serves each | None |
@@ -185,7 +185,7 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-nine Cowork agents. Unlike skills, an agent runs in
+The plugin ships thirty Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -221,6 +221,7 @@ don't load it explicitly.
 | **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. When the project tree holds the person, also reports the impossible-date warnings `person_warnings` finds there, outside the findings count. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Inside a project, saves its report as one research-log entry; writes nothing else. | "Evaluate the sources on this profile" / "Are these sources right?" |
 | **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year, recorded as one entry in the project's research log. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
 | **tree-survey** | Surveys a FamilySearch tree for holes it likely has records for before any project exists, checks what FamilySearch holds for the strongest ones, and suggests 3-5 people with one research question each. Writes nothing; the user picks one and `init-project` starts from it. | "What should I research in my tree?" / "Find gaps in my tree" / "Where should I start?" |
+| **where-else-to-search** | After a FamilySearch records search, suggests 3-8 external collections FamilySearch curates for that place and period, each with a prefilled search link and the years it covers. Needs no project and writes nothing. | "Where else could I look for him?" / "Is this on Ancestry or MyHeritage?" |
 
 ## Recommended workflow
 

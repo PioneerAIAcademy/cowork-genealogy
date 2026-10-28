@@ -14,6 +14,7 @@ running tests).
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import posixpath
@@ -31,6 +32,7 @@ from typing import Any
 from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
+    ClaudeSDKClient,
     HookMatcher,
     ResultMessage,
     SystemMessage,
@@ -41,6 +43,8 @@ from claude_agent_sdk import (
 )
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
+from e2e.turn_loop import Turn as TurnRecord, accumulate_usage, stream_turns
+from harness.skill_runner import load_step_boundary  # one loader for both harness planes
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
@@ -182,6 +186,12 @@ BASELINE_ALLOWED_TOOLS = [
 #       missing a standardized date for {originalDate}"), so a stripped date or
 #       place can come back verbatim. Committed e2e runs made 39 such calls
 #       across 20 fixtures before this was blocked.
+#   project_create
+#       given `personId`, reads the person off the live tree and returns their
+#       relatives by name (issue #3384). An e2e run always starts in an existing
+#       project, which `project_create` refuses, so no legitimate e2e call exists;
+#       blocking it by name, rather than on `personId`, keeps the block one the
+#       hosted proto worker can mirror (it blocks by bare name only).
 #
 # NOT blocked (legitimate research): record_search / record_read /
 # fulltext_search / image_* / collections_search (the agent must find
@@ -200,6 +210,7 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_record_matches",
         "person_person_matches",
         "person_quality",
+        "project_create",
     }
 )
 
@@ -226,6 +237,8 @@ def is_turn_cap_error(detail: str | None) -> bool:
 
 # Tools that read the live tree only in one MODE, so the bare name cannot decide
 # it. Currently empty — kept for the next tool whose block depends on an argument.
+# The hosted proto worker blocks by bare name only, so a tool added here needs a
+# worker port first (`apps/server/tests/test_proto_demo.py` holds this empty).
 LIVE_TREE_ARG_TOOLS = {}
 
 
@@ -588,6 +601,56 @@ def project_read_denied(
         "not readable directly. Read it through the MCP tools instead: "
         f"{_project_read_route(t_r, root_r)}."
     )
+
+
+def wrap_up_override(boundary, reply: str | None, turn_step: str | None,
+                     wrap_up_after: str | None) -> str | None:
+    """Section F's separate arm: "Wrap it up." after one named step.
+
+    An override of the REPLY, not a session mode. `next_auto_reply` is
+    production's own function and must not grow a test-only branch, and section
+    F's point is that e2e exercises the real mechanism rather than a
+    harness-shaped imitation of it.
+
+    It swaps a reply; it never invents one. A turn `next_auto_reply` already
+    ended the run on stays ended, so the arm cannot extend a run past where
+    production would have stopped it.
+    """
+    if not reply or not wrap_up_after:
+        return reply
+    if turn_step != wrap_up_after:
+        return reply
+    return boundary.REPLY_WRAP_UP
+
+
+def ended_on_a_question(boundary, text: str | None) -> bool:
+    """Whether a turn's last text ends by asking the RESEARCHER something.
+
+    A step that ends on a question only the researcher can answer writes no
+    "Continue with ...?" line, so `next_auto_reply` returns nothing and the run
+    ends there. Both tests are needed: no offer alone also describes a final
+    conclusion, and a trailing "?" alone also describes the offer line itself.
+
+    Takes the text rather than the turn so it is pure, and so it reads the same
+    last-assistant-text the offer parser reads.
+    """
+    stripped = (text or "").strip()
+    if not stripped:
+        return False
+    if boundary.offered_step(stripped):
+        return False
+    return stripped.splitlines()[-1].strip().endswith("?")
+
+
+def step_turn_mode(boundary, opening_mode: str, turn) -> str:
+    """The mode a step-mode turn RAN under (section F).
+
+    The first turn takes the run's own `--step-mode`, standing in for the researcher's
+    opening choice. Every later one is read from the message the host sent, with
+    production's own `step_mode`, so a "Wrap it up." reply is a wrapup turn here exactly
+    as it is on the worker, and the run ends after it as production's does.
+    """
+    return opening_mode if turn.index == 0 else boundary.step_mode(turn.sent)
 
 
 def _pretool_deny(reason: str) -> dict[str, Any]:
@@ -2074,6 +2137,8 @@ async def _run_agent(
     tool_search: bool = True,
     single_ask: bool = False,
     user_message: str | None = None,
+    step_mode: str | None = None,
+    wrap_up_after: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -2262,6 +2327,42 @@ async def _run_agent(
             flush=True,
         )
 
+    # The step boundary (decision 25, rider 3). OFF unless the run asks for it: an e2e
+    # run drives a whole research flow, so enforcing by default would end every fixture
+    # at its first step. Section F turns it on for real, when the orchestrator replies
+    # to each turn with `next_auto_reply` instead of running one long turn.
+    _step_gate = None
+    _boundary = None
+    #: The run's turns, appended by `stream_turns` and read by the pretool hook
+    #: (to stamp `step`) and the ResultMessage branch (to stamp `usage`). Empty
+    #: on every non-step run, where the hook's stamp is a no-op.
+    _step_turns: list[TurnRecord] = []
+    #: `next_auto_reply`'s state, carried across the run's turns. The host owns
+    #: it in production (`sessions.auto_reply`); here it is one dict.
+    _reply_state: dict[str, Any] = {}
+    if step_mode:
+        _boundary = load_step_boundary()
+    #: The gate for the CURRENT turn. Rebuilt when a turn starts, as the worker builds
+    #: one per turn: a gate carried across turns would judge turn 2's first step against
+    #: turn 1's group, deny it, and halt the retry.
+    _gate_turn: dict[str, Any] = {"index": None}
+
+    def _turn_mode(turn) -> str:
+        return step_turn_mode(_boundary, step_mode, turn)
+
+    def _current_gate():
+        nonlocal _step_gate
+        if _boundary is None or not _step_turns:
+            return None
+        turn = _step_turns[-1]
+        if _gate_turn["index"] != turn.index:
+            _gate_turn["index"] = turn.index
+            _step_gate = _boundary.StepGate(
+                boundary=_boundary, mode=_boundary.gate_mode(_turn_mode(turn)),
+                ctx=lambda: _boundary.step_ctx(read_research_json(workspace) or {}),
+            )
+        return _step_gate
+
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
         # spec §11 Step 0 — record caller identity for EVERY call, including ones
@@ -2278,6 +2379,30 @@ async def _run_agent(
         # skill writes nothing. The mcp__-only budget cap is tool_call_count,
         # incremented separately below.
         activity_count["n"] += 1
+
+        # The boundary sits AFTER attribution and the activity count, so a denied
+        # crossing is still attributed and still counts as progress -- a turn that
+        # tried to take a second step plainly did work.
+        if (_gate := _current_gate()) is not None:
+            try:
+                _verdict = _gate.check(
+                    tool_name, input_data.get("tool_input") or {},
+                    subagent=bool(input_data.get("agent_id")),
+                )
+            except Exception:  # noqa: BLE001 - a hook that raises fails a call the agent was entitled to make
+                _verdict = None
+            if _verdict is not None:
+                _out = _pretool_deny(_verdict[1])
+                if _verdict[0] == "halt":
+                    _out["continue_"] = False
+                    _out["stopReason"] = _verdict[1]
+                return _out
+            # Allowed, so if it was a step this turn OPENED with, record which.
+            # `next_auto_reply` keys on the step a turn ran, and the gate is the
+            # only thing that knows: by the time the turn ends, the spawn is just
+            # another tool call among dozens.
+            if _step_turns and _step_turns[-1].step is None and _gate.first_step:
+                _step_turns[-1].step = _gate.first_step
 
         # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
@@ -2691,6 +2816,12 @@ async def _run_agent(
         # A single ask is one turn: whatever stop ends it is the answer.
         if single_ask:
             return {}
+        # A step-mode turn ends at its boundary on purpose; the host's reply
+        # continues the run, and `next_auto_reply`'s cap replaces
+        # `max_continue_nudges` (section F). Its own statement, not folded into
+        # the one above: `test_e2e_single_ask.py` pins that one's exact shape.
+        if _boundary is not None:
+            return {}
         # The agent is ending its turn. In an autonomous e2e run the only
         # valid end is project.status == "completed"; an earlier yield is the
         # known stall. Veto it (decision=block) and tell the agent to resume,
@@ -2955,10 +3086,107 @@ async def _run_agent(
 
         current_options = options
         current_prompt = user_message
+        # Section F: step mode drives turns on ONE persistent session. The client
+        # is built here rather than inside the loop because the loop's other
+        # entry is a stall resume, which a persistent session has no answer for
+        # (see the stall arm below).
+        step_client = None
+        if _boundary is not None:
+            step_client = ClaudeSDKClient(options=options)
+            await step_client.connect(None)  # None = streaming input
+            live["client"] = step_client
+
+        def _last_text(turn) -> str | None:
+            """The turn's last assistant text — where the offer line lives."""
+            for message in reversed(turn.messages):
+                if isinstance(message, AssistantMessage):
+                    for block in reversed(message.content):
+                        if isinstance(block, TextBlock):
+                            return block.text
+            return None
+
+        _answered_question = {"done": False}
+
+        def _decide_reply(turn):
+            """What the host replies after this turn, via production's own function.
+
+            Section F's whole point: `next_auto_reply` is the function the
+            prototype worker calls, so e2e exercises the mechanism rather than a
+            harness-shaped imitation. Everything here is just gathering its
+            arguments.
+            """
+            previous = next(
+                (t.step for t in reversed(_step_turns[: turn.index]) if t.step), None
+            )
+            outcome = "ok"
+            if (turn.usage or {}).get("is_error"):
+                outcome = str((turn.usage or {}).get("stop_reason") or "error")
+            # The turn an answered question opens runs as `job`: without this the
+            # answer buys exactly one step and the run ends, because
+            # `next_auto_reply` replies to nothing but a `job` turn. Stamped on
+            # the turn too, so the per-step report can tell a wrap-up turn --
+            # which runs several steps -- from the step it opened with.
+            mode = turn.mode = _turn_mode(turn)
+            if turn.index == _answered_question.get("opened"):
+                mode = turn.mode = "job"
+            decision = _boundary.next_auto_reply(
+                _reply_state,
+                mode,
+                previous,
+                turn.step,
+                _boundary.offered_step(_last_text(turn)),
+                outcome,
+            )
+            _reply_state.clear()
+            _reply_state.update(decision.get("state") or {})
+            reply = decision.get("reply")
+            # Section F's separate arm: answer "Wrap it up." after one named step
+            # instead of what `next_auto_reply` chose, which exercises B2's
+            # link-then-conclude path. An override of the REPLY, not a session
+            # mode -- `next_auto_reply` is production's own function and must not
+            # grow a test-only branch. The run ends after it, because the next
+            # turn reads `wrapup` and that function answers nothing for one.
+            reply = wrap_up_override(_boundary, reply, turn.step, wrap_up_after)
+            # Section F: "answers the fixture's own question when asked for a
+            # single one". A step that ends on a question for the researcher
+            # makes no offer, so the run would end there with the fixture's own
+            # question already on file. Answered at most once: a second time
+            # would be a loop, and a run that asks twice has not understood the
+            # answer, which is a finding rather than something to paper over.
+            # Only a `job` turn, and only while there is research left to do. The
+            # arm existed to keep a run going past a question it could answer; a
+            # concluded or completed project has nothing to keep going, and
+            # answering a proof-conclusion turn's closing courtesy question
+            # ("shall I look for his parents next?") would run a new step on a
+            # finished project and change the very files the judge grades.
+            if (not reply and not _answered_question["done"]
+                    and outcome == "ok" and mode == "job"
+                    and turn.step != "proof-conclusion"
+                    and not project_completed(read_research_json(workspace) or {})
+                    and ended_on_a_question(_boundary, _last_text(turn))):
+                _answered_question["done"] = True
+                _answered_question["opened"] = turn.index + 1
+                reply = fixture.researcher_question
+                _emit(f"[host reply] turn {turn.index} answers the fixture's own question")
+            if reply:
+                _emit(f"[host reply] turn {turn.index} ({turn.step or 'no step'}) -> {reply}")
+            return reply
+
         while True:  # session (re)start loop — re-entered only to resume a stall
-            iterator = live["it"] = open_query(
-                prompt=current_prompt, options=current_options
-            ).__aiter__()
+            if step_client is not None:
+                # Section F: one session, many turns. A one-shot query would end
+                # at the first step boundary and the run would read as finished.
+                iterator = live["it"] = stream_turns(
+                    client=step_client,
+                    first_message=current_prompt,
+                    decide_reply=_decide_reply,
+                    turns=_step_turns,
+                    max_replies=_boundary.MAX_AUTO_REPLIES,
+                ).__aiter__()
+            else:
+                iterator = live["it"] = open_query(
+                    prompt=current_prompt, options=current_options
+                ).__aiter__()
             _emit("agent started" if resumes["n"] == 0
                   else f"resumed session (attempt {resumes['n']}) after stall")
             restart = False
@@ -2990,6 +3218,23 @@ async def _run_agent(
                         error = (
                             f"host slept {sleep_detector.counted_sleep_seconds:.0f}s "
                             f">= inactivity cap {fixture.caps.inactivity_seconds}s"
+                        )
+                        return
+                    # Step mode ends the run on a stall rather than resuming
+                    # (lead, 2026-10-26: "if ending the run is a lot simpler,
+                    # build that first and see how often a stall really
+                    # happens"). It IS a lot simpler: resume re-opens a one-shot
+                    # query with `resume=<session_id>`, which a persistent
+                    # session has no answer for -- it needs a disconnect, a new
+                    # client, a reconnect and a ruling on the interrupted turn's
+                    # partial messages. The turn goes in the error text so the
+                    # frequency is measurable from the committed runs.
+                    if step_client is not None:
+                        aborted_reason = "sdk_stream_silence"
+                        error = (
+                            f"no SDK message within {fixture.caps.inactivity_seconds}s (inactivity)"
+                            f" on turn {len(_step_turns) - 1} "
+                            f"({(_step_turns[-1].step if _step_turns else None) or 'no step'})"
                         )
                         return
                     if _should_resume():
@@ -3280,6 +3525,21 @@ async def _run_agent(
                             None,
                         ]
                     )
+                    # Step mode: stamp the TURN, and accumulate at the end.
+                    # One ResultMessage arrives per turn on a persistent session
+                    # where a one-shot query had one per run, so assigning here
+                    # would record the LAST turn's figures as the run's (lead,
+                    # 2026-10-26; `accumulate_usage` carries the reasoning).
+                    if _step_turns:
+                        _step_turns[-1].usage = {
+                            "duration_ms": message.duration_ms,
+                            "duration_api_ms": message.duration_api_ms,
+                            "num_turns": message.num_turns,
+                            "is_error": message.is_error,
+                            "stop_reason": message.stop_reason,
+                            "total_cost_usd": message.total_cost_usd,
+                            "usage": message.usage,
+                        }
                     usage = {
                         "duration_ms": message.duration_ms,
                         "duration_api_ms": message.duration_api_ms,
@@ -3358,6 +3618,15 @@ async def _run_agent(
                             f">= inactivity cap {fixture.caps.inactivity_seconds}s"
                         )
                         return
+                    # Step mode ends the run here too: see the inactivity arm above.
+                    if step_client is not None:
+                        aborted_reason = "no_progress_stall"
+                        error = (
+                            f"no progress (assistant text / tool call) for {fixture.caps.progress_stall_seconds}s"
+                            f" on turn {len(_step_turns) - 1} "
+                            f"({(_step_turns[-1].step if _step_turns else None) or 'no step'})"
+                        )
+                        return
                     if _should_resume():
                         restart = True
                         break
@@ -3416,6 +3685,16 @@ async def _run_agent(
         elif live["it"] is not None:
             await _shutdown(live["it"])
         live["it"] = live["closing"] = None
+        # Closing the generator does not close the session it streamed from, so
+        # a step run's CLI and its MCP server sat idle through the whole judge
+        # phase, until the SDK's atexit reaper got to them. Shielded and capped:
+        # teardown must not be the thing that fails a run that already finished.
+        if live.get("client") is not None:
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(
+                    asyncio.shield(live["client"].disconnect()), timeout=15
+                )
+            live["client"] = None
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
@@ -3450,6 +3729,18 @@ async def _run_agent(
     # `usage_source` marks which one you're reading: a fallback block has exact
     # token counts but a null cost, and must not be compared against a clean run's
     # `total_cost_usd`.
+    # Step mode: the run's figures are the SUM over its turns, not the last
+    # turn's ResultMessage (lead, 2026-10-26). This also sidesteps
+    # `result_message_covers_last_query_only`, which cannot see the problem here:
+    # it counts `system:init` rows, and a persistent session is ONE CLI process
+    # emitting ONE init however many turns it serves. So a multi-turn step run
+    # would read to every report as a clean single-query run carrying the last
+    # turn's cost.
+    if _step_turns:
+        _accumulated = accumulate_usage(_step_turns)
+        if _accumulated:
+            usage = {**usage, **_accumulated}
+
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
         # To the start of the teardown, not to now: waiting for the CLI to
@@ -3758,6 +4049,8 @@ async def run_e2e_test(
     deny_project_reads: bool = False,
     context_1m: bool = False,
     tool_search: bool = True,
+    step_mode: str | None = None,
+    wrap_up_after: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -3831,6 +4124,8 @@ async def run_e2e_test(
             deny_project_reads=deny_project_reads,
             context_1m=context_1m,
             tool_search=tool_search,
+            step_mode=step_mode,
+            wrap_up_after=wrap_up_after,
         )
 
         final_research = read_research_json(workspace)
@@ -4022,6 +4317,11 @@ async def run_e2e_test(
             # corpus — every schema is loaded up front — and CI rejects a run
             # with either one False committed under eval/runlogs/e2e/.
             "tool_search": tool_search,
+            # Section F: the mode the run OPENED in, or None for the one long turn every
+            # committed run used. A step run is many turns on one session answered by
+            # `next_auto_reply`, so it is not comparable to a run without it.
+            "step_mode": step_mode,
+            "wrap_up_after": wrap_up_after,
         }
 
         # Summarize any subagent transcripts (record-structurer, search-images, …)

@@ -736,6 +736,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // New agent (issue #3521), one-shot and project-free: after a FamilySearch
+  // records search it lists curated external collections with prefilled links.
+  // No `Read`, no `project_context` and no writer, so "writes nothing" is
+  // structural. `build_external_search_url` logs only when given a `projectPath`,
+  // which the body never passes.
+  "where-else-to-search.md": {
+    tools: [
+      "place_search",
+      "external_links_search",
+      "build_external_search_url",
+    ],
+    denies: [],
+  },
+
   // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
   // `person_record_matches` for the pending matches, `research_query` to find a
   // hint the project already extracted, `record_read` per hint,
@@ -955,15 +969,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // declared less `place_search` (project_create standardizes places), plus
   // `Read`, which it had as the main thread: a large `person_read` result is
   // persisted to a file the agent pages through. Its `research_append` is laned
-  // to `project` (which it owns), `researcher_profile`, `known_holdings` and
-  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // to `project` (which it owns), `researcher_profile` and `sources`
+  // (guard_project_files.py). It reviews nothing and spawns nothing,
   // so no spawn tool.
   "init-project.md": {
     tools: [
-      "Read",
-      "person_read",
+      "project_context",
       "project_create",
       "research_append",
+      "tree_edit",
     ],
     denies: [],
   },

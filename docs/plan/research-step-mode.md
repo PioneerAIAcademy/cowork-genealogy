@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19); phases 1+ not started.** Its answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep PR (#3682) is merged, proof-conclusion's (#3889) is open, PR 1 is #3883, and the route PRs, PR 2 and the conflict PR follow it. Its answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -321,6 +321,25 @@ that apply:
     equal (`test_alpha_stop_hook.py`), and that file's `>= 26` floor and `== 30` pins change with
     them. Existing alpha sandboxes keep their creation-time code until the 72-hour cutoff
     (`app/sessions.py`), so step mode reaches the alpha over about three days.
+  - **Deviation recorded (PR 1, review of aa48f22e):** `turn_max_nudges` keeps returning the
+    queue body's stamped value rather than a hardcoded 0. The switch is the WEB tier's
+    `DEFAULT_MAX_NUDGES`, now 0, which is what every real turn carries; the worker honouring
+    what was stamped is the layering the field exists for, and hardcoding 0 would remove the
+    only way to exercise the veto/deny/halt path deliberately. `max_nudges()`'s docstring
+    says so.
+  - **`proto-demo-auto` and `proto-probe-resume` keep exporting 40, deliberately.** That
+    export is what keeps the Stop hook under a live test at all, and `test_proto_demo.py`
+    pins it on purpose. Under step mode such a turn gets veto, deny, then halt, so the
+    recipe does not reach its verdict today. Lowering it to 0 would not fix that: without
+    the keep-going driver below the run is one step, and the verdict wants a completed
+    project either way. Both paths need the driver, so the export stays where its own
+    tests put it.
+  - **Still owed, and NOT in PR 1:** `demo.py`'s keep-going driver — posting "keep going."
+    after each turn and waiting until the session has no open or held turn — with the
+    `bounds.py`, `turn.py` and `test_proto_target.py` changes beside it. Until it lands,
+    `make proto-demo-auto` runs one step and its verdict, which wants a completed project,
+    is not reachable under step mode. It is a live billed recipe, so it is built and run
+    together rather than built blind here.
   - **Phase 2 deletes the veto** (see Phases).
 - **Outcomes:**
   - A step turn ends `ok`, which renders no label: at cap 0 no plane binds the Stop hook.
@@ -328,6 +347,21 @@ that apply:
     sets `completed` at turn close from `project_completed(read_research(...))` when no Stop
     verdict was recorded. The honest `completed` label (section C) then shows on step turns
     too.
+    - **Amended to the implemented rule (review of aa48f22e).** This said "only when the
+      project became completed DURING the turn". The worker cannot know that without reading
+      `research.json` at the turn's START — a read every turn would pay and a down store must
+      not be asked twice — so it labels the first `ok` turn that SEES a completed project
+      when no other turn of the project carries the label. Two consequences follow, and the
+      first is the better behaviour: when the completing turn closed `stopped`, `budget` or
+      `delivered`, the next ordinary turn carries the label, which is right — the project IS
+      complete and the researcher should be told, and labelling a turn they stopped would
+      not say that.
+    - **The second is a real gap, and it is the lead's call.** A project completed a SECOND
+      time — a follow-up question wrapped up after the first completion — is never labelled
+      again, so the researcher never sees "Research complete" for it. Fixing it properly
+      means stamping the project's completeness on the turn row at close and comparing with
+      the previous closed turn: one column, one small query, no extra `research.json` read,
+      but a migration. Worth doing, and sized here rather than guessed at.
 - **The router stops ordering the model not to yield.** `skills/research/SKILL.md` deletes:
   - the "Continuous work" orders;
   - "Iterate — without yielding";
@@ -810,6 +844,10 @@ that apply:
 - **`eval/harness/e2e/orchestrator.py` keeps one `ClaudeSDKClient` session open** with streaming
   input, and replies to each turn as production's "Keep going" does, with `next_auto_reply`
   (section A2). It also answers the fixture's own question when asked for a single one.
+  **Built:** a step that ends on a question for the researcher makes no offer, so the run
+  would end there with the fixture's own question already on file. The host answers it once —
+  a second time would be a loop, and a run that asks twice has not understood the answer,
+  which is a finding rather than something to paper over.
 - **The run ends** when the function stops: a turn with no "Continue with …?" line, a finished
   wrap-up turn, or the reply cap, which replaces `max_continue_nudges` (a Stop-veto counter
   today). The no-progress stop remains. Both caps are runaway guards only.
@@ -823,7 +861,10 @@ that apply:
   - two-question fixtures are re-scoped (genealogist work). maria-bracero-marriage's parents
     finding is already non-required (`docs/plan/attached-records-baseline.md`, decision 13).
 - **A separate e2e arm** answers "Wrap it up." right after the search step, which exercises
-  B2's link-then-conclude path.
+  B2's link-then-conclude path. **Built** as `--wrap-up-after <step>`: an override of the
+  REPLY, not a session mode, so `next_auto_reply` keeps no test-only branch. It swaps a reply
+  and never invents one, and the run ends after it because the turn that reply opens reads
+  `wrapup`. Refused without `--step-mode`, where no host reply is sent at all.
 - **Interim, if the persistent session slips:** the harness runs each fixture as one turn in
   mode `job`, as Cowork does, a stopgap that measures the old continuous flow. It keeps
   `stop_checker.py`'s veto and `max_continue_nudges`, so a conflict that cannot be settled runs
@@ -969,8 +1010,8 @@ records the measure.
 - **Leave out of the per-step figures** wrap-up turns, which run several steps (`turns.mode`).
   A host reply under "Keep going" is a one-step turn and counts.
 - **To break it down by step,** PR 1 adds nullable `turns.step` and `turns.mode` columns, and the
-  "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/015_*.sql` (014
-  is taken). The worker fills them, and they also seed a redelivered attempt (section A). "p90
+  "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/015_turn_step.sql`
+  (014 went to #3794 while this was in flight). The worker fills them, and they also seed a redelivered attempt (section A). "p90
   by step" becomes one `GROUP BY`.
 - **Cost per step and the reply at each boundary** (decision 28), from the same columns:
   - spend per step, priced from each turn's token columns (`input_tokens`,
@@ -1169,9 +1210,10 @@ in parallel with PR 2.
     of `next_auto_reply`, its `ctx` read, and its host-hook and chain tests are all out of
     this PR. Only the cap-0 Stop-veto change above touches it;
   - decision 12's three contract sites (E);
-  - the worker's turn-close `completed`, set only when `project.status` became `completed`
-    during the turn, so later turns on a finished project that took a new question are not
-    labelled `completed`;
+  - the worker's turn-close `completed`, set on the first `ok` turn that SEES a completed
+    project when no other turn of the project carries the label (amended from "became
+    completed during the turn" -- see Outcomes above for why, and for the one gap it
+    leaves);
   - `ownership.json`'s stale `search_stop` note (E);
   - **writer and ladder rules:** E's rule replacing `newQuestionWhileSearchInFlightInvariants`,
     with its exemption (a proof summary and no open item) and the 11 rewritten tests; two
@@ -1326,8 +1368,8 @@ in parallel with PR 2.
      reply, and no held reply is released while Stop is set;
    - the alpha's chain replies to "Continue with …?" only while "Keep going" is on;
    - `turn_done` carries `reply_follows` on both hosted planes when a reply will follow;
-   - the worker sets `completed` at turn close when a step finished the project, and not on a
-     later turn of a project that was already `completed` before the turn;
+   - the worker sets `completed` at turn close on the first `ok` turn that sees a completed
+     project, and not again on any later turn of that project;
    - a turn that ran no step leaves `prev_step` unchanged, on the prototype by reading the last
      closed turn with a non-null `turns.step`;
    - `reply_options`: nothing for no offer; Continue, Keep going and Wrap it up for an ordinary

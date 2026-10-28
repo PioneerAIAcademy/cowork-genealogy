@@ -1014,3 +1014,46 @@ button {
   background: none; border: none; padding: 0; font: inherit; font-size: 0.85em;
   color: var(--text-secondary, #666); text-decoration: underline; cursor: pointer;
 }
+
+/* Step mode (decision 25): the replies a turn offers. One button per phrase on
+   `turn_done.options`, and each sends that phrase verbatim -- the server reads it
+   back with `step_mode(text)`, so the LABEL may be friendly but the message cannot
+   be. They sit where the outcome line would, because a turn that offers a next step
+   has not "ended" in the way an outcome label describes. */
+.stepReplies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 2px;
+}
+
+.stepReply {
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.stepReply:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+/* A message the host sent for the researcher. Dimmed rather than restyled: it is
+   still their turn in their run, and a differently-coloured bubble would read as a
+   third speaker. */
+.msgAuto {
+  opacity: 0.82;
+}
+
+.msgAutoNote {
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-align: right;
+  padding: 0 2px 2px;
+}

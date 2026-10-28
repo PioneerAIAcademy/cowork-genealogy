@@ -133,7 +133,7 @@ function project(research: Record<string, unknown>): string {
     plans: [{ id: "pl_001", question_id: "q_001" }],
     plan_items: [], log: [], sources: [], assertions: [], person_evidence: [],
     conflicts: [], hypotheses: [], timelines: [], proof_summaries: [],
-    evaluations: [], known_holdings: [],
+    evaluations: [],
     localities: [{ id: "lo_001", place: "Schuylkill, Pennsylvania" }],
     ...research
   }), "utf8");

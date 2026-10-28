@@ -505,7 +505,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
       mitigation: {
         side: "caller",
-        excerpt: "candidates rather than a verdict — and to `@plugin:check-warnings` as well when the",
+        excerpt: "candidates rather than a verdict. Hand that ask to `@plugin:search-records` first and never answer it inline from the tree; add `@plugin:check-warnings` after it",
       },
     },
   },
@@ -523,7 +523,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
       mitigation: {
         side: "caller",
-        excerpt: "counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
+        excerpt: "`@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
       },
     },
   },
@@ -896,6 +896,8 @@ describe("agent delegation framing", () => {
     // ARRIVED as a new agent (issue #3273); no skill directory of that name.
     "tree-survey",
     "validate-schema",
+    // ARRIVED as a new agent (issue #3521); no skill directory of that name.
+    "where-else-to-search",
     "record-structurer",
   ];
 
