@@ -4,13 +4,13 @@
     "skill": "conflict-resolution",
     "name": "An unresolved conflict routes to research-plan, not question-selection (E)",
     "type": "positive",
-    "description": "flynn-unresolved-conflict has c_001 (Ireland vs Pennsylvania birthplace) blocking the open question q_001, and both plans are completed, so nothing is searching. The conflict cannot be settled on the evidence on file and needs a new record. Section E moves that route: the evidence that would settle a conflict is a SEARCH on the question already open, so it goes to research-plan. Routing to question-selection opened a second question while the first was unfinished, which under step mode starts the next step on the wrong agent.",
+    "description": "dutch-mother-name-disputed has c_001 (three readings of the mother's name in one marriage act) blocking the open question q_001. The conflict cannot be settled on the evidence on file and needs a new record. Section E moves that route: the evidence that would settle a conflict is a SEARCH on the question already open, so it goes to research-plan. Routing to question-selection opened a second question while the first was unfinished, which under step mode starts the next step on the wrong agent.",
     "tags": [
       "conflict-resolution",
       "unresolved",
       "routing",
       "step-mode",
-      "birthplace",
+      "mother-name",
       "direct-arm"
     ]
   },
@@ -19,9 +19,8 @@
     "scenario": "dutch-mother-name-disputed"
   },
   "judge_context": [
-    "The next-step recommendation must name **research-plan**, and should name the record type that would settle the name — a different record carrying the mother's name, such as the marriage act itself or a baptism.",
+    "The reply must recommend **research-plan** as the next step and name the record that would settle the name — a different record carrying the mother's name, such as the marriage act itself or a baptism. Where in the reply that recommendation sits, and how its last line is worded, are not graded: the router writes the offer the host parses, not this agent.",
     "Naming **question-selection**, or recommending a new research question, is the failure this test exists for. q_001 is still open, and the evidence that would settle this is a SEARCH on that question, not a second question competing with it. This is the routing section E changed.",
-    "**The last line must be the offer**, written exactly as \"Continue with planning the searches?\". The host parses only the last line, against the step labels, so a reply that names research-plan mid-text and ends some other way offers the researcher nothing.",
     "Leaving c_001 `unresolved` with `preferred_assertion_id: null` is CORRECT here and must not be charged. Three readings of one name — an OCR pass carrying [?], a ten-year index, and the researcher's own reading of the image — cannot be settled from what is on file; `ut_conflict_resolution_016` pins the same thing on this scenario.",
     "The analysis fields (`independence_analysis`, `weighing_analysis`) should still be written even though the conflict stays unresolved.",
     "Do not charge the agent for also acknowledging the researcher's reading; that is `_016`'s subject, not this test's."
