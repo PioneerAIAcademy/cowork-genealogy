@@ -1,6 +1,6 @@
 # GEDCOM export — Spec
 
-> **Status:** New (2026-10-27), issue #3896. Implemented by
+> **Status:** New (2026-10-27). Implemented by
 > `packages/viewer-ui/src/lib/gedcom-export.ts` and the "Export GEDCOM" button in
 > `packages/viewer-ui/src/components/layout/Header.tsx`.
 
@@ -143,13 +143,12 @@ Under each fact:
    if present, else `date`). That covers a trailing annotation (`Abt 1845 (?)`) and free
    text (`about Spring 1845`).
 
-A valid date followed by an annotation (`Abt 1845 (?)`) stays a phrase, as issue #3896
-specifies. 5.5.1's interpreted-date form, `INT ABT 1845 (?)`, would keep such a date
+A valid date followed by an annotation (`Abt 1845 (?)`) stays a phrase. 5.5.1's interpreted-date form, `INT ABT 1845 (?)`, would keep such a date
 sortable with its annotation; it is a possible follow-up, not built.
 
 `standard_date` is already GEDCOM-shaped in mixed case (`simplified-gedcomx-spec.md`
-§4.5). Step 1's fallback to `date` goes beyond issue #3896's literal rule, which made
-every date-only fact a phrase. The data forces it: 526 of the 777 dated facts in
+§4.5). Step 1's fallback to `date` goes beyond the original rule, which made every
+date-only fact a phrase. The data forces it: 526 of the 777 dated facts in
 `eval/fixtures/scenarios/*/tree.gedcomx.json` (2026-10-27) carry no `standard_date`, and
 the commonest of those values — `~1845`, `1908-03-12`, `1850` — are valid GEDCOM dates
 that an importer can sort only if they are not phrases.
@@ -266,7 +265,7 @@ Every top-level `research.json` section:
 | `proof_summaries` | proof notes (§7) |
 | `timelines` | left out — re-derivable from the exported facts |
 | `log`, `plans`, `evaluations` | left out — process records, not conclusions |
-| `localities`, `known_holdings` | left out — not about a person |
+| `localities` | left out — about a place, not a person |
 | `rejected_links`, `namesakes`, `warning_justifications` | left out — the tool's own bookkeeping |
 | `researcher_profile` | left out — narration settings |
 
