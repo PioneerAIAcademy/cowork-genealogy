@@ -151,7 +151,7 @@
           "status": "in_progress"
         },
         {
-          "id": "pli_004",
+          "id": "pli_007",
           "sequence": 4,
           "record_type": "census",
           "jurisdiction": "Schuylkill County, Pennsylvania",
@@ -162,7 +162,7 @@
           "status": "completed"
         },
         {
-          "id": "pli_005",
+          "id": "pli_008",
           "sequence": 5,
           "record_type": "probate",
           "jurisdiction": "Schuylkill County, Pennsylvania",
@@ -270,7 +270,7 @@
     },
     {
       "id": "log_006",
-      "plan_item_id": "pli_004",
+      "plan_item_id": "pli_007",
       "performed": "2026-05-04T09:00:00Z",
       "tool": "record_search",
       "query": {
@@ -286,7 +286,7 @@
     },
     {
       "id": "log_007",
-      "plan_item_id": "pli_005",
+      "plan_item_id": "pli_008",
       "performed": "2026-05-04T13:00:00Z",
       "tool": "record_search",
       "query": {

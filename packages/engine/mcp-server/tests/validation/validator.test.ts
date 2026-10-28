@@ -4492,3 +4492,96 @@ describe("Validator — informant_proximity 'unknown' implies indeterminate qual
     expect(floorErrors(result)).toHaveLength(0);
   });
 });
+
+describe("entry ids are unique within their section", () => {
+  // Every reference resolves an id against one set, so two entries sharing an
+  // id are indistinguishable to it. Plan-item ids are one pool across plans,
+  // because `log[].plan_item_id` resolves against all of them.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const scenarios = join(here, "..", "..", "..", "..", "..", "eval", "fixtures", "scenarios");
+  const load = (name: string, file: string) =>
+    JSON.parse(readFileSync(join(scenarios, name, file), "utf-8"));
+  const base = () => load("mid-research-flynn-with-evaluation", "research.json");
+  const tree = load("mid-research-flynn-with-evaluation", "tree.gedcomx.json");
+  const duplicateErrors = (r: { errors: { message: string }[] }) =>
+    r.errors
+      .map((e) => e.message)
+      .filter((m) => m.includes("duplicate") && m.includes("ids must be unique"));
+
+  const LABELS: Record<string, string> = {
+    questions: "question", plans: "plan", log: "log", sources: "source",
+    assertions: "assertion", person_evidence: "person_evidence",
+    rejected_links: "rejected_links", conflicts: "conflict", hypotheses: "hypothesis",
+    timelines: "timeline", proof_summaries: "proof summary", evaluations: "evaluation",
+    localities: "locality", namesakes: "namesake",
+  };
+  const sections = Object.keys(ID_PREFIXES).filter((s) => s !== "project" && s !== "plan_items");
+
+  it("names every section that has an id prefix", () => {
+    expect(sections.sort()).toEqual(Object.keys(LABELS).sort());
+  });
+
+  it("the base scenario carries no duplicate", async () => {
+    expect(duplicateErrors(await validateParsed(base(), tree))).toEqual([]);
+  });
+
+  it.each(sections)("refuses a duplicated %s id", async (section) => {
+    const research = base();
+    const rows = Array.isArray(research[section]) ? research[section] : [];
+    const first = rows[0] ?? { id: `${ID_PREFIXES[section]}001` };
+    const copy = structuredClone(first);
+    // A copied plan would also repeat its items' ids; renumber those.
+    if (section === "plans") copy.items.forEach((it: any, k: number) => (it.id = `pli_9${k}`));
+    research[section] = [...(rows.length ? rows : [first]), copy];
+    const dups = duplicateErrors(await validateParsed(research, tree));
+    expect(dups).toHaveLength(1);
+    expect(dups[0]).toContain(`duplicate ${LABELS[section]} id '${first.id}'`);
+  });
+
+  it("refuses a plan-item id repeated across two plans", async () => {
+    const research = base();
+    const [p0] = research.plans;
+    research.plans.push({
+      ...structuredClone(p0),
+      id: "pl_099",
+      items: [structuredClone(p0.items[0])],
+    });
+    const dups = duplicateErrors(await validateParsed(research, tree));
+    expect(dups).toHaveLength(1);
+    expect(dups[0]).toContain(`duplicate plan item id '${p0.items[0].id}'`);
+  });
+
+  it("keeps a renumbered copy valid", async () => {
+    const research = base();
+    const c = structuredClone(research.conflicts[0]);
+    research.conflicts.push({ ...c, id: "c_099" });
+    expect(duplicateErrors(await validateParsed(research, tree))).toEqual([]);
+  });
+
+  it("holds across every shipped scenario fixture", async () => {
+    // Collected by hand rather than by full validation: seven fixtures exist to
+    // FAIL validation (see the V5 scan above), so this asserts the one fact.
+    const { readdirSync, existsSync } = await import("fs");
+    const offenders: string[] = [];
+    for (const name of readdirSync(scenarios)) {
+      const rp = join(scenarios, name, "research.json");
+      if (!existsSync(rp)) continue;
+      const research = JSON.parse(readFileSync(rp, "utf-8"));
+      const pools: Record<string, unknown[]> = {};
+      for (const s of sections) {
+        pools[s] = (Array.isArray(research[s]) ? research[s] : []).map((e: any) => e?.id);
+      }
+      pools.plan_items = (research.plans ?? []).flatMap((p: any) =>
+        (p?.items ?? []).map((i: any) => i?.id),
+      );
+      for (const [s, ids] of Object.entries(pools)) {
+        const seen = new Set<unknown>();
+        for (const id of ids) {
+          if (typeof id === "string" && seen.has(id)) offenders.push(`${name}: ${s} ${id}`);
+          seen.add(id);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
