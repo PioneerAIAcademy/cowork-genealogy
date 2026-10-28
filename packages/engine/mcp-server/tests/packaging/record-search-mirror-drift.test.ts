@@ -81,7 +81,7 @@ const MIRROR_ONLY: Record<string, string> = {
     "record_search field: the real one is recordArk, which the mirror also has.",
 };
 
-type Field = { name: string; optional: boolean };
+type Field = { name: string; optional: boolean; type: string };
 
 function fieldsOf(file: string, interfaceName: string): Field[] {
   const src = readFileSync(file, "utf8");
@@ -96,8 +96,9 @@ function fieldsOf(file: string, interfaceName: string): Field[] {
       found = node.members
         .filter(ts.isPropertySignature)
         .map((m) => ({
-          name: m.name.getText(sf),
+          name: ts.isStringLiteral(m.name) ? m.name.text : m.name.getText(sf),
           optional: m.questionToken !== undefined,
+          type: (m.type?.getText(sf) ?? "").replace(/\s+/g, "").replace(/^readonly/, "").replace(/^(?:Readonly)?Array<(\w+)>$/, "$1[]"),
         }));
     }
   });
@@ -146,6 +147,18 @@ describe("packages/schema mirrors the engine's record_search shapes", () => {
       });
     });
   }
+
+  it("types a field holding a mirrored shape with that same mirrored shape", () => {
+    // A name-only comparison passes `treeMatches?: Array<{ personId: string }>`:
+    // the invented shape comes back inline, past both interface checks above.
+    const pattern = new RegExp(`\\b(${MIRRORED.join("|")})\\b`);
+    const engine = new Map(fieldsOf(ENGINE_TYPES, "RecordSearchResult").map((f) => [f.name, f.type]));
+    const nested = fieldsOf(MIRROR, "RecordSearchResult").filter((f) => pattern.test(engine.get(f.name) ?? ""));
+    expect(nested.map((f) => f.name)).toContain("treeMatches");
+    for (const f of nested) {
+      expect(f.type, `RecordSearchResult.${f.name}: type it as the engine does`).toBe(engine.get(f.name));
+    }
+  });
 
   it("is actually reading both files, not matching nothing", () => {
     // A field-name comparison between two empty lists passes. Pin that each
