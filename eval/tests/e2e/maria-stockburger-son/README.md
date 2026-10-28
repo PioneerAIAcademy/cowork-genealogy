@@ -28,17 +28,32 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 1, `hint-samples.csv` row 49,
-flag `adds_son`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Germany, Births and Baptisms, 1558-1898", a baptism entry for Andreas Mayer, born and baptised 5 September 1812 at Sankt Georgen, naming his parents as Johann Georg Mayer and Maria Dorothea Stokburger. The index also carries a death date of 29 February 1852 for him, with no place.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Andreas (born 1812) as her son, plus a `required` finding that the report documents
-the rejection.
+**Resolved as a false match (outcome 3 — polarity:avoid).** The hint record
+(`ark:/61903/1:1:NNXZ-4L3`) is a baptism entry for Andreas Mayer, born and
+baptised 5 September 1812 at Sankt Georgen, naming parents "Johann Georg Mayer,
+Bürger in [Magdalsthal], Rennuß Nachb." and "Maria Dorothea uaor geb. Stokburger."
+The godparents column ends "Alle von Rennuß" (all from Rennus). The entry also
+carries a marginal death note: "† 4 H. 29 Februars 1852."
 
-A strong candidate. Both parents' names match the tree couple, and the date falls five years before the eldest child the tree knows. The tree's own index entry for the daughter Anna Maria's 1821 baptism, in the same collection, uses the identical place string ("Sankt Georgen, Freiburg, Baden") and likewise carries a later death date. That looks like the same register, annotated by the same hand. "Freiburg" in that string is the administrative region, not the city: Sankt Georgen im Schwarzwald lies in Regierungsbezirk Freiburg, and the tree's own church-book entries place the family at Oberkirnach in that parish. The hint record is not among the subject's or her children's sources, and no Andreas is in the tree.
+**What decided it:** The register image (Image 120 of group 3015626,
+`ark:/61903/3:1:3Q9M-CS43-L99T-Q`) was read to identify the father's hamlet.
+The 1812 entry places the father at **Rennuß** (Rennus), a hamlet within the
+Sankt Georgen parish. The tree couple's two known children — Magdalena (1817)
+and Anna Maria (1821) — are both from **Oberkirnach**, a different hamlet in the
+same parish. The parent names match, but the hamlet does not: this is a second
+Johann Georg Mayer + Maria Dorothea Stokburger household in the parish, based in
+Rennuß rather than Oberkirnach. Mayer is common in the area and the tree already
+carries two person entries for "Johann Georg" (PIDs `9D31-B4G` and `9DQM-45F`),
+confirming the name collision is real.
 
-The residual risk is a second couple of the same names in the parish. Mayer is common, and the tree already holds Johann Georg twice, so it has not been tidied. The discriminating check is the 1812 entry on the register image: the father's residence and occupation should match the Oberkirnach entries of 1817 and 1821. A different hamlet, or a father described as someone else's son, would separate the two couples.
+**Image-read check:** The verdict rests on reading the register image
+(`image_basis: true`). The check against two other indexed entries on the same
+page was not independently verified in this session. A reviewer may confirm by
+checking any two of entries 35–38 (also on Image 120) against their FamilySearch
+index records.
+
+**What was searched:** The indexed baptism register for children of Johann Georg
+Mayer and Maria Dorothea Stockburger at Sankt Georgen was searched
+comprehensively. Seven children were found (including Magdalena 1817 and Anna
+Maria 1821 already in the tree); no Andreas appears among them as a child of the
+Oberkirnach branch of this couple.
