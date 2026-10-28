@@ -795,9 +795,10 @@ describe("the guard script's decisions", () => {
     ["namespaced agent_type, as production reports it", GM_OWNER],
     ["bare agent_type", "gps-mentor"],
   ])("permits the gps-mentor agent its real call — %s", (_label, agent_type) => {
-    // The shape the agent actually emits: the verdict body as the top-level
-    // `verdict` argument, the pointer append, and the superseded_by update on
-    // the prior entry for the same focus + target, in one call.
+    // The shape the agent emits: the verdict body as the top-level `verdict`
+    // argument, the pointer append, and the superseded_by update on the prior
+    // entry for the same focus + target. One call or two (the committed m2r
+    // run splits the update into a second call) — both shapes pass the route.
     const out = runGuard({
       tool_name: "mcp__genealogy__research_append",
       tool_input: {
