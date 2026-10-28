@@ -6,30 +6,30 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Schuylkill, Pennsylvania, United States"
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
       {
         "imageGroupNumber": "008116090",
-        "imageGroupPrefix": "008116090",
         "imageCount": 22,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1851–1930",
             "recordType": "Wills and Estate Records"
           },
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1851–1930",
             "recordType": "Land and Property Deeds"
           },
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1851–1930",
             "recordType": "Loose Probate Papers"
           }
@@ -37,14 +37,13 @@
       },
       {
         "imageGroupNumber": "007512883",
-        "imageGroupPrefix": "007512883",
         "imageCount": 240,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1850–1885",
             "recordType": "Tax Assessment Records"
           }
