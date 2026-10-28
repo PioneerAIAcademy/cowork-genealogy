@@ -85,7 +85,6 @@ export function buildIndex(
   // yet (`{}`), both of which `?? []` lets straight through into `for...of`.
   // `asArray` + the optional `?.id` below cover all three shapes.
   const sections: [string, unknown[]][] = [
-    ['known_holdings', asArray(research.known_holdings)],
     ['questions', asArray(research.questions)],
     ['plans', asArray(research.plans)],
     ['log', asArray(research.log)],
