@@ -16,7 +16,7 @@ import App from '../App'
 // Annotated (not cast) so typecheck reports TS2322 if the transport shape drifts
 // — e.g. `notice` going missing from getProjectState (#1899 review).
 const stubTransport: ResearchTransport = {
-  getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
+  getProjectState: async () => ({ research: null, gedcomx: null, collections: null, label: null, notice: null }),
   subscribe: () => () => {},
   readSidecar: async () => null,
   submitFeedback: async () => ({ ok: true }),

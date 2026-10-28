@@ -11,7 +11,7 @@ import type { ResearchTransport } from './transport'
 // Electron half, so keep both paths named rather than gesturing at directories.
 function makeInMemoryTransport(): ResearchTransport {
   return {
-    getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
+    getProjectState: async () => ({ research: null, gedcomx: null, collections: null, label: null, notice: null }),
     subscribe: () => () => {},
     readSidecar: async () => null,
     openExternal: () => {},

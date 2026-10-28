@@ -17,6 +17,7 @@ export async function assertTransportContract(transport: ResearchTransport): Pro
   assert(typeof state === 'object' && state !== null, 'getProjectState must resolve to an object')
   assert('research' in state, 'state must have a research field')
   assert('gedcomx' in state, 'state must have a gedcomx field')
+  assert('collections' in state, 'state must have a collections field')
   assert(
     state.label === null || typeof state.label === 'string',
     'state.label must be string | null'
@@ -31,6 +32,7 @@ export async function assertTransportContract(transport: ResearchTransport): Pro
   const unsubscribe = transport.subscribe({
     onResearch: () => {},
     onGedcomx: () => {},
+    onCollections: () => {},
     onSidecar: () => {},
     onError: () => {},
     onNotice: () => {}
