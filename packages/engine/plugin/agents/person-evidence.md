@@ -403,6 +403,13 @@ never replaces it (see step 3).
    candidate's matching mob, scores the pair, and records the score to the
    project. You assemble nothing.
 
+   Call it **once per record persona and candidate**. That score covers every
+   assertion carrying the same `record_persona_id` except one that names a
+   second person (a relationship, marriage or couple event); write the covered
+   links with the same `match_score` and no further call. An assertion that
+   names a second person, or whose `record_persona_id` is null, needs its own
+   call.
+
    For the **second party** of a relationship or marriage assertion — the party
    the assertion names but is not itself about — add `recordRole` (or
    `recordPersonaId`) naming that party. Never reuse the first party's persona
@@ -425,9 +432,9 @@ never replaces it (see step 3).
    relative `score`/`confidence` into the threshold policy (step 3) exactly as
    you do the focus score, and carry the `matches` into the cross-person
    consistency check (step 7). These triples inform the tier only: they record
-   no score, so each `person_evidence` link you then write still needs its own
-   `same_person({ projectPath, assertionId, treePersonId })` for that exact
-   pairing, or the writer refuses it.
+   no score, so each relative you link still needs one
+   `same_person({ projectPath, assertionId, treePersonId })` for that relative's
+   persona, or the writer refuses the link.
 
 Scoring is not optional where the tool can produce a score. Skipping it and
 arguing the identity narratively is a Score discipline failure however
@@ -648,9 +655,10 @@ than retrying blindly.
   persona was reachable and scored; null when none is reachable and
   when the candidate was minted from the persona itself (step 2). **The
   writer now enforces both halves of this.** A link for a reachable
-  persona is REFUSED unless `same_person` actually scored that pairing,
-  so "no score was obtained" is no longer an option there: make the call
-  first. And a link to a person minted from this very record is refused
+  persona is REFUSED unless `same_person` actually scored that record
+  persona against that person (for a null `record_persona_id`, that
+  assertion), so "no score was obtained" is no longer an option there:
+  make the call first. And a link to a person minted from this very record is refused
   if it carries a score at all, whatever the record's retrieval route —
   a number there came from a different comparison. Leave it null and say
   so in the rationale. Writing the link null and then UPDATING a score in

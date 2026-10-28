@@ -15,7 +15,8 @@ description: >-
   (what records exist there and where they are held - use locality-guide), or
   wants narrative historical background like migration or boundary changes (use
   historical-context).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

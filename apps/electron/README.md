@@ -8,7 +8,7 @@ No telemetry. No analytics. Offline-first.
 
 - Watches a project folder for changes to research files
 - Displays research progress through a visual pipeline (Init, Question Selection, Research Plan, Search Records, Extraction, Analysis, Findings)
-- Renders 11 research sections as browsable Notion-style cards: Project Overview, Questions, Plans, Research Log, Sources, Assertions, Person Evidence, Conflicts, Hypotheses, Timelines, Findings
+- Renders 14 research sections as browsable Notion-style cards: Project Overview, Questions, Localities, Collections, Plans, Research Log, Sources, Assertions, Person Evidence, Conflicts, Hypotheses, Timelines, Findings, Mentor Evaluations
 - Shows GedcomX persons and relationships in the Project Overview
 - Cross-links between sections (click an assertion ID in a question card to jump to that assertion)
 - Light and dark theme toggle
@@ -53,7 +53,7 @@ The Electron window opens automatically. The Vite dev server provides HMR for th
 
 ### Opening a project
 
-On launch, the app shows a welcome screen. Click "Open Project Folder" to select a folder containing `research.json` and `tree.gedcomx.json`. The app watches both files and updates the UI in real time when they change.
+On launch, the app shows a welcome screen. Click "Open Project Folder" to select a folder containing `research.json` and `tree.gedcomx.json`. The app watches `research.json`, `tree.gedcomx.json` and `external-collections.json` and updates the UI in real time when they change.
 
 You can also auto-open a project folder via the `--project-dir` CLI argument:
 
@@ -134,7 +134,7 @@ src/
       components/
         layout/                # Header, Sidebar
         shared/                # Card, StatusBadge, DetailPanel, PersonCard, CrossLink
-        sections/              # 11 section components (one per research.json section)
+        sections/              # 14 section components (research.json sections, plus Collections)
       styles/
         global.css             # CSS variables, light/dark themes
 ```
@@ -154,6 +154,7 @@ src/
 | `project:select-folder` | renderer to main | Response: folder path or null |
 | `project:research-updated` | main to renderer | Parsed research.json |
 | `project:gedcomx-updated` | main to renderer | Parsed tree.gedcomx.json |
+| `project:collections-updated` | main to renderer | Parsed external-collections.json, or `null` when it was deleted |
 | `project:watch-error` | main to renderer | Error message string |
 | `open-file` | renderer to main | Response: file content or null |
 | `open-external` | renderer to main | HTTPS URL to open in browser |
