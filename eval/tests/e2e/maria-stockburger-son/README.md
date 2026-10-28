@@ -28,30 +28,30 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved as a false match (outcome 3 — polarity:avoid).** The hint record
-(`ark:/61903/1:1:NNXZ-4L3`) is a baptism entry for Andreas Mayer, born and
-baptised 5 September 1812 at Sankt Georgen, naming parents "Johann Georg Mayer,
-Bürger in [Magdalsthal], Rennuß Nachb." and "Maria Dorothea uaor geb. Stokburger."
-The godparents column ends "Alle von Rennuß" (all from Rennus). The entry also
-carries a marginal death note: "† 4 H. 29 Februars 1852."
+**Resolved as a true match (outcome 1).** The hint record
+(`ark:/61903/1:1:NNXZ-4L3`) is the baptism of Andreas Mayer, born and baptised
+5 September 1812 at Sankt Georgen, entry 34 on Image 120 of group 3015626
+(`ark:/61903/3:1:3Q9M-CS43-L99T-Q`). It names his parents as Johann Georg Mayer
+and Maria Dorothea Stokburger and places the family at Kirnach. Andreas is a son
+of the tree couple. Reviewed by Edmond against the image and the index.
 
-**What decided it:** The register image (Image 120 of group 3015626,
-`ark:/61903/3:1:3Q9M-CS43-L99T-Q`) was read to identify the father's hamlet.
-The 1812 entry places the father at **Rennuß** (Rennus), a hamlet within the
-Sankt Georgen parish. The tree couple's two known children — Magdalena (1817)
-and Anna Maria (1821) — are both from **Oberkirnach**, a different hamlet in the
-same parish. The parent names match, but the hamlet does not: this is a second
-Johann Georg Mayer + Maria Dorothea Stokburger household in the parish, based in
-Rennuß rather than Oberkirnach. Mayer is common in the area.
+**What decided it:**
 
-**Image-read check:** The verdict rests on reading the register image
-(`image_basis: true`). The check against two other indexed entries on the same
-page was not independently verified in this session. A reviewer may confirm by
-checking any two of entries 35–38 (also on Image 120) against their FamilySearch
-index records.
+1. **Same household.** Entry 34 and Magdalena's 1817 baptism entry
+   (`QPD6-95WX`) both point to family register page 70. One register page is
+   one household.
+2. **The children fit one sequence.** The index returns 11 children of this
+   couple at Sankt Georgen, spaced 14 to 35 months apart with no overlaps.
+   Andreas falls cleanly between Jacob (December 1810) and Dorothea
+   (January 1814). A second couple of the same names would show as overlapping
+   or crowded births; there are none.
 
-**What was searched:** The indexed baptism register for children of Johann Georg
-Mayer and Maria Dorothea Stockburger at Sankt Georgen was searched
-comprehensively. Seven children were found (including Magdalena 1817 and Anna
-Maria 1821 already in the tree); no Andreas appears among them as a child of the
-Oberkirnach branch of this couple.
+**Image-read check.** The register image was read, so the reading was checked
+against two other indexed entries on the same page first. Entry 35
+(`N87L-45S`, Anna Weisser): the mother reads Rosenfelder, matching the index.
+Entry 38 (`NCC4-6G7`, Christoph Mayer): the mother reads Lupfer, matching the
+index. Both match, so the reading is licensed for child, parents and date. The
+check does not license the residence word "Kirnach"; the verdict does not rest
+on it.
+
+Retrieval was by hand on familysearch.org.

@@ -3,35 +3,19 @@
     {
       "id": "f1",
       "type": "relationship",
-      "polarity": "avoid",
-      "description": "The agent must NOT assert that Maria Dorothea Stockburger (PID 9DQM-45L) had a son named Andreas Mayer born and baptised 5 September 1812 at Sankt Georgen, Baden. The baptism entry at ark:/61903/1:1:NNXZ-4L3 (image ark:/61903/3:1:3Q9M-CS43-L99T-Q, Image 120 of group 3015626) names parents 'Johann Georg Mayer, Bürger in [Magdalsthal], Rennuß Nachb.' and 'Maria Dorothea uaor geb. Stokburger'; all three godparents are recorded as 'Alle von Rennuß'. The tree couple's two known children — Magdalena (baptised 5 March 1817) and Anna Maria (baptised 9 November 1821) — are both from Oberkirnach, a different hamlet in the same Sankt Georgen parish. Rennuß and Oberkirnach are distinct hamlets; the father's stated hamlet in the 1812 entry does not match the tree couple's hamlet in the 1817 and 1821 entries. The 1812 record belongs to a different Johann Georg Mayer of Rennuß, not to the tree person's husband.",
+      "description": "Maria Dorothea Stockburger and Johann Georg Mayer had a son, Andreas Mayer, born and baptised 5 September 1812 at Sankt Georgen, Baden (the entry places the family at Kirnach); the baptism index also carries a death date of 29 February 1852 for him.",
       "details": {
         "subject_person": "Maria Dorothea Stockburger (9DQM-45L)",
         "relation": "child",
-        "wrong_candidate": {
-          "name": "Andreas Mayer, born 5 September 1812, Sankt Georgen, Baden",
-          "note": "The 1812 baptism entry names a Johann Georg Mayer of Rennuß as father, whereas the tree couple lived at Oberkirnach; both hamlets lie within the Sankt Georgen parish but are distinct — the 1812 parents are a different couple of the same names"
-        }
-      },
-      "supporting_sources": [
-        "Deutschland Geburten und Taufen, 1558-1898 — baptism entry for Andreas Mayer, 5 Sep 1812, Sankt Georgen, Baden, naming father Johann Georg Mayer of Rennuß Nachbarschaft and mother Maria Dorothea uaor geb. Stokburger, with all godparents from Rennuß (ark:/61903/1:1:NNXZ-4L3; image ark:/61903/3:1:3Q9M-CS43-L99T-Q) — the disproving record: the father's hamlet (Rennuß) does not match the tree couple's hamlet (Oberkirnach) in their 1817 and 1821 children's baptism entries"
-      ],
-      "required": true
-    },
-    {
-      "id": "f2",
-      "type": "fact",
-      "description": "Having searched the indexed baptism register for children of Johann Georg Mayer and Maria Dorothea Stockburger at Sankt Georgen im Schwarzwald, the agent should document that no baptism record establishes an Andreas Mayer born in 1812 as a child of the Oberkirnach branch of this couple. The hint record (ark:/61903/1:1:NNXZ-4L3) belongs to a same-named couple from the hamlet of Rennuß, a different household within the parish. The research should identify the children actually found for the tree couple — which include at minimum Magdalena (1817) and Anna Maria (1821) already in the tree, plus any additional children the indexed register yields — and record a negative conclusion on the 1812 Andreas hint.",
-      "details": {
-        "subject_person": "Maria Dorothea Stockburger (9DQM-45L)",
-        "relation": "research conclusion",
         "target_person": {
-          "name": "documented negative conclusion: 1812 Andreas Mayer is not this couple's son",
-          "birth": "n/a"
-        }
+          "name": "Andreas Mayer",
+          "birth": "5 September 1812, Sankt Georgen, Baden, Germany",
+          "death": "29 February 1852"
+        },
+        "father": "Johann Georg Mayer"
       },
       "supporting_sources": [
-        "No baptism record in Deutschland Geburten und Taufen, 1558-1898 establishes an Andreas Mayer born circa 1812 as a child of Johann Georg Mayer and Maria Dorothea Stockburger of Oberkirnach, Sankt Georgen, Baden"
+        "Germany, Births and Baptisms, 1558-1898 — baptism entry for Andreas Mayer, 5 Sep 1812, Sankt Georgen, Baden (Kirnach), naming his parents as Johann Georg Mayer and Maria Dorothea Stokburger (ark:/61903/1:1:NNXZ-4L3; register image ark:/61903/3:1:3Q9M-CS43-L99T-Q, Image 120 of group 3015626, entry 34)"
       ],
       "required": true
     }
