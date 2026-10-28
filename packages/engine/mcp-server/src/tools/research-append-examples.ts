@@ -249,16 +249,6 @@ const EXAMPLES: Record<string, string> = {
   "updated": null
 }`,
 
-  known_holdings: `{
-  "holding_type": "document",
-  "description": "Great-grandmother's family Bible with births recorded on the flyleaf",
-  "relevant_facts": "Birth dates for six children, 1868-1881",
-  "relates_to_person_ids": ["I1"],
-  "confidence": "confident",
-  "promoted": false,
-  "created": "2026-07-18"
-}`,
-
   namesakes: `{
   "person_id": "I1",
   "name": "John Smith",

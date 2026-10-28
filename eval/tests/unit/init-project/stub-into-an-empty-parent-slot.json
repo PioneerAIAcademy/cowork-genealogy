@@ -23,7 +23,7 @@
   "judge_context": [
     "The read (person-read-flynn-family, read by project_create on the host) holds Mary Kelly as Patrick's wife with NO parents, so the father slot the user fills is empty: a stub for Owen Kelly is correct.",
     "Owen should be a new person (gender Male, as stated; names given 'Owen', surname 'Kelly') linked as Mary's parent by a ParentChild edge, and that edge should cite a source titled \"Researcher's statement\" — never the FamilySearch Family Tree source, which does not hold him.",
-    "The user's family knowledge should also be recorded as an oral_knowledge holding.",
+    "The family knowledge is recorded only as the stub and its Researcher's statement source: nothing for it is written to research.json.",
     "Must NOT re-add Mary, Patrick or any person the read already holds, and must NOT stub anyone the user did not name (Mary's mother is unknown and gets no stub)."
   ],
   "execution": {
