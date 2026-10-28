@@ -1022,3 +1022,115 @@ def test_a_release_outranks_a_higher_numbered_candidate(tmp_path):
     skill_dir = _skill_dir_with(tmp_path, ["v33.json", "v34_2026-10-23_12-00-55.json"])
     got = judge_regrade._latest_full_skill_runlog(skill_dir)
     assert got is not None and got[0] == "v33.json"
+
+
+def _stale_log(skill: str = "demo") -> dict:
+    """A log in the shape a regrade used to leave behind.
+
+    `outcome` and `runs[]` carry the fresh grading; the summary still describes
+    the grading it replaced.
+    """
+    dim = lambda score: [  # noqa: E731
+        {"source": "base", "name": "Correctness", "score": score, "rationale": "x"}
+    ]
+    return {
+        "schema_version": 3,
+        "skill": skill,
+        "version": 1,
+        "released": False,
+        "releasable": True,
+        "invocation": "skill",
+        "timestamp": "2026-10-09_00-00-00",
+        "harness_version": "0.1.0",
+        "model": "claude-sonnet-4-5",
+        "judge_prompt_hash": "a" * 64,
+        "judge_render_hash": "b" * 64,
+        "snapshot": {},
+        "tests": [
+            {
+                "test_id": "ut_demo_001",
+                "test_type": "positive",
+                "expected_outcome": "pass",
+                "scenario": "demo-scenario",
+                "mcp_fixtures": [],
+                "outcome": "fail",
+                "flaky": False,
+                "outcome_summary": {
+                    "per_run_outcomes": ["pass"],
+                    "aggregated_dimensions": dim(3),
+                    "review_dimensions": dim(3),
+                },
+                "totals": {"duration_ms": 0, "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "judge_input_tokens": 0, "judge_cached_input_tokens": 0, "judge_output_tokens": 0, "skill_cost_usd": 0.0, "judge_cost_usd": 0.0, "total_cost_usd": 0.0},
+                "runs": [
+                    {
+                        "run_index": 0,
+                        "run_id": "r0",
+                        "outcome": "fail",
+                        "aborted_reason": None,
+                        "duration_ms": 0,
+                        "input_tokens": 0,
+                        "cached_input_tokens": 0,
+                        "output_tokens": 0,
+                        "skill_cost_usd": 0.0,
+                        "output": {
+                            "text_response": "",
+                            "activated": True,
+                            "skills_invoked": [],
+                            "tool_calls": [],
+                            "files_created": [],
+                        },
+                        "validators": {"passed": True, "results": []},
+                        "judge": {
+                            "skipped": False,
+                            "dimensions": dim(1),
+                            "judge_cost_usd": 0.0,
+                        },
+                    }
+                ],
+            }
+        ],
+        "totals": {"duration_ms": 0, "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "judge_input_tokens": 0, "judge_cached_input_tokens": 0, "judge_output_tokens": 0, "skill_cost_usd": 0.0, "judge_cost_usd": 0.0, "total_cost_usd": 0.0},
+    }
+
+
+def test_reaggregate_repairs_a_stale_summary_without_touching_the_envelope(tmp_path):
+    """The repair path: no model call, and no fingerprint is stamped.
+
+    Stamping `judge_render_hash` here would certify a suite as graded by the
+    current render code when nothing re-graded it, and would un-refuse a suite
+    rule 2 is deliberately holding stale.
+    """
+    path = tmp_path / "v1_2026-10-09_00-00-00.json"
+    path.write_text(json.dumps(_stale_log()), encoding="utf-8")
+
+    changed = judge_regrade.reaggregate_log(path)
+
+    assert changed == ["ut_demo_001"]
+    out = json.loads(path.read_text(encoding="utf-8"))
+    entry = out["tests"][0]
+    assert entry["outcome_summary"]["per_run_outcomes"] == ["fail"]
+    assert entry["outcome_summary"]["aggregated_dimensions"][0]["score"] == 1
+    # The envelope is exactly as it was.
+    assert out["judge_render_hash"] == "b" * 64
+    assert out["judge_prompt_hash"] == "a" * 64
+
+
+def test_reaggregate_leaves_a_consistent_log_unwritten(tmp_path):
+    """The other direction: a log that already agrees is not rewritten.
+
+    A repair that rewrote every log each pass would churn the whole corpus and
+    make a real repair indistinguishable from noise in a diff.
+    """
+    log = _stale_log()
+    entry = log["tests"][0]
+    entry["outcome_summary"] = {
+        "per_run_outcomes": ["fail"],
+        "aggregated_dimensions": entry["runs"][0]["judge"]["dimensions"],
+        "review_dimensions": entry["runs"][0]["judge"]["dimensions"],
+    }
+    path = tmp_path / "v1_2026-10-09_00-00-00.json"
+    path.write_text(json.dumps(log), encoding="utf-8")
+    before = path.read_text(encoding="utf-8")
+
+    assert judge_regrade.reaggregate_log(path) == []
+    assert path.read_text(encoding="utf-8") == before

@@ -2431,49 +2431,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The translation is factually accurate. Birth date correctly identified as 14 March 1843 (registration 15 March). Father Jean Baptiste Lef\u00e8vre (farmer, age 30), mother Marie Anne Dubois, child Guillaume, all correctly extracted. Legitimacy properly noted. The agent correctly distinguished birth date from registration date and preserved French names. No fabricated material or unsupported claims."
+            "rationale": "The translation is factually accurate. The agent correctly identified the birth date as 14 March 1843 (the day before registration on 15 March), accurately translated key genealogical terms (cultivateur as farmer, son \u00e9pouse as his wife, d\u00e9clarant as declarant), preserved names in French form (Jean Baptiste, Guillaume, Marie Anne Dubois), and correctly identified the record as a French civil birth registration with the father as primary informant. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent addressed all required elements: translated the full record structure, identified both parents by name and relationship, noted the child's name and sex, extracted the birth date and time, identified the location (Saint-Malo), explained the registrar's role, and noted legitimacy. The genealogically significant context (cultivateur, son \u00e9pouse, d\u00e9clarant, \u00e9tat civil) was all covered. No required information was omitted."
+            "rationale": "The agent addressed all required elements: translated the full record structure, explained genealogically significant terms (officier de l'\u00e9tat civil, a comparu, cultivateur, son \u00e9pouse, d\u00e9clarant), flagged the high-value parentage source (both parents named with stated relationship), distinguished the birth date (14 March) from the registration date (15 March), and logged the translation via research_log_append. No required work was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "One MCP call made: research_log_append with projectPath and ops array containing translation tool details. The call succeeded (ok: true, logId: log_006 returned). Arguments match expected structure: language='French', recordType='civil birth registration', outcome='positive', resultsExamined=1, and full notes field with original and translation. No fixture_not_found errors. Arguments are correct."
+            "rationale": "The single MCP call (research_log_append) passed correct arguments: projectPath matched the workspace, the ops array contained a translation tool entry with language='French', recordType='civil birth registration', outcome='positive', resultsExamined=1, and the notes field captured the full original text and translation. The call succeeded with ok=true and created log_006. Arguments were semantically correct and complete."
           },
           {
             "source": "rubric",
             "name": "Accuracy",
             "score": 3,
-            "rationale": "Translation preserves genealogical meaning precisely. Occupational term 'cultivateur' correctly rendered as 'farmer/agricultural worker' with note on imprecision. Relationship term 'son \u00e9pouse' correctly identified as establishing marital relationship and legitimacy. Names kept in original French form (Jean Baptiste, Guillaume, Marie Anne Dubois). No genealogical terms were flattened or mistranslated."
+            "rationale": "Translation is faithful and preserves genealogical precision. Relationship terms (son \u00e9pouse = his wife, establishing legitimacy) are translated accurately. Occupational term (cultivateur = farmer/agricultural worker) is correctly rendered with the note that it is not a precise rank. Place names (Saint-Malo, commune) are preserved. Dates (14 March 1843 birth, 15 March 1843 registration) are accurate. No genealogical terms are distorted or mistranslated."
           },
           {
             "source": "rubric",
             "name": "Notation of uncertainty",
             "score": 3,
-            "rationale": "The agent flagged ambiguities appropriately. Noted that 'cultivateur' is not a precise occupational rank. Explained that the registrar's personal name does not appear in the excerpt. Clarified that birth location is assumed to be Saint-Malo unless stated otherwise. Flagged the distinction between birth date (14 March) and registration date (15 March). Ambiguous or potentially unclear terms were explicitly hedged."
+            "rationale": "The agent appropriately flags ambiguities and provides context. It notes that cultivateur means 'farmer or agricultural worker (not a precise occupational rank)' \u2014 hedging the occupational interpretation. It explains that the registrar's personal name does not appear in the excerpt and would typically appear in the closing formula. It clarifies that birth place is assumed to be the registration commune unless stated otherwise. Ambiguous or incomplete elements are explicitly noted rather than silently resolved."
           },
           {
             "source": "rubric",
             "name": "Genealogical context",
             "score": 3,
-            "rationale": "Agent explained genealogically significant terms with context: 'officier de l'\u00e9tat civil' identified as civil registrar and recorder; 'a comparu' noted as formulaic opening of French civil act; 'cultivateur' explained as farmer/agricultural worker; 'son \u00e9pouse' identified as establishing marital relationship and legitimacy; 'd\u00e9clarant' explained as the father making the declaration. The agent also noted this is a high-value parentage source naming both parents and their relationship, and explained the post-1792 French civil registration system context."
+            "rationale": "The agent identifies and explains genealogically significant terms with their research implications. It explains officier de l'\u00e9tat civil (civil registrar, the recorder), a comparu (formulaic opening of French civil act), son \u00e9pouse (establishes marital relationship and legitimacy), and d\u00e9clarant (the father as declarant, making him primary informant). It notes the record is post-1792 format, that the father was a first-person witness (primary-quality information), and that the mother is identified by birth surname (standard French practice). The high-value parentage source is flagged."
           },
           {
             "source": "rubric",
             "name": "Date formatting",
             "score": 3,
-            "rationale": "Dates rendered accurately in prose and ISO format. Birth date correctly identified as 14 March 1843 (1843-03-14), registration date as 15 March 1843 (1843-03-15). Birth time (6 o'clock in the morning) preserved. The agent correctly distinguished the two dates and noted their genealogical significance. France had adopted the Gregorian calendar by 1843, so no calendar flag was needed. Dates match the record exactly."
+            "rationale": "Dates are accurately rendered and properly distinguished. Birth date is correctly identified as 14 March 1843 (1843-03-14), the day before registration. Registration date is correctly identified as 15 March 1843 (1843-03-15). The agent explicitly notes these are two distinct dates and should not be conflated. Birth time (6 o'clock in the morning) is included. The record is French (post-1792 Gregorian calendar), so no calendar flag is needed. Dates are complete and accurate."
           },
           {
             "source": "rubric",
             "name": "Abbreviation expansion",
-            "score": 3,
-            "rationale": "The French civil record contains no abbreviations requiring expansion. The text uses full words throughout: 'L'an mil huit cent quarante-trois' (full year), 'maire et officier de l'\u00e9tat civil' (full titles), 'cultivateur' (full occupation), 'son \u00e9pouse' (full relationship term), 'd\u00e9clarant' (full term). No abbreviations were present in the source text, so this dimension does not apply as a defect. The agent correctly handled the text as written."
+            "score": null,
+            "rationale": "The French civil birth record provided contains no abbreviations to expand. The text uses full words throughout (L'an, mil, huit, cent, quarante-trois, maire, officier, \u00e9tat civil, comparu, cultivateur, \u00e2g\u00e9, pr\u00e9sent\u00e9, enfant, sexe, masculin, hier, heures, matin, d\u00e9clarant, \u00e9pouse, pr\u00e9nom). No abbreviations are present in the source material, so this dimension does not apply."
           }
         ],
         "review_dimensions": [
@@ -2481,49 +2481,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The translation is factually accurate. Birth date correctly identified as 14 March 1843 (registration 15 March). Father Jean Baptiste Lef\u00e8vre (farmer, age 30), mother Marie Anne Dubois, child Guillaume, all correctly extracted. Legitimacy properly noted. The agent correctly distinguished birth date from registration date and preserved French names. No fabricated material or unsupported claims."
+            "rationale": "The translation is factually accurate. The agent correctly identified the birth date as 14 March 1843 (the day before registration on 15 March), accurately translated key genealogical terms (cultivateur as farmer, son \u00e9pouse as his wife, d\u00e9clarant as declarant), preserved names in French form (Jean Baptiste, Guillaume, Marie Anne Dubois), and correctly identified the record as a French civil birth registration with the father as primary informant. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent addressed all required elements: translated the full record structure, identified both parents by name and relationship, noted the child's name and sex, extracted the birth date and time, identified the location (Saint-Malo), explained the registrar's role, and noted legitimacy. The genealogically significant context (cultivateur, son \u00e9pouse, d\u00e9clarant, \u00e9tat civil) was all covered. No required information was omitted."
+            "rationale": "The agent addressed all required elements: translated the full record structure, explained genealogically significant terms (officier de l'\u00e9tat civil, a comparu, cultivateur, son \u00e9pouse, d\u00e9clarant), flagged the high-value parentage source (both parents named with stated relationship), distinguished the birth date (14 March) from the registration date (15 March), and logged the translation via research_log_append. No required work was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "One MCP call made: research_log_append with projectPath and ops array containing translation tool details. The call succeeded (ok: true, logId: log_006 returned). Arguments match expected structure: language='French', recordType='civil birth registration', outcome='positive', resultsExamined=1, and full notes field with original and translation. No fixture_not_found errors. Arguments are correct."
+            "rationale": "The single MCP call (research_log_append) passed correct arguments: projectPath matched the workspace, the ops array contained a translation tool entry with language='French', recordType='civil birth registration', outcome='positive', resultsExamined=1, and the notes field captured the full original text and translation. The call succeeded with ok=true and created log_006. Arguments were semantically correct and complete."
           },
           {
             "source": "rubric",
             "name": "Accuracy",
             "score": 3,
-            "rationale": "Translation preserves genealogical meaning precisely. Occupational term 'cultivateur' correctly rendered as 'farmer/agricultural worker' with note on imprecision. Relationship term 'son \u00e9pouse' correctly identified as establishing marital relationship and legitimacy. Names kept in original French form (Jean Baptiste, Guillaume, Marie Anne Dubois). No genealogical terms were flattened or mistranslated."
+            "rationale": "Translation is faithful and preserves genealogical precision. Relationship terms (son \u00e9pouse = his wife, establishing legitimacy) are translated accurately. Occupational term (cultivateur = farmer/agricultural worker) is correctly rendered with the note that it is not a precise rank. Place names (Saint-Malo, commune) are preserved. Dates (14 March 1843 birth, 15 March 1843 registration) are accurate. No genealogical terms are distorted or mistranslated."
           },
           {
             "source": "rubric",
             "name": "Notation of uncertainty",
             "score": 3,
-            "rationale": "The agent flagged ambiguities appropriately. Noted that 'cultivateur' is not a precise occupational rank. Explained that the registrar's personal name does not appear in the excerpt. Clarified that birth location is assumed to be Saint-Malo unless stated otherwise. Flagged the distinction between birth date (14 March) and registration date (15 March). Ambiguous or potentially unclear terms were explicitly hedged."
+            "rationale": "The agent appropriately flags ambiguities and provides context. It notes that cultivateur means 'farmer or agricultural worker (not a precise occupational rank)' \u2014 hedging the occupational interpretation. It explains that the registrar's personal name does not appear in the excerpt and would typically appear in the closing formula. It clarifies that birth place is assumed to be the registration commune unless stated otherwise. Ambiguous or incomplete elements are explicitly noted rather than silently resolved."
           },
           {
             "source": "rubric",
             "name": "Genealogical context",
             "score": 3,
-            "rationale": "Agent explained genealogically significant terms with context: 'officier de l'\u00e9tat civil' identified as civil registrar and recorder; 'a comparu' noted as formulaic opening of French civil act; 'cultivateur' explained as farmer/agricultural worker; 'son \u00e9pouse' identified as establishing marital relationship and legitimacy; 'd\u00e9clarant' explained as the father making the declaration. The agent also noted this is a high-value parentage source naming both parents and their relationship, and explained the post-1792 French civil registration system context."
+            "rationale": "The agent identifies and explains genealogically significant terms with their research implications. It explains officier de l'\u00e9tat civil (civil registrar, the recorder), a comparu (formulaic opening of French civil act), son \u00e9pouse (establishes marital relationship and legitimacy), and d\u00e9clarant (the father as declarant, making him primary informant). It notes the record is post-1792 format, that the father was a first-person witness (primary-quality information), and that the mother is identified by birth surname (standard French practice). The high-value parentage source is flagged."
           },
           {
             "source": "rubric",
             "name": "Date formatting",
             "score": 3,
-            "rationale": "Dates rendered accurately in prose and ISO format. Birth date correctly identified as 14 March 1843 (1843-03-14), registration date as 15 March 1843 (1843-03-15). Birth time (6 o'clock in the morning) preserved. The agent correctly distinguished the two dates and noted their genealogical significance. France had adopted the Gregorian calendar by 1843, so no calendar flag was needed. Dates match the record exactly."
+            "rationale": "Dates are accurately rendered and properly distinguished. Birth date is correctly identified as 14 March 1843 (1843-03-14), the day before registration. Registration date is correctly identified as 15 March 1843 (1843-03-15). The agent explicitly notes these are two distinct dates and should not be conflated. Birth time (6 o'clock in the morning) is included. The record is French (post-1792 Gregorian calendar), so no calendar flag is needed. Dates are complete and accurate."
           },
           {
             "source": "rubric",
             "name": "Abbreviation expansion",
-            "score": 3,
-            "rationale": "The French civil record contains no abbreviations requiring expansion. The text uses full words throughout: 'L'an mil huit cent quarante-trois' (full year), 'maire et officier de l'\u00e9tat civil' (full titles), 'cultivateur' (full occupation), 'son \u00e9pouse' (full relationship term), 'd\u00e9clarant' (full term). No abbreviations were present in the source text, so this dimension does not apply as a defect. The agent correctly handled the text as written."
+            "score": null,
+            "rationale": "The French civil birth record provided contains no abbreviations to expand. The text uses full words throughout (L'an, mil, huit, cent, quarante-trois, maire, officier, \u00e9tat civil, comparu, cultivateur, \u00e2g\u00e9, pr\u00e9sent\u00e9, enfant, sexe, masculin, hier, heures, matin, d\u00e9clarant, \u00e9pouse, pr\u00e9nom). No abbreviations are present in the source material, so this dimension does not apply."
           }
         ]
       },

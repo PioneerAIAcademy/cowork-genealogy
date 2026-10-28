@@ -2504,37 +2504,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts about Hollow Creek Settlement appear in the reply or log."
+            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts or unsupported claims appear in the reply or log."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. The per-test context requirement that no template be generated was met."
+            "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing the input state required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed args matching expected_args: query 'Hollow Creek Settlement' satisfies the expected ~Hollow Creek substring expectation. The research_log_append call used live matching (matched.kind='live') and correctly structured the negative outcome entry with all required fields."
+            "rationale": "The wikipedia_search call passed query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly captured the not-found outcome with all required fields (outcome='negative', resultsExamined=0, notes=null, tool='wikipedia_search'). No critical arguments were wrong."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": null,
-            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, when wikipedia_search returns an error, no template is logged and Template fidelity does not apply. The agent correctly logged a negative entry with notes=null instead."
+            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on not-found tests no template is logged (notes=null is correct), and Template fidelity does not apply. The agent correctly logged a negative entry without a filled template."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
-            "score": null,
-            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on the not-found test the graded question of whether the query was well-aimed and the response accepted does not apply when the tool returns an error. The agent accepted the not-found response at face value and did not re-query."
+            "score": 3,
+            "rationale": "The agent sent one wikipedia_search call with query 'Hollow Creek Settlement', targeting the article the delegation named. The tool returned an error (no article found), and the agent accepted this result at face value without re-querying or attempting to override it. The response correctly reflects the tool's negative outcome."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement and the rubric's specification for the not-found test step-2 return. No extra narration, no article content, no characterization."
+            "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement for the correct reply on a not-found test. No extra narration, no mid-workflow commentary, no article content or genealogical assertions appear."
           }
         ],
         "review_dimensions": [
@@ -2542,37 +2542,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts about Hollow Creek Settlement appear in the reply or log."
+            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts or unsupported claims appear in the reply or log."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. The per-test context requirement that no template be generated was met."
+            "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing the input state required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed args matching expected_args: query 'Hollow Creek Settlement' satisfies the expected ~Hollow Creek substring expectation. The research_log_append call used live matching (matched.kind='live') and correctly structured the negative outcome entry with all required fields."
+            "rationale": "The wikipedia_search call passed query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly captured the not-found outcome with all required fields (outcome='negative', resultsExamined=0, notes=null, tool='wikipedia_search'). No critical arguments were wrong."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": null,
-            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, when wikipedia_search returns an error, no template is logged and Template fidelity does not apply. The agent correctly logged a negative entry with notes=null instead."
+            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on not-found tests no template is logged (notes=null is correct), and Template fidelity does not apply. The agent correctly logged a negative entry without a filled template."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
-            "score": null,
-            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on the not-found test the graded question of whether the query was well-aimed and the response accepted does not apply when the tool returns an error. The agent accepted the not-found response at face value and did not re-query."
+            "score": 3,
+            "rationale": "The agent sent one wikipedia_search call with query 'Hollow Creek Settlement', targeting the article the delegation named. The tool returned an error (no article found), and the agent accepted this result at face value without re-querying or attempting to override it. The response correctly reflects the tool's negative outcome."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement and the rubric's specification for the not-found test step-2 return. No extra narration, no article content, no characterization."
+            "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement for the correct reply on a not-found test. No extra narration, no mid-workflow commentary, no article content or genealogical assertions appear."
           }
         ]
       },

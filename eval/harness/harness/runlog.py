@@ -278,6 +278,78 @@ def aggregate_dimensions(
 # ---- Activated derivation (spec §6) --------------------------------------
 
 
+class _RunView:
+    """The slice of a committed run dict that the aggregators read.
+
+    `assemble_test_entry` aggregates `SingleRun` objects it has just built; a
+    regrade only ever holds the committed JSON. Rebuilding a whole `SingleRun`
+    from that JSON would mean supplying a dozen fields no aggregator looks at,
+    and would raise on any log written before one of them existed. This exposes
+    exactly the four attributes `aggregate_dimensions` and the outcome sort
+    touch, so a field added to `SingleRun` later cannot silently change what a
+    rebuild aggregates.
+    """
+
+    __slots__ = ("outcome", "judge", "validators")
+
+    def __init__(self, run: dict[str, Any]) -> None:
+        judge = run.get("judge") or {}
+        validators = run.get("validators") or {}
+        self.outcome = run.get("outcome") or ""
+        self.judge = JudgeResult(
+            skipped=bool(judge.get("skipped")),
+            dimensions=judge.get("dimensions") or [],
+            judge_cost_usd=0.0,
+        )
+        # `.get("passed")` absent -> None, not False: `aggregate_dimensions`
+        # drops a run only on `is False`, and None means validators never
+        # reached a verdict rather than that one failed.
+        self.validators = ValidatorResult(
+            passed=validators.get("passed"), results=validators.get("results") or []
+        )
+
+
+def refresh_test_entry_outcome(entry: dict[str, Any]) -> str | None:
+    """Recompute a committed test entry's derived fields from its own `runs[]`.
+
+    Returns the entry's outcome after the rebuild, or None when it has no runs.
+
+    A regrade rewrites `runs[].judge.dimensions` and `runs[].outcome` and
+    everything derived from them goes stale in the same write. Before this
+    existed `judge_regrade` refreshed `outcome` alone, so a regraded entry
+    could read `outcome: "fail"` beside an `outcome_summary` still reporting
+    `per_run_outcomes: ["pass"]` and the pre-regrade dimension scores. That is
+    not cosmetic: `skill_gate` and the dashboards read `aggregated_dimensions`,
+    so a stale summary scores the suite against the grading it just replaced.
+
+    The derivation mirrors `assemble_test_entry` exactly — same aggregator,
+    same outcome-first sort, same `review_dimensions` fallback — because any
+    second ranking here would make a regraded entry disagree with a freshly
+    run one. `flaky` is included: it is derived from `per_run_outcomes` and
+    went stale with it.
+    """
+    runs = entry.get("runs") or []
+    if not runs:
+        return None
+    views = [_RunView(r) for r in runs]
+    per_run_outcomes = [v.outcome for v in views]
+    outcome = aggregate_per_run_outcome(per_run_outcomes)
+
+    by_outcome = sorted(views, key=lambda v: v.outcome != outcome)
+    aggregated_dims = aggregate_dimensions(by_outcome)
+    review_dims = aggregated_dims or aggregate_dimensions(
+        by_outcome, include_validator_failed=True
+    )
+
+    entry["outcome"] = outcome
+    entry["flaky"] = len(set(per_run_outcomes)) > 1
+    summary = entry.setdefault("outcome_summary", {})
+    summary["per_run_outcomes"] = per_run_outcomes
+    summary["aggregated_dimensions"] = aggregated_dims
+    summary["review_dimensions"] = review_dims
+    return outcome
+
+
 def derive_activated(
     *,
     skill: str,

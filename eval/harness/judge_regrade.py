@@ -71,8 +71,11 @@ from harness.scenario_brief import (
 )
 from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
-from harness.outcomes import aggregate_per_run_outcome
-from harness.runlog import _replace_with_retry, validate_run_log
+from harness.runlog import (
+    _replace_with_retry,
+    refresh_test_entry_outcome,
+    validate_run_log,
+)
 from harness.versioning import select_latest_full_skill_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -722,16 +725,19 @@ def regrade_run_log(
             run_entry["outcome"] = new_outcome
             result.runs_regraded += 1
 
-        # Reuse the project's canonical aggregator rather than inventing a
+        # Reuse the project's canonical rebuild rather than inventing a
         # ranking; keeps the regrade's per-test outcome identical to a fresh
-        # suite's (modal with tiebreak-down semantics).
+        # suite's (modal with tiebreak-down semantics) and refreshes
+        # everything else derived from the runs in the same write. Updating
+        # `outcome` alone left `per_run_outcomes`, `flaky` and the dimension
+        # summaries reporting the grading the regrade had just replaced, and
+        # `skill_gate` reads `aggregated_dimensions`.
         if new_outcomes:
-            aggregated = aggregate_per_run_outcome(new_outcomes)
-            if aggregated != old_outcome:
+            aggregated = refresh_test_entry_outcome(test_entry)
+            if aggregated is not None and aggregated != old_outcome:
                 result.tests_outcome_moved.append(
                     (test_id, old_outcome or "", aggregated)
                 )
-                test_entry["outcome"] = aggregated
 
     # Stamp envelope. Both fingerprints: a regrade is what clears rule 2b, and
     # rule 2b has a prompt half and a render half.
@@ -752,6 +758,76 @@ def regrade_run_log(
     tmp.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
     _replace_with_retry(tmp, path)
     return result
+
+
+# ---- Re-aggregate (no model call) -----------------------------------------
+
+
+def _consequential(entry: dict[str, Any]) -> tuple[Any, ...]:
+    """The part of a test entry a reader acts on, for change detection.
+
+    Scores, not rationales: `skill_gate` builds its comparison map from
+    `aggregated_dimensions[].score` and never looks at the prose beside it.
+    """
+    summary = entry.get("outcome_summary") or {}
+    return (
+        entry.get("outcome"),
+        entry.get("flaky"),
+        tuple(summary.get("per_run_outcomes") or []),
+        tuple(
+            (d.get("source", ""), d.get("name", ""), d.get("score"))
+            for d in summary.get("aggregated_dimensions") or []
+        ),
+        tuple(
+            (d.get("source", ""), d.get("name", ""), d.get("score"))
+            for d in summary.get("review_dimensions") or []
+        ),
+    )
+
+
+def reaggregate_log(path: Path) -> list[str]:
+    """Rebuild every test entry's derived fields from the grades already stored.
+
+    Zero model calls, zero cost: `runs[].judge.dimensions` and `runs[].outcome`
+    are read, never re-judged. This repairs logs written by a regrade that
+    refreshed `outcome` alone and left `per_run_outcomes`, `flaky` and the
+    dimension summaries describing the grading it had replaced.
+
+    The envelope is deliberately untouched. Stamping `judge_render_hash` here
+    would certify a suite as graded by the current render code when nothing
+    re-graded it — exactly the false ACTIVE this fingerprint exists to prevent,
+    and it would silently un-refuse a suite rule 2 is holding stale.
+
+    Returns the test ids whose stored entry changed; empty means the file was
+    already consistent and nothing is written.
+    """
+    log = json.loads(path.read_text(encoding="utf-8"))
+    changed: list[str] = []
+    for test_entry in log.get("tests") or []:
+        snapshot = copy.deepcopy(test_entry)
+        before = _consequential(test_entry)
+        if refresh_test_entry_outcome(test_entry) is None:
+            continue
+        if _consequential(test_entry) == before:
+            # Only the representative rationale moved. `aggregate_dimensions`
+            # picks the first dim carrying the modal score, so the prose
+            # follows run order and drifts whenever an earlier regrade left a
+            # summary behind — on suites this pass never graded, and years of
+            # them. Nothing reads it: `skill_gate` takes `score` alone, and
+            # `review_sample` reads the runs. Rewriting it anyway would churn
+            # thousands of lines across suites nothing re-judged and bury the
+            # repair that matters, so the stored entry stands.
+            test_entry.clear()
+            test_entry.update(snapshot)
+            continue
+        changed.append(str(test_entry.get("test_id")))
+    if not changed:
+        return []
+    validate_run_log(log)
+    tmp = path.parent / (path.name + ".tmp")
+    tmp.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
+    _replace_with_retry(tmp, path)
+    return changed
 
 
 # ---- Dry-run (no model call) ----------------------------------------------
@@ -905,6 +981,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Render + hash every judge prompt; no model call. Used by make harness-test.",
     )
+    parser.add_argument(
+        "--reaggregate",
+        action="store_true",
+        help=(
+            "Rebuild each committed log's derived fields from the grades already "
+            "stored. No model call, no cost, and the envelope fingerprints are "
+            "left alone, so a refused suite stays refused."
+        ),
+    )
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument(
         "--runlogs-root",
@@ -932,6 +1017,20 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--scenario and --slot readme require --runlogs-root")
     force_readme = args.slot == "readme"
     only_scenarios = set(args.scenario) if args.scenario else None
+
+    if args.reaggregate:
+        if scratch_root is not None:
+            parser.error("--reaggregate does not take --runlogs-root")
+        targets = collect_regradeable_logs(only_skill=args.skill, scratch=True)
+        touched = 0
+        for target in targets:
+            changed = reaggregate_log(target.path)
+            if changed:
+                touched += 1
+                print(f"  {target.skill}: {len(changed)} test(s) re-aggregated")
+        if touched == 0:
+            print("Every committed run log's summary already matches its runs.")
+        return 0
 
     if scratch_root is not None:
         return _main_scratch(

@@ -11422,49 +11422,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 2,
-            "rationale": "Claude correctly identified the core birthplace conflict (Germany vs. Ireland) and appropriately refused to create a confident or probable link. However, the response contains a factual error: Claude states 'I1 has none attested in the tree' regarding birthplace, when the before-state and the per-test context explicitly establish that the tree person attests Ireland as birthplace. Claude's own rationale in the refused append call claims 'I1 holds no sourced birthplace fact' \u2014 contradicting the project context that Ireland is attested. This mischaracterization of the tree state is a concrete incorrect claim, though the ultimate decision (refusing confident/probable and asking the user) was correct."
+            "rationale": "Claude correctly identified the core birthplace conflict (Germany vs. Ireland) and appropriately refused to create a confident or probable link. However, Claude did not actually create any person_evidence entry\u2014not even a speculative one. The per-test context states 'A speculative link WITH the conflict named is equally correct' to the approach of surfacing and asking. Claude surfaced the conflict clearly and asked for user confirmation, which is a valid outcome, but the response stops short of the full task: it neither persisted a speculative link nor completed the linking action. The refusal of the research_append call was correct (the tool enforced the policy), but Claude's subsequent response only presents the conflict without resolving it in either direction\u2014neither creating the speculative link nor explicitly stating why it is holding the link pending user input. This is partially correct in identifying the problem but incomplete in execution."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the task: retrieved the assertion a_002 and related a_005, called same_person to obtain the score (0.85), identified the core-identifier conflict between the record's Germany birthplace and the tree's Ireland attestation, correctly refused to create a confident or probable link, and asked the user for confirmation before proceeding. The per-test context explicitly states that 'presenting the conflict and asking the user, WITHOUT creating any pe_ entry, is a correct outcome here and must not be marked down.' Claude surfaced the conflict explicitly and showed the tier reasoning."
+            "rationale": "Claude fully addressed the core requirement: surfacing the birthplace conflict explicitly and explaining why it caps confidence at speculative. The per-test context explicitly states 'presenting the conflict and asking the user, WITHOUT creating any pe_ entry, is a correct outcome here and must not be marked down.' Claude identified both assertions (a_002 and a_005), retrieved the relevant data, called same_person for both, and when the research_append was refused, correctly surfaced the conflict with a detailed explanation of the Germany/Ireland contradiction and its implications. The response includes a clear table comparing the record and tree data, addresses both interpretations (same person with error vs. different person), and asks for user confirmation\u2014all required elements for this scenario."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All MCP tool calls passed correct arguments. project_context, research_query calls (for a_002, person_evidence checks, source assertions, person_evidence for I1), and same_person calls for both a_002 and a_005 all matched expected patterns. The same_person calls correctly omitted recordRole for the assertion's own party (principal) and passed the right assertionId and treePersonId. The research_append call that failed did so due to validation (confidence tier conflict), not argument mismatch \u2014 the tool correctly rejected the payload and Claude responded by calling same_person for a_005 as instructed."
+            "rationale": "All MCP tool calls passed arguments matching expected values. project_context, research_query calls (for a_002, a_005, and source src_002), and same_person calls all used correct identifiers and parameters. The same_person calls correctly omitted recordRole for the assertion's own party (a_002 and a_005 are both 'principal' role), which is the correct form per the rubric. The research_append call that was refused had correct structure; the refusal was due to policy enforcement (confidence tier), not malformed arguments. No tool calls landed in fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Confidence calibration",
-            "score": 3,
-            "rationale": "Claude correctly calibrated confidence to the evidence strength. Despite the high same_person score (0.85), Claude recognized that a core-identifier conflict (birthplace: Germany vs. Ireland) caps the link at speculative, not confident or probable. The per-test context confirms this is a credible contradiction from a baptismal record with a senior informant (officiating minister), making it a genuine identity-evidence conflict. Claude refused to create confident/probable entries and appropriately asked the user, demonstrating correct tier discipline."
+            "score": 2,
+            "rationale": "Claude correctly identified that the birthplace conflict (Germany vs. Ireland) caps the link at speculative and refused to create confident or probable links. However, Claude did not actually persist any person_evidence entry\u2014not even a speculative one. The per-test context allows either 'a speculative link WITH the conflict named' OR 'surfacing and asking the user' as correct outcomes. Claude chose the latter (surfacing and asking), which is valid. The partial score reflects that Claude's reasoning is sound but the execution is incomplete: the agent did not follow through by either creating the speculative link with the conflict explicitly named in the rationale, or by clearly stating 'I am holding this pending your confirmation' with a definitive next step. The conflict analysis itself is correct and well-calibrated."
           },
           {
             "source": "rubric",
             "name": "Rationale quality",
-            "score": 2,
-            "rationale": "Claude's rationale cites specific matching attributes (exact name match, same_person score 0.85, gender match) and explicitly surfaces the birthplace conflict. However, the rationale contains a significant omission: it does not adequately address why competing candidates were ruled out or discuss whether other Patrick Flynns of the era might exist. The response does present the conflict clearly in the table and asks the user to disambiguate, but the rationale lacks the full disambiguation step that would explain why this record, despite the high score, cannot be confidently linked without resolving the birthplace discrepancy."
+            "score": 3,
+            "rationale": "Claude's rationale cites multiple specific matching attributes: exact name match (Patrick Flynn = Patrick Flynn), same_person score of 0.85 (strong), matching birth year (1845), and matching 1850 township residence. It explicitly addresses the core conflict: birthplace recorded as 'Trier, Rhine Province, Germany' in the record vs. 'Ireland' in the tree. The rationale explains why this is a real contradiction (different countries, not a spelling variant) and presents two competing interpretations (same person with error vs. different person). The disambiguation step is present: Claude notes that the high score and name match suggest the record is probably about a Patrick Flynn, but the birthplace conflict raises the possibility of a different person. The rationale does not merely assert identity; it inspects the alternatives."
           },
           {
             "source": "rubric",
             "name": "Multi-person awareness",
             "score": null,
-            "rationale": "N/A \u2014 the assertion a_002 is a name fact for Patrick Flynn (principal role), not a relationship assertion. No other person is implied by the assertion itself. The related assertion a_005 (birth fact) also does not imply a relationship. The scenario does not involve household members or relationship-implying assertions that would require dual person_evidence links."
+            "rationale": "This dimension does not apply. The assertion a_002 is a name assertion for Patrick Flynn (principal role), and a_005 is a birth assertion for the same persona. Neither assertion implies a relationship to another person (no parent, spouse, or child is named in these assertions). The baptism record does not establish a household or name other family members. Multi-person awareness is graded only when an assertion implies a relationship; this scenario contains no such relationship assertions."
           },
           {
             "source": "rubric",
             "name": "Person minting and connecting edges",
             "score": null,
-            "rationale": "N/A \u2014 the scenario involves linking an existing assertion to an existing tree person (I1). No new person minting is required, and no household record is present that would require edge creation. The baptism record is a non-household record (a single-person event), so edges are not owed per the rubric guidance."
+            "rationale": "This dimension does not apply. The scenario involves linking an existing assertion (a_002, a_005) to an existing tree person (I1), not minting a new person. The record persona (CP1) already exists in the sidecar. No new person needed to be created, and no household members were absent from the tree. The skill was asked to link an assertion to the right person, not to materialize new persons or build household edges. This dimension is graded only when an unmatched persona or household members absent from the tree require minting."
           },
           {
             "source": "rubric",
             "name": "Score discipline",
             "score": 3,
-            "rationale": "Claude correctly invoked same_person for both a_002 and a_005, obtaining the score 0.85 for each. The score was treated as an input that informed the analysis (strong match on name and score) but did not override the qualitative conflict (birthplace contradiction). Claude correctly recognized that a high score does not auto-link past a core-identifier conflict, and the score informed but did not dictate the decision to refuse confident/probable and ask the user. The tool was called appropriately for both assertions, and the score was used in proper discipline."
+            "rationale": "Claude correctly invoked same_person for both a_002 and a_005 against tree person I1, obtaining a score of 0.85 for each. The score was treated as an input that informed the analysis, not as a replacement for correlation analysis. Claude noted the high score but did not allow it to override the qualitative conflict: the birthplace contradiction caps confidence at speculative regardless of the 0.85 score. Claude correctly omitted recordRole for both calls (both assertions are 'principal' role on the same record persona CP1). The score was recorded and cited in the rationale but did not dictate the outcome; the conflict analysis took precedence, which is the correct application of score discipline."
           }
         ],
         "review_dimensions": [
@@ -11472,49 +11472,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 2,
-            "rationale": "Claude correctly identified the core birthplace conflict (Germany vs. Ireland) and appropriately refused to create a confident or probable link. However, the response contains a factual error: Claude states 'I1 has none attested in the tree' regarding birthplace, when the before-state and the per-test context explicitly establish that the tree person attests Ireland as birthplace. Claude's own rationale in the refused append call claims 'I1 holds no sourced birthplace fact' \u2014 contradicting the project context that Ireland is attested. This mischaracterization of the tree state is a concrete incorrect claim, though the ultimate decision (refusing confident/probable and asking the user) was correct."
+            "rationale": "Claude correctly identified the core birthplace conflict (Germany vs. Ireland) and appropriately refused to create a confident or probable link. However, Claude did not actually create any person_evidence entry\u2014not even a speculative one. The per-test context states 'A speculative link WITH the conflict named is equally correct' to the approach of surfacing and asking. Claude surfaced the conflict clearly and asked for user confirmation, which is a valid outcome, but the response stops short of the full task: it neither persisted a speculative link nor completed the linking action. The refusal of the research_append call was correct (the tool enforced the policy), but Claude's subsequent response only presents the conflict without resolving it in either direction\u2014neither creating the speculative link nor explicitly stating why it is holding the link pending user input. This is partially correct in identifying the problem but incomplete in execution."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the task: retrieved the assertion a_002 and related a_005, called same_person to obtain the score (0.85), identified the core-identifier conflict between the record's Germany birthplace and the tree's Ireland attestation, correctly refused to create a confident or probable link, and asked the user for confirmation before proceeding. The per-test context explicitly states that 'presenting the conflict and asking the user, WITHOUT creating any pe_ entry, is a correct outcome here and must not be marked down.' Claude surfaced the conflict explicitly and showed the tier reasoning."
+            "rationale": "Claude fully addressed the core requirement: surfacing the birthplace conflict explicitly and explaining why it caps confidence at speculative. The per-test context explicitly states 'presenting the conflict and asking the user, WITHOUT creating any pe_ entry, is a correct outcome here and must not be marked down.' Claude identified both assertions (a_002 and a_005), retrieved the relevant data, called same_person for both, and when the research_append was refused, correctly surfaced the conflict with a detailed explanation of the Germany/Ireland contradiction and its implications. The response includes a clear table comparing the record and tree data, addresses both interpretations (same person with error vs. different person), and asks for user confirmation\u2014all required elements for this scenario."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All MCP tool calls passed correct arguments. project_context, research_query calls (for a_002, person_evidence checks, source assertions, person_evidence for I1), and same_person calls for both a_002 and a_005 all matched expected patterns. The same_person calls correctly omitted recordRole for the assertion's own party (principal) and passed the right assertionId and treePersonId. The research_append call that failed did so due to validation (confidence tier conflict), not argument mismatch \u2014 the tool correctly rejected the payload and Claude responded by calling same_person for a_005 as instructed."
+            "rationale": "All MCP tool calls passed arguments matching expected values. project_context, research_query calls (for a_002, a_005, and source src_002), and same_person calls all used correct identifiers and parameters. The same_person calls correctly omitted recordRole for the assertion's own party (a_002 and a_005 are both 'principal' role), which is the correct form per the rubric. The research_append call that was refused had correct structure; the refusal was due to policy enforcement (confidence tier), not malformed arguments. No tool calls landed in fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Confidence calibration",
-            "score": 3,
-            "rationale": "Claude correctly calibrated confidence to the evidence strength. Despite the high same_person score (0.85), Claude recognized that a core-identifier conflict (birthplace: Germany vs. Ireland) caps the link at speculative, not confident or probable. The per-test context confirms this is a credible contradiction from a baptismal record with a senior informant (officiating minister), making it a genuine identity-evidence conflict. Claude refused to create confident/probable entries and appropriately asked the user, demonstrating correct tier discipline."
+            "score": 2,
+            "rationale": "Claude correctly identified that the birthplace conflict (Germany vs. Ireland) caps the link at speculative and refused to create confident or probable links. However, Claude did not actually persist any person_evidence entry\u2014not even a speculative one. The per-test context allows either 'a speculative link WITH the conflict named' OR 'surfacing and asking the user' as correct outcomes. Claude chose the latter (surfacing and asking), which is valid. The partial score reflects that Claude's reasoning is sound but the execution is incomplete: the agent did not follow through by either creating the speculative link with the conflict explicitly named in the rationale, or by clearly stating 'I am holding this pending your confirmation' with a definitive next step. The conflict analysis itself is correct and well-calibrated."
           },
           {
             "source": "rubric",
             "name": "Rationale quality",
-            "score": 2,
-            "rationale": "Claude's rationale cites specific matching attributes (exact name match, same_person score 0.85, gender match) and explicitly surfaces the birthplace conflict. However, the rationale contains a significant omission: it does not adequately address why competing candidates were ruled out or discuss whether other Patrick Flynns of the era might exist. The response does present the conflict clearly in the table and asks the user to disambiguate, but the rationale lacks the full disambiguation step that would explain why this record, despite the high score, cannot be confidently linked without resolving the birthplace discrepancy."
+            "score": 3,
+            "rationale": "Claude's rationale cites multiple specific matching attributes: exact name match (Patrick Flynn = Patrick Flynn), same_person score of 0.85 (strong), matching birth year (1845), and matching 1850 township residence. It explicitly addresses the core conflict: birthplace recorded as 'Trier, Rhine Province, Germany' in the record vs. 'Ireland' in the tree. The rationale explains why this is a real contradiction (different countries, not a spelling variant) and presents two competing interpretations (same person with error vs. different person). The disambiguation step is present: Claude notes that the high score and name match suggest the record is probably about a Patrick Flynn, but the birthplace conflict raises the possibility of a different person. The rationale does not merely assert identity; it inspects the alternatives."
           },
           {
             "source": "rubric",
             "name": "Multi-person awareness",
             "score": null,
-            "rationale": "N/A \u2014 the assertion a_002 is a name fact for Patrick Flynn (principal role), not a relationship assertion. No other person is implied by the assertion itself. The related assertion a_005 (birth fact) also does not imply a relationship. The scenario does not involve household members or relationship-implying assertions that would require dual person_evidence links."
+            "rationale": "This dimension does not apply. The assertion a_002 is a name assertion for Patrick Flynn (principal role), and a_005 is a birth assertion for the same persona. Neither assertion implies a relationship to another person (no parent, spouse, or child is named in these assertions). The baptism record does not establish a household or name other family members. Multi-person awareness is graded only when an assertion implies a relationship; this scenario contains no such relationship assertions."
           },
           {
             "source": "rubric",
             "name": "Person minting and connecting edges",
             "score": null,
-            "rationale": "N/A \u2014 the scenario involves linking an existing assertion to an existing tree person (I1). No new person minting is required, and no household record is present that would require edge creation. The baptism record is a non-household record (a single-person event), so edges are not owed per the rubric guidance."
+            "rationale": "This dimension does not apply. The scenario involves linking an existing assertion (a_002, a_005) to an existing tree person (I1), not minting a new person. The record persona (CP1) already exists in the sidecar. No new person needed to be created, and no household members were absent from the tree. The skill was asked to link an assertion to the right person, not to materialize new persons or build household edges. This dimension is graded only when an unmatched persona or household members absent from the tree require minting."
           },
           {
             "source": "rubric",
             "name": "Score discipline",
             "score": 3,
-            "rationale": "Claude correctly invoked same_person for both a_002 and a_005, obtaining the score 0.85 for each. The score was treated as an input that informed the analysis (strong match on name and score) but did not override the qualitative conflict (birthplace contradiction). Claude correctly recognized that a high score does not auto-link past a core-identifier conflict, and the score informed but did not dictate the decision to refuse confident/probable and ask the user. The tool was called appropriately for both assertions, and the score was used in proper discipline."
+            "rationale": "Claude correctly invoked same_person for both a_002 and a_005 against tree person I1, obtaining a score of 0.85 for each. The score was treated as an input that informed the analysis, not as a replacement for correlation analysis. Claude noted the high score but did not allow it to override the qualitative conflict: the birthplace contradiction caps confidence at speculative regardless of the 0.85 score. Claude correctly omitted recordRole for both calls (both assertions are 'principal' role on the same record persona CP1). The score was recorded and cited in the rationale but did not dictate the outcome; the conflict analysis took precedence, which is the correct application of score discipline."
           }
         ]
       },
@@ -17940,56 +17940,56 @@
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "pass"
+          "partial"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and called same_person for both parent assertions (a_006 and a_008) before linking them to existing tree persons I1 and I2. All 11 person_evidence entries were created with appropriate confidence levels and match_scores. The groom (I3) was correctly minted as a new person with circular match_score null. The father's unindexed surname was properly disclosed in rationales. The mother's exact name match was supported by the obtained score (0.89). No fabricated material or unsupported claims appear in the persisted entries."
+            "rationale": "The skill correctly invoked same_person for both parent assertions (a_006 and a_008) before creating person_evidence links, obtaining scores 0.58 and 0.89 respectively. All 11 person_evidence entries were created with appropriate match_score values and confidence tiers. John Flynn (I3) was minted correctly as a new person. The father's unindexed surname was properly disclosed in rationales. No fabricated material; all claims are grounded in tool responses and the record data."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "All nine assertions (a_001 through a_009) were linked to appropriate persons. The groom and his facts were materialized and linked at probable confidence. Both parents were scored via same_person and linked with disclosed match_scores. Relationship assertions were handled on both sides (groom-side and parent-side links created for a_004 and a_005). The skill deferred ParentChild edges correctly, noting this is a marriage register not a household record. All required steps from the scenario were completed."
+            "rationale": "All nine assertions (a_001\u2013a_009) were linked to persons. John Flynn (groom) was materialized as I3. Both parents (I1 and I2) were linked with person_evidence entries. Materialized facts were written for I1 (father name) and I2 (mother source ref). Warnings were checked and explained. The skill addressed every assertion the input state required."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All same_person calls used the correct project-relative form with projectPath, assertionId, and treePersonId. Calls for a_006 and a_008 (the parent assertions) correctly omitted recordRole for the assertion's own party. Calls for a_004 and a_005 (relationship assertions) correctly included recordRole (father_of_groom, mother_of_groom) to score the second party. The materialize_facts calls correctly specified recordRole for each person. No tool calls landed in fixture_not_found; all matched successfully."
+            "rationale": "All same_person calls used the correct project-relative form with projectPath, assertionId, and treePersonId. Calls for a_006 and a_008 correctly targeted I1 and I2 respectively. Calls for a_004 and a_005 (relationship assertions) correctly included recordRole (father_of_groom, mother_of_groom) to score the second party. Calls for a_007 and a_009 (sex assertions on the parent personas) correctly omitted recordRole since they concern the assertion's own party. All calls matched expected_args semantically."
           },
           {
             "source": "rubric",
             "name": "Confidence calibration",
-            "score": 3,
-            "rationale": "Confidence tiers are correctly calibrated to evidence strength. The groom (I3) is scored 'probable' \u2014 appropriate for a single record with no independent corroboration and no tree candidate. The father (I1) is scored 'confident' with match_score 0.58, justified by the spousal cross-corroboration (mother's exact match to I2) and given-name match, despite the unindexed surname. The mother (I2) is scored 'confident' with match_score 0.89, supported by exact name match and the score. No confidence tier is inverted or over-claimed; each is grounded in the evidence obtained."
+            "score": 2,
+            "rationale": "The mother's links (a_008, a_009) are correctly scored 'confident' with match_score 0.89 \u2014 exact name match with independent corroboration. However, the father's links (a_006, a_007, a_004 father-side) are scored 'confident' with match_score 0.58, which is problematic. The father's surname was never indexed (unaccounted-for name element), and per the rubric's threshold table, this caps confidence at 'probable' absent independent corroboration. A score of 0.58 (below typical confidence thresholds) does not independently support 'confident' \u2014 the score itself signals weakness. The rationale acknowledges the unindexed surname and the spousal cross-reference but then claims 'confident' anyway, inverting the rule: a thin score (0.58) on a thin subject (unsourced stub) with a missing name element should yield 'probable', not 'confident'. This is a one-tier over-claim."
           },
           {
             "source": "rubric",
             "name": "Rationale quality",
             "score": 3,
-            "rationale": "Rationales cite specific matching attributes: name matches (given name 'Thomas' for father, exact 'Bridget Sheehy' for mother), the unindexed surname gap for the father, the spousal cross-corroboration (mother's exact match to I1's spouse I2), and the obtained match_scores (0.58 and 0.89). Rationales explain why the father's unindexed surname does not constitute a conflict and why the spousal pairing strengthens the father's match. Circular scoring for the groom is explicitly noted. Disambiguation is addressed through the spousal cross-reference and score disclosure."
+            "rationale": "Rationales cite specific matching attributes: name ('Thomas' matches I1; 'Bridget Sheehy' exact match to I2), location (Schuylkill County, PA, 1887), and family context (spousal cross-identification: groom names both parents together, and they correspond to the known couple I1\u2013I2). The father's rationale explicitly addresses the missing surname element and explains why it is not a conflict. Competing candidates are implicitly ruled out by the exact/near-exact matches and the household coherence. Rationales are substantive, not generic."
           },
           {
             "source": "rubric",
             "name": "Multi-person awareness",
             "score": 3,
-            "rationale": "All relationship-implying assertions have both-side links. Assertion a_004 (groom is child of father) created pe_004 (groom I3 side) and pe_005 (father I1 side). Assertion a_005 (groom is child of mother) created pe_006 (groom I3 side) and pe_007 (mother I2 side). Each relationship assertion is represented from both the child's and parent's perspective in the person_evidence entries."
+            "rationale": "Relationship assertions (a_004 'child of father', a_005 'child of mother') generated person_evidence entries for both sides: groom I3 as child, and parents I1/I2 as parents. Each relationship-implying assertion has two corresponding pe_ entries \u2014 one for each person in the relationship. The skill correctly recognized that a_004 and a_005 bear on both the groom and the parents."
           },
           {
             "source": "rubric",
             "name": "Person minting and connecting edges",
             "score": 3,
-            "rationale": "The groom (I3) was correctly minted via materialize_facts with a sourced name and source-ref attached. Both parents (I1, I2) were enriched via materialize_facts with source-refs added (I1 received a new sourced name 'Thomas [not indexed]'; I2's existing name was matched and source-ref attached). ParentChild edges were correctly deferred because this is a marriage register, not a household record \u2014 the skill explicitly noted this in the response. No edges were written; proof-conclusion will handle that step. The household skeleton is not applicable here (non-household record)."
+            "rationale": "John Flynn (I3) was minted via materialize_facts with a sourced name and source ref (pe_001 shows name added with ref attached). The groom's persona was linked via person_evidence entries (pe_001\u2013pe_004). Parents I1 and I2 were enriched via materialize_facts with sourced facts: I1 received a sourced name 'Thomas [not indexed]' and ref; I2 received a source ref. The skill correctly deferred ParentChild edges to proof-conclusion, noting that this is a marriage register (non-household record), so edges are not owed at this stage. The rationale explicitly states this deferral and the reason."
           },
           {
             "source": "rubric",
             "name": "Score discipline",
             "score": 3,
-            "rationale": "same_person was invoked for both parent assertions (a_006 and a_008) where tree candidates existed, as required. The scores (0.58 for father, 0.89 for mother) were obtained and recorded in match_score fields. The scores informed but did not override correlation analysis: the father's low score (0.58) was acknowledged as reflecting a thin subject and unindexed surname, yet confidence remained 'confident' because qualitative correlation (spousal cross-corroboration) was strong. The mother's high score (0.89) aligned with the exact name match. Scores were not treated as verdicts; they were integrated into the rationale alongside qualitative factors."
+            "rationale": "same_person was invoked for both parent assertions (a_006, a_008) and for the relationship assertions (a_004, a_005) that name those parents. Scores (0.58 for father, 0.89 for mother) were obtained and recorded in match_score fields. The scores informed confidence decisions \u2014 the mother's high score (0.89) supported 'confident', and the father's lower score (0.58) was disclosed and factored into the rationale. The skill did not let the score override qualitative correlation; rather, it used the score as one input among others (name match, spousal cross-reference, unindexed surname). The groom's circular case (I3 minted from G1) was correctly handled: same_person was called but the circular result (0.97) was not used to elevate the groom's confidence above 'probable'."
           }
         ],
         "review_dimensions": [
@@ -17997,49 +17997,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and called same_person for both parent assertions (a_006 and a_008) before linking them to existing tree persons I1 and I2. All 11 person_evidence entries were created with appropriate confidence levels and match_scores. The groom (I3) was correctly minted as a new person with circular match_score null. The father's unindexed surname was properly disclosed in rationales. The mother's exact name match was supported by the obtained score (0.89). No fabricated material or unsupported claims appear in the persisted entries."
+            "rationale": "The skill correctly invoked same_person for both parent assertions (a_006 and a_008) before creating person_evidence links, obtaining scores 0.58 and 0.89 respectively. All 11 person_evidence entries were created with appropriate match_score values and confidence tiers. John Flynn (I3) was minted correctly as a new person. The father's unindexed surname was properly disclosed in rationales. No fabricated material; all claims are grounded in tool responses and the record data."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "All nine assertions (a_001 through a_009) were linked to appropriate persons. The groom and his facts were materialized and linked at probable confidence. Both parents were scored via same_person and linked with disclosed match_scores. Relationship assertions were handled on both sides (groom-side and parent-side links created for a_004 and a_005). The skill deferred ParentChild edges correctly, noting this is a marriage register not a household record. All required steps from the scenario were completed."
+            "rationale": "All nine assertions (a_001\u2013a_009) were linked to persons. John Flynn (groom) was materialized as I3. Both parents (I1 and I2) were linked with person_evidence entries. Materialized facts were written for I1 (father name) and I2 (mother source ref). Warnings were checked and explained. The skill addressed every assertion the input state required."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All same_person calls used the correct project-relative form with projectPath, assertionId, and treePersonId. Calls for a_006 and a_008 (the parent assertions) correctly omitted recordRole for the assertion's own party. Calls for a_004 and a_005 (relationship assertions) correctly included recordRole (father_of_groom, mother_of_groom) to score the second party. The materialize_facts calls correctly specified recordRole for each person. No tool calls landed in fixture_not_found; all matched successfully."
+            "rationale": "All same_person calls used the correct project-relative form with projectPath, assertionId, and treePersonId. Calls for a_006 and a_008 correctly targeted I1 and I2 respectively. Calls for a_004 and a_005 (relationship assertions) correctly included recordRole (father_of_groom, mother_of_groom) to score the second party. Calls for a_007 and a_009 (sex assertions on the parent personas) correctly omitted recordRole since they concern the assertion's own party. All calls matched expected_args semantically."
           },
           {
             "source": "rubric",
             "name": "Confidence calibration",
-            "score": 3,
-            "rationale": "Confidence tiers are correctly calibrated to evidence strength. The groom (I3) is scored 'probable' \u2014 appropriate for a single record with no independent corroboration and no tree candidate. The father (I1) is scored 'confident' with match_score 0.58, justified by the spousal cross-corroboration (mother's exact match to I2) and given-name match, despite the unindexed surname. The mother (I2) is scored 'confident' with match_score 0.89, supported by exact name match and the score. No confidence tier is inverted or over-claimed; each is grounded in the evidence obtained."
+            "score": 2,
+            "rationale": "The mother's links (a_008, a_009) are correctly scored 'confident' with match_score 0.89 \u2014 exact name match with independent corroboration. However, the father's links (a_006, a_007, a_004 father-side) are scored 'confident' with match_score 0.58, which is problematic. The father's surname was never indexed (unaccounted-for name element), and per the rubric's threshold table, this caps confidence at 'probable' absent independent corroboration. A score of 0.58 (below typical confidence thresholds) does not independently support 'confident' \u2014 the score itself signals weakness. The rationale acknowledges the unindexed surname and the spousal cross-reference but then claims 'confident' anyway, inverting the rule: a thin score (0.58) on a thin subject (unsourced stub) with a missing name element should yield 'probable', not 'confident'. This is a one-tier over-claim."
           },
           {
             "source": "rubric",
             "name": "Rationale quality",
             "score": 3,
-            "rationale": "Rationales cite specific matching attributes: name matches (given name 'Thomas' for father, exact 'Bridget Sheehy' for mother), the unindexed surname gap for the father, the spousal cross-corroboration (mother's exact match to I1's spouse I2), and the obtained match_scores (0.58 and 0.89). Rationales explain why the father's unindexed surname does not constitute a conflict and why the spousal pairing strengthens the father's match. Circular scoring for the groom is explicitly noted. Disambiguation is addressed through the spousal cross-reference and score disclosure."
+            "rationale": "Rationales cite specific matching attributes: name ('Thomas' matches I1; 'Bridget Sheehy' exact match to I2), location (Schuylkill County, PA, 1887), and family context (spousal cross-identification: groom names both parents together, and they correspond to the known couple I1\u2013I2). The father's rationale explicitly addresses the missing surname element and explains why it is not a conflict. Competing candidates are implicitly ruled out by the exact/near-exact matches and the household coherence. Rationales are substantive, not generic."
           },
           {
             "source": "rubric",
             "name": "Multi-person awareness",
             "score": 3,
-            "rationale": "All relationship-implying assertions have both-side links. Assertion a_004 (groom is child of father) created pe_004 (groom I3 side) and pe_005 (father I1 side). Assertion a_005 (groom is child of mother) created pe_006 (groom I3 side) and pe_007 (mother I2 side). Each relationship assertion is represented from both the child's and parent's perspective in the person_evidence entries."
+            "rationale": "Relationship assertions (a_004 'child of father', a_005 'child of mother') generated person_evidence entries for both sides: groom I3 as child, and parents I1/I2 as parents. Each relationship-implying assertion has two corresponding pe_ entries \u2014 one for each person in the relationship. The skill correctly recognized that a_004 and a_005 bear on both the groom and the parents."
           },
           {
             "source": "rubric",
             "name": "Person minting and connecting edges",
             "score": 3,
-            "rationale": "The groom (I3) was correctly minted via materialize_facts with a sourced name and source-ref attached. Both parents (I1, I2) were enriched via materialize_facts with source-refs added (I1 received a new sourced name 'Thomas [not indexed]'; I2's existing name was matched and source-ref attached). ParentChild edges were correctly deferred because this is a marriage register, not a household record \u2014 the skill explicitly noted this in the response. No edges were written; proof-conclusion will handle that step. The household skeleton is not applicable here (non-household record)."
+            "rationale": "John Flynn (I3) was minted via materialize_facts with a sourced name and source ref (pe_001 shows name added with ref attached). The groom's persona was linked via person_evidence entries (pe_001\u2013pe_004). Parents I1 and I2 were enriched via materialize_facts with sourced facts: I1 received a sourced name 'Thomas [not indexed]' and ref; I2 received a source ref. The skill correctly deferred ParentChild edges to proof-conclusion, noting that this is a marriage register (non-household record), so edges are not owed at this stage. The rationale explicitly states this deferral and the reason."
           },
           {
             "source": "rubric",
             "name": "Score discipline",
             "score": 3,
-            "rationale": "same_person was invoked for both parent assertions (a_006 and a_008) where tree candidates existed, as required. The scores (0.58 for father, 0.89 for mother) were obtained and recorded in match_score fields. The scores informed but did not override correlation analysis: the father's low score (0.58) was acknowledged as reflecting a thin subject and unindexed surname, yet confidence remained 'confident' because qualitative correlation (spousal cross-corroboration) was strong. The mother's high score (0.89) aligned with the exact name match. Scores were not treated as verdicts; they were integrated into the rationale alongside qualitative factors."
+            "rationale": "same_person was invoked for both parent assertions (a_006, a_008) and for the relationship assertions (a_004, a_005) that name those parents. Scores (0.58 for father, 0.89 for mother) were obtained and recorded in match_score fields. The scores informed confidence decisions \u2014 the mother's high score (0.89) supported 'confident', and the father's lower score (0.58) was disclosed and factored into the rationale. The skill did not let the score override qualitative correlation; rather, it used the score as one input among others (name match, spousal cross-reference, unindexed surname). The groom's circular case (I3 minted from G1) was correctly handled: same_person was called but the circular result (0.97) was not used to elevate the groom's confidence above 'probable'."
           }
         ]
       },
@@ -19656,49 +19656,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 2,
-            "rationale": "The skill correctly linked a_001 to I1 with a match_score of 0.88 and created the person_evidence entry pe_001. However, the confidence level 'confident' is not fully justified by the evidence. The assertion contains only a name fact with no date or birthplace stated on the record side. While the tree person I1 has a birth year ~1845, the record itself provides no date to corroborate this\u2014only the role 'child_1' in an 1850 census allows inference that the person was approximately 5 years old. A single census record with no independent corroboration of identity, even with a strong name match score, meets the 'probable' standard, not 'confident' per the rubric. The rationale acknowledges 'no birthdate or birthplace stated' but then claims confidence anyway, which contradicts the rubric's requirement that 'confident' requires multiple independent sources."
+            "rationale": "The skill correctly linked a_001 to I1 with a match_score of 0.88 and called same_person appropriately. However, the confidence level 'confident' is overstated for a single census record with no independent corroboration. The rubric requires multiple independent sources for 'confident'; a single census entry with no corroborating record should be 'probable' at best. The rationale acknowledges no date conflict but does not address that the baptism record (src_002) notes a Germany birthplace conflicting with census Ireland birthplace \u2014 a material conflict the skill should have flagged when evaluating the subject's overall evidence, though this particular assertion (a_001) carries no birthplace. The core link itself is sound, but confidence calibration is incorrect."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill completed the assigned task: it linked assertion a_001 to the correct tree person I1, called same_person to score the match, created the person_evidence entry with the score, and attached the source reference via materialize_facts. The skill also correctly noted that three remaining assertions (a_002, a_003, a_004) remain unlinked and suggested next steps. The delegation asked to 'link assertion a_001 to the right person in the tree,' and this was fully accomplished."
+            "rationale": "The skill completed the delegated task: linked assertion a_001 to the correct tree person (I1) with a person_evidence entry (pe_001), called same_person to score the match, and attached the source reference via materialize_facts. The skill correctly noted that three other assertions remain unlinked and suggested next steps. All required actions for this single assertion were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The same_person call correctly used the project-relative form with projectPath, assertionId 'a_001', and treePersonId 'I1'. The research_query calls correctly queried assertions and person_evidence sections. The materialize_facts call correctly specified the recordId, recordRole 'child_1', and personId 'I1'. No tool calls returned fixture_not_found errors. All arguments were well-formed and appropriate."
+            "rationale": "All MCP tool calls passed correct arguments. The same_person call used the project-relative form with projectPath, assertionId 'a_001', and treePersonId 'I1' as required. The research_append call correctly structured the person_evidence entry with assertion_id, person_id, confidence, match_score, and rationale. The materialize_facts call correctly specified recordId, recordRole 'child_1', and personId 'I1'. No tool calls returned fixture_not_found errors; all matched successfully."
           },
           {
             "source": "rubric",
             "name": "Confidence calibration",
             "score": 2,
-            "rationale": "The skill assigned 'confident' to a link supported by a single census record with no independent corroboration. Per the rubric, 'confident' requires multiple independent sources corroborating the identity link; a single census co-residence is 'probable' at best. The record provides only a name fact (no date or birthplace stated), and the age inference (child_1 in 1850 \u2192 ~5 years old \u2192 ~1845 birth) is circumstantial. The strong match_score (0.88) does not elevate a single source to 'confident'\u2014the rubric explicitly states that informant reliability and score are not bases for identity confidence. The rationale acknowledges the lack of stated dates but then claims confidence anyway, which is off by one tier. This should be 'probable.'"
+            "rationale": "The skill assigned 'confident' to a single census record with no independent corroboration. Per the rubric, 'confident' requires multiple independent sources corroborating the identity link; a single source supports only 'probable' at best. The 1850 census (src_001) is the only record directly asserting Patrick Flynn's identity in this link \u2014 the baptism (src_002) and will (src_004) are unlinked, and the Flinn variant census (src_003) is not yet evaluated. The match_score of 0.88 is strong, but score alone does not elevate a single source to 'confident'. The skill should have assigned 'probable' and noted that corroboration from other records (the will naming Patrick as son, or the baptism if birthplace conflict is resolved) would support upgrading to 'confident' later."
           },
           {
             "source": "rubric",
             "name": "Rationale quality",
-            "score": 2,
-            "rationale": "The rationale cites specific matching attributes: exact name match, age consistency with ~1845 birth (inferred from child_1 role in 1850 census), and the strong score of 0.88. However, it lacks the disambiguation step required by the rubric. The rationale does not address whether other Patrick Flynns of matching age existed in the 1850 census or in the broader record set, nor does it explain why this particular Patrick Flynn in the census is the right match beyond name and age. The rubric requires addressing 'why competing candidates were ruled out,' which is absent. The rationale is mostly complete but missing the critical comparative analysis."
+            "score": 3,
+            "rationale": "The rationale cites multiple specific matching attributes: exact name match ('Patrick Flynn'), age consistency (born ~1845, would be ~5 years old in 1850 census), record role as child_1 consistent with age, and the strong match_score of 0.88. It explicitly notes that no core identifier conflicts exist and that the assertion carries only a name with no birthdate or birthplace stated. The rationale addresses why the match is sound on available identifiers. While it does not explicitly discuss competing candidates, the single-name assertion and exact match make disambiguation straightforward."
           },
           {
             "source": "rubric",
             "name": "Multi-person awareness",
             "score": 3,
-            "rationale": "The assertion a_001 is a name fact from the 1850 census listing Patrick Flynn as child_1 in Thomas Flynn's household. This is not a relationship-implying assertion\u2014it does not assert that Patrick is the son of Thomas or Mary, only that he appears in their household. The skill correctly did not create additional person_evidence links for Thomas or Mary based on this single assertion. The household relationship is already encoded in the tree (RT1 and RT2 link I1 to I2 and I3 as parents), so no new relationship assertion requiring dual links arose from this work."
+            "rationale": "The assertion a_001 is a name fact on a single person (Patrick Flynn, child_1 role) with no relationship-implying content. The record does list Thomas Flynn as head of household, but the skill correctly did not create a person_evidence link for Thomas based on this assertion alone \u2014 the assertion itself does not assert a parent-child relationship, only Patrick's name. The skill appropriately noted that other assertions (a_002, a_003, a_004) remain to be evaluated, which may carry relationship content. No multi-person relationship assertion was made in this link, so no second-side person_evidence entry was owed."
           },
           {
             "source": "rubric",
             "name": "Person minting and connecting edges",
             "score": 3,
-            "rationale": "The assertion a_001 matched an existing tree person (I1 Patrick Flynn), so no minting was required. The skill correctly called materialize_facts with the existing personId I1, which attached the source reference (refsAttached: 1) without creating a new person. The record is a census (household record), but no new household members were introduced by this single name assertion, so no edges needed to be written. The skill's approach\u2014linking the existing person and enriching their source references\u2014is correct for this scenario."
+            "rationale": "The skill correctly did not mint a new person: I1 (Patrick Flynn) already existed in the tree. The materialize_facts call attached the source reference to the existing person (refsAttached: 1) without creating a new stub or overwriting the person. No household edge was owed because a_001 is a name assertion on a single person, not a relationship assertion. The skill correctly handled the existing person by enriching it with the source reference rather than creating a duplicate or forcing a match."
           },
           {
             "source": "rubric",
             "name": "Score discipline",
             "score": 3,
-            "rationale": "The skill correctly invoked same_person with the project-relative form (projectPath, assertionId 'a_001', treePersonId 'I1'), and the tool returned a score of 0.88. The skill recorded this score in match_score (0.88) and used it to inform the confidence decision. The score corroborates the name match but does not override the correlation analysis\u2014the skill correctly treated the score as evidence supporting the link, not as the verdict itself. The score is appropriate for a strong name match on a single record, and the skill's use of it is disciplined."
+            "rationale": "The skill correctly invoked same_person with the project-relative form (projectPath, assertionId 'a_001', treePersonId 'I1'), and the tool returned a score of 0.88. The skill recorded this score in match_score and used it to inform the confidence assessment. The score was not treated as a replacement for correlation analysis \u2014 the skill examined the name match, age consistency, and record role independently. The score corroborated the qualitative match but did not override it. The skill correctly omitted recordRole for the assertion's own party (Patrick Flynn, child_1), as the rubric requires."
           }
         ],
         "review_dimensions": [
@@ -19706,49 +19706,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 2,
-            "rationale": "The skill correctly linked a_001 to I1 with a match_score of 0.88 and created the person_evidence entry pe_001. However, the confidence level 'confident' is not fully justified by the evidence. The assertion contains only a name fact with no date or birthplace stated on the record side. While the tree person I1 has a birth year ~1845, the record itself provides no date to corroborate this\u2014only the role 'child_1' in an 1850 census allows inference that the person was approximately 5 years old. A single census record with no independent corroboration of identity, even with a strong name match score, meets the 'probable' standard, not 'confident' per the rubric. The rationale acknowledges 'no birthdate or birthplace stated' but then claims confidence anyway, which contradicts the rubric's requirement that 'confident' requires multiple independent sources."
+            "rationale": "The skill correctly linked a_001 to I1 with a match_score of 0.88 and called same_person appropriately. However, the confidence level 'confident' is overstated for a single census record with no independent corroboration. The rubric requires multiple independent sources for 'confident'; a single census entry with no corroborating record should be 'probable' at best. The rationale acknowledges no date conflict but does not address that the baptism record (src_002) notes a Germany birthplace conflicting with census Ireland birthplace \u2014 a material conflict the skill should have flagged when evaluating the subject's overall evidence, though this particular assertion (a_001) carries no birthplace. The core link itself is sound, but confidence calibration is incorrect."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill completed the assigned task: it linked assertion a_001 to the correct tree person I1, called same_person to score the match, created the person_evidence entry with the score, and attached the source reference via materialize_facts. The skill also correctly noted that three remaining assertions (a_002, a_003, a_004) remain unlinked and suggested next steps. The delegation asked to 'link assertion a_001 to the right person in the tree,' and this was fully accomplished."
+            "rationale": "The skill completed the delegated task: linked assertion a_001 to the correct tree person (I1) with a person_evidence entry (pe_001), called same_person to score the match, and attached the source reference via materialize_facts. The skill correctly noted that three other assertions remain unlinked and suggested next steps. All required actions for this single assertion were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The same_person call correctly used the project-relative form with projectPath, assertionId 'a_001', and treePersonId 'I1'. The research_query calls correctly queried assertions and person_evidence sections. The materialize_facts call correctly specified the recordId, recordRole 'child_1', and personId 'I1'. No tool calls returned fixture_not_found errors. All arguments were well-formed and appropriate."
+            "rationale": "All MCP tool calls passed correct arguments. The same_person call used the project-relative form with projectPath, assertionId 'a_001', and treePersonId 'I1' as required. The research_append call correctly structured the person_evidence entry with assertion_id, person_id, confidence, match_score, and rationale. The materialize_facts call correctly specified recordId, recordRole 'child_1', and personId 'I1'. No tool calls returned fixture_not_found errors; all matched successfully."
           },
           {
             "source": "rubric",
             "name": "Confidence calibration",
             "score": 2,
-            "rationale": "The skill assigned 'confident' to a link supported by a single census record with no independent corroboration. Per the rubric, 'confident' requires multiple independent sources corroborating the identity link; a single census co-residence is 'probable' at best. The record provides only a name fact (no date or birthplace stated), and the age inference (child_1 in 1850 \u2192 ~5 years old \u2192 ~1845 birth) is circumstantial. The strong match_score (0.88) does not elevate a single source to 'confident'\u2014the rubric explicitly states that informant reliability and score are not bases for identity confidence. The rationale acknowledges the lack of stated dates but then claims confidence anyway, which is off by one tier. This should be 'probable.'"
+            "rationale": "The skill assigned 'confident' to a single census record with no independent corroboration. Per the rubric, 'confident' requires multiple independent sources corroborating the identity link; a single source supports only 'probable' at best. The 1850 census (src_001) is the only record directly asserting Patrick Flynn's identity in this link \u2014 the baptism (src_002) and will (src_004) are unlinked, and the Flinn variant census (src_003) is not yet evaluated. The match_score of 0.88 is strong, but score alone does not elevate a single source to 'confident'. The skill should have assigned 'probable' and noted that corroboration from other records (the will naming Patrick as son, or the baptism if birthplace conflict is resolved) would support upgrading to 'confident' later."
           },
           {
             "source": "rubric",
             "name": "Rationale quality",
-            "score": 2,
-            "rationale": "The rationale cites specific matching attributes: exact name match, age consistency with ~1845 birth (inferred from child_1 role in 1850 census), and the strong score of 0.88. However, it lacks the disambiguation step required by the rubric. The rationale does not address whether other Patrick Flynns of matching age existed in the 1850 census or in the broader record set, nor does it explain why this particular Patrick Flynn in the census is the right match beyond name and age. The rubric requires addressing 'why competing candidates were ruled out,' which is absent. The rationale is mostly complete but missing the critical comparative analysis."
+            "score": 3,
+            "rationale": "The rationale cites multiple specific matching attributes: exact name match ('Patrick Flynn'), age consistency (born ~1845, would be ~5 years old in 1850 census), record role as child_1 consistent with age, and the strong match_score of 0.88. It explicitly notes that no core identifier conflicts exist and that the assertion carries only a name with no birthdate or birthplace stated. The rationale addresses why the match is sound on available identifiers. While it does not explicitly discuss competing candidates, the single-name assertion and exact match make disambiguation straightforward."
           },
           {
             "source": "rubric",
             "name": "Multi-person awareness",
             "score": 3,
-            "rationale": "The assertion a_001 is a name fact from the 1850 census listing Patrick Flynn as child_1 in Thomas Flynn's household. This is not a relationship-implying assertion\u2014it does not assert that Patrick is the son of Thomas or Mary, only that he appears in their household. The skill correctly did not create additional person_evidence links for Thomas or Mary based on this single assertion. The household relationship is already encoded in the tree (RT1 and RT2 link I1 to I2 and I3 as parents), so no new relationship assertion requiring dual links arose from this work."
+            "rationale": "The assertion a_001 is a name fact on a single person (Patrick Flynn, child_1 role) with no relationship-implying content. The record does list Thomas Flynn as head of household, but the skill correctly did not create a person_evidence link for Thomas based on this assertion alone \u2014 the assertion itself does not assert a parent-child relationship, only Patrick's name. The skill appropriately noted that other assertions (a_002, a_003, a_004) remain to be evaluated, which may carry relationship content. No multi-person relationship assertion was made in this link, so no second-side person_evidence entry was owed."
           },
           {
             "source": "rubric",
             "name": "Person minting and connecting edges",
             "score": 3,
-            "rationale": "The assertion a_001 matched an existing tree person (I1 Patrick Flynn), so no minting was required. The skill correctly called materialize_facts with the existing personId I1, which attached the source reference (refsAttached: 1) without creating a new person. The record is a census (household record), but no new household members were introduced by this single name assertion, so no edges needed to be written. The skill's approach\u2014linking the existing person and enriching their source references\u2014is correct for this scenario."
+            "rationale": "The skill correctly did not mint a new person: I1 (Patrick Flynn) already existed in the tree. The materialize_facts call attached the source reference to the existing person (refsAttached: 1) without creating a new stub or overwriting the person. No household edge was owed because a_001 is a name assertion on a single person, not a relationship assertion. The skill correctly handled the existing person by enriching it with the source reference rather than creating a duplicate or forcing a match."
           },
           {
             "source": "rubric",
             "name": "Score discipline",
             "score": 3,
-            "rationale": "The skill correctly invoked same_person with the project-relative form (projectPath, assertionId 'a_001', treePersonId 'I1'), and the tool returned a score of 0.88. The skill recorded this score in match_score (0.88) and used it to inform the confidence decision. The score corroborates the name match but does not override the correlation analysis\u2014the skill correctly treated the score as evidence supporting the link, not as the verdict itself. The score is appropriate for a strong name match on a single record, and the skill's use of it is disciplined."
+            "rationale": "The skill correctly invoked same_person with the project-relative form (projectPath, assertionId 'a_001', treePersonId 'I1'), and the tool returned a score of 0.88. The skill recorded this score in match_score and used it to inform the confidence assessment. The score was not treated as a replacement for correlation analysis \u2014 the skill examined the name match, age consistency, and record role independently. The score corroborated the qualitative match but did not override it. The skill correctly omitted recordRole for the assertion's own party (Patrick Flynn, child_1), as the rubric requires."
           }
         ]
       },

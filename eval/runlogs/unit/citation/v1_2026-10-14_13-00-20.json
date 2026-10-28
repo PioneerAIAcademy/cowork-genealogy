@@ -9366,49 +9366,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly declined to modify src_004's citation or source_classification. The response accurately identifies that source classification is set at extraction and belongs in conflict resolution, not citation refinement. The terminology correction (original vs. primary source) is sound and appropriately explained without being imposed on the persisted data."
+            "rationale": "Claude correctly declined to modify src_004's citation or source_classification. The response accurately identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source type. src_004 is correctly classified as 'original' per the extraction phase. Claude's explanation that the death certificate contains both primary information (death facts) and secondary information (birth facts from a son-in-law) is factually accurate and well-grounded in the before-state data. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed the user's request fully. The delegation asked to update src_004's citation to mention it is a primary source. Claude correctly identified this as a terminology/scope issue and provided the appropriate response: declining the modification while explaining why the request conflates source classification with information quality."
+            "rationale": "Claude addressed the full scope of the request. The user asked to update the citation to mention it is a 'primary source.' Claude correctly identified this as a terminology issue and explained why the request cannot be fulfilled as stated: source_classification is set at extraction and is outside the citation skill's writable fields. The response also helpfully clarified the layered point about original sources containing both primary and secondary information, which directly addresses the underlying confusion in the request."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly handled the request through reasoning and explanation rather than tool invocation, which is appropriate for a scope/terminology clarification that does not require persisting changes."
+            "rationale": "No MCP tool calls were made. The skill correctly handled the request through reasoning and explanation rather than tool invocation, which is appropriate for a terminology clarification that does not require file modifications."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
             "score": null,
-            "rationale": "No citation was created or modified in this run, so this dimension does not apply. The skill declined to rewrite src_004's citation, which is the correct behavior given the request's scope."
+            "rationale": "This dimension applies only when a citation is being created or refined. Claude declined to modify src_004's citation, so no new citation was produced and this dimension does not apply."
           },
           {
             "source": "rubric",
             "name": "Replication test",
             "score": null,
-            "rationale": "No citation was created or modified, so this dimension does not apply. The skill correctly avoided changing the citation's locators or structure."
+            "rationale": "This dimension evaluates whether a citation carries all necessary locators for replication. Since Claude did not modify src_004's citation, there is no refined citation to evaluate on this dimension."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "Claude correctly distinguished between source classification (original/derivative/authored) and information quality (primary/secondary based on informant proximity). The response accurately explains that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law), demonstrating proper understanding of the layered concept."
+            "rationale": "Claude correctly distinguished between source classification (original/derivative/authored) and information quality (primary/secondary based on informant proximity). The response explicitly clarified that src_004 is an original source that contains both primary information (death facts) and secondary information (birth facts from son-in-law James Brown). No conflation occurred; the distinction was properly explained to the user."
           },
           {
             "source": "rubric",
             "name": "Source fidelity \u2014 no fabricated detail",
             "score": 3,
-            "rationale": "Claude made no changes to persisted fields and offered no invented locators or details in the response. The explanation of source classification and information quality draws from established genealogical principles, not fabricated values. No concrete data was invented."
+            "rationale": "Claude made no changes to src_004's citation or persisted fields. The response contains no invented locators, dates, names, or repository details. All factual claims in the explanation (that src_004 is classified original, that it contains death facts and birth facts, that James Brown was the informant) are traceable to the before-state data. No fabrication occurred."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
-            "score": 3,
-            "rationale": "No write to research.json occurred, which is correct. The skill appropriately declined to modify src_004's citation_detail or source_classification fields, as the request conflated terminology rather than requesting a legitimate citation refinement. No validation call was needed because no write was attempted."
+            "score": null,
+            "rationale": "No write operations were performed. Claude correctly declined to modify research.json, so no research_append or validate_research_schema calls were required or expected. The absence of tool calls reflects the correct decision not to persist changes."
           }
         ],
         "review_dimensions": [
@@ -9416,49 +9416,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly declined to modify src_004's citation or source_classification. The response accurately identifies that source classification is set at extraction and belongs in conflict resolution, not citation refinement. The terminology correction (original vs. primary source) is sound and appropriately explained without being imposed on the persisted data."
+            "rationale": "Claude correctly declined to modify src_004's citation or source_classification. The response accurately identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source type. src_004 is correctly classified as 'original' per the extraction phase. Claude's explanation that the death certificate contains both primary information (death facts) and secondary information (birth facts from a son-in-law) is factually accurate and well-grounded in the before-state data. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed the user's request fully. The delegation asked to update src_004's citation to mention it is a primary source. Claude correctly identified this as a terminology/scope issue and provided the appropriate response: declining the modification while explaining why the request conflates source classification with information quality."
+            "rationale": "Claude addressed the full scope of the request. The user asked to update the citation to mention it is a 'primary source.' Claude correctly identified this as a terminology issue and explained why the request cannot be fulfilled as stated: source_classification is set at extraction and is outside the citation skill's writable fields. The response also helpfully clarified the layered point about original sources containing both primary and secondary information, which directly addresses the underlying confusion in the request."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly handled the request through reasoning and explanation rather than tool invocation, which is appropriate for a scope/terminology clarification that does not require persisting changes."
+            "rationale": "No MCP tool calls were made. The skill correctly handled the request through reasoning and explanation rather than tool invocation, which is appropriate for a terminology clarification that does not require file modifications."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
             "score": null,
-            "rationale": "No citation was created or modified in this run, so this dimension does not apply. The skill declined to rewrite src_004's citation, which is the correct behavior given the request's scope."
+            "rationale": "This dimension applies only when a citation is being created or refined. Claude declined to modify src_004's citation, so no new citation was produced and this dimension does not apply."
           },
           {
             "source": "rubric",
             "name": "Replication test",
             "score": null,
-            "rationale": "No citation was created or modified, so this dimension does not apply. The skill correctly avoided changing the citation's locators or structure."
+            "rationale": "This dimension evaluates whether a citation carries all necessary locators for replication. Since Claude did not modify src_004's citation, there is no refined citation to evaluate on this dimension."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "Claude correctly distinguished between source classification (original/derivative/authored) and information quality (primary/secondary based on informant proximity). The response accurately explains that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law), demonstrating proper understanding of the layered concept."
+            "rationale": "Claude correctly distinguished between source classification (original/derivative/authored) and information quality (primary/secondary based on informant proximity). The response explicitly clarified that src_004 is an original source that contains both primary information (death facts) and secondary information (birth facts from son-in-law James Brown). No conflation occurred; the distinction was properly explained to the user."
           },
           {
             "source": "rubric",
             "name": "Source fidelity \u2014 no fabricated detail",
             "score": 3,
-            "rationale": "Claude made no changes to persisted fields and offered no invented locators or details in the response. The explanation of source classification and information quality draws from established genealogical principles, not fabricated values. No concrete data was invented."
+            "rationale": "Claude made no changes to src_004's citation or persisted fields. The response contains no invented locators, dates, names, or repository details. All factual claims in the explanation (that src_004 is classified original, that it contains death facts and birth facts, that James Brown was the informant) are traceable to the before-state data. No fabrication occurred."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
-            "score": 3,
-            "rationale": "No write to research.json occurred, which is correct. The skill appropriately declined to modify src_004's citation_detail or source_classification fields, as the request conflated terminology rather than requesting a legitimate citation refinement. No validation call was needed because no write was attempted."
+            "score": null,
+            "rationale": "No write operations were performed. Claude correctly declined to modify research.json, so no research_append or validate_research_schema calls were required or expected. The absence of tool calls reflects the correct decision not to persist changes."
           }
         ]
       },
