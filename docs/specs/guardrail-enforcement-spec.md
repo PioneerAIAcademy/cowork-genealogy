@@ -171,15 +171,17 @@ depends on another shipping first.
 | §5.4 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `sources` op landing a non-empty `transcription` with no `image_filename` — a claim about a page that does not say which page | **advisory only — warns, refuses nothing.** Two legitimate shapes have no filename to give: a PDF capture, and an `image_transcribe` run with no `projectPath`, which stages nothing. Refusing either would block correct work to catch a documentation gap |
 | §5.5 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `timelines` append, or an update setting `events`, that leaves events with empty `assertion_ids` — tree or user facts presented beside record-backed ones | **advisory only — warns, refuses nothing.** Refusal rejected 2026-10-18 and kept a warning on 2026-10-19, though that ruling withdrew the "tree-built first pass" premise for person-mode timelines (there an unsourced tree fact becomes a gap). Whether person mode should refuse instead is open with the lead |
 | §5.6 | Namesake warning (`namesakeRowWarnings`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_append` call that appends or updates a `namesakes` row whose holder has live `probable` or `confident` links the namesake cap refuses: it lists them, the facts their parties carried and the names citing their sources | **advisory only — warns, refuses nothing** (lead, 2026-10-18, item 5 of the list of 2026-10-17). With rows planted on the 212 committed e2e final states (measured at `20ad24872`, `dev/measure-namesake-cap.ts` §4): 455 of 1,306 persons warned, listing 2,216 links; on subjects alone, 58 of 181, listing 366 links |
+| §5 | Circular-corroboration gate (`circularCorroborationCallCheck`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `person_evidence` link a call asserts at `probable`/`confident` to a starting-tree person whose only corroboration is the linked record's own: every source on the baseline relationship to each role-matched parent or spouse is that record or a copy of it (a copy: a shared source or description, or a party's birth, christening or baptism with the same full date, place and given name). Where no such relative exists the person's own sources decide, and only `confident` is refused. Instrument: `packages/engine/mcp-server/dev/measure-circular-corroboration.ts` | **enforcing**. As committed it refuses **6 of 10,361** committed links, all `confident`, subject-alone, in one fixture (`ferber-marriage`, I4 and the 1900 census `MM88-DGG`, two runs): I4's only non-tree source is that census, and one of the six (`pe_024`, residence) matches a tree fact sourced to the same census; the other five match name and birth month against facts whose tree provenance is unknown. Read by the genealogist (2026-10-24), who ruled all six true positives, so the gate ships enforcing. **Unmeasurable on the relationship arm:** 16 of 1,992 committed starting-tree relationships carry a source (captured before relationship sources existed), so the arm that catches the reported Latham shape can fire on none of them. Planted instead, with every role-matched edge sourced to the record alone: 419 of 1,311 links that reach one are refused, and 0 of 1,311 once the edge also carries another record |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
+| — | Step boundary (`step_allowed`, `StepGate`) | **prototype worker and both eval harnesses only — NOT Cowork, NOT the hosted alpha** | a second step spawned inside one turn: the turn runs one step, reports it, and ends. Ships in `packages/engine/plugin/hooks/step_boundary.py` as a **library** loaded with `importlib`, not as a registered plugin hook, so there is no `hooks.json` entry, no matcher-coverage case and no `make hook-smoke` arm. Cowork runs on router prose alone (decision 25, lead 2026-10-21): the cost exposure is the prototype, and a Cowork researcher can press stop. Rider 2's halt rate on the prototype is what would buy the hook later, with numbers rather than a guess | **enforcing on the prototype; absent in Cowork by decision** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
 | §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score. Exempt by tool identity: `extraction_append({ personId })`'s unchecked attachment links (`speculative`, no score, `ATTACHMENT_LINK_RATIONALE`), on an internal flag no caller reaches (lead, 2026-10-19) | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null. ADR-0009 constraint 3 holds because an assertion is a (record, party) pair, so a second persona is a second assertion, and the tree person keeps the two links of a relationship assertion apart |
 | §5 | An attachment link is only ever superseded | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` update of an attachment link (`isAttachmentLink`), live or retired, that sets anything but `superseded_by`: raising one in place would skip `same_person`, since the score gate checks an update only when it writes `match_score`, `assertion_id` or `person_id` | **enforcing** (since 2026-10-20; refuses 0 committed links, none carries the rationale yet) |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | §6 | Field ownership by caller (`project.status`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic and so gates this arm with no edit | a `project.status` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, from either the `fields` or `entry` key, on append **and** update. Keyed on presence, not on a value: any write of the field asserts the project's state. The co-written rest of `project` — including the `updated` activity ping — is untouched | **enforcing** (since 2026-09-24). **Nothing proves this arm binds in Cowork**, which is true of every hook arm (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
-| §6 | Claim ownership by caller (`conflicts`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `conflicts` op from anything but the `conflict-resolution` agent that sets `status: "resolved"` or `"moot"` with its rationale, or sets any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind` or `resolved_value` truthy — single-op or `ops[]`, `fields` or `entry`, stringified or not. A skeleton open (the schema's required fields only) and a re-open to `unresolved` claim nothing and pass, because six skills open conflicts | **enforcing** (since 2026-09-29). Nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
+| §6 | Claim ownership by caller (`conflicts`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `conflicts` op from anything but the `conflict-resolution` agent that sets `status: "resolved"` or `"moot"` with its rationale, or sets any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value` or `weighed_log_entry_ids` truthy — single-op or `ops[]`, `fields` or `entry`, stringified or not. A skeleton open (the schema's required fields only) and a re-open to `unresolved` claim nothing and pass, because six skills open conflicts | **enforcing** (since 2026-09-29). Nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which `make e2e-advisories SINCE=all` now reports (fired / acted / ignored / condition-never-held / not-observable per advisory, split by `agent_type`). A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
@@ -1258,6 +1260,44 @@ with `planItemId` — which is available whenever the search was not already
 logged unattributed. Only a paid eval run could show how often the narrow case
 is reached.
 
+### A plan item's `collection_url` is a stored curated collection
+
+`research_append` refuses a plan item whose `collection_url` names no collection in
+`external-collections.json`, on both routes that write an item: a
+`plan_items` append or update, and the inline `items[]` of a `plans` op. The field
+exists so a plan names a collection FamilySearch curates for the place, not an id
+recalled from memory — the failure that produced Ancestry ids 9093, 7549 and 60207
+before `build_external_search_url` existed. Both halves live in the project folder,
+so the question is decidable from the documents alone.
+
+**Only a url the op sets is checked.** An update that leaves `collection_url` as it
+was is not re-checked, so an item planned before a re-fetch dropped its row is not
+stranded by an unrelated edit. A missing file refuses every url and names the
+fetch that creates it; an unreadable file refuses with the read error rather than
+throwing. Omitting the field is always accepted: it means a site-wide search.
+
+**Compared by collection key, across every stored place** (lead ruling,
+2026-10-23). `ancestry:<id>` is one collection however its url is spelled
+(`/search/collections/<id>/`, `?dbid=<id>`), and checking the whole file means a
+plan item's free-text jurisdiction never has to be matched to a stored place. The
+ruling replaces the "measure first" call of 2026-09-24: that call rested on ids not
+being traceable from the project files, and the stored list makes it an exact
+lookup.
+
+**`build_external_search_url` holds the same line.** Given a `projectPath` that is
+a project, it refuses a `baseUrl` that names a collection (an Ancestry collection
+id, a MyHeritage collection page) the file does not hold, by the same key. A
+site's or an archive's own search url names no collection and is not checked, and
+outside a project nothing is: the link still serves a standalone search. Without
+it a recalled `baseUrl` would never pass through `research_append`.
+
+**An external item appended without a `collection_url` draws a warning, never a
+refusal**, listing the stored collections that fit it. The fit is a loose match of
+the item's free-text jurisdiction to the stored places, which a hint can afford and
+a refusal could not. The research-plan eval counts those misses
+(`report_external_items_missing_a_stored_collection`).
+`collectionUrlInvariants`.
+
 ### Blocking conflicts before completion
 
 `project.status` may not be set to `"completed"` while any `conflicts[]` entry is
@@ -1310,19 +1350,33 @@ the evidence, not of a bookkeeping field.
   reference-checks `extracted_for_question_ids`, so a dangling id is possible;
   none exists in the corpus, and blocking on one is the safer direction.
 
-**The satisfying shape, including the case that has no winner.** For a conflict
-that can be settled, `conflict-resolution` writes `status: "resolved"` with
-`independence_analysis`, `weighing_analysis` and `resolution_rationale`, or
-`moot` with a rationale. For a conflict the researcher weighed and honestly
-**could not** settle, neither reads true as usually stated — so the shape is
-`resolved` with all three analyses, `resolution_rationale` saying why it cannot
-be settled and what would settle it, and `preferred_assertion_id` left **null**,
-which `conflictInvariants` permits. That is a deferral recorded as a finding, per
-`gps-research-flow.md`'s "a conflict that can't be resolved yet is written down
-as a finding, with what would resolve it"; it is not `moot`, which asserts the
-conflict no longer matters. The gate's refusal message states this shape, because
-without it a deferring researcher has no writable route to `completed` and no
-override tier exists. Note that the corpus's 52 resolved conflicts are counted
+**The satisfying shape, and the case that has no winner — which no longer has
+one.** For a conflict that can be settled, `conflict-resolution` writes
+`status: "resolved"` with `independence_analysis`, `weighing_analysis` and
+`resolution_rationale`, or `moot` with a rationale.
+
+For a conflict the researcher weighed and honestly **could not** settle, this
+section used to prescribe `resolved` with all three analyses and
+`preferred_assertion_id` left null — the shape that cleared the gate, since
+otherwise a deferring researcher had no writable route to `completed` and no
+override tier exists. **Step mode's decision 12 (lead, 2026-10-18) removes that
+route rather than widening it:** such a conflict stays `unresolved`.
+
+The reason is that the old shape bought a green gate with a false statement. A
+`resolved` conflict carrying `resolution_kind: "tree"` asserts the tree's
+existing conclusion *won the weighing* — a finding about the evidence. "I
+weighed these and could not tell" is a different finding, and writing it as the
+first makes an open question read as settled to every later reader, which is the
+opposite of what `gps-research-flow.md`'s "a conflict that can't be resolved yet
+is written down as a finding, with what would resolve it" asks for. It is not
+`moot` either, which asserts the conflict no longer matters.
+
+So the gate keeps refusing, and **that refusal is now the designed end state, not
+a dead end**: the project does not reach `completed`, the question is concluded
+at the tier the evidence actually reaches (`not_proved` included), and the run
+ends on that open conclusion. The deferral is still recorded as a finding — on
+the conflict, in its three analyses and `resolution_rationale` — it just no
+longer claims to be a resolution. The gate's refusal message states this. Note that the corpus's 52 resolved conflicts are counted
 over resolved conflicts generally and are **not** evidence that any refused run
 could have satisfied the gate.
 

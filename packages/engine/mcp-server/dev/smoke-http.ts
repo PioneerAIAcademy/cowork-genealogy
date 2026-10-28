@@ -179,10 +179,12 @@ try {
   );
 
   // A row that passes projectPath reaches the store, so it needs the project
-  // header and the door; every other row must work with no project bound.
+  // header and the door, as does project_list, which reads the bound store with
+  // no projectPath; every other row must work with no project bound.
   stage = "plan";
   const run = await runPlan(
-    (tool, args) => callViaClient("projectPath" in args ? projectClient : plainClient, tool, args),
+    (tool, args) =>
+      callViaClient("projectPath" in args || tool === "project_list" ? projectClient : plainClient, tool, args),
     ctx,
   );
   calls = run.calls;

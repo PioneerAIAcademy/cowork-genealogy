@@ -72,6 +72,11 @@ const CLOSED_ENUMS = {
   not_reached_kind: new Set([
     "nil_search", "browse_only", "over_transport_cap", "paywalled",
     "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
+    // Step mode, decision 21: a source this question never planned, recorded by
+    // the "not exhaustive" choice so the declaration says what it left rather
+    // than silently omitting it. The only kind naming a source the agent CHOSE
+    // not to reach rather than one it could not.
+    "deferred",
   ]),
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
@@ -88,11 +93,6 @@ const CLOSED_ENUMS = {
     "GenealogyBank", "FindAGrave-Plus",
     "FamilySearch-Partner", "LibraryAccess", "other", "none",
   ]),
-  holding_type: new Set([
-    "document", "prior_research", "oral_knowledge", "gedcom",
-    "photo", "artifact", "other",
-  ]),
-  holding_confidence: new Set(["confident", "unsure"]),
   severity: new Set(["high", "medium", "low"]),
   evaluation_focus: new Set([
     "pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand",
@@ -104,6 +104,9 @@ const CLOSED_ENUMS = {
   locality_page_section: new Set([
     "home", "getting_started", "online_records", "research_tips",
   ]),
+  locality_page_outcome: new Set(["unreachable"]),
+  registration_event: new Set(["birth", "marriage", "death"]),
+  registration_level: new Set(["town", "parish", "county", "state", "national"]),
 };
 
 // Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
@@ -154,6 +157,24 @@ const CLAIM_NOT_A_RELATIONSHIP =
   "(issues #3213 and #3032 own them): leave a claim of any other kind out and keep the ParentChild " +
   "claims in claims[]. tier must equal the strongest proof_tier among the claims that remain, " +
   "so it cannot rise above them.";
+
+// A parentage claim that left its relationship off is not a fact claim, and told
+// to "leave a claim of any other kind out" the agent dropped a not_proved
+// maternity claim in 2 of 4 tries of ut_proof_conclusion_022 (2026-10-25). So a
+// claim whose label names a parent relationship is told to add it instead.
+const PARENTAGE_CLAIM_LABEL = /patern|matern|parent|father|mother/i;
+
+function claimRelationshipMissing(claim: any): string {
+  if (typeof claim?.claim !== "string" || !PARENTAGE_CLAIM_LABEL.test(claim.claim)) {
+    return CLAIM_NOT_A_RELATIONSHIP;
+  }
+  return (
+    `claim '${claim.claim}' is a parentage claim, so it is a ParentChild relationship claim: add ` +
+    `relationship: { type: "ParentChild", parent: "<the parent's tree person id>", child: ` +
+    `"<the child's tree person id>" } and keep it in claims[] at its own proof_tier, not_proved ` +
+    `included. Do not drop it.`
+  );
+}
 
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
@@ -230,7 +251,6 @@ export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}(
 // so a new id-prefixed section cannot get here without a check, or drift from it.
 export const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
-  known_holdings: "kh_",
   questions: "q_",
   plans: "pl_",
   plan_items: "pli_",
@@ -627,7 +647,7 @@ const NULLABLE_FIELDS = new Set([
 // tests/validation/validator.test.ts.
 export const RESEARCH_SHAPES = {
   document: new Set([
-    "project", "researcher_profile", "known_holdings", "questions", "plans",
+    "project", "researcher_profile", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
     "localities", "warning_justifications", "namesakes",
@@ -638,10 +658,6 @@ export const RESEARCH_SHAPES = {
   ]),
   researcher_profile: new Set([
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
-  ]),
-  known_holding: new Set([
-    "id", "holding_type", "description", "relates_to_person_ids",
-    "relevant_facts", "confidence", "promoted", "created",
   ]),
   question: new Set([
     "id", "question", "rationale", "selection_basis", "priority", "status",
@@ -663,12 +679,12 @@ export const RESEARCH_SHAPES = {
   plan_item: new Set([
     "id", "sequence", "record_type", "jurisdiction", "date_range",
     "repository", "rationale", "fallback_for", "status",
-    "skip_category", "skip_reason",
+    "skip_category", "skip_reason", "collection_url",
   ]),
   log_entry: new Set([
     "id", "plan_item_id", "performed", "tool", "query", "outcome",
     "results_examined", "results_ref", "results_available", "notes",
-    "external_site",
+    "external_site", "staged_ref",
   ]),
   external_site_detail: new Set([
     "site", "url_generated", "capture_received", "capture_filename",
@@ -701,7 +717,7 @@ export const RESEARCH_SHAPES = {
     "identity_question", "competing_assertion_ids", "status",
     "preferred_assertion_id", "resolution_rationale",
     "independence_analysis", "weighing_analysis", "blocks_question_ids",
-    "resolution_kind", "resolved_value",
+    "resolution_kind", "resolved_value", "weighed_log_entry_ids",
   ]),
   hypothesis: new Set([
     "id", "claim", "status", "supporting_assertion_ids",
@@ -739,8 +755,8 @@ export const RESEARCH_SHAPES = {
   ]),
   locality: new Set([
     "id", "place", "for_place", "time_period", "jurisdictions",
-    "collections", "quirks", "guide_markdown", "pages_read", "source",
-    "created", "updated",
+    "collections", "quirks", "guide_markdown", "pages_read",
+    "registration_start", "volume_summary", "source", "created", "updated",
   ]),
   warning_justification: new Set([
     "warning_id", "justification", "person_ids", "tool", "recorded_at",
@@ -781,7 +797,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, path, `missing top-level section '${section}'`);
     }
   }
-  checkAllowedKeys(data, RESEARCH_SHAPES.document, "research documents", path, report);
+  // Projects created before #2069 still carry the deleted known_holdings
+  // section, and no tool can remove a top-level key, so it warns instead of
+  // failing every later validation.
+  const { known_holdings: retiredHoldings, ...current } = data;
+  if (retiredHoldings !== undefined) {
+    addWarning(
+      report,
+      path,
+      "retired section 'known_holdings' is ignored: it was deleted from the schema (#2069) and nothing reads it. No action needed."
+    );
+  }
+  checkAllowedKeys(current, RESEARCH_SHAPES.document, "research documents", path, report);
 
   if (typeof data.project !== "object" || data.project === null) {
     addError(report, path, "project must be an object");
@@ -839,41 +866,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ia = rp.intended_audience;
       if (ia !== null && ia !== undefined && typeof ia !== "string") {
         addError(report, rpPath, "intended_audience must be a string");
-      }
-    }
-  }
-
-  // Known holdings (optional)
-  const holdings = data.known_holdings;
-  if (holdings !== null && holdings !== undefined) {
-    if (!Array.isArray(holdings)) {
-      addError(report, `${path}/known_holdings`, "known_holdings must be an array");
-    } else {
-      for (let i = 0; i < holdings.length; i++) {
-        const kh = holdings[i];
-        const khPath = `${path}/known_holdings[${i}]`;
-        if (!isObjectEntry(kh, khPath, report)) continue;
-        checkRequired(kh, [
-          "id", "holding_type", "description", "confidence", "promoted", "created",
-        ], khPath, report, NULLABLE_FIELDS);
-        checkAllowedKeys(kh, RESEARCH_SHAPES.known_holding, "known_holdings entries", khPath, report);
-        if ("id" in kh) {
-          checkIdPrefix(kh.id, ID_PREFIXES.known_holdings, khPath, report);
-        }
-        if ("holding_type" in kh) {
-          checkEnum(kh.holding_type, "holding_type", khPath, report);
-        }
-        if ("confidence" in kh) {
-          checkEnum(kh.confidence, "holding_confidence", khPath, report);
-        }
-        if ("promoted" in kh && typeof kh.promoted !== "boolean") {
-          addError(report, khPath, "promoted must be a boolean");
-        }
-        checkIsoDate(kh, "created", khPath, report);
-        const rtp = kh.relates_to_person_ids;
-        if (rtp !== null && rtp !== undefined && !Array.isArray(rtp)) {
-          addError(report, khPath, "relates_to_person_ids must be an array");
-        }
       }
     }
   }
@@ -988,6 +980,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           if (nr.kind === "wiki_named_untouched" && (nr.wiki_title === null || nr.wiki_title === undefined)) {
             addError(report, nrp, "wiki_title is required (non-null) when kind is 'wiki_named_untouched'");
           }
+          // A `deferred` entry is the only record of a source this question chose
+          // not to plan, and "Search more" plans from it (step mode, section B): the
+          // film, image or URL lives in `description`, so one with none names nothing.
+          if (nr.kind === "deferred" && (typeof nr.description !== "string" || nr.description.trim() === "")) {
+            addError(report, nrp, "description is required (non-blank) when kind is 'deferred': name the source left unsearched");
+          }
         }
       }
     }
@@ -1094,6 +1092,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if ("skip_category" in item) {
         checkEnum(item.skip_category, "skip_category", ip, report);
       }
+      // Optional. Whether it names a stored collection is research_append's
+      // precondition (it reads external-collections.json); here only the type.
+      if ("collection_url" in item) {
+        const url = item.collection_url;
+        if (typeof url !== "string" || url === "") {
+          addError(report, ip, "collection_url must be a non-empty string (a url from external-collections.json), or omitted");
+        }
+      }
     }
   }
 
@@ -1148,6 +1154,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if (!isNonNegativeInteger(n)) {
         addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
       }
+    }
+    if ("staged_ref" in entry && typeof entry.staged_ref !== "string") {
+      addError(report, lp, `staged_ref must be a string; got ${JSON.stringify(entry.staged_ref)}`);
     }
 
     const ext = entry.external_site;
@@ -1491,6 +1500,22 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (ct === "identity" && !c.identity_question) {
       addError(report, cp, "identity conflict requires identity_question");
     }
+    // The question's log entries conflict-resolution has weighed. Optional,
+    // and it mirrors search_stop.log_entry_ids, so it is checked the same
+    // way: an array whose every id resolves to a real log entry. Absent is
+    // allowed; null is not, because the JSON Schema has no null branch.
+    if ("weighed_log_entry_ids" in c) {
+      const weighed = c.weighed_log_entry_ids;
+      if (!Array.isArray(weighed)) {
+        addError(report, cp, "weighed_log_entry_ids must be an array");
+      } else {
+        weighed.forEach((l: unknown, j: number) => {
+          const wp = `${cp}/weighed_log_entry_ids[${j}]`;
+          if (typeof l !== "string") addError(report, wp, "must be a string");
+          else checkRefExists(l, ids.log, "log entry", wp, report);
+        });
+      }
+    }
     // identity_question is the question's text — schema type string|null. Reject
     // any other type (notably the boolean form that slipped past this validator
     // and into the corpus before the completed-gate was fixed; issue #1001).
@@ -1783,9 +1808,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         ], clp, report, NULLABLE_FIELDS);
         // Required like the three above, worded for what a missing one means.
         if (!("relationship" in claim)) {
-          addError(report, clp, `missing required field 'relationship' — ${CLAIM_NOT_A_RELATIONSHIP}`);
+          addError(report, clp, `missing required field 'relationship' — ${claimRelationshipMissing(claim)}`);
         } else if (claim.relationship === null) {
-          addError(report, clp, `required field 'relationship' is null — ${CLAIM_NOT_A_RELATIONSHIP}`);
+          addError(report, clp, `required field 'relationship' is null — ${claimRelationshipMissing(claim)}`);
         }
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
         // Optional here (unlike the scalar above) but still closed: an
@@ -1965,6 +1990,27 @@ function validateEvaluations(
   }
 }
 
+/** Each named count, when present, is a non-negative integer; `nullable` ones may also be null. */
+function checkCounts(
+  obj: any,
+  fields: string[],
+  nullable: string[],
+  path: string,
+  report: ValidationReport,
+): void {
+  if (!obj || typeof obj !== "object") return;
+  for (const f of fields) {
+    if (!(f in obj) || (obj[f] === null && nullable.includes(f))) continue;
+    if (!isNonNegativeInteger(obj[f])) {
+      const or = nullable.includes(f) ? " or null" : "";
+      addError(report, path, `${f} must be a non-negative integer${or}; got ${JSON.stringify(obj[f])}`);
+    }
+  }
+}
+
+const BUCKET_COUNTS = ["volumes", "browse_only", "fulltext_only"];
+const BUCKET_NULLABLE = ["browse_only", "fulltext_only"];
+
 function validateLocalities(
   data: any,
   path: string,
@@ -2000,6 +2046,40 @@ function validateLocalities(
       if ("section" in pr) {
         checkEnum(pr.section, "locality_page_section", `${lp}/pages_read[${j}]`, report);
       }
+      if ("outcome" in pr) {
+        checkEnum(pr.outcome, "locality_page_outcome", `${lp}/pages_read[${j}]`, report);
+      }
+    }
+    // The fields research-plan reads instead of re-running the survey. Counts
+    // must be what the schema says, or a plan decides on a NaN or a fraction.
+    const cols = Array.isArray(loc.collections) ? loc.collections : [];
+    for (let j = 0; j < cols.length; j++) {
+      checkCounts(cols[j], ["person_count", "record_count"], ["person_count", "record_count"], `${lp}/collections[${j}]`, report);
+    }
+    const regs = Array.isArray(loc.registration_start) ? loc.registration_start : [];
+    for (let j = 0; j < regs.length; j++) {
+      const rs = regs[j];
+      const rp = `${lp}/registration_start[${j}]`;
+      if (!rs || typeof rs !== "object") continue;
+      checkRequired(rs, ["event", "level", "year", "source_url"], rp, report, NULLABLE_FIELDS);
+      if ("event" in rs) checkEnum(rs.event, "registration_event", rp, report);
+      if ("level" in rs) checkEnum(rs.level, "registration_level", rp, report);
+      if ("year" in rs && !Number.isInteger(rs.year)) {
+        addError(report, rp, `year must be an integer; got ${JSON.stringify(rs.year)}`);
+      }
+    }
+    const vs = loc.volume_summary;
+    if (vs && typeof vs === "object") {
+      const vp = `${lp}/volume_summary`;
+      checkRequired(vs, ["total_volumes", "complete", "by_record_type", "untyped"], vp, report, NULLABLE_FIELDS);
+      if ("total_volumes" in vs && !isNonNegativeInteger(vs.total_volumes)) {
+        addError(report, vp, `total_volumes must be a non-negative integer; got ${JSON.stringify(vs.total_volumes)}`);
+      }
+      const buckets = Array.isArray(vs.by_record_type) ? vs.by_record_type : [];
+      for (let j = 0; j < buckets.length; j++) {
+        checkCounts(buckets[j], BUCKET_COUNTS, BUCKET_NULLABLE, `${vp}/by_record_type[${j}]`, report);
+      }
+      checkCounts(vs.untyped, BUCKET_COUNTS, BUCKET_NULLABLE, `${vp}/untyped`, report);
     }
   }
 
@@ -2407,7 +2487,7 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings, proof_summaries[].claims[].relationship,
+  // timelines, proof_summaries[].claims[].relationship,
   // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
@@ -2533,8 +2613,8 @@ async function validateSidecars(
       continue;
     }
 
-    // A non-persona producer (fulltext_search, external_links_search) stages a
-    // sidecar but no GedcomX personas, so a record_persona_id on such an
+    // A non-persona producer (fulltext_search, or a legacy external_links_search
+    // sidecar from before #2995) has a sidecar but no GedcomX personas, so a record_persona_id on such an
     // assertion is invalid regardless of record_id. Say why, rather than the
     // misleading "does not match any result's recordId" the recordId-only match
     // produced for these sidecars — they key on `id`, never `recordId` (#2038).

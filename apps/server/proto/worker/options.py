@@ -31,7 +31,8 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
   ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
   CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
-  every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
+  every agent (``gateway_agent_models``, and ``gateway_plugin_copy`` for the plugin's own
+  namespaced registration of them), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
@@ -46,11 +47,14 @@ identifiers reach it through a closure, never a global.
 from __future__ import annotations
 
 import dataclasses
+import importlib.util
 import json
 import os
 import re
+import shutil
 import sys
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Any
 
 from app.agent.continue_policy import (
@@ -97,6 +101,8 @@ GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 GATEWAY_AGENT_MODELS = {
     "claude-sonnet-4-6": "us.anthropic.claude-sonnet-4-6",
     "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
+    # Not yet served through TAP's gateway: first seen there at U14's check.
+    "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
 }
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
@@ -229,7 +235,8 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
         # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
-        # (tap-gateway) runs 1.6.0, where tool search is unverified (handoff U14).
+        # (tap-gateway) runs 1.6.0: tool search passes on a local copy of its route
+        # (2026-10-24) and is unverified on the deployed gateway (handoff U14).
         "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
     }
 
@@ -244,6 +251,40 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
             agent = dataclasses.replace(agent, model=GATEWAY_AGENT_MODELS[model])
         out[name] = agent
     return out
+
+
+_FRONTMATTER_MODEL_RE = re.compile(r"^model:[ \t]*(\S+)[ \t]*$", re.MULTILINE)
+
+
+def gateway_plugin_copy(plugin_dir: str, dest: str) -> str:
+    """``plugin_dir`` copied to ``dest`` with each ``agents/*.md`` frontmatter ``model`` in
+    ``GATEWAY_AGENT_MODELS`` replaced by its Bedrock id; returns ``dest``. ``plugins=``
+    registers every agent a second time, as ``genealogy-research:<agent>`` straight from
+    its file, which ``gateway_agent_models`` never sees: a delegation by that name sent
+    the bare id and the gateway answered 400, and the main thread did the work itself
+    (handoff F4, 2026-10-24). Only the frontmatter is rewritten, never the body."""
+    shutil.copytree(plugin_dir, dest, dirs_exist_ok=True)
+    for path in sorted(Path(dest, "agents").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        if not text.startswith("---\n"):
+            continue
+        end = text.find("\n---", 4)
+        if end < 0:
+            continue
+        head = _FRONTMATTER_MODEL_RE.sub(
+            lambda m: f"model: {GATEWAY_AGENT_MODELS.get(m.group(1), m.group(1))}", text[:end])
+        if head != text[:end]:
+            path.write_text(head + text[end:], encoding="utf-8")
+    return dest
+
+
+def plugin_copy_missing(plugin_dir: str, dest: str) -> list[str]:
+    """The files of ``plugin_dir`` that ``dest`` lacks, as relative paths. A copy under
+    ``/tmp`` loses files on Amazon Linux 2023, whose tmpfiles cleanup removes any not
+    touched for 10 days; the CLI reads a skill's other files only when that skill runs."""
+    src = Path(plugin_dir)
+    return sorted(str(p.relative_to(src)) for p in src.rglob("*")
+                  if p.is_file() and not (Path(dest) / p.relative_to(src)).is_file())
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
@@ -364,6 +405,40 @@ def _deny(reason: str) -> dict[str, Any]:
 # executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
+# ── The step boundary (decision 25) ──────────────────────────────────────────────
+#
+# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, the way
+# `context_policy.py` loads `guard_project_files.py`. It is not a hook anywhere:
+# this worker is the only plane that ENFORCES the boundary, and it does so from
+# its own `PreToolUse` below.
+
+def _default_plugin_dir() -> Path:
+    """Where the plugin is. ``ENGINE_PLUGIN_DIR`` in the deployed image, which the
+    worker's predeploy hook puts at ``/opt/genealogy/plugin``; the checkout otherwise.
+    Read the same way ``worker.py`` reads it, so the two cannot point at different
+    copies."""
+    env = os.environ.get("ENGINE_PLUGIN_DIR")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parents[4] / "packages" / "engine" / "plugin"
+
+
+def load_step_boundary(path: Path | None = None):
+    """Import the plugin's step boundary. Raises if it is missing.
+
+    A checkout always has the file and the worker bundle ships the plugin, so an image
+    without it is broken in a way that must be LOUD -- the alternative is a turn that
+    silently enforces no boundary, which looks exactly like the feature working.
+    """
+    target = Path(path) if path is not None else _default_plugin_dir() / "hooks" / "step_boundary.py"
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", target)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {target}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 # U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
 # checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
 STORE_UNAVAILABLE_REASON = (
@@ -409,6 +484,7 @@ def make_pretool_hook(
     halt: Callable[..., str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
+    step_gate: Any | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -425,6 +501,13 @@ def make_pretool_hook(
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
     ``halt``, so the audit trail shows where the turn was cut.
+
+    ``step_gate`` is decision 25's carrier: a ``StepGate`` for THIS turn, or None to
+    enforce no boundary. It is consulted after the halt and delivered arms, so a
+    researcher's stop and a met bounded request both still outrank it -- a turn being
+    stopped on purpose must not be re-decided as a boundary crossing. Its first
+    crossing DENIES and its second HALTS, and a gate that raises is treated as no
+    opinion, because a hook that raises fails a call the user was entitled to make.
 
     A ``halt()`` that raises HALTS with ``STORE_UNAVAILABLE_REASON``, logs
     ``ev=halt_failed`` and calls ``on_halt_failed()`` (U23). The worker's halt classifies
@@ -529,9 +612,51 @@ def make_pretool_hook(
             # comment said 157). Appended rather than prepended, the reason eats most of
             # the window and the summary is cut. What the researcher most needs leads.
             return _halt(delivered_stop_reason(summary))
+        # The step boundary (decision 25). It sits AFTER the halt and delivered arms, so
+        # the researcher's own stop and a met bounded request both still outrank it: a
+        # turn being stopped on purpose must not be re-decided as a boundary crossing.
+        step_verdict = None
         try:
-            protected = direct_project_file_write(tool_name, tool_input)
-            if protected:
+            if step_gate is not None:
+                # Truthiness, as both harnesses read it: a main-thread call carrying
+                # `agent_id: null` is still the router's, and must still be gated.
+                step_verdict = step_gate.check(
+                    tool_name, tool_input, subagent=bool(data.get("agent_id"))
+                )
+        except Exception as exc:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
+            step_verdict = None
+            if log is not None:
+                log(ev="step_boundary_failed", turn_id=turn_id, tool_name=tool_name,
+                    error=f"{type(exc).__name__}: {exc}")
+        if step_verdict is not None and step_verdict[0] == "halt":
+            # The backstop. `_halt` denies the call it stops, so the step the model was
+            # told not to start does not run on its way out.
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name or "unknown",
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="halt", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id, reason=step_verdict[1])
+            return _halt(step_verdict[1])
+        try:
+            # A boundary deny is final: the other clauses can only deny too, and the
+            # step reason is the one the model must act on.
+            protected = (
+                None if step_verdict is not None
+                else direct_project_file_write(tool_name, tool_input)
+            )
+            if step_verdict is not None:
+                decision, reason = "deny", step_verdict[1]
+            elif protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
             elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
@@ -590,7 +715,8 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
     "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
     "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
-    "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
+    "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
+    "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
     "tree_gaps", "volume_bisect", "volume_search",
 })
@@ -656,7 +782,8 @@ def make_posttool_hook(
 RESUME_CONTINUE_TEXT = (
     "Your previous attempt at this message was interrupted while work was in "
     "progress (the worker restarted). Re-read research.json and continue the same "
-    "task from where it stopped; do not start over, and do not ask the user anything."
+    "task from where it stopped; do not start over. Finish the step that was running "
+    "and end with its \"Continue with ...?\" line, as the step would have."
 )
 
 

@@ -4,6 +4,7 @@ import type {
   JsonWrite,
   ProjectDirState,
   ProjectEntry,
+  ProjectListing,
   ProjectPathClass,
   ProjectStore,
   WriteJsonBothOptions,
@@ -112,5 +113,9 @@ export class ScopedFsStore implements ProjectStore {
   async remove(projectPath: string, ref: string): Promise<void> {
     this.assertAnchor(projectPath);
     return this.inner.remove(this.map(projectPath), ref);
+  }
+
+  async listProjects(): Promise<ProjectListing> {
+    return { mode: "hosted", projectPaths: [SCOPED_ANCHOR] };
   }
 }

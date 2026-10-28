@@ -20,6 +20,7 @@ signature contract.
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
@@ -794,7 +795,10 @@ def test_completion_summary_offers_second_opinion(
 
 _STALE_PROOF_ID = "ps_002"
 _STALE_PROOF_QUESTION = "q_002"
-_SEARCHED_MARKER = re.compile(r"Walworth|Hyde Genealogy", re.I)
+# The book's title, not the author: a still-to-search item can name Walworth only to
+# exclude him ("Hyde families not covered by Walworth", ut_proof_conclusion_g9j
+# 2026-10-26), while every stale listing names the book itself.
+_SEARCHED_MARKER = re.compile(r"Hyde Genealogy", re.I)
 _STILL_TO_SEARCH_CUE = re.compile(
     r"could (?:still )?(?:resolve|advance|name|settle)|not yet (?:examined|searched)"
     r"|remain(?:s|ing)? unsearched|still (?:to search|unsearched)|unexamined|next step",
@@ -803,10 +807,14 @@ _STILL_TO_SEARCH_CUE = re.compile(
 
 
 def _still_to_search_text(text):
-    """Each section's text, split at heading lines, from its first
-    still-to-search cue to its end."""
+    """Each section's text, split at heading lines and at a `---` rule, from
+    its first still-to-search cue to its end. The rule is where footnotes start:
+    a footnote citing the Hyde Genealogy as searched is not a to-do item."""
     parts = []
-    for para in re.split(r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$))", text or "", flags=re.M):
+    for para in re.split(
+        r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$|(?:-{3,}|\*{3,}|_{3,})[ \t]*$))",
+        text or "", flags=re.M,
+    ):
         m = _STILL_TO_SEARCH_CUE.search(para)
         if m:
             parts.append(para[m.start():])
@@ -862,4 +870,101 @@ def test_stale_proof_refreshed(before_state, after_state, test):
     assert not stale, (
         f"{_STALE_PROOF_ID}'s {', '.join(stale)} still lists Walworth's Hyde "
         "Genealogy as still to search, though log_021 searched both volumes"
+    )
+
+
+# --- Narrative edit form (issue #3542, lead 2c) --------------------------
+#
+# ut_proof_conclusion_e1k asks for one parenthetical in ps_001's narrative to
+# change. The deterministic half of the lead's before/after: the update must go
+# through `edits` and never re-send `narrative_markdown` in `fields`, and the
+# saved narrative must be the original with exactly that one change. The edits
+# together must also be well short of the narrative: a whole narrative sent as one
+# edit's `old` and `new` is a re-send under another key.
+
+_EDIT_FORM_ID = "ps_001"
+_EDIT_FORM_FROM = (
+    "the 1860 census does not state relationships explicitly "
+    "(the relationship column was not introduced until 1880)"
+)
+_EDIT_FORM_TO = (
+    "the 1860 census does not state relationships explicitly "
+    "(the relationship-to-head column first appears in the 1880 census)"
+)
+
+
+def _decoded_dict(value):
+    """`value` as a dict, decoding a JSON string once as the tool does; else {}."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _proof_summary_update_ops(tool_calls, entry_id):
+    """Every proof_summaries update op naming `entry_id`, single-op or batched,
+    from research_append calls (any MCP prefix). A stringified `ops` is decoded."""
+    found = []
+    for tc in tool_calls:
+        if "research_append" not in tc.get("tool", ""):
+            continue
+        args = tc.get("args") or {}
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except ValueError:
+                ops = None
+        for op in ops if isinstance(ops, list) else [args]:
+            if (
+                isinstance(op, dict)
+                and op.get("section") == "proof_summaries"
+                and op.get("op") == "update"
+                and op.get("entryId") == entry_id
+            ):
+                found.append(op)
+    return found
+
+
+def test_narrative_edit_form_used(before_state, after_state, tool_calls, test):
+    """Tagged `narrative-edit-form` (ut_proof_conclusion_e1k)."""
+    if "narrative-edit-form" not in test.get("tags", []):
+        pytest.skip("not a narrative-edit-form test")
+    before = _summary_by_id(before_state, _EDIT_FORM_ID)
+    after_research = after_state.get("research_json")
+    if before is None or after_research is None:
+        pytest.skip("Missing research.json")
+    ops = _proof_summary_update_ops(tool_calls, _EDIT_FORM_ID)
+    assert ops, f"no research_append update of {_EDIT_FORM_ID} was made"
+    resent = [op for op in ops if "narrative_markdown" in _decoded_dict(op.get("fields"))]
+    assert not resent, (
+        f"{len(resent)} update(s) of {_EDIT_FORM_ID} re-sent the whole narrative_markdown in "
+        "`fields`; a one-sentence change goes in `edits`"
+    )
+    assert any(op.get("edits") for op in ops), (
+        f"no update of {_EDIT_FORM_ID} carried `edits`"
+    )
+    original = before.get("narrative_markdown") or ""
+    sent = sum(
+        len(e.get("old") or "") + len(e.get("new") or "")
+        for op in ops
+        if isinstance(op.get("edits"), list)
+        for e in op["edits"]
+        if isinstance(e, dict)
+    )
+    assert sent * 2 < len(original), (
+        f"the edits to {_EDIT_FORM_ID} sent {sent} characters against a {len(original)}-character "
+        "narrative; an edit names the sentence it changes, not the whole field"
+    )
+    assert original.count(_EDIT_FORM_FROM) == 1, "fixture error: the target sentence must occur once"
+    expected = original.replace(_EDIT_FORM_FROM, _EDIT_FORM_TO)
+    after = next(
+        (ps for ps in after_research.get("proof_summaries", []) if ps.get("id") == _EDIT_FORM_ID),
+        None,
+    )
+    assert after is not None, f"{_EDIT_FORM_ID} is missing after the run"
+    assert after.get("narrative_markdown") == expected, (
+        f"{_EDIT_FORM_ID}'s narrative is not the original with exactly the requested change"
     )

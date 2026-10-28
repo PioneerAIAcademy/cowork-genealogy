@@ -971,6 +971,7 @@ def test_tiers_carry_their_security_group_profile_and_type(stack):
         assert o[(rh.LC_NS, "IamInstanceProfile")].endswith(f"instance-profile/genealogy-u13/genealogy-u13-{tier}")
         assert o[(rh.INSTANCES_NS, "InstanceTypes")] == rh.INSTANCE_TYPES[tier]
         assert o[(rh.MANAGED_NS, "ManagedActionsEnabled")] == "false"
+        assert (o[(rh.LOGS_NS, "StreamLogs")], o[(rh.LOGS_NS, "DeleteOnTerminate")]) == ("true", "false")
         assert (o[(rh.ASG_NS, "MinSize")], o[(rh.ASG_NS, "MaxSize")]) == ("1", "1")
         for var, key in rh.TIER_SECRETS[tier].items():
             assert o[(rh.SECRETS_NS, var)].startswith(f"arn:aws:secretsmanager:us-east-1:{ACCOUNT}:secret:genealogy-u13/{key}")
@@ -1413,9 +1414,13 @@ def test_every_case_has_a_row_in_the_readme_probe_table():
 ])
 def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
     """Neither name is in up's API layer, so the restore removes it: on web the template's
-    AUTONOMOUS_MAX_NUDGES=60 (01-web.config) applies again; the worker template sets neither."""
+    AUTONOMOUS_MAX_NUDGES=0 (01-web.config) applies again; the worker template sets neither."""
     assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
-    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "60"
+    # The template is 0 under step mode (decision 25), so `nudges_0` now sets the
+    # value the template already carries. The case still earns its keep: it proves
+    # the rehearsal APPLIES and REMOVES the option, which is what the restore tests,
+    # and it is the case that would catch the template drifting back above 0.
+    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "0"
     assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
     env, fake, _ = stack
     env_name = rh.ENV_NAMES[tier]
@@ -1629,8 +1634,8 @@ def test_slot_case_applies_both_options_and_restores_them(stack, case, n):
     (None, "4", r"names 2 user\(s\) for HttpConnections=4"),
     (SLOT_USERS[2], "4", r"names 2 user\(s\) for HttpConnections=4"),
     ("genealogy-turn-0 genealogy-turn-0", "2", "names a user twice"),
-    ("genealogy-turn-0 genealogy-turn-8", "2", r"\['genealogy-turn-8'\], which 01-worker-layout.sh"),
-    ("genealogy-turn-0 webapp", "2", r"\['webapp'\], which 01-worker-layout.sh's TURN_USERS does not create"),
+    ("genealogy-turn-0 genealogy-turn-8", "2", r"\['genealogy-turn-8'\], which 100_worker-layout.sh"),
+    ("genealogy-turn-0 webapp", "2", r"\['webapp'\], which 100_worker-layout.sh's TURN_USERS does not create"),
     (SLOT_USERS[2], "0", "not a positive integer"),
 ])
 def test_check_options_refuses_users_that_do_not_match_connections(users, conns, message):

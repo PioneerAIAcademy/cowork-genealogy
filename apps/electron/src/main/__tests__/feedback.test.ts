@@ -16,6 +16,7 @@ import {
   PRESUMED_LIVING_YEARS,
   redactLivingPersons,
   renderFeedbackMarkdown,
+  toZipEntryName,
   walkProject,
   type FeedbackOptions
 } from '../feedback'
@@ -1431,5 +1432,55 @@ describe('review findings — the stale-copy skip', () => {
     )
     const md = await zip.file('FEEDBACK.md')!.async('string')
     expect(md).toContain('tree.gedcomx.json.bak (stale copy)')
+  })
+})
+
+describe('buildFeedbackZip — entry names (#3706)', () => {
+  const REPORT = '2026-10-21 Historical context - Danish naming and the Kjøller name.md'
+  const LOCAL_HEADER = Buffer.from([0x50, 0x4b, 0x03, 0x04])
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-names-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+    await mkdir(join(folder, 'reports'))
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  it('toZipEntryName turns every backslash into a forward slash', () => {
+    expect(toZipEntryName(`reports\\${REPORT}`)).toBe(`reports/${REPORT}`)
+    expect(toZipEntryName('results\\sub\\log_006.json')).toBe('results/sub/log_006.json')
+    expect(toZipEntryName(`reports/${REPORT}`)).toBe(`reports/${REPORT}`)
+  })
+
+  it('writes /-separated, UTF-8-flagged entry names', async () => {
+    // On Windows this is a file inside reports/; on Linux and macOS it is a root
+    // file whose name holds a backslash. walkProject reports `reports\<name>`
+    // either way, so this fails on every OS if the zip boundary stops converting.
+    await writeFile(join(folder, `reports\\${REPORT}`), 'report body', 'utf8')
+
+    const buf = Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    const zip = await JSZip.loadAsync(buf)
+    expect(Object.keys(zip.files).filter((n) => n.includes('\\'))).toEqual([])
+    expect(await zip.file(`reports/${REPORT}`)!.async('string')).toBe('report body')
+
+    // Python zipfile before 3.12 (the case extractor, under macOS's stock
+    // python3) and Expand-Archive (the .bat) decode a name as UTF-8 only when
+    // general-purpose flag bit 11 is set in the entry's header; otherwise they
+    // read cp437 and the ø arrives mangled.
+    const name = Buffer.from(`reports/${REPORT}`, 'utf8')
+    let flags: number | undefined
+    for (let i = buf.indexOf(LOCAL_HEADER); i !== -1; i = buf.indexOf(LOCAL_HEADER, i + 4)) {
+      const len = buf.readUInt16LE(i + 26)
+      if (buf.subarray(i + 30, i + 30 + len).equals(name)) {
+        flags = buf.readUInt16LE(i + 6)
+        break
+      }
+    }
+    expect(flags).toBeDefined()
+    expect(flags! & 0x0800).toBe(0x0800)
   })
 })

@@ -344,6 +344,11 @@
           "description": "Positive tests only. Sub-skills this test expects to EXECUTE for real (opt-in). Their allowed-tools join the session allowlist, and the test must stock a fixture for each of those tools. Omit to leave a Skill() callee un-unioned, which is the default for every test. Mutually exclusive with stub_skills for the same skill.",
           "uniqueItems": true
         },
+        "step_mode": {
+          "type": "string",
+          "enum": ["step", "job", "wrapup"],
+          "description": "The step boundary this test's turn runs under (decision 25, docs/plan/research-step-mode.md). OMIT for no boundary, which is the default and what every test measures today: the harness builds no gate at all. Declare `step` to enforce one step per turn (the first spawn fixes the group; a second, out-of-group spawn is DENIED, and a second crossing HALTS the run as the worker's does); `job` to allow every step, as Cowork's one-turn \"Keep going\" does; `wrapup` for the dispose-to-conclusion order. The check runs BEFORE the stubs, so a stub's canned reply cannot stand in for a step denial. The predicate is the plugin's own packages/engine/plugin/hooks/step_boundary.py, loaded by the worker and both harnesses, so a test measures the rule production runs."
+        },
         "stop_at_stub": {
           "type": "boolean",
           "default": false,

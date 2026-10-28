@@ -141,6 +141,12 @@ without a linked identity assertion: stop. Do not proceed to Step 1.** Those
 are workflow states — an upstream step has not run — so there is no finding to
 record. Report the failing IDs and route.
 
+**Except under `wrapUp: yes`, for step 3 only.** Proceed, conclude at
+`not_proved` with `shortfall: "gap"`, name who is unidentified and what
+identifying them would take, and resolve the question (§7). A question with no
+assertions at all is this case. Step 4's conflict IDs still stop you under
+`wrapUp: yes` — see §7.
+
 **If step 4 produces failing IDs, do not conclude the question — but do record
 the attempt.** An unresolved identity conflict is a research *finding*, not a
 missing prerequisite, and a question that comes back with nothing written
@@ -176,9 +182,11 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 
 - `research_query({ section: "assertions", questionId })` — every assertion
   linked via `extracted_for_question_ids`.
-- `research_query({ section: "person_evidence", personId })` — per person the
-  question concerns (one call per person; `person_evidence` has no
+- `research_query({ section: "person_evidence", personId: [ … ] })` — every
+  person the question concerns, in one call (`person_evidence` has no
   `questionId` filter, so key off the persons the assertions above name).
+- `research_query({ section: "sources", sourceId: [ … ] })` — every source
+  those assertions cite, in one call.
 - `research_query({ section: "conflicts", questionId })` — conflicts that name
   this question in `blocks_question_ids` or dispute one of its assertions;
   check `status` for which are already resolved.
@@ -212,7 +220,7 @@ Never select a tier from a partial set, and never describe one as complete.
 
 **Multi-claim exception — applies only when writing a `claims[]` breakdown (§5), never to an ordinary single-claim tier.** When a question resolves into distinguishable claims with different evidence strength (paternity vs. maternity is the canonical case), tier each claim independently by the table and decision rules above, using only the evidence bearing on that claim, and write a per-claim breakdown in `claims[]` instead of forcing the scalar to speak for both — instead, too, of splitting into two questions (reserved for when the two parents need genuinely different research plans, not differing evidence strength alone; see `research-plan`). Once each claim has its own tier, set the scalar `tier` field to whichever is stronger — this is bookkeeping so existing tier-≥-probable routing keeps firing, not a preference for higher confidence in general. The breakdown, not the scalar, decides what gets written to the tree (§6).
 
-**A bounded or negative conclusion can itself be Proved/Probable — do not collapse to Not Proved because a *precise* value is unreachable.** When the exact event value can't be established but a **bounded** claim is well-supported, tier and state THAT bounded conclusion at the level its own evidence supports (often probable), and encode it (§6). Example: an exact death date is unrecoverable, but "died after the 1870 census and before 1911 — Kentucky had no statewide death registration until 1911, so **no death certificate exists** for him; a county estate administration brackets the death to the later 1870s" is a well-supported bounded conclusion, not a Not-Proved non-answer. Likewise a **documented negative** — "no record of type X exists for this person, and here is why (jurisdiction/era)" — is a GPS-valid finding; recording it *is* answering the question. Tier the finding on the strength of what CAN be established (the bracket / the negative), not on the unreachable exact value. Reserve Not Proved for when you cannot even bound the event or choose among candidates — and never leave the tree silent on a vital event you were asked about: if you can bound it or document its record-absence, that conclusion belongs in the tree (§6). **This does not relax the precondition gate above.** An *unresolved conflict* — competing candidates for the concluded fact not yet adjudicated — still hard-blocks per the decision rules: decline to finalize, surface the open conflict explicitly, and route to `conflict-resolution` first. A bounded or documented-negative conclusion is a valid *answer* only once the preconditions hold (exhaustiveness declared, conflicts resolved); it is never a way to conclude *past* an unresolved conflict or an undeclared exhaustiveness.
+**A bounded or negative conclusion can itself be Proved/Probable — do not collapse to Not Proved because a *precise* value is unreachable.** When the exact event value can't be established but a **bounded** claim is well-supported, tier and state THAT bounded conclusion at the level its own evidence supports (often probable), and encode it (§6). Example: an exact death date is unrecoverable, but "died after the 1870 census and before 1911 — Kentucky had no statewide death registration until 1911, so **no death certificate exists** for him; a county estate administration brackets the death to the later 1870s" is a well-supported bounded conclusion, not a Not-Proved non-answer. Likewise a **documented negative** — "no record of type X exists for this person, and here is why (jurisdiction/era)" — is a GPS-valid finding; recording it *is* answering the question. Tier the finding on the strength of what CAN be established (the bracket / the negative), not on the unreachable exact value. Reserve Not Proved for when you cannot even bound the event or choose among candidates — and never leave the tree silent on a vital event you were asked about: if you can bound it or document its record-absence, that conclusion belongs in the tree (§6). **This does not relax the precondition gate above.** An *unresolved conflict* — competing candidates for the concluded fact not yet adjudicated — still hard-blocks per the decision rules: decline to finalize, surface the open conflict explicitly, and route to `conflict-resolution` first. A bounded or documented-negative conclusion is a valid *answer* only once the preconditions hold (conflicts resolved); it is never a way to conclude *past* an unresolved conflict.
 
 **Data values are lowercase** (the table labels are capitalized for readability, but the `tier` field stored in `research.json` must be one of `proved` / `probable` / `possible` / `not_proved` / `disproved` — case-sensitive).
 
@@ -316,7 +324,11 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 **Only when you concluded it.** If the preconditions gate blocked you and you recorded the attempt at `not_proved`, the question stays **open** — you were prevented from concluding, which is not the same as concluding that nothing is there. A `not_proved` summary written after an exhaustive search that came back empty DOES close its question; a `not_proved` summary written because a conflict blocked the correlation does not. Leave it open and route.
 
-**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
+**Under `wrapUp: yes` you resolve the question at the tier you reached**, `not_proved` included, and whether or not the person was identified. Where an unidentified person would otherwise have blocked you, write `not_proved` with `shortfall: "gap"`, name who is unidentified and what identifying them would take, and resolve.
+
+**A blocking conflict still holds the question open, `wrapUp: yes` or not.** Write or refresh the `not_proved` summary with `shortfall: "conflict"`, leave `status` as it is, and name the conflict. Do not rely on the writer tool to stop you: it builds its blocking set from the summary's `supporting_assertion_ids`, so a summary citing none resolves straight over an open conflict.
+
+**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9, which names research-plan as where it would be planned.
 
 `resolution_assertion_ids` are the `a_` ids the conclusion rests on — the same ones in the summary's `supporting_assertion_ids`.
 
@@ -324,8 +336,8 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
-- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
-- That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
+- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`. That write is refused while a blocking conflict is unresolved, on a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
+- **If the delegation passed `newQuestion: yes`, do not write `completed`.** Call `research_append({ section: "project", op: "update", fields: {} })` instead and say the new question is next.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and fewer than two hypotheses for the question is refused — decline, and name hypothesis-tracking as the next step.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
@@ -340,7 +352,8 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
+- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with choosing the next question?"; the question is still open → the step that unblocks it; another question is still open → question-selection; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **What would advance the tier**, when it is `probable`, `possible` or `not_proved`: one line naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo) — and naming **research-plan** as where that search would be planned. Never question-selection: advancing a tier is a search on the question already answered. Say it even when the project is complete, where it is what more would take rather than the next step.
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
@@ -385,7 +398,7 @@ is already persisted.
 
 **Writes:** `proof_summaries[]`, the concluded question's resolution fields (`status`, `resolved`, `resolution_assertion_ids`), and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable — and at `possible` for a bounded or documented-negative conclusion (§6).
 
-**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. `narrative_markdown` and `exhaustive_search_summary` change together: a log entry made after the summary was written changes both (see §5). Before treating the existing summary as current, call `research_query({ section: "log", questionId })` and check every record those entries searched against the summary's not-examined list and the narrative's what-could-resolve list; a searched record still on either list means the summary is stale and both fields change. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
+**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. To change a sentence or two of `narrative_markdown` or `exhaustive_search_summary`, pass `edits: [{ field, old, new }]` on that update instead of the field, each `old` copied exactly from the current text so it matches once. `narrative_markdown` and `exhaustive_search_summary` change together: a log entry made after the summary was written changes both (see §5). Before treating the existing summary as current, call `research_query({ section: "log", questionId })` and check every record those entries searched against the summary's not-examined list and the narrative's what-could-resolve list; a searched record still on either list means the summary is stale and both fields change. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
 
 **Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `search_stop`, and never mint a question (see §7).
 
@@ -714,9 +727,11 @@ paragraphs of plain prose with **no label, heading or field name**:
    "exhaustive", not even inside a phrase such as "standard of proof"; say
    "the highest standard" instead.
 2. One sentence: what happens next, in plain language. When this invocation
-   set `project.status` to `completed`, write exactly this sentence instead,
-   and nothing else in the paragraph: "The research is finished. If you'd like
-   a second opinion on it, just ask."
+   set `project.status` to `completed`, write exactly one of these instead, and
+   nothing else in the paragraph. When the question's `search_stop` lists
+   unsearched sources (paragraph 1 names them): "This research is finished for
+   now. If you'd like a second opinion on it, just ask." When it does not:
+   "This research is finished. If you'd like a second opinion on it, just ask."
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

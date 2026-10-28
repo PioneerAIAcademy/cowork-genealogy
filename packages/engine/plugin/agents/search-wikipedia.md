@@ -11,7 +11,8 @@ description: >-
   held (use locality-guide), or wants narrative genealogical history such as
   migration patterns, settlement, chain migration or boundary changes (use
   historical-context).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -70,7 +71,9 @@ never do. Stop there.
 
 - Narrative genealogical history — **migration patterns**, settlement, chain
   migration, **boundary changes**, or "how did X work" synthesis → name
-  `historical-context`.
+  `historical-context`. A request to look a named topic up on Wikipedia is a
+  single-article request even when the topic is a migration or a boundary
+  change — proceed to the workflow.
 - A locality records-availability guide — what records exist for a place and
   where they are held → name `locality-guide`.
 - The FamilySearch Research Wiki, or "FamilySearch wiki" → name

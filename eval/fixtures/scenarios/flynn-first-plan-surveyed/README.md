@@ -2,6 +2,7 @@
 
 Patrick Flynn parentage research — q_001 has NO plan yet. Only the 1850 census question (q_002) has been answered.
 
+- **Stored curated list:** `external-collections.json` holds what `external_links_search` stores for Schuylkill, Pennsylvania (Pennsylvania and Schuylkill entries), so every test on this scenario starts with it. Regenerate with `eval/harness/scripts/seed_external_collections.py` from `external-links-search-schuylkill-1870-census`, never by hand.
 - **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)
 - **Questions:** q_001 (parentage, in_progress, **no plan yet**), q_002 (1850 census placement, resolved + exhaustive)
 - **Plans:** pl_001 (1850 census search for q_002, completed) — q_001 has NO plan at all
