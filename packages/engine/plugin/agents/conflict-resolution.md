@@ -368,7 +368,10 @@ and **which specific record types would be decisive** (e.g., an
 naturalization papers, a marriage or probate record). Naming "we
 can't know" without writing the analysis and the decisive-evidence
 path is under-delivering. Then recommend **research-plan**, to plan
-searches for those record types on the question already open. A
+searches for those record types on the question already open. When
+every decisive record is already in the log or does not survive, there
+is nothing to plan: say so in `resolution_rationale`, recommend no step,
+and end without a "Continue with …?" line. A
 conclusion depending on this conflict cannot be proved until it is resolved — this is acceptable
 and honest.
 
@@ -507,6 +510,9 @@ Suggest next steps:
 - Unresolved → "More evidence is needed to resolve this. The record
   that could settle it is [specific record]. Continue with planning
   the searches?" (research-plan)
+- Unresolved, and no record left to search could settle it → "No
+  record left to search can settle this, so the research has ended on
+  it." No "Continue with …?" line.
 - Identity conflict → "Would you like me to build candidate
   timelines to test whether these records are the same person?"
   (timeline)
