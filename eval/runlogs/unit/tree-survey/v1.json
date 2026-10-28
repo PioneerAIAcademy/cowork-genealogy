@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "tree-survey",
   "version": 1,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-28_08-56-14",
@@ -147,7 +147,7 @@
       },
       "totals": {
         "duration_ms": 22440.591468999628,
-        "duration_api_ms": 18859.0,
+        "duration_api_ms": 18859,
         "judge_duration_ms": 12169.26901799161,
         "wall_clock_ms": 35035.79759597778,
         "num_turns": 2,
@@ -170,7 +170,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22440.591468999628,
-          "duration_api_ms": 18859.0,
+          "duration_api_ms": 18859,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -259,7 +259,7 @@
           },
           "skill_cost_usd": 0.1318532,
           "output": {
-            "text_response": "Here's what the tree survey found for your tree (starting from TGAP-ROT, surveyed 8 generations up and 4 down, covering 40 people):\n\n---\n\n## Suggested Research: Edmund Ashby & Clara Weis\n\n**Research Question:** Which child was born to Edmund Ashby and Clara Weis between 1881 and 1886 in Dayton, Montgomery, Ohio?\n\n**Why this matters:** Edmund Ashby (1850\u20131919) is on your direct line. He and his wife Clara Weis have children recorded in 1880 and 1887 \u2014 a **seven-year gap** that likely means a child is missing from the tree. That child may have died young, or may simply never have been added.\n\n**What's available:** FamilySearch holds roughly 4.2 million records for the Dayton area in this period, including church baptism records and vital birth records. No hints are currently waiting for this couple, so this would be a search from scratch.\n\n---\n\n**Ready to start?** Say \"start a project for Edmund Ashby\" (or use his FamilySearch ID) and I'll initialize a research project with this question as the objective using `init-project`.",
+            "text_response": "Here's what the tree survey found for your tree (starting from TGAP-ROT, surveyed 8 generations up and 4 down, covering 40 people):\n\n---\n\n## Suggested Research: Edmund Ashby & Clara Weis\n\n**Research Question:** Which child was born to Edmund Ashby and Clara Weis between 1881 and 1886 in Dayton, Montgomery, Ohio?\n\n**Why this matters:** Edmund Ashby (1850–1919) is on your direct line. He and his wife Clara Weis have children recorded in 1880 and 1887 — a **seven-year gap** that likely means a child is missing from the tree. That child may have died young, or may simply never have been added.\n\n**What's available:** FamilySearch holds roughly 4.2 million records for the Dayton area in this period, including church baptism records and vital birth records. No hints are currently waiting for this couple, so this would be a search from scratch.\n\n---\n\n**Ready to start?** Say \"start a project for Edmund Ashby\" (or use his FamilySearch ID) and I'll initialize a research project with this question as the objective using `init-project`.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -641,7 +641,7 @@
       },
       "totals": {
         "duration_ms": 12069.51912000659,
-        "duration_api_ms": 10183.0,
+        "duration_api_ms": 10183,
         "judge_duration_ms": 7661.866812006338,
         "wall_clock_ms": 19748.5933303833,
         "num_turns": 2,
@@ -664,7 +664,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 12069.51912000659,
-          "duration_api_ms": 10183.0,
+          "duration_api_ms": 10183,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1417,
@@ -753,7 +753,7 @@
           },
           "skill_cost_usd": 0.124551,
           "output": {
-            "text_response": "The tree survey for **TGAP-ROT** is complete. Here's what was found:\n\n- The tree was read **8 generations up** and **4 generations down**, covering **63 people** in total.\n- The survey ran to completion without stopping early.\n\n**Result: No gaps were found.** The tree shows no holes in what was surveyed \u2014 all 63 people examined appear to have sufficient data without missing connections that FamilySearch likely has records for.",
+            "text_response": "The tree survey for **TGAP-ROT** is complete. Here's what was found:\n\n- The tree was read **8 generations up** and **4 generations down**, covering **63 people** in total.\n- The survey ran to completion without stopping early.\n\n**Result: No gaps were found.** The tree shows no holes in what was surveyed — all 63 people examined appear to have sufficient data without missing connections that FamilySearch likely has records for.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1055,7 +1055,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: called tree_gaps once with the delegation's personId, received one hole, checked its coverage and pendingHints (finding no fitting hints but proceeding anyway), and returned a single suggestion with the person's ID, name, lifespan, and a scoped research question. The summary reports the tree was read 8 generations up and 4 down, covering 40 people, and did not stop early\u2014all details from the scanned object. No omissions."
+            "rationale": "The skill addressed everything required: called tree_gaps once with the delegation's personId, received one hole, checked its coverage and pendingHints (finding no fitting hints but proceeding anyway), and returned a single suggestion with the person's ID, name, lifespan, and a scoped research question. The summary reports the tree was read 8 generations up and 4 down, covering 40 people, and did not stop early—all details from the scanned object. No omissions."
           },
           {
             "source": "base",
@@ -1099,7 +1099,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: called tree_gaps once with the delegation's personId, received one hole, checked its coverage and pendingHints (finding no fitting hints but proceeding anyway), and returned a single suggestion with the person's ID, name, lifespan, and a scoped research question. The summary reports the tree was read 8 generations up and 4 down, covering 40 people, and did not stop early\u2014all details from the scanned object. No omissions."
+            "rationale": "The skill addressed everything required: called tree_gaps once with the delegation's personId, received one hole, checked its coverage and pendingHints (finding no fitting hints but proceeding anyway), and returned a single suggestion with the person's ID, name, lifespan, and a scoped research question. The summary reports the tree was read 8 generations up and 4 down, covering 40 people, and did not stop early—all details from the scanned object. No omissions."
           },
           {
             "source": "base",
@@ -1135,7 +1135,7 @@
       },
       "totals": {
         "duration_ms": 17864.280998997856,
-        "duration_api_ms": 14754.0,
+        "duration_api_ms": 14754,
         "judge_duration_ms": 12431.422100024065,
         "wall_clock_ms": 30858.1485748291,
         "num_turns": 2,
@@ -1158,7 +1158,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 17864.280998997856,
-          "duration_api_ms": 14754.0,
+          "duration_api_ms": 14754,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -1247,7 +1247,7 @@
           },
           "skill_cost_usd": 0.1385476,
           "output": {
-            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\n### Suggested Research Question\n\n**Samuel Ashby (TGAP-GF3, 1855\u20131920):**\nDid Samuel Ashby and Ida Marsh have any children born after 1888, between 1889 and 1903, in Dayton, Montgomery, Ohio?\n\n---\n\n### Why This Question?\n\nThe tree lists Samuel and Ida's last child as born in 1888, when Ida was only 28 years old \u2014 young enough that additional children may have followed. FamilySearch has no pending record suggestions for him, but it does hold roughly nine record collections for Dayton and Montgomery County, including church records, birth and death records, and the **1900 US Census** (which would show who was living in the household and could reveal any children born after 1888).\n\n---\n\n### Next Step\n\nWhen you're ready to begin, use `init-project` with person ID **TGAP-GF3** and the question above as your research objective.",
+            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\n### Suggested Research Question\n\n**Samuel Ashby (TGAP-GF3, 1855–1920):**\nDid Samuel Ashby and Ida Marsh have any children born after 1888, between 1889 and 1903, in Dayton, Montgomery, Ohio?\n\n---\n\n### Why This Question?\n\nThe tree lists Samuel and Ida's last child as born in 1888, when Ida was only 28 years old — young enough that additional children may have followed. FamilySearch has no pending record suggestions for him, but it does hold roughly nine record collections for Dayton and Montgomery County, including church records, birth and death records, and the **1900 US Census** (which would show who was living in the household and could reveal any children born after 1888).\n\n---\n\n### Next Step\n\nWhen you're ready to begin, use `init-project` with person ID **TGAP-GF3** and the question above as your research objective.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1477,7 +1477,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: called tree_gaps once with the delegation's personId, received one hole, checked its coverage and pendingHints (finding no fitting hints but proceeding anyway), and returned a single suggestion with the person's ID, name, lifespan, and a scoped research question. The summary reports the tree was read 8 generations up and 4 down, covering 40 people, and did not stop early\u2014all details from the scanned object. No omissions."
+                "rationale": "The skill addressed everything required: called tree_gaps once with the delegation's personId, received one hole, checked its coverage and pendingHints (finding no fitting hints but proceeding anyway), and returned a single suggestion with the person's ID, name, lifespan, and a scoped research question. The summary reports the tree was read 8 generations up and 4 down, covering 40 people, and did not stop early—all details from the scanned object. No omissions."
               },
               {
                 "source": "base",
@@ -1629,7 +1629,7 @@
       },
       "totals": {
         "duration_ms": 12799.986335012363,
-        "duration_api_ms": 10693.0,
+        "duration_api_ms": 10693,
         "judge_duration_ms": 8741.664235014468,
         "wall_clock_ms": 21570.30963897705,
         "num_turns": 2,
@@ -1652,7 +1652,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 12799.986335012363,
-          "duration_api_ms": 10693.0,
+          "duration_api_ms": 10693,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1417,
@@ -1741,7 +1741,7 @@
           },
           "skill_cost_usd": 0.1241048,
           "output": {
-            "text_response": "The tree-survey agent read up to 8 generations up and 4 generations down, covering 7 people in the tree for **TGAP-ROT**, and found **no gaps**. The tree appears to be complete within the portion surveyed \u2014 no missing parents, missing generation links, or obvious research opportunities were identified.",
+            "text_response": "The tree-survey agent read up to 8 generations up and 4 generations down, covering 7 people in the tree for **TGAP-ROT**, and found **no gaps**. The tree appears to be complete within the portion surveyed — no missing parents, missing generation links, or obvious research opportunities were identified.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2073,7 +2073,7 @@
             "source": "rubric",
             "name": "Hand-off and prose",
             "score": 3,
-            "rationale": "The response correctly separates the machine-readable section (above the `---` line) with each person's FamilySearch ID and question, scan summary, and the init-project hint, from the user-facing prose below the `---` line. The prose contains no identifiers, file names, tool names, or field names\u2014only plain language descriptions of the holes and available records. No project was created or written."
+            "rationale": "The response correctly separates the machine-readable section (above the `---` line) with each person's FamilySearch ID and question, scan summary, and the init-project hint, from the user-facing prose below the `---` line. The prose contains no identifiers, file names, tool names, or field names—only plain language descriptions of the holes and available records. No project was created or written."
           }
         ],
         "review_dimensions": [
@@ -2117,13 +2117,13 @@
             "source": "rubric",
             "name": "Hand-off and prose",
             "score": 3,
-            "rationale": "The response correctly separates the machine-readable section (above the `---` line) with each person's FamilySearch ID and question, scan summary, and the init-project hint, from the user-facing prose below the `---` line. The prose contains no identifiers, file names, tool names, or field names\u2014only plain language descriptions of the holes and available records. No project was created or written."
+            "rationale": "The response correctly separates the machine-readable section (above the `---` line) with each person's FamilySearch ID and question, scan summary, and the init-project hint, from the user-facing prose below the `---` line. The prose contains no identifiers, file names, tool names, or field names—only plain language descriptions of the holes and available records. No project was created or written."
           }
         ]
       },
       "totals": {
         "duration_ms": 23764.03682399541,
-        "duration_api_ms": 20250.0,
+        "duration_api_ms": 20250,
         "judge_duration_ms": 11477.5720500038,
         "wall_clock_ms": 35656.38303756714,
         "num_turns": 2,
@@ -2146,7 +2146,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 23764.03682399541,
-          "duration_api_ms": 20250.0,
+          "duration_api_ms": 20250,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -2235,7 +2235,7 @@
           },
           "skill_cost_usd": 0.15086460000000002,
           "output": {
-            "text_response": "Here's what the tree survey found for your tree (centered on **TGAP-ROT**), after reading 120 people across 8 ancestor generations and 4 descendant generations:\n\n---\n\n## 5 Suggested Research Questions\n\n| # | Person | Question |\n|---|--------|----------|\n| 1 | **Samuel Weis** (b. ~1830, Lancaster, PA) | Who were his parents? *(FamilySearch has a pending record suggestion for this gap \u2014 strongest lead)* |\n| 2 | **Edmund Ashby** (b. ~1850, Lancaster, PA) | When and where did he die? *(No death date in the tree; death records and censuses should help)* |\n| 3 | **August Ashby** (1858\u20131931, Lancaster, PA) | Who was his spouse? *(No spouse recorded; marriage records and censuses should help)* |\n| 4 | **Hannah Pruitt** (1861\u20131934, Lancaster, PA) | Who were her parents? *(No parents in the tree; birth, church, and census records should help)* |\n| 5 | **Louise Marsh** (d. 1901, Lancaster Co., PA) | Where was she born? *(No birthplace recorded; censuses and local records should help)* |\n\n---\n\n**Recommended starting point:** Samuel Weis's parentage \u2014 there is already a pending record suggestion on FamilySearch pointing to that gap, making it the fastest path to a finding.\n\nTo begin, just tell me which person you'd like to start with and I'll kick off a research project for them.",
+            "text_response": "Here's what the tree survey found for your tree (centered on **TGAP-ROT**), after reading 120 people across 8 ancestor generations and 4 descendant generations:\n\n---\n\n## 5 Suggested Research Questions\n\n| # | Person | Question |\n|---|--------|----------|\n| 1 | **Samuel Weis** (b. ~1830, Lancaster, PA) | Who were his parents? *(FamilySearch has a pending record suggestion for this gap — strongest lead)* |\n| 2 | **Edmund Ashby** (b. ~1850, Lancaster, PA) | When and where did he die? *(No death date in the tree; death records and censuses should help)* |\n| 3 | **August Ashby** (1858–1931, Lancaster, PA) | Who was his spouse? *(No spouse recorded; marriage records and censuses should help)* |\n| 4 | **Hannah Pruitt** (1861–1934, Lancaster, PA) | Who were her parents? *(No parents in the tree; birth, church, and census records should help)* |\n| 5 | **Louise Marsh** (d. 1901, Lancaster Co., PA) | Where was she born? *(No birthplace recorded; censuses and local records should help)* |\n\n---\n\n**Recommended starting point:** Samuel Weis's parentage — there is already a pending record suggestion on FamilySearch pointing to that gap, making it the fastest path to a finding.\n\nTo begin, just tell me which person you'd like to start with and I'll kick off a research project for them.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2495,7 +2495,7 @@
                 "source": "rubric",
                 "name": "Hand-off and prose",
                 "score": 3,
-                "rationale": "The response correctly separates the machine-readable section (above the `---` line) with each person's FamilySearch ID and question, scan summary, and the init-project hint, from the user-facing prose below the `---` line. The prose contains no identifiers, file names, tool names, or field names\u2014only plain language descriptions of the holes and available records. No project was created or written."
+                "rationale": "The response correctly separates the machine-readable section (above the `---` line) with each person's FamilySearch ID and question, scan summary, and the init-project hint, from the user-facing prose below the `---` line. The prose contains no identifiers, file names, tool names, or field names—only plain language descriptions of the holes and available records. No project was created or written."
               }
             ],
             "judge_cost_usd": 0.013856,
@@ -2617,7 +2617,7 @@
       },
       "totals": {
         "duration_ms": 18243.34086399176,
-        "duration_api_ms": 16182.0,
+        "duration_api_ms": 16182,
         "judge_duration_ms": 11842.895675014006,
         "wall_clock_ms": 30101.24897956848,
         "num_turns": 2,
@@ -2640,7 +2640,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18243.34086399176,
-          "duration_api_ms": 16182.0,
+          "duration_api_ms": 16182,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -2729,7 +2729,7 @@
           },
           "skill_cost_usd": 0.1353655,
           "output": {
-            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\nThe tree was read 8 generations up and 4 down (120 people). Two promising research gaps were identified:\n\n---\n\n### 1. Hannah Pruitt \u2014 Parents Unknown\n**Question:** Who were the parents of Hannah Pruitt, born about 1861 in Lancaster, Lancaster, Pennsylvania?\n\nHannah Pruitt (1861\u20131934) was born in Lancaster, Pennsylvania, but your tree doesn't name her father or mother. FamilySearch has one pending record suggestion for this gap. Lancaster census, church, and birth records \u2014 including the 1900, 1910, and 1920 censuses \u2014 could show her living with her family or reveal who her parents were.\n\n---\n\n### 2. August Ashby \u2014 Spouse Unknown\n**Question:** Who was the spouse of August Ashby, born about 1858 and died 1931, in Lancaster, Lancaster, Pennsylvania, between 1876 and 1931?\n\nAugust Ashby (1858\u20131931) lived and died in Lancaster, Pennsylvania, but your tree records no wife. Lancaster church, vital, and census records \u2014 including the 1900, 1910, and 1920 censuses \u2014 could show a marriage or a household with a wife.\n\n---\n\nPick whichever question interests you most and say **\"start a project\"** with your chosen person's question ID (`TGAP-M2A` for Hannah Pruitt's parents, or `TGAP-M1A` for August Ashby's spouse) to kick off a full research project.",
+            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\nThe tree was read 8 generations up and 4 down (120 people). Two promising research gaps were identified:\n\n---\n\n### 1. Hannah Pruitt — Parents Unknown\n**Question:** Who were the parents of Hannah Pruitt, born about 1861 in Lancaster, Lancaster, Pennsylvania?\n\nHannah Pruitt (1861–1934) was born in Lancaster, Pennsylvania, but your tree doesn't name her father or mother. FamilySearch has one pending record suggestion for this gap. Lancaster census, church, and birth records — including the 1900, 1910, and 1920 censuses — could show her living with her family or reveal who her parents were.\n\n---\n\n### 2. August Ashby — Spouse Unknown\n**Question:** Who was the spouse of August Ashby, born about 1858 and died 1931, in Lancaster, Lancaster, Pennsylvania, between 1876 and 1931?\n\nAugust Ashby (1858–1931) lived and died in Lancaster, Pennsylvania, but your tree records no wife. Lancaster church, vital, and census records — including the 1900, 1910, and 1920 censuses — could show a marriage or a household with a wife.\n\n---\n\nPick whichever question interests you most and say **\"start a project\"** with your chosen person's question ID (`TGAP-M2A` for Hannah Pruitt's parents, or `TGAP-M1A` for August Ashby's spouse) to kick off a full research project.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3025,7 +3025,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received one hole for Hannah Pruitt (TGAP-GM2), and reported only what the tool returned. The suggestion accurately names Hannah Pruitt with birth year ~1861 in Lancaster County, Pennsylvania, and correctly states that FamilySearch holds ~4.2 million records including 1860 census, church records, and vital records\u2014all drawn from the coverage field. The claim that no pending hints exist matches pendingHints.total: 0. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received one hole for Hannah Pruitt (TGAP-GM2), and reported only what the tool returned. The suggestion accurately names Hannah Pruitt with birth year ~1861 in Lancaster County, Pennsylvania, and correctly states that FamilySearch holds ~4.2 million records including 1860 census, church records, and vital records—all drawn from the coverage field. The claim that no pending hints exist matches pendingHints.total: 0. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -3069,7 +3069,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received one hole for Hannah Pruitt (TGAP-GM2), and reported only what the tool returned. The suggestion accurately names Hannah Pruitt with birth year ~1861 in Lancaster County, Pennsylvania, and correctly states that FamilySearch holds ~4.2 million records including 1860 census, church records, and vital records\u2014all drawn from the coverage field. The claim that no pending hints exist matches pendingHints.total: 0. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received one hole for Hannah Pruitt (TGAP-GM2), and reported only what the tool returned. The suggestion accurately names Hannah Pruitt with birth year ~1861 in Lancaster County, Pennsylvania, and correctly states that FamilySearch holds ~4.2 million records including 1860 census, church records, and vital records—all drawn from the coverage field. The claim that no pending hints exist matches pendingHints.total: 0. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -3111,7 +3111,7 @@
       },
       "totals": {
         "duration_ms": 18515.838700986933,
-        "duration_api_ms": 16442.0,
+        "duration_api_ms": 16442,
         "judge_duration_ms": 11554.755963996286,
         "wall_clock_ms": 30100.306749343872,
         "num_turns": 2,
@@ -3134,7 +3134,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18515.838700986933,
-          "duration_api_ms": 16442.0,
+          "duration_api_ms": 16442,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -3223,7 +3223,7 @@
           },
           "skill_cost_usd": 0.13235159999999999,
           "output": {
-            "text_response": "Here's what the tree survey found for your tree:\n\n---\n\n## Tree Survey \u2014 TGAP-ROT\n\nThe tree was read **8 generations up and 4 generations down**, covering **40 people total**, and only one research gap was identified:\n\n---\n\n### \ud83d\udd0d Suggested Research Question\n\n**Who were the parents of Hannah Pruitt, born about 1861 in Lancaster County, Pennsylvania?**\n\n**Hannah Pruitt (1861\u20131934)** appears in your tree as a direct ancestor, two generations back from Walter Ashby. Her father and mother are not named in the tree.\n\n**Why this is a good lead:**\n- FamilySearch holds approximately **4.2 million records** for Lancaster County, Pennsylvania, covering her birth years.\n- The **1860 census** is the best starting point \u2014 it may show her family living together around the time she was born.\n- Available record types include the 1860 census, church records, and vital records.\n- FamilySearch currently has no pending record hints for her, so this is an open question ready to be explored.\n\n---\n\n### Next Step\n\nWhen you're ready to begin, start a project with:\n- **Person ID:** `TGAP-GM2` (Hannah Pruitt)\n- **Objective:** Find Hannah Pruitt's parents \u2014 use `init-project` with this ID and question as the objective.",
+            "text_response": "Here's what the tree survey found for your tree:\n\n---\n\n## Tree Survey — TGAP-ROT\n\nThe tree was read **8 generations up and 4 generations down**, covering **40 people total**, and only one research gap was identified:\n\n---\n\n### 🔍 Suggested Research Question\n\n**Who were the parents of Hannah Pruitt, born about 1861 in Lancaster County, Pennsylvania?**\n\n**Hannah Pruitt (1861–1934)** appears in your tree as a direct ancestor, two generations back from Walter Ashby. Her father and mother are not named in the tree.\n\n**Why this is a good lead:**\n- FamilySearch holds approximately **4.2 million records** for Lancaster County, Pennsylvania, covering her birth years.\n- The **1860 census** is the best starting point — it may show her family living together around the time she was born.\n- Available record types include the 1860 census, church records, and vital records.\n- FamilySearch currently has no pending record hints for her, so this is an open question ready to be explored.\n\n---\n\n### Next Step\n\nWhen you're ready to begin, start a project with:\n- **Person ID:** `TGAP-GM2` (Hannah Pruitt)\n- **Objective:** Find Hannah Pruitt's parents — use `init-project` with this ID and question as the objective.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3447,7 +3447,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received one hole for Hannah Pruitt (TGAP-GM2), and reported only what the tool returned. The suggestion accurately names Hannah Pruitt with birth year ~1861 in Lancaster County, Pennsylvania, and correctly states that FamilySearch holds ~4.2 million records including 1860 census, church records, and vital records\u2014all drawn from the coverage field. The claim that no pending hints exist matches pendingHints.total: 0. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received one hole for Hannah Pruitt (TGAP-GM2), and reported only what the tool returned. The suggestion accurately names Hannah Pruitt with birth year ~1861 in Lancaster County, Pennsylvania, and correctly states that FamilySearch holds ~4.2 million records including 1860 census, church records, and vital records—all drawn from the coverage field. The claim that no pending hints exist matches pendingHints.total: 0. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -3549,7 +3549,7 @@
             "source": "rubric",
             "name": "Suggestions",
             "score": 3,
-            "rationale": "The suggestion names one person (Clara, TGAP-GM1), states the hole in plain words (maiden name missing), cites what FamilySearch holds (3.1 million records including church/vital records and 1880 census), and poses one research question: 'Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879\u20131881 in Dayton, Montgomery County, Ohio?' This is a single fact (maiden name), names the person, and scopes place (Dayton, Montgomery County, Ohio) and years (1879\u20131881, born 1854). One suggestion for one hole. Clara is not a living person. All criteria met."
+            "rationale": "The suggestion names one person (Clara, TGAP-GM1), states the hole in plain words (maiden name missing), cites what FamilySearch holds (3.1 million records including church/vital records and 1880 census), and poses one research question: 'Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879–1881 in Dayton, Montgomery County, Ohio?' This is a single fact (maiden name), names the person, and scopes place (Dayton, Montgomery County, Ohio) and years (1879–1881, born 1854). One suggestion for one hole. Clara is not a living person. All criteria met."
           },
           {
             "source": "rubric",
@@ -3593,7 +3593,7 @@
             "source": "rubric",
             "name": "Suggestions",
             "score": 3,
-            "rationale": "The suggestion names one person (Clara, TGAP-GM1), states the hole in plain words (maiden name missing), cites what FamilySearch holds (3.1 million records including church/vital records and 1880 census), and poses one research question: 'Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879\u20131881 in Dayton, Montgomery County, Ohio?' This is a single fact (maiden name), names the person, and scopes place (Dayton, Montgomery County, Ohio) and years (1879\u20131881, born 1854). One suggestion for one hole. Clara is not a living person. All criteria met."
+            "rationale": "The suggestion names one person (Clara, TGAP-GM1), states the hole in plain words (maiden name missing), cites what FamilySearch holds (3.1 million records including church/vital records and 1880 census), and poses one research question: 'Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879–1881 in Dayton, Montgomery County, Ohio?' This is a single fact (maiden name), names the person, and scopes place (Dayton, Montgomery County, Ohio) and years (1879–1881, born 1854). One suggestion for one hole. Clara is not a living person. All criteria met."
           },
           {
             "source": "rubric",
@@ -3605,7 +3605,7 @@
       },
       "totals": {
         "duration_ms": 18862.213935004547,
-        "duration_api_ms": 16639.0,
+        "duration_api_ms": 16639,
         "judge_duration_ms": 11900.491198990494,
         "wall_clock_ms": 30780.10392189026,
         "num_turns": 2,
@@ -3628,7 +3628,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18862.213935004547,
-          "duration_api_ms": 16639.0,
+          "duration_api_ms": 16639,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -3717,7 +3717,7 @@
           },
           "skill_cost_usd": 0.1313422,
           "output": {
-            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\n## Suggested Research Question\n\n**Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879\u20131881 in Dayton, Montgomery County, Ohio?**\n\n### Why This Matters\nClara is the wife of Edmund Ashby, who is in your direct line. The tree records only her first name \u2014 her maiden name is missing entirely. Without it, her own parents and family cannot be traced back further.\n\n### Where to Look\nFamilySearch holds approximately 3.1 million church and vital records for the Dayton area, including the **1880 census**. A marriage record from around 1879\u20131881 or the 1880 household listing would likely reveal her maiden name. No record matches are currently waiting on her profile, so research would start from scratch.\n\n---\n\n**Ready to begin?** Just say the word and I can start a project for this question using `init-project` with person **TGAP-ROT** and the objective above.",
+            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\n## Suggested Research Question\n\n**Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879–1881 in Dayton, Montgomery County, Ohio?**\n\n### Why This Matters\nClara is the wife of Edmund Ashby, who is in your direct line. The tree records only her first name — her maiden name is missing entirely. Without it, her own parents and family cannot be traced back further.\n\n### Where to Look\nFamilySearch holds approximately 3.1 million church and vital records for the Dayton area, including the **1880 census**. A marriage record from around 1879–1881 or the 1880 household listing would likely reveal her maiden name. No record matches are currently waiting on her profile, so research would start from scratch.\n\n---\n\n**Ready to begin?** Just say the word and I can start a project for this question using `init-project` with person **TGAP-ROT** and the objective above.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3751,7 +3751,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-survey",
-                "text": "TGAP-GM1: Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879\u20131881 in Dayton, Montgomery County, Ohio?\n\nThe tree was read 8 generations up and 4 down (40 people), and it did not stop early. When you pick one, run `init-project` with that ID and that question as the objective.\n\n---\n\nClara (1854\u20131927) is the wife of Edmund Ashby, who is in your direct line. The tree gives only her first name, so her maiden name is missing. Without it, her own parents and family can't be traced. FamilySearch holds about 3.1 million church and vital records for the Dayton area, including the 1880 census. A marriage record around 1879 to 1881 or the 1880 household listing would likely show her maiden name. No record matches are waiting on her yet, so the search would start from scratch.\n\nYou can pick this one and research will start from there."
+                "text": "TGAP-GM1: Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879–1881 in Dayton, Montgomery County, Ohio?\n\nThe tree was read 8 generations up and 4 down (40 people), and it did not stop early. When you pick one, run `init-project` with that ID and that question as the objective.\n\n---\n\nClara (1854–1927) is the wife of Edmund Ashby, who is in your direct line. The tree gives only her first name, so her maiden name is missing. Without it, her own parents and family can't be traced. FamilySearch holds about 3.1 million church and vital records for the Dayton area, including the 1880 census. A marriage record around 1879 to 1881 or the 1880 household listing would likely show her maiden name. No record matches are waiting on her yet, so the search would start from scratch.\n\nYou can pick this one and research will start from there."
               }
             ]
           },
@@ -3971,7 +3971,7 @@
                 "source": "rubric",
                 "name": "Suggestions",
                 "score": 3,
-                "rationale": "The suggestion names one person (Clara, TGAP-GM1), states the hole in plain words (maiden name missing), cites what FamilySearch holds (3.1 million records including church/vital records and 1880 census), and poses one research question: 'Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879\u20131881 in Dayton, Montgomery County, Ohio?' This is a single fact (maiden name), names the person, and scopes place (Dayton, Montgomery County, Ohio) and years (1879\u20131881, born 1854). One suggestion for one hole. Clara is not a living person. All criteria met."
+                "rationale": "The suggestion names one person (Clara, TGAP-GM1), states the hole in plain words (maiden name missing), cites what FamilySearch holds (3.1 million records including church/vital records and 1880 census), and poses one research question: 'Who was the maiden name and parentage of Clara (wife of Edmund Ashby), born about 1854 and married around 1879–1881 in Dayton, Montgomery County, Ohio?' This is a single fact (maiden name), names the person, and scopes place (Dayton, Montgomery County, Ohio) and years (1879–1881, born 1854). One suggestion for one hole. Clara is not a living person. All criteria met."
               },
               {
                 "source": "rubric",
@@ -4051,7 +4051,7 @@
       },
       "totals": {
         "duration_ms": 14418.8294679916,
-        "duration_api_ms": 12616.0,
+        "duration_api_ms": 12616,
         "judge_duration_ms": 4035.176492994651,
         "wall_clock_ms": 18466.538906097412,
         "num_turns": 2,
@@ -4074,7 +4074,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14418.8294679916,
-          "duration_api_ms": 12616.0,
+          "duration_api_ms": 12616,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1411,
@@ -4194,7 +4194,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -4260,7 +4260,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4296,7 +4296,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4314,13 +4314,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -4454,7 +4454,7 @@
       },
       "totals": {
         "duration_ms": 13005.532752984436,
-        "duration_api_ms": 10677.0,
+        "duration_api_ms": 10677,
         "judge_duration_ms": 3765.632655005902,
         "wall_clock_ms": 16787.372827529907,
         "num_turns": 2,
@@ -4477,7 +4477,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 13005.532752984436,
-          "duration_api_ms": 10677.0,
+          "duration_api_ms": 10677,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1417,
@@ -4562,7 +4562,7 @@
           },
           "skill_cost_usd": 0.12284109999999997,
           "output": {
-            "text_response": "That's planning, so please use **research-plan**.\n\nThe tree-survey agent is designed specifically for surveying a FamilySearch tree to find research gaps \u2014 it reads the tree up and down and suggests people and questions to work on, but it doesn't plan searches for a specific question. For planning the searches on Hannah Pruitt's parents, you'd want the **research-plan** agent, which creates a sequenced research plan (which record sets to search, in what order, from which repositories) for a chosen question in an existing project.\n\nWould you like me to route your request to the research-plan agent instead?",
+            "text_response": "That's planning, so please use **research-plan**.\n\nThe tree-survey agent is designed specifically for surveying a FamilySearch tree to find research gaps — it reads the tree up and down and suggests people and questions to work on, but it doesn't plan searches for a specific question. For planning the searches on Hannah Pruitt's parents, you'd want the **research-plan** agent, which creates a sequenced research plan (which record sets to search, in what order, from which repositories) for a chosen question in an existing project.\n\nWould you like me to route your request to the research-plan agent instead?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -4597,7 +4597,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -4663,7 +4663,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4699,7 +4699,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4717,13 +4717,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -4857,7 +4857,7 @@
       },
       "totals": {
         "duration_ms": 10549.53720397316,
-        "duration_api_ms": 8885.0,
+        "duration_api_ms": 8885,
         "judge_duration_ms": 3697.635029006051,
         "wall_clock_ms": 14260.87999343872,
         "num_turns": 2,
@@ -4880,7 +4880,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 10549.53720397316,
-          "duration_api_ms": 8885.0,
+          "duration_api_ms": 8885,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1415,
@@ -4965,7 +4965,7 @@
           },
           "skill_cost_usd": 0.12176479999999999,
           "output": {
-            "text_response": "The tree-survey agent noted that picking the next research question for an existing project falls outside its scope \u2014 it handles open-ended tree surveys before any project exists. For selecting the next question within an active project, please use the **question-selection** agent instead.\n\nWould you like me to route your request to the question-selection agent?",
+            "text_response": "The tree-survey agent noted that picking the next research question for an existing project falls outside its scope — it handles open-ended tree surveys before any project exists. For selecting the next question within an active project, please use the **question-selection** agent instead.\n\nWould you like me to route your request to the question-selection agent?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -5000,7 +5000,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -5066,7 +5066,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -5102,7 +5102,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -5120,13 +5120,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -5308,7 +5308,7 @@
       },
       "totals": {
         "duration_ms": 23099.016133026453,
-        "duration_api_ms": 22188.0,
+        "duration_api_ms": 22188,
         "judge_duration_ms": 11815.08895198931,
         "wall_clock_ms": 34927.04176902771,
         "num_turns": 2,
@@ -5331,7 +5331,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 23099.016133026453,
-          "duration_api_ms": 22188.0,
+          "duration_api_ms": 22188,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -5420,7 +5420,7 @@
           },
           "skill_cost_usd": 0.1329139,
           "output": {
-            "text_response": "Here's what the tree survey found for your tree (starting from person **TGAP-ROT**):\n\n---\n\n## Tree Survey Result\n\nThe survey read **8 generations of ancestors** and **4 generations of descendants** (40 people total).\n\n### Top Research Suggestion\n\n**Heinrich Weis** (Tree ID: `TGAP-GF2`)\n\n> **Research Question:** When and where was Heinrich Weis born? *(Search window: 1812\u20131902)*\n\n**Why this matters:**\n- Heinrich died in 1902 and lived in **Cincinnati, Hamilton County, Ohio** \u2014 two generations back from Walter Ashby.\n- Your tree has **no birth date or birthplace** recorded for him.\n- FamilySearch has ~**9 record collections** for that area and period, with roughly **4.2 million records**, including:\n  - Church records\n  - Vital records\n  - 1850 and 1860 censuses\n- No records have been matched to him yet, and no hints are pending.\n\nA **census entry** could give an approximate birth year and birthplace; a **church record** could provide an exact birth date.\n\n---\n\n### Next Step\n\nWhen you're ready to start, say **\"init-project\"** with person ID `TGAP-GF2` and the objective:\n> *\"When and where was Heinrich Weis born?\"*",
+            "text_response": "Here's what the tree survey found for your tree (starting from person **TGAP-ROT**):\n\n---\n\n## Tree Survey Result\n\nThe survey read **8 generations of ancestors** and **4 generations of descendants** (40 people total).\n\n### Top Research Suggestion\n\n**Heinrich Weis** (Tree ID: `TGAP-GF2`)\n\n> **Research Question:** When and where was Heinrich Weis born? *(Search window: 1812–1902)*\n\n**Why this matters:**\n- Heinrich died in 1902 and lived in **Cincinnati, Hamilton County, Ohio** — two generations back from Walter Ashby.\n- Your tree has **no birth date or birthplace** recorded for him.\n- FamilySearch has ~**9 record collections** for that area and period, with roughly **4.2 million records**, including:\n  - Church records\n  - Vital records\n  - 1850 and 1860 censuses\n- No records have been matched to him yet, and no hints are pending.\n\nA **census entry** could give an approximate birth year and birthplace; a **church record** could provide an exact birth date.\n\n---\n\n### Next Step\n\nWhen you're ready to start, say **\"init-project\"** with person ID `TGAP-GF2` and the objective:\n> *\"When and where was Heinrich Weis born?\"*",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5802,7 +5802,7 @@
       },
       "totals": {
         "duration_ms": 20653.573233023053,
-        "duration_api_ms": 17577.0,
+        "duration_api_ms": 17577,
         "judge_duration_ms": 11096.948794991476,
         "wall_clock_ms": 32196.208715438843,
         "num_turns": 2,
@@ -5825,7 +5825,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20653.573233023053,
-          "duration_api_ms": 17577.0,
+          "duration_api_ms": 17577,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -5914,7 +5914,7 @@
           },
           "skill_cost_usd": 0.13163249999999999,
           "output": {
-            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\n## Suggested Research Question\n\n**Who were the children, if any, of Ruth Ashby (1880\u20131949) and Frank Ellery, born between 1906 and 1925 in Dayton, Montgomery, Ohio?**\n\n---\n\n### Why This Question?\n\nRuth Ashby is married to Frank Ellery in your tree, but **no children are listed for them**. Either they had none, or the children simply haven't been added yet.\n\nFamilySearch has:\n- **1910 and 1920 census records** for Dayton, Ohio \u2014 these list everyone in a household, so any children living with them would appear\n- **Church and birth records** for the area\n\nNone of the record hints FamilySearch has already suggested for Ruth relate to this question, so this is a genuine gap worth investigating.\n\n---\n\n### Next Step\n\nWhen you're ready to start, use `init-project` with person ID **TGAP-ROT** and the question above as your research objective. That will set up a full research project and get you started.",
+            "text_response": "Here's what the tree survey found for person **TGAP-ROT**:\n\n---\n\n## Suggested Research Question\n\n**Who were the children, if any, of Ruth Ashby (1880–1949) and Frank Ellery, born between 1906 and 1925 in Dayton, Montgomery, Ohio?**\n\n---\n\n### Why This Question?\n\nRuth Ashby is married to Frank Ellery in your tree, but **no children are listed for them**. Either they had none, or the children simply haven't been added yet.\n\nFamilySearch has:\n- **1910 and 1920 census records** for Dayton, Ohio — these list everyone in a household, so any children living with them would appear\n- **Church and birth records** for the area\n\nNone of the record hints FamilySearch has already suggested for Ruth relate to this question, so this is a genuine gap worth investigating.\n\n---\n\n### Next Step\n\nWhen you're ready to start, use `init-project` with person ID **TGAP-ROT** and the question above as your research objective. That will set up a full research project and get you started.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6296,7 +6296,7 @@
       },
       "totals": {
         "duration_ms": 15899.352627020562,
-        "duration_api_ms": 14892.0,
+        "duration_api_ms": 14892,
         "judge_duration_ms": 10931.715957005508,
         "wall_clock_ms": 26848.91629219055,
         "num_turns": 2,
@@ -6319,7 +6319,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 15899.352627020562,
-          "duration_api_ms": 14892.0,
+          "duration_api_ms": 14892,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -6408,7 +6408,7 @@
           },
           "skill_cost_usd": 0.12991280000000002,
           "output": {
-            "text_response": "Here's what the tree survey found for your tree:\n\n---\n\n**Suggested Research: Johann Ashby (TGAP-GGF)**\n\n**Research question:** When and where did Johann Ashby, born in 1822 in Baden, Germany, die (between 1822 and 1912)?\n\n**Why this person?**\nJohann Ashby is one of Walter's ancestors. He was born in 1822 in Baden, Germany, but your tree has no death date recorded for him. FamilySearch holds three collections of church records for the Baden region \u2014 roughly 900,000 records total \u2014 which may include a burial or death entry for him. Church records are the main source to try for this place and period.\n\n---\n\n**Next step:** When you're ready to begin, use `init-project` with person ID **TGAP-GGF** and the question above as your research objective.",
+            "text_response": "Here's what the tree survey found for your tree:\n\n---\n\n**Suggested Research: Johann Ashby (TGAP-GGF)**\n\n**Research question:** When and where did Johann Ashby, born in 1822 in Baden, Germany, die (between 1822 and 1912)?\n\n**Why this person?**\nJohann Ashby is one of Walter's ancestors. He was born in 1822 in Baden, Germany, but your tree has no death date recorded for him. FamilySearch holds three collections of church records for the Baden region — roughly 900,000 records total — which may include a burial or death entry for him. Church records are the main source to try for this place and period.\n\n---\n\n**Next step:** When you're ready to begin, use `init-project` with person ID **TGAP-GGF** and the question above as your research objective.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6790,7 +6790,7 @@
       },
       "totals": {
         "duration_ms": 19334.41522999783,
-        "duration_api_ms": 16214.0,
+        "duration_api_ms": 16214,
         "judge_duration_ms": 11858.08280299534,
         "wall_clock_ms": 31623.727560043335,
         "num_turns": 2,
@@ -6813,7 +6813,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19334.41522999783,
-          "duration_api_ms": 16214.0,
+          "duration_api_ms": 16214,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1416,
@@ -6902,7 +6902,7 @@
           },
           "skill_cost_usd": 0.1313705,
           "output": {
-            "text_response": "Here's what the tree survey found for **TGAP-ROT**:\n\n---\n\n## Tree Survey Result\n\nThe tree was read **8 generations up and 4 generations down**, covering **40 people**, and completed fully without stopping early.\n\n### Suggested Research Question\n\n**TGAP-UNC** \u2014 *Who was the spouse of August Ashby, born about 1858 and died in 1931 in Dayton, Montgomery County, Ohio?*\n\n**Why this is a good research target:**\n- August Ashby was born in 1858 and died in 1931 in Dayton, Ohio (age ~73). The tree shows **no wife or partner** for him.\n- FamilySearch holds approximately **4.2 million records** for that area and time period, including census, church, and vital records.\n- The **1880 census** falls squarely within his adult life, and marriage/church records could name a spouse.\n- No record matches have been flagged for him yet, so this is a fresh lead.\n\n---\n\n### Next Step\n\nWhen you're ready to begin, run **`init-project`** with person ID **TGAP-UNC** and the question above as your objective. That will set up a formal research project and guide you through the search process.",
+            "text_response": "Here's what the tree survey found for **TGAP-ROT**:\n\n---\n\n## Tree Survey Result\n\nThe tree was read **8 generations up and 4 generations down**, covering **40 people**, and completed fully without stopping early.\n\n### Suggested Research Question\n\n**TGAP-UNC** — *Who was the spouse of August Ashby, born about 1858 and died in 1931 in Dayton, Montgomery County, Ohio?*\n\n**Why this is a good research target:**\n- August Ashby was born in 1858 and died in 1931 in Dayton, Ohio (age ~73). The tree shows **no wife or partner** for him.\n- FamilySearch holds approximately **4.2 million records** for that area and time period, including census, church, and vital records.\n- The **1880 census** falls squarely within his adult life, and marriage/church records could name a spouse.\n- No record matches have been flagged for him yet, so this is a fresh lead.\n\n---\n\n### Next Step\n\nWhen you're ready to begin, run **`init-project`** with person ID **TGAP-UNC** and the question above as your objective. That will set up a formal research project and guide you through the search process.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7234,7 +7234,7 @@
             "source": "rubric",
             "name": "Hand-off and prose",
             "score": 3,
-            "rationale": "The response correctly provides the FamilySearch ID (TGAP-UNC) and question above the --- line, states how far the tree was read (8 generations up, 4 down, 40 people), and includes the hint to run init-project with that ID and question. Below the ---, the prose contains no identifiers, file names, tool names, or field names\u2014only plain language describing August Ashby, the research need, and what FamilySearch holds. No project was created and no writer tool was called."
+            "rationale": "The response correctly provides the FamilySearch ID (TGAP-UNC) and question above the --- line, states how far the tree was read (8 generations up, 4 down, 40 people), and includes the hint to run init-project with that ID and question. Below the ---, the prose contains no identifiers, file names, tool names, or field names—only plain language describing August Ashby, the research need, and what FamilySearch holds. No project was created and no writer tool was called."
           }
         ],
         "review_dimensions": [
@@ -7278,13 +7278,13 @@
             "source": "rubric",
             "name": "Hand-off and prose",
             "score": 3,
-            "rationale": "The response correctly provides the FamilySearch ID (TGAP-UNC) and question above the --- line, states how far the tree was read (8 generations up, 4 down, 40 people), and includes the hint to run init-project with that ID and question. Below the ---, the prose contains no identifiers, file names, tool names, or field names\u2014only plain language describing August Ashby, the research need, and what FamilySearch holds. No project was created and no writer tool was called."
+            "rationale": "The response correctly provides the FamilySearch ID (TGAP-UNC) and question above the --- line, states how far the tree was read (8 generations up, 4 down, 40 people), and includes the hint to run init-project with that ID and question. Below the ---, the prose contains no identifiers, file names, tool names, or field names—only plain language describing August Ashby, the research need, and what FamilySearch holds. No project was created and no writer tool was called."
           }
         ]
       },
       "totals": {
         "duration_ms": 19000.433093024185,
-        "duration_api_ms": 17215.0,
+        "duration_api_ms": 17215,
         "judge_duration_ms": 12271.61852401332,
         "wall_clock_ms": 31288.32244873047,
         "num_turns": 2,
@@ -7307,7 +7307,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19000.433093024185,
-          "duration_api_ms": 17215.0,
+          "duration_api_ms": 17215,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1437,
@@ -7396,7 +7396,7 @@
           },
           "skill_cost_usd": 0.1320008,
           "output": {
-            "text_response": "The tree survey found **one research opportunity** in your tree:\n\n---\n\n**August Ashby (1858\u20131931)**\n*Dayton, Montgomery County, Ohio*\n\n**Suggested question:** Who was August Ashby's spouse?\n\nHe appears on your tree as a relative of Walter Ashby (one generation up). He lived to age 73 but has no wife or partner listed in the tree. Finding his marriage would likely also surface children and his wife's family.\n\n**Why this is promising:**\n- FamilySearch has 9 collections covering Dayton, Ohio for his adult years (~4.2 million records), including census, church, and vital records (births, marriages, deaths)\n- The 1880 census falls squarely within his adult years\n- No hints have been matched yet \u2014 this is a fresh search\n\n---\n\nWhen you're ready to start, use `init-project` with August's ID (**TGAP-UNC**) and that question as your objective.",
+            "text_response": "The tree survey found **one research opportunity** in your tree:\n\n---\n\n**August Ashby (1858–1931)**\n*Dayton, Montgomery County, Ohio*\n\n**Suggested question:** Who was August Ashby's spouse?\n\nHe appears on your tree as a relative of Walter Ashby (one generation up). He lived to age 73 but has no wife or partner listed in the tree. Finding his marriage would likely also surface children and his wife's family.\n\n**Why this is promising:**\n- FamilySearch has 9 collections covering Dayton, Ohio for his adult years (~4.2 million records), including census, church, and vital records (births, marriages, deaths)\n- The 1880 census falls squarely within his adult years\n- No hints have been matched yet — this is a fresh search\n\n---\n\nWhen you're ready to start, use `init-project` with August's ID (**TGAP-UNC**) and that question as your objective.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7430,7 +7430,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-survey",
-                "text": "TGAP-UNC: Who was the spouse of August Ashby, born 1858 and died 1931, who lived in Dayton, Montgomery County, Ohio, between 1876 and 1931?\n\nThe tree was read 8 generations up and 4 generations down, 40 people in all, and it did not stop early. It found only one hole.\n\nWhen you pick one, run `init-project` with that ID and that question as the objective.\n\n---\n\nAugust Ashby (1858\u20131931) is on your tree as a relative of Walter Ashby, one generation up from him. He died at 73, and the tree lists no wife or partner for him. A marriage is a common find in genealogy records, and it often leads to his children and his wife's family.\n\nFamilySearch has a good amount to search for Dayton, Ohio in his adult years. There are 9 collections with about 4.2 million records, including census, church and vital records (births, marriages and deaths). The 1880 census falls within his adult years. FamilySearch has no pending record suggestions for him, so nothing specific has been matched yet, and this is a fresh search.\n\nYou can pick this person and research will start from there."
+                "text": "TGAP-UNC: Who was the spouse of August Ashby, born 1858 and died 1931, who lived in Dayton, Montgomery County, Ohio, between 1876 and 1931?\n\nThe tree was read 8 generations up and 4 generations down, 40 people in all, and it did not stop early. It found only one hole.\n\nWhen you pick one, run `init-project` with that ID and that question as the objective.\n\n---\n\nAugust Ashby (1858–1931) is on your tree as a relative of Walter Ashby, one generation up from him. He died at 73, and the tree lists no wife or partner for him. A marriage is a common find in genealogy records, and it often leads to his children and his wife's family.\n\nFamilySearch has a good amount to search for Dayton, Ohio in his adult years. There are 9 collections with about 4.2 million records, including census, church and vital records (births, marriages and deaths). The 1880 census falls within his adult years. FamilySearch has no pending record suggestions for him, so nothing specific has been matched yet, and this is a fresh search.\n\nYou can pick this person and research will start from there."
               }
             ]
           },
@@ -7656,7 +7656,7 @@
                 "source": "rubric",
                 "name": "Hand-off and prose",
                 "score": 3,
-                "rationale": "The response correctly provides the FamilySearch ID (TGAP-UNC) and question above the --- line, states how far the tree was read (8 generations up, 4 down, 40 people), and includes the hint to run init-project with that ID and question. Below the ---, the prose contains no identifiers, file names, tool names, or field names\u2014only plain language describing August Ashby, the research need, and what FamilySearch holds. No project was created and no writer tool was called."
+                "rationale": "The response correctly provides the FamilySearch ID (TGAP-UNC) and question above the --- line, states how far the tree was read (8 generations up, 4 down, 40 people), and includes the hint to run init-project with that ID and question. Below the ---, the prose contains no identifiers, file names, tool names, or field names—only plain language describing August Ashby, the research need, and what FamilySearch holds. No project was created and no writer tool was called."
               }
             ],
             "judge_cost_usd": 0.013212000000000002,
@@ -7676,7 +7676,7 @@
   ],
   "totals": {
     "duration_ms": 280520.49798803637,
-    "duration_api_ms": 244266.0,
+    "duration_api_ms": 244266,
     "judge_duration_ms": 157251.83626104263,
     "num_turns": 32,
     "input_tokens": 22674,
