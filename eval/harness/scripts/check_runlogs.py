@@ -789,6 +789,7 @@ JUDGE_RENDER_TRIGGER_PATHS = (
     "eval/harness/harness/scenario_brief.py",
     "eval/harness/harness/rubric.py",
     "eval/harness/harness/skill_runner.py",
+    "eval/harness/harness/judge_render.py",
 )
 
 
