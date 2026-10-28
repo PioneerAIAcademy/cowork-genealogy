@@ -31,7 +31,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
@@ -2622,6 +2622,20 @@ async function validateSidecars(
     }
 
     if (!entry.results_ref) {
+      // An accepted hint stages nothing: extraction_append verified the persona id
+      // against its own read at write time. What can still be checked is that the
+      // assertion is about the hinted record.
+      if (isAcceptedHint(entry)) {
+        const hinted = typeof entry.query?.recordId === "string" ? arkToBareId(entry.query.recordId) : "";
+        if (hinted === "" || arkToBareId(String(a.record_id ?? "")) !== hinted) {
+          addError(
+            report,
+            ap,
+            `has record_persona_id under hint entry '${logId}', but record_id '${a.record_id}' is not the hinted record '${entry.query?.recordId ?? ""}'`,
+          );
+        }
+        continue;
+      }
       addError(report, ap, `has record_persona_id but its log entry '${logId}' has no sidecar (results_ref is null)`);
       continue;
     }
