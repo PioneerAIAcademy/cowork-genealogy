@@ -154,6 +154,24 @@
   color: var(--text-primary);
 }
 
+.treeStars {
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* "5/5" carries no unit aloud; this supplies one without changing the visual. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .treeId {
   font-family: var(--font-mono);
   font-size: 12px;

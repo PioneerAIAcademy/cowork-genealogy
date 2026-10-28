@@ -405,7 +405,6 @@ needed for that path.
 - No underscores → it's a bare/unsplit image group number; convert to an
   apid first.
 
-This mirrors how `volume_search` derives `imageGroupPrefix` (substring
-before the first `_`): a value with no `_` is already its own prefix and
-takes the apid path; a 3-segment value carries its natural id in the
-last segment.
+The bare image group number is the substring before the first `_`: a
+value with no `_` is already that number and takes the apid path; a
+3-segment value carries its natural id in the last segment.
