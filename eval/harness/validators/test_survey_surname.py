@@ -238,7 +238,8 @@ def test_household_grouping_and_slave_schedule(before_state, after_state, test):
 
     Reads the table from the survey_surname log entry's notes. A heading is any
     non-table line, since the body asks for a sub-section, not a markdown `#`.
-    A table line is any line with a pipe: GFM tables may omit the outer ones."""
+    A table line is any other line with a pipe: GFM tables may omit the outer
+    ones, and a `#` heading may carry a pipe (`### 1850 | United States ...`)."""
     if "household-grouping" not in test.get("tags", []):
         pytest.skip("not a household-grouping test")
     text = _survey_table(before_state, after_state)
@@ -246,10 +247,10 @@ def test_household_grouping_and_slave_schedule(before_state, after_state, test):
     population, slave, heading = [], [], ""
     for line in text.lower().splitlines():
         s = line.strip()
-        if "|" in s:
-            (slave if "slave" in heading else population).append(s)
-        elif s:
+        if s.startswith("#") or (s and "|" not in s):
             heading = s
+        elif s:
+            (slave if "slave" in heading else population).append(s)
     assert slave, "no table rows under a heading naming the slave schedule"
     assert any("edmund" in r for r in slave), (
         "the slave-schedule stub is not under the slave-schedule heading"

@@ -1043,6 +1043,19 @@ def test_the_plugin_ships_thirty_agents_and_two_skills():
     assert "\nEXPECTED_SKILLS = 2\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
+def test_an_agents_effort_reaches_its_bare_name_definition():
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    defs = load_agent_definitions(PLUGIN_DIR)
+    declared = {}
+    for md in sorted((PLUGIN_DIR / "agents").glob("*.md")):
+        head = md.read_text(encoding="utf-8").split("\n---", 1)[0]
+        line = next((x for x in head.splitlines() if x.startswith("effort:")), None)
+        declared[md.stem] = line.split(":", 1)[1].strip() if line else None
+    assert any(declared.values()), "no shipped agent declares effort; this test checks nothing"
+    assert {n: d.effort for n, d in defs.items()} == declared
+
+
 def test_expected_agents_is_the_shipped_set():
     assert worker.EXPECTED_AGENTS == AGENTS
     agents, error = worker.load_plugin_agents(str(PLUGIN_DIR))

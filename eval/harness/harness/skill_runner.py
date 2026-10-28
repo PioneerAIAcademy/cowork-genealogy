@@ -247,7 +247,8 @@ BUILTIN_ARG_TRUNCATE = 200
 #
 # The direct-agent arm (#2246) also reads this field: its verbatim assertion
 # `test_direct_delegation_relayed_verbatim` compares the recorded prompt against
-# the test's `input.delegation`, so a cut here is a false red on a run that
+# the test's `input.delegation` (with `<workspace>` replaced by the run's
+# folder), so a cut here is a false red on a run that
 # relayed perfectly.
 _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 

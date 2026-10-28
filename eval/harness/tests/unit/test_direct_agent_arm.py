@@ -112,7 +112,7 @@ def test_direct_prompt_replaces_the_workspace_placeholder(tmp_path):
     production caller always sends a real path."""
     spec = load_test_from_dict(_raw(delegation=DELEGATION + "\nprojectPath: <workspace>"))
     sent = _resolved_delegation(spec, tmp_path)
-    assert sent == DELEGATION + f"\nprojectPath: {tmp_path}"
+    assert sent == DELEGATION + f"\nprojectPath: {tmp_path.as_posix()}"
     prompt = _prompt_for(spec, tmp_path)
     assert sent in prompt
     assert "<workspace>" not in prompt

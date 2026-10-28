@@ -214,5 +214,29 @@ def test_table_checks_accept_pipeless_tables():
 
 def test_columns_fail_on_pipeless_table_without_ark():
     bad = _pipeless(_NOTES.replace("| Record ARK | Ruled Out |", "| Record ID | Ruled Out |"))
-    _expect_failure(check_columns, "lacks", before_state=EMPTY,
+    _expect_failure(check_columns, "'ark'", before_state=EMPTY,
                     after_state=_state([_entry(notes=bad)]), test=POSITIVE)
+
+
+_PIPE_HEADINGS = _NOTES.replace("## 1850 - United States Census, 1850",
+                                "### 1850 | United States Census, 1850").replace(
+    "## 1850 - United States Census (Slave Schedule), 1850",
+    "### 1850 | United States Census (Slave Schedule), 1850")
+_PLAIN_HEADINGS = _NOTES.replace("## 1850 - United States Census (Slave Schedule), 1850",
+                                 "United States Census (Slave Schedule), 1850, 1 entry:")
+
+
+@pytest.mark.parametrize("notes", [_PIPE_HEADINGS, _PLAIN_HEADINGS],
+                         ids=["heading-with-pipe", "plain-line-heading"])
+def test_grouping_reads_headings_in_both_layouts(notes):
+    after = _state([_entry(notes=notes)])
+    assert _run(check_grouping, before_state=EMPTY, after_state=after, test=POSITIVE) == "passed"
+
+
+def test_grouping_fails_on_a_split_household_under_plain_headings():
+    split = _PLAIN_HEADINGS.replace("| Mary Dixon (b. 1805) |", "| |").replace(
+        "| 1850 | Rockingham |",
+        "| 1850 | Ohio | Mary Dixon | | ark:/61903/1:1:XJQV-1850-B | |\n| 1850 | Rockingham |",
+    )
+    _expect_failure(check_grouping, "one household row", before_state=EMPTY,
+                    after_state=_state([_entry(notes=split)]), test=POSITIVE)

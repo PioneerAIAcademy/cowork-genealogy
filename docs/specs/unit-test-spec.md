@@ -757,7 +757,8 @@ On a direct test the harness:
 - runs the main thread on the harness default model, never on the agent's
   `model:`. The agent runs as a subagent on its own `model:` and `effort:` (§11);
 - sends the main thread a harness-owned dispatcher prompt whose only instruction
-  is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`. The
+  is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`, after
+  replacing each `<workspace>` with the run's folder (forward slashes). The
   agent's name is the test's `skill`; a direct test whose skill has no
   same-named agent file is refused rather than silently spawning nothing;
 - decides the positive-test outcome on `agents_spawned` instead of
@@ -874,9 +875,10 @@ and one instructs the agent outright to *'verify all seven criteria now pass and
 issue the search_stop'*. Write the delegation as that caller writes
 one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
-A `<workspace>` placeholder in a path argument is fine — the live writer tools
-override `projectPath` with the run's workspace, and substituting it would break
-the verbatim assertion on both sides.
+Write a path argument as `<workspace>`. The harness replaces it with the run's
+folder in both the prompt the dispatcher relays and the delegation the verbatim
+assertion compares against; the judge still reads the raw text. Left literal, the
+placeholder read to a Haiku agent as "no project" (#3935).
 
 **Read a twin against its routed original over several runs, never one, and
 never write a live rate into the test file.** Measuring the first five twins

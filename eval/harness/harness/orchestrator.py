@@ -1833,12 +1833,13 @@ def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
 
     A production caller always sends a real absolute path. Left literal, the
     placeholder reads to the agent as "no project", and a Haiku agent hands back
-    naming init-project instead of surveying (#3935).
+    naming init-project instead of surveying (#3935). Forward slashes, as the
+    mock writes `projectPath`, so a Windows dispatcher relays no backslashes.
     """
     delegation = spec.delegation or ""
     if workspace is None:
         return delegation
-    return delegation.replace(WORKSPACE_PLACEHOLDER, str(workspace))
+    return delegation.replace(WORKSPACE_PLACEHOLDER, workspace.as_posix())
 
 
 def _prompt_for(spec: TestSpec, workspace: Path | None = None) -> str:
@@ -2188,8 +2189,7 @@ def build_judge_grade_kwargs(
             "a conclusion that is WRONG. An agent that refuses the outcome this text "
             "asserts may be behaving exactly as required. Judge correctness from the "
             "rubric and the per-test context alone — never from what the delegation "
-            "claims about the answer.)\n\n"
-            + (getattr(result, "delegation_sent", None) or spec.delegation or "")
+            "claims about the answer.)\n\n" + (spec.delegation or "")
         )
         _spawned = spawned_agents(getattr(result, "builtin_tool_calls", []) or [])
         judge_ran = [
