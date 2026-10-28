@@ -223,7 +223,7 @@ the absorbed person's id in every section that holds person ids.
 | | `hypotheses` | `hypothesis-tracking` | — | `research_append` | unit + tool |
 | | `timelines` | `timeline` | `timeline_build`, by tool identity, for a person's own timeline only | `research_append`, `merge_tree_persons`, `timeline_build` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append`, `merge_tree_persons` | unit + hook — the hook denies the section unless the caller is the proof-conclusion **agent** |
-| | `evaluations` | `gps-mentor` | — | `research_append` | **nothing** routes the section to its owner — issue #3191. The hook's per-agent lanes do keep every other agent off it |
+| | `evaluations` | `gps-mentor` | — | `research_append` | hook — the section is routed to the gps-mentor **agent** (issue #3191), so the main-thread write is denied too; the per-agent lanes already kept every other agent off it |
 | | `localities` | `locality-guide` | — | `research_append` | unit |
 | | `warning_justifications` | none — appended by the warning gate as a side effect of a justified tree write | — | `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` | **nothing** |
 | `tree.gedcomx.json` | `persons` | none by design — co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion`, `forget-and-rederive` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget`, plus `research_append`/`extraction_append` for the assertion-backlink fact rewrite only (authorized by tool identity, not by adding a caller — `tree-materialization-spec.md` §4.4) | unit |

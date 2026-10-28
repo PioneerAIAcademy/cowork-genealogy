@@ -621,6 +621,60 @@ def test_per_claim_tree_encoding(before_state, after_state, test):
     )
 
 
+# --- Naming customs left out of the conclusion (naming-not-evidence) ---
+#
+# Issue #3251: a proof summary weighed children's names as "strong
+# circumstantial support" for a parentage and put a grandmother on the wrong
+# side. The scenario plants both in h_002's notes, which the judge also reads,
+# and across six graded runs the judge quoted those notes as the run's own
+# narrative. So this reads only what the run wrote.
+
+_NAMING_CUSTOM = re.compile(
+    r"\bnam(?:ing|e)\s+(?:customs?|patterns?|conventions?|traditions?|practices?)\b"
+    r"|\bnamed\s+(?:for|after)\s+(?:(?:the|his|her|their)\s+)?"
+    r"(?:(?:paternal|maternal)\s+)?grand(?:father|mother|parent)s?\b",
+    re.IGNORECASE,
+)
+_MATERNAL_GRANDMOTHER = re.compile(r"\bmaternal\s+grandmother\b", re.IGNORECASE)
+_BARE_EXCLUSION = re.compile(r"\b(?:not|never|no|excluded)\b", re.IGNORECASE)
+_EXCLUSION_SPOILERS = re.compile(
+    r"Thomas|Bridget|grand|first\s+(?:son|daughter)|support|consistent|suggest",
+    re.IGNORECASE,
+)
+
+
+def _naming_sentences(text):
+    joined = re.sub(r"[ \t]*\n(?![ \t]*\n)[ \t]*", " ", text or "")
+    sentences = re.split(r"(?<=[.!?])\s+|\n\s*\n", joined)
+    hits = []
+    for s in sentences:
+        if _MATERNAL_GRANDMOTHER.search(s):
+            hits.append(s.strip())
+        elif _NAMING_CUSTOM.search(s) and not (
+            _BARE_EXCLUSION.search(s) and not _EXCLUSION_SPOILERS.search(s)
+        ):
+            hits.append(s.strip())
+    return hits
+
+
+def test_naming_custom_not_cited(after_state, agent_returns, text_response, test):
+    """Tagged `naming-not-evidence`: the q_001 proof summary's narrative and
+    the agent's reply leave naming customs out. A bare exclusion ("naming
+    patterns are not evidence and were not considered") passes; a sentence
+    that describes the custom, ties it to a candidate, or names a maternal
+    grandmother fails, whatever it concludes."""
+    if "naming-not-evidence" not in test.get("tags", []):
+        pytest.skip("not a naming-not-evidence test")
+    ps = _proof_summary_for_question(after_state, "q_001")
+    assert ps is not None, "no proof_summaries entry for q_001 found in after_state"
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    hits = _naming_sentences(ps.get("narrative_markdown") or "") + _naming_sentences(reply)
+    assert not hits, (
+        "the conclusion cites a naming custom or a maternal grandmother; children's "
+        f"names are not evidence of a parentage: {hits!r}"
+    )
+
+
 #: Tiers that are a final answer rather than a stalled one. A disproved
 #: conclusion is as settled as a proved one -- the evidence refutes the claim --
 #: so asking why it is not "higher" is a category error. `not_proved` is

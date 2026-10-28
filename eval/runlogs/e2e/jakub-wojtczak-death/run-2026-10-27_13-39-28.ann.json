@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f2": "Agent never evaluated the hint (VZGY-L1L), never called source_attachments, never named Frank J Wojtczak. proof_summaries is empty and the question is still open. No documented conclusion of any kind."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "1aca74813f76857ef218287fe56626fd0e02e91ffd3f8f235d1038ed45c1c10b",
+  "blind_bundle_digest": "a37a8faa9575211241510c035da15c9bbfc28802f213dfb1cb44e7a8c047e893"
+}
