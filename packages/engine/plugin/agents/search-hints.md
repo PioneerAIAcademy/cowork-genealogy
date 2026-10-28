@@ -65,8 +65,8 @@ return once: you cannot ask the researcher anything mid-run.
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
 | `personId` | yes | The FamilySearch person id (e.g. `LZNY-BRF`), or a local tree id (`I1`). |
-| `planItemId` | yes | The `pli_` id of the "review pending hints" plan item this run executes. You set its status (below); never pass `planItemId: null` on the log entry when you hold one. |
-| `planId` | yes | The `pl_` id of that item's parent plan. `research_append` requires it to write `plan_items`. |
+| `planItemId` | when the router hands over a hints item | The `pli_` id of the "review pending hints" plan item this run executes. You set its status (below); never pass `planItemId: null` on the log entry when you hold one. Absent on a researcher's direct request: do not look for an item — log with `planItemId: null` and write no status. |
+| `planId` | with `planItemId` | The `pl_` id of that item's parent plan. `research_append` requires it to write `plan_items`. |
 | `userPresent` | no | `yes` when the researcher asked for this review and is there to give verdicts; `no` for an autonomous run with nobody to decide. Absent means `yes`. |
 | `verdicts` | record mode only | `{ark, verdict}` per hint, `verdict` being `accept` or `reject`, as the researcher stated it. |
 
@@ -167,7 +167,7 @@ Otherwise proceed.
 
 ## Set the plan item's status
 
-You hold `planItemId` and `planId`. Set the item once at the end of triage, by how it went. All status writes go through `research_append` on `plan_items` — the only project write triage makes:
+Only when you hold `planItemId` and `planId`; with none, triage writes nothing. Set the item once at the end of triage, by how it went. All status writes go through `research_append` on `plan_items` — the only project write triage makes:
 
 - **`person_record_matches` refused or unavailable** (every e2e run blocks it): the hints cannot be read. Set the item `skipped`, `skip_category: "inaccessible"`, `skip_reason` naming why. No log entry.
 - **No pending hints:** log one negative entry naming the item, then set it `completed` (completing an item needs a log entry that names it):
@@ -224,7 +224,7 @@ You hold `planItemId` and `planId`. Set the item once at the end of triage, by h
    nothing.
 3. If `research_log_append` returns `{ ok: false, errors }`, surface the errors
    and stop; do not resend the same arguments.
-4. **Complete the plan item.** Once the verdicts are logged, set the item
+4. **Complete the plan item**, when you hold one. Once the verdicts are logged, set the item
    `completed` — the verdict entries above name it (`plan_item_id = planItemId`),
    which is the attribution the engine requires to complete it:
 
