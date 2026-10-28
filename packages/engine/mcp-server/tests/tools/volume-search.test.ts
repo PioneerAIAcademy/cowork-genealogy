@@ -982,6 +982,24 @@ describe("fitToBudget", () => {
     expect(out.results[1].coverages).toHaveLength(2);
   });
 
+  it("shortens the longest volume first and leaves neighbours it has room for whole", () => {
+    // Capping only "big" at 20 frees ~12,000 characters, so the 25-row neighbours
+    // must keep all their rows even though they are over the first cap too.
+    const input = page([volume("m1", 25), volume("big", 200), volume("m2", 25)]);
+    const budget = JSON.stringify(input).length - 1_000;
+
+    const out = fitToBudget(input, budget);
+
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(budget);
+    expect(out.results.map((g) => g.imageGroupNumber)).toEqual(["m1", "big", "m2"]);
+    expect(out.results[1].coverages).toHaveLength(20);
+    expect(out.results[1].coverageCount).toBe(200);
+    for (const g of [out.results[0], out.results[2]]) {
+      expect(g.coverages).toHaveLength(25);
+      expect(g).not.toHaveProperty("coverageCount");
+    }
+  });
+
   it("keeps every volume and returns the most-shortened answer when nothing fits", () => {
     const input = page([volume("a", 5), volume("b", 5)]);
     const out = fitToBudget(input, 10);
@@ -1032,6 +1050,15 @@ describe("mergeCoverages", () => {
       { place: "B", dateRange: "1881-1884", recordType: "Muster rolls" },
     ]);
     expect(out).toEqual([{ places: ["A", "B"], dateRange: "1881–1884", recordType: "Muster rolls" }]);
+  });
+
+  it("merges one span written with an em-dash or a spaced hyphen", () => {
+    const out = mergeCoverages([
+      { place: "A", dateRange: "1881—1884", recordType: "Muster rolls" },
+      { place: "B", dateRange: "1881 - 1884", recordType: "Muster rolls" },
+      { place: "C", dateRange: "1881-1884", recordType: "Muster rolls" },
+    ]);
+    expect(out).toEqual([{ places: ["A", "B", "C"], dateRange: "1881—1884", recordType: "Muster rolls" }]);
   });
 
   it("leaves places empty rather than listing a blank place", () => {

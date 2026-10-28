@@ -746,8 +746,9 @@ dozens of towns — Freeborn, Minnesota's seven muster-roll volumes carry 31–4
 each — and that repetition was most of an oversized page.
 
 - **Key:** `(dateRange, recordType)` when the row has a `recordType`; otherwise
-  `(dateRange, recordTypeConceptId)`. An en-dash in `dateRange` keys as a hyphen,
-  since `datesOrig` and the fallback write one span both ways; the first-seen text
+  `(dateRange, recordTypeConceptId)`. An en-dash, an em-dash or a spaced hyphen in
+  `dateRange` keys as a bare hyphen, since `datesOrig` and the fallback write one
+  span several ways; the first-seen text
   is what the row shows. Keying on the visible text means two rows
   that print the same are always one row, even when their concept ids differ.
 - **Order:** rows in first-seen order; places within a row in first-seen order,
@@ -993,9 +994,10 @@ For each group in `response.groups`:
 
 After every group is mapped, the whole answer is serialized compactly — as the
 server sends it — and measured against `RESULT_CHAR_BUDGET` (40,000 characters).
-Over the budget, each volume's `coverages` is cut to the first 20 rows, then 10,
-5, 3 and 1, stopping at the first cap that fits; every volume that was cut gets
-`coverageCount`. Volumes are never dropped: the upstream cursor has already moved
+Over the budget, `coverages` are cut to the first 20 rows, then 10, 5, 3 and 1.
+Within each cap the longest lists are cut first, one volume at a time, stopping
+as soon as the answer fits, so one oversized volume does not cost its neighbours
+rows they had room for; every volume that was cut gets `coverageCount`. Volumes are never dropped: the upstream cursor has already moved
 past them, so a dropped volume could not be reached by any later page. If even a
 cap of 1 does not fit, that most-shortened answer is returned.
 
@@ -1217,8 +1219,8 @@ images are digitized, indexed, or full-text processed.
 | 26 | The real Freeborn first page at the default `pageSize` sends `pageSize: 50`, fits under 40,000 characters, and no volume carries `coverageCount` | Default page fits by merging alone |
 | 27 | On that page every upstream `(place, dateRange, recordType)` triple is in the answer | Merge is lossless |
 | 28 | The full 100-volume Freeborn page at `pageSize: 100` stays under the budget, keeps all 100 volumes and `nextPageToken`, and every shortened volume carries `coverageCount` > its row count | Budget backstop |
-| 29 | `fitToBudget` returns an in-budget answer unchanged, marks only the volumes it cut, and keeps every volume when nothing fits | Budget rules |
-| 30 | `mergeCoverages` merges on the visible `recordType` despite differing concept ids, keeps id-only rows apart, merges an en-dash and a hyphen spelling of one span, dedupes places in order, and lists no blank place | Merge key |
+| 29 | `fitToBudget` returns an in-budget answer unchanged, marks only the volumes it cut, cuts the longest volume first and leaves neighbours it has room for whole, and keeps every volume when nothing fits | Budget rules |
+| 30 | `mergeCoverages` merges on the visible `recordType` despite differing concept ids, keeps id-only rows apart, merges en-dash, em-dash, spaced-hyphen and hyphen spellings of one span, dedupes places in order, and lists no blank place | Merge key |
 | 31 | A caller's `pageSize` is sent and echoed; `1` and `100` are accepted | Page size |
 | 32 | `0`, `101`, `2.5`, `-1`, `NaN` and `"50"` are refused before any request | Page-size validation |
 | 33 | The 409 recovery names `pageSize` | Paging conflict |

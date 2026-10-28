@@ -266,9 +266,10 @@ export function mergeCoverages(rows: MappedCoverage[]): SimplifiedCoverage[] {
   const merged: SimplifiedCoverage[] = [];
   const byKey = new Map<string, SimplifiedCoverage>();
   for (const row of rows) {
-    // `datesOrig` writes a span with an en-dash where the fallback writes a hyphen,
-    // so one span would otherwise key two ways; the first-seen text is what shows.
-    const date = (row.dateRange ?? "").replace(/–/g, "-");
+    // `datesOrig` writes a span with an en-dash, an em-dash or a spaced hyphen
+    // where the fallback writes a bare hyphen, so one span would otherwise key
+    // several ways; the first-seen text is what shows.
+    const date = (row.dateRange ?? "").replace(/\s*[–—-]\s*/g, "-");
     const key = row.recordType != null
       ? `type\u0000${date}\u0000${row.recordType}`
       : `concept\u0000${date}\u0000${row.recordTypeConceptId ?? ""}`;
@@ -314,29 +315,37 @@ function mapGroup(
 }
 
 /**
- * Keep the serialized answer under `budget` characters by shortening each
- * volume's coverage list to the first cap in COVERAGE_CAPS that fits, marking
- * every shortened volume with `coverageCount`. Never drops a volume. If even the
- * smallest cap does not fit, returns that most-shortened answer.
+ * Keep the serialized answer under `budget` characters by shortening coverage
+ * lists, longest first, to each cap in COVERAGE_CAPS in turn, marking every
+ * shortened volume with `coverageCount`. Longest first, so one oversized volume
+ * does not cost its neighbours rows they had room for. Never drops a volume. If
+ * even the smallest cap does not fit, returns that most-shortened answer.
  */
 export function fitToBudget(
   result: VolumeSearchResult,
   budget: number = RESULT_CHAR_BUDGET
 ): VolumeSearchResult {
-  if (JSON.stringify(result).length <= budget) return result;
-  let capped = result;
+  let size = JSON.stringify(result).length;
+  if (size <= budget) return result;
+  const groups = [...result.results];
+  // Compact JSON serializes each array element on its own, so replacing one
+  // volume changes the answer's length by exactly the change in that volume's.
+  const lengths = groups.map((g) => JSON.stringify(g).length);
+  const longestFirst = groups
+    .map((_, i) => i)
+    .sort((a, b) => groups[b].coverages.length - groups[a].coverages.length);
   for (const cap of COVERAGE_CAPS) {
-    capped = {
-      ...result,
-      results: result.results.map((g) =>
-        g.coverages.length > cap
-          ? { ...g, coverages: g.coverages.slice(0, cap), coverageCount: g.coverages.length }
-          : g
-      ),
-    };
-    if (JSON.stringify(capped).length <= budget) break;
+    for (const i of longestFirst) {
+      const g = result.results[i];
+      if (g.coverages.length <= cap) break;
+      groups[i] = { ...g, coverages: g.coverages.slice(0, cap), coverageCount: g.coverages.length };
+      const length = JSON.stringify(groups[i]).length;
+      size += length - lengths[i];
+      lengths[i] = length;
+      if (size <= budget) return { ...result, results: groups };
+    }
   }
-  return capped;
+  return { ...result, results: groups };
 }
 
 export async function volumeSearchTool(
