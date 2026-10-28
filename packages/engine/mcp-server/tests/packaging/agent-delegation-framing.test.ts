@@ -230,7 +230,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       // file's header exists to stop.
       {
         side: "caller",
-        excerpt: "Relay the agent's return as-is.",
+        excerpt: "Relay everything after the agent's final `---` verbatim, or its whole return when it has none.",
       },
       {
         side: "agent",
@@ -248,7 +248,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
       {
         side: "caller",
-        excerpt: "Relay the agent's return as-is.",
+        excerpt: "Relay everything after the agent's final `---` verbatim, or its whole return when it has none.",
       },
     ],
     exempt: {
