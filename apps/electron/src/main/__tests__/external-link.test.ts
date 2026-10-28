@@ -149,13 +149,17 @@ describe('resolveFamilySearchTarget — refuses everything else', () => {
     // `record_search`'s `parseTreePersonId` applies no grammar at all, so the
     // narrow pattern silently dropped the link on any id it did not predict.
     for (const pid of ['KW7C-X9P', 'KW7C-X9PZ', 'kw7c-x9p']) {
-      expect(resolveFamilySearchTarget(`https://www.familysearch.org/tree/person/${pid}`), pid)
-        .not.toBeNull()
+      expect(
+        resolveFamilySearchTarget(`https://www.familysearch.org/tree/person/${pid}`),
+        pid
+      ).not.toBeNull()
     }
     // Still anchored: the grammar is what rejects, not the host.
     for (const pid of ['KW7-X9P', 'KW7C-X9PZQ', 'KW7C_X9P', 'KW7C-X9P/extra']) {
-      expect(resolveFamilySearchTarget(`https://www.familysearch.org/tree/person/${pid}`), pid)
-        .toBeNull()
+      expect(
+        resolveFamilySearchTarget(`https://www.familysearch.org/tree/person/${pid}`),
+        pid
+      ).toBeNull()
     }
   })
 
