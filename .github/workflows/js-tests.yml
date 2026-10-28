@@ -73,7 +73,11 @@ jobs:
           # packages/schema/ mirror skips this job and reports success — the
           # lint dark in exactly the case it exists to catch. engine-tests.yml
           # lists the same path for the same reason.
-          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^eval/app/|^eval/Start\.bat$|^scripts/drop-npm-managed-trees\.mjs$|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$|^\.github/workflows/electron-release\.yml$'
+          #
+          # external-collections-store.ts is the one engine file here, for the
+          # same reason: viewer-ui's externalCollections-drift.test.ts reads its
+          # row and document interfaces, so an engine-only rename must run it.
+          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^eval/app/|^eval/Start\.bat$|^scripts/drop-npm-managed-trees\.mjs$|^docs/specs/schemas/|^packages/engine/mcp-server/src/utils/external-collections-store\.ts$|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$|^\.github/workflows/electron-release\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

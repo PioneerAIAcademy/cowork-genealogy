@@ -102,3 +102,55 @@ describe('WsResearchTransport — constrained FamilySearch channel', () => {
     )
   })
 })
+
+describe('WsResearchTransport — external collections', () => {
+  function connWith(): { conn: SessionConnection; push: (msg: Record<string, unknown>) => void } {
+    let listener: ((msg: { type: string; [k: string]: unknown }) => void) | null = null
+    return {
+      conn: {
+        connect: () => {},
+        on: (fn) => {
+          listener = fn
+          return () => {}
+        },
+        send: () => {},
+        close: () => {}
+      },
+      push: (msg) => listener!(msg as { type: string })
+    }
+  }
+
+  function handlers(onCollections: (d: unknown) => void) {
+    return {
+      onResearch: () => {},
+      onGedcomx: () => {},
+      onCollections,
+      onSidecar: () => {},
+      onError: () => {},
+      onNotice: () => {}
+    }
+  }
+
+  it('routes a document_updated for external-collections.json to onCollections', () => {
+    const { conn, push } = connWith()
+    const onCollections = vi.fn()
+    new WsResearchTransport('s1', conn).subscribe(handlers(onCollections))
+    const data = { places: {} }
+    push({ type: 'document_updated', name: 'external-collections.json', data })
+    expect(onCollections).toHaveBeenCalledWith(data)
+  })
+
+  it('ignores a document_updated for any other document', () => {
+    const { conn, push } = connWith()
+    const onCollections = vi.fn()
+    new WsResearchTransport('s1', conn).subscribe(handlers(onCollections))
+    push({ type: 'document_updated', name: 'other.json', data: { places: {} } })
+    expect(onCollections).not.toHaveBeenCalled()
+  })
+
+  it('leaves collections to the socket: getProjectState returns null', async () => {
+    stubFetch({ research: null, gedcomx: null, label: 'x' })
+    const state = await new WsResearchTransport('s1', fakeConn()).getProjectState()
+    expect(state.collections).toBeNull()
+  })
+})
