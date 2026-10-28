@@ -1129,6 +1129,19 @@ async def test_stream_snapshots_documents_at_open_then_emits_changes_without_ids
     assert frames[1]["data"]["data"] == {"v": 2}
 
 
+async def test_stream_sends_external_collections_as_a_named_document():
+    """Pins existing behavior the viewer's Collections section relies on: the
+    file reaches the client as `document_updated` with its name, which is the
+    frame the hosted sandbox also sends."""
+    store = FakeStore()
+    row = store.seed_session()
+    doc = {"places": {"Schuylkill, Pennsylvania, United States": {"rows": []}}}
+    store.docs[row.project_id] = {"external-collections.json": (1, doc)}
+    gen = stream_frames(store, row, 0, poll_s=0.0, ping_s=5.0)
+    opening = parse_frames(await anext(gen) + await anext(gen))
+    assert opening[1]["data"] == {"type": "document_updated", "name": "external-collections.json", "data": doc}
+
+
 async def test_stream_stops_when_the_client_disconnects():
     store = FakeStore()
     row = store.seed_session()

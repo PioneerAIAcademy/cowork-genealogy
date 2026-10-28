@@ -31,7 +31,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
@@ -519,6 +519,19 @@ function checkIsoDate(
  * join test alongside it covers that in the meantime.
  */
 export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
+
+/** Whether a `conflicts[]` entry is settled: `resolved` or `moot` (issue #2359).
+ *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
+ *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
+ *  disputing its sources. Not every status read asks that question:
+ *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
+ *  this on any document the validator accepts. The harness keeps a Python copy,
+ *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
+ *  `test_settled_conflict_parity.py` runs both over the same conflicts. */
+export function isSettledConflict(c: any): boolean {
+  return SETTLED_CONFLICT_STATUSES.has(c?.status);
+}
 
 function checkRefExists(
   refId: string,
@@ -1486,7 +1499,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // Collected here, and read by the proof_summaries block below. Safe
       // because validateResearch is a single sequential pass and conflicts
       // precede proof_summaries in it.
-      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+      if (isSettledConflict(c) && typeof c.id === "string") {
         ids.settled_conflicts.add(c.id);
       }
     }
@@ -2613,6 +2626,20 @@ async function validateSidecars(
     }
 
     if (!entry.results_ref) {
+      // An accepted hint stages nothing: extraction_append verified the persona id
+      // against its own read at write time. What can still be checked is that the
+      // assertion is about the hinted record.
+      if (isAcceptedHint(entry)) {
+        const hinted = typeof entry.query?.recordId === "string" ? arkToBareId(entry.query.recordId) : "";
+        if (hinted === "" || arkToBareId(String(a.record_id ?? "")) !== hinted) {
+          addError(
+            report,
+            ap,
+            `has record_persona_id under hint entry '${logId}', but record_id '${a.record_id}' is not the hinted record '${entry.query?.recordId ?? ""}'`,
+          );
+        }
+        continue;
+      }
       addError(report, ap, `has record_persona_id but its log entry '${logId}' has no sidecar (results_ref is null)`);
       continue;
     }

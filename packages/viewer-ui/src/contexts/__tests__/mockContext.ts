@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import type { ResearchData, GedcomxData } from '../../lib/schema'
 import type { ResearchDataState, SidecarState } from '../ResearchDataContext'
+import type { ExternalCollectionsData } from '../../lib/externalCollections'
 import { patrickFlynnResearch, patrickFlynnGedcomx } from '../../lib/__fixtures__/patrick-flynn'
 
 // Standard mock builder for useResearchData. Tests pass overrides for the
@@ -9,6 +10,7 @@ export function buildMockContext(
   overrides: {
     research?: ResearchData | null
     gedcomx?: GedcomxData | null
+    collections?: ExternalCollectionsData | null
     sidecar?: SidecarState
     openSidecar?: ResearchDataState['openSidecar']
     closeSidecar?: ResearchDataState['closeSidecar']
@@ -26,6 +28,7 @@ export function buildMockContext(
   return {
     research: overrides.research === undefined ? patrickFlynnResearch : overrides.research,
     gedcomx: overrides.gedcomx === undefined ? patrickFlynnGedcomx : overrides.gedcomx,
+    collections: overrides.collections ?? null,
     error: overrides.error ?? null,
     clearError: overrides.clearError ?? (() => {}),
     notice: overrides.notice ?? null,
