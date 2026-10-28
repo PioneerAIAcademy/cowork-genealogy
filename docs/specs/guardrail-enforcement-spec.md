@@ -1298,6 +1298,17 @@ a refusal could not. The research-plan eval counts those misses
 (`report_external_items_missing_a_stored_collection`).
 `collectionUrlInvariants`.
 
+
+### A logged external-site url is a stored curated collection
+
+`research_log_append` refuses an `external_site` entry whose `urlGenerated` names a
+collection that is not in `external-collections.json` (lead ruling, 2026-10-28:
+add the guard rather than wait to measure). With `research_append` on
+`collection_url` and `build_external_search_url` on `baseUrl`, it covers every
+writer of a collection id. Compared by collection key across every stored place,
+as above. **A url already in the log is not re-checked**, so closing a hand-off
+built before the list existed, or whose row a re-fetch dropped, is never refused.
+
 ### Blocking conflicts before completion
 
 `project.status` may not be set to `"completed"` while any `conflicts[]` entry is

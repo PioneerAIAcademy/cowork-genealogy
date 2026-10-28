@@ -196,6 +196,16 @@ it is the string the skill presents as the clickable link and persists into
 `research.json`, the same caller-composed shape `build_external_search_url`
 refuses as `invalid_base_url`. Trimmed before both the check and the write.
 
+**A collection url must be stored.** A `urlGenerated` that names one collection
+(an Ancestry collection id in either spelling, a MyHeritage collection page) is
+refused unless its collection key is in `external-collections.json`, for any
+place; a site's or an archive's own search names no collection and is not
+checked. A missing file refuses with the fetch that creates it, an unreadable one
+with the read error and the re-fetch. A url already in the log is not re-checked:
+closing a hand-off logs its url again, and one built before the list existed, or
+whose collection a re-fetch dropped, must stay closable. The check runs in the
+preflight pass, so a batch reports every refused op at once.
+
 **`resultsExamined` validation.** Must be a non-negative integer. A numeric
 string (`"5"`, the same stringified-argument slip `resultsAvailable` is coerced
 for) is coerced first; `NaN`, a negative or a fraction is rejected with an
