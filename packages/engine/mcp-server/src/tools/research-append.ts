@@ -5510,10 +5510,6 @@ function planItemSkipInvariants(
   return errors;
 }
 
-// The stored collections are read once per call, before the sync apply loop,
-// and only when an op sets `collection_url` (`loadStoredCollectionUrls`). Every
-// place's rows, so a plan item's free-text jurisdiction never has to be matched.
-
 /** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
  *  inline `items[]`. An update is not an append, so a status change never warns. */
 function appendedPlanItems(ops: readonly ResearchAppendOp[]): any[] {

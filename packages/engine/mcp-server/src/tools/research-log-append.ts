@@ -1623,6 +1623,17 @@ function opUrlGenerated(op: ResearchLogAppendOp): string | undefined {
   return typeof url === "string" ? url.trim() : undefined;
 }
 
+/** Whether an op would list a new hand-off in `awaitingUser`: `partial`, no capture. */
+function opensHandOff(op: ResearchLogAppendOp): boolean {
+  let site: unknown;
+  try {
+    site = coerceObjectArg(asNull(op.externalSite), "externalSite");
+  } catch {
+    return false;
+  }
+  return op.outcome === "partial" && (site as { captureReceived?: unknown } | null)?.captureReceived === false;
+}
+
 /** A url already in the log, as the research.json read at the start of the call. */
 function loggedExternalUrls(log: unknown): Set<string> {
   const urls = new Set<string>();
@@ -1635,15 +1646,17 @@ function loggedExternalUrls(log: unknown): Set<string> {
 
 /** An `external_site` url that names a collection must name a stored one, so a
  *  search never goes to an invented collection id. A url already logged is not
- *  re-checked: closing a hand-off logs its url again, and one built before the
- *  list existed, or whose collection a re-fetch dropped, must stay closable. */
+ *  re-checked unless the op opens a new hand-off: closing a hand-off, or logging a
+ *  capture that came back later, logs its url again, and one built before the list
+ *  existed, or whose collection a re-fetch dropped, must stay closable. */
 async function preflightStoredCollection(
   op: ResearchLogAppendOp,
   logged: Set<string>,
   stored: () => Promise<StoredCollectionUrls>,
 ): Promise<void> {
   const url = opUrlGenerated(op);
-  if (url === undefined || !namesCollection(url) || logged.has(url)) return;
+  if (url === undefined || !namesCollection(url)) return;
+  if (logged.has(url) && !opensHandOff(op)) return;
   const ways =
     "Build a site-wide search with build_external_search_url and no baseUrl, or use a stored " +
     "collection's url from research_query({section: \"external_collections\", place, recordType}).";
@@ -1958,7 +1971,7 @@ async function applyLogAppendOp(
   // so a padded value would pass here and persist with its spaces.
   const urlGenerated =
     typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
-  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
+  if (externalSite && urlGenerated != null && (typeof urlGenerated !== "string" || !isHttpUrl(urlGenerated))) {
     throw new LogAppendError(
       `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
     );
@@ -2268,11 +2281,7 @@ export async function researchLogAppend(
     const loggedUrls = loggedExternalUrls(research.log);
     let storedUrls: Promise<StoredCollectionUrls> | undefined;
     const stored = () => (storedUrls ??= loadStoredCollectionUrls(projectPath));
-    const checkCollection = async (op: ResearchLogAppendOp) => {
-      await preflightStoredCollection(op, loggedUrls, stored);
-      const url = opUrlGenerated(op);
-      if (url !== undefined) loggedUrls.add(url);
-    };
+    const checkCollection = (op: ResearchLogAppendOp) => preflightStoredCollection(op, loggedUrls, stored);
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {

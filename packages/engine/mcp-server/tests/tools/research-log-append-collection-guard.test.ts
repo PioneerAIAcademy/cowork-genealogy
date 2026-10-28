@@ -160,6 +160,95 @@ describe("research_log_append: a collection url must be a stored collection", ()
     expect(awaitingUserHandOffs(await log())).toEqual([]);
   });
 
+  // An earlier entry with an unstored url: logging it again must not hand the
+  // researcher the invented collection anew, but closing it, or logging a capture
+  // that came back, must still work.
+  function earlier(id: string, url: string, open: boolean) {
+    return {
+      id,
+      plan_item_id: null,
+      performed: "2026-01-01T00:00:00.000Z",
+      tool: "external_site",
+      query: { surname: "Flynn" },
+      outcome: open ? "partial" : "negative",
+      results_examined: 0,
+      external_site: { site: "ancestry", url_generated: url, capture_received: !open },
+      results_ref: null,
+    };
+  }
+
+  it.each([
+    ["closed", false],
+    ["still open", true],
+  ])("refuses a new hand-off for a logged, unstored url whose earlier hand-off is %s", async (_label, open) => {
+    await project([earlier("log_001", INVENTED_9093, open)], stored([STORED_7163]));
+    const r = await researchLogAppend({ projectPath: dir, ...handOff(INVENTED_9093) });
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r)).toContain("is not in external-collections.json");
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("refuses that new hand-off inside a batch too", async () => {
+    await project([earlier("log_001", INVENTED_9093, false)], stored([STORED_7163]));
+    const r = await researchLogAppend({ projectPath: dir, ops: [handOff(STORED_7163), handOff(INVENTED_9093)] } as any);
+    expect(r.ok).toBe(false);
+    expect((r as { errors: string[] }).errors.map((e) => e.slice(0, 7))).toEqual(["ops[1]:"]);
+    expect(await log()).toHaveLength(1);
+  });
+
+  it("accepts a partial capture for a logged, unstored url", async () => {
+    await project([earlier("log_001", INVENTED_9093, true)], stored([STORED_7163]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(INVENTED_9093),
+      outcome: "partial",
+      externalSite: { site: "ancestry", urlGenerated: INVENTED_9093, captureReceived: true },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a capture logged after the hand-off was already closed", async () => {
+    await project(
+      [earlier("log_001", INVENTED_9093, true), { ...earlier("log_002", INVENTED_9093, false) }],
+      stored([STORED_7163]),
+    );
+    const r = await researchLogAppend({ projectPath: dir, ...handOff(INVENTED_9093, true), outcome: "positive" });
+    expect(r.ok).toBe(true);
+    expect(await log()).toHaveLength(3);
+  });
+
+  it("checks a MyHeritage collection page the same way", async () => {
+    const stored101 = "https://www.myheritage.com/research/collection-101/1880-census";
+    await project([], stored([stored101]));
+    const ok = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(stored101 + "?qname=Flynn"),
+      externalSite: { site: "myheritage", urlGenerated: stored101 + "?qname=Flynn", captureReceived: false },
+    });
+    expect(ok.ok).toBe(true);
+    const bad = await researchLogAppend({
+      projectPath: dir,
+      ...handOff("https://www.myheritage.com/research/collection-20822/ma-census"),
+      externalSite: {
+        site: "myheritage",
+        urlGenerated: "https://www.myheritage.com/research/collection-20822/ma-census",
+        captureReceived: false,
+      },
+    });
+    expect(bad.ok).toBe(false);
+  });
+
+  it("refuses an array urlGenerated instead of saving it", async () => {
+    await project([], stored([STORED_7163]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(INVENTED_9093),
+      externalSite: { site: "ancestry", urlGenerated: [INVENTED_9093] as any, captureReceived: false },
+    });
+    expect(r.ok).toBe(false);
+    expect(await log()).toEqual([]);
+  });
+
   it("reports every refused op in a batch, and writes none of them", async () => {
     await project([], stored([STORED_7163]));
     const r = await researchLogAppend({
