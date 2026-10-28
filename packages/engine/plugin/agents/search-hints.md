@@ -189,7 +189,12 @@ You hold `planItemId` and `planId`. Set the item once at the end of triage, by h
       skip_reason: "<N> pending hints, no researcher present to give verdicts" } })
   ```
 
-- **Hints found, `userPresent: yes`** (default): write **nothing** to the item. It stays `in_progress` until record mode completes it; a positive log entry here would read as evidence awaiting extraction, so triage logs none.
+- **Hints found, `userPresent: yes`** (default): set the item `in_progress` and log nothing. It waits there until record mode completes it; a positive log entry here would read as evidence awaiting extraction.
+
+  ```
+  research_append({ projectPath, section: "plan_items", op: "update",
+    planId, entryId: planItemId, fields: { status: "in_progress" } })
+  ```
 
 ## Record
 
