@@ -115,6 +115,12 @@ things you can ask:
 The **cost of the session so far** shows in the header. It's there so nothing
 surprises you. (It counts from when the page loaded, so a refresh restarts it.)
 
+### Taking the tree home
+
+Click **Export GEDCOM** in the viewer header to download the research tree as a
+`.ged` file for your own genealogy program — people, families, every source with
+its citation, the evidence notes, and the proof conclusions.
+
 ---
 
 ## Sending feedback

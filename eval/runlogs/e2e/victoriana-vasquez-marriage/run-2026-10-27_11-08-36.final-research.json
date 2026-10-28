@@ -1,0 +1,2399 @@
+{
+  "project": {
+    "id": "rp_victoriana_vasquez_marriage",
+    "objective": "When and where did Victoriana Vasquez, daughter of Remigio Vasquez and Bernarda Sandoval, marry Jose Cleofas Gutierrez?",
+    "subject_person_ids": [
+      "GFG9-7H4"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Victoriana Vasquez, daughter of Remigio Vasquez and Bernarda Sandoval, marry Jose Cleofas Gutierrez?",
+      "rationale": "This is the project's single-fact objective \u2014 the date and place of one marriage event. No sources are attached to any person in the tree, and no prior research exists. Marriage records for Hispanic families in the relevant region are typically found in Catholic parish registers and civil registration records, both of which are searchable by bride and groom name. Establishing the date and place of this marriage is the entire scope of the project.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-10-27"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-27",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "New Mexico, United States",
+          "date_range": "1751-1918",
+          "repository": "FamilySearch",
+          "rationale": "New Mexico, Marriages, 1751-1918 is name-searchable (personCount 251,436) and covers the Spanish colonial, Mexican territorial, and US Territorial periods \u2014 the most likely window for a Hispanic New Mexico family. Under the Mexico Naming Customs wiki (fetched this session), Victoriana's full compound surname is Vasquez Sandoval (paternal Vasquez from father Remigio, maternal Sandoval from mother Bernarda); records will list her as 'Vasquez' or 'Vasquez Sandoval.' Search for her under both forms as bride and for Jose Cleofas Gutierrez as groom. The bride retains her maiden surname in Catholic and civil records.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "marriage",
+          "jurisdiction": "New Mexico, United States",
+          "date_range": "1885-1954",
+          "repository": "FamilySearch",
+          "rationale": "New Mexico, County Marriages, 1885-1954 is name-searchable (personCount 162,523) and covers county-level civil marriage licenses and bonds through early statehood (New Mexico achieved statehood 6 January 1912). This collection partially overlaps chronologically with item 1 but draws on county courthouse civil-registration sources distinct from the indexed church registers. Both collections must be searched independently because a Catholic church marriage and a civil bond/license are separate instruments and may index differently.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1880-1930",
+          "repository": "FamilySearch",
+          "rationale": "US Federal Census records (1880, 1900, 1910, 1920, 1930) are name-searchable on FamilySearch. The 1900 schedule records the number of years each person has been married and the year of immigration if foreign-born; the 1910 schedule records years of present marriage; both bracket the marriage date directly. Census records also place the couple and child Silveria Gutierrez in a specific county, identifying the county whose records to prioritize when browsing the unindexed Catholic registers (item 5). Also search the New Mexico, Territorial Census, 1885 (name-searchable, personCount 59,040) on FamilySearch for early placement. Search under both 'Vasquez' and 'Gutierrez' surnames for either spouse.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "New Mexico, United States",
+          "date_range": "1726-1918",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: New Mexico, Births and Christenings, 1726-1918 is name-searchable (personCount 764,129). Searching for the baptism of daughter Silveria Gutierrez would name her parents \u2014 Victoriana Vasquez and Jose Cleofas Gutierrez \u2014 and typically records the parents' parish of residence, often their marriage date and parish. The child's baptism is the record most likely to state directly when and where the parents married, since the officiating priest frequently asked for that information. Also search for Victoriana's own baptism record under 'Vasquez Sandoval,' which would establish her home parish \u2014 often the same parish where the marriage took place.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "New Mexico, United States",
+          "date_range": "1701-1956",
+          "repository": "FamilySearch",
+          "rationale": "New Mexico, Catholic Church Records, 1701-1956 is browse-only (personCount 0) \u2014 the digitized Catholic parish registers are not name-indexed and must be browsed by parish. This item should follow census and child-baptism searches (items 3-4), which are expected to narrow the search to a specific county and parish before browsing. Under Catholic practice, the velaci\u00f3n (formal nuptial blessing recorded separately from the civil act) and the marriage investigation (informaciones matrimoniales) may appear in registers distinct from the main marriage libro. Browse the marriage books of the identified parish for entries listing Vasquez or Gutierrez.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "marriage",
+          "jurisdiction": "New Mexico, United States",
+          "date_range": "1885-1954",
+          "repository": "Ancestry",
+          "rationale": "Ancestry.com holds New Mexico marriage records and US census collections that overlap with items 1-3 and may carry digitized images not visible in the FamilySearch index alone. If FamilySearch name searches on items 1 and 2 yield no result, Ancestry's New Mexico marriage index and its US census collections (which include the 1900 and 1910 schedules with years-married fields) provide an independent search path through a different indexing pipeline. Ancestry also holds the New Mexico Territorial and county marriage bonds that may index slightly different name spellings.",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Ancestry.com requires a subscription and a user capture; no user was present to click the link and return a PDF during this autonomous run. Three search URLs were generated and logged (log_076, log_077, log_078) for the researcher to execute later. FamilySearch holds equivalent collections (NM County Marriages 1885-1954, and both census years) that search-records can reach without a capture."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Chihuahua, Mexico",
+          "date_range": "1632-2005",
+          "repository": "FamilySearch",
+          "rationale": "Mexico, Chihuahua, Catholic Church Records, 1632-2005 is name-searchable (personCount 11,115,750). Chihuahua is the Mexican state directly bordering New Mexico and is the most geographically plausible state of origin if the family came from Mexico rather than the US territory. If all New Mexico searches are negative, search for the marriage record of Victoriana Vasquez Sandoval and Jose Cleofas Gutierrez in Chihuahua's Catholic registers. Also search Mexico, Chihuahua, Civil Registration, 1861-1997 (name-searchable, personCount 8,411,748) as the civil counterpart \u2014 Mexico mandated civil registration beginning 1859-1861. A Chihuahua baptism for either principal would also name their home parish and corroborate a Mexican rather than New Mexican origin.",
+          "fallback_for": "pli_005",
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:03:38.904Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "spouseGivenName": "Jose Cleofas",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Search 1: Victoriana Vasquez + Jose Cleofas Gutierrez, NM marriages. Zero results."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:03:44.068Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez Sandoval",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 3,
+      "notes": "Search 2: Victoriana Vasquez Sandoval + Gutierrez, NM marriages, collectionId 1680844. 3 results returned but none match \u2014 first is Victoriana Vasquez as Mother-in-Law with spouse Doroteo (not Gutierrez), others are unrelated Sandoval entries. Subject GFG9-7H4 unresolvable (no dated/placed facts); ranking withheld. Proceeding to broader search.",
+      "staged_ref": "results/.staging/b5b5ee70-09d6-4f29-8391-58459e1ec911.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:03:57.839Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Search 3: Victoriana Vasquez + Gutierrez, collectionId 1680844 only. 1 result \u2014 same Victoriana Vasquez as Mother-in-Law on a Jose Vasquez record; spouse listed as Doroteo, not Gutierrez. Not the target. Trying groom-as-principal next.",
+      "staged_ref": "results/.staging/3fcc281d-d8b8-449e-98a7-dba9ff20e1cb.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:04:41.193Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Jose Cleofas",
+        "spouseSurname": "Vasquez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 14,
+      "notes": "Search 4: Gutierrez, Jose Cleofas + spouse Vasquez, collectionId 1680844. 14 results; none match Jose Cleofas Gutierrez \u2014 names include Jose De La Luz, Jose Antonio, Joe, Josephi, Juan Jose, Jose Saval, etc. None have Vasquez spouse confirmed. Trying given name Cleofas alone next.",
+      "staged_ref": "results/.staging/d3ea771a-c715-40f5-b5e8-040ef0564582.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:04:41.222Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "spouseSurname": "Vasquez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "Search 5: Gutierrez, Cleofas + spouse Vasquez, collectionId 1680844. 1 result \u2014 Gutierres as Mother-in-Law, unrelated.",
+      "staged_ref": "results/.staging/fa755305-c669-40cf-8d8a-362f70c3f226.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:04:41.247Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "fatherSurname": "Vasquez",
+        "fatherGivenName": "Remigio",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1,
+      "notes": "Search 6: Victoriana Vasquez + father Remigio Vasquez, collectionId 1680844. 1 result \u2014 same Victoriana Vasquez as Mother-in-Law on Jose Vasquez record, father field absent. No target record found.",
+      "staged_ref": "results/.staging/1b6f8f1e-9c38-41c4-917f-3cfef0113dc2.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:05:04.511Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4,
+      "notes": "Search 7: Gutierrez, Cleofas (no spouse filter), collectionId 1680844. 4 results \u2014 Roberto C. Gutierrez (1950), two Gutierrez Mother-in-Law entries, one Gutierres Mother-in-Law. None match Jose Cleofas as groom.",
+      "staged_ref": "results/.staging/1d57559c-d4c3-4b6d-ae07-05247c321821.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:05:04.535Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "motherSurname": "Sandoval",
+        "motherGivenName": "Bernarda",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 1,
+      "notes": "Search 8: Victoriana Vasquez + mother Bernarda Sandoval, collectionId 1680844. 1 result \u2014 same Victoriana Vasquez Mother-in-Law record again; mother field absent. No target found.",
+      "staged_ref": "results/.staging/848b1c04-2a0a-45fd-b91d-1068da2122a4.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:05:37.884Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "spouseSurname": "Gutierrez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 11,
+      "notes": "Search 9: Vasquez (no given name) + spouse Gutierrez, collectionId 1680844. 11 results \u2014 reviewed all. Victoriana Vasquez appears again only as Mother-in-Law on Jose Vasquez record (different person). No Victoriana Vasquez + Jose Cleofas Gutierrez pairing found.",
+      "staged_ref": "results/.staging/d0d0cee9-4e97-4b45-8714-9da1ad271883.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:05:37.906Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sandoval",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 2,
+      "notes": "Search 10: Victoriana Sandoval + spouse Gutierrez, collectionId 1680844. 2 results \u2014 unrelated Sandoval entries. No match.",
+      "staged_ref": "results/.staging/9d1e9fbb-1a1b-42e1-bdbf-6946e7b0b445.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:06:00.223Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleo*",
+        "spouseSurname": "Vasquez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Search 11: Gutierrez + Cleo* wildcard + spouse Vasquez, collectionId 1680844. Zero results."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:06:00.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "spouseSurname": "Vasquez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 3,
+      "notes": "Search 12: Gutierrez, Cleofas + spouse Vasquez, NM-wide marriage. 3 results from 2 collections (1680844 and 2110325); Trinidad C Gutierrez Mother-in-Law and unrelated entries. No Jose Cleofas Gutierrez + Victoriana Vasquez match.",
+      "staged_ref": "results/.staging/dc587762-7678-4fce-ad3c-9fbeb997301d.json"
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:06:47.386Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 1,
+      "notes": "Search 13: Victoriana Vasquez, NM-wide marriage (all NM collections). Only 1 result \u2014 the recurring Mother-in-Law record FDPP-R8H. No principal marriage record indexed for Victoriana Vasquez in NM.",
+      "staged_ref": "results/.staging/c2411b91-c6f4-4490-bf44-595584650254.json"
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:06:47.393Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "fatherGivenName": "Remigio",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 157,
+      "notes": "Search 14: Vasquez + father given name Remigio, collectionId 1680844. 157 total matches; first 50 reviewed. All father fields absent. Victoriana Vasquez appears only as Mother-in-Law (FDPP-R8H). No principal record for Victoriana found.",
+      "staged_ref": "results/.staging/7424fd37-18b5-4219-8a91-94bb890c2724.json"
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:07:32.747Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "spouseSurname": "Vasquez",
+        "spouseGivenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 221,
+      "notes": "Search 15: Gutierrez + spouse Victoriana Vasquez, NM-wide. 221 total, 50 reviewed. All relativeTerms.spouse absent or present but no Victoriana Vasquez confirmed; no Cleofas given name in any groom.",
+      "staged_ref": "results/.staging/88d20aa6-9230-498e-bfa9-f3968fb0a5ac.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:07:32.760Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasq*",
+        "givenName": "Victoriana",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 1,
+      "notes": "Search 16: Vasq* wildcard + Victoriana, collectionId 1680844. Same single Mother-in-Law record returned. The Victoriana Vasquez marriage to Jose Cleofas Gutierrez is not indexed in this collection under any Vasq* variant.",
+      "staged_ref": "results/.staging/f18e29f3-1a2b-4782-8271-f82bd48eda89.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:08:20.534Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierres",
+        "givenName": "Jose Cleofas",
+        "spouseSurname": "Vasquez",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 14,
+      "notes": "Search 17: Gutierres (alternate spelling), Jose Cleofas + spouse Vasquez, collectionId 1680844. Same 14 results as before; no Jose Cleofas Gutierrez/Gutierres with Vasquez spouse.",
+      "staged_ref": "results/.staging/04c6a84f-1735-45dd-9aba-94e68d4cc448.json"
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:08:20.548Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "M52865-2",
+        "surname": "Gutierrez"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 80,
+      "notes": "Search 18: batch M52865-2 (Silver City, Grant Co.) + surname Gutierrez. 80 total, 50 reviewed. Batch covers 1894\u20131954 Grant County records. No Jose Cleofas Gutierrez entries. No Victoriana Vasquez as bride.",
+      "staged_ref": "results/.staging/a8e8b645-e390-4fd9-b568-e1b6494386c9.json"
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-27T10:08:58.188Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Jose Cleofas",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 5965,
+      "notes": "Search 19: Gutierrez, Jose Cleofas + NM, all record types. 5,965 total; 50 reviewed. Top results are 'Jose C Gutierrez' in census and death collections \u2014 no 'Cleofas' spelled out, no marriage record linking to Victoriana Vasquez. Notably, 1900 census shows a 'Jose C Gutierrez' widowed in Sandoval County with marriage date of 1874, but name spelled out as 'Cleofas' not confirmed.",
+      "staged_ref": "results/.staging/331df5da-e073-4b65-90ee-6588eeea7cab.json"
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:10:16.759Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage",
+        "marriageYearFrom": 1885,
+        "marriageYearTo": 1954
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 1,
+      "notes": "Search returned 1 result from the wrong collection (\"New Mexico, Marriages, 1751-1918\", collectionId 1680844) rather than the target \"New Mexico, County Marriages, 1885-1954\" (collectionId 2110325). The hit shows Victoriana Vasquez in the role of Mother-in-Law in a different record, not as bride in her own marriage. Collection mismatch \u2014 re-running with explicit collectionId 2110325.",
+      "staged_ref": "results/.staging/4ec61024-074c-4f1a-b3eb-377f8dfc5123.json"
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:10:31.914Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results in target collection (2110325) with bride Vasquez/Victoriana + spouse Gutierrez. Trying variants next."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:10:56.585Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 Vasquez/Victoriana in target collection, no spouse filter."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:10:56.585Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sandoval",
+        "givenName": "Victoriana",
+        "spouseSurname": "Gutierrez",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 maternal surname Sandoval as primary surname with spouse Gutierrez."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:10:56.585Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "spouseSurname": "Gutierrez",
+        "spouseGivenName": "Jose",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 Vasquez bride, Jose Gutierrez groom, no bride given name filter."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:11:23.223Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Jose",
+        "spouseSurname": "Vasquez",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "results_available": 7,
+      "notes": "7 results for Jose Gutierrez + Vasquez spouse, all from correct collection 2110325. None are a Gutierrez-Vasquez marriage record; all show Jose Gutierrez in Father or Father-in-Law roles on other couples' records. relativeTerms.spouse is absent on all, meaning none name a Vasquez wife.",
+      "staged_ref": "results/.staging/636922ed-84e2-4cb5-a470-2a099ba8e29f.json"
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:11:23.245Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "fatherSurname": "Vasquez",
+        "fatherGivenName": "Remigio",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 Vasquez/Victoriana with father Remigio Vasquez in target collection."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:11:42.483Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "spouseSurname": "Vasquez",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "results_available": 3,
+      "notes": "3 results for Cleofas Gutierrez + Vasquez spouse in target collection. None are the target marriage; one is a Trinidad C Gutierrez as Mother-in-Law in an unrelated record. No record naming a Vasquez bride for a Cleofas Gutierrez.",
+      "staged_ref": "results/.staging/0c4d25b9-6c4b-4541-b4f3-7596f0dc2d89.json"
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:11:42.501Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "collectionId": "2110325",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 Vasquez/Victoriana with recordType=marriage in target collection."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:12:13.827Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Jose Cleofas",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 33,
+      "notes": "33 results for Jose Cleofas Gutierrez in target collection 2110325. Exhaustive scan of all 33 rows: no result has a Vasquez bride. Brides include Maes, Cates, Fajardo, Valdez, Green, Archibeque, Abeyta, Trujillo, de Baca, Vargas, Armijo, Gurrele, Gonzales, Rivera. No Jose Cleofas Gutierrez specifically named (middle name Cleofas not indexed).",
+      "staged_ref": "results/.staging/186cd881-7d3f-4cec-bdbd-a68c77b73238.json"
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:12:13.845Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "results_available": 1,
+      "notes": "Statewide NM marriage search without collection filter returned 1 hit \u2014 Victoriana Vasquez as Mother-in-Law in collection 1680844 (New Mexico Marriages 1751-1918), not the target collection or a principal marriage record.",
+      "staged_ref": "results/.staging/d12e10f5-ce74-4be9-8eca-96f66c5dbf94.json"
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:12:30.061Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Basquez",
+        "givenName": "Victoriana",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 alternate spelling Basquez/Victoriana in target collection."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:12:30.061Z",
+      "tool": "record_search",
+      "query": {
+        "fatherSurname": "Vasquez",
+        "fatherGivenName": "Remigio",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results \u2014 father Remigio Vasquez in target collection. No family members found via father's name."
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:13:06.139Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_033.json",
+      "results_available": 285,
+      "notes": "Broad NM statewide search (no collection filter), 285 total matches for Victoriana Vasquez in all NM-indexed collections. Top 50 reviewed: no marriage record as principal bride. Collections represented: Residence Database (modern), Public Records, Deaths 1889-1945, Census 1920, NM Marriages 1751-1918 (Mother-in-Law role only). Zero results from target collection 2110325 in this pool.",
+      "staged_ref": "results/.staging/8649a176-8aba-4bf2-86f5-0c77a30e1a03.json"
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-27T10:13:06.166Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Remigio",
+        "collectionId": "2110325",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results for father Remigio Vasquez in target collection, confirming the Vasquez family (Sandoval/Socorro/Valencia county connection) is absent from this limited 3-county collection."
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:15:08.595Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Silveria",
+        "surname": "Gutierrez",
+        "fatherGivenName": "Jose Cleofas",
+        "fatherSurname": "Gutierrez",
+        "motherGivenName": "Victoriana",
+        "motherSurname": "Vasquez",
+        "collectionId": "1680839",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 32,
+      "external_site": null,
+      "results_ref": "results/log_035.json",
+      "results_available": 32,
+      "notes": "Searched NM Births and Christenings 1726-1918 (coll. 1680839) for Silveria Gutierrez with father Jose Cleofas Gutierrez and mother Victoriana Vasquez. 32 results returned but all show Silveria Gutieres/Gutierrez in a MOTHER role for Vaca-surname children \u2014 none is her own baptism as the principal. relativeTerms show father/mother absent on all hits, confirming the collection does not index parental names in a way that matched our filters. Subject GFG9-3QW has no dated/placed facts so ranking was withheld. No baptism record for Silveria Gutierrez (daughter of Jose Cleofas) found in this search.",
+      "staged_ref": "results/.staging/1f6bb7ec-0d55-4ae9-9e78-dd249b76d6cd.json"
+    },
+    {
+      "id": "log_036",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:15:27.347Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Vasquez",
+        "fatherGivenName": "Remigio",
+        "fatherSurname": "Vasquez",
+        "motherGivenName": "Bernarda",
+        "motherSurname": "Sandoval",
+        "collectionId": "1680839",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched NM Births and Christenings 1726-1918 for Victoriana Vasquez with father Remigio Vasquez and mother Bernarda Sandoval. Zero results."
+    },
+    {
+      "id": "log_037",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:15:27.347Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jose Cleofas",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1325221",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_037.json",
+      "results_available": 87,
+      "staged_ref": "results/.staging/e2e68c33-928a-417e-be89-ac4b49f6014b.json"
+    },
+    {
+      "id": "log_038",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:15:27.395Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jose Cleofas",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1727033",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_038.json",
+      "results_available": 88,
+      "staged_ref": "results/.staging/3484ba7f-e4e6-4684-9ca3-45ee1c914d7f.json"
+    },
+    {
+      "id": "log_039",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:15:27.480Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Remigio",
+        "surname": "Vasquez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1417683",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_039.json",
+      "results_available": 1,
+      "staged_ref": "results/.staging/97768f31-62a6-458d-8dd6-387ba0667ea1.json"
+    },
+    {
+      "id": "log_040",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:15:42.113Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Jose Cleofas",
+        "fatherSurname": "Gutierrez",
+        "motherGivenName": "Victoriana",
+        "motherSurname": "Vasquez",
+        "collectionId": "1680839",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched NM Births and Christenings 1726-1918 for any child of Jose Cleofas Gutierrez and Victoriana Vasquez (no principal name specified). Zero results. Collection does not appear to index parental names in a way usable as filters for this couple."
+    },
+    {
+      "id": "log_041",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:16:04.754Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Vasquez",
+        "collectionId": "1680839",
+        "recordCountry": "United States",
+        "sex": "Female"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Broader search for Victoriana Vasquez (no parental filters) in NM Births and Christenings 1726-1918. Zero results \u2014 no baptism/christening record for Victoriana Vasquez found in this collection."
+    },
+    {
+      "id": "log_042",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:16:04.755Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Silveria",
+        "surname": "Gutierrez",
+        "collectionId": "1680839",
+        "recordCountry": "United States",
+        "isPrincipal": true,
+        "sex": "Female"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_042.json",
+      "results_available": 3,
+      "notes": "Searched NM Births and Christenings 1726-1918 for Silveria Gutierrez as principal (female). 3 hits: (1) Silveria Gutierres christened 18 Aug 1876, La Joya, Socorro NM \u2014 most plausible timeframe; (2) Maria Silveria Gutierres, 7 Jan 1849, NM; (3) Maria Silveria Gutierres, 28 Jun 1835, Fernandez, Taos NM. Will read all three to check for parental names.",
+      "staged_ref": "results/.staging/c59abbd8-5750-4418-93e5-728eb00b45b3.json"
+    },
+    {
+      "id": "log_043",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:16:33.309Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:V2HM-TLJ"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read Silveria Gutierres christening 18 Aug 1876, La Joya, Socorro NM. Parents: Juan Gutierres (father) and Juliana Romero (mother). NOT our Silveria \u2014 expected parents Jose Cleofas Gutierrez and Victoriana Vasquez."
+    },
+    {
+      "id": "log_044",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:16:33.309Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:V245-GYB"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read Maria Silveria Gutierres christening 7 Jan 1849, Tome, Valencia NM. Parents: Gabriel Gutierres (father) and Maria Lorensa Chaves (mother). NOT our Silveria."
+    },
+    {
+      "id": "log_045",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:16:33.310Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:V2HW-63B"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read Maria Silveria Gutierres christening 28 Jun 1835, Fernandez/Taos NM. Parents: Francisco Gutierres (father) and Candelaria Cortez (mother). NOT our Silveria."
+    },
+    {
+      "id": "log_046",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:17:17.822Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1325221",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900
+      },
+      "outcome": "positive",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": "results/log_046.json",
+      "results_available": 17,
+      "staged_ref": "results/.staging/b215196e-dbd1-45b7-b640-6dabe4fb62eb.json"
+    },
+    {
+      "id": "log_047",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:17:17.858Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1727033",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910
+      },
+      "outcome": "positive",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_047.json",
+      "results_available": 14,
+      "staged_ref": "results/.staging/1402105b-e080-4287-91d6-aff250077f36.json"
+    },
+    {
+      "id": "log_048",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:17:17.884Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Bernarda",
+        "surname": "Sandoval",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1417683",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_048.json",
+      "results_available": 1,
+      "staged_ref": "results/.staging/16afb8ae-e2ec-400b-9a91-82cef9d801e3.json"
+    },
+    {
+      "id": "log_049",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:17:17.905Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Sandoval",
+        "collectionId": "1680839",
+        "recordCountry": "United States",
+        "sex": "Female"
+      },
+      "outcome": "positive",
+      "results_examined": 22,
+      "external_site": null,
+      "results_ref": "results/log_049.json",
+      "results_available": 22,
+      "notes": "Searched NM Births and Christenings 1726-1918 for Victoriana Sandoval (alternate maternal surname). 22 results returned but none match Victoriana Vasquez/Sandoval daughter of Remigio Vasquez and Bernarda Sandoval \u2014 closest are 'Maria Victoriana Sandoval' from 1887 (Bernalillo) and 1893 (Rio Arriba), both with different parents. Ranking withheld as subject GFG9-7H4 has no dated/placed facts.",
+      "staged_ref": "results/.staging/c3be0ca9-d4a2-492c-8b6a-8db04999eac3.json"
+    },
+    {
+      "id": "log_050",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:17:17.929Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Jose Cleofas",
+        "fatherSurname": "Gutierrez",
+        "collectionId": "1680839",
+        "recordCountry": "United States"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_050.json",
+      "results_available": 292,
+      "notes": "Searched NM Births and Christenings 1726-1918 for any child of Jose Cleofas Gutierrez (fatherSurname Gutierrez, fatherGivenName Jose Cleofas). 292 total matches, 50 returned; none of the relativeTerms.father.name values show 'Jose Cleofas' \u2014 collection indexes fathers only in abbreviated form (e.g., 'Jose Gutierrez'). Cannot identify children of Jose Cleofas Gutierrez specifically.",
+      "staged_ref": "results/.staging/d4a10a39-100f-4447-8a20-14a573454dd8.json"
+    },
+    {
+      "id": "log_051",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:18:03.094Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Remigio",
+        "fatherSurname": "Vasquez",
+        "collectionId": "1680839",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched NM Births and Christenings 1726-1918 for any child of Remigio Vasquez (to find Victoriana's baptism via her father). Zero results. Collection does not index this father."
+    },
+    {
+      "id": "log_052",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:18:03.095Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1488411",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_052.json",
+      "results_available": 10,
+      "staged_ref": "results/.staging/114786ba-43d2-4e9e-9f41-a6252838d48c.json"
+    },
+    {
+      "id": "log_053",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:18:03.112Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Cleofas",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1488411",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_053.json",
+      "results_available": 9,
+      "staged_ref": "results/.staging/5b4af992-13b5-45f4-b5c6-31bb8bfc8840.json"
+    },
+    {
+      "id": "log_054",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:18:03.131Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Vasquez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "sex": "Female"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_054.json",
+      "results_available": 55,
+      "notes": "Broad NM search across all collections for Victoriana Vasquez female. 55 results. Top result: death record 1928 Loving, Eddy NM. Second result (ark:/61903/1:1:FDPP-R8H): Victoriana Vasquez as Mother In Law in NM Marriages 1751-1918 \u2014 potentially identifies her as a parent in a child's marriage record. No birth/christening records for our Victoriana found in this broad sweep.",
+      "staged_ref": "results/.staging/2061f75b-681a-459d-90d1-8970e704e37f.json"
+    },
+    {
+      "id": "log_055",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:18:54.723Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FDPP-R8H"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read NM Marriages 1751-1918 record: Jose Vasquez married Manuela Santillan, 3 Mar 1917, Silver City, Grant NM. Manuela's parents: Doroteo (father) and Victoriana Vasquez (mother). Different Victoriana Vasquez \u2014 our subject's daughter is Silveria Gutierrez (not Manuela Santillan) and her husband is Jose Cleofas Gutierrez (not Doroteo). This is a different family."
+    },
+    {
+      "id": "log_056",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:18:54.723Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FLYL-HXT"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read NM Deaths 1889-1945: Victoriana Vasquez died 31 Mar 1928, Loving, Eddy NM. Parents indexed as Manuel Vasquez (father) and Guillerma Malinar (mother). NOT our subject \u2014 our subject's parents are Remigio Vasquez and Bernarda Sandoval. Different woman."
+    },
+    {
+      "id": "log_057",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:19:14.444Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "C52864-1",
+        "fatherGivenName": "Cleofas"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched batch C52864-1 (La Joya, Socorro area) for father named Cleofas. Zero results. No record of Jose Cleofas Gutierrez as father in this La Joya/Socorro extraction batch."
+    },
+    {
+      "id": "log_058",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:19:14.444Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1810731",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930
+      },
+      "outcome": "positive",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": "results/log_058.json",
+      "results_available": 16,
+      "staged_ref": "results/.staging/f0850ea2-411c-468a-8923-eb734c170e4d.json"
+    },
+    {
+      "id": "log_059",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:19:14.461Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Remigio",
+        "surname": "Vasquez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "residenceYearFrom": 1885,
+        "residenceYearTo": 1885
+      },
+      "outcome": "positive",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_059.json",
+      "results_available": 13,
+      "staged_ref": "results/.staging/f6631924-2c8b-4dda-86ba-c8a483435297.json"
+    },
+    {
+      "id": "log_060",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:03.691Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MM2B-8G9"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_060.json",
+      "notes": "Read 1900 Cleofas Gutierrez household (Bernalillo, Sandoval, married 1891). Ruled out: wife is Francisca Gutierrez, not Victoriana. Different family entirely.",
+      "staged_ref": "results/.staging/9b5b9af6-3455-42cc-948e-f94a95f15fac.json"
+    },
+    {
+      "id": "log_061",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:03.706Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MGSK-Z6Y"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_061.json",
+      "notes": "Read 1910 Victoriana Gutierres in Bernalillo (Juan Jose Gutierres household). Ruled out: Victoriana is wife of Toribio Gutierres, son of Juan Jose. Not our couple.",
+      "staged_ref": "results/.staging/15e6376a-3413-4206-9e16-90f801ba0c18.json"
+    },
+    {
+      "id": "log_062",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:03.720Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1325221",
+        "spouseGivenName": "Cleofas",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_062.json",
+      "results_available": 12,
+      "notes": "1900 census NM: Victoriana with spouseGivenName Cleofas returned 12 results. The relativeTerms show actual spouse names -- none match Cleofas as spouse. The search matched on middle-initial C in spouse column. No hit for our couple.",
+      "staged_ref": "results/.staging/27e6a689-088a-485f-9f9d-44f3f623574c.json"
+    },
+    {
+      "id": "log_063",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:03.738Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "collectionId": "1727033",
+        "spouseGivenName": "Cleofas",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910
+      },
+      "outcome": "negative",
+      "results_examined": 35,
+      "external_site": null,
+      "results_ref": "results/log_063.json",
+      "results_available": 35,
+      "notes": "1910 census NM: Victoriana with spouseGivenName Cleofas returned 35 results. None show Victoriana with a spouse actually named Cleofas. Same pattern -- fuzzy matching on initial C.",
+      "staged_ref": "results/.staging/7639040e-e090-4ba4-9ec5-facd3ec91ac7.json"
+    },
+    {
+      "id": "log_064",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:03.762Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Silveria",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_064.json",
+      "results_available": 942,
+      "notes": "Silveria Gutierrez search across NM returned 942 total matches (50 shown). Key leads: SSDI Silveria Gutierrez born 20 Jun 1894 died Sep 1975 in Hidalgo County NM; NM Deaths record (FLB8-42C) shows Silveria C Gutierrez as spouse of Jose Gutierrez; 1940 census shows Silveria Gutierrez in Lordsburg, Hidalgo County. Family may be in Hidalgo County, not central NM. Will read NM Deaths record next.",
+      "staged_ref": "results/.staging/b681fb67-aef3-45d6-9482-ba3d05794e9f.json"
+    },
+    {
+      "id": "log_065",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:57.312Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Remigio",
+        "surname": "Vasquez",
+        "recordCountry": "United States",
+        "collectionId": "2110742"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1885 NM Territorial Census (collection 2110742): Remigio Vasquez returned 0 results. The Vasquez household either not enumerated, indexed under different spelling, or not in this collection."
+    },
+    {
+      "id": "log_066",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:21:57.312Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FLB8-42C"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_066.json",
+      "notes": "NM Deaths record: Jose Gutierrez died 28 Dec 1944, Lordsburg, Hidalgo NM, born 1890. Wife is Silveria C Gutierrez. His parents are Inge Gutierrez and Trofelia Grandos. This is a different Jose Gutierrez than our subject (wrong parents). Silveria C Gutierrez here is likely our tree's Silveria who married a man named Jose Gutierrez. Ruled out as our principal subject's death record.",
+      "staged_ref": "results/.staging/108ddd75-28b7-451d-9ec2-ab162f1ea4bf.json"
+    },
+    {
+      "id": "log_067",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:22:46.526Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6KRS-FRD9"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_067.json",
+      "notes": "BLM Tract Books 1915: Victoriana Gutierrez filed a land assessment in New Mexico (place only resolved to state level, no county). This is a promising lead for locating Victoriana circa 1915 but county/township unknown without reading the image. Image ark: 3QSQ-G9W3-SP3Z.",
+      "staged_ref": "results/.staging/54a580ce-6faa-4cbb-807e-32ea6f4613f1.json"
+    },
+    {
+      "id": "log_068",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:22:46.536Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "residencePlace": "Hidalgo, New Mexico, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_068.json",
+      "results_available": 239,
+      "notes": "Victoriana Gutierrez with residencePlace Hidalgo NM returned 239 results mostly from obituary/modern collections. No census records for Victoriana with Jose Cleofas identified. Subject GFG9-7H4 unresolvable.",
+      "staged_ref": "results/.staging/860cb085-5025-4f5f-8b30-25162d66bc1f.json"
+    },
+    {
+      "id": "log_069",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:22:46.566Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jose Cleofas",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "residencePlace": "Grant, New Mexico, United States",
+        "collectionId": "1325221",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_069.json",
+      "results_available": 1,
+      "notes": "1900 census Grant County NM: Jose Cleofas Gutierrez returned 1 result (Jose M Gutieres, Mexico-born, single, 1899 immigrant in Central Grant). Not our subject. Definitive nil for Jose Cleofas in Grant County 1900.",
+      "staged_ref": "results/.staging/0435a486-579d-444d-9835-a7e4d453cf42.json"
+    },
+    {
+      "id": "log_070",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:22:46.574Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Vasquez",
+        "recordCountry": "United States",
+        "collectionId": "2110742"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1885 NM Territorial Census: Victoriana Vasquez returned 0 results. Neither Victoriana nor Remigio found in this collection."
+    },
+    {
+      "id": "log_071",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:26:11.843Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Victoriana",
+        "surname": "Vasquez",
+        "recordCountry": "United States",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_071.json",
+      "results_available": 1,
+      "notes": "NM Marriages 1751-1918: Victoriana Vasquez returned 1 result (ark:/61903/1:1:FDPP-R8H). Record is a 1917 Silver City, Grant County marriage where Victoriana Vasquez is mother of the bride (Manuela Santillan); bride's father listed as Doroteo \u2014 not Jose Cleofas Gutierrez. This is a different Victoriana Vasquez married to a Doroteo, not our subject.",
+      "staged_ref": "results/.staging/f96636c7-91ea-4b9f-8bb6-8e471e978bd0.json"
+    },
+    {
+      "id": "log_072",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:26:11.857Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jose Cleofas",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "collectionId": "1680844"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_072.json",
+      "results_available": 205,
+      "notes": "NM Marriages 1751-1918: Jose Cleofas Gutierrez returned 205 results \u2014 all are other Jose X Gutierrez men spanning 1787-1954 across NM. No 'Jose Cleofas Gutierrez' identified in top 50. Subject GFG9-WPX unresolvable; ranking withheld.",
+      "staged_ref": "results/.staging/4b3db255-4215-406f-b0fc-2e9ad34f162d.json"
+    },
+    {
+      "id": "log_073",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:26:11.885Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Cleofas",
+        "surname": "Gutierrez",
+        "recordCountry": "United States",
+        "collectionId": "1680844",
+        "residencePlace": "Grant, New Mexico, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "NM Marriages 1751-1918: Cleofas Gutierrez in Grant County returned 0 results. No marriage record for Jose Cleofas Gutierrez found in this collection for Grant County."
+    },
+    {
+      "id": "log_074",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-27T10:26:11.885Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FDPP-R8H"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_074.json",
+      "notes": "Read 1917 Silver City NM marriage record. Confirms Victoriana Vasquez (mother of bride Manuela Santillan) is married to Doroteo \u2014 not Jose Cleofas Gutierrez. Different person from our research subject. This record does not help date the Vasquez-Gutierrez marriage.",
+      "staged_ref": "results/.staging/f1070830-7f41-4c15-b18f-bf6afa9ef688.json"
+    },
+    {
+      "id": "log_075",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-27T10:29:01.235Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "New Mexico, United States",
+        "host": "ancestry.com",
+        "startYear": 1885,
+        "endYear": 1954
+      },
+      "outcome": "positive",
+      "results_examined": 45,
+      "external_site": null,
+      "results_ref": "results/log_075.json",
+      "notes": "Curated external links for New Mexico, United States (1885-1954). 153 total links staged; 45 returned inline. Relevant Ancestry collections identified: 61844 (NM Select County Marriage Records 1905-1999), 7872 (NM Compiled Marriage Index 1727-1900), 7602 (1900 US Federal Census), 7884 (1910 US Federal Census). FamilySearch also holds NM County Marriages 1885-1954 (collection 2110325) and both census years.",
+      "staged_ref": "results/.staging/9a3cf7db-f70b-42d9-9cd3-d29596ec7dda.json"
+    },
+    {
+      "id": "log_076",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-27T10:29:01.245Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "61844",
+        "collectionName": "New Mexico Select County Marriage Records, 1905-1999",
+        "givenName": "Victoriana",
+        "surname": "Vasquez",
+        "spouseGivenName": "Jose",
+        "spouseSurname": "Gutierrez",
+        "fatherGivenName": "Remigio",
+        "fatherSurname": "Vasquez",
+        "motherGivenName": "Bernarda",
+        "motherSurname": "Sandoval",
+        "residencePlace": "New Mexico, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/61844/?name=Victoriana_Vasquez&residence=_New+Mexico%2C+United+States&father=Remigio_Vasquez&mother=Bernarda_Sandoval&spouse=Jose_Gutierrez",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Deferred \u2014 requires a user capture, which cannot happen while the run is working. Search targets Victoriana Vasquez marriage to Jose Gutierrez in NM Select County Marriage Records 1905-1999. URL recorded so researcher can capture later: https://www.ancestry.com/search/collections/61844/?name=Victoriana_Vasquez&residence=_New+Mexico%2C+United+States&father=Remigio_Vasquez&mother=Bernarda_Sandoval&spouse=Jose_Gutierrez. FamilySearch alternative: NM County Marriages 1885-1954 (collection 2110325) \u2014 hand to search-records."
+    },
+    {
+      "id": "log_077",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:29:01.245Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "7602",
+        "collectionName": "1900 United States Federal Census",
+        "givenName": "Jose",
+        "surname": "Gutierrez",
+        "residencePlace": "New Mexico, United States",
+        "residenceYear": 1900
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7602/?name=Jose_Gutierrez&residence=1900_New+Mexico%2C+United+States",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Deferred \u2014 requires a user capture, which cannot happen while the run is working. Search targets Jose Cleofas Gutierrez in the 1900 US Federal Census, New Mexico. URL recorded so researcher can capture later: https://www.ancestry.com/search/collections/7602/?name=Jose_Gutierrez&residence=1900_New+Mexico%2C+United+States. FamilySearch also holds the 1900 census \u2014 hand to search-records as an alternative."
+    },
+    {
+      "id": "log_078",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:29:01.245Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "7884",
+        "collectionName": "1910 United States Federal Census",
+        "givenName": "Jose",
+        "surname": "Gutierrez",
+        "residencePlace": "New Mexico, United States",
+        "residenceYear": 1910
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7884/?name=Jose_Gutierrez&residence=1910_New+Mexico%2C+United+States",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Deferred \u2014 requires a user capture, which cannot happen while the run is working. Search targets Jose Cleofas Gutierrez in the 1910 US Federal Census, New Mexico. URL recorded so researcher can capture later: https://www.ancestry.com/search/collections/7884/?name=Jose_Gutierrez&residence=1910_New+Mexico%2C+United+States. FamilySearch also holds the 1910 census \u2014 hand to search-records as an alternative."
+    },
+    {
+      "id": "log_079",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:29:54.264Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Victoriana\" +\"Vasquez\" +\"Gutierrez\"",
+        "place": "New Mexico",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_079.json",
+      "notes": "FTS: +Victoriana +Vasquez +Gutierrez, place=New Mexico. 61 total results; 20 examined. Two NM records from 'United States, New Mexico, Religious' collection: Roswell, Chaves NM 1917 (ark 3Q9M-CSVN-CS2V-3) lists 'Victoriana Vasquez' and 'Manuelita Gutierrez' as separate names on the same page; second also Roswell. No direct marriage record pairing Victoriana Vasquez with Jose Cleofas Gutierrez. Other 18 results are Mexican records (Coahuila, Jalisco, Oaxaca, Durango, Mexico State, Michoacan, Nayarit, Aguascalientes) with these common names separately on large register pages.",
+      "staged_ref": "results/.staging/ca439168-ee0d-439e-ae97-452c59ea2a2b.json"
+    },
+    {
+      "id": "log_080",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:29:54.278Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Victoriana\" +\"Cleofas\"",
+        "place": "New Mexico",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_080.json",
+      "notes": "FTS: +Victoriana +Cleofas, place=New Mexico. 16,902 total results \u2014 far too broad; place filter does not restrict to NM documents. Top 20 all from Mexican collections. Unusable at this volume; search abandoned.",
+      "staged_ref": "results/.staging/46197cb5-774c-4762-a78f-33be3b1f1ead.json"
+    },
+    {
+      "id": "log_081",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:29:54.292Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Remigio\" +\"Vasquez\" +\"Bernarda\" +\"Sandoval\"",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_081.json",
+      "notes": "FTS: +Remigio +Vasquez +Bernarda +Sandoval, no place filter. 9 total results, all examined. One NM hit (Penasco, Taos NM, ark 3Q9M-CSVY-59RP) from 'United States, New Mexico, Religious' collection \u2014 all four terms appear on page but as different unrelated individuals (Octaviano Vasquez, Juan R. Sandoval, Remigio alone, Bernarda Romero). No hit identifying Remigio Vasquez as husband of Bernarda Sandoval. Other 8 results: Peru (2), Costa Rica, Venezuela, Jalisco, Michoacan \u2014 all false positives.",
+      "staged_ref": "results/.staging/ef96f145-da92-4acf-ad37-fd6c8c123cfb.json"
+    },
+    {
+      "id": "log_082",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:29:54.303Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Cleofas Gutierrez\" +\"Vasquez\""
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FTS phrase: +'Cleofas Gutierrez' +'Vasquez'. Zero results. Phrase 'Cleofas Gutierrez' adjacent does not appear in any AI-transcribed document containing Vasquez. Phrase may be too restrictive given HTR and name spacing in handwritten registers."
+    },
+    {
+      "id": "log_083",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:31:25.039Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Victoriana\" +\"Gutierrez\"",
+        "collectionId": "M9J1-3V7",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_083.json",
+      "notes": "FTS: +Victoriana +Gutierrez in NM Religious collection (M9J1-3V7). 48 total, 20 examined. All results from Roswell (Chaves County) and Carlsbad (Eddy County) parish registers. None show Victoriana paired with Jose Cleofas Gutierrez as a married couple. Victoriana and Gutierrez appear on the same register pages but as separate, unconnected entries. No Grant or Hidalgo County records appear in this collection's FTS results.",
+      "staged_ref": "results/.staging/3435cbc3-d10d-45e1-a009-faea365a917d.json"
+    },
+    {
+      "id": "log_084",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:31:25.054Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Cleofas\" +\"Vasquez\"",
+        "collectionId": "M9J1-3V7",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_084.json",
+      "notes": "FTS: +Cleofas +Vasquez in NM Religious collection (M9J1-3V7). 15 results, all examined. Records: Carlsbad Eddy NM (multiple years 1923-1956), Mesilla Dona Ana NM, Mora Mora NM, Los Ojos Post Office Rio Arriba NM, Roswell Chaves NM. The names Cleofas and Vasquez appear on same pages as separate individuals (e.g. 'Cleofas Salazar' and 'Maria Vasquez', 'Cleofas Rodriguez' and 'Francisco Vasquez'). No record showing Jose Cleofas Gutierrez connected to a Vasquez bride or family. No Lordsburg, Grant County, or Hidalgo County records appear in this search.",
+      "staged_ref": "results/.staging/92527312-0203-4bf1-841a-1ebbc64a4bbb.json"
+    },
+    {
+      "id": "log_085",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:31:25.068Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Cleofas\" +\"Gutierrez\" +\"Vasquez\"",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_085.json",
+      "notes": "FTS: +Cleofas +Gutierrez +Vasquez, no place filter. Result set was 65KB \u2014 too large to read in full. First 5 results visible from staged preview included records from multiple Latin American countries. No clear NM result pairing Cleofas Gutierrez with a Vasquez family visible in the portion examined. Full triage would require reading the sidecar file directly.",
+      "staged_ref": "results/.staging/05dedba7-2955-4dd5-a1fa-8fa0a5d4b36c.json"
+    },
+    {
+      "id": "log_086",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:31:25.084Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Silveria\" +\"Gutierrez\" +\"Vasquez\"",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_086.json",
+      "notes": "FTS: +Silveria +Gutierrez +Vasquez. 228 total, 20 examined. All results from Guatemala, Peru, Colombia, El Salvador \u2014 none from New Mexico. The three terms (Silveria, Gutierrez, Vasquez) are common enough across Latin America that this search cannot distinguish the target family. No NM records reached.",
+      "staged_ref": "results/.staging/0d04ad23-f2c2-4bbb-98fe-083206953e59.json"
+    },
+    {
+      "id": "log_087",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:32:32.541Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Victoriana Vasquez\" +\"Gutierrez\"",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_087.json",
+      "notes": "FTS phrase: +'Victoriana Vasquez' +'Gutierrez'. 9 total results, all examined. NM hits: (1) ark 3Q9M-CSVN-CS2V-3, Roswell Chaves NM 1917 \u2014 'Victoriana Vasquez' and 'Manuelita Gutierrez' appear as separate entries on same parish page (not as a married couple); (2) San Antonio, Bexar TX 1948 marriage register (wrong state, wrong year, too late). Other 7 results: Guatemala, Peru, El Salvador, Mexico Nayarit. No record shows 'Victoriana Vasquez' married to or with 'Jose Cleofas Gutierrez' as a named couple.",
+      "staged_ref": "results/.staging/e229d8b0-38fe-4feb-9308-555a4cc9bc0a.json"
+    },
+    {
+      "id": "log_088",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:32:32.554Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Jose Cleofas\" +\"Gutierrez\"",
+        "collectionId": "M9J1-3V7",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_088.json",
+      "notes": "FTS phrase: +'Jose Cleofas' +'Gutierrez' in NM Religious collection M9J1-3V7. 2 results. (1) Villanueva, San Miguel NM 1939: 'Cleofas Garcia' appears (different surname); name 'Silveria' also appears as a separate entry on the page \u2014 coincidental, not the same Silveria Gutierrez. (2) Anthony, Dona Ana NM 1919: 'Cleofas Lara' and 'Jesus Gutierrez' as separate individuals. Neither record contains 'Jose Cleofas Gutierrez' as a connected name. The NM Religious collection has no FTS coverage for Grant County (Silver City, Lordsburg area) \u2014 the target parish is not in the AI-transcribed subset.",
+      "staged_ref": "results/.staging/70f0e421-c7bd-43b0-ac26-d1300ed1b8cb.json"
+    },
+    {
+      "id": "log_089",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:32:32.601Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Remigio Vasquez\"",
+        "place": "New Mexico",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_089.json",
+      "notes": "FTS phrase: +'Remigio Vasquez' with place=New Mexico. 3 results, all examined. Despite place filter, all 3 results are from Mexico: Reynosa Tamaulipas 1924, Conkal Yucatan 1834-1837, Tlaxiaco Oaxaca 1913. Place filter matches collection metadata rather than document geography. No NM record mentioning Remigio Vasquez by that exact name found in FTS. Confirms FTS coverage gap for this family in New Mexico.",
+      "staged_ref": "results/.staging/2c5e0464-402c-4adc-8db0-def3c0acd71f.json"
+    },
+    {
+      "id": "log_090",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-27T10:38:17.990Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "009055895",
+        "standardPlace": "San Lorenzo, Grant, New Mexico, United States",
+        "recordType": "Church records (1882-1883)",
+        "imagesExamined": "00001-00010"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 145,
+      "notes": "Volume 009055895 listed (145 images). Cover pages identify this as the 'Red River Chronicle' newspaper for San Lorenzo, N. Mex., starting April 22, 1882 \u2014 it is a newspaper microfilm, not a Catholic parish register. No genealogical entries (baptisms, marriages, burials) found. Not relevant to the search for the Gutierrez-Vasquez marriage."
+    },
+    {
+      "id": "log_091",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-27T10:38:17.990Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "008139132",
+        "standardPlace": "Lordsburg, Hidalgo, New Mexico, United States",
+        "recordType": "St. Joseph Catholic Church records 1916-1956 (Baptisms, Marriages, Communion, Deaths, Confirmations)",
+        "imagesExamined": "00001-00017, 00250, 00400, 00500, 00550, 00600, 00640, 00650, 00700"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 790,
+      "notes": "Volume 008139132 listed (790 images). St. Joseph Catholic Church, Lordsburg, NM, El Paso Diocese; covers Baptisms, Marriages, Communion, Deaths, Confirmations 1916-1956. Structure identified: index pp.5-25; baptism register pp.25-399; communion pp.400-499; confirmation pp.500-640; marriage register (Liber Matrimoniorum) starts frame ~650, page 46 of register at frame 700 contains 1948-1949 marriages. Marriage index G section (frame 640) lists only Gandara, Gonsales, Guerrero, Gerra \u2014 no Gutierrez entries found. Marriage register covers 1916-1956 only, after the probable marriage date of Jose Cleofas Gutierrez and Victoriana Vasquez (likely 1880s-1890s). 20-image cap reached. Target marriage not found in this parish."
+    },
+    {
+      "id": "log_092",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-27T10:39:59.075Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007854378",
+        "standardPlace": "Silver City, Grant, New Mexico, United States",
+        "recordType": "St. Vincent de Paul Church records, volumes 8-17 (Baptisms 1911-1956)",
+        "imagesExamined": "00001-00003"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1329,
+      "notes": "Volume 007854378 listed (1329 images). St. Vincent de Paul parish, Silver City, NM. Cover page identifies this as BAPTISMS Volume 8, starting April 6, 1911 (Book 8, Roll 62). The volume contains baptism register volumes 8-17. No marriage register section found in this volume. No other digitized Grant County Catholic marriage register identified among the 8 Grant County volumes in the collection (007854377, 007854378, 007854379, 007854380, 008139120, 008139122, 008139129, 008139127). The marriage register for St. Vincent de Paul, Silver City, covering the 1880s-1890s (the likely period for the Gutierrez-Vasquez marriage) does not appear to be digitized in this FamilySearch collection.\""
+    },
+    {
+      "id": "log_093",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:42:21.609Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua",
+        "recordType": "marriage",
+        "collectionId": "1521780",
+        "fatherSurname": "Vasquez",
+        "fatherGivenName": "Remigio",
+        "motherGivenName": "Bernarda"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_093.json",
+      "results_available": 3,
+      "notes": "Search 1: Victoriana Vasquez marriage in Chihuahua Catholic Church Records (1521780) with parent filters (Remigio/Bernarda). Returned 3 low-scoring results, none matching Victoriana as bride. Subject has no dated/placed facts; ranking withheld. Effective nil.",
+      "staged_ref": "results/.staging/444fc8e7-91f8-49b8-a3f4-ee31aa3f8375.json"
+    },
+    {
+      "id": "log_094",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:43:26.841Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua",
+        "collectionId": "1922462"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_094.json",
+      "results_available": 758,
+      "notes": "Search 2: Victoriana Vasquez in Chihuahua Civil Registration (1922462), broad search. 758 total matches. Subject has no dated/placed facts; ranking withheld. Top hit (QGCP-6R6V) is Victoriana Vasquez married to Sirindo Gardea at Tem\u00f3sachi 1897 \u2014 wrong groom. Also notable: QGCL-TSGV is a birth record for 'Victoriana V\u00e1squez Gutierrez' born 1894 at Cusihuiriachi \u2014 Vasquez father + Gutierrez mother, does not directly match our subject. No Gutierrez groom found. Need to narrow with spouse name or search for Jose Cleofas Gutierrez directly.",
+      "staged_ref": "results/.staging/40aece24-767b-4f14-8efd-1e51e502cb9d.json"
+    },
+    {
+      "id": "log_095",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:43:26.871Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Remigio",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_095.json",
+      "results_available": 2237,
+      "notes": "Search 3: Remigio Vasquez in Chihuahua (all collections). 2237 total matches; subject has no dated/placed facts, ranking withheld. Top hit (QGCB-35MQ) is Remigio V\u00e1squez who married Rita Elizalde in Jim\u00e9nez 1934 \u2014 wrong wife. No Remigio Vasquez married to Bernarda Sandoval identified in top 50. Broad pool requires narrowing (add Sandoval spouse filter or search for Bernarda Sandoval directly).",
+      "staged_ref": "results/.staging/6844bfbd-3d25-484e-ba3a-1e0962d6187c.json"
+    },
+    {
+      "id": "log_096",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:44:36.669Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Jose Cleofas",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua",
+        "recordType": "marriage",
+        "spouseSurname": "Vasquez"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_096.json",
+      "results_available": 84,
+      "notes": "Search 4: Jose Cleofas Gutierrez marriage in Chihuahua (all collections) with Vasquez spouse. 84 total matches. Top hits are Jose Guti\u00e9rrez + Catalina V\u00e1squez (Bachin\u00edva, 1917) \u2014 wrong bride. No 'Cleofas' given name found in top 50, nor 'Victoriana' as bride. Subject unresolvable (no dates/places). No match for Jose Cleofas Gutierrez + Victoriana Vasquez.",
+      "staged_ref": "results/.staging/74f6c3d9-c38b-4a70-8777-83e75ab768e5.json"
+    },
+    {
+      "id": "log_097",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:44:36.701Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua",
+        "collectionId": "1922462",
+        "spouseGivenName": "Jose",
+        "spouseSurname": "Gutierrez"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_097.json",
+      "results_available": 454,
+      "notes": "Search 5: Victoriana Vasquez in Chihuahua Civil Registration (1922462) with spouseGivenName Jose + spouseSurname Gutierrez. 454 total matches. All returned records show relativeTerms spouse='absent' \u2014 the Gutierrez spouse name is not present on any of the top 50 records. No marriage of Victoriana Vasquez to a Gutierrez found. Records include death records, birth records, and women named as mothers \u2014 no matching bride.",
+      "staged_ref": "results/.staging/475056d4-ee02-44ce-8a39-37721f189d9d.json"
+    },
+    {
+      "id": "log_098",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:44:36.727Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "spouseGivenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_098.json",
+      "results_available": 2,
+      "notes": "Unlogged staged search from earlier session; logged to preserve audit trail.",
+      "staged_ref": "results/.staging/3b7b4b59-db20-45dd-9581-d2cd9cd391a5.json"
+    },
+    {
+      "id": "log_099",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:44:36.743Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Remigio",
+        "residencePlace": "Taos County, New Mexico, United States",
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_099.json",
+      "results_available": 132,
+      "notes": "Unlogged staged search from earlier session; logged to preserve audit trail.",
+      "staged_ref": "results/.staging/544a26f8-7636-462c-9819-091c755abd38.json"
+    },
+    {
+      "id": "log_100",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:44:36.763Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "residencePlace": "Taos County, New Mexico, United States",
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_100.json",
+      "results_available": 59,
+      "notes": "Unlogged staged search from earlier session; logged to preserve audit trail.",
+      "staged_ref": "results/.staging/b5ff4a52-61df-4472-856b-2bd81c08f167.json"
+    },
+    {
+      "id": "log_101",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:45:48.219Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "spouseGivenName": "Jose",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. No NM marriage records found for Victoriana Vasquez with spouse Jose in New Mexico state. Confirmation register lead (Penasco/Taos area) points to northern NM origin. Will retry broader search."
+    },
+    {
+      "id": "log_102",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:45:48.219Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "spouseGivenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "2 results returned (New Mexico, County Marriages, 1885-1954) but neither matches Jose Cleofas Gutierrez/Victoriana Vasquez \u2014 both are incidental relatives in unrelated entries. Outcome coded negative as no valid match found. Note: log_098 logged this staged result as positive; this entry clarifies the triage."
+    },
+    {
+      "id": "log_103",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:45:48.219Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Remigio",
+        "residencePlace": "Taos County, New Mexico, United States",
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 132,
+      "notes": "132 results for Remigio Vasquez in Taos County NM census, but pool dominated by modern Residence Database 1970-2024. No historical census hit for the genealogically relevant Remigio Vasquez (father of Victoriana). Note: log_099 logged as positive; this entry clarifies the triage."
+    },
+    {
+      "id": "log_104",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:45:48.219Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "residencePlace": "Taos County, New Mexico, United States",
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 59,
+      "notes": "59 results for Cleofas Gutierrez census in Taos County NM, dominated by modern records. No clearly matching historical census hit for Jose Cleofas Gutierrez. Note: log_100 logged as positive; this entry clarifies the triage."
+    },
+    {
+      "id": "log_105",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:47:27.032Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Silveria",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch API returned network timeout on retry. Transient failure \u2014 coverage unknown. Search for Silveria Gutierrez (daughter) in Chihuahua not completed."
+    },
+    {
+      "id": "log_106",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:47:27.033Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sandoval",
+        "givenName": "Bernarda",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua",
+        "spouseSurname": "Vasquez"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch API returned network timeout on retry. Transient failure \u2014 coverage unknown. Search for Bernarda Sandoval (mother) in Chihuahua not completed."
+    },
+    {
+      "id": "log_107",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-27T10:47:27.033Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "recordCountry": "Mexico",
+        "recordSubdivision": "Chihuahua"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch API returned network timeout on retry. Transient failure \u2014 coverage unknown. Search for Cleofas Gutierrez (groom, given name variant) in Chihuahua not completed."
+    },
+    {
+      "id": "log_108",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:50:02.546Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "spouseGivenName": "Cleofas",
+        "recordCountry": "United States",
+        "recordType": "marriage"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch record_search API timed out (transient error). Not a nil \u2014 coverage unknown. Retry needed."
+    },
+    {
+      "id": "log_109",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:50:02.546Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1920,
+        "recordType": "census"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch record_search API timed out (transient error). Not a nil. Retry needed."
+    },
+    {
+      "id": "log_110",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:50:02.546Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Remigio",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1910,
+        "recordType": "census"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch record_search API timed out (transient error). Not a nil. Retry needed."
+    },
+    {
+      "id": "log_111",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:50:02.546Z",
+      "tool": "record_search",
+      "query": {
+        "fatherSurname": "Gutierrez",
+        "fatherGivenName": "Cleofas",
+        "motherGivenName": "Victoriana",
+        "recordCountry": "United States",
+        "recordSubdivision": "New Mexico",
+        "recordType": "birth"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch record_search API timed out (transient error). Not a nil. Retry needed."
+    },
+    {
+      "id": "log_112",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:50:02.546Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Vasquez",
+        "givenName": "Victoriana",
+        "collectionId": "2341907",
+        "recordCountry": "United States"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Search in NM Catholic Church Records (collection 2341907) for Victoriana Vasquez marriage. API timed out. Not a nil. Retry needed."
+    },
+    {
+      "id": "log_113",
+      "plan_item_id": null,
+      "performed": "2026-10-27T10:50:02.547Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gutierrez",
+        "givenName": "Cleofas",
+        "recordCountry": "United States",
+        "recordType": "marriage"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch record_search API timed out (transient error). Not a nil. Retry needed."
+    },
+    {
+      "id": "log_114",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-27T10:52:48.733Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-CSVY-59RP",
+        "lookingFor": "Victoriana Vasquez, Remigio Vasquez, Bernarda Sandoval",
+        "imageGroupNumber": "8251955",
+        "recordType": "Confirmation Register",
+        "place": "Penasco, New Mexico"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_114.json",
+      "results_available": 1,
+      "notes": "Transcribed image ark:/61903/3:1:3Q9M-CSVY-59RP from imageGroupNumber 8251955 (San Antonio Church, Penasco, NM \u2014 confirmation register). The page header reads: 'Registrum Confirmatorum Ecclesiae Sancti Antonio, Penasco, Die 8 Octobris 44' \u2014 this is a confirmation ceremony from October 8, 1944, not the 1800s. Columns list: Confirmand, Father, Mother, Godparent. Neither Remigio Vasquez nor Bernarda Sandoval appear as parents, confirmands, or godparents anywhere on this page. Victoriana Vasquez is likewise absent. A 'Remigio Valencia' appears as the father of Paulina Valencia (a different family). In the second section (Trampas, dated 9-44), 'Octaviana Vasquez' appears as the mother of Adolfo A. Lopez; 'Esmeralda Vasquez' appears as a godparent \u2014 these are different individuals from our subjects. The full-text hit that pointed to this ARK appears to have been a loose or erroneous match; the target family does not appear on this page. This page is from 1944 and covers confirmations at San Antonio (Penasco) and a neighboring Trampas ceremony \u2014 well outside the era relevant to Victoriana Vasquez's marriage.",
+      "staged_ref": "results/.staging/9213865a-4a1c-4c21-ac9b-b7e3b7d7175f.json"
+    },
+    {
+      "id": "log_115",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-27T10:58:43.284Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "8133009",
+        "standardPlace": "Penasco, New Mexico, United States",
+        "recordType": "Marriage Register - San Antonio/St. Anthony Church, Penasco NM",
+        "yearsSearched": "1859-1904 (sampled)",
+        "imagesExamined": "1, 2, 3, 4, 50, 70, 80, 85, 90, 93, 96, 100, 103, 105, 110, 115, 120, 125, 135, 150",
+        "lookingFor": "Victoriana Vasquez (daughter of Remigio Vasquez and Bernarda Sandoval) married to Jose Cleofas Gutierrez"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 476,
+      "notes": "Browsed San Antonio (St. Anthony) Church, Penasco NM marriage register, image group 8133009, 476 total images. Image 3 confirms: 'ARCHDIOCESE SANTA FE / ST. ANTHONY / PENASCO / MARRIAGES / START 1859'. Image 4 confirms first section covers 'CASORIOS Oct. 1859-AUG 1904'. Read 20 sampled pages covering dates from 1874 (image 50) through September 1904 (image 150), focusing on the 1880-1904 window (images 80-150) most likely to contain the target marriage. No marriage record found for Victoriana Vasquez and Jose Cleofas Gutierrez. Other Vasquez names appeared: Bonifacia Vasquez (daughter of Jose Victoriano Vasquez, married December 1880, image 80); Franquito Vasquez as godparent (1888, image 96). Neither Remigio Vasquez, Bernarda Sandoval, Victoriana Vasquez as bride, nor Jose Cleofas Gutierrez as groom appeared in any of the 20 pages examined. Browse is incomplete: hit the 20-image session cap before covering images 151-476 (1904-1955) and the many un-sampled pages within 1-150. Continuation URL: https://www.familysearch.org/search/film/008133009?i=150"
+    },
+    {
+      "id": "log_116",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-27T11:00:41.013Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "8133009",
+        "standardPlace": "Penasco, New Mexico, United States",
+        "recordType": "Marriage Register - San Antonio/St. Anthony Church, Penasco NM",
+        "continuationFrom": "image 151",
+        "imagesAttempted": "151, 470, 476",
+        "lookingFor": "Victoriana Vasquez daughter of Remigio Vasquez and Bernarda Sandoval married to Jose Cleofas Gutierrez"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 476,
+      "notes": "Attempted to continue browsing San Antonio Church, Penasco NM marriage register (8133009, 476 images) from image 151 onward and also to check images 470-476 for an index. The per-project image cap of 20 distinct reads for this group was already exhausted by the prior browse session (log_115, images 1-150). No new images could be read. Images 151-476 remain unread. The researcher must continue this browse manually. Direct continuation URL (starting at image 151): https://www.familysearch.org/search/film/008133009?i=150. Index check (images 470-476): https://www.familysearch.org/search/film/008133009?i=469. The target marriage of Victoriana Vasquez to Jose Cleofas Gutierrez has not been found or ruled out in images 151-476.\""
+    },
+    {
+      "id": "log_117",
+      "plan_item_id": null,
+      "performed": "2026-10-27T11:01:29.019Z",
+      "tool": "person_read",
+      "query": {
+        "personId": "GFG9-7H4"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "extraction_append(personId=GFG9-7H4): FamilySearch Family Tree has no indexed records attached to Victoriana Vasquez. No sources, no marriage date/place, no hints available via this route."
+    },
+    {
+      "id": "log_118",
+      "plan_item_id": null,
+      "performed": "2026-10-27T11:01:29.019Z",
+      "tool": "person_read",
+      "query": {
+        "personId": "GFG9-WPX"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "extraction_append(personId=GFG9-WPX): FamilySearch Family Tree has no indexed records attached to Jose Cleofas Gutierrez. No sources, no marriage date/place, no hints available via this route."
+    },
+    {
+      "id": "log_119",
+      "plan_item_id": null,
+      "performed": "2026-10-27T11:01:29.019Z",
+      "tool": "person_read",
+      "query": {
+        "personId": "GFG9-FPF"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "extraction_append(personId=GFG9-FPF): FamilySearch Family Tree has no indexed records attached to Remigio Vasquez (father of Victoriana)."
+    },
+    {
+      "id": "log_120",
+      "plan_item_id": null,
+      "performed": "2026-10-27T11:01:29.019Z",
+      "tool": "person_read",
+      "query": {
+        "personId": "GFG9-NTX"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "extraction_append(personId=GFG9-NTX): FamilySearch Family Tree has no indexed records attached to Bernarda Sandoval (mother of Victoriana)."
+    },
+    {
+      "id": "log_121",
+      "plan_item_id": null,
+      "performed": "2026-10-27T11:01:29.019Z",
+      "tool": "person_read",
+      "query": {
+        "personId": "GFG9-3QW"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "extraction_append(personId=GFG9-3QW): FamilySearch Family Tree has no indexed records attached to Silveria Gutierrez (daughter of Victoriana and Jose Cleofas)."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -5,7 +5,6 @@ import { ResearchDataProvider } from './contexts/ResearchDataProvider'
 import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
 import ProjectOverview from './components/sections/ProjectOverview'
-import KnownInformationSection from './components/sections/KnownInformationSection'
 import QuestionsSection from './components/sections/QuestionsSection'
 import PlansSection from './components/sections/PlansSection'
 import LocalitiesSection from './components/sections/LocalitiesSection'
@@ -24,7 +23,6 @@ import styles from './App.module.css'
 
 export const sectionComponents: Record<string, React.ComponentType> = {
   project_overview: ProjectOverview,
-  known_holdings: KnownInformationSection,
   questions: QuestionsSection,
   plans: PlansSection,
   localities: LocalitiesSection,

@@ -3,8 +3,7 @@
 Ownership is declared at skill granularity (`callers`), but a merge is a
 tool-granular operation. `merge_tree_persons` repoints every research.json
 reference to a collapsed person — `project.subject_person_ids`,
-`person_evidence[].person_id`, `timelines[].person_ids`,
-`known_holdings[].relates_to_person_ids` — in one atomic write, and the skill
+`person_evidence[].person_id`, `timelines[].person_ids` — in one atomic write, and the skill
 that calls it (`tree-edit`) is a declared caller of none of those sections.
 
 The alternative was widening `callers`, which the unit plane keys on. That

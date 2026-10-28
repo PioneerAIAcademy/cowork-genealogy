@@ -104,7 +104,6 @@ const DEF_FOR: Record<string, string> = {
   timelines: "timeline",
   proof_summaries: "proof_summary",
   evaluations: "evaluation_entry",
-  known_holdings: "known_holding",
   localities: "locality",
   namesakes: "namesake",
 };
