@@ -13,6 +13,13 @@ export function setOpenExternal(fn: (url: string) => void): void {
   impl = fn
 }
 
+/** Whether a link can be offered as clickable on every host. Electron's
+ *  `open-external` opens only https, so an http link would be a button that
+ *  does nothing there; it is shown as text instead. */
+export function isOpenableUrl(url: string): boolean {
+  return /^https:\/\//i.test(url)
+}
+
 /** Open a URL outside the app. No-ops on empty input. */
 export function openExternal(url: string | undefined | null): void {
   if (url) impl(url)

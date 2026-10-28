@@ -153,7 +153,7 @@ def render(log: dict[str, Any], name: str) -> str:
     tests = [t for t in log.get("tests") or [] if isinstance(t, dict)]
     out = [
         f"{log.get('skill', '?')} — unit run {log.get('timestamp', '?')}",
-        f"log: {name} · model: {log.get('model', '?')} · invocation: "
+        f"log: {name} · harness default model: {log.get('model', '?')} · invocation: "
         f"{log.get('invocation', '?')} · {len(tests)} test(s)",
         "",
     ]

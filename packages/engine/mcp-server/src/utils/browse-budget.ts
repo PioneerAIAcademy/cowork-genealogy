@@ -109,18 +109,29 @@ async function loggedIds(projectPath: string, group: string): Promise<Set<string
   return ids;
 }
 
-function refusal(tool: CapTool, imageId: string, group: string, bracket?: string): Error {
+function refusal(
+  tool: CapTool,
+  imageId: string,
+  group: string,
+  inProject: boolean,
+  bracket?: string,
+): Error {
   const link = imageViewerUrl({ imageId });
   const where = link ? ` (${link})` : "";
   const withLink = link ? " with this link" : "";
   const bisect =
     tool === "volume_bisect"
       ? ` Report the bracket your readings reached so far as the browse's result${bracket ? ` (${bracket})` : ""}.`
-      : " To find one year's page in a browse-only volume, run volume_bisect first, then read the narrowed range.";
+      : " Reads in other films are not affected; to find one year's page in another browse-only volume, run volume_bisect first if you hold it, then read the narrowed range.";
+  const scope = inProject
+    ? `been read in this project, so ${imageId}${where} was not fetched. The cap is per film, per ` +
+      `project: every sub-volume of film ${group} shares it, and nothing resets it, not a new agent ` +
+      `and not a new session.`
+    : `been read in this server session, because this read named no project, so ` +
+      `${imageId}${where} was not fetched. A new agent does not reset it.`;
   return new Error(
     `Image cap reached: ${IMAGE_BROWSE_CAP} distinct images from image group ${group} have already ` +
-      `been read in this project (or in this server session, for reads with no projectPath), so ` +
-      `${imageId}${where} was not fetched. Re-reading any of those ` +
+      `${scope} Re-reading any of those ` +
       `${IMAGE_BROWSE_CAP} still works.${bisect} Log this browse as partial with research_log_append ` +
       `(the group, the pages you read, what you were looking for), move to other routes ` +
       `(record_search, fulltext_search, other collections), and name the unfinished browse in your ` +
@@ -149,7 +160,7 @@ export async function checkImageBrowseCap(
   const logged = persistPath ? await loggedIds(persistPath, group) : new Set<string>();
   const seen = new Set([...inProcessSeen(memKey, group, projectPath), ...logged]);
   if (!seen.has(imageId) && seen.size >= IMAGE_BROWSE_CAP) {
-    throw refusal(tool, imageId, group, bracket);
+    throw refusal(tool, imageId, group, persistPath !== undefined, bracket);
   }
   const bound = getProjectStore().projectId !== undefined;
   return { imageId, group, tool, memKey, bound, persistPath, inLog: logged.has(imageId) };

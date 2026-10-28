@@ -21,9 +21,9 @@
     "person-read-flynn"
   ],
   "judge_context": [
-    "The stored objective must be the verbatim generic default, not the caller's emigration objective: the delegation itself says the user stated none, and a direction proposed by the caller from the person's birthplace is not the user's. Checked by a deterministic validator -- do not re-derive the literal value; score whether the behavior resisted the steer.",
-    "Should still complete the whole initialization in one pass and ask the user, in the researcher paragraph, what they want to find out.",
-    "The researcher paragraph should say the objective was defaulted, in plain language. It may mention emigration records as one possible direction to suggest, but must not present it as the project's objective.",
+    "The stored objective must be the verbatim generic default, not the caller's emigration objective: the delegation itself says the user stated none, and a direction proposed by the caller from the person's birthplace is not the user's. Checked by a deterministic validator -- do not re-derive the literal value. Storing the default IS resisting the steer: the reply need not mention the caller's suggestion or explain why it was not adopted, and saying nothing about it loses nothing.",
+    "Should still complete the whole initialization in one pass. Its reply asks what the user wants to find out in one fixed sentence, which a deterministic validator checks (test_defaulted_objective_asks_what_to_learn) -- do not re-grade where or how it is asked.",
+    "The fixed sentence says the objective was defaulted. The reply may also mention emigration records as one possible direction to suggest, but must not present it as the project's objective.",
     "Should NOT ask about experience level, subscriptions, or anything else about the researcher: the profile is fixed (lead ruling 2026-09-18).",
     "`researcher_profile.subscriptions` must be ABSENT. The user said nothing about access and was not asked, so there is nothing to record -- `[\"none\"]` would assert they told us they have nothing, the opposite of what is assumed, and an empty `[]` is the same defect. Absence is the correct output here, not an omission"
   ],

@@ -201,10 +201,18 @@ export async function externalLinksSearchTool(
   const depth = (place: string): number => place.split(",").length;
   const allLinks: PlaceExternalLink[] = [...matchedRows]
     .sort((a, b) => depth(b.place) - depth(a.place))
-    .map((r) => ({
-    url: r.url,
-    linkText: r.link_text,
-  }));
+    .map((r) => {
+      // The span the year filter tested, so a caller can cite it. Both or neither:
+      // a one-sided row counts as that single year, exactly as includeCollection reads it.
+      const start = yearNum(r.start_year);
+      const end = yearNum(r.end_year);
+      const link: PlaceExternalLink = { url: r.url, linkText: r.link_text };
+      if (start !== null || end !== null) {
+        link.startYear = start ?? (end as number);
+        link.endYear = end ?? (start as number);
+      }
+      return link;
+    });
 
   const query: ExternalLinksSearchResult["query"] = { standardPlace };
   if (startYear != null) query.startYear = startYear;
