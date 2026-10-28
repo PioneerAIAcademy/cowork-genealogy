@@ -33,7 +33,7 @@ match strength.
 5 September 1812 at Sankt Georgen, entry 34 on Image 120 of group 3015626
 (`ark:/61903/3:1:3Q9M-CS43-L99T-Q`). It names his parents as Johann Georg Mayer
 and Maria Dorothea Stokburger and places the family at Kirnach. Andreas is a son
-of the tree couple. Reviewed by Edmond against the image and the index.
+of the tree couple. Retrieval was by hand on familysearch.org.
 
 **What decided it:**
 
@@ -53,5 +53,3 @@ Entry 38 (`NCC4-6G7`, Christoph Mayer): the mother reads Lupfer, matching the
 index. Both match, so the reading is licensed for child, parents and date. The
 check does not license the residence word "Kirnach"; the verdict does not rest
 on it.
-
-Retrieval was by hand on familysearch.org.
