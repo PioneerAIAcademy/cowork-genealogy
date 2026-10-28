@@ -1124,8 +1124,74 @@ describe("questionStatus — a conflict that wants new evidence (section E)", ()
       }],
       conflicts: [analysed()],
     });
-    expect(questionStatus(d, question()).nextStep).not.toBe(
-      "search-external-sites — pli_1 (Ancestry)",
-    );
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("an uncited entry on a closed item does not hold the search on extraction", () => {
+    // An inconclusive `partial` stays uncited for good, and so does the search
+    // entry behind a record `extraction_append` read. Counting either would
+    // name extraction on every pass and the new item would never run.
+    const d = doc({
+      plans: [
+        { id: "pl_0", question_id: Q, status: "completed",
+          items: [{ id: "pli_0", status: "completed", sequence: 1, repository: "FamilySearch" }] },
+        openPlan(),
+      ],
+      log: [{ id: "log_1", plan_item_id: "pli_0", tool: "record_search", outcome: "partial" }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a search whose record was extracted does not route to extraction again", () => {
+    // The conflict round's own item, completed by extraction_append, which cites
+    // its read (`log_2`) and leaves the search that found the record uncited.
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "completed", sequence: 1, repository: "FamilySearch" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [
+        { id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+        { id: "log_2", tool: "record_read", outcome: "positive" },
+      ],
+      assertions: [{ id: "a_9", log_entry_id: "log_2", extracted_for_question_ids: [Q] }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a record found by an item still in progress goes to extraction first", () => {
+    const d = doc({
+      plans: [{ ...openPlan(), items: [{ id: "pli_1", status: "in_progress", sequence: 1, repository: "FamilySearch" }] }],
+      log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^extraction /);
+  });
+});
+
+describe("questionStatus — the dispatch arm skips an item waiting on an upload (section I)", () => {
+  it("names the next search past an upload-waiting item, with no conflict open", () => {
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "in_progress", sequence: 1, repository: "Ancestry" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [{
+        id: "log_9", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+        external_site: {
+          site: "ancestry", url_generated: "https://example.test/s?q=2",
+          capture_received: false,
+        },
+      }],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
   });
 });

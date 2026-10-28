@@ -233,10 +233,12 @@ whether anything is left to weigh.
 identity conflict routes to the search like any other, and any open item on the
 active plan satisfies it, not only one planned for the conflict. Both are
 deliberate: the rung's job is to stop the conflict rung firing while work is
-outstanding, not to choose the work. A record already found and not yet
-extracted outranks the search — re-running the search that found it would find
-it again — and an item waiting only on the researcher's upload is skipped, as
-it is everywhere else in this ladder.
+outstanding, not to choose the work. A record found by an item still open and
+not yet extracted outranks the search — re-running the search that found it
+would find it again. An uncited entry on a closed item does not: inconclusive
+`partial`s and link lists stay uncited for good, and `extraction_append` cites
+the read, not the search that found the record. An item waiting only on the
+researcher's upload is skipped, as it is everywhere else in this ladder.
 
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no

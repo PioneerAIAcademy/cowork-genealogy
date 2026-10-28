@@ -758,7 +758,9 @@ that apply:
   ships in the first route PR, not PR 1, because the new route loops without it.
   - **The rule:** when every conflict in `openConflictIds` already carries
     `independence_analysis` and the question's active plan has open items, the next step is
-    search-records. It sits above that arm. A conflict not yet analysed still goes to
+    extraction if a record found by an item still open is not yet extracted, and otherwise
+    the next item's search: search-records, or search-external-sites for an item on another
+    repository. It sits above that arm. A conflict not yet analysed still goes to
     conflict-resolution first, even beside an analysed one.
   - **Why that marker:** conflict-resolution fills `independence_analysis` on every analysis,
     resolved or not (`agents/conflict-resolution.md:348-352`).
@@ -1396,7 +1398,8 @@ in parallel with PR 2.
    - B's branch fires with `resources_spent`, no summary, no open item and full log coverage;
    - a `justification` with no "Overturn risk:" prefix defaults to research-plan;
    - E's rule: when every open conflict carries `independence_analysis` and a plan item is
-     open, the next step is search-records;
+     open, the next step is extraction for a record found by an open item and not yet
+     extracted, otherwise the next item's search (search-records for FamilySearch);
    - a concluded, unresolved question with no open conflict routes to proof-conclusion;
    - an analysed, unresolved conflict that has weighed every log entry, with no open item,
      routes to proof-conclusion; once the question has a `not_proved` summary with

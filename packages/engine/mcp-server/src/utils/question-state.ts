@@ -117,13 +117,18 @@ function searchStepFor(item: any): string {
  *  raise again — so the question stalled until the upload arrived. */
 function nextUnexecutedItem(research: any, plans: any[]): any | null {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
-  const items = plans
-    .filter((p) => p?.status === undefined || p?.status === "active")
-    .flatMap((p) => arr(p?.items))
-    .filter((i) => (i?.status === "planned" || i?.status === "in_progress")
-      && !waitingOnUpload.has(i?.id))
+  const items = openItems(plans)
+    .filter((i) => !waitingOnUpload.has(i?.id))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
+}
+
+/** The `planned`/`in_progress` items on a plan that is active or status-less. */
+function openItems(plans: any[]): any[] {
+  return plans
+    .filter((p) => p?.status === undefined || p?.status === "active")
+    .flatMap((p) => arr(p?.items))
+    .filter((i) => i?.status === "planned" || i?.status === "in_progress");
 }
 
 /** Fact types that name one event per person, so two values are a disagreement
@@ -506,14 +511,6 @@ export function conflictCoverageLogIds(research: any, conflict: any): string[] {
   return [...ids].sort();
 }
 
-/** Section E's ending on an unsettled conflict: every open conflict has been
- *  analysed (`independence_analysis`) over every log entry the question owns
- *  (`weighed_log_entry_ids`), and nothing is left to search. Re-running
- *  conflict-resolution there weighs the same evidence again, forever, so the
- *  question goes to proof-conclusion instead, which concludes at the tier the
- *  evidence reaches and leaves it open (decision 12). A log entry the weighed
- *  list does not cover -- a later upload, a steer's search -- is new evidence,
- *  and sends it back to conflict-resolution. */
 /** Whether conflict-resolution has analysed this conflict.
  *
  *  One definition for both rungs. `Boolean(c.independence_analysis)` accepted
@@ -548,6 +545,14 @@ function conflictEvidenceWanted(
     .every((c) => isAnalysed(c));
 }
 
+/** Section E's ending on an unsettled conflict: every open conflict has been
+ *  analysed (`independence_analysis`) over every log entry the question owns
+ *  (`weighed_log_entry_ids`), and nothing is left to search. Re-running
+ *  conflict-resolution there weighs the same evidence again, forever, so the
+ *  question goes to proof-conclusion instead, which concludes at the tier the
+ *  evidence reaches and leaves it open (decision 12). A log entry the weighed
+ *  list does not cover -- a later upload, a steer's search -- is new evidence,
+ *  and sends it back to conflict-resolution. */
 function unsettledConflictWeighed(
   research: any,
   openConflictIds: string[],
@@ -643,17 +648,21 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // Section E: a conflict that needs new evidence becomes plan items on this
     // question rather than a helper question. Routing to conflict-resolution
     // again would hand it the evidence it has already weighed.
-    // Extraction first: a record this question already found and nobody has
-    // extracted is the evidence the conflict needs, and re-running the search
-    // that found it would find it again. The `pendingExtraction` rung below is
-    // unreachable while a conflict is open, so it is asked here.
+    // Extraction first, but only for entries on items still open: search-records
+    // leaves its item `in_progress` until the record is extracted, and
+    // re-running that search would find the record again. An entry on a closed
+    // item is not waiting on extraction: `extraction_append` cites the read, not
+    // the search that found it, and inconclusive `partial`s and link lists stay
+    // uncited for good, so counting them would hold the question here forever.
+    const openIds = new Set(openItems(plans).map((i) => i?.id));
+    const awaitingExtraction = logs.filter((e) => openIds.has(e?.plan_item_id));
     const item = nextUnexecutedItem(research, plans);
-    nextStep = pendingExtraction(research, logs).length > 0
+    nextStep = pendingExtraction(research, awaitingExtraction).length > 0
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Reachable now that the picker skips upload-waiting items as
-        // `hasOpenWork` does: every open item can be one of those.
+        // Unreachable today: `hasOpenWork` and the picker read the same items
+        // with the same upload skip. Kept for when the picker skips more.
         : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
