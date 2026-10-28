@@ -65,6 +65,8 @@ import {
   unlinkedParentProofInvariants,
   narrativeLengthWarnings,
   NARRATIVE_WORD_BUDGET,
+  planItemSearchedSkipInvariants,
+  planItemCompletionRecordTypeInvariants,
 } from "../../src/tools/research-append.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -15777,5 +15779,23 @@ describe("research_append: a localities first place must be in the place standar
     expect(errors.join(" ")).toMatch(/ops\[1\]/);
     expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
     expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+});
+
+describe("a searched plan item the record-type check will not complete can be skipped (#3592)", () => {
+  const research = {
+    log: [{ id: "log_001", plan_item_id: "pli_006", tool: "record_search", outcome: "negative", query: { recordType: "census" } }],
+  };
+  const item = { id: "pli_006", record_type: "probate" };
+
+  it("refuses 'completed' and accepts 'skipped', so the item is never stuck in_progress", () => {
+    expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, research)).toHaveLength(1);
+    expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, research)).toEqual([]);
+  });
+
+  it("still refuses the skip when the item's own record-type search ran", () => {
+    const probate = { log: [{ ...research.log[0], query: { recordType: "probate" } }] };
+    expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, probate)).toEqual([]);
+    expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, probate)).toHaveLength(1);
   });
 });

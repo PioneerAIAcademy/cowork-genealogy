@@ -2724,6 +2724,23 @@ describe("research_log_append — filtered zero-hit fulltext names its unfiltere
     expect((await readJson("research.json")).log).toHaveLength(2);
   });
 
+  it("names every refused op in a batch, not just the first", async () => {
+    await writeProject(baseResearch());
+    const nil = (keywords: string) => ({
+      tool: "fulltext_search",
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: 0,
+      query: { keywords, place: "Schuylkill County, Pennsylvania" },
+      planItemId: null,
+    });
+    const r = await researchLogAppend({ projectPath: dir, ops: [nil("+Flynn +Patrick"), nil("+Flynn +Thomas")] } as any);
+    expect(r.ok).toBe(false);
+    const errs = (r as any).errors as string[];
+    expect(errs.some((e) => e.startsWith("ops[0]:"))).toBe(true);
+    expect(errs.some((e) => e.startsWith("ops[1]:"))).toBe(true);
+  });
+
   it("allows it when the unfiltered retry is already in log[]", async () => {
     await writeProject(
       baseResearch([

@@ -5388,7 +5388,7 @@ export function planItemCompletionRecordTypeInvariants(entry: any, research: any
       `${terms.map((t) => `'${t}'`).join(", ")}. Completing it would claim a ${entry.record_type} ` +
       `search the document does not record. Run and log the ${entry.record_type} search this item ` +
       `calls for with research_log_append({ planItemId: "${pid}", ... }) before completing it, or ` +
-      `leave it 'in_progress' if that search was not done.`,
+      `skip it with a skip_category if that search will not be done.`,
   ];
 }
 
@@ -5483,7 +5483,7 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  search's entry names the item. An `error` entry is not a search that ran,
  *  and an external hand-off counts only once its capture arrived.
  *
- *  **One exemption: the deferred external hand-off.** search-records runs
+ *  **Exemption 1: the deferred external hand-off.** search-records runs
  *  three nil searches, then hands the item to search-external-sites, which,
  *  with no user present to capture, logs a deferred entry and skips the item
  *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
@@ -5492,7 +5492,11 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  `completed`, this rule stays silent and capture-pending answers alone: it
  *  lets an `inaccessible` or `user_declined` skip stand, and refuses any other
  *  category with a message naming those two. Capture-pending itself decides
- *  which entry is latest, so the two rules cannot disagree. */
+ *  which entry is latest, so the two rules cannot disagree.
+ *
+ *  **Exemption 2: the wrong record type.** Wherever the completion record-type
+ *  check would refuse `completed` (no attributed search names the item's
+ *  record type), this rule is silent too, so the skip is the item's exit (#3592). */
 export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "skipped") return [];
   const pid = entry?.id;
