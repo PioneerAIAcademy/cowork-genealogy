@@ -32,6 +32,7 @@ import { readExternalCollections } from "../utils/external-collections-store.js"
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
+import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 
 const MAX_ITEMS = 50;
 
@@ -452,12 +453,6 @@ function disagreementsInScope(
     ? found
     : found.filter((d) => assertionIds.some((id) => d.assertionIds.includes(id)));
 }
-
-/** The plural near-miss: `sections` is the mistake the model actually makes.
- *  server.ts answers it at dispatch with this text; the handler, for a caller
- *  that reaches it directly. */
-export const SECTIONS_NEAR_MISS =
-  "The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'.";
 
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
   const { projectPath, section } = input;

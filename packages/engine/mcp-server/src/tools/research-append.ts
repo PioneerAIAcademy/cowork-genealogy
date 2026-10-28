@@ -8655,14 +8655,15 @@ async function prepareOps(
 /** Lane scoping for a narrow caller (e.g. `extraction_append`).
  *
  *  This is a second FUNCTION PARAMETER, deliberately not a field on
- *  `ResearchAppendInput`: `index.ts` dispatches with `researchAppend(args)`, a
- *  single argument built from `request.params.arguments`, so an extra key on the
- *  tool input can never reach this object. The restriction is therefore
+ *  `ResearchAppendInput`: `server.ts` dispatches with `researchAppend(args)`, a
+ *  single argument built from `request.params.arguments` (and refuses a key that
+ *  is not a parameter first), so an extra key on the tool input can never reach
+ *  this object. The restriction is therefore
  *  unforgeable from the LLM side — a caller cannot widen its own lane.
  *
  *  It also lives here, in the module, rather than in the dispatch layer, because
  *  `eval/harness/harness/mock_mcp.py` imports these functions directly and never
- *  routes through `index.ts`. A gate in dispatch would be invisible to every
+ *  routes through `server.ts`. A gate in dispatch would be invisible to every
  *  eval run. */
 export interface ResearchAppendOptions {
   /** Sections this caller may write. Omitted = every section (`research_append`). */

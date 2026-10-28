@@ -60,6 +60,7 @@ import {
   documentToExtract,
   type StructuredDocument,
 } from "../utils/structured-document.js";
+import { RETIRED_EXTRACTION_KEYS, retiredExtractionMessage } from "../utils/tool-hint-messages.js";
 
 /** The sections extraction writes: one record's source plus its assertions, and
  *  the question ids a re-found record gains. */
@@ -81,24 +82,6 @@ export async function extractionAppend(
   principal: Principal,
 ): Promise<ExtractionBatchResult> {
   return runExtractionAppend(input, DEFAULT_DEPS, principal);
-}
-
-/** The hand-built forms, in both spellings (`ops` with its `sourceDescription`,
- *  and one flat op), and the one-record extractor mode (`logEntryId` +
- *  `recordId`). server.ts refuses them at dispatch with this message; the
- *  handler refuses them too, for a caller that reaches it directly. */
-export const RETIRED_EXTRACTION_KEYS = [
-  "ops", "sourceDescription", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId",
-] as const;
-
-export function retiredExtractionMessage(retired: readonly string[]): string {
-  return (
-    `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
-    "classifications are decided in code, so there is nothing for a caller to compose. Send " +
-    "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
-    "any other source, or `absences` for people a search did not find. Correcting an " +
-    "existing assertion is not an extraction and is not done here."
-  );
 }
 
 /** `extractionAppend` with its record reader injected. The harness and the tests

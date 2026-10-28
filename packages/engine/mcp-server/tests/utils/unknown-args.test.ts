@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { allToolSchemas } from "../../src/tool-schemas.js";
-import { nearestParameters, rejectUnknownArgs } from "../../src/utils/unknown-args.js";
+import { ACCEPTED_ALIASES, nearestParameters, rejectUnknownArgs } from "../../src/utils/unknown-args.js";
 import { callTool } from "../helpers/call-tool.js";
-import { IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE } from "../../src/tools/image-transcribe.js";
-import { SECTIONS_NEAR_MISS } from "../../src/tools/research-query.js";
+import { SECTIONS_NEAR_MISS, treeCorrectRejection, treeEditRejection } from "../../src/utils/tool-hint-messages.js";
 
 const LUXEMBOURG = { surname: "X", recordCountry: "Luxembourg" };
 
@@ -23,11 +22,37 @@ describe("rejectUnknownArgs through the server (#3736)", () => {
     expect(r.text).toContain("no parameter `country`");
   });
 
-  it("lets imageArk through to image_transcribe, whose handler folds it into ark", async () => {
-    const r = await callTool("image_transcribe", { imageArk: "ark:/61903/3:1:3QS7-L9S9-ZQ1T" });
+  it("lets imageArk through to image_read, whose handler folds it into ark", async () => {
+    // Not an ARK, so the handler refuses it before any fetch, and the refusal
+    // is the ark-format one: the value reached the resolver as `ark`.
+    const r = await callTool("image_read", { imageArk: "not-an-ark" });
     expect(r.isError).toBe(true);
     expect(r.text).not.toContain("has no parameter");
-    expect(r.text).toContain(IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE);
+    expect(r.text).not.toMatch(/Provide exactly one of|requires one of/);
+    expect(r.text).toContain("Unrecognized ark");
+  });
+
+  it("redirects a correction op sent to tree_edit, and an addition sent to tree_correct", async () => {
+    const edit = await callTool("tree_edit", { projectPath: "/p", operation: "update_fact", personId: "I1", factId: "F1", fact: {} });
+    expect(edit.isError).toBe(true);
+    expect(edit.text).toContain(treeEditRejection("update_fact"));
+    expect(edit.text).not.toContain("no parameter `factId`");
+    const correct = await callTool("tree_correct", { projectPath: "/p", operation: "add_fact", sourceAssertionId: "a_001" });
+    expect(correct.isError).toBe(true);
+    expect(correct.text).toContain(treeCorrectRejection("add_fact"));
+  });
+
+  it("names imageGroupNumber for a misspelled group number, not the item hint", async () => {
+    const r = await callTool("image_search", { image_group_number: "004884748" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("image_search has no parameter `image_group_number`; the nearest are `imageGroupNumber`");
+    expect(r.text).not.toContain("to address one item");
+  });
+
+  it("gives a lone sourceDescription the retired-form message", async () => {
+    const r = await callTool("extraction_append", { projectPath: "/p", recordIds: ["X"], sourceDescription: { title: "t" } });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("extraction_append no longer takes `sourceDescription`");
   });
 
   it("answers research_query's plural sections with the singular near-miss", async () => {
@@ -82,6 +107,10 @@ describe("rejectUnknownArgs: what it lets through", () => {
         query: { recordType: "Marriage", collection: "PA marriages" },
       }),
     ).toBeNull();
+  });
+
+  it("accepts exactly these aliases: adding one is a deliberate edit here", () => {
+    expect(ACCEPTED_ALIASES).toEqual({ image_read: ["imageArk"], image_transcribe: ["imageArk"] });
   });
 
   it("accepts imageArk on the two image tools, and nowhere else", () => {

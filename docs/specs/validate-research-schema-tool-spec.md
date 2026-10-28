@@ -102,8 +102,9 @@ omits `arguments` altogether — the MCP protocol marks `arguments`
 optional, and `server.ts` checks argument names only when it is present —
 throws `Cannot destructure property 'projectPath' of 'input' as it is
 undefined`. `server.ts` catches that and returns `{ error: "<message>" }`
-with `isError: true`. Whenever `arguments` is present, every outcome is a
-structured result and `isError` is never set.
+with `isError: true`. Whenever `arguments` is present and names only this
+tool's parameters, every outcome is a structured result and `isError` is never
+set; a key that is not a parameter is refused by the guard with `isError: true`.
 
 ## 4. Validation rules
 
