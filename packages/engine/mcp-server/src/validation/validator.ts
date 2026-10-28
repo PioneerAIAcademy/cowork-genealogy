@@ -675,7 +675,7 @@ export const RESEARCH_SHAPES = {
   question: new Set([
     "id", "question", "rationale", "selection_basis", "priority", "status",
     "depends_on", "unblocks", "created", "resolved",
-    "resolution_assertion_ids", "search_stop",
+    "resolution_assertion_ids", "search_stop", "date_window",
   ]),
   search_stop: new Set([
     "stopped_because", "log_entry_ids", "stop_criteria", "justification", "not_reached",
@@ -912,6 +912,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     checkIsoDate(q, "created", qp, report);
     checkIsoDate(q, "resolved", qp, report); // nullable — null skipped above
+    if ("date_window" in q) {
+      const m = typeof q.date_window === "string" ? /^(\d{4})-(\d{4})$/.exec(q.date_window) : null;
+      if (!m || Number(m[1]) > Number(m[2])) {
+        addError(report, qp, `date_window must be "YYYY-YYYY" with the start year not after the end year, got ${JSON.stringify(q.date_window)}`);
+      }
+    }
 
     // search_stop (replaces exhaustive_declaration — issue #2539, 2026-10-07)
     const ss = q.search_stop;

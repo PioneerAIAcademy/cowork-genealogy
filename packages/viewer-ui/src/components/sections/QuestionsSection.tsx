@@ -66,6 +66,13 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         <div className={styles.fieldValue}>{question.selection_basis.replace(/_/g, ' ')}</div>
       </div>
 
+      {question.date_window && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Date Window</div>
+          <div className={styles.fieldValue}>{question.date_window}</div>
+        </div>
+      )}
+
       {stopped_because && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Stopped Because</div>

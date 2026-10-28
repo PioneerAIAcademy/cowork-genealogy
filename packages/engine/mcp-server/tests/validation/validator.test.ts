@@ -2794,6 +2794,7 @@ describe("Research closed shapes", () => {
           created: "2026-01-01",
           resolved: null,
           resolution_assertion_ids: [],
+          date_window: "1830-1900",
           search_stop: {
             stopped_because: "question_answered",
             log_entry_ids: ["log_001"],
@@ -3096,6 +3097,23 @@ describe("Research closed shapes", () => {
     research.log[1].external_site.site = "archion_de";
     const result = await validateParsed(research, maximalTree);
     expect(JSON.stringify(result.errors)).toMatch(/'archion_de' is not a valid site/);
+  });
+
+  // #2424 (umbrella #2475) — questions[].date_window, optional. The maximal document
+  // carries "1830-1900" (acceptance); a one-year window is written "1850-1850".
+  it("refuses a malformed or backwards questions[].date_window", async () => {
+    for (const bad of ["1800", "c. 1800", "1900-1800", 1800, null]) {
+      const research = maximalResearch();
+      research.questions[0].date_window = bad;
+      const result = await validateParsed(research, maximalTree);
+      const messages = result.errors.map((e: any) => e.message);
+      expect(messages.some((m: string) => m.startsWith('date_window must be "YYYY-YYYY"')), String(bad)).toBe(true);
+    }
+    const research = maximalResearch();
+    research.questions[0].date_window = "1850-1850";
+    expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
+    delete research.questions[0].date_window;
+    expect((await validateParsed(research, maximalTree)).errors).toEqual([]);
   });
 
   it("accepts the openarch search site on external_site.site (#3185)", async () => {

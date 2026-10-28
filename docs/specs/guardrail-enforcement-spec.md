@@ -170,6 +170,7 @@ depends on another shipping first.
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | an assertion whose `informant_proximity` is `unknown` while its `information_quality` claims a determination (`primary`/`secondary`). Forward only — `indeterminate` at a KNOWN proximity is the ordinary census shape and stays legal. Was prose; the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus | **enforcing** |
 | §5.4 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `sources` op landing a non-empty `transcription` with no `image_filename` — a claim about a page that does not say which page | **advisory only — warns, refuses nothing.** Two legitimate shapes have no filename to give: a PDF capture, and an `image_transcribe` run with no `projectPath`, which stages nothing. Refusing either would block correct work to catch a documentation gap |
 | §5.5 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `timelines` append, or an update setting `events`, that leaves events with empty `assertion_ids` — tree or user facts presented beside record-backed ones | **advisory only — warns, refuses nothing.** Refusal rejected 2026-10-18 and kept a warning on 2026-10-19, though that ruling withdrew the "tree-built first pass" premise for person-mode timelines (there an unsourced tree fact becomes a gap). Whether person mode should refuse instead is open with the lead |
+| §5 | A plan should reach its question's date window | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update setting `date_range` or `status: "skipped"`, after which the question's live plan items span less than half of its `questions[].date_window` | **advisory only — warns, refuses nothing.** Silent on every committed document: no question carries `date_window` yet. See "A plan should reach its question's date window" below |
 | §5.6 | Namesake warning (`namesakeRowWarnings`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_append` call that appends or updates a `namesakes` row whose holder has live `probable` or `confident` links the namesake cap refuses: it lists them, the facts their parties carried and the names citing their sources | **advisory only — warns, refuses nothing** (lead, 2026-10-18, item 5 of the list of 2026-10-17). With rows planted on the 212 committed e2e final states (measured at `20ad24872`, `dev/measure-namesake-cap.ts` §4): 455 of 1,306 persons warned, listing 2,216 links; on subjects alone, 58 of 181, listing 366 links |
 | §5 | Circular-corroboration gate (`circularCorroborationCallCheck`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `person_evidence` link a call asserts at `probable`/`confident` to a starting-tree person whose only corroboration is the linked record's own: every source on the baseline relationship to each role-matched parent or spouse is that record or a copy of it (a copy: a shared source or description, or a party's birth, christening or baptism with the same full date, place and given name). Where no such relative exists the person's own sources decide, and only `confident` is refused. Instrument: `packages/engine/mcp-server/dev/measure-circular-corroboration.ts` | **enforcing**. As committed it refuses **6 of 10,361** committed links, all `confident`, subject-alone, in one fixture (`ferber-marriage`, I4 and the 1900 census `MM88-DGG`, two runs): I4's only non-tree source is that census, and one of the six (`pe_024`, residence) matches a tree fact sourced to the same census; the other five match name and birth month against facts whose tree provenance is unknown. Read by the genealogist (2026-10-24), who ruled all six true positives, so the gate ships enforcing. **Unmeasurable on the relationship arm:** 16 of 1,992 committed starting-tree relationships carry a source (captured before relationship sources existed), so the arm that catches the reported Latham shape can fire on none of them. Planted instead, with every role-matched edge sourced to the record alone: 419 of 1,311 links that reach one are refused, and 0 of 1,311 once the edge also carries another record |
 | §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
@@ -1114,6 +1115,48 @@ the parent's status. Re-derive before quoting.
 breaks the model's retry loop — the same gap the misroute arm's row records, and
 one only a paid eval run could close. Every figure above describes the eval
 corpus, not production (`docs/architecture.md` §9.4 gap 3).
+
+### A plan should reach its question's date window
+
+**Rule.** After a write that can change a question's plan coverage — a `plans`
+append, a `plans` update carrying `items`, a `plan_items` append, or a
+`plan_items` update setting `date_range` or `status: "skipped"` — `research_append`
+takes the span of that question's live plan items (earliest `date_range` start to
+latest end; items on a `superseded` plan and `skipped` items left out) and
+compares it with the question's `date_window`. When more than half the window's
+years fall outside the span, the success payload carries a warning naming the
+window, the span and the uncovered count. Judged once per question on the call's
+end state. Status-only updates (`in_progress`, `completed`) are not judged, so a
+search agent is not re-warned on every item it works. Implemented as
+`planWindowFlag` in `packages/engine/mcp-server/src/utils/plan-item-plausibility.ts`.
+
+**Why the window lives on the question.** The rule was first scoped on the belief
+that a question carries a birth estimate and a death date; it carries neither, and
+the failure cited for the one-endpoint case (`anders-monsen-ancestry`) has a death
+date in its starting tree. The subject's lifetime is not a stand-in: a rule warning when a question's
+plans leave more than 15 years of the subject's adult life (birth + 15 to death)
+uncovered fires on **145 of 391** plan-bearing questions across 332 committed
+projects (scenario fixtures and e2e final states), measured at 08d5021a6 by
+`eval/harness/scripts/measure_question_window_lifetime.py . 15 15` — including the
+correct `anders-unna-marriage` plan (1770–1800), death-only plans and parentage
+plans. A question's window depends on what it asks, so question-selection states it
+(`questions[].date_window`, `research-schema-spec.md` §5.2).
+
+**Decided 2026-10-01 (review-ready), kept.** Advise, never refuse, in every
+case. The place half — the item's place against the subject's tree places — is dropped: a string comparison against the
+tree's places would fire on every migration.
+
+**The threshold.** More than half: on a 20-year window, 10 uncovered years is
+silent and 11 warns (pinned in `tests/tools/plan-item-plausibility.test.ts`). The
+span, not summed item years, is what counts, so a census plan of single years
+1850…1900 covers a 1845–1908 window.
+
+**What it does not see.** A question without `date_window` — every question
+written before the field existed — is never judged. A `questions` update that adds
+or changes `date_window` on a question that already has plans is not judged; only
+plan writes are. Promoting the warning to a refusal needs the ADR-0011 limit-2
+inspection over real windowed plans, which do not exist yet; the first come from
+question-selection's eval run.
 
 ### A completed plan item needs a log entry naming it
 

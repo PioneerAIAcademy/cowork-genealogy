@@ -561,6 +561,7 @@ Array of question objects.
 | `resolved` | string or null | yes | ISO 8601 date when resolved, or null |
 | `resolution_assertion_ids` | string[] | yes | Assertion IDs that resolved this question (may be empty) |
 | `search_stop` | object | yes | See below |
+| `date_window` | string | no | `"YYYY-YYYY"`, start not after end: the years whose records could answer this question, written by question-selection. The JSON Schema pattern checks the shape; only `validate_research_schema` checks the order. `research_append` warns when the question's plans leave more than half of it unsearched (`guardrail-enforcement-spec.md` §"A plan should reach its question's date window"). Absent on questions written before 2026-10-28, which are never judged |
 
 **`search_stop`** — Why searching stopped on this question and what could not be reached. The GPS requires an explicit claim that research is reasonably exhaustive, with references to the log entries and a 7-Point Stop Criteria assessment. Renamed from `exhaustive_declaration` (2026-10-07); legacy documents with `exhaustive_declaration.declared === true` are read via the `isStopGateSatisfied` helper.
 
