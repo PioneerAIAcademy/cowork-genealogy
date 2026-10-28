@@ -245,10 +245,46 @@ a graduation, must satisfy all six:
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach unscored.
 
-   **As implemented, after a correction in PR B.** The attestation keys on
-   (`record_id`, `assertion_id`, `tree_person_id`).
+   **As implemented (#3552).** The attestation is filed under
+   (`record_id`, `assertion_id`, `tree_person_id`) and read two ways. First the
+   exact key. Then, when the link's assertion carries a non-null
+   `record_persona_id` P that its record's assertions give exactly one role, any
+   entry for that record that names P as the persona it COMPARED, the same
+   `tree_person_id`, a `record_role` the record gives P, and `party_resolved:
+   true`. So one `same_person` call per (persona, tree person) answers for every
+   fact of that persona; `person_evidence` rows stay one per assertion.
 
-   PR A keyed it on (`record_id`, party, `tree_person_id`), party being
+   This literally meets the constraint's wording, and it is not PR A's party key
+   (below), for three reasons. It fires only where the ASSERTION carries P, which
+   `research_append` verified against the record at write time — PR A's defect
+   needed the assertion to carry null while the scorer resolved an id, and that
+   case still falls to the exact key. It reads the persona the score compared
+   (`entry.record_persona_id`), not the assertion the call was made under, so a
+   `recordRole` call for the father under the child's assertion covers the
+   father's facts and not the child's; the issue's wording ("any assertion of the
+   same (`record_id`, `record_persona_id`)") would have read it the other way. And
+   `party_resolved`, written only by `same_person` since #3552, keeps older entries
+   to their own assertion: before #3555 a multi-person record scored `persons[0]`
+   while filing the id asked for, and before #3791 a `recordRole` call filed the
+   assertion's own persona. A date cutoff could not do this, because a desktop
+   `.mcpb` runs an older build long after any merge date. A persona id the record
+   gives several roles names no single party and shares nothing, the rule
+   `same_person` already applies (`givenToSeveralRoles`). An assertion that
+   names a second person (`isTwoParty`: a relationship, marriage, couple event,
+   or a fact about another person) shares nothing either: its link may be about
+   that other party, while the arm sees only the assertion's own persona, so a
+   score comparing the child with the father's tree person would otherwise admit
+   the father's link on the child's baptism relationship. The gate gathers the
+   record's assertions with `sameRecord`, the rule the scorer uses, so the two
+   read one role set. An assertion with no persona id keeps the exact key.
+
+   Not measurable offline: committed runs carry no `results/.scores` files, so
+   the risk of a wrongly extended score is bounded by the guards above and
+   measured by the first post-change panel run. The call saving is measurable:
+   `dev/replay-score-gate.ts` over 224 committed runs counts 8,349 scores needed
+   under the assertion key and 6,385 under the persona arm.
+
+   **PR B's correction, which the persona arm keeps.** PR A keyed it on (`record_id`, party, `tree_person_id`), party being
    `record_persona_id` when non-null and `record_role` otherwise. That was
    wrong, and PR B's writer-side gate is what exposed it: the party is not
    stable across the two routes. On the FETCHED route the tool resolves a real
@@ -266,11 +302,10 @@ a graduation, must satisfy all six:
    `tree_person_id` keeps the two links of a relationship assertion apart.
    Both sides always hold both tokens, which the party never guaranteed.
 
-   The constraint's own wording — key on (`record_id`, `record_persona_id`) —
-   is met in effect, not literally: `record_persona_id` is null on thousands of
-   corpus links and so cannot key anything on its own, which is what drove PR A
-   to the party fallback in the first place. The assertion is the stable stand-in
-   for it.
+   `record_persona_id` is null on thousands of corpus links and so cannot key
+   anything on its own, which is what drove PR A to the party fallback. The
+   assertion stays the stand-in for those links; where the assertion does carry a
+   verified persona id, the persona arm above keys on it directly.
 
    **This is the ATTESTATION key only.** The record-side PROJECTION still groups
    parties on persona-id-else-role, and must, for the reasons below.

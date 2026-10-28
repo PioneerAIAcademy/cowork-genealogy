@@ -7,7 +7,8 @@ import type {
   FeedbackResult,
   FeedbackContext,
   ResearchData,
-  GedcomxData
+  GedcomxData,
+  ExternalCollectionsData
 } from '@genealogy/viewer-ui'
 
 // The Electron adapter: maps the shared ResearchTransport onto the existing
@@ -26,6 +27,7 @@ export class IpcResearchTransport implements ResearchTransport {
     return {
       research: (state.research as ResearchData | null) ?? null,
       gedcomx: (state.gedcomx as GedcomxData | null) ?? null,
+      collections: (state.collections as ExternalCollectionsData | null) ?? null,
       label: state.folderPath,
       notice: state.notice ?? null
     }
@@ -34,6 +36,9 @@ export class IpcResearchTransport implements ResearchTransport {
   subscribe(handlers: SubscriptionHandlers): () => void {
     window.api.onResearchUpdated((data) => handlers.onResearch(data as ResearchData))
     window.api.onGedcomxUpdated((data) => handlers.onGedcomx(data as GedcomxData))
+    window.api.onCollectionsUpdated((data) =>
+      handlers.onCollections((data as ExternalCollectionsData | null) ?? null)
+    )
     window.api.onWatchError((err) => handlers.onError(err))
     window.api.onFolderNotice((message) => handlers.onNotice(message))
     window.api.onSidecarUpdated((event) => handlers.onSidecar(event))

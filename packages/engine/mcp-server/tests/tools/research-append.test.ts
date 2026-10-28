@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join, resolve } from "path";
 import { tmpdir } from "os";
@@ -4461,6 +4462,88 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    // `moot` settles a conflict exactly as `resolved` does (issue #2359): a
+    // conflict that no longer bears on the question disputes nothing.
+    it("does NOT fire once the conflict is moot", async () => {
+      const state = conflicted();
+      state.conflicts[0].status = "moot";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the question resolve when the only conflict on its sources is moot", async () => {
+      const state = conflicted() as any;
+      state.conflicts[0].status = "moot";
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004", "a_013"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // A conflict that names the question in `blocks_question_ids` blocks it by
+    // declaration, whether or not any source is disputed — so a `not_proved`
+    // summary citing nothing cannot close it.
+    const declaredBlocker = (withMoot: boolean) => {
+      const state = conflicted() as any;
+      state.conflicts = [
+        ...(withMoot ? [{ ...state.conflicts[0], status: "moot" }] : []),
+        {
+          id: "c_002",
+          status: "unresolved",
+          competing_assertion_ids: ["a_999"],
+          blocks_question_ids: ["q_001"],
+        },
+      ];
+      state.proof_summaries = [{ id: "ps_001", ...summary("not_proved", []) }];
+      return state;
+    };
+
+    it.each([true, false])(
+      "refuses the question resolve while a declared blocker is unresolved (moot conflict present: %s)",
+      async (withMoot) => {
+        await writeProject(declaredBlocker(withMoot));
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved" },
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toContain("q_001 cannot be marked resolved while c_002 is unresolved");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      },
+    );
+
+    it("allows the question resolve when its declared blocker is moot", async () => {
+      const state = declaredBlocker(false);
+      state.conflicts[0].status = "moot";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
 
     it("refuses an update that leaves a forbidden tier standing, without naming tier", async () => {
       // The 2026-08-21 escape, replayed. The agent updated the summary's other
@@ -5486,6 +5569,24 @@ describe("research_append (project singleton section)", () => {
     const research = await readResearch();
     expect(research.researcher_profile.experience_level).toBe("professional");
     expect(research.researcher_profile.narration_guidance).toBe("Terse; assume GPS fluency.");
+  });
+
+  it("writes a newly created researcher_profile right after project, ahead of the other sections", async () => {
+    fileStoreOnly("jsonb keeps no key order");
+    const r0 = baseResearch();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "novice" },
+    } as never);
+    expect(r.ok).toBe(true);
+    const keys = Object.keys(await readResearch());
+    expect(keys[0]).toBe("project");
+    expect(keys[1]).toBe("researcher_profile");
+    // Every other section keeps its relative order.
+    expect(keys.filter((k) => k !== "researcher_profile")).toEqual(Object.keys(r0));
   });
 
   it("lets a researcher correct their profile afterwards — it is not set-once", async () => {
@@ -8922,6 +9023,69 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.errors[0]).toMatch(/fulltext_search-sourced/);
     expect(r.errors[0]).toMatch(/no GedcomX personas/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // nothing written
+  });
+
+  // ── D2: an accepted hint's entry, verified against extraction_append's read ──
+  describe("persona ids under an accepted hint (#3552)", () => {
+    const STAGED = "results/.staging/hint-read.json";
+    const hintResearch = () => {
+      const r = baseResearch();
+      r.log = [
+        {
+          ...searchLogEntry(null),
+          tool: "person_record_matches",
+          query: { id: "LZNY-BRF", recordId: "ark:/61903/1:1:ABCD-123" },
+        },
+      ] as any;
+      return r;
+    };
+    const writeStagedRead = async () => {
+      await mkdir(join(dir, "results", ".staging"), { recursive: true });
+      await writeFile(
+        join(dir, STAGED),
+        JSON.stringify({ tool: "record_read", payload: { results: [sidecarRecord()] } }),
+      );
+    };
+    const hintAssertion = (persona: string) => {
+      const { source_id: _s, ...a } = noId(validAssertion("x"));
+      return {
+        section: "assertions" as const,
+        op: "append" as const,
+        entry: { ...a, source_id: "src_001", record_id: "ark:/61903/1:1:ABCD-123", record_persona_id: persona, log_entry_id: "log_001" },
+      };
+    };
+    const hintReads = new Map([["log_001", STAGED]]);
+
+    it("accepts a persona id the staged read holds", async () => {
+      await writeProject(hintResearch());
+      await writeStagedRead();
+      const r = await researchAppend({ projectPath: dir, ops: [hintAssertion("p_2")] } as any, { hintReads });
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect((await readResearch()).assertions[1].record_persona_id).toBe("p_2");
+    });
+
+    it("refuses a persona id the staged read does not hold", async () => {
+      await writeProject(hintResearch());
+      await writeStagedRead();
+      const r = await researchAppend({ projectPath: dir, ops: [hintAssertion("p_9")] } as any, { hintReads });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/'p_9' does not resolve/);
+    });
+
+    it("refuses a persona id when the staged read is missing, rather than writing it unverified", async () => {
+      await writeProject(hintResearch());
+      const r = await researchAppend({ projectPath: dir, ops: [hintAssertion("p_1")] } as any, { hintReads });
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/cannot be verified/);
+    });
+
+    it("still requires null under a hint entry when no read is named for it", async () => {
+      await writeProject(hintResearch());
+      await writeStagedRead();
+      const r = await researchAppend({ projectPath: dir, ops: [hintAssertion("p_1")] } as any);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/record_persona_id must be null/);
+    });
   });
 
   // ── D2: record_read persona-bearing producer ──
@@ -14503,6 +14667,162 @@ describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
 
   it("a person-level ref to another record means it was not minted from this one", () => {
     expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
+});
+
+describe("research_append — one score per record persona covers its facts (#3552)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-persona-score-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // Record rec_A: P1 the principal (a_010 name, a_011 birth), F1 the father
+  // (a_020), a party with no persona id (a_030), and M1, an id the extraction
+  // gave two roles (a_040 mother, a_041 witness).
+  const fact = (id: string, persona: string | null, role: string, fact_type = "name") => ({
+    ...validAssertion(id, "src_010"),
+    record_id: "rec_A",
+    record_persona_id: persona,
+    record_role: role,
+    fact_type,
+    value: `${id} value`,
+  });
+  async function writeProject() {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      fact("a_010", "P1", "principal"),
+      fact("a_011", "P1", "principal", "birth"),
+      fact("a_020", "F1", "father"),
+      fact("a_030", null, "principal", "birth"),
+      fact("a_040", "M1", "mother"),
+      fact("a_041", "M1", "witness"),
+      fact("a_050", "P1", "principal", "relationship"),
+    ] as any;
+    r.sources = [...r.sources, { id: "src_010", gedcomx_source_description_id: "S1" }] as any;
+    const tree = {
+      ...baseTree,
+      persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Smith" }] }],
+    };
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  async function score(over: Record<string, unknown>) {
+    await recordMatchScore(dir, {
+      record_id: "rec_A",
+      record_persona_id: "P1",
+      record_role: "principal",
+      tree_person_id: "I1",
+      score: 0.82,
+      matched: true,
+      assertion_id: "a_010",
+      record_source: "record_read",
+      computed: "2026-10-27T00:00:00Z",
+      party_resolved: true,
+      ...(over as any),
+    });
+  }
+  const link = (assertionId: string, personId = "I1") => ({
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: {
+      assertion_id: assertionId,
+      person_id: personId,
+      confidence: "probable",
+      rationale: "Names match.",
+      match_score: 0.82,
+      created: "2026-10-27",
+      superseded_by: null,
+    },
+  });
+  const write = (...ops: any[]) => researchAppend({ projectPath: dir, ops } as any);
+
+  it("accepts another fact of a scored persona with no call of its own", async () => {
+    await writeProject();
+    await score({});
+    const r = await write(link("a_011"));
+    expect(errorsOf(r) ?? []).toEqual([]);
+  });
+
+  it("still needs its own score for a fact with no persona id", async () => {
+    await writeProject();
+    await score({});
+    const r = await write(link("a_030"));
+    expect(failure(r).errors?.join(" ")).toMatch(/no same_person score behind it/);
+  });
+
+  it("still needs its own score for another persona of the same record", async () => {
+    await writeProject();
+    await score({});
+    expect((await write(link("a_020"))).ok).toBe(false);
+  });
+
+  it("does not share a score across the facts of an id the record gives two roles", async () => {
+    await writeProject();
+    await score({ assertion_id: "a_040", record_persona_id: "M1", record_role: "mother", tree_person_id: "I2" });
+    expect((await write(link("a_041", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share a score with another tree person", async () => {
+    await writeProject();
+    await score({});
+    expect((await write(link("a_011", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share a score written before the persona was resolved", async () => {
+    await writeProject();
+    await score({ party_resolved: undefined });
+    expect((await write(link("a_011"))).ok).toBe(false);
+  });
+
+  it("does not share an entry whose persona and role disagree", async () => {
+    // The pre-#3791 shape: a father call under the child's assertion filed the
+    // child's persona with the role asked.
+    await writeProject();
+    await score({ record_role: "father", tree_person_id: "I2" });
+    expect((await write(link("a_011", "I2"))).ok).toBe(false);
+  });
+
+  it("shares the persona a recordRole call compared, not the one it was filed under", async () => {
+    await writeProject();
+    await score({ record_persona_id: "F1", record_role: "father", tree_person_id: "I2" });
+    expect(errorsOf(await write(link("a_020", "I2"))) ?? []).toEqual([]);
+    expect((await write(link("a_011", "I2"))).ok).toBe(false);
+  });
+
+  it("does not share a score onto an assertion that names a second person", async () => {
+    // a_050 is P1's relationship assertion: its link to I2 may be about the other
+    // party it names, so a score that compared P1 with I2 says nothing about it.
+    await writeProject();
+    await score({ tree_person_id: "I2" });
+    expect((await write(link("a_050", "I2"))).ok).toBe(false);
+  });
+
+  it("names the persona in the refusal, so one call is made per persona", async () => {
+    await writeProject();
+    const r = await write(link("a_011"));
+    expect(failure(r).errors?.join(" ")).toMatch(/One score covers every fact of persona 'P1'/);
+  });
+
+  it("accepts a link to an assertion this same call creates, when its persona is scored", async () => {
+    await writeProject();
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.log = [
+      { id: "log_001", plan_item_id: null, performed: "2026-10-27T00:00:00Z", tool: "record_read", query: { recordId: "rec_A" }, outcome: "positive", results_examined: 1, external_site: null, results_ref: "results/log_001.json" },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({ log_id: "log_001", tool: "record_read", retrieved: "2026-10-27T00:00:00Z", returned_count: 1, payload: { results: [{ recordId: "rec_A", gedcomx: { persons: [{ id: "P1" }, { id: "F1" }, { id: "M1" }] } }] } }),
+    );
+    await score({});
+    const { id: _id, ...birthplace } = { ...fact("a_099", "P1", "principal", "birthplace"), log_entry_id: "log_001" };
+    const r = await write({ section: "assertions", op: "append", entry: birthplace }, link("a_051"));
+    expect(errorsOf(r) ?? []).toEqual([]);
   });
 });
 

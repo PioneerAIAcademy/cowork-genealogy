@@ -43,6 +43,32 @@
   transition: all 0.15s ease;
 }
 
+.exportBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 5px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  transition: all 0.15s ease;
+}
+
+.exportBtn:hover:not(:disabled) {
+  border-color: var(--accent-gold);
+}
+
+.exportBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exportError {
+  font-size: 0.82rem;
+  color: var(--badge-red-text);
+}
+
 .feedbackBtn:hover {
   filter: brightness(1.1);
   box-shadow: 0 1px 4px rgba(184, 134, 11, 0.3);
