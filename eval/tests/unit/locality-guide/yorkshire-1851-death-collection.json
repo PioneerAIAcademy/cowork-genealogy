@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_locality_guide_w6j",
+    "skill": "locality-guide",
+    "name": "Names FamilySearch collection 1473141 and yorkshirebmd.org.uk for Yorkshire 1851 death records",
+    "type": "positive",
+    "description": "The collections_search tool returns FamilySearch col. 1473141 (England & Wales Civil Registration Death Index, 1837–1915) for Yorkshire, and external_links_search returns yorkshirebmd.org.uk. The agent gap was describing civil registration generically without naming the specific free FamilySearch collection or the regional BMD index. This test verifies the skill consumes both tool responses and surfaces their specifics.",
+    "tags": [
+      "from-cowork",
+      "yorkshire-1851-death-collection",
+      "re-invoke-safe",
+      "collection-id",
+      "england",
+      "civil-registration"
+    ]
+  },
+  "input": {
+    "user_message": "Build a locality guide for Yorkshire, England for 1851. I'm trying to find a death record from that year. What records exist and where can I search?\n\nprojectPath: <workspace>",
+    "scenario": "yorkshire-1851-death-collection"
+  },
+  "mcp_fixtures": [
+    "collections-search-yorkshire",
+    "collections-search-any",
+    "external-links-search-yorkshire",
+    "external-links-search-any",
+    "wiki-read-england-civil-registration",
+    "wiki-search-england-civil-registration",
+    "place-search-england",
+    "place-search-any",
+    "place-search-all-any",
+    "wiki-search-any",
+    "wiki-read-any",
+    "wikipedia-search-any",
+    "volume-search-any",
+    "place-population-any",
+    "wiki-place-page-any"
+  ],
+  "judge_context": [
+    "The skill must name FamilySearch collection 1473141 — specifically the 'England & Wales, Civil Registration Death Index, 1837–1915' — as a free, indexed online resource. The collections_search fixture returns it; a guide that describes civil registration generically without citing this collection number or title has not consumed the tool response and must not pass.",
+    "The skill should mention yorkshirebmd.org.uk as a regional transcription source for Yorkshire registration districts. The external_links_search fixture returns it as the top result; omitting it when a patron is explicitly searching for a Yorkshire death record is the gap this test captures.",
+    "The skill should correctly state that civil death registration in England was functioning and mandatory by 1851, and explain that the GRO index entry provides the registration district, year and quarter, while the full certificate must be ordered separately from the GRO (at a fee). These are facts the wiki_read fixture supports."
+  ]
+}

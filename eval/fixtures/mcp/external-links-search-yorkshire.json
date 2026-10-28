@@ -1,0 +1,36 @@
+{
+  "tool": "external_links_search",
+  "description": "External genealogy links for Yorkshire, England — includes yorkshirebmd.org.uk as a regional transcription site for Yorkshire BMD registration. Predicate matches ~Yorkshire.",
+  "args": {
+    "standardPlace": "~Yorkshire"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Yorkshire, England"
+    },
+    "totalForPlace": 5,
+    "returned": 5,
+    "results": [
+      {
+        "url": "https://www.yorkshirebmd.org.uk/",
+        "linkText": "Yorkshire BMD — Free transcriptions of Yorkshire births, marriages and deaths from civil registration"
+      },
+      {
+        "url": "https://www.freebmd.org.uk/",
+        "linkText": "FreeBMD — Free transcriptions of England & Wales civil registration indexes"
+      },
+      {
+        "url": "https://www.ancestry.co.uk/search/collections/england-wales-civil-registration/",
+        "linkText": "Ancestry — England & Wales Civil Registration records"
+      },
+      {
+        "url": "https://www.findmypast.co.uk/research/bmd/deaths",
+        "linkText": "Findmypast — England & Wales death records"
+      },
+      {
+        "url": "https://www.gro.gov.uk/gro/content/certificates/",
+        "linkText": "GRO — General Register Office certificate ordering (England & Wales)"
+      }
+    ]
+  }
+}
