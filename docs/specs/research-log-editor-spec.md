@@ -205,7 +205,7 @@ with the read error and the re-fetch. A url already in the log is not re-checked
 unless the op opens a new hand-off (`partial` with `captureReceived: false`):
 closing a hand-off, or logging a capture that came back later, logs its url
 again, and one built before the list existed, or whose collection a re-fetch
-dropped, must stay closable. A `urlGenerated` that is not a string is refused. The check runs in the
+dropped, must stay closable. A `urlGenerated` that is not a string is refused. `captureReceived` is coerced like `resultsExamined` (a stringified `"false"` is the boolean) and refused when it is still not a boolean, so a hand-off is never saved where `awaitingUser` cannot see it. The check runs in the
 preflight pass, so a batch reports every refused op at once.
 
 **`resultsExamined` validation.** Must be a non-negative integer. A numeric

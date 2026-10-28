@@ -48,6 +48,7 @@ import {
 import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { opensHandOff } from "../utils/awaiting-hand-offs.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
@@ -1623,15 +1624,16 @@ function opUrlGenerated(op: ResearchLogAppendOp): string | undefined {
   return typeof url === "string" ? url.trim() : undefined;
 }
 
-/** Whether an op would list a new hand-off in `awaitingUser`: `partial`, no capture. */
-function opensHandOff(op: ResearchLogAppendOp): boolean {
+/** Whether an op would list a new hand-off in `awaitingUser`. `captureReceived`
+ *  is coerced as the write coerces it, so a stringified `"false"` counts. */
+function opOpensHandOff(op: ResearchLogAppendOp): boolean {
   let site: unknown;
   try {
     site = coerceObjectArg(asNull(op.externalSite), "externalSite");
   } catch {
     return false;
   }
-  return op.outcome === "partial" && (site as { captureReceived?: unknown } | null)?.captureReceived === false;
+  return opensHandOff(op.outcome, coerceJsonArg((site as { captureReceived?: unknown } | null)?.captureReceived));
 }
 
 /** A url already in the log, as the research.json read at the start of the call. */
@@ -1656,7 +1658,7 @@ async function preflightStoredCollection(
 ): Promise<void> {
   const url = opUrlGenerated(op);
   if (url === undefined || !namesCollection(url)) return;
-  if (logged.has(url) && !opensHandOff(op)) return;
+  if (logged.has(url) && !opOpensHandOff(op)) return;
   const ways =
     "Build a site-wide search with build_external_search_url and no baseUrl, or use a stored " +
     "collection's url from research_query({section: \"external_collections\", place, recordType}).";
@@ -1976,6 +1978,15 @@ async function applyLogAppendOp(
       `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
     );
   }
+  // Coerced like `resultsExamined`: a stringified `"false"` is the boolean, and
+  // anything still not a boolean is refused rather than saved, since a string
+  // `"false"` would never list in `awaitingUser` and the hand-off would be lost.
+  const captureReceived = coerceJsonArg(externalSite?.captureReceived);
+  if (externalSite && typeof captureReceived !== "boolean") {
+    throw new LogAppendError(
+      `externalSite.captureReceived must be true or false, got ${JSON.stringify(externalSite.captureReceived)}`,
+    );
+  }
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
   }
@@ -2036,7 +2047,7 @@ async function applyLogAppendOp(
       ? {
           site: externalSite.site,
           url_generated: urlGenerated,
-          capture_received: externalSite.captureReceived,
+          capture_received: captureReceived,
           ...(externalSite.captureFilename !== undefined
             ? { capture_filename: asNull(externalSite.captureFilename) }
             : {}),

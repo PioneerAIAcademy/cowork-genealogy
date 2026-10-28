@@ -188,8 +188,11 @@ describe("research_log_append: a collection url must be a stored collection", ()
     expect(await log()).toHaveLength(1);
   });
 
-  it("refuses that new hand-off inside a batch too", async () => {
-    await project([earlier("log_001", INVENTED_9093, false)], stored([STORED_7163]));
+  it.each([
+    ["closed", false],
+    ["still open", true],
+  ])("refuses that new hand-off inside a batch too, earlier one %s", async (_label, open) => {
+    await project([earlier("log_001", INVENTED_9093, open)], stored([STORED_7163]));
     const r = await researchLogAppend({ projectPath: dir, ops: [handOff(STORED_7163), handOff(INVENTED_9093)] } as any);
     expect(r.ok).toBe(false);
     expect((r as { errors: string[] }).errors.map((e) => e.slice(0, 7))).toEqual(["ops[1]:"]);
@@ -236,6 +239,61 @@ describe("research_log_append: a collection url must be a stored collection", ()
       },
     });
     expect(bad.ok).toBe(false);
+    expect(JSON.stringify(bad)).toContain("is not in external-collections.json");
+  });
+
+  it("accepts a no-access close of a logged, unstored url", async () => {
+    await project([earlier("log_001", INVENTED_9093, true)], stored([STORED_7163]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(INVENTED_9093),
+      outcome: "error",
+      externalSite: { site: "ancestry", urlGenerated: INVENTED_9093, captureReceived: false },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses a stringified externalSite that opens a new hand-off for a logged, unstored url", async () => {
+    await project([earlier("log_001", INVENTED_9093, false)], stored([STORED_7163]));
+    const op = handOff(INVENTED_9093);
+    const r = await researchLogAppend({ projectPath: dir, ...op, externalSite: JSON.stringify(op.externalSite) as any });
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses a string \"false\" new hand-off for a logged, unstored url", async () => {
+    await project([earlier("log_001", INVENTED_9093, false)], stored([STORED_7163]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(INVENTED_9093),
+      externalSite: { site: "ancestry", urlGenerated: INVENTED_9093, captureReceived: "false" as any },
+    });
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r)).toContain("is not in external-collections.json");
+  });
+
+  it("saves a string \"false\" hand-off for a stored url as a real open hand-off", async () => {
+    await project([], stored([STORED_7163]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(STORED_7163),
+      externalSite: { site: "ancestry", urlGenerated: STORED_7163, captureReceived: "false" as any },
+    });
+    expect(r.ok).toBe(true);
+    const entries = await log();
+    expect(entries[0].external_site.capture_received).toBe(false);
+    expect(awaitingUserHandOffs(entries)).toHaveLength(1);
+  });
+
+  it("refuses a captureReceived that is not a boolean", async () => {
+    await project([], stored([STORED_7163]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ...handOff(STORED_7163),
+      externalSite: { site: "ancestry", urlGenerated: STORED_7163, captureReceived: "yes" as any },
+    });
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r)).toContain("captureReceived must be true or false");
+    expect(await log()).toEqual([]);
   });
 
   it("refuses an array urlGenerated instead of saving it", async () => {
