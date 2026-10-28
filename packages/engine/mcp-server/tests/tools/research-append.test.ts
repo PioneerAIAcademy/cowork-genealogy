@@ -5418,19 +5418,6 @@ describe("research_append (Phase 3)", () => {
     expect(singleOk(r).entryId).toBe("ev_001");
     expect((await readResearch()).evaluations[0].timestamp).toMatch(/T.*:/);
   });
-
-  it("appends a known_holding and stamps `created` (date)", async () => {
-    await writeProject();
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "known_holdings",
-      op: "append",
-      entry: { holding_type: "document", description: "Family bible", confidence: "confident", promoted: false },
-    });
-    expect(r.ok && singleOk(r).entryId).toBe("kh_001");
-    const kh = (await readResearch()).known_holdings[0];
-    expect(kh.created).toMatch(/^\d{4}-\d{2}-\d{2}$/); // bare date
-  });
 });
 
 describe("research_append (project singleton section)", () => {
@@ -8267,6 +8254,44 @@ describe("research_append (batch ops) — every op's errors", () => {
       const resolved = lines.find((l) => /^ops\[1\]: question q_001 cannot be marked resolved/.test(l));
       expect(resolved, r.errors.join("\n")).toBeDefined();
       expect(r.errors.indexOf(resolved!)).toBeGreaterThan(r.errors.indexOf(lines[0]));
+    });
+
+    it("a summary citing nothing does not resolve over a conflict that names the question", async () => {
+      // The hole decision 12 left open. `blocking` was reached only through the
+      // summary's `supporting_assertion_ids`, so a `not_proved` summary citing
+      // NONE found nothing to dispute and the question resolved straight over an
+      // open conflict -- which is exactly the shape a wrap-up produces, and
+      // exactly what decision 12 says must not happen.
+      const research = baseResearch();
+      research.questions = [validQuestion("q_001")];
+      research.conflicts = [{
+        id: "c_001",
+        conflict_type: "fact",
+        description: "Two birthplaces",
+        disputed_attribute: "birthplace",
+        competing_assertion_ids: ["a_001", "a_002"],
+        status: "unresolved",
+        blocks_question_ids: ["q_001"],
+      }] as any;
+      const r = await refuse(
+        [
+          {
+            section: "proof_summaries",
+            op: "append",
+            entry: {
+              question_id: "q_001", tier: "not_proved", vehicle: "summary", shortfall: "conflict",
+              supporting_assertion_ids: [], resolved_conflict_ids: [],
+              exhaustive_search_summary: "Nothing settles it",
+              narrative_markdown: "## Conclusion\nThe conflict cannot be settled.",
+            },
+          },
+          { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved", resolved: "2026-10-27", resolution_assertion_ids: [] } },
+        ],
+        research,
+      );
+      const lines = opLines(r.errors);
+      const resolved = lines.find((l) => /^ops\[1\]: question q_001 cannot be marked resolved while c_001/.test(l));
+      expect(resolved, r.errors.join("\n")).toBeDefined();
     });
 
     it("a plan whose own item op was refused is not called misrouted, and no advice to move items is given", async () => {

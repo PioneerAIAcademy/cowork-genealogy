@@ -956,7 +956,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
 
     // Validate the WHOLE project before persisting. The realistic failure is a
     // dangling person reference from research.json (person_evidence,
-    // subject_person_ids, timelines, known holdings) — this tool does not
+    // subject_person_ids, timelines) — this tool does not
     // repair those, by design, so the error names them and the caller decides.
     const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {

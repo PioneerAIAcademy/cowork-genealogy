@@ -830,9 +830,8 @@ describe("research_query — every array section is queryable or deliberately ex
 
   it("the optional set is exactly the queryable array sections the schema does not require", () => {
     // NOT simply "array sections not required" — that set also holds
-    // `known_holdings`, which is excluded and so has no absence behaviour at
-    // all. Subtracting the exclusions is what makes this hold today and keeps
-    // holding when issue #2069 lands: the subtraction becomes a no-op.
+    // `warning_justifications`, which is excluded and so has no absence
+    // behaviour at all.
     const expected = arraySections
       .filter((s) => !required.has(s) && !(s in RESEARCH_QUERY_EXCLUDED))
       .sort();
@@ -840,10 +839,9 @@ describe("research_query — every array section is queryable or deliberately ex
   });
 
   it("every excluded section is still a top-level array section of the schema", () => {
-    // The tripwire for issue #2069. When it deletes `known_holdings` from the
-    // schema, this reds until the RESEARCH_QUERY_EXCLUDED entry goes with it —
-    // so the exclusion map cannot rot into a list of sections that no longer
-    // exist.
+    // Deleting a section from the schema reds this until its
+    // RESEARCH_QUERY_EXCLUDED entry goes with it — so the exclusion map cannot
+    // rot into a list of sections that no longer exist (it fired for #2069).
     const stale = Object.keys(RESEARCH_QUERY_EXCLUDED).filter((s) => !arraySections.includes(s));
     expect(stale, `RESEARCH_QUERY_EXCLUDED names section(s) the schema no longer has`).toEqual([]);
   });

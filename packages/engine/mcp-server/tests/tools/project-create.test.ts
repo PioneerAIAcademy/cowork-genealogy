@@ -183,16 +183,13 @@ describe("project_create", () => {
     }
   });
 
-  it("writes the house researcher profile, and no known_holdings", async () => {
+  it("writes the house researcher profile", async () => {
     // The profile is the fixed house default, the same on every project, and
     // never inferred about the researcher: no subscriptions, no stated level.
-    // Holdings are written afterwards through research_append, from what the
-    // researcher actually said.
     await projectCreate({ projectPath: dir, objective: "Who were John's parents?" });
     const research = await readResearch();
     expect(research.researcher_profile).toEqual(HOUSE_RESEARCHER_PROFILE);
     expect(research.researcher_profile.subscriptions).toBeUndefined();
-    expect(research.known_holdings).toBeUndefined();
   });
 
   it("creates a valid empty tree when none is supplied", async () => {
