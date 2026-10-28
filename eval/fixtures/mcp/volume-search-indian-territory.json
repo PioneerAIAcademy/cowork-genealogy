@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Indian Territory, United States",
       "startYear": 1840,
-      "endYear": 1870
+      "endYear": 1870,
+      "pageSize": 50
     },
     "totalResults": 1,
     "results": [
       {
         "imageGroupNumber": "002298871",
-        "imageGroupPrefix": "002298871",
         "imageCount": 940,
         "recordSearchablePercent": 99,
         "fulltextSearchable": true,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Indian Territory, United States",
+            "places": ["Indian Territory, United States"],
             "dateRange": "1840-1870",
             "recordType": "Tribal Enrollment Cards"
           }
