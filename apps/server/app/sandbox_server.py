@@ -365,20 +365,23 @@ class Hub:
         while True:
             await asyncio.sleep(_WATCH_INTERVAL)
             try:
-                for f in PROJECT_DIR.rglob("*"):
-                    if not f.is_file():
-                        continue
-                    rel = str(f.relative_to(PROJECT_DIR))
-                    try:
-                        mt = f.stat().st_mtime
-                    except OSError:
-                        continue
-                    if seen.get(rel) != mt:  # new or changed
-                        seen[rel] = mt
-                        await self._emit_change(rel)
-                await self._emit_collections_removed(seen)
+                await self._poll_once(seen)
             except OSError:
                 pass
+
+    async def _poll_once(self, seen: dict[str, float]) -> None:
+        for f in PROJECT_DIR.rglob("*"):
+            if not f.is_file():
+                continue
+            rel = str(f.relative_to(PROJECT_DIR))
+            try:
+                mt = f.stat().st_mtime
+            except OSError:
+                continue
+            if seen.get(rel) != mt:  # new or changed
+                seen[rel] = mt
+                await self._emit_change(rel)
+        await self._emit_collections_removed(seen)
 
     async def _emit_collections_removed(self, seen: dict[str, float]) -> None:
         # The one optional root file: its removal clears the viewer's section.

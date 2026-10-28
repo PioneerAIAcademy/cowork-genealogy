@@ -194,3 +194,27 @@ async def test_present_collections_are_not_reported_removed(tmp_path, monkeypatc
     await hub._emit_collections_removed(seen)
 
     assert hub.sent == []
+
+
+@pytest.mark.asyncio
+async def test_a_poll_after_the_file_is_deleted_sends_one_null_frame(tmp_path, monkeypatch):
+    """Drives the watch loop's own step, so dropping the removal call from it
+    fails here, not only in the helper's unit test above."""
+    import app.sandbox_server as mod
+
+    monkeypatch.setattr(mod, "PROJECT_DIR", tmp_path)
+    target = tmp_path / "external-collections.json"
+    target.write_text(_COLLECTIONS, encoding="utf-8")
+
+    hub = _RecordingHub()
+    seen: dict[str, float] = {}
+    await hub._poll_once(seen)
+    assert [m["data"] is not None for m in hub.sent] == [True]
+
+    target.unlink()
+    await hub._poll_once(seen)
+    await hub._poll_once(seen)
+
+    assert hub.sent[1:] == [
+        {"type": "document_updated", "name": "external-collections.json", "data": None}
+    ]

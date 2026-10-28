@@ -8,7 +8,7 @@ No telemetry. No analytics. Offline-first.
 
 - Watches a project folder for changes to research files
 - Displays research progress through a visual pipeline (Init, Question Selection, Research Plan, Search Records, Extraction, Analysis, Findings)
-- Renders 11 research sections as browsable Notion-style cards: Project Overview, Questions, Plans, Research Log, Sources, Assertions, Person Evidence, Conflicts, Hypotheses, Timelines, Findings
+- Renders 14 research sections as browsable Notion-style cards: Project Overview, Questions, Localities, Collections, Plans, Research Log, Sources, Assertions, Person Evidence, Conflicts, Hypotheses, Timelines, Findings, Mentor Evaluations
 - Shows GedcomX persons and relationships in the Project Overview
 - Cross-links between sections (click an assertion ID in a question card to jump to that assertion)
 - Light and dark theme toggle
@@ -53,7 +53,7 @@ The Electron window opens automatically. The Vite dev server provides HMR for th
 
 ### Opening a project
 
-On launch, the app shows a welcome screen. Click "Open Project Folder" to select a folder containing `research.json` and `tree.gedcomx.json`. The app watches both files and updates the UI in real time when they change.
+On launch, the app shows a welcome screen. Click "Open Project Folder" to select a folder containing `research.json` and `tree.gedcomx.json`. The app watches `research.json`, `tree.gedcomx.json` and `external-collections.json` and updates the UI in real time when they change.
 
 You can also auto-open a project folder via the `--project-dir` CLI argument:
 
