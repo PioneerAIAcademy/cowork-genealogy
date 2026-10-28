@@ -42,9 +42,7 @@ Sankt Georgen parish. The tree couple's two known children — Magdalena (1817)
 and Anna Maria (1821) — are both from **Oberkirnach**, a different hamlet in the
 same parish. The parent names match, but the hamlet does not: this is a second
 Johann Georg Mayer + Maria Dorothea Stokburger household in the parish, based in
-Rennuß rather than Oberkirnach. Mayer is common in the area and the tree already
-carries two person entries for "Johann Georg" (PIDs `9D31-B4G` and `9DQM-45F`),
-confirming the name collision is real.
+Rennuß rather than Oberkirnach. Mayer is common in the area.
 
 **Image-read check:** The verdict rests on reading the register image
 (`image_basis: true`). The check against two other indexed entries on the same
