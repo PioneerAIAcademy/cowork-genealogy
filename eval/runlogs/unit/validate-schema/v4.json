@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "validate-schema",
   "version": 4,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-28_00-15-02",
@@ -83,13 +83,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). There is no error to interpret or explain. Per the rubric, this dimension is N/A when the validator returns no errors on a clean-pass test."
+            "rationale": "N/A — the validator returned no errors (valid: true, errors: []). There is no error to interpret or explain. Per the rubric, this dimension is N/A when the validator returns no errors on a clean-pass test."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there is nothing to fix. Per the rubric, this dimension is N/A when no errors are reported on a clean-pass test."
+            "rationale": "N/A — no errors were reported by the validator, so there is nothing to fix. Per the rubric, this dimension is N/A when no errors are reported on a clean-pass test."
           },
           {
             "source": "rubric",
@@ -121,13 +121,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). There is no error to interpret or explain. Per the rubric, this dimension is N/A when the validator returns no errors on a clean-pass test."
+            "rationale": "N/A — the validator returned no errors (valid: true, errors: []). There is no error to interpret or explain. Per the rubric, this dimension is N/A when the validator returns no errors on a clean-pass test."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there is nothing to fix. Per the rubric, this dimension is N/A when no errors are reported on a clean-pass test."
+            "rationale": "N/A — no errors were reported by the validator, so there is nothing to fix. Per the rubric, this dimension is N/A when no errors are reported on a clean-pass test."
           },
           {
             "source": "rubric",
@@ -139,7 +139,7 @@
       },
       "totals": {
         "duration_ms": 15156.179468001937,
-        "duration_api_ms": 12761.0,
+        "duration_api_ms": 12761,
         "judge_duration_ms": 9061.690684990026,
         "wall_clock_ms": 24331.97021484375,
         "num_turns": 2,
@@ -162,7 +162,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 15156.179468001937,
-          "duration_api_ms": 12761.0,
+          "duration_api_ms": 12761,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -240,7 +240,7 @@
           },
           "skill_cost_usd": 0.121264195,
           "output": {
-            "text_response": "Schema validation passed for the project in `/tmp/eval-ut_validate_schema_010-0-0-i1f6_99h`. Both `research.json` and `tree.gedcomx.json` pass every validation check \u2014 no errors and no warnings. The checks covered required fields, enum values, ID-prefix conventions, and cross-file references. The validation result was logged as `log_006` in `research.json`.\n\nNothing needs fixing.",
+            "text_response": "Schema validation passed for the project in `/tmp/eval-ut_validate_schema_010-0-0-i1f6_99h`. Both `research.json` and `tree.gedcomx.json` pass every validation check — no errors and no warnings. The checks covered required fields, enum values, ID-prefix conventions, and cross-file references. The validation result was logged as `log_006` in `research.json`.\n\nNothing needs fixing.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -295,7 +295,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -564,13 +564,13 @@
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). There is no error to interpret or explain. Per the rubric, this dimension is N/A when the validator returns no errors on a clean-pass test."
+                "rationale": "N/A — the validator returned no errors (valid: true, errors: []). There is no error to interpret or explain. Per the rubric, this dimension is N/A when the validator returns no errors on a clean-pass test."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no errors were reported by the validator, so there is nothing to fix. Per the rubric, this dimension is N/A when no errors are reported on a clean-pass test."
+                "rationale": "N/A — no errors were reported by the validator, so there is nothing to fix. Per the rubric, this dimension is N/A when no errors are reported on a clean-pass test."
               },
               {
                 "source": "rubric",
@@ -684,7 +684,7 @@
       },
       "totals": {
         "duration_ms": 17581.857393000973,
-        "duration_api_ms": 14375.0,
+        "duration_api_ms": 14375,
         "judge_duration_ms": 9773.576065024827,
         "wall_clock_ms": 27902.313709259033,
         "num_turns": 2,
@@ -707,7 +707,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 17581.857393000973,
-          "duration_api_ms": 14375.0,
+          "duration_api_ms": 14375,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -785,7 +785,7 @@
           },
           "skill_cost_usd": 0.12308137,
           "output": {
-            "text_response": "Validation of the project in `/tmp/eval-ut_validate_schema_006-0-0-1_bt40z2` found **1 error**:\n\n- **research.json, person_evidence[0]:** The id `x_001` should start with `pe_`. Person evidence entries must use the `pe_` prefix. Fix: rename the id to a `pe_`-prefixed value such as `pe_001`, and update any references to it so they still resolve.\n\n`tree.gedcomx.json` was not flagged in this run.\n\nThe log entry for this check is `log_006`.\n\n---\n\nThe check found one problem \u2014 a label on one record that does not follow the naming convention the software expects. The rest of the project passed.\n\n**The fix:** rename that one label in the research file and make sure anything pointing to it still points to the new name.",
+            "text_response": "Validation of the project in `/tmp/eval-ut_validate_schema_006-0-0-1_bt40z2` found **1 error**:\n\n- **research.json, person_evidence[0]:** The id `x_001` should start with `pe_`. Person evidence entries must use the `pe_` prefix. Fix: rename the id to a `pe_`-prefixed value such as `pe_001`, and update any references to it so they still resolve.\n\n`tree.gedcomx.json` was not flagged in this run.\n\nThe log entry for this check is `log_006`.\n\n---\n\nThe check found one problem — a label on one record that does not follow the naming convention the software expects. The rest of the project passed.\n\n**The fix:** rename that one label in the research file and make sure anything pointing to it still points to the new name.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -842,7 +842,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -1233,7 +1233,7 @@
       },
       "totals": {
         "duration_ms": 18039.31190702133,
-        "duration_api_ms": 15263.0,
+        "duration_api_ms": 15263,
         "judge_duration_ms": 9435.669982020045,
         "wall_clock_ms": 27964.407682418823,
         "num_turns": 2,
@@ -1256,7 +1256,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18039.31190702133,
-          "duration_api_ms": 15263.0,
+          "duration_api_ms": 15263,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -1391,7 +1391,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -1782,7 +1782,7 @@
       },
       "totals": {
         "duration_ms": 20009.215722995577,
-        "duration_api_ms": 17215.0,
+        "duration_api_ms": 17215,
         "judge_duration_ms": 10022.669708007015,
         "wall_clock_ms": 30522.21918106079,
         "num_turns": 2,
@@ -1805,7 +1805,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20009.215722995577,
-          "duration_api_ms": 17215.0,
+          "duration_api_ms": 17215,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -1883,7 +1883,7 @@
           },
           "skill_cost_usd": 0.125085245,
           "output": {
-            "text_response": "Validation of `/tmp/eval-ut_validate_schema_007-0-0-lnkfadt2` found **1 error**. The primary working directory was used since the path provided was the placeholder `<workspace>`.\n\n---\n\n**Error 1 of 1**\n\n- **File:** `research.json`\n- **Object:** `assertions[0]`\n- **Field:** source reference\n- **Value:** `src_999`\n- **Explanation:** The assertion cites a source ID that does not exist in `research.json`.\n- **Fix:** Point the assertion at an existing source ID, or add a source with ID `src_999` that has the required fields for its shape. Do not leave the reference dangling.\n\n`tree.gedcomx.json` had no errors reported.\n\nA research log entry (`log_006`) was written to record this report.\n\n---\n\n**Summary:** There is one broken cross-reference in `research.json` \u2014 an assertion links to source `src_999`, which doesn't exist in the project's source list. To fix it, either re-link that assertion to a source that does exist, or add the missing source (`src_999`) to the project.",
+            "text_response": "Validation of `/tmp/eval-ut_validate_schema_007-0-0-lnkfadt2` found **1 error**. The primary working directory was used since the path provided was the placeholder `<workspace>`.\n\n---\n\n**Error 1 of 1**\n\n- **File:** `research.json`\n- **Object:** `assertions[0]`\n- **Field:** source reference\n- **Value:** `src_999`\n- **Explanation:** The assertion cites a source ID that does not exist in `research.json`.\n- **Fix:** Point the assertion at an existing source ID, or add a source with ID `src_999` that has the required fields for its shape. Do not leave the reference dangling.\n\n`tree.gedcomx.json` had no errors reported.\n\nA research log entry (`log_006`) was written to record this report.\n\n---\n\n**Summary:** There is one broken cross-reference in `research.json` — an assertion links to source `src_999`, which doesn't exist in the project's source list. To fix it, either re-link that assertion to a source that does exist, or add the missing source (`src_999`) to the project.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1940,7 +1940,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -2331,7 +2331,7 @@
       },
       "totals": {
         "duration_ms": 19859.96364199673,
-        "duration_api_ms": 16985.0,
+        "duration_api_ms": 16985,
         "judge_duration_ms": 9646.826173993759,
         "wall_clock_ms": 30006.67905807495,
         "num_turns": 2,
@@ -2354,7 +2354,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19859.96364199673,
-          "duration_api_ms": 16985.0,
+          "duration_api_ms": 16985,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -2432,7 +2432,7 @@
           },
           "skill_cost_usd": 0.12297469000000001,
           "output": {
-            "text_response": "Schema validation of the project at `/tmp/eval-ut_validate_schema_004-0-0-zew95rgv` found **1 problem** in `research.json`:\n\n1. **research.json, assertions[0]:** The value `'tertiary'` is not a valid information quality. The allowed values are `indeterminate`, `primary`, and `secondary`. **Fix:** Change it to `'secondary'` if the source is derivative, or to `'indeterminate'` if the quality cannot yet be judged.\n\n`tree.gedcomx.json` was not flagged.\n\n---\n\n**Summary:** There is one labeling mistake \u2014 an unrecognized category label in the information quality field. Change `'tertiary'` to one of the accepted values (`indeterminate`, `primary`, or `secondary`), and the file will pass schema validation.",
+            "text_response": "Schema validation of the project at `/tmp/eval-ut_validate_schema_004-0-0-zew95rgv` found **1 problem** in `research.json`:\n\n1. **research.json, assertions[0]:** The value `'tertiary'` is not a valid information quality. The allowed values are `indeterminate`, `primary`, and `secondary`. **Fix:** Change it to `'secondary'` if the source is derivative, or to `'indeterminate'` if the quality cannot yet be judged.\n\n`tree.gedcomx.json` was not flagged.\n\n---\n\n**Summary:** There is one labeling mistake — an unrecognized category label in the information quality field. Change `'tertiary'` to one of the accepted values (`indeterminate`, `primary`, or `secondary`), and the file will pass schema validation.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2489,7 +2489,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -2830,7 +2830,7 @@
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy: 'add a rationale string to questions[0] that explains why the question matters.' This is concrete and actionable\u2014the researcher knows exactly what field to add, where to add it, and what it should contain. The fix directly addresses the reported error and would resolve the validation failure."
+            "rationale": "The skill provided a specific, correct remedy: 'add a rationale string to questions[0] that explains why the question matters.' This is concrete and actionable—the researcher knows exactly what field to add, where to add it, and what it should contain. The fix directly addresses the reported error and would resolve the validation failure."
           },
           {
             "source": "rubric",
@@ -2868,7 +2868,7 @@
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy: 'add a rationale string to questions[0] that explains why the question matters.' This is concrete and actionable\u2014the researcher knows exactly what field to add, where to add it, and what it should contain. The fix directly addresses the reported error and would resolve the validation failure."
+            "rationale": "The skill provided a specific, correct remedy: 'add a rationale string to questions[0] that explains why the question matters.' This is concrete and actionable—the researcher knows exactly what field to add, where to add it, and what it should contain. The fix directly addresses the reported error and would resolve the validation failure."
           },
           {
             "source": "rubric",
@@ -2880,7 +2880,7 @@
       },
       "totals": {
         "duration_ms": 16561.91606799257,
-        "duration_api_ms": 14499.0,
+        "duration_api_ms": 14499,
         "judge_duration_ms": 10402.921242988668,
         "wall_clock_ms": 27073.818922042847,
         "num_turns": 2,
@@ -2903,7 +2903,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 16561.91606799257,
-          "duration_api_ms": 14499.0,
+          "duration_api_ms": 14499,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -2981,7 +2981,7 @@
           },
           "skill_cost_usd": 0.12311427000000003,
           "output": {
-            "text_response": "Validation of `research.json` and `tree.gedcomx.json` found **1 error** and **0 warnings**.\n\n---\n\n**Error 1: `research.json`, `questions[0]`**\n- **Problem:** Missing required field `rationale`.\n- **What it means:** The first research question has no explanation of why it matters to the research. The schema requires one.\n- **Fix:** Add a `rationale` string to `questions[0]` that explains why the question matters.\n\n---\n\n`tree.gedcomx.json` had no reported errors.\n\nThe validation was logged to `research.json` as `log_006`.\n\n**Summary:** One issue needs to be addressed \u2014 the first research question in `research.json` is missing its required `rationale` field. Everything else passed. Add an explanation of why that question matters to your research, and the file will be schema-compliant.",
+            "text_response": "Validation of `research.json` and `tree.gedcomx.json` found **1 error** and **0 warnings**.\n\n---\n\n**Error 1: `research.json`, `questions[0]`**\n- **Problem:** Missing required field `rationale`.\n- **What it means:** The first research question has no explanation of why it matters to the research. The schema requires one.\n- **Fix:** Add a `rationale` string to `questions[0]` that explains why the question matters.\n\n---\n\n`tree.gedcomx.json` had no reported errors.\n\nThe validation was logged to `research.json` as `log_006`.\n\n**Summary:** One issue needs to be addressed — the first research question in `research.json` is missing its required `rationale` field. Everything else passed. Add an explanation of why that question matters to your research, and the file will be schema-compliant.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3038,7 +3038,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -3315,7 +3315,7 @@
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "The skill provided a specific, correct remedy: 'add a rationale string to questions[0] that explains why the question matters.' This is concrete and actionable\u2014the researcher knows exactly what field to add, where to add it, and what it should contain. The fix directly addresses the reported error and would resolve the validation failure."
+                "rationale": "The skill provided a specific, correct remedy: 'add a rationale string to questions[0] that explains why the question matters.' This is concrete and actionable—the researcher knows exactly what field to add, where to add it, and what it should contain. The fix directly addresses the reported error and would resolve the validation failure."
               },
               {
                 "source": "rubric",
@@ -3373,13 +3373,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no schema errors to explain. The response correctly interpreted the 'no_project' result, which is not a schema error but a precondition failure. This dimension applies only when errors are present."
+            "rationale": "N/A — the validator returned no schema errors to explain. The response correctly interpreted the 'no_project' result, which is not a schema error but a precondition failure. This dimension applies only when errors are present."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no schema errors were reported, so there are no fixes to suggest. The skill correctly identified the precondition (no project) and pointed to the appropriate action (init-project), which is routing guidance rather than error remediation."
+            "rationale": "N/A — no schema errors were reported, so there are no fixes to suggest. The skill correctly identified the precondition (no project) and pointed to the appropriate action (init-project), which is routing guidance rather than error remediation."
           },
           {
             "source": "rubric",
@@ -3411,13 +3411,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no schema errors to explain. The response correctly interpreted the 'no_project' result, which is not a schema error but a precondition failure. This dimension applies only when errors are present."
+            "rationale": "N/A — the validator returned no schema errors to explain. The response correctly interpreted the 'no_project' result, which is not a schema error but a precondition failure. This dimension applies only when errors are present."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no schema errors were reported, so there are no fixes to suggest. The skill correctly identified the precondition (no project) and pointed to the appropriate action (init-project), which is routing guidance rather than error remediation."
+            "rationale": "N/A — no schema errors were reported, so there are no fixes to suggest. The skill correctly identified the precondition (no project) and pointed to the appropriate action (init-project), which is routing guidance rather than error remediation."
           },
           {
             "source": "rubric",
@@ -3429,7 +3429,7 @@
       },
       "totals": {
         "duration_ms": 13175.787287997082,
-        "duration_api_ms": 11218.0,
+        "duration_api_ms": 11218,
         "judge_duration_ms": 7715.138711006148,
         "wall_clock_ms": 20917.27924346924,
         "num_turns": 2,
@@ -3452,7 +3452,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 13175.787287997082,
-          "duration_api_ms": 11218.0,
+          "duration_api_ms": 11218,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1419,
@@ -3546,7 +3546,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ]
                 }
               }
@@ -3780,13 +3780,13 @@
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no schema errors to explain. The response correctly interpreted the 'no_project' result, which is not a schema error but a precondition failure. This dimension applies only when errors are present."
+                "rationale": "N/A — the validator returned no schema errors to explain. The response correctly interpreted the 'no_project' result, which is not a schema error but a precondition failure. This dimension applies only when errors are present."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no schema errors were reported, so there are no fixes to suggest. The skill correctly identified the precondition (no project) and pointed to the appropriate action (init-project), which is routing guidance rather than error remediation."
+                "rationale": "N/A — no schema errors were reported, so there are no fixes to suggest. The skill correctly identified the precondition (no project) and pointed to the appropriate action (init-project), which is routing guidance rather than error remediation."
               },
               {
                 "source": "rubric",
@@ -3844,13 +3844,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). The per-test context explicitly states the skill should report that both files validate with no errors. Since no errors were returned, there is no error to interpret or explain. This dimension applies only when errors are present."
+            "rationale": "N/A — the validator returned no errors (valid: true, errors: []). The per-test context explicitly states the skill should report that both files validate with no errors. Since no errors were returned, there is no error to interpret or explain. This dimension applies only when errors are present."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. The per-test context confirms both files should validate cleanly. This dimension applies only when errors are present and require remediation."
+            "rationale": "N/A — no errors were reported by the validator, so there are no fixes to suggest. The per-test context confirms both files should validate cleanly. This dimension applies only when errors are present and require remediation."
           },
           {
             "source": "rubric",
@@ -3882,13 +3882,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). The per-test context explicitly states the skill should report that both files validate with no errors. Since no errors were returned, there is no error to interpret or explain. This dimension applies only when errors are present."
+            "rationale": "N/A — the validator returned no errors (valid: true, errors: []). The per-test context explicitly states the skill should report that both files validate with no errors. Since no errors were returned, there is no error to interpret or explain. This dimension applies only when errors are present."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. The per-test context confirms both files should validate cleanly. This dimension applies only when errors are present and require remediation."
+            "rationale": "N/A — no errors were reported by the validator, so there are no fixes to suggest. The per-test context confirms both files should validate cleanly. This dimension applies only when errors are present and require remediation."
           },
           {
             "source": "rubric",
@@ -3900,7 +3900,7 @@
       },
       "totals": {
         "duration_ms": 15227.109664003365,
-        "duration_api_ms": 13156.0,
+        "duration_api_ms": 13156,
         "judge_duration_ms": 10579.103915020823,
         "wall_clock_ms": 25929.78858947754,
         "num_turns": 2,
@@ -3923,7 +3923,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 15227.109664003365,
-          "duration_api_ms": 13156.0,
+          "duration_api_ms": 13156,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1421,
@@ -4056,7 +4056,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -4325,13 +4325,13 @@
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). The per-test context explicitly states the skill should report that both files validate with no errors. Since no errors were returned, there is no error to interpret or explain. This dimension applies only when errors are present."
+                "rationale": "N/A — the validator returned no errors (valid: true, errors: []). The per-test context explicitly states the skill should report that both files validate with no errors. Since no errors were returned, there is no error to interpret or explain. This dimension applies only when errors are present."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. The per-test context confirms both files should validate cleanly. This dimension applies only when errors are present and require remediation."
+                "rationale": "N/A — no errors were reported by the validator, so there are no fixes to suggest. The per-test context confirms both files should validate cleanly. This dimension applies only when errors are present and require remediation."
               },
               {
                 "source": "rubric",
@@ -4371,13 +4371,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that validation passed with no errors. The validator confirmed both project files are schema-valid, and the skill accurately conveyed this result. The claim that 'both conflicts have the right shape' is supported by the validator's clean pass \u2014 the schema's conditional rules automatically verify conflict_type-specific field requirements. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly reported that validation passed with no errors. The validator confirmed both project files are schema-valid, and the skill accurately conveyed this result. The claim that 'both conflicts have the right shape' is supported by the validator's clean pass — the schema's conditional rules automatically verify conflict_type-specific field requirements. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request fully: validate the project files and confirm both unresolved conflicts have the right shape. It ran the validator, reported the clean result, and logged the outcome. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill \u2014 no enumeration of individual field values is required."
+            "rationale": "The skill addressed the user's request fully: validate the project files and confirm both unresolved conflicts have the right shape. It ran the validator, reported the clean result, and logged the outcome. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill — no enumeration of individual field values is required."
           },
           {
             "source": "base",
@@ -4389,13 +4389,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (clean-pass test). The per-test context confirms this is the expected outcome and that the skill should report validation passed without flagging null fields as errors. No error explanation was needed because validation succeeded."
+            "rationale": "N/A — the validator returned no errors (clean-pass test). The per-test context confirms this is the expected outcome and that the skill should report validation passed without flagging null fields as errors. No error explanation was needed because validation succeeded."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so no fixes were required. The per-test context confirms that a clean validation result requires no fix suggestions."
+            "rationale": "N/A — no errors were reported by the validator, so no fixes were required. The per-test context confirms that a clean validation result requires no fix suggestions."
           },
           {
             "source": "rubric",
@@ -4409,13 +4409,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that validation passed with no errors. The validator confirmed both project files are schema-valid, and the skill accurately conveyed this result. The claim that 'both conflicts have the right shape' is supported by the validator's clean pass \u2014 the schema's conditional rules automatically verify conflict_type-specific field requirements. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly reported that validation passed with no errors. The validator confirmed both project files are schema-valid, and the skill accurately conveyed this result. The claim that 'both conflicts have the right shape' is supported by the validator's clean pass — the schema's conditional rules automatically verify conflict_type-specific field requirements. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request fully: validate the project files and confirm both unresolved conflicts have the right shape. It ran the validator, reported the clean result, and logged the outcome. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill \u2014 no enumeration of individual field values is required."
+            "rationale": "The skill addressed the user's request fully: validate the project files and confirm both unresolved conflicts have the right shape. It ran the validator, reported the clean result, and logged the outcome. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill — no enumeration of individual field values is required."
           },
           {
             "source": "base",
@@ -4427,13 +4427,13 @@
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (clean-pass test). The per-test context confirms this is the expected outcome and that the skill should report validation passed without flagging null fields as errors. No error explanation was needed because validation succeeded."
+            "rationale": "N/A — the validator returned no errors (clean-pass test). The per-test context confirms this is the expected outcome and that the skill should report validation passed without flagging null fields as errors. No error explanation was needed because validation succeeded."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so no fixes were required. The per-test context confirms that a clean validation result requires no fix suggestions."
+            "rationale": "N/A — no errors were reported by the validator, so no fixes were required. The per-test context confirms that a clean validation result requires no fix suggestions."
           },
           {
             "source": "rubric",
@@ -4445,7 +4445,7 @@
       },
       "totals": {
         "duration_ms": 17481.220879999455,
-        "duration_api_ms": 14625.0,
+        "duration_api_ms": 14625,
         "judge_duration_ms": 9193.243071989855,
         "wall_clock_ms": 27342.779636383057,
         "num_turns": 2,
@@ -4468,7 +4468,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 17481.220879999455,
-          "duration_api_ms": 14625.0,
+          "duration_api_ms": 14625,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1437,
@@ -4601,7 +4601,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -4618,7 +4618,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Validate schema for project files",
-                  "prompt": "Validate the project files. There are two unresolved conflicts \u2014 make sure both have the right shape.\n\nprojectPath: <workspace>",
+                  "prompt": "Validate the project files. There are two unresolved conflicts — make sure both have the right shape.\n\nprojectPath: <workspace>",
                   "subagent_type": "validate-schema",
                   "run_in_background": "False"
                 }
@@ -4852,13 +4852,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly reported that validation passed with no errors. The validator confirmed both project files are schema-valid, and the skill accurately conveyed this result. The claim that 'both conflicts have the right shape' is supported by the validator's clean pass \u2014 the schema's conditional rules automatically verify conflict_type-specific field requirements. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly reported that validation passed with no errors. The validator confirmed both project files are schema-valid, and the skill accurately conveyed this result. The claim that 'both conflicts have the right shape' is supported by the validator's clean pass — the schema's conditional rules automatically verify conflict_type-specific field requirements. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request fully: validate the project files and confirm both unresolved conflicts have the right shape. It ran the validator, reported the clean result, and logged the outcome. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill \u2014 no enumeration of individual field values is required."
+                "rationale": "The skill addressed the user's request fully: validate the project files and confirm both unresolved conflicts have the right shape. It ran the validator, reported the clean result, and logged the outcome. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill — no enumeration of individual field values is required."
               },
               {
                 "source": "base",
@@ -4870,13 +4870,13 @@
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors (clean-pass test). The per-test context confirms this is the expected outcome and that the skill should report validation passed without flagging null fields as errors. No error explanation was needed because validation succeeded."
+                "rationale": "N/A — the validator returned no errors (clean-pass test). The per-test context confirms this is the expected outcome and that the skill should report validation passed without flagging null fields as errors. No error explanation was needed because validation succeeded."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no errors were reported by the validator, so no fixes were required. The per-test context confirms that a clean validation result requires no fix suggestions."
+                "rationale": "N/A — no errors were reported by the validator, so no fixes were required. The per-test context confirms that a clean validation result requires no fix suggestions."
               },
               {
                 "source": "rubric",
@@ -4902,7 +4902,7 @@
   ],
   "totals": {
     "duration_ms": 153092.56203300902,
-    "duration_api_ms": 130097.0,
+    "duration_api_ms": 130097,
     "judge_duration_ms": 85830.83955504117,
     "num_turns": 18,
     "input_tokens": 12803,
