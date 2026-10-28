@@ -1,0 +1,401 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Cornelis van Noord (b. ~1828) of Zuid-Holland, Netherlands.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-15"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Write one clear sentence before each action and omit hedging phrases."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the mother of Cornelis van Noord (b. ~1828, Zuid-Holland)?",
+      "rationale": "The birth act names the mother but the OCR reading is uncertain; a ten-year marriage index from a different record names her differently.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "birth",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1828",
+          "repository": "FamilySearch",
+          "rationale": "The birth act should name both parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "marriage",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1838-1848",
+          "repository": "FamilySearch",
+          "rationale": "The ten-year marriage index should confirm the mother's name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "marriage",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1843",
+          "repository": "FamilySearch",
+          "rationale": "The marriage act itself names the groom's mother in full, where the index abbreviates.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "death",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1828-1900",
+          "repository": "FamilySearch",
+          "rationale": "The mother's own death act names her as an adult, independently of either reading.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "population_register",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1830-1850",
+          "repository": "FamilySearch",
+          "rationale": "The population register lists the household with each member's name as the household gave it.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "birth",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1820-1845",
+          "repository": "FamilySearch",
+          "rationale": "A sibling's birth act names the same mother in another clerk's hand.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "marriage",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1815-1828",
+          "repository": "FamilySearch",
+          "rationale": "The parents' own marriage act names the bride as she signed.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-01T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Cornelis",
+        "surname": "van Noord",
+        "birthDate": "1828",
+        "birthPlace": "Zuid-Holland, Netherlands"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_available": 1,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "Found the 1828 birth act of Cornelis van Noord."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-06-10T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Cornelis",
+        "surname": "van Noord",
+        "marriageDate": "1838-1848",
+        "marriagePlace": "Zuid-Holland, Netherlands"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_available": 1,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "Found the ten-year marriage index entry for Cornelis van Noord."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-06-12T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Cornelis",
+        "surname": "van Noord",
+        "marriageDate": "1843",
+        "marriagePlace": "Zuid-Holland, Netherlands",
+        "collection": "Netherlands, Civil Registration, Marriages"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "The 1843 marriage register volume the index points to is missing from the series: the images run from act 12 to act 61 with acts 13-48 absent, and act 31 is the one the index cites. No other year carries a marriage of Cornelis van Noord."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-13T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "van Noord",
+        "givenName": "Jannetje Fannetje Tannetje",
+        "deathPlace": "Zuid-Holland, Netherlands",
+        "deathDate": "1828-1900"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "No death act in Zuid-Holland 1828-1900 for a Jannetje, Fannetje or Tannetje married to a van Noord, under her own surname or her husband's; the death of Cornelis's father in 1851 records him as a widower without naming her."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-14T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "van Noord",
+        "residencePlace": "Zuid-Holland, Netherlands",
+        "residenceDate": "1830-1850"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "The municipality's bevolkingsregister begins in 1850; Cornelis had left the household by then, and the 1850 register lists the father as a widower with no wife entered."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-06-15T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "van Noord",
+        "fatherGivenName": "Pieter",
+        "birthPlace": "Zuid-Holland, Netherlands",
+        "birthDate": "1820-1845"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "No other birth to this couple in the municipality or its neighbours, 1820-1845: Cornelis was the only child registered."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-06-16T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "van Noord",
+        "givenName": "Pieter",
+        "marriagePlace": "Zuid-Holland, Netherlands",
+        "marriageDate": "1815-1828"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "No marriage of Pieter van Noord 1815-1828 in Zuid-Holland; the parents married outside the province or before civil registration reached it, and neither is indexed."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "SD-001",
+      "citation": "Burgerlijke Stand, Zuid-Holland, Netherlands, birth act no. 42, 1828, Cornelis van Noord",
+      "citation_detail": {
+        "who": "Municipal registrar, Zuid-Holland",
+        "what": "Birth act no. 42, Geboorteakten 1828",
+        "when_created": "1828",
+        "when_accessed": "2026-06-01",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Gemeentearchief, Geboorteakten 1828"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "SD-002",
+      "citation": "Tienjarige tafels (ten-year marriage index), Zuid-Holland, Netherlands, 1838-1848, Cornelis van Noord",
+      "citation_detail": {
+        "who": "Municipal clerk, Zuid-Holland",
+        "what": "Ten-year marriage index, Huwelijkse bijlagen 1838-1848",
+        "when_created": "1838-1848",
+        "when_accessed": "2026-06-10",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Gemeentearchief, Huwelijkse bijlagen"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-10"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:DUTCH-BIRTH",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Cornelis van Noord",
+      "information_quality": "primary",
+      "informant": "father",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:DUTCH-BIRTH",
+      "record_role": "other",
+      "fact_type": "name",
+      "value": "Jannetje [?] van Noord",
+      "information_quality": "primary",
+      "informant": "father",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "The first letter is unclear in the handwritten act; OCR read it as J but the user sees T. The groom's mother on the same act was also read as Jannetje.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:DUTCH-INDEX",
+      "record_role": "other",
+      "fact_type": "name",
+      "value": "Fannetje van Noord",
+      "information_quality": "secondary",
+      "informant": "clerk",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth act names Cornelis van Noord as the child; matches tree person I1 exactly.",
+      "match_score": null,
+      "created": "2026-06-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth act names the mother; OCR reading uncertain (Jannetje [?]).",
+      "match_score": null,
+      "created": "2026-06-01",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Ten-year marriage index names the mother as Fannetje van Noord; linked to same person I2.",
+      "match_score": null,
+      "created": "2026-06-10",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Mother's name: 'Jannetje [?] van Noord' (birth act OCR, first letter uncertain) vs. 'Fannetje van Noord' (ten-year marriage index). The user reads the birth act as 'Tannetje'.",
+      "disputed_attribute": "name",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_002",
+        "a_003"
+      ],
+      "independence_analysis": "The birth act (a_002) and the ten-year index (a_003) are independent records, but the index is a derivative abstract of a marriage act, and the act's own reading is not on file. The researcher's reading of the birth-act image is a third reading of the same entry as a_002, not an independent witness.",
+      "weighing_analysis": "Neither side outweighs the other: the birth act is the original but its first letter is unreadable, and the index is legible but derivative. Each reading is consistent with the other two letters; nothing on file breaks the tie.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "Cannot be settled, and no record left to search can settle it. Every record that could name the mother in full was searched: the 1843 marriage act is missing from its register, and there is no death act for her, no population-register entry, no sibling's birth act and no parents' marriage act. The birth act's first letter stays unreadable.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_001"
+      ],
+      "weighed_log_entry_ids": [
+        "log_001",
+        "log_002",
+        "log_003",
+        "log_004",
+        "log_005",
+        "log_006",
+        "log_007"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

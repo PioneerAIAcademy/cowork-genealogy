@@ -744,3 +744,24 @@ def existing_plan_changes(before: dict, after: dict) -> list[str]:
             )
         errors.extend(plan_errors)
     return errors
+
+
+def continue_offers(text: str | None) -> list[str]:
+    """Every line of `text` that offers a step, the way the host reads an offer.
+
+    Each line goes through the step boundary's own `offered_step`, so only an
+    offer naming a real step counts: "or continue with a different question?"
+    is prose, not an offer. Every line, not only the last one the host parses:
+    an agent's own return ends on its `summary_for_user` paragraphs, so an
+    offer the router relays sits above them. Emphasis is stripped first, which
+    the host does not do, so a bolded offer is still caught.
+    """
+    from harness.skill_runner import load_step_boundary
+
+    offered_step = load_step_boundary().offered_step
+    found = []
+    for line in str(text or "").splitlines():
+        plain = re.sub(r"[*_`]", "", line).strip()
+        if plain and offered_step(plain):
+            found.append(plain)
+    return found

@@ -1165,3 +1165,56 @@ def test_calendar_regime_read_from_tool(tool_calls, test):
         "jurisdiction before ruling on a date conflict; convert_calendar calls "
         f"seen: {[(tc.get('args') or {}) for tc in calls]}"
     )
+
+
+# --- Ending on an unsettled conflict (step mode, section E) ---
+
+_UNSETTLED_TAG = "unsettled-conflict-ending"
+
+
+def _question_log_ids(state, qid):
+    """The log entries on `qid`'s plan items. The ladder's coverage set also
+    counts an upload that closes a hand-off; the fixtures these tags run on
+    carry none, so the plan-item entries are the whole set there."""
+    items = {
+        i.get("id")
+        for p in state.get("plans") or []
+        if p.get("question_id") == qid
+        for i in p.get("items") or []
+    }
+    return {e.get("id") for e in state.get("log") or [] if e.get("plan_item_id") in items}
+
+
+def test_unsettled_conflict_stays_open_and_weighed(after_state, test):
+    """A pass that cannot settle c_001 keeps it unresolved, and the analysis
+    write leaves `weighed_log_entry_ids` covering every log entry of q_001.
+    The tool stamps the field; this checks the stamp reached the project in a
+    real run, which is what moves the ladder to proof-conclusion."""
+    if _UNSETTLED_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not a {_UNSETTLED_TAG} test")
+    conflict = next((c for c in after_state.get("conflicts") or [] if c.get("id") == "c_001"), None)
+    assert conflict is not None, "c_001 is gone from conflicts[]"
+    assert conflict.get("status") == "unresolved", (
+        f"c_001 is {conflict.get('status')!r}: no record left to search can settle it"
+    )
+    assert conflict.get("preferred_assertion_id") is None, "c_001 names a preferred assertion"
+    missing = sorted(_question_log_ids(after_state, "q_001") - set(conflict.get("weighed_log_entry_ids") or []))
+    assert not missing, (
+        f"c_001's weighed_log_entry_ids misses {missing}: either the pass wrote no "
+        "analysis or research_append did not stamp it, and the ladder sends q_001 "
+        "back to conflict-resolution"
+    )
+
+
+def test_unsettled_conflict_offers_no_continue(text_response, test, agent_returns=None):
+    """With nothing left to search, a "Continue with ...?" offer re-runs the same
+    weighing. The pass ends without one."""
+    if _UNSETTLED_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not a {_UNSETTLED_TAG} test")
+    from harness.skill_runner import subject_reply_text
+    from validators_lib import continue_offers
+
+    reply = subject_reply_text(agent_returns, text_response, "conflict-resolution", test)
+    assert reply.strip(), "conflict-resolution returned no reply"
+    offers = continue_offers(reply)
+    assert not offers, f"the reply offers a next step with nothing left to search: {offers}"

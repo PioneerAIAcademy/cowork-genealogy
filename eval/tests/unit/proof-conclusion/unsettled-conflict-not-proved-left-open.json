@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_uc2",
+    "skill": "proof-conclusion",
+    "name": "Ending on an unsettled conflict: not_proved with shortfall conflict, question left open (E)",
+    "type": "positive",
+    "description": "dutch-mother-searched-out-weighed: c_001 is unresolved, has weighed every log entry, and no plan item is open, so the ladder's unsettled-conflict arm sends q_001 to proof-conclusion. Step mode's section E and decision 12: it writes not_proved with shortfall: \"conflict\" as the terminal marker, leaves the question open (a conflict that blocks the correlation is not a conclusion that nothing is there), writes no search_stop (research-exhaustiveness owns it, and the plugin hook routes it there), and ends without a \"Continue with ...?\" line, since every way on is the researcher's: wrap it up, or a different question.",
+    "tags": [
+      "unsettled-conflict-ending",
+      "step-mode",
+      "not-proved",
+      "conflict-blocked",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Conclude q_001 — the mother of Cornelis van Noord. Conflict c_001 on her name is unresolved, has weighed every search in the log, and no plan item is open: conclude at the tier the evidence reaches and leave the question open.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "dutch-mother-searched-out-weighed"
+  },
+  "judge_context": [
+    "COMPLIANT: one proof summary for q_001 with `tier: \"not_proved\"` and `shortfall: \"conflict\"`, naming c_001 as what prevents the conclusion; q_001 stays `in_progress`; its `search_stop` is unchanged; the reply ends without a \"Continue with ...?\" line.",
+    "Resolving q_001 is the failure. A `not_proved` written because a conflict blocks the correlation does not close its question (proof-conclusion §7). The question stays open so that a later upload, which the conflict has not weighed, can send it back to conflict-resolution.",
+    "Writing `search_stop` is a failure: research-exhaustiveness owns it. This test's question was never declared exhaustive, and nothing here should declare it.",
+    "**No \"Continue with ...?\" line.** Every search that could settle the name has been made; offering conflict-resolution, research-plan or question-selection as a next step would loop. The reply should say the research has ended on an unsettled conflict.",
+    "Do not charge the agent for omitting a \"what would advance the tier\" record: there is none left to search, and the body says to leave that line out here.",
+    "Do not require a particular `vehicle`; a summary or statement fits a not_proved conclusion this short."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

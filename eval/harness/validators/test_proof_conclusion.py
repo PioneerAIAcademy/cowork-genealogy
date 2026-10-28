@@ -968,3 +968,47 @@ def test_narrative_edit_form_used(before_state, after_state, tool_calls, test):
     assert after.get("narrative_markdown") == expected, (
         f"{_EDIT_FORM_ID}'s narrative is not the original with exactly the requested change"
     )
+
+
+# --- Ending on an unsettled conflict (step mode, section E) ---
+
+_UNSETTLED_TAG = "unsettled-conflict-ending"
+
+
+def test_unsettled_conflict_not_proved_left_open(before_state, after_state, test):
+    """The terminal marker the ladder reads: one `not_proved` summary for q_001
+    with `shortfall: "conflict"`. The question stays open (a conflict blocking
+    the correlation is not a finding that nothing is there), and `search_stop`
+    is research-exhaustiveness's, so it is unchanged."""
+    if _UNSETTLED_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not a {_UNSETTLED_TAG} test")
+    summaries = [s for s in after_state.get("proof_summaries") or [] if s.get("question_id") == "q_001"]
+    assert len(summaries) == 1, f"q_001 has {len(summaries)} proof summaries, want 1"
+    s = summaries[0]
+    assert (s.get("tier"), s.get("shortfall")) == ("not_proved", "conflict"), (
+        f"q_001's summary is tier {s.get('tier')!r}, shortfall {s.get('shortfall')!r}; "
+        "the ladder ends the research only on not_proved with shortfall conflict"
+    )
+    before_q = next(q for q in before_state.get("questions") or [] if q.get("id") == "q_001")
+    after_q = next(q for q in after_state.get("questions") or [] if q.get("id") == "q_001")
+    assert after_q.get("status") == before_q.get("status"), (
+        f"q_001 moved from {before_q.get('status')!r} to {after_q.get('status')!r}: "
+        "a conflict-blocked not_proved leaves the question open"
+    )
+    assert after_q.get("search_stop") == before_q.get("search_stop"), (
+        "q_001's search_stop changed; research-exhaustiveness owns it"
+    )
+
+
+def test_unsettled_conflict_conclusion_offers_no_continue(text_response, test, agent_returns=None):
+    """The research has ended on the conflict, so every way on is the
+    researcher's: no "Continue with ...?" offer."""
+    if _UNSETTLED_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not a {_UNSETTLED_TAG} test")
+    from harness.skill_runner import subject_reply_text
+    from validators_lib import continue_offers
+
+    reply = subject_reply_text(agent_returns, text_response, "proof-conclusion", test)
+    assert reply.strip(), "proof-conclusion returned no reply"
+    offers = continue_offers(reply)
+    assert not offers, f"the reply offers a next step after the research ended: {offers}"

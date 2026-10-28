@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_uc1",
+    "skill": "conflict-resolution",
+    "name": "A conflict no record left to search can settle ends without a Continue line (E)",
+    "type": "positive",
+    "description": "dutch-mother-searched-out: c_001 (three readings of the mother's name) was analysed on the birth act and the index, and named five records that would settle it. All five have since been searched and none survives or names her. Step mode's section E: a pass that settles nothing and names nothing left to search ends without a \"Continue with ...?\" line, because offering one would re-run conflict-resolution on the same evidence for ever. The ladder then sends the question to proof-conclusion. The counterpart of ut_conflict_resolution_rt1, where a record IS left to search and the pass routes to research-plan.",
+    "tags": [
+      "conflict-resolution",
+      "unresolved",
+      "routing",
+      "step-mode",
+      "unsettled-conflict-ending",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Weigh conflict c_001 on the mother's name against the searches made since it was last analysed, then say what happens next.\n\nprojectPath: <workspace>",
+    "scenario": "dutch-mother-searched-out"
+  },
+  "judge_context": [
+    "c_001 must stay `unresolved` with `preferred_assertion_id: null`. The birth act's first letter is unreadable and the only legible reading is a derivative index; nothing searched since breaks that tie. Resolving it to either name is the failure.",
+    "The five records c_001 named as decisive (the marriage act itself, the mother's death act, the population register, a sibling's birth act, the parents' marriage act) are all in the log as searched, and each note says why it cannot settle the name: missing volume, no act, register begins too late, no sibling, no indexed marriage. The pass should say so in `resolution_rationale`: no record left to search can settle it.",
+    "**The reply must not end with, or contain, a \"Continue with ...?\" line.** There is nothing to plan, so offering planning would re-run this same weighing. Naming research-plan or question-selection as the next step, or recommending a new research question, is the failure this test exists for.",
+    "Do not charge the agent for naming a record that is genuinely absent from the log, if it says why that record could settle the name and does not offer to plan it. Do charge it for proposing again any of the five records already searched.",
+    "Do not require the agent to write `weighed_log_entry_ids`: `research_append` stamps it on the analysis write. A validator checks the stamp.",
+    "The analysis fields (`independence_analysis`, `weighing_analysis`) should be refreshed on this pass, since there is new evidence to weigh."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
