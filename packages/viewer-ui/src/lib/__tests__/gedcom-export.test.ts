@@ -187,6 +187,12 @@ describe('file framing', () => {
     expect(child(head, 'DATE')[0].data?.value).toBe('27 OCT 2026')
   })
 
+  it('writes a HEAD SOUR system id of 20 characters or fewer', () => {
+    const id = child(ofType(text, 'HEAD')[0], 'SOUR')[0].data?.value ?? ''
+    expect(id).toBe('GENEALOGY_RESEARCH')
+    expect(id.length).toBeLessThanOrEqual(20)
+  })
+
   it('has a SUBM record with a NAME, pointed at from HEAD', () => {
     const subm = ofType(text, 'SUBM')
     expect(subm).toHaveLength(1)

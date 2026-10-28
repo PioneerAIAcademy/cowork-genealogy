@@ -34,7 +34,7 @@ deliberately left out.
 
 ```
 0 HEAD
-1 SOUR GENEALOGY_RESEARCH_VIEWER
+1 SOUR GENEALOGY_RESEARCH
 2 NAME Genealogy Research Viewer
 1 DATE 27 OCT 2026
 1 SUBM @U1@
@@ -50,6 +50,7 @@ deliberately left out.
 0 TRLR
 ```
 
+The HEAD `SOUR` value is the approved system ID, which 5.5.1 caps at 20 characters.
 `SUBM` and its `NAME` are required by 5.5.1. Lines end with LF; there is no BOM. Record
 order: INDI, FAM, SOUR, REPO, NOTE.
 

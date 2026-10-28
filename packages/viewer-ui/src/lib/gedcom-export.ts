@@ -508,7 +508,7 @@ export function exportGedcom(
 
   // §2 Header
   w.text(0, 'HEAD')
-  w.text(1, 'SOUR', 'GENEALOGY_RESEARCH_VIEWER')
+  w.text(1, 'SOUR', 'GENEALOGY_RESEARCH')
   w.text(2, 'NAME', 'Genealogy Research Viewer')
   w.text(1, 'DATE', headerDate(opts.now ?? new Date()))
   w.pointer(1, 'SUBM', '@U1@')
