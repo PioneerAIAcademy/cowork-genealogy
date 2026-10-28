@@ -2562,57 +2562,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent's findings are factually accurate and grounded in tool responses. Finding 1 correctly identifies the Minnesota Death Index discrepancy (1954 indexed vs. 1945 profile) with all supporting details matching the record_read response. Finding 2 correctly identifies the 1885 census as misattributed to KD96-WX7, with the person_read of KD96-WX7 confirming birth 1852, residence Aurdal Otter Tail 1885, and death 1919\u2014all matching the census record. The agent properly distinguished index error from misattribution based on the evidence. The checklist block correctly references findings rather than reprinting the CONSISTENCY issues verbatim. No fabricated material or unsupported claims."
+                "rationale": "The agent's findings are factually accurate and grounded in tool responses. Finding 1 correctly identifies the death year discrepancy (1954 indexed vs. 1945 profile) with all supporting details matching the record_read response for HOLE-002. Finding 2 correctly identifies the 1885 census as misattributed to KD96-WX7, with the person_read response for KD96-WX7 confirming birth 1852, residence Aurdal Otter Tail 1885, and death 1919\u2014all matching the census record. The agent properly notes the funeral card (SD-HOLE-D) cannot be independently verified. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent addressed all required work: called person_read for KD96-TV2, read all three sources with record ARKs (HOLE-001, HOLE-002, HOLE-003), called person_quality with detail:true, called source_attachments before the misattribution recommendation, called person_read on KD96-WX7 to confirm the true subject, and called person_warnings. Both findings were reported. The unreadable source (SD-HOLE-D) was explicitly noted as unchecked with reason. The checklist block was included after findings, outside the count, with CONSISTENCY warnings properly redirected to findings and the other two issues (marriage place, marriage sources) printed under their scoreTypes in the correct order."
+                "rationale": "The agent addressed all required elements: audited all 4 attached sources (3 indexed records plus 1 memory), identified both real findings (death year indexing error and 1885 census misattribution), explained why the memory could not be checked, ran person_quality and reported its checklist correctly outside the findings count, and ran person_warnings (which returned no warnings). The delegation asked to evaluate sources for mis-indexing; the agent completed this task fully."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed arguments matching expected_args semantically. person_read calls used correct personIds (KD96-TV2, KD96-WX7). record_read calls used ARKs extracted from source URLs (HOLE-001, HOLE-002, HOLE-003). source_attachments was called with the correct ARK (HOLE-003). person_quality was called with personId and detail:true. person_warnings was called with personId and projectPath. research_log_append was called with correct projectPath, personId, and outcome. No critical identifiers were wrong, no fixture_not_found errors occurred, and no extraneous noisy arguments were added."
+                "rationale": "All tool calls passed arguments matching expected_args semantically. person_read called with correct personId (KD96-TV2 and KD96-WX7). record_read calls used ARKs extracted from source URLs (HOLE-001, HOLE-002, HOLE-003). source_attachments called with the correct ARK (HOLE-003). person_quality and person_warnings called with correct personId. research_log_append called with correct projectPath and query structure. No fixture_not_found errors. All critical identifiers correct."
               },
               {
                 "source": "rubric",
                 "name": "Classification before recommendation",
                 "score": 3,
-                "rationale": "Each finding carries an explicit classification with supporting evidence. Finding 1 is labeled 'indexing error' and cites the single-field disagreement: day and month match (10 June), birth year matches (1875), place matches (Erskine, Polk, Minnesota), only the year digit differs (1954 vs. 1945). Finding 2 is labeled 'misattributed' and cites multiple independent fields wrong: birth year 23 years off (1852 vs. 1875), county different (Otter Tail vs. Polk), wife different (Bergit vs. Inger), household composition different (Nils vs. Ole C.). The cues are explicit and allow verification."
+                "rationale": "Each finding carries explicit classification with supporting evidence. Finding 1 is classified as 'indexing error' with the cue: day and month match exactly (10 June), name matches, birth year 1875 matches, death place matches\u2014only the year digit differs. Finding 2 is classified as 'misattributed' with multiple independent mismatches: birth year 1852 vs. 1875 (23-year gap), wife Bergit vs. Inger, county Otter Tail vs. Polk, household composition entirely different. The agent explicitly states 'A person born in 1875 would be ten years old in 1885 and could not be the head of this household,' making the misattribution cue clear."
               },
               {
                 "source": "rubric",
                 "name": "Remediation doctrine",
                 "score": 3,
-                "rationale": "Finding 1 (index error) recommends consulting the original death certificate first, then filing the correction\u2014the original comes first, matching the required order. Finding 2 (misattribution) recommends detaching from KD96-TV2 and names the true subject (KD96-WX7) after source_attachments confirmed the attachment and person_read of KD96-WX7 verified the fit. The detach is licensed: the disagreement is with the profile (not source-vs-source), the person is named, and multiple independent fields are wrong. No index error recommends detaching. No source-vs-source disagreement is treated as misattribution."
+                "rationale": "Finding 1 (indexing error) recommends consulting the original death certificate first, then filing the correction via FamilySearch's index-correction path, keeping the source attached. This follows the correct order: original first, correction second. Finding 2 (misattribution) recommends detaching from KD96-TV2 after source_attachments confirmed the record is also attached to KD96-WX7. The detach is licensed: the disagreement is with the profile (multiple independent fields wrong), and the person whose record it is (KD96-WX7) is named with person_read confirmation. No index error is recommended for detaching."
               },
               {
                 "source": "rubric",
                 "name": "Signal versus backend noise",
                 "score": 3,
-                "rationale": "The findings list contains only user-actionable items (two findings, stated count of 2). The checklist block appears after findings, outside the count, and carries no recommended action. The two CONSISTENCY issues from person_quality are not printed verbatim as suggestions; instead, the checklist points to the findings they match ('FamilySearch flags this death date too \u2014 finding 1 above'). The other two issues (marriage place, marriage sources) are printed under their scoreTypes (VERIFIABILITY, COMPLETENESS) in the correct order. No backend artifacts are numbered as findings or given actions."
+                "rationale": "The findings list contains only user-actionable items (2 findings, stated count 2). Backend artifacts (repeated FamilySearch IDs) are absent. The person_quality checklist appears after the findings, outside the count, with no recommended action attached. The checklist correctly redirects the two CONSISTENCY issues (death date and birth date mismatches) to the findings rather than printing them verbatim as suggestions. The impossible-date check result (no warnings) is reported as a separate block outside the findings. No backend noise is presented as a problem."
               },
               {
                 "source": "rubric",
                 "name": "Tool selection and argument quality",
                 "score": 3,
-                "rationale": "person_read was called for KD96-TV2 and returned sources and relatives. Every source with a 1:1: ARK was read: HOLE-001, HOLE-002, HOLE-003 all read with their actual ARKs. source_attachments was called before the misattribution recommendation, confirming HOLE-003 is attached to both KD96-TV2 and KD96-WX7. person_read was called for KD96-WX7 to confirm the true subject's facts fit the record. person_warnings was called once with projectPath and personId. No ARKs were invented; all came from source URLs in person_read responses."
+                "rationale": "person_read called for KD96-TV2 (the subject) and KD96-WX7 (to confirm the true subject of the misattributed record). record_read called for each source carrying a 1:1: ARK (HOLE-001, HOLE-002, HOLE-003), using the ARKs from the source URLs. source_attachments called before the misattribution recommendation, confirming HOLE-003 is attached to both KD96-TV2 and KD96-WX7. person_warnings called once with projectPath and personId. All tool selections and arguments are correct."
               },
               {
                 "source": "rubric",
                 "name": "Coverage and honesty about what was not checked",
                 "score": 3,
-                "rationale": "All four attached sources are accounted for. Three readable sources (HOLE-001, HOLE-002, HOLE-003) were read and judged. The fourth source (SD-HOLE-D, funeral card/photograph) is explicitly named as unchecked with the reason: 'contributor-uploaded memory with no indexed record behind it.' The agent notes its title mentions 1945 but states this is not independent evidence. No source is described as clean without a tool response, and no attached sources go unmentioned."
+                "rationale": "All 4 attached sources are accounted for. The three indexed records (HOLE-001, HOLE-002, HOLE-003) are read and judged. The memory (SD-HOLE-D) is explicitly named as unchecked with the reason: 'contributor-uploaded memory with no indexed record behind it' and 'an uploader's title is not independent evidence.' The agent notes that reading the original funeral card directly would help confirm the year but does not claim to have done so. Complete coverage with honest accounting of limitations."
               }
             ],
-            "judge_cost_usd": 0.0203739,
+            "judge_cost_usd": 0.0197839,
             "duration_ms": 19197.458799986634,
             "error": null,
             "input_tokens": 12041,
             "cached_input_tokens": 6129,
-            "output_tokens": 1544
+            "output_tokens": 1426
           },
           "started_at": 1792658742.8297124,
           "ended_at": 1792658905.951704
@@ -7105,57 +7105,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The response correctly identifies and classifies two source findings: the Minnesota Death Index as an indexing error (1954 vs. 1945 death year, with month/day/birth year/place matching), and the 1885 Minnesota State Census as misattributed (multiple independent fields wrong: birth year 1852 vs. 1875, county Otter Tail vs. Polk, wife Bergit vs. Inger). The remedy for the index error correctly directs re-reading the original death certificate first, then correcting the index. The misattribution detach is properly licensed by source_attachments showing the record attached to both KD96-TV2 and KD96-WX7, and person_read of KD96-WX7 confirming all fields fit that person exactly (born 1852, 1885 residence in Aurdal Otter Tail, death 1919 Otter Tail). The impossible-date warning is reported verbatim from person_warnings with the exact message and facts (Death 1945-06-10, Residence 1950). The uploaded funeral card is correctly reported as unchecked with the reason (no indexed record). The profile checklist items are correctly presented outside the findings count. No fabricated material or unsupported claims."
+                "rationale": "The response correctly identifies and classifies two source issues: (1) Minnesota Death Index shows death year 1954 vs. profile's 10 June 1945 \u2014 correctly identified as indexing error with one field wrong; (2) 1885 Minnesota State Census shows Christian Hole born 1852 in Otter Tail County with wife Bergit \u2014 correctly identified as misattribution, with multiple independent fields disagreeing (birth year 23 years off, county different, wife's name different). The response accurately cites the profile facts from person_read (birth 1875, death 10 June 1945, wife Inger, Polk County). The 1900 census birth-year variance (1877 in record vs. 1875 in profile) is correctly noted as ordinary variance and not flagged as an error. The uploaded funeral card is correctly reported as unchecked with reason stated. The impossible-date warning is reported verbatim from person_warnings with correct facts (Death 1945-06-10, Residence 1950). The FamilySearch checklist items are correctly reported as suggestions outside the findings count. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The response addresses all required elements: person_read was called for KD96-TV2 and returned four sources (three with record ARKs, one uploaded memory); all three readable sources were read via record_read and judged; the uploaded memory was explicitly reported as unchecked with reason; person_quality was called with detail:true and its two-issue checklist was reported outside the findings count; person_warnings was called and its one warning was reported in the correct position with the correct message and facts; source_attachments was called before the misattribution detach recommendation, confirming the record's attachment to both persons; person_read was called for KD96-WX7 to verify the misattribution. The response does not mention SD-HOLE-E (the child's source), correctly excluding it from the audit. All required actions were performed."
+                "rationale": "The response addresses all required elements: (1) person_read was called for KD96-TV2 and all four attached sources are accounted for (three readable indexed sources plus one uploaded memory); (2) all three readable sources with record ARKs were read via record_read; (3) the 1900 census is evaluated and correctly noted as ordinary variance; (4) the Death Index is classified and remedied; (5) the 1885 census is classified and remedied; (6) the uploaded funeral card is explicitly reported as unchecked with reason; (7) person_warnings result is reported in its own block after findings; (8) person_quality checklist is reported after warnings, outside the count; (9) source_attachments was called before the misattribution detach recommendation, confirming the record's attachment to KD96-WX7 and person_read of KD96-WX7 confirms the fit. No required items omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed arguments matching expected_args semantically. person_read called with personId 'KD96-TV2' (exact match). record_read called three times with ARKs extracted from source URLs: 'ark:/61903/1:1:HOLE-001', 'ark:/61903/1:1:HOLE-002', 'ark:/61903/1:1:HOLE-003' (all match expected ~HOLE-### patterns). person_quality called with personId 'KD96-TV2' and detail:true. person_warnings called with personId 'KD96-TV2' and projectPath (exact match). source_attachments called with the 1885 census ARK 'ark:/61903/1:1:HOLE-003' (matches expected ~HOLE-003). person_read called again for KD96-WX7 to verify the misattribution (exact match). research_log_append called with correct projectPath and query structure. No critical identifiers were wrong, no calls landed in fixture_not_found, and no noisy extra arguments were added."
+                "rationale": "All tool calls passed correct arguments matching expected_args: person_read(personId: 'KD96-TV2') correct; record_read calls used ARKs from source urls (HOLE-001, HOLE-002, HOLE-003) as expected; person_quality(personId: 'KD96-TV2', detail: true) correct; person_warnings(personId: 'KD96-TV2', projectPath: ...) correct; source_attachments(uris: ['ark:/61903/1:1:HOLE-003']) correct; person_read(personId: 'KD96-WX7') correct to verify the misattributed record's true subject; research_log_append with correct projectPath and query structure. No fixture_not_found errors. All critical identifiers correct."
               },
               {
                 "source": "rubric",
                 "name": "Remediation doctrine",
                 "score": 3,
-                "rationale": "The response correctly distinguishes index error from misattribution and applies the appropriate remedy to each. For the Minnesota Death Index (one field wrong: 1954 vs. 1945 death year; all other fields match\u2014month, day, birth year 1875, place Erskine Polk Minnesota), the remedy correctly directs: 'obtain the original death certificate for Christian P. Hole (died 10 June 1945, Polk County, Minnesota) to confirm the true year, then use the index-correction path on FamilySearch to correct the indexed year. Keep the source attached.' The original is checked first, correction follows. For the 1885 Minnesota State Census (multiple independent fields wrong: birth year 1852 vs. 1875, county Otter Tail vs. Polk, wife Bergit vs. Inger), detaching is correctly recommended as the first action after source_attachments confirms the record is attached to KD96-WX7, and person_read of KD96-WX7 confirms all fields fit that person exactly. The detach is licensed by the profile disagreement and the person whose record it is (KD96-WX7) is named. The impossible-date warning is not treated as a source finding and carries no remedy."
+                "rationale": "The response correctly distinguishes index error from misattribution and applies appropriate remedies. For the Death Index (one field wrong: year 1954 vs. 1945; all other fields match \u2014 birth year 1875, place Erskine Polk Minnesota, month/day 10 June): remedy is to re-read the original death certificate first, then correct the index, keeping the source attached. For the 1885 census (multiple independent fields wrong: birth year 1852 vs. 1875, county Otter Tail vs. Polk, wife Bergit vs. Inger): remedy is detach, with source_attachments confirming attachment to KD96-WX7 and person_read of KD96-WX7 confirming all fields fit that person (born 1852, 1885 residence Aurdal Otter Tail, death 1919 Otter Tail). The detach is licensed: disagreement is with the profile (not source-vs-source), and the person whose record it is (KD96-WX7) is named. The order check passes: for the index error, the first action is 'obtain the original death certificate...to confirm the true year, then use the index-correction path' \u2014 the original is checked first."
               },
               {
                 "source": "rubric",
                 "name": "Classification before recommendation",
                 "score": 3,
-                "rationale": "Each finding carries an explicit classification with supporting evidence. Finding 1 is classified 'indexing error' with the cue: 'The month and day both match (10 June), as do the birth year (1875) and place (Erskine, Polk, Minnesota). The death year is the only field that disagrees.' Finding 2 is classified 'misattributed' with the cue: 'Multiple fields disagree simultaneously: birth year, county, and wife's name' and the evidence that 'Every field of the 1885 census record fits KD96-WX7 exactly; none fit KD96-TV2.' The distinction between one field wrong (index error) and several independent fields wrong (misattribution) is explicit and grounded in the record details."
+                "rationale": "Each finding carries explicit classification with supporting evidence. Finding 1 (Death Index): classified as 'indexing error' with cue 'The month and day both match (10 June), as do the birth year (1875) and place (Erskine, Polk, Minnesota). The death year is the only field that disagrees.' Finding 2 (1885 Census): classified as 'misattributed' with cue 'Multiple fields disagree simultaneously: birth year, county, and wife's name' and 'Every field of the 1885 census record fits KD96-WX7 exactly; none fit KD96-TV2.' Both classifications are explicit and evidence-based, allowing a reader to verify the distinction."
               },
               {
                 "source": "rubric",
                 "name": "Signal versus backend noise",
                 "score": 3,
-                "rationale": "The response cleanly separates user-actionable findings from backend artifacts and FamilySearch metadata. The numbered findings (2 items) contain only substantive source disagreements with recommended actions. The impossible-date warning is reported in its own block after the findings, outside the stated count, with the tool's message verbatim and no narrated cause. The FamilySearch profile checklist (2 items: marriage has no tagged sources, marriage place missing city) is presented in a separate block after the warnings, outside the findings count, with no recommended action attached. No backend artifacts (repeated IDs, storage metadata) appear in the findings or carry actions. The response states 'Could not check' for the uploaded memory with the reason, which is a legitimate accounting, not noise."
+                "rationale": "The findings list contains only user-actionable items (two source issues). Backend artifacts (repeated FamilySearch ids across records) are absent from the numbered findings. The impossible-date warning from person_warnings is reported in its own block after the findings, outside the stated count of 2 findings, with the tool's message given verbatim and no narrated cause. The FamilySearch profile checklist (marriage missing sources, marriage place missing city) is reported in a separate block after the warnings, outside the count, with no recommended action attached. The response correctly separates what the researcher can act on (the two source issues) from metadata and system artifacts."
               },
               {
                 "source": "rubric",
                 "name": "Tool selection and argument quality",
                 "score": 3,
-                "rationale": "The agent correctly selected and sequenced tools. person_read was called for KD96-TV2 to retrieve the profile and attached sources. Each source carrying a 1:1: ARK was read with record_read using the ARK from the source's url field (HOLE-001, HOLE-002, HOLE-003). person_quality was called with detail:true to retrieve the profile checklist. person_warnings was called once with projectPath and personId KD96-TV2 to check for tree-level contradictions. source_attachments was called before the misattribution detach recommendation, confirming the 1885 census is attached to both KD96-TV2 and KD96-WX7. person_read was called for KD96-WX7 to verify the misattribution and confirm the record's true subject. All ARKs were taken from source urls, not invented. No records were judged without being read."
+                "rationale": "person_read was called for the subject (KD96-TV2) and returned the four-fact profile and attached sources. All three readable sources carrying 1:1: ARKs were read with the ARKs they actually carry (HOLE-001, HOLE-002, HOLE-003 from the source urls). source_attachments was called before the misattribution detach recommendation, confirming the 1885 census is attached to both KD96-TV2 and KD96-WX7. person_read was then called for KD96-WX7 to confirm the record's true subject and verify the fit. person_warnings was called once with projectPath and personId KD96-TV2, and the warning was reported because the person was found in the tree. person_quality was called with detail: true. All tool paths are correct."
               },
               {
                 "source": "rubric",
                 "name": "Coverage and honesty about what was not checked",
                 "score": 3,
-                "rationale": "All attached sources are accounted for. The three readable sources (HOLE-001, HOLE-002, HOLE-003) were each read and judged. The uploaded memory (SD-HOLE-D, funeral card) is explicitly reported as unchecked with the reason: 'this is a contributor-uploaded item with no indexed record behind it. Its contents cannot be verified through a record read.' The response notes the funeral card title is consistent with the profile but correctly states 'the uploader's title is not independent evidence.' No source is described as clean without a tool response behind it, and no attached sources go unmentioned."
+                "rationale": "All four attached sources are accounted for. The three readable indexed sources (HOLE-A, HOLE-B, HOLE-C) are each read and judged. The one unreadable source (HOLE-D, the uploaded funeral card) is explicitly named and reported as unchecked with the reason: 'this is a contributor-uploaded item with no indexed record behind it. Its contents cannot be verified through a record read.' The response notes the card's title is consistent with the profile but correctly states that an uploader's title is not independent evidence. No source is described as clean without a tool response behind it."
               }
             ],
-            "judge_cost_usd": 0.0231779,
+            "judge_cost_usd": 0.0225829,
             "duration_ms": 21068.670400010888,
             "error": null,
             "input_tokens": 12300,
             "cached_input_tokens": 6129,
-            "output_tokens": 2053
+            "output_tokens": 1934
           },
           "started_at": 1792658906.0470192,
           "ended_at": 1792659073.4199102
@@ -11305,5 +11305,5 @@
       "research_log_append": "5575baefbe6c3792d2b7c71a623f68084e1ecc3d550365f9b15b45ef2bd75cc8"
     }
   },
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  "judge_render_hash": "5367ed19690a4d9c780880f8a9dd57b80546ff71b8b873d48ecf402bb5850393"
 }

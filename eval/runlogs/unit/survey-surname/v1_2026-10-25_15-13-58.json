@@ -198,7 +198,8 @@
                 "subagent_type": "survey-surname",
                 "text": "That's a search for one person's record \u2014 please use search-records."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -1181,11 +1182,11 @@
                 "rationale": "The logged survey_surname entry contains a well-structured markdown table with two sections: one for '1850 \u2014 United States Census, 1850' (population schedule) and one for '1850 \u2014 United States Census (Slave Schedule), 1850' (non-population schedule). The population section correctly groups Edmund and Mary Dixon (sharing recordArk ark:/61903/1:2:XJQV-HH1850-A) into one household row with Edmund as head and Mary listed under 'Other Dixon Members'. William and James Dixon appear as separate rows with unique ARKs. All required columns are present: Census Year, County, Head of Household, Other Dixon Members, Record ARK, and Ruled Out. The table ends with the required hedge sentence about pre-1880 censuses lacking relationship columns."
               }
             ],
-            "judge_cost_usd": 0.018760199999999998,
+            "judge_cost_usd": 0.018328999999999998,
             "duration_ms": 12353.260800009593,
             "error": null,
             "input_tokens": 12869,
-            "cached_input_tokens": 4312,
+            "cached_input_tokens": 0,
             "output_tokens": 1092
           },
           "started_at": 1792941368.5628712,
@@ -3099,11 +3100,11 @@
                 "rationale": "The logged survey_surname entry (log_010) contains a well-structured markdown table sectioned by census year (1820, 1830, 1840) with collection title 'United States Census' repeated for each section. The table includes all required columns: Census Year, County, Head of Household, Other Members (Dixon surname), Record ARK, and Ruled Out. Households are listed by year and county. Pre-1850 censuses show '\u2014' for other members (correct, as only heads are named). The table ends with the required hedge sentence: 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.'"
               }
             ],
-            "judge_cost_usd": 0.024682000000000003,
+            "judge_cost_usd": 0.025113200000000002,
             "duration_ms": 13362.583700014511,
             "error": null,
             "input_tokens": 18602,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4312,
             "output_tokens": 1216
           },
           "started_at": 1792941247.8411162,
@@ -4130,11 +4131,11 @@
                 "rationale": "The markdown table is well-structured and logged in the survey_surname research-log entry (log_009). It is sectioned by census year (1840 and 1850) with collection titles. Columns include: Census Year, County, Head of Household, Other Members (surname Dixon), Record ARK, and Ruled Out. The 1840 section lists all 6 households with their counties and ARKs. The 1850 section notes the threshold violation and that counties are needed, with one household (Edmund and Mary Dixon) shown from the first page. The closing hedge sentence about pre-1880 censuses is present. Structure and content are correct."
               }
             ],
-            "judge_cost_usd": 0.022199,
+            "judge_cost_usd": 0.0226302,
             "duration_ms": 13374.60480001755,
             "error": null,
             "input_tokens": 16254,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4312,
             "output_tokens": 1189
           },
           "started_at": 1792941247.8411162,
@@ -4188,5 +4189,6 @@
     "live_modules": {
       "research_log_append": "4287c1c36d6a2263ee34a6dd9a25170131455964046710deb41b760bba8be20f"
     }
-  }
+  },
+  "judge_render_hash": "5367ed19690a4d9c780880f8a9dd57b80546ff71b8b873d48ecf402bb5850393"
 }
