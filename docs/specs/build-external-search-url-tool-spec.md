@@ -915,7 +915,7 @@ means nothing is backed.
 a project, the tool refuses a `baseUrl` naming a collection whose key is not
 stored for any place (§5); `research_append` refuses the same on a plan item's
 `collection_url`, and `research_log_append` on an `external_site` entry's
-`urlGenerated` (lead ruling of 2026-10-28), except a url already in the log on an
+`urlGenerated` (decided 2026-10-28: Richard's call, the lead agreeing), except a url already in the log on an
 entry that opens no new hand-off, so a hand-off stays closable. The ruling replaced "measure first" (2026-09-24): ids are now
 traceable from the project files, so the check is an exact lookup.
 
