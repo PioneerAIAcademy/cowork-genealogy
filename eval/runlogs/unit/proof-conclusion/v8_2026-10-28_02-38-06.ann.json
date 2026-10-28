@@ -1,0 +1,326 @@
+{
+  "run_log": "v8_2026-10-28_02-38-06.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment's core GPS analysis and evaluation of the three sources are sound, but it does not fully resolve the structural inconsistency involving ps_001's preferred assertion a_002 and q_001's returned assertions. This creates a meaningful grounding ambiguity, even though the underlying tool observations are correctly reported."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the main defect and handles the evidence gaps appropriately, but its treatment of the maternal-scope problem is incomplete because it does not evaluate what ps_001 actually says—or fails to say—about the mother."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all eight MCP calls passed, used the correct sections and identifiers, returned live results, and had semantically appropriate arguments for the review-mode proof-conclusion assessment. No fixture errors or incorrect tool arguments were identified."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly supports the “probable” tier and identifies the evidence gap, but it does not fully justify why “probable” is the appropriate ceiling. It also identifies the maternal-scope defect without explaining how leaving half of the question unanswered affects the overall proof conclusion. Those omissions make the tier analysis incomplete."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly evaluates the review-mode self-containment requirement, accurately confirms that the narrative contains the necessary source details and evidence hierarchy without relying on bare assertion IDs, and appropriately treats the repeated “digital image, FamilySearch.org” wording as a minor clarity issue rather than an error. The pass verdict is well supported."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment thoroughly surveys the cited and unincorporated assertions, accurately explains their evidentiary contributions, and correctly determines that incorporating the flagged assertions would not change the tier. It also appropriately avoids requiring the deeper three-layer analysis because this is a review-mode test. No relevant or inconvenient evidence is omitted."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies the “summary” vehicle and recognizes that the evidence supports that form. Although it does not explicitly state that the Summary form remains appropriate, the assessment demonstrates that through its discussion of the evidence shape and structure. The omission is a minor opportunity for additional explanation, not a substantive defect."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly verifies the tree encoding for the probable-tier proof: the ParentChild relationship is properly encoded and sourced to all three cited sources, the birth fact reflects the resolved conclusion, and the persons and relationship are linked. It also correctly confirms that the tree representation reflects the proof conclusion rather than merely the narrative."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately evaluates the paternity and maternity conclusions, correctly explains the evidence and conflict resolution, and confirms the tree encoding. It is factually grounded, appropriately weighs the sources and informant quality, and contains no fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that all required elements were completed: the proof summary, all 11 assertions, the resolved conflict, separate paternity/maternity analysis, exhaustive-search evidence, tree encoding, and both question and project status updates. No major required component is omitted."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all MCP calls used the correct arguments and parameters, including the tree edit and research updates. It also correctly notes that all calls returned live results with no fixture errors, and the described operations align with the expected tool usage."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment clearly justifies both tiers, explains why the paternity conclusion does not reach “proved,” identifies the specific evidence needed to advance it, and accurately explains why maternity remains “not_proved.” It also correctly identifies the remaining evidence gaps and distinguishes the current conclusions from the next research steps."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the narrative is self-contained, describes the evidence and assertions inline, provides sufficient source details through citations, explains the conflict resolution, and clearly states both tiers. A reader can understand and follow the reasoning without access to the underlying JSON."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that all relevant assertions and the resolved conflict are addressed, including inconvenient evidence concerning the Bridget Flynn candidate. It demonstrates that the narrative is comprehensive and balanced rather than selectively presenting only supporting evidence."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies the Argument form as appropriate for the evidence shape and explains why: competing candidates, indirect evidence, and a secondary-informant direct claim. It also accurately describes how the narrative applies the Argument structure to distinguish the “probable” paternity conclusion from the “not_proved” maternity conclusion."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n8p",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the paternal conclusion is encoded in the tree with the appropriate ParentChild relationship, source reference, and “probable” conclusion, while correctly leaving the unproved maternity claim unencoded. It clearly distinguishes the tree encoding from the narrative-only conclusion."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately distinguishes the missing death certificate from the indirect evidence that was found, correctly supports the “possible” tier, and identifies the unsearched reachable microfilm as an evidence gap. The citations and factual claims are consistent with the tool results, with no fabricated or unsupported material."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms all required elements: the missing death certificate is clearly distinguished from the indirect evidence, the reachable alternative sources are identified, the “possible” tier is appropriately justified, and the narrative includes citations, evidence analysis, conflict handling, and tier justification. It also correctly confirms that q_001 was resolved with the supporting assertions properly cited."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that all MCP calls succeeded with appropriate arguments, consistent project and fixture identifiers, and no fixture_not_found errors. It accurately verifies the research queries, append operations, and tree edits, including the expected IDs and field structures."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly justifies the “possible” tier, explains the strength and limitations of the two independent sources, identifies the specific evidence needed to advance the tier, and correctly classifies the unsearched microfilm as a reachable evidence gap rather than a ceiling."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the narrative is self-contained, provides sufficient inline source details, accurately describes the evidence and its limitations, explains the apparent tension between the negative certificate search and indirect evidence, and clearly states the “possible” tier. A reader can follow the reasoning without access to the underlying JSON."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that all three relevant assertions are addressed, accurately evaluates the classification and limitations of both sources, and verifies that no conflicting evidence was omitted. It also correctly notes that no conflict-resolution analysis was required because the conflicts query returned zero conflicts."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies the Summary form as appropriate for the evidence shape and explains why. It accurately distinguishes the Summary from both an overbuilt Argument and an underdeveloped Statement, while confirming that the narrative follows the expected Summary structure and adequately explains the “possible” tier."
+    },
+    {
+      "test_id": "ut_proof_conclusion_n9f",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the “possible” conclusion was appropriately encoded on the tree, with the synthesized death fact marked primary and sourced to both supporting records. It accurately verifies that the encoded date and place match the evidence and that the tree now reflects the conclusion rather than merely the narrative."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the proof conclusion, correctly classifies the five sources, and appropriately justifies the “proved” tier based on the two independent original sources with primary information. It also correctly handles the conflict and negative probate result, with no fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that all required elements were completed, including the new “proved” proof summary, incorporation of all five assertions, conflict citation, exhaustive-search documentation, tree encoding, and self-contained narrative with tier justification. No major required component was omitted."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all MCP calls used the correct arguments and parameters, including the required proof-summary fields and the ParentChild tree relationship. It also correctly verifies that all results were live and that no fixture_not_found errors occurred."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly justifies the “proved” tier using the stated threshold of two independent original sources with primary information. It also correctly identifies that no higher tier exists, sets the shortfall to “none,” and confirms that the exhaustive-search summary documents completion of the planned searches with no unreached sources."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the narrative is self-contained, describes each assertion and source with sufficient detail, provides complete inline citations, explains the conflict resolution, and explicitly states the “proved” tier. A reader can follow the reasoning without access to the underlying JSON."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that all relevant assertions and the resolved conflict are addressed, including the negative probate result. It also verifies that the narrative is balanced rather than selectively presenting favorable evidence, while accurately acknowledging the limitations of the census evidence and death-certificate informant."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies the Summary form as appropriate for the evidence shape and accurately explains how the narrative follows that structure. It properly distinguishes the straightforward convergence of evidence from cases requiring an Argument, and its reasoning is consistent with the described proof."
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the proved conclusion was encoded on the tree, including the newly required ParentChild relationship, the appropriate source assertion, and the source reference. It also correctly verifies that the relationship was not pre-staged and that the conclusion is now represented in the tree rather than only in the narrative."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies that no assertions exist for q_001, making “not_proved” the only defensible tier. It accurately describes the absence of gathered evidence, identifies the relevant unsearched record types, correctly sets shortfall: gap, and confirms the required project-status update. No unsupported or fabricated claims are present."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms all required elements: the not_proved tier with gap shortfall, the empty resolution assertion list, the required project completion update, and the narrative explaining what further research would be needed. It also correctly recognizes that the “What Remains Unsearched” section satisfies the requirement to state what identifying the parents would take."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that all seven MCP calls used the expected arguments and structures, with no fixture_not_found errors. It also accurately verifies the batched proof-summary/question update and the separate project-status update."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly justifies the not_proved tier based on the absence of assertions, accurately identifies the remaining reachable but unsearched sources, and clearly connects the gap shortfall to those research opportunities. The narrative also explicitly explains why the tier cannot be higher."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the two main weaknesses: incomplete description of the baseline tree entry and exceeding the 150-word budget for a Statement vehicle. While the word-count issue was only a validation warning, the combination means the narrative is not fully self-contained or compliant with the expected form."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that q_001 has no assertions or conflicts, accurately reflects that absence in the narrative, and appropriately avoids citing nonexistent evidence. It also correctly recognizes that the exhaustive-search summary documents the unsearched record types and satisfies the requirement to show what remains."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies the Statement vehicle as appropriate for a not_proved conclusion with zero evidence. It accurately explains that the narrative's plain conclusion, evidence-state description, and remaining unsearched sources fit the Statement form and match the simplicity of the evidence."
+    },
+    {
+      "test_id": "ut_proof_conclusion_wz1",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The rating is N/A because the criterion does not apply. The conclusion is not_proved, which is below the rubric’s probable threshold for tree encoding. Therefore, tree encoding is not evaluated, and making no tree changes is correct."
+    }
+  ]
+}
