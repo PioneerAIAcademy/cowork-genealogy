@@ -4,7 +4,7 @@
     "skill": "conflict-resolution",
     "name": "An unresolved conflict routes to research-plan, not question-selection (E)",
     "type": "positive",
-    "description": "dutch-mother-name-disputed has c_001 (three readings of the mother's name in one marriage act) blocking the open question q_001. The conflict cannot be settled on the evidence on file and needs a new record. Section E moves that route: the evidence that would settle a conflict is a SEARCH on the question already open, so it goes to research-plan. Routing to question-selection opened a second question while the first was unfinished, which under step mode starts the next step on the wrong agent.",
+    "description": "dutch-mother-name-disputed has c_001 blocking the open question q_001: three readings of the mother's name from two records and the researcher — Cornelis's 1828 birth act, OCR'd 'Jannetje' with the first letter uncertain (a_002, src_001); the ten-year marriage index, 'Fannetje' (a_003, src_002); and the researcher's own reading of that birth act as 'Tannetje'. The conflict cannot be settled on the evidence on file and needs a new record. Section E moves that route: the evidence that would settle a conflict is a SEARCH on the question already open, so it goes to research-plan. Routing to question-selection opened a second question while the first was unfinished, which under step mode starts the next step on the wrong agent.",
     "tags": [
       "conflict-resolution",
       "unresolved",

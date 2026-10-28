@@ -633,8 +633,10 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Unreachable today: `hasOpenWork` and the picker read the same items
-        // with the same upload skip. Kept for when the picker skips more.
+        // Unreachable today: `hasOpenWork` reads ACTIVE plans only while the
+        // picker also takes status-less ones, so its items are a subset of the
+        // picker's and both apply the same upload skip — if the rung fired,
+        // the picker has at least that item. Kept for when the picker skips more.
         : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
