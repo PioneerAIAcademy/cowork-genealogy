@@ -438,12 +438,11 @@ city-only residence has a placed fact (withholding does not fire) but may still
 be `subjectTooThin` (no narrow date, no relative). Both can be true
 simultaneously.
 
-The flag is advisory to the caller; the namesake gate does not read it. That
-gate is `extraction_append`'s thin-subject refusal
-(`research-append-tool-spec.md` §11.6, "The thin-subject gate"), and it
-recomputes the same test from `buildSubjectDoc` on the project as it stands at
-extraction time. It cannot read the flag back: `record_search` stages its
-response before ranking attaches `ranked`, so no sidecar records it.
+The flag is advisory to the caller. The namesake gate is `extraction_append`'s
+thin-subject refusal (`research-append-tool-spec.md` §11.6, "The thin-subject
+gate"). It does not read `ranked`: `record_search` runs the same test
+(`subjectTooThinNow`) when it stages a search and saves the result as
+`subjectTooThin` in the staged payload, and the gate reads that saved value.
 
 The **stricter form** — ignore facts the query already filtered on, since every
 result shares those by construction — is not built: the base rule shipped alone
