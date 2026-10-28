@@ -1,9 +1,13 @@
 {
   "project": {
-    "id": "proj_002",
-    "name": "Silva-González children — Chile civil registration",
-    "source_pid": null,
-    "created_at": "2026-01-10T00:00:00Z"
+    "id": "rp_silva_gonzalez_children_chile",
+    "objective": "What children were born to Benjamín Silva Díaz and Clara González Pimienta in Chile, 1890–1910?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-28",
+    "updated": "2026-10-28"
   },
   "researcher_profile": {
     "experience_level": "novice",
@@ -13,15 +17,30 @@
     {
       "id": "q_001",
       "question": "What children were born to Benjamín Silva Díaz and Clara González Pimienta in Chile, 1890–1910?",
-      "status": "open",
-      "resolution": null,
-      "exhaustive_declaration": null
+      "rationale": "The couple Benjamín Silva Díaz (I1) and Clara González Pimienta (I2) lived in Nancagua, Colchagua, Chile around 1890. Chile civil registration records would identify their children born in that period.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-28",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
     }
   ],
   "plans": [
     {
       "id": "pl_001",
       "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-28",
       "items": [
         {
           "id": "pli_001",
