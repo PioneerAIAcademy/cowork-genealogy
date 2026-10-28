@@ -8,6 +8,14 @@ import { flynnRecordReadSidecar } from '../../../lib/__fixtures__/flynn-record-r
 import type { RecordSearchResult, FulltextSearchResult } from '../../../lib/schema'
 import type { RecordReadResult } from '../SidecarResultCard'
 
+/** One builder for every "the base result, but with X" case in this file.
+ *  No trailing `as RecordSearchResult`: the return annotation already types the
+ *  literal, and the extra cast would swallow a genuine shape error. */
+const withResult = (overrides: Partial<RecordSearchResult>): RecordSearchResult => ({
+  ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult),
+  ...overrides
+})
+
 describe('SidecarResultCard — record_search', () => {
   const result = patrickFlynnSidecar.payload.results![0] as RecordSearchResult
 
@@ -272,8 +280,7 @@ describe('SidecarResultCard — fulltext_search', () => {
  * `ark:/example` carries no `\d:\d:` and the policy returns null for it.
  */
 describe('SidecarResultCard — link visibility', () => {
-  const withArkUrl = (arkUrl: string): RecordSearchResult =>
-    ({ ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult), arkUrl }) as RecordSearchResult
+  const withArkUrl = (arkUrl: string): RecordSearchResult => withResult({ arkUrl })
 
   it('renders the link for an arkUrl the policy resolves', () => {
     render(
@@ -283,6 +290,18 @@ describe('SidecarResultCard — link visibility', () => {
         defaultExpanded={true}
       />
     )
+    expect(screen.getByRole('button', { name: /Open in FamilySearch/ })).toBeInTheDocument()
+  })
+
+  it('renders the link from recordArk, which is what record_search really emits', () => {
+    // The engine has no `arkUrl`; it emits `recordArk`. Without the fallback
+    // the footer link never rendered for a real sidecar.
+    const result = {
+      ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult),
+      arkUrl: undefined,
+      recordArk: 'ark:/61903/1:1:MXYZ-9QP'
+    } as RecordSearchResult
+    render(<SidecarResultCard result={result} tool="record_search" defaultExpanded={true} />)
     expect(screen.getByRole('button', { name: /Open in FamilySearch/ })).toBeInTheDocument()
   })
 
@@ -296,6 +315,100 @@ describe('SidecarResultCard — link visibility', () => {
       />
     )
     expect(screen.queryByRole('button', { name: /Open in FamilySearch/ })).toBeNull()
+  })
+})
+
+/**
+ * The PER-ROW tree-match link, which the block above does NOT cover — that one
+ * asserts the footer `arkUrl` link ("Open in FamilySearch"). Before these two
+ * cases nothing in the repo asserted the row's "View →" button in either
+ * direction, so dropping the link, or passing the bare `treePersonId` to the
+ * policy (which refuses it), shipped green.
+ */
+describe('SidecarResultCard — tree-match link visibility', () => {
+  const withTreeMatch = (treePersonId: string): RecordSearchResult =>
+    withResult({ treeMatches: [{ treePersonId, stars: 5 }] })
+
+  // `lib/external.ts` holds module-level singletons that persist across
+  // describes, so without this the block inherits whichever impl the previous
+  // block installed.
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setOpenExternal(() => {})
+    setOpenFamilySearch(() => {})
+  })
+
+  it('renders the View link for a tree PID the policy resolves', () => {
+    render(
+      <SidecarResultCard
+        result={withTreeMatch('KW7C-X9P')}
+        tool="record_search"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByRole('button', { name: /View/ })).toBeInTheDocument()
+  })
+
+  it('skips a row with no treePersonId instead of rendering an empty chip', () => {
+    // Sidecar payloads are untyped at runtime and reach this component through
+    // a cast, so a row without a PID is reachable. Skipping it is what keeps
+    // every row from sharing key={undefined} — the original #2476 symptom.
+    const result = withResult({
+      treeMatches: [
+        { treePersonId: '', stars: 4 },
+        { treePersonId: 'KW7C-X9P', stars: 5 }
+      ] as RecordSearchResult['treeMatches']
+    })
+    render(<SidecarResultCard result={result} tool="record_search" defaultExpanded={true} />)
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    expect(screen.getByText('KW7C-X9P')).toBeInTheDocument()
+  })
+
+  it('omits the stars when they are not a number', () => {
+    const result = withResult({
+      treeMatches: [
+        { treePersonId: 'KW7C-X9P', stars: undefined }
+      ] as unknown as RecordSearchResult['treeMatches']
+    })
+    render(<SidecarResultCard result={result} tool="record_search" defaultExpanded={true} />)
+    expect(screen.getByText('KW7C-X9P')).toBeInTheDocument()
+    expect(screen.queryByText('/5')).toBeNull()
+  })
+
+  it('renders NO View link for a tree PID the policy refuses', () => {
+    render(
+      <SidecarResultCard
+        result={withTreeMatch('XX-1')}
+        tool="record_search"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.queryByRole('button', { name: /View/ })).toBeNull()
+  })
+})
+
+/** The row link's channel, which the visibility block above cannot see.
+ *  Same assertion as the footer link's, for the other sink in this file. */
+describe('SidecarResultCard — tree-match link channel', () => {
+  const fs = vi.fn()
+  const generic = vi.fn()
+
+  beforeEach(() => {
+    fs.mockClear()
+    generic.mockClear()
+    setOpenFamilySearch(fs)
+    setOpenExternal(generic)
+  })
+
+  it('routes the tree-match link through the constrained channel', async () => {
+    const result = {
+      ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult),
+      treeMatches: [{ treePersonId: 'KW7C-X9P', stars: 5 }]
+    } as RecordSearchResult
+    render(<SidecarResultCard result={result} tool="record_search" defaultExpanded={true} />)
+    await userEvent.click(screen.getByRole('button', { name: /View KW7C-X9P/ }))
+    expect(fs).toHaveBeenCalledTimes(1)
+    expect(generic).not.toHaveBeenCalled()
   })
 })
 
