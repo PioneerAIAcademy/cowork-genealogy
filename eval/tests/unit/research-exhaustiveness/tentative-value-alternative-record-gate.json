@@ -23,7 +23,7 @@
     "Should run the tentative-value sweep: recognize that assertion a_001's maiden surname is tentative/unresolved (value 'Ellen [?]', flagged illegible in the register image) — the target of the question is not actually established.",
     "Should classify the uncertainty as a single record's data-quality issue that a DIFFERENT record type could independently resolve, NOT as genuine source inaccessibility. The illegible marriage certificate is therefore not a valid inaccessible-source stopping point.",
     "Should name at least one specific alternative record type that was never searched and could establish the maiden surname independently — e.g. the 1880 US census (Ellen as a child under her maiden surname in her father's household), an Iowa birth or baptism record, or a death/obituary naming her maiden name.",
-    "Should recommend extending the plan (research-plan) with an item targeting that alternative record type — not an early termination (the records are accessible) and not a declaration.",
+    "Should recommend extending the plan (research-plan) with an item targeting that alternative record type, not a declaration.",
     "Tool Arguments: this is a decline/review response — Claude is not expected to call validate_research_schema.",
     "`justification` must open with `Overturn risk: high — <sources>`: a decisive record nobody has searched is exactly the case where the answer could still move. The ladder reads that prefix to pick the default, so free prose without it is a miss.",
     "On the high-risk verdict the reply names the sources that could change the answer, names \"wrap it up\" as the alternative, and its LAST line is exactly \"Continue with planning the searches?\". The host parses only that line against the step labels."

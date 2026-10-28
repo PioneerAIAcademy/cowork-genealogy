@@ -14,6 +14,9 @@
     "delegation": "The researcher is wrapping this question up. Link assertion a_002 (the Patrick Flynn baptism record) to the right person in the tree, or handle it per the threshold policy if it should not be linked.\n\nuserPresent: no\nprojectPath: <workspace>",
     "scenario": "flynn-birthplace-conflict-stated"
   },
+  "mcp_fixtures": [
+    "same-person-flynn-weak"
+  ],
   "execution": {
     "max_wall_clock_seconds": 600
   },
