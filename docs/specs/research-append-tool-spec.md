@@ -212,7 +212,9 @@ camelCase convenience fields the same way `research_log_append` does.
   create (`HOUSE_RESEARCHER_PROFILE`: the fixed house default, never a claim about
   the researcher). It is also the one section created **on first write when
   absent**: the schema makes it optional, so a project created before that seed
-  gets the object when a caller first writes a field.
+  gets the object when a caller first writes a field. It is created right after
+  `project`, so an agent paging a long `research.json` finds it near the top. An
+  existing document is not reordered, and the Postgres store keeps no key order.
 
   Making another field settable later = extend that section's `allowedFields`.
 
