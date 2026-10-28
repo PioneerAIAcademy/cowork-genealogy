@@ -335,6 +335,27 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    tool: "evaluation_append",
+    label: "evaluation_append (evaluations + verdict)",
+    offline: true,
+    // research_append scoped to `evaluations` by tool identity (ADR-0006). The
+    // narrow tool takes the same single-op shape and forces the lane.
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      section: "evaluations",
+      op: "append",
+      entry: {
+        focus: "on-demand",
+        target_id: "project",
+        target_type: "project",
+        verdict: "looks_solid",
+        superseded_by: null,
+      },
+      verdict: { summary: "narrow-tool transport smoke" },
+    }),
+    expect: okTrue,
+  },
+  {
     tool: "research_query",
     label: "research_query (evaluations)",
     offline: true,

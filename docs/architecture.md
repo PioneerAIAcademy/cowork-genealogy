@@ -1223,6 +1223,12 @@ a person's attached records as unchecked candidates. Code composes each op whole
 as it does the `extracted_for_question_ids` growth a re-found record gets, so no
 input field reaches any of them (ADR-0006, amended 2026-10-20).
 
+`evaluation_append` is the second variant: `research_append` restricted to the
+single `evaluations` section, held only by the `gps-mentor` agent — the most
+prompt-exposed agent in the system. Unlike `extraction_append` it has no bespoke
+input surface; the mentor supplies an ordinary `evaluations` append and the lane
+gate forces the section (`research-append-tool-spec.md` §12).
+
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
 
@@ -1504,7 +1510,8 @@ tool and it belongs in that module**, so there is no second copy to drift.
 
 ### 6.2 Writes go only through validating writer tools
 
-`research_append` (and its lane-scoped variant `extraction_append`, §5.3),
+`research_append` (and its lane-scoped variants `extraction_append` and
+`evaluation_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
 memory and block only on errors the call itself introduces** — pre-existing

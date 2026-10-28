@@ -79,11 +79,15 @@ GENERAL_PURPOSE = "general-purpose"
 
 
 #: The manifest's `hookRouting`, the one copy the packaging guard
-#: (`tests/packaging/hook-lanes.ts`) reads too: the tool the plugin hook routes
-#: by section -- the one `hookCallers` permits -- and each tree row that tool
-#: writes, mapped to the research.json section whose op writes it.
+#: (`tests/packaging/hook-lanes.ts`) reads too: the writer tools the plugin hook
+#: routes by section -- the ones `hookCallers` permits -- and each tree row
+#: `research_append` writes, mapped to the research.json section whose op writes
+#: it. `tool` is a list since issue #1491 added `evaluation_append`.
 _HOOK_ROUTING = load_manifest()["hookRouting"]
-HOOK_ROUTED_TOOL: str = _HOOK_ROUTING["tool"]
+_routed_tool = _HOOK_ROUTING["tool"]
+HOOK_ROUTED_TOOLS: frozenset[str] = frozenset(
+    [_routed_tool] if isinstance(_routed_tool, str) else _routed_tool
+)
 TREE_ROW_VIA: dict[str, str] = dict(_HOOK_ROUTING["treeRowsVia"])
 
 
@@ -104,15 +108,15 @@ def writer_tools() -> set[str]:
 def _names(row: dict, ident: str, tool: str) -> bool:
     """Whether `row` names `ident` as a writer of it with `tool`.
 
-    `callers` counts for every writer tool on its row; `hookCallers` for
-    `research_append` only, the one tool the hook routes; an `agentCallers`
-    entry (`{agent, tools}`) for the tools it names.
+    `callers` counts for every writer tool on its row; `hookCallers` for a
+    hook-routed tool (`HOOK_ROUTED_TOOLS`), the tools the hook routes; an
+    `agentCallers` entry (`{agent, tools}`) for the tools it names.
     """
     if tool not in (row.get("writerTools") or []):
         return False
     if ident in (row.get("callers") or []):
         return True
-    if tool == HOOK_ROUTED_TOOL and ident in (row.get("hookCallers") or []):
+    if tool in HOOK_ROUTED_TOOLS and ident in (row.get("hookCallers") or []):
         return True
     return any(
         e["agent"] == ident and tool in e["tools"] for e in row.get("agentCallers") or []
@@ -124,8 +128,9 @@ def _reaches(row: dict, ident: str, tool: str) -> bool | None | str:
 
     `"identity"` when the row's `toolAuthorized` names the tool: it is
     authorized there for every caller, so the row need name no one for it.
-    Every other writer tool but `research_append` writes the rows its `writerTools`
-    entries name. An agent's `research_append` reaches what the shipped hook
+    A writer tool that is not hook-routed writes the rows its `writerTools`
+    entries name. An agent's hook-routed tool (`research_append`, or
+    `evaluation_append` scoped to `evaluations`) reaches what the shipped hook
     leaves it: its lane, minus sections routed to another agent. A skill's is
     confined by nothing static -- the unit plane checks its rows at run time.
     """
@@ -133,7 +138,7 @@ def _reaches(row: dict, ident: str, tool: str) -> bool | None | str:
         return False
     if tool in (row.get("toolAuthorized") or []):
         return "identity"
-    if tool != HOOK_ROUTED_TOOL:
+    if tool not in HOOK_ROUTED_TOOLS:
         return True
     if not ident.startswith("agent:"):
         return None

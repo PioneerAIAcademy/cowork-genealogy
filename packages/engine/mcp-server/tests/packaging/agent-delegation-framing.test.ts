@@ -1009,8 +1009,10 @@ describe("agent delegation framing", () => {
     // OWNER_REASON and DECLARATION_REASON, with {agent} filled at runtime from
     // OWNED_SECTIONS / OWNED_DECLARATIONS / OWNED_FIELDS. Nothing is wrong today — the text
     // carries no conclusion — but a later edit that slanted it would fire
-    // nothing, and these are the same three agents the prose arm drops for the
-    // name-collision reason, so for them neither arm covers that path.
+    // nothing. Three of the routed agents are the ones the prose arm drops for
+    // the name-collision reason, so for them neither arm covers that path;
+    // gps-mentor (routed since issue #1491) also has a visible `research ->
+    // gps-mentor` edge, and both arms require it defended on its own side.
     //
     // This cannot pin the composed message (it does not exist until runtime).
     // What it can do is hold the template and require the callee to be defended
@@ -1040,21 +1042,30 @@ describe("agent delegation framing", () => {
       [...routed].sort(),
       "the hook routes to an agent set this test could not resolve. It reads " +
         "OWNED_SECTIONS, OWNED_DECLARATIONS and OWNED_FIELDS; if the routing moved, follow it.",
-    ).toEqual(["person-evidence", "proof-conclusion", "research-exhaustiveness"]);
+    ).toEqual(["gps-mentor", "person-evidence", "proof-conclusion", "research-exhaustiveness"]);
 
     // Each routed callee must carry the rule on its own side.
     const undefended = [...routed].filter(
       (agent) =>
         !Object.entries(DELEGATION_EDGES).some(
           ([edge, spec]) =>
-            edge.endsWith(` -> ${agent}`) && spec.pins.some((p) => p.side === "agent"),
+            edge.endsWith(` -> ${agent}`) &&
+            // An agent-side PIN defends the path; a documented agent-side
+            // `exempt` accounts for it with a reason, under the same shrink-only
+            // and not-contradicted staleness guards the exemption block below
+            // runs — so when that side gains a rule it is pinned, not left
+            // silent. gps-mentor is routed since the evaluations deny but carries
+            // the caller-pressure analysis as an exemption (the hook-composed
+            // delegation passes only focus and target_id, like the /research one).
+            (spec.pins.some((p) => p.side === "agent") || spec.exempt?.side === "agent"),
         ),
     );
     expect(
       undefended,
       "the hook tells a denied caller to delegate to this agent, but no edge pins an " +
-        "AGENT-side rule for it. The hook composes the caller side at runtime, so the " +
-        "agent side is the only side that can defend this path.",
+        "AGENT-side rule for it or documents an agent-side exemption. The hook composes " +
+        "the caller side at runtime, so the agent side is the only side that can defend " +
+        "this path.",
     ).toEqual([]);
   });
 

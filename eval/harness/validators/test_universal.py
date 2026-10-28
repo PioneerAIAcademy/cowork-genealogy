@@ -1428,6 +1428,9 @@ def test_write_then_validate(before_state, after_state, tool_calls, skill_frontm
 # (mcp__genealogy__research_append → research_append).
 PROJECT_WRITER_TOOLS = {
     "research_append",
+    # research_append scoped to `evaluations` by tool identity (issue #1491):
+    # gps-mentor persists its verdict through it, so it is a legitimate writer.
+    "evaluation_append",
     "extraction_append",
     "research_log_append",
     "tree_edit",
@@ -1515,6 +1518,9 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     routed indexed-record extraction through code called from the main thread.
     It is no longer in `SUBAGENT_ONLY_TOOLS`, so it can no longer appear here.
 
+    `evaluation_append` (#1491) joined the set: it is the gps-mentor agent's
+    verdict writer, and a main-thread call grades the work itself.
+
     This is the deterministic half of what the LLM judge used to grade by
     transcript inference — badly: across the 2026-07-16 runs it caught the
     violation roughly 1-in-8, and a run could pass while violating. The
@@ -1534,6 +1540,10 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         "image_read": (
             "image_read → image_transcribe (staged; read with sidecar_read), so "
             "the base64 never enters the router's context"
+        ),
+        "evaluation_append": (
+            "evaluation_append → invoke @plugin:gps-mentor and let it append the "
+            "evaluation, so the proof critique is not self-issued from the main thread"
         ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})

@@ -265,6 +265,38 @@ def test_delegation_itself_is_not_a_violation():
     )
 
 
+# --- evaluation_append: the gps-mentor verdict writer (issue #1491) ---
+#
+# The harness-plane half of the main-thread deny. The hook plane
+# (`guard_project_files.py`) denies the same write by caller identity; these pin
+# that the e2e plane denies the main thread and exempts gps-mentor's own call.
+
+
+def test_evaluation_append_is_guarded():
+    assert "evaluation_append" in SUBAGENT_ONLY_TOOLS
+
+
+def test_evaluation_append_on_main_thread_is_denied():
+    """A main-thread evaluation write is the router grading its own work."""
+    assert (
+        subagent_only_violation(_main("mcp__genealogy__evaluation_append"))
+        == "evaluation_append"
+    )
+
+
+def test_evaluation_append_allowed_inside_the_subagent():
+    """gps-mentor always runs as a subagent; its own call carries agent_id."""
+    assert subagent_only_violation(_sub("mcp__genealogy__evaluation_append")) is None
+
+
+def test_evaluation_append_denial_reason_names_the_route_out():
+    reason = subagent_only_denial("evaluation_append")["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert "evaluation_append" in reason
+    assert "gps-mentor" in reason
+
+
 # --- the policy set itself ---
 
 
@@ -274,11 +306,12 @@ def test_image_read_is_the_guarded_tool():
     assert "record_read" not in SUBAGENT_ONLY_TOOLS
 
 
-def test_the_guarded_set_is_exactly_image_read():
-    # Pinned as an EQUALITY, not a membership: after #2937 removed
-    # `extraction_append` the set has one member, and an equality is what catches
-    # a tool being quietly added back.
-    assert set(SUBAGENT_ONLY_TOOLS) == {"image_read"}
+def test_the_guarded_set_is_exactly_its_two_members():
+    # Pinned as an EQUALITY, not a membership: an equality catches a tool being
+    # quietly added back (e.g. `extraction_append` after #2937) AND a member
+    # being quietly dropped (e.g. `evaluation_append` after #1491, whose removal
+    # would reopen the main thread to grading its own work).
+    assert set(SUBAGENT_ONLY_TOOLS) == {"image_read", "evaluation_append"}
     # research_append is the broad writer the record-extractor is denied; it must
     # NOT get swept into the subagent-only guard, which is about a different axis.
     assert "research_append" not in SUBAGENT_ONLY_TOOLS

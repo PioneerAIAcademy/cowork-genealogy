@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 56 tools.
+The MCP server exposes 57 tools.
 
 ### FamilySearch records and places
 
@@ -73,6 +73,7 @@ way project state changes.
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
 | `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. BOTH hosted planes end the turn on this tool's name via a `PreToolUse` hook, the prototype worker and the hosted alpha; in Cowork and e2e no such hook binds, so it returns a harmless acknowledgement and the run carries on | None |
 | `extraction_append` | Extracts records in code: FamilySearch records by `recordIds` (read, logged and classified from the extraction table), any other source as a structured document from the `record-structurer` agent, a nil search as negative evidence by `absences`, and, by `personId`, every indexed record FamilySearch has attached to one tree person, each linked to that person as an unverified candidate. Classifications are set here and are final | None |
+| `evaluation_append` | Append or update a gps-mentor GPS-review verdict in `research.json`'s `evaluations` section. `research_append` scoped to `evaluations` by tool identity (ADR-0006) — it writes no other section, and only the gps-mentor agent holds it. The structured verdict body is passed as `verdict` and written to a sidecar file; the tool stamps `file_path` and assigns the `ev_NNN` id | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |

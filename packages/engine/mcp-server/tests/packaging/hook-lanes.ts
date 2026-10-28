@@ -15,22 +15,29 @@ export const GUARD = join(HERE, "..", "..", "..", "plugin", "hooks", "guard_proj
 const OWNERSHIP_JSON = join(HERE, "..", "..", "..", "..", "..", "docs", "specs", "schemas", "ownership.json");
 
 /**
- * The manifest's `hookRouting`: the one tool the hook routes by section, and
- * each tree row that tool writes mapped to the research.json section whose op
- * writes it. Read from the manifest so this file and
- * `writer_attribution_report.py` share one copy.
+ * The manifest's `hookRouting`: the writer tools the hook routes by section, and
+ * each tree row `research_append` writes mapped to the research.json section
+ * whose op writes it. Read from the manifest so this file and
+ * `writer_attribution_report.py` share one copy. `tool` is a list since
+ * issue #1491 added `evaluation_append` beside `research_append`.
  */
 const hookRouting = (
   JSON.parse(readFileSync(OWNERSHIP_JSON, "utf-8")) as {
-    hookRouting?: { tool?: string; treeRowsVia?: Record<string, string> };
+    hookRouting?: { tool?: string | string[]; treeRowsVia?: Record<string, string> };
   }
 ).hookRouting;
-if (typeof hookRouting?.tool !== "string" || typeof hookRouting.treeRowsVia !== "object") {
+const routedTools =
+  typeof hookRouting?.tool === "string"
+    ? [hookRouting.tool]
+    : Array.isArray(hookRouting?.tool)
+      ? hookRouting.tool
+      : undefined;
+if (routedTools === undefined || routedTools.length === 0 || typeof hookRouting?.treeRowsVia !== "object") {
   throw new Error(`${OWNERSHIP_JSON} has no hookRouting.tool / hookRouting.treeRowsVia`);
 }
 
-/** The one tool the hook routes by section. */
-export const HOOK_ROUTED_TOOL: string = hookRouting.tool;
+/** The writer tools the hook routes by section (`research_append`, `evaluation_append`). */
+export const HOOK_ROUTED_TOOLS: readonly string[] = routedTools;
 
 /** Tree row → the research.json section whose `research_append` op writes it. */
 export const TREE_ROW_VIA: Readonly<Record<string, string>> = hookRouting.treeRowsVia;
@@ -73,11 +80,13 @@ export function wholeSectionOwners(src: string = readFileSync(GUARD, "utf-8")): 
 }
 
 /**
- * Whether the hook lets `agent` (bare name) write this manifest row with
- * `research_append`: the row's section must be inside the agent's lane and not
- * routed to another agent. An agent with no lane reaches nothing the hook can
- * vouch for, so this returns false for every row — callers that need a lane
- * for every `research_append` holder check that separately.
+ * Whether the hook lets `agent` (bare name) write this manifest row with a
+ * hook-routed tool: the row's section must be inside the agent's lane and not
+ * routed to another agent. The rule is the section route, so it holds for either
+ * `HOOK_ROUTED_TOOLS` member (`research_append` and `evaluation_append` route a
+ * section identically). An agent with no lane reaches nothing the hook can vouch
+ * for, so this returns false for every row — callers that need a lane for every
+ * holder of a hook-routed tool check that separately.
  */
 export function researchAppendReaches(
   agent: string,
