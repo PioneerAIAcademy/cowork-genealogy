@@ -20,7 +20,6 @@ describe("person-id-refs walker", () => {
         { id: "rj_002", assertion_id: "a_002", person_id: null }, // falsy → skipped
       ],
       timelines: [{ id: "t_001", person_ids: ["I4", "I5"] }],
-      known_holdings: [{ id: "kh_001", relates_to_person_ids: ["I6"] }],
       proof_summaries: [
         {
           id: "ps_001",
@@ -39,7 +38,7 @@ describe("person-id-refs walker", () => {
   it("yields every populated person-id reference, skipping a falsy person_evidence id", () => {
     const refs = [...iteratePersonIdRefs(researchWithAllFields())];
     expect(refs.map((r) => r.pid)).toEqual([
-      "I3", "I9", "I1", "I2", "I4", "I5", "I6", "I7", "I8", "I10",
+      "I3", "I9", "I1", "I2", "I4", "I5", "I7", "I8", "I10",
     ]);
   });
 

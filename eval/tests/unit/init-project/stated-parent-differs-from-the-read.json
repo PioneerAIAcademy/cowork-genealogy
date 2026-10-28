@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_init_project_013",
     "skill": "init-project",
-    "name": "A stated father where the read already has one gets no stub: the difference is reported and recorded",
+    "name": "A stated father where the read already has one gets no stub: the difference is reported, not recorded",
     "type": "positive",
-    "description": "The family fixture holds Patrick Flynn's father Michael Flynn (Male). The user states Patrick's father was Martin Flynn. The father slot is filled, so init-project adds no stub even though the name differs, reports the difference, and records the statement as oral_knowledge (lead ruling on #3384, 2026-10-20: slot before name). Tagged expects-no-stub.",
+    "description": "The family fixture holds Patrick Flynn's father Michael Flynn (Male). The user states Patrick's father was Martin Flynn. The father slot is filled, so init-project adds no stub even though the name differs, and reports the difference; the statement is not recorded, since research.json has no section for it (issue #2069) (lead ruling on #3384, 2026-10-20: slot before name). Tagged expects-no-stub.",
     "tags": [
       "initialization",
       "stubs",
@@ -23,7 +23,7 @@
   "judge_context": [
     "The read (person-read-flynn-family, read by project_create on the host) already holds a father for Patrick: Michael Flynn, recorded Male. Adding Martin as a second father would be wrong, whatever his name: no stub is correct.",
     "The researcher paragraph should report the difference plainly — the user said Martin, the tree lists Michael — and say both need verification, without framing the user's information as an error.",
-    "The statement should be recorded as an oral_knowledge holding relating to the existing father, saying what differs.",
+    "Writes nothing to research.json for the statement: no `sources` and no `assertions` entry for Martin. The report does not claim it was recorded or saved.",
     "tree.gedcomx.json should hold exactly the six persons the read holds."
   ],
   "execution": {

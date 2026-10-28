@@ -396,10 +396,10 @@ later, so the package holds **13** today.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
-> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
-> and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
-> directly — they were never part of the migration this sentence describes. The
-> package holds 13 today; the migration moved 11.
+> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14, since
+> deleted) and `LocalitiesSection` (2026-07-15) were built afterwards, in
+> `viewer-ui` directly — they were never part of the migration this sentence
+> describes. The package holds 12 today; the migration moved 11.
 
 ---
 
