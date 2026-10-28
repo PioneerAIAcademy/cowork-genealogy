@@ -4,14 +4,12 @@
     "skill": "question-selection",
     "name": "Select a question that addresses an unresolved conflict",
     "type": "positive",
-    "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. The natural next question is one that gathers evidence to resolve them — not a question that ignores the conflicts and pursues new directions.",
+    "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. Settling them is work on q_001 (conflict-resolution, then plan items), so no new question is written; the reply names what is outstanding on q_001.",
     "tags": [
       "question-selection",
       "conflict-driven",
       "blocked-questions",
-      "selection-basis-unresolved-conflict",
-      "new-question-exhaustive-declaration-unstarted",
-      "unblocks-nonempty",
+      "question-selection-no-new-question",
       "direct-arm"
     ]
   },

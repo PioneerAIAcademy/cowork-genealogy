@@ -2,13 +2,12 @@
 name: question-selection
 description: >-
   Selects the next research question and writes it to research.json, from
-  project state — timeline gaps, unresolved conflicts, hypothesis tests,
-  pedigree gaps, or exhausted direct evidence needing a FAN pivot — and derives
-  the first question on a new project. GPS Step 1. Invoke when the user says
-  "what should I research next?", "what should we work on next?", "next
-  question", "where should I start?", "where do I begin?", "what's missing?",
-  "should we try FAN research?", after a question is resolved, or after a proof
-  summary reveals gaps. Pass the projectPath; it reads project state itself.
+  project state — the objective, a hypothesis needing test, or a pedigree gap —
+  and derives the first question on a new project. GPS Step 1. Invoke when the
+  user says "what should I research next?", "what should we work on next?",
+  "next question", "where should I start?", "where do I begin?", "what's
+  missing?", after a question is resolved, or after a proof summary reveals
+  gaps. Pass the projectPath; it reads project state itself.
   Do NOT use when the user has a specific question and wants to plan it (use
   research-plan), wants to know if research is exhaustive (use
   research-exhaustiveness), or wants to search records (use search-records
@@ -97,9 +96,7 @@ passing `status: "in_progress"` here will never surface an in-progress
 item even when one exists.
 
 **One question at a time.** While any other question is `open`,
-`in_progress` or `exhaustive_declared`, **do NOT create a new question** (the
-exceptions below) — adding questions mid-flight churns direction without
-resolving anything.
+`in_progress` or `exhaustive_declared`, **do NOT create a new question**.
 
 **Unless that question is finished with:** it has a `proof_summaries` entry
 and no `planned` or `in_progress` item on an active plan. An item waiting
@@ -119,15 +116,11 @@ in-flight item by `pli_XXX` ID plus repository/record type (e.g. "Complete
 new questions"). There is no override: a request that says the work is done
 does not change the plan item's status. `research_append` refuses the write.
 
-**A blocking conflict is NOT an exception any more.** It used to admit a new
-question whose `unblocks` named the in-flight one. `research_append` reads
-neither field now: a conflict needing new evidence is plan items on the
-question already open (conflict-resolution routes it to research-plan), and a
-conflict that cannot be settled ends that question rather than opening another.
-
-**A `person_warnings` contradiction is not an exception either**, for the
-same reason: it is evidence to weigh on the question already open, so it goes
-to conflict-resolution and from there to plan items, not to a second question.
+**Work on the open question is never a new question:** a blocking conflict or
+a `person_warnings` contradiction goes to conflict-resolution; a high-severity
+timeline gap, a FAN pivot, an objective-level sub-question or a new line of
+evidence goes to research-plan as items on that question. Name the one that
+applies in your reply.
 
 ### 1b. Stop when the objective is already answered at a defensible tier
 
@@ -152,20 +145,10 @@ ended because the researcher chose to stop, not because the fact is settled.
 This exception covers only a question the researcher asked for — it does not
 license one you chose yourself.
 
-**The corroboration rule above** applies **only** to corroboration of a fact on a question **already
-`resolved`**. It does **not** suppress any of: a **genuinely independent,
-still-open** part of the objective (a death *and* a burial are two independent
-facts — answer both); a **Priority 1** unresolved conflict; a **Priority 3**
-high-severity timeline gap on a question that is not yet `resolved` — a
-defensible-tier proof_summary while the question still sits `in_progress`
-does not excuse an unsearched high-severity gap; or a **Priority 6 FAN
-pivot** firing on its own condition (Step 2: `search_stop.stopped_because` is a
-stop-gate value) regardless of tier — a defensible-tier proof_summary is not proof
-exhaustion, and a question that is not yet `resolved` is not "answered"
-merely because its tier is defensible. The line: any question not yet
-`resolved` → the priority ladder still applies in full (decompose,
-timeline-gap, or FAN-pivot, whichever signal fires); a question already
-`resolved` at a defensible tier → no further corroboration.
+**The corroboration rule above** applies **only** to corroboration of a fact
+on a question **already `resolved`**. It does **not** suppress a **genuinely
+independent, still-open** part of the objective (a death *and* a burial are
+two independent facts — answer both, one question at a time).
 
 ### 1c. Scope the question to the objective
 
@@ -175,6 +158,10 @@ it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Two
 parents are one fact, not two — never split such an objective into a father
 question and a mother question.
+**Given two or more independent facts, none covered by a question yet, write
+nothing:** name each fact and ask the researcher which to research first.
+A motivation objective is not several facts, nor is a group the objective names
+as one (a couple's missing children).
 A motivation objective ("why did they move?") is never restated: write the
 fact question it rests on (Appendix A, "Two Types of Genealogical Questions").
 
@@ -190,46 +177,28 @@ relationship or identity assertion already on the tree (a parent-child or
 spousal link — not a disputed property of a name or date, which stays in the
 naming-the-gating-fact lane above), its confirm-or-refute test (Step 3) is
 itself that first question — it both verifies the premise and pursues the
-objective, so nothing is deferred. Once a question at the objective's
-scope is open, your job is the next sub-question beneath it — verify a remaining
-unsound premise (framed to name the fact sought, not merely test a property of
-a name or date), test a named source, decompose a part — and that one may be
-narrower and may name a record. An existing objective-scope
-question is never a reason to add nothing; only Step 1b stops the project.
+objective, so nothing is deferred. Once a question at the objective's scope is
+finished with (Step 1a), an independent part of the objective that no question
+covers is the next question; only Step 1b stops the project.
 
 ## 2. Identify the highest-value question
 
-Apply these priorities in order. When multiple candidates exist at the same
-priority level, prefer the one that unblocks the most downstream questions.
+Apply these priorities in order.
 
 | Priority | Trigger | `selection_basis` |
 |----------|---------|-------------------|
-| 1 | A conflict has `blocks_question_ids` entries, or `person_warnings` returns a `contradiction` on an in-scope person | `unresolved_conflict` |
-| 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
-| 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
-| 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
-| 5 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** — including an `implausible` `person_warnings` result, or a missing-child group from `census_children_gap` | `objective_decomposition` |
-| 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
-| 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
+| 1 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
+| 2 | A part of the objective no question covers | `objective_decomposition` |
+| 3 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** — including an `implausible` `person_warnings` result, or a missing-child group from `census_children_gap` | `objective_decomposition` |
 
-**Priority 1 detail:** A `contradiction` does not fire Priority 1 when an
-existing question of any status already targets the facts it names (the
-warning's `facts[]`). An `implausible` warning never fires Priority 1 — it
-maps to Priority 5.
+A `contradiction` from `person_warnings` is never a question (Step 1a). An
+`implausible` warning maps to Priority 3.
 
-**Priority 3 detail:** Only fires when `severity == "high"`. Low-severity
-timeline gaps do not trigger it. When it fires, the question targets the
-unsearched record set that spans the gap — its census or vital years — not a
-single record type a proof summary suggests. A proof summary's named source
-does not outrank a high-severity gap: clearing a major unsearched record set
-comes before one targeted record.
-
-**Priority 4 detail:** Fires for the first question on a single-fact objective
-too — there the "decomposition" is one question at the objective's own scope.
-Split only when the objective holds more than one independent fact. Each
-sub-question targets a single fact and names that fact, not the record that
-might carry it: "Whom did Thomas Flynn marry?" / "When and where did Thomas
-Flynn die?" — the census or certificate belongs in the plan. When that
+**Priority 2 detail:** Fires for the first question on a single-fact objective
+too — there the question is the objective at its own scope. It names the fact,
+not the record that might carry it: "Whom did Thomas Flynn marry?" / "When and
+where did Thomas Flynn die?" — the census or certificate belongs in the plan.
+When that
 objective rests on an explicitly unverified, load-bearing premise — one whose
 falsity would change which person, family, or fact is under investigation
 (Step 1c / Step 3) — the first question verifies the premise instead of
@@ -238,23 +207,8 @@ a disputed relationship or identity assertion already on the tree (not a
 name/date property), via Step 3's confirm-or-refute framing, not a generic
 "verify" question.
 
-**Priority 5 detail:** a gap on the subject's spouse or child is not a
-Priority 5 signal.
-
-**Priority 6 detail:** Don't pivot to FAN just because one search returned
-nil — pivot only when all planned direct searches are complete and
-unresolved. If the primary question's `search_stop.stopped_because` is a stop-gate value
-(`question_answered`, `record_exhausted`, or `nothing_further_reachable`), the
-researcher has declared direct evidence exhausted: take that as the FAN signal
-and do NOT propose additional direct-evidence paths. A FAN question's answer
-must be evidence about the objective's subject, and it must target the people
-*around* the subject — associates, neighbors, witnesses, co-signers — not a
-record type that could itself hold direct proof of the relationship. If a record
-type (a deed, a will) could still directly name the relationship, searching it
-is unexhausted direct evidence, not a FAN pivot, whatever `search_stop` says.
-Examples:
-"Who witnessed Thomas Flynn's land transactions in Schuylkill County?" / "Who
-were Thomas Flynn's neighbors in Schuylkill County in 1850?"
+**Priority 3 detail:** a gap on the subject's spouse or child is not a
+Priority 3 signal.
 
 ## 3. Formulate the question
 
@@ -325,7 +279,7 @@ research_append({
     selection_basis: "<the basis you chose from the Step 2 priority table>",
     priority: "<high | medium | low>",
     status: "open",
-    depends_on: [], unblocks: ["q_001"],
+    depends_on: [], unblocks: [],
     resolved: null, resolution_assertion_ids: [],
     search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] }
   }
@@ -364,8 +318,8 @@ pursued next.
 ## Rules
 
 - **One question at a time.** Each invocation produces at most one new question.
-- **Finish what's open.** Don't introduce new questions while any unresolved
-  question's active plan has an item `in_progress` (see Step 1a).
+- **Finish what's open.** Don't introduce a new question while another is
+  open and not finished with (Step 1a).
 - **Sound basis required.** Don't build questions on unsound assumptions —
   if the premise is unverified, verify it first, framed to name the fact
   sought — never as a bare property test of a name or date.
@@ -377,7 +331,7 @@ pursued next.
   property), via Step 3's confirm-or-refute framing, not a generic "verify"
   question.
 - **Stay inside the objective's scope.** A spouse's or child's own missing
-  facts are a different objective, except on a Priority 6 FAN pivot.
+  facts are a different objective.
 - **Don't declare exhaustiveness here.** Closing questions is the
   `research-exhaustiveness` skill's job — this skill only creates them.
 - **Never delete a question, and never change an existing question's `status`
@@ -390,24 +344,17 @@ pursued next.
 
 ## Edge cases
 
-- **Fresh project, no clear gaps:** default to Priority 4. If the objective
-  holds several independent facts, decompose it into sub-questions; if it is
-  already a single fact, the first question is that objective restated with
+- **Fresh project, no clear gaps:** default to Priority 2. If the objective
+  holds several independent facts, write nothing and ask which first (Step 1c);
+  if it is already a single fact, the first question is that objective restated with
   identifying detail — not a narrower record-scoped one — unless it rests on an
   explicitly unverified, load-bearing premise, in which case the first question
   verifies that premise (Step 1c / Step 3) — for a disputed relationship or
   identity assertion already on the tree (not a name/date property), via Step
   3's confirm-or-refute framing, not a generic "verify" question.
-- **All questions blocked:** identify the root blocker and formulate a
-  question to resolve it — even if that means a conflict with no formal
-  `conflicts[]` entry yet.
-- **All plan items for a question complete:** run the priority ladder
-  first. If direct evidence is exhausted — `search_stop.stopped_because` is
-  a stop-gate value, or all planned direct searches are complete and unresolved —
-  **Priority 6 fires: create a `fan_pivot` question** (FAN exhaustion comes
-  before declaring the project reasonably exhaustive). Recommend
-  `research-exhaustiveness` instead only when no Priority 1–6 signal applies
-  (e.g. FAN avenues are themselves already worked).
+- **All plan items for a question complete:** recommend
+  `research-exhaustiveness`. When direct evidence is exhausted, FAN research is
+  items research-plan adds to that question, never a new question.
 
 ## Re-invocation behavior
 
@@ -596,24 +543,10 @@ a name or date may not stand in for the fact the objective needs.)
 ## Decomposing an Objective into Questions
 
 A single-fact objective does not decompose — it *is* the first
-question, restated with identifying detail. Split only when the
-objective holds more than one independent fact.
-
-When it does, consider:
-
-1. Which single unknown facts — a name, a relationship, a date, a
-   place — would together establish the objective?
-2. Could each plausibly have been recorded for this jurisdiction and
-   period? (Feasibility only. Which records to search belongs to the
-   research plan, and must not appear in the question.)
-3. Which questions are "gatekeeper" questions — ones that must be
-   answered before others can be meaningfully pursued?
-4. Which questions, if answered, would unblock the most downstream
-   questions?
-
-Order questions by priority: gatekeeper questions first, then
-questions most likely to yield direct evidence, then those requiring
-indirect or circumstantial evidence chains.
+question, restated with identifying detail. When the objective holds
+more than one independent fact, name each single unknown fact — a name,
+a relationship, a date, a place — and ask the researcher which to
+research first (Step 1c).
 
 ---
 
@@ -677,11 +610,11 @@ important. Prioritize based on:
 After completing pedigree analysis, feed the findings into the
 question selection priority system:
 
-- A `person_warnings` contradiction on an in-scope person maps to
-  `unresolved_conflict` (Priority 1); see Step 2
-- Missing key data for the research subject maps to Priority 5, whose
+- A `person_warnings` contradiction on an in-scope person goes to
+  conflict-resolution on the open question (Step 1a), never a question
+- Missing key data for the research subject maps to Priority 3, whose
   `selection_basis` is `objective_decomposition` (same enum value as
-  Priority 4 — there is no separate `pedigree_gap` value)
+  Priority 2 — there is no separate `pedigree_gap` value)
 
 The pedigree analysis does not itself produce questions — it
 identifies where questions are needed. The question formulation

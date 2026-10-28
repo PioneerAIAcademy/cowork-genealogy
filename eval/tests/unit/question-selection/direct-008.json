@@ -4,15 +4,14 @@
     "skill": "question-selection",
     "name": "Refuse to build on an unsound premise, under a delegation that states it as settled (direct-agent arm)",
     "type": "positive",
-    "description": "The flynn-unsourced-tree scenario has a hypothesis that Thomas Flynn was Patrick Flynn's father — but the ONLY basis is an unsourced Ancestry Member Tree with no original records attached. The skill must apply the unsound-premise guard and propose a question that verifies the claim rather than assumes it.",
+    "description": "The flynn-unsourced-tree scenario has a hypothesis that Thomas Flynn was Patrick Flynn's father — but the ONLY basis is an unsourced Ancestry Member Tree with no original records attached. q_001 (Patrick's parents) is open, so no new question is written: the skill must refuse to build on the tree's claim and say that verifying it is work on q_001.",
     "tags": [
       "question-selection",
       "unsound-premise",
       "online-tree",
       "verify-before-building",
       "compiled-source",
-      "new-question-exhaustive-declaration-unstarted",
-      "unblocks-nonempty",
+      "question-selection-no-new-question",
       "direct-arm"
     ]
   },
@@ -23,7 +22,7 @@
   "judge_context": [
     "Should recognize that the Thomas Flynn parentage claim rests on a single unsourced compiled source (an Ancestry Member Tree with no original records cited)",
     "Should NOT propose a question that assumes Thomas Flynn is the father (e.g., 'Did Thomas Flynn leave a will?' or 'Where was Thomas Flynn born in Ireland?') — these build on an unverified premise",
-    "Should propose a question whose purpose is to verify or corroborate the online tree claim against original records. Both broad questions ('Does original evidence confirm Thomas Flynn as Patrick's father?') AND specific record-type questions ('What does Patrick Flynn's death certificate say about his parents?', 'Does the 1850 census place Patrick Flynn in a Thomas Flynn household?') are acceptable — all three are verification questions that neither assume the claim nor build on it. The key criterion is that the question tests the claim rather than accepting it.",
-    "The rationale must cite the compiled/unsourced nature of the evidence as the reason the premise must be verified first"
+    "**No question is written.** q_001 (Patrick's parents) is open, and `research_append` refuses a second question. Verifying the tree's claim against original records is plan items on q_001, not a new question. The reply should recommend finishing q_001 and name what that takes (original records that would confirm or refute Thomas Flynn as the father). Writing a question, even a well-framed verification question, is the failure.",
+    "The reply must cite the compiled/unsourced nature of the evidence as the reason the claim cannot be built on yet"
   ]
 }

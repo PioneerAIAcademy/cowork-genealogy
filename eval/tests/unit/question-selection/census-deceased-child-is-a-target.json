@@ -18,6 +18,6 @@
     "The post-1900 living child is NOT William Mercer (already in the tree, b. 1906) — it is a child the tree does not yet have",
     "Naming only the post-1900 living child while missing the pre-1900 deceased child is a FAIL on the gap dimension, not a partial",
     "The deceased child is a research target (born and died before the enumeration), not a tree or data error — do not present it as a person_warnings-style contradiction",
-    "The question's selection_basis should be objective_decomposition (Priority 5 — a missing-child group from census_children_gap), per the skill's priority table"
+    "The question's selection_basis should be objective_decomposition (Priority 3 — a missing-child group from census_children_gap), per the skill's priority table"
   ]
 }
