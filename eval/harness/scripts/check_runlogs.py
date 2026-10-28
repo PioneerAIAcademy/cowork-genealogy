@@ -1446,8 +1446,8 @@ def rule6_regrade_outcomes(skill: str, path: str) -> int:
             f"skill `{skill}`: `{Path(path).name}` is MODIFIED by this PR and "
             f"test `{test_id}` moved `{before}` -> `{now}`. A regrade re-samples "
             f"the judge, so a verdict can go red without the skill changing; "
-            f"zero reds still governs. Either resolve the red or state in the PR "
-            f"body why the new verdict is the correct one.",
+            f"zero reds still governs. Resolve the red (re-run the suite, or fix "
+            f"the skill) before merging.",
         )
         fails += 1
     return fails
