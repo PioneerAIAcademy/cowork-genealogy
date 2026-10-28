@@ -908,6 +908,14 @@ Quirks affect how queries should be constructed for that collection.
   Halsteinsdatter → Halsteinsdr), the mirror of the vowel-substitution
   rule above for given names.
 
+### Luxembourg, Church and Civil Registration (5000012)
+
+- Civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
+- A query with `surname` drops every birth entry with no indexed surname: the record is in the collection, but `surname` hides it.
+- **To find a child's own birth:** search with `givenName` plus `fatherSurname` and/or `fatherGivenName` (or the mother's equivalents), no `surname`, anchored on `recordCountry: Luxembourg`.
+- **A nil under `surname` in this collection says nothing about whether the birth is indexed** — drop `surname` and re-anchor on the parents' names before concluding absence.
+- Marriages and deaths are indexed with a surname; the name-only pattern applies to birth acts only.
+
 
 # Reference: Name search mechanics
 
@@ -1188,6 +1196,7 @@ collection does not exempt a lever from this requirement.
 | Narrow place (state→county→town) | Add smaller levels to place string | Too many hits; subject's town is known |
 | Drop place | Clear all place parameters | Subject migrated unexpectedly |
 | Switch event-place | Move place from `birthPlace` → `residencePlace` → `marriagePlace` → `anyPlace` | Each event occurred in a different place |
+| **Run one place-free search when enumerating a couple's children** | Clear all place parameters; anchor on `recordCountry` + the birth `collectionId`; set both parents' given names and surnames | When the plan item enumerates a couple's children: FamilySearch sometimes indexes a child under the wrong jurisdiction, and any place filter — even broadened — never reaches it. A place-anchored search that returns some children never trips the zero-hit lever. Run this once per enumeration plan item; do not apply it to every birth search. Verify any hit outside the family's expected place against the parents' names before accepting. |
 
 **Boundary changes are a research-plan concern, not a search-records one.** A place's records may be filed under the jurisdiction in force at the event *or* under its present-day jurisdiction — FamilySearch sometimes indexes a collection under the modern country rather than the historical one. Working out that succession (and the right jurisdictions to search, plus any indexing quirks) is `locality-guide`/`research-plan`'s job: they stage the alternatives into the plan, so a plan item may carry a fallback jurisdiction in its `rationale`. Here in search-records the reflex is general: **try the jurisdiction the plan gives you; if a boundary-related nil persists and the plan staged a successor jurisdiction, try it; otherwise bounce back to `research-plan`** rather than guessing per-country rules or looking up place history yourself.
 

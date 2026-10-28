@@ -1,0 +1,187 @@
+{
+  "tool": "record_search",
+  "description": "record_search with any surname constraint in Luxembourg returns records where a Reding is named as a PARENT, not as the child — the civil birth act indexes children by given name only. This fixture fires for any query that includes a surname parameter (e.g. surname=Reding), returning three mother-side hits to show the collection is active and indexed, but NOT the child Theresia (ark 6LYM-X1PN). Ordered FIRST so that any surname-carrying query is siphoned here; the parent-anchored fixture (record-search-theresia-luxembourg-hit) fires only for queries that drop surname and use a parent name anchor instead.",
+  "args": {
+    "surname": "~"
+  },
+  "response": {
+    "query": {
+      "surname": "Reding",
+      "givenName": "Theresia",
+      "recordCountry": "Luxembourg"
+    },
+    "totalMatches": 3,
+    "paginationCappedAt": 100,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "GCTN-Q79",
+        "recordId": "GCTN-Q79",
+        "personName": "Maria Reding",
+        "score": 0.72,
+        "sex": "Female",
+        "birthDate": "1815",
+        "birthPlace": "Arsdorf, Redange, Luxembourg",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GCTN-Q79",
+        "collectionId": "5000012",
+        "collectionTitle": "Luxembourg, Church and Civil Registration",
+        "recordTitle": "Birth of Johann, son of Johann Schroeder and Maria Reding",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Johann",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "3 May 1844",
+                  "place": "Arsdorf, Redange, Luxembourg"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Maria",
+                  "surname": "Reding",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "GCTN-Q8M",
+        "recordId": "GCTN-Q8M",
+        "personName": "Theresia Reding",
+        "score": 0.68,
+        "sex": "Female",
+        "birthDate": "1820",
+        "birthPlace": "Arsdorf, Redange, Luxembourg",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GCTN-Q8M",
+        "collectionId": "5000012",
+        "collectionTitle": "Luxembourg, Church and Civil Registration",
+        "recordTitle": "Marriage of Peter Maas and Theresia Reding",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Theresia",
+                  "surname": "Reding",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Marriage",
+                  "date": "12 April 1842",
+                  "place": "Arsdorf, Redange, Luxembourg"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "GCTN-Q91",
+        "recordId": "GCTN-Q91",
+        "personName": "Jakob Reding",
+        "score": 0.61,
+        "sex": "Male",
+        "birthDate": "1812",
+        "birthPlace": "Arsdorf, Redange, Luxembourg",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GCTN-Q91",
+        "collectionId": "5000012",
+        "collectionTitle": "Luxembourg, Church and Civil Registration",
+        "recordTitle": "Birth of Anna, daughter of Jakob Reding and Maria Schroeder",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Anna",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "8 January 1843",
+                  "place": "Arsdorf, Redange, Luxembourg"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Jakob",
+                  "surname": "Reding",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

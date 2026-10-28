@@ -1,0 +1,121 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks staged Silva-González children candidates (all 7 from record-search-silva-children-no-place) against the couple's children search. Zulema de Jesús (Q2S2-PCBW) ranks among the candidates — both parent names (Benjamín Silva Díaz, Clara González Pimienta) align despite the unexpected birthplace (Pichilemu vs Nancagua). Matched on subjectId; independent of the per-run stagedResultsRef.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 7,
+    "returnedCount": 7,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:Q2S2-LKD1",
+        "primaryId": "P1",
+        "personName": "Alfredo Silva González",
+        "sex": "Male",
+        "birthDate": "14 March 1892",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.88,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:Q2S2-LKD2",
+        "primaryId": "P1",
+        "personName": "Rosa Silva González",
+        "sex": "Female",
+        "birthDate": "5 August 1893",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.86,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 3,
+        "searchRank": 3,
+        "recordId": "ark:/61903/1:1:Q2S2-LKD3",
+        "primaryId": "P1",
+        "personName": "Luis Silva González",
+        "sex": "Male",
+        "birthDate": "20 February 1895",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.85,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 4,
+        "searchRank": 4,
+        "recordId": "ark:/61903/1:1:Q2S2-LKD4",
+        "primaryId": "P1",
+        "personName": "Ana Silva González",
+        "sex": "Female",
+        "birthDate": "11 October 1896",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.84,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 5,
+        "searchRank": 5,
+        "recordId": "ark:/61903/1:1:Q2S2-PCBW",
+        "primaryId": "P1",
+        "personName": "Zulema de Jesús Silva González",
+        "sex": "Female",
+        "birthDate": "12 November 1897",
+        "birthPlace": "Pichilemu, Petorca, Aconcagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.83,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 6,
+        "searchRank": 6,
+        "recordId": "ark:/61903/1:1:Q2S2-LKD5",
+        "primaryId": "P1",
+        "personName": "Carlos Silva González",
+        "sex": "Male",
+        "birthDate": "3 July 1899",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.82,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 7,
+        "searchRank": 7,
+        "recordId": "ark:/61903/1:1:Q2S2-LKD6",
+        "primaryId": "P1",
+        "personName": "Elena Silva González",
+        "sex": "Female",
+        "birthDate": "22 January 1902",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "collectionTitle": "Chile, Civil Registration, 1885-1932",
+        "matchScore": 0.80,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

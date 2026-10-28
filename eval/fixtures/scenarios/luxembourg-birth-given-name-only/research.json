@@ -1,0 +1,49 @@
+{
+  "project": {
+    "id": "proj_001",
+    "name": "Theresia Reding — Luxembourg birth",
+    "source_pid": null,
+    "created_at": "2026-01-10T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Explain findings clearly and simply, as if to someone new to genealogy research."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Theresia Reding born in Arsdorf, Luxembourg in 1846, and who were her parents?",
+      "status": "open",
+      "resolution": null,
+      "exhaustive_declaration": null
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Arsdorf, Redange, Luxembourg",
+          "date_range": "1840-1852",
+          "repository": "FamilySearch",
+          "rationale": "Luxembourg, Church and Civil Registration (collection 5000012) covers Arsdorf civil birth registers. Search for Theresia's birth in the 1840s, which would name her parents.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,106 @@
+{
+  "tool": "record_search",
+  "description": "record_search that DROPS surname and anchors on fatherSurname=Reding (or fatherGivenName=Jakob, or motherSurname=Schroeder, etc.) finds Theresia's 1846 Arsdorf civil birth act (ark 6LYM-X1PN), indexed by given name only — no surname on the child. The surname-carrying fixture (record-search-reding-surname-not-found) is ordered FIRST and siphons any query with surname set, so this fixture fires only for the doctrine-correct parent-anchored search. Matched on fatherSurname~Reding: any query with a fatherSurname containing 'Reding' and no surname field reaches this fixture. primaryId P1 matches rank-search-matches-theresia-luxembourg.",
+  "args": {
+    "fatherSurname": "~Reding"
+  },
+  "response": {
+    "query": {
+      "givenName": "Theresia",
+      "fatherSurname": "Reding",
+      "fatherGivenName": "Jakob",
+      "recordCountry": "Luxembourg",
+      "birthYearFrom": 1844,
+      "birthYearTo": 1848
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "6LYM-X1PN",
+        "recordId": "6LYM-X1PN",
+        "personName": "Theresia",
+        "score": 0.94,
+        "sex": "Female",
+        "birthDate": "17 June 1846",
+        "birthPlace": "Arsdorf, Redange, Luxembourg",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:6LYM-X1PN",
+        "collectionId": "5000012",
+        "collectionTitle": "Luxembourg, Church and Civil Registration",
+        "recordTitle": "Birth of Theresia, daughter of Jakob Reding and Maria Schroeder",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Theresia",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "17 June 1846",
+                  "place": "Arsdorf, Redange, Luxembourg"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Jakob",
+                  "surname": "Reding",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Maria",
+                  "surname": "Schroeder",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

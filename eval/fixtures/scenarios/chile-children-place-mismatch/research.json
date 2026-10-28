@@ -1,0 +1,49 @@
+{
+  "project": {
+    "id": "proj_002",
+    "name": "Silva-González children — Chile civil registration",
+    "source_pid": null,
+    "created_at": "2026-01-10T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Explain findings clearly and simply, as if to someone new to genealogy research."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What children were born to Benjamín Silva Díaz and Clara González Pimienta in Chile, 1890–1910?",
+      "status": "open",
+      "resolution": null,
+      "exhaustive_declaration": null
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Nancagua, Colchagua, Chile",
+          "date_range": "1890-1910",
+          "repository": "FamilySearch",
+          "rationale": "Enumerate all children of Benjamín Silva Díaz and Clara González Pimienta in FamilySearch Chile civil registration (collection 1410964). The couple lived in Nancagua; search their birth registrations there.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

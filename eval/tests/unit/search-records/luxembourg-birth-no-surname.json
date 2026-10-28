@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_search_records_028",
+    "skill": "search-records",
+    "name": "Luxembourg indexing quirk: civil birth acts index children by given name only — drop surname, re-anchor on parent names",
+    "type": "positive",
+    "description": "Executing pli_001 (find Theresia Reding's 1846 civil birth in Arsdorf, Luxembourg), a surname-anchored search returns records where a Reding is named as a PARENT, not as the child (record-search-reding-surname-not-found) — three mother-side hits, none of which is Theresia's own birth. Luxembourg civil birth acts index the newborn by given name only; the child carries no indexed surname. The skill must recognize this indexing pattern and drop surname, re-anchoring on givenName=Theresia + fatherSurname=Reding (or fatherGivenName=Jakob, or the mother's equivalents), anchored on recordCountry=Luxembourg, which surfaces the birth (record-search-theresia-luxembourg-hit, ark 6LYM-X1PN). Guards the Luxembourg name-only doctrine: a surname-nil in this collection is NOT evidence the birth is unindexed.",
+    "tags": [
+      "search",
+      "vital",
+      "luxembourg",
+      "name-only-indexing",
+      "nil-recovery",
+      "search-by-parent",
+      "collection-specific",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_001 — search FamilySearch's Luxembourg, Church and Civil Registration (collection 5000012) for Theresia Reding's birth in Arsdorf, approximately 1846, to confirm her parents.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"vital_record\",\n  \"jurisdiction\": \"Arsdorf, Redange, Luxembourg\",\n  \"date_range\": \"1840-1852\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Luxembourg, Church and Civil Registration (collection 5000012) covers Arsdorf civil birth registers. Search for Theresia's birth in the 1840s, which would name her parents.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Theresia\",\n      \"surname\": \"Reding\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1846\",\n    \"place\": \"Arsdorf, Redange, Luxembourg\"\n  },\n  \"death\": null\n}",
+    "scenario": "luxembourg-birth-given-name-only"
+  },
+  "mcp_fixtures": [
+    "record-search-reding-surname-not-found",
+    "record-search-theresia-luxembourg-hit",
+    "rank-search-matches-theresia-luxembourg",
+    "record-read-theresia-6lym-x1pn",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE (Tool Arguments): the birth search must NOT keep 'Reding' as the surname constraint. Luxembourg civil birth acts index the newborn by given name only — there is no indexed surname on the child. A query with surname=Reding returns records where Reding is a parent, not the child, and this collection returns 3 such parent-side hits (record-search-reding-surname-not-found). Score Tool Arguments 3 if a record_search drops the surname and searches instead with givenName=Theresia plus a parent anchor (fatherSurname=Reding, fatherGivenName=Jakob, motherSurname=Schroeder, or similar) anchored on recordCountry=Luxembourg or collectionId=5000012. Score 1 if the skill keeps surname=Reding as the only anchor and does not re-anchor on the parents.",
+    "CORE (Correctness): the skill should recognize that Luxembourg civil birth acts index children by given name only, and re-anchor on the given name plus the parents' names already in the subject record (father: Jakob Reding, mother: Maria Schroeder). Reaching the birth (record-search-theresia-luxembourg-hit, ark 6LYM-X1PN, born 17 June 1846, Arsdorf, daughter of Jakob Reding and Maria Schroeder) is the successful outcome.",
+    "If the skill receives the 3 parent-side hits from the surname search (record-search-reding-surname-not-found) and concludes 'birth not found' or 'Theresia is unindexed' without also trying a parent-anchored, no-surname search, that is a FAIL. The surname-nil from a Luxembourg civil birth collection says nothing about whether the child's birth is indexed.",
+    "Completeness: the search should be logged (the initial surname attempt and/or the successful parent-anchored attempt). Finding the birth (6LYM-X1PN) is a complete answer; do NOT require the skill to also complete extraction in this test.",
+    "Do NOT penalize the skill for not calling place_search or collections_search — recordCountry 'Luxembourg' is a sufficient anchor for the civil birth search, and a validate_research_schema call is acceptable if made.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
