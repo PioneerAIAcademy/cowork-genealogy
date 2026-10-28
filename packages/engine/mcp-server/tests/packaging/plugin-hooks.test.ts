@@ -902,11 +902,10 @@ describe("the guard script's decisions", () => {
   it.each([
     ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
-    ["known_holdings", { section: "known_holdings", op: "append", entry: {} }],
     ["both in one batch", {
       ops: [
+        { section: "project", op: "update", fields: { objective: "x" } },
         { section: "researcher_profile", op: "update", fields: {} },
-        { section: "known_holdings", op: "append", entry: {} },
       ],
     }],
   ])("permits the init-project agent its own lane — %s", (_label, tool_input) => {

@@ -4,20 +4,31 @@ import { IpcResearchTransport, unwrapIpcError } from '../IpcResearchTransport'
 import type { AppAPI } from '../../../../preload/index.d'
 
 let folderNoticeCb: ((m: string) => void) | null = null
+let collectionsCb: ((d: unknown) => void) | null = null
 
 // The IPC adapter must satisfy the SAME structural contract the web WS adapter
 // does (shared harness from @genealogy/viewer-ui/contract).
 function installApiStub(): void {
   folderNoticeCb = null
+  collectionsCb = null
   // Annotated, NOT cast. The previous `as unknown` threw the type away, so a
   // channel missing from this stub was invisible to typecheck — it was missing
   // both `openFamilySearch` (added here) and `readImage` (drifted earlier and
   // nobody saw). Typecheck is the only net that catches a stub falling behind
   // the real API, and a cast blinds it.
   const stub: AppAPI = {
-    getState: async () => ({ folderPath: null, research: null, gedcomx: null, notice: null }),
+    getState: async () => ({
+      folderPath: null,
+      research: null,
+      gedcomx: null,
+      collections: null,
+      notice: null
+    }),
     onResearchUpdated: () => {},
     onGedcomxUpdated: () => {},
+    onCollectionsUpdated: (cb: (d: unknown) => void) => {
+      collectionsCb = cb
+    },
     onWatchError: () => {},
     onFolderNotice: (cb: (m: string) => void) => {
       folderNoticeCb = cb
@@ -56,6 +67,7 @@ describe('IpcResearchTransport', () => {
     new IpcResearchTransport().subscribe({
       onResearch: () => {},
       onGedcomx: () => {},
+      onCollections: () => {},
       onSidecar: () => {},
       onError: () => {},
       onNotice
@@ -74,10 +86,40 @@ describe('IpcResearchTransport', () => {
       folderPath: '/p',
       research: null,
       gedcomx: null,
+      collections: null,
       notice: 'research.json is in a subfolder'
     })
     const state = await new IpcResearchTransport().getProjectState()
     expect(state.notice).toBe('research.json is in a subfolder')
+  })
+
+  it('routes project:collections-updated to handlers.onCollections, null included', () => {
+    const onCollections = vi.fn()
+    new IpcResearchTransport().subscribe({
+      onResearch: () => {},
+      onGedcomx: () => {},
+      onCollections,
+      onSidecar: () => {},
+      onError: () => {},
+      onNotice: () => {}
+    })
+    const doc = { places: {} }
+    collectionsCb!(doc)
+    collectionsCb!(null)
+    expect(onCollections.mock.calls).toEqual([[doc], [null]])
+  })
+
+  it('maps stored collections through from getState', async () => {
+    const doc = { places: { P: { rows: [] } } }
+    ;(window as unknown as { api: { getState: unknown } }).api.getState = async () => ({
+      folderPath: '/p',
+      research: null,
+      gedcomx: null,
+      collections: doc,
+      notice: null
+    })
+    const state = await new IpcResearchTransport().getProjectState()
+    expect(state.collections).toBe(doc)
   })
 
   // The provider puts err.message straight into the error bar, so the Electron

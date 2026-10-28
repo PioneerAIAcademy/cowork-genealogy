@@ -80,7 +80,7 @@ function project(research: Record<string, unknown>): string {
     questions: [], plans: [], log: [], sources: [],
     assertions: [{ id: "a_001" }], person_evidence: [],
     conflicts: [], hypotheses: [], timelines: [], proof_summaries: [],
-    evaluations: [], localities: [], known_holdings: [],
+    evaluations: [], localities: [],
     ...research
   }), "utf8");
   writeFileSync(join(dir, "tree.gedcomx.json"),

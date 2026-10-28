@@ -1,0 +1,70 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [{ "ref": "S3", "page": "1860 Census, Schuylkill Co., age 15" }]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "primary": true,
+          "date": "1908-03-12",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S4", "page": "Death cert. no. 4521" }]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Michael",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census (Thomas Flynn household)", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "1850 U.S. Federal Census (Michael Flynn household)", "author": "U.S. Census Bureau" },
+    { "id": "S3", "title": "1860 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S4", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" }
+  ]
+}
