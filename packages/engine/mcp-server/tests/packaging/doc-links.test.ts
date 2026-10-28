@@ -305,11 +305,6 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "named as the rejected alternative in the ADR-0010 row; it must not exist",
   },
   {
-    file: "docs/contributor-issue-drafts.md",
-    path: "packages/viewer-ui/src/lib/gedcom-export.ts",
-    why: "a draft issue names it as a new file to create",
-  },
-  {
     file: "docs/e2e-testing-guide.md",
     path: "eval/e2e-project/<slug>/",
     why: "created at runtime by `make e2e-project`; gitignored, so it is absent at rest",
