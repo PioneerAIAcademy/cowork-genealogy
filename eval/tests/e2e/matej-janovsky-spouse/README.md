@@ -80,7 +80,8 @@ grooms who married a Marie before 1874 are the hint's candidates.
 - **f3 (avoid)** fails an agent that gives Matěj a wife Marie or the son Josef (1874). Its
   description says only that the hint belongs to another Matěj Janovský who married a Marie at
   Malšice before 1874; the indexes leave two such grooms (1871 and 1873) and it names neither. Its
-  `target_person` is "Marie Janovská", the wrong wife under her married name, rather than Josef,
+  `target_person` is "Marie Janovská", the wrong wife under her married name (with "Marie Janovsky",
+  the unaccented spelling the starting tree uses for the family, as `alternate_name`), rather than Josef,
   because the starting tree already holds Matěj's brother **Josef Janovský** (`LZG9-NLS`); naming
   Josef would make the avoid-guard's name matcher fire on the brother in every run. The judge still
   grades the Josef half from the description.

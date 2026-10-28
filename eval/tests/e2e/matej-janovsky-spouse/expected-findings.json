@@ -49,7 +49,8 @@
         "subject_person": "Matěj Janovský (GMBS-DQZ)",
         "relation": "spouse",
         "target_person": {
-          "name": "Marie Janovská"
+          "name": "Marie Janovská",
+          "alternate_name": "Marie Janovsky"
         },
         "wrong_child": "Josef, born 25 January 1874, baptised 26 January 1874, Malšice — son of another Matěj Janovský and Marie"
       },
