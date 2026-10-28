@@ -20,10 +20,9 @@ import {
   stopWatching
 } from '../watcher'
 
-// Pure-helper tests. The chokidar integration (lifecycle, awaitWriteFinish,
-// emit dispatch into BrowserWindow) is exercised by the existing app at
-// startup and by manual verification — but the routing decision is where
-// bugs hide, so it gets unit-tested here.
+// Mostly pure-helper tests: the routing decision is where bugs hide. Real
+// chokidar runs only in the two startWatching tests at the end, for the delete,
+// restore and moved-folder paths no helper test can reach.
 
 describe('classifyBasename', () => {
   describe('fixed files', () => {
@@ -463,5 +462,47 @@ describe('startWatching: a deleted file that comes back is seen again', () => {
       () => expect(collectionSends().at(-1)).toEqual({ places: { P: { rows: [] } } }),
       { timeout: 5000 }
     )
+  }, 20000)
+})
+
+describe('startWatching: a deleted project folder never shows its parent', () => {
+  let parent: string
+
+  beforeEach(async () => {
+    parent = await mkdtemp(join(tmpdir(), 'collections-parent-'))
+  })
+
+  afterEach(async () => {
+    stopWatching()
+    await rm(parent, { recursive: true, force: true })
+  })
+
+  // After a delete the path is watched again; with the folder itself gone,
+  // chokidar watches the parent, so a research.json there would arrive as this
+  // project's data.
+  it('sends nothing for a research.json in the parent', async () => {
+    const proj = join(parent, 'proj')
+    await mkdir(proj)
+    await writeFile(join(proj, 'research.json'), '{"p":1}', 'utf-8')
+    const send = vi.fn()
+    startWatching(proj, { webContents: { send } } as unknown as Parameters<typeof startWatching>[1])
+    await vi.waitFor(
+      () => expect(send).toHaveBeenCalledWith('project:research-updated', { p: 1 }),
+      {
+        timeout: 5000
+      }
+    )
+
+    await new Promise((r) => setTimeout(r, 1000))
+    await rm(proj, { recursive: true, force: true })
+    await vi.waitFor(
+      () => expect(send).toHaveBeenCalledWith('project:watch-error', 'research.json deleted'),
+      { timeout: 5000 }
+    )
+    await new Promise((r) => setTimeout(r, 500))
+    await writeFile(join(parent, 'research.json'), '{"parent":true}', 'utf-8')
+    await new Promise((r) => setTimeout(r, 2000))
+
+    expect(send).not.toHaveBeenCalledWith('project:research-updated', { parent: true })
   }, 20000)
 })

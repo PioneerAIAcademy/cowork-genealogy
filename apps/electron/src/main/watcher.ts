@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron'
 import { watch, type FSWatcher } from 'chokidar'
 import { readFile, readdir, stat as fsStat } from 'node:fs/promises'
-import { join, resolve, basename, relative } from 'node:path'
+import { join, resolve, basename, dirname, relative } from 'node:path'
 
 let watcher: FSWatcher | null = null
 let currentFolderPath: string | null = null
@@ -242,6 +242,12 @@ export function applyFixedUnlink(
   mainWindow.webContents.send('project:watch-error', `${file} deleted`)
 }
 
+// A re-watched path whose folder was deleted or moved makes chokidar watch the
+// parent instead; a research.json there must never be shown as this project's.
+function inProjectFolder(filePath: string): boolean {
+  return resolve(dirname(filePath)) === currentFolderPath
+}
+
 export function startWatching(folderPath: string, mainWindow: BrowserWindow): void {
   stopWatching()
   currentFolderPath = resolve(folderPath)
@@ -264,6 +270,7 @@ export function startWatching(folderPath: string, mainWindow: BrowserWindow): vo
     const cls = classifyBasename(basename(filePath))
 
     if (cls.kind === 'fixed') {
+      if (!inProjectFolder(filePath)) return
       try {
         const content = await readFile(filePath, 'utf8')
         applyFixedFile(cls.file, JSON.parse(content), mainWindow)
@@ -295,6 +302,7 @@ export function startWatching(folderPath: string, mainWindow: BrowserWindow): vo
   watcher.on('unlink', (filePath) => {
     const cls = classifyBasename(basename(filePath))
     if (cls.kind === 'fixed') {
+      if (!inProjectFolder(filePath)) return
       applyFixedUnlink(cls.file, mainWindow)
       // chokidar drops a watched file path once it is deleted, so a file put
       // back later would never be seen. Watch the path again.

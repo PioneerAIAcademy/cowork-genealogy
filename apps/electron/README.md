@@ -134,7 +134,7 @@ src/
       components/
         layout/                # Header, Sidebar
         shared/                # Card, StatusBadge, DetailPanel, PersonCard, CrossLink
-        sections/              # 11 section components (one per research.json section)
+        sections/              # 14 section components (research.json sections, plus Collections)
       styles/
         global.css             # CSS variables, light/dark themes
 ```

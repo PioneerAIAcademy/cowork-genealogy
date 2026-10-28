@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import ts from 'typescript'
 
 // The viewer's row type is a hand copy of the engine's (the web side never
 // imports the engine). A field renamed on one side alone makes parseRow drop
@@ -11,44 +12,25 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(here, '..', '..', '..', '..', '..')
 
-/** The body of `interface name { … }`, nested braces included. */
-function interfaceBody(source: string, name: string): string {
-  const start = source.search(new RegExp(`interface ${name}\\s*\\{`))
-  if (start < 0) throw new Error(`interface ${name} not found`)
-  const open = source.indexOf('{', start)
-  let depth = 0
-  for (let i = open; i < source.length; i++) {
-    if (source[i] === '{') depth++
-    if (source[i] === '}' && --depth === 0) return source.slice(open + 1, i)
-  }
-  throw new Error(`interface ${name} is not closed`)
-}
-
-/** `name: type` per top-level member, comments, whitespace and trailing
- *  separators dropped. */
+/** `name: type` per member, the type printed by the TypeScript compiler so
+ *  formatting never matters (the same reason schema-interface-drift.test.ts
+ *  parses rather than greps). `rename` maps a type name to a shared placeholder,
+ *  so the row type, named differently on each side, compares equal. */
 function interfaceFields(source: string, name: string, rename: [string, string][] = []): string[] {
-  let body = interfaceBody(source, name).replace(/\/\/.*$/gm, '')
-  for (const [from, to] of rename) body = body.split(from).join(to)
-  // Split on `;` or a newline only at the top level, so a member that spans
-  // lines inside `{}`, `<>`, `()` or `[]` stays one field.
-  const fields: string[] = []
-  let depth = 0
-  let current = ''
-  for (const ch of body) {
-    if ('{<(['.includes(ch)) depth++
-    if ('}>)]'.includes(ch)) depth--
-    if (depth === 0 && (ch === ';' || ch === '\n')) {
-      fields.push(current)
-      current = ''
-    } else {
-      current += ch
-    }
+  const file = ts.createSourceFile('x.ts', source, ts.ScriptTarget.Latest, true)
+  const printer = ts.createPrinter({ removeComments: true })
+  for (const node of file.statements) {
+    if (!ts.isInterfaceDeclaration(node) || node.name.text !== name) continue
+    return node.members
+      .filter(ts.isPropertySignature)
+      .map((m) => {
+        let type = m.type ? printer.printNode(ts.EmitHint.Unspecified, m.type, file) : ''
+        for (const [from, to] of rename) type = type.split(from).join(to)
+        return `${m.name.getText(file)}${m.questionToken ? '?' : ''}:${type.replace(/\s+/g, '')}`
+      })
+      .sort()
   }
-  fields.push(current)
-  return fields
-    .map((f) => f.replace(/\s+/g, '').replace(/,$/, ''))
-    .filter(Boolean)
-    .sort()
+  throw new Error(`interface ${name} not found`)
 }
 
 describe('external collections row: engine and viewer agree', () => {
@@ -76,10 +58,11 @@ describe('external collections row: engine and viewer agree', () => {
     ).toEqual(interfaceFields(engine, 'ExternalCollectionsDoc', [['StoredCollectionRow', 'ROW']]))
   })
 
-  it('reads a nested member as one field', () => {
-    expect(
-      interfaceFields('interface D {\n  places: Record<string, {\n    rows: R[]\n  }>;\n}', 'D')
-    ).toEqual(['places:Record<string,{rows:R[]}>'])
+  it('reads a nested member as one field, however it is wrapped', () => {
+    const wrapped = 'interface D {\n  places: Record<\n    string,\n    { rows: R[]; }\n  >;\n}'
+    expect(interfaceFields(wrapped, 'D')).toEqual(
+      interfaceFields('interface D { places: Record<string, { rows: R[] }> }', 'D')
+    )
   })
 
   it('reads fields across a reflowed body', () => {
