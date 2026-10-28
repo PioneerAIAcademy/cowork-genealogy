@@ -43,6 +43,7 @@ import {
   classifyArk,
   runSnapshot,
   scoreFindings,
+  selectSubjectPersona,
   SPEC_PATH,
   unplantedKey,
   writeJson,
@@ -408,16 +409,152 @@ describe("resume follows the input-PID map", () => {
     expect(w.calls.filter((c) => c === `record_read:${ark("CENS-111")}`)).toHaveLength(1);
   });
 
-  it("relationship-level sources get no same_person row and are counted relationship_unscored", async () => {
+  it("--no-same-person counts every relationship-level source as unscored and writes no rows", async () => {
     const out = mkTmp();
     const w = world({
       persons: { "AAAA-111": person("AAAA-111", { personas: ["P1"], relSources: ["E1", "E2"] }) },
       records: { [ark("P1")]: record("P1"), [ark("E1")]: record("E1"), [ark("E2")]: record("E2") },
     });
-    await snap(out, pidsFile(out, ["AAAA-111"]), w);
-    const rows = readJson(join(out, "persons", "AAAA-111", "same-person.json"));
-    expect(rows.map((r: Json) => r.ark)).toEqual([ark("P1")]);
+    await snap(out, pidsFile(out, ["AAAA-111"]), w, false);
+    expect(existsSync(join(out, "persons", "AAAA-111", "same-person.json"))).toBe(false);
     expect(readJson(join(out, "persons", "AAAA-111", "meta.json")).relationship_unscored).toBe(2);
+  });
+});
+
+// ─── relationship-level persona selection (issue #3892) ─────────────────────
+
+const rp = (id: string, gender: string, a?: string, date = "1850"): Json => ({
+  id,
+  gender,
+  ...(a ? { ark: a } : {}),
+  names: [{ given: "N", surname: "S" }],
+  facts: [{ type: "http://gedcomx.org/Birth", date, place: "Ohio" }],
+});
+const pc = (parent: string, child: string): Json => ({ type: "ParentChild", parent, child });
+
+/** AAAA-111 with the given tree edges, every one citing the single source E1. */
+function edgeRead(edges: Json[], gender = "Male"): Json {
+  return {
+    persons: [{ id: "AAAA-111", gender, living: false, names: [{ given: "John", surname: "Smith" }], sources: [] }],
+    relationships: edges.map((e) => ({ ...e, sources: [{ ref: "r_E1" }] })),
+    sources: [{ id: "r_E1", title: "Edge E1", url: url("E1") }],
+  };
+}
+const asParent: Json = { type: "ParentChild", parent: "AAAA-111", child: "KIN1-111" };
+const asChild: Json = { type: "ParentChild", parent: "KIN1-111", child: "AAAA-111" };
+const asSpouse: Json = { type: "Couple", person1: "AAAA-111", person2: "KIN1-111" };
+const entryOf = (read: Json) => buildAuditList(read).entries[0];
+const select = (read: Json, rec: Json) => selectSubjectPersona(read, "AAAA-111", entryOf(read), rec);
+
+const parentsRecord = (): Json => ({
+  persons: [rp("f", "Male"), rp("m", "Female"), rp("c", "Female", ark("E1"))],
+  relationships: [pc("f", "c"), pc("m", "c")],
+});
+const childrenRecord = (): Json => ({
+  persons: [rp("mo", "Female", ark("E1")), rp("fa", "Male"), rp("c1", "Female"), rp("c2", "Male")],
+  relationships: [pc("fa", "c1"), pc("mo", "c1"), pc("fa", "c2"), pc("mo", "c2")],
+});
+const coupleRecord = (): Json => ({
+  persons: [rp("h", "Male"), rp("w", "Female", ark("E1"))],
+  relationships: [{ type: "Couple", person1: "h", person2: "w" }],
+});
+
+describe("selectSubjectPersona", () => {
+  it("(a) subject is the parent and the ARK names the child: the subject's gender picks one of two record parents", () => {
+    expect(select(edgeRead([asParent], "Male"), parentsRecord())).toEqual({ persona_id: "f", selected_by: "role:parent" });
+    expect(select(edgeRead([asParent], "Female"), parentsRecord())).toEqual({ persona_id: "m", selected_by: "role:parent" });
+  });
+
+  it("(b) subject is the child and the ARK names a parent", () => {
+    expect(select(edgeRead([asChild], "Female"), childrenRecord())).toEqual({ persona_id: "c1", selected_by: "role:child" });
+    expect(select(edgeRead([asChild], "Male"), childrenRecord())).toEqual({ persona_id: "c2", selected_by: "role:child" });
+  });
+
+  it("(c) a Couple source: the partner of the same gender, P itself included as a candidate", () => {
+    expect(select(edgeRead([asSpouse], "Male"), coupleRecord())).toEqual({ persona_id: "h", selected_by: "role:spouse" });
+    expect(select(edgeRead([asSpouse], "Female"), coupleRecord())).toEqual({ persona_id: "w", selected_by: "role:spouse" });
+  });
+
+  it("(d) two same-gender children are ambiguous, and so are two parents when the subject's gender is unknown", () => {
+    const sibs: Json = { persons: [rp("mo", "Female", ark("E1")), rp("c1", "Female"), rp("c2", "Female")], relationships: [pc("mo", "c1"), pc("mo", "c2")] };
+    expect(select(edgeRead([asChild], "Female"), sibs)).toEqual({ unscored: "ambiguous" });
+    expect(select(edgeRead([asParent], "Unknown"), parentsRecord())).toEqual({ unscored: "ambiguous" });
+  });
+
+  it("a persona holding the role itself is a candidate (a parent named by the ARK, subject also a parent)", () => {
+    const rec: Json = { persons: [rp("f", "Male", ark("E1")), rp("c", "Female")], relationships: [pc("f", "c")] };
+    expect(select(edgeRead([asParent], "Male"), rec)).toEqual({ persona_id: "f", selected_by: "role:parent" });
+  });
+
+  it("two edges that select different personas are edges_disagree; two that select the same one are not", () => {
+    const rec: Json = { persons: [rp("g", "Male"), rp("x", "Female", ark("E1")), rp("k", "Male")], relationships: [pc("g", "x"), pc("x", "k")] };
+    expect(select(edgeRead([asParent, asChild]), rec)).toEqual({ unscored: "edges_disagree" });
+    expect(select(edgeRead([asParent, { ...asParent, child: "KIN2-111" }]), parentsRecord())).toEqual({ persona_id: "f", selected_by: "role:parent" });
+  });
+
+  it("no candidates, or none of the subject's gender, is no_relationship", () => {
+    expect(select(edgeRead([asParent]), { persons: [rp("c", "Female", ark("E1"))], relationships: [] })).toEqual({ unscored: "no_relationship" });
+    expect(select(edgeRead([asParent], "Male"), { persons: [rp("m", "Female"), rp("c", "Male", ark("E1"))], relationships: [pc("m", "c")] })).toEqual({ unscored: "no_relationship" });
+    const noEdge = edgeRead([asParent]);
+    noEdge.relationships = [];
+    noEdge.persons[0].sources = [{ ref: "r_E1" }];
+    const e = { ...entryOf(edgeRead([asParent])) };
+    expect(selectSubjectPersona(noEdge, "AAAA-111", e, parentsRecord())).toEqual({ unscored: "no_relationship" });
+  });
+
+  it("an unreadable record, or one without the ARK's persona, is record_unreadable", () => {
+    expect(select(edgeRead([asParent]), undefined)).toEqual({ unscored: "record_unreadable" });
+    expect(select(edgeRead([asParent]), { is_error: true, error: "gone" })).toEqual({ unscored: "record_unreadable" });
+    expect(select(edgeRead([asParent]), { persons: [rp("f", "Male")], relationships: [] })).toEqual({ unscored: "record_unreadable" });
+  });
+
+  it("a subject-level source selects the ARK's own persona", () => {
+    const read = person("AAAA-111", { personas: ["P1"] });
+    expect(selectSubjectPersona(read, "AAAA-111", buildAuditList(read).entries[0], record("P1"))).toEqual({ persona_id: "p_1", selected_by: "ark" });
+  });
+});
+
+describe("relationship-level sources in snapshot, baseline and plant", () => {
+  const edgeWorld = (edges: Json[], rec: Json, gender = "Male"): World =>
+    world({ persons: { "AAAA-111": edgeRead(edges, gender) }, records: { [ark("E1")]: rec } });
+  const rowsOf = (out: string) => readJson(join(out, "persons", "AAAA-111", "same-person.json"));
+  const metaOf = (out: string) => readJson(join(out, "persons", "AAAA-111", "meta.json"));
+
+  it("scores the selected persona and records who was chosen and why", async () => {
+    const out = mkTmp();
+    const w = edgeWorld([asParent], parentsRecord());
+    await snap(out, ["AAAA-111"], w);
+    expect(rowsOf(out)).toEqual([{ ark: ark("E1"), persona_id: "f", selected_by: "role:parent", result: { matched: true, score: 0.9 } }]);
+    expect(metaOf(out)).toMatchObject({ relationship_unscored: 0, relationship_unscored_reasons: {} });
+  });
+
+  it("an ambiguous source gets an unscored row with its reason, and baseline sums the reasons without adding findings", async () => {
+    const out = mkTmp();
+    const sibs: Json = { persons: [rp("mo", "Female", ark("E1")), rp("c1", "Female"), rp("c2", "Female")], relationships: [pc("mo", "c1"), pc("mo", "c2")] };
+    await snap(out, ["AAAA-111"], edgeWorld([asChild], sibs, "Female"));
+    expect(rowsOf(out)).toEqual([{ ark: ark("E1"), unscored: "ambiguous" }]);
+    expect(metaOf(out)).toMatchObject({ relationship_unscored: 1, relationship_unscored_reasons: { ambiguous: 1 } });
+    const { rows, summary } = runBaseline(out);
+    expect(rows).toEqual([]);
+    expect(summary.counts).toMatchObject({ relationship_unscored: 1, relationship_unscored_reasons: { ambiguous: 1 } });
+  });
+
+  it("(e) an indexing plant on a relationship-level ARK re-scores that source from the edited record", async () => {
+    const out = mkTmp();
+    const w = edgeWorld([asSpouse], coupleRecord(), "Female");
+    w.persons["HOST-111"] = w.persons["AAAA-111"];
+    delete w.persons["AAAA-111"];
+    const tools = fakeTools(w);
+    const seen: string[] = [];
+    tools.samePerson = (input) => {
+      seen.push(input.gedcomx2.persons.find((p: Json) => p.id === input.primaryId2).facts[0].date);
+      return fakeTools(w).samePerson(input);
+    };
+    await runPlant(spec([{ id: "fx_i", type: "indexing_error", host: "HOST-111", edit: { persona_ark: ark("E1"), field: "Birth.date", value: "1805" } }]), out, tools);
+    expect(seen).toEqual(["1850", "1805"]);
+    const rows = readJson(join(out, "persons", "fx_i", "same-person.json"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ ark: ark("E1"), persona_id: "w", selected_by: "role:spouse" });
   });
 });
 
