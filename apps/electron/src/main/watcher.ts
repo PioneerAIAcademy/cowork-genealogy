@@ -1,21 +1,31 @@
 import { BrowserWindow } from 'electron'
 import { watch, type FSWatcher } from 'chokidar'
 import { readFile, readdir, stat as fsStat } from 'node:fs/promises'
-import { join, resolve, basename, relative } from 'node:path'
+import { join, resolve, basename, dirname, relative } from 'node:path'
 
 let watcher: FSWatcher | null = null
 let currentFolderPath: string | null = null
 let lastResearch: unknown = null
 let lastGedcomx: unknown = null
+let lastCollections: unknown = null
 let lastNotice: string | null = null
 
-export const WATCHED_FILES = ['research.json', 'tree.gedcomx.json'] as const
+export const WATCHED_FILES = [
+  'research.json',
+  'tree.gedcomx.json',
+  'external-collections.json'
+] as const
 export type FixedFile = (typeof WATCHED_FILES)[number]
 
 export const channelMap: Record<FixedFile, string> = {
   'research.json': 'project:research-updated',
-  'tree.gedcomx.json': 'project:gedcomx-updated'
+  'tree.gedcomx.json': 'project:gedcomx-updated',
+  'external-collections.json': 'project:collections-updated'
 }
+
+// Optional: a project has no stored collection list until a place is surveyed,
+// so its removal is not an error — the viewer just clears the section.
+const OPTIONAL_FILES: ReadonlySet<FixedFile> = new Set(['external-collections.json'])
 
 // log_<alphanumeric>.json — anything else under results/ is ignored (READMEs,
 // .DS_Store, .tmp during atomic writes, etc.).
@@ -39,12 +49,14 @@ export function getCurrentState(): {
   folderPath: string | null
   research: unknown
   gedcomx: unknown
+  collections: unknown
   notice: string | null
 } {
   return {
     folderPath: currentFolderPath,
     research: lastResearch,
     gedcomx: lastGedcomx,
+    collections: lastCollections,
     notice: lastNotice
   }
 }
@@ -206,6 +218,36 @@ export async function scanAndNotify(
   }
 }
 
+/** Cache a parsed fixed file and push it to the renderer. */
+export function applyFixedFile(
+  file: FixedFile,
+  data: unknown,
+  mainWindow: Pick<BrowserWindow, 'webContents'>
+): void {
+  if (file === 'research.json') lastResearch = data
+  if (file === 'tree.gedcomx.json') lastGedcomx = data
+  if (file === 'external-collections.json') lastCollections = data
+  mainWindow.webContents.send(channelMap[file], data)
+}
+
+/** A fixed file was deleted: an optional one clears, the others are an error. */
+export function applyFixedUnlink(
+  file: FixedFile,
+  mainWindow: Pick<BrowserWindow, 'webContents'>
+): void {
+  if (OPTIONAL_FILES.has(file)) {
+    applyFixedFile(file, null, mainWindow)
+    return
+  }
+  mainWindow.webContents.send('project:watch-error', `${file} deleted`)
+}
+
+// A re-watched path whose folder was deleted or moved makes chokidar watch the
+// parent instead; a research.json there must never be shown as this project's.
+function inProjectFolder(filePath: string): boolean {
+  return resolve(dirname(filePath)) === currentFolderPath
+}
+
 export function startWatching(folderPath: string, mainWindow: BrowserWindow): void {
   stopWatching()
   currentFolderPath = resolve(folderPath)
@@ -228,12 +270,10 @@ export function startWatching(folderPath: string, mainWindow: BrowserWindow): vo
     const cls = classifyBasename(basename(filePath))
 
     if (cls.kind === 'fixed') {
+      if (!inProjectFolder(filePath)) return
       try {
         const content = await readFile(filePath, 'utf8')
-        const data = JSON.parse(content)
-        if (cls.file === 'research.json') lastResearch = data
-        if (cls.file === 'tree.gedcomx.json') lastGedcomx = data
-        mainWindow.webContents.send(channelMap[cls.file], data)
+        applyFixedFile(cls.file, JSON.parse(content), mainWindow)
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         mainWindow.webContents.send('project:watch-error', `Error reading ${cls.file}: ${message}`)
@@ -262,7 +302,12 @@ export function startWatching(folderPath: string, mainWindow: BrowserWindow): vo
   watcher.on('unlink', (filePath) => {
     const cls = classifyBasename(basename(filePath))
     if (cls.kind === 'fixed') {
-      mainWindow.webContents.send('project:watch-error', `${cls.file} deleted`)
+      if (!inProjectFolder(filePath)) return
+      applyFixedUnlink(cls.file, mainWindow)
+      // chokidar drops a watched file path once it is deleted, so a file put
+      // back later would never be seen. Watch the path again.
+      watcher?.unwatch(filePath)
+      watcher?.add(filePath)
       return
     }
     if (cls.kind === 'sidecar') {
@@ -285,6 +330,7 @@ export function stopWatching(): void {
   currentFolderPath = null
   lastResearch = null
   lastGedcomx = null
+  lastCollections = null
   // Must be cleared with the rest: otherwise picking a clean folder replays the
   // previous folder's notice on the next reload — a wrong banner, worse than
   // none (issue #1899).

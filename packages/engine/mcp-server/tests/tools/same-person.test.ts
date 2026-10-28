@@ -13,6 +13,7 @@ import { having, notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import { findRecordedScore, readMatchScores } from "../../src/utils/match-scores.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -2220,6 +2221,79 @@ describe("samePerson — project-relative arm", () => {
       );
       expect(result.recordPersona).toEqual({ id: null, name: "Pierre Mouchang", role: "father" });
     });
+  });
+});
+
+// ─── the score a production call records answers the writer's persona arm (#3552)
+//
+// The writer shares a score across a persona's facts only when the entry names
+// the persona it compared, carries `party_resolved`, and a role the record gives
+// that persona. These run the real project arm (record_read and the match API
+// mocked) on the shape extraction now writes for an accepted hint, and check the
+// entry it records against the lookup research_append makes.
+
+describe("samePerson — the recorded entry answers for the persona's other facts (#3552)", () => {
+  let dir: string;
+  const RECORD = "https://www.familysearch.org/ark:/61903/1:1:HINT-001";
+  const research = () => ({
+    log: [
+      { id: "log_h", tool: "person_record_matches", outcome: "positive", query: { recordId: RECORD }, results_ref: null },
+    ],
+    assertions: [
+      { id: "a_010", record_id: RECORD, record_role: "principal", fact_type: "name", value: "John Smith", record_persona_id: "P1", record_basis: "stated", log_entry_id: "log_h" },
+      { id: "a_011", record_id: RECORD, record_role: "principal", fact_type: "birth", value: "1850", record_persona_id: "P1", record_basis: "stated", log_entry_id: "log_h" },
+      { id: "a_020", record_id: RECORD, record_role: "father", fact_type: "name", value: "Thomas Smith", record_persona_id: "F1", record_basis: "stated", log_entry_id: "log_h" },
+    ],
+  });
+  const TREE = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ given: "John", surname: "Smith" }] },
+      { id: "I2", gender: "Male", names: [{ given: "Thomas", surname: "Smith" }] },
+    ],
+    relationships: [],
+  };
+  const P1 = { personaId: "P1", roles: new Set(["principal"]) };
+  const F1 = { personaId: "F1", roles: new Set(["father"]) };
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "same-person-persona-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(research()), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE), "utf8");
+    mockFetch.mockResolvedValue({ ok: true, json: async () => matchResponse });
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const fetched = () =>
+    recordReadMock.mockResolvedValue({
+      persons: [
+        { id: "P1", names: [{ given: "John", surname: "Smith" }] },
+        { id: "F1", names: [{ given: "Thomas", surname: "Smith" }] },
+      ],
+    });
+
+  it("fetched: the assertion's own party covers the persona's other facts", async () => {
+    fetched();
+    await samePerson({ projectPath: dir, assertionId: "a_010", treePersonId: "I1" }, LOCAL);
+    expect(recordReadMock.mock.calls[0][0].resultsRef).toBeUndefined();
+    const file = await readMatchScores(dir, RECORD);
+    expect(findRecordedScore(file, "a_011", "I1", P1)?.party_resolved).toBe(true);
+  });
+
+  it("fetched: a recordRole call covers the party it compared, not the assertion's own", async () => {
+    fetched();
+    await samePerson({ projectPath: dir, assertionId: "a_010", treePersonId: "I2", recordRole: "father" }, LOCAL);
+    const file = await readMatchScores(dir, RECORD);
+    expect(findRecordedScore(file, "a_020", "I2", F1)).not.toBeNull();
+    expect(findRecordedScore(file, "a_011", "I2", P1)).toBeNull();
+  });
+
+  it("projected: the persona taken from the assertions covers its other facts", async () => {
+    await samePerson({ projectPath: dir, assertionId: "a_010", treePersonId: "I1" }, LOCAL);
+    const file = await readMatchScores(dir, RECORD);
+    const entry = findRecordedScore(file, "a_011", "I1", P1);
+    expect(entry?.record_source).toBe("projection");
   });
 });
 

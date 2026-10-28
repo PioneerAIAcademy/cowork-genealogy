@@ -2363,6 +2363,44 @@ describe("Project Validator", () => {
       expect(result.errors.some((e) => e.message.includes("does not resolve to a person"))).toBe(false);
     });
 
+    describe("D5: a persona id under a sidecar-less log entry (#3552)", () => {
+      const project = async (tool: string, outcome: string, recordId: string) => {
+        const research = {
+          ...minimalResearch,
+          log: [
+            { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool, query: { id: "LZNY-BRF", recordId: "ark:/61903/1:1:ABCD-123" }, outcome, results_examined: 1, results_ref: null, external_site: null },
+          ],
+          sources: [
+            { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+          ],
+          assertions: [
+            { id: "a_001", source_id: "src_001", record_id: recordId, record_role: "principal", record_persona_id: "P1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [], log_entry_id: "log_001" },
+          ],
+        };
+        await writeProject(research, { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] });
+        return (await validateProject(testDir)).errors.filter((e) => e.path.startsWith("research.json/assertions"));
+      };
+
+      it("accepts one under an accepted hint for the same record", async () => {
+        expect(await project("person_record_matches", "positive", "https://familysearch.org/ark:/61903/1:1:ABCD-123")).toEqual([]);
+      });
+
+      it("rejects one under an accepted hint for another record", async () => {
+        const errors = await project("person_record_matches", "positive", "ark:/61903/1:1:OTHER-99");
+        expect(errors.map((e) => e.message).join(" ")).toMatch(/is not the hinted record/);
+      });
+
+      it("rejects one under a rejected hint", async () => {
+        const errors = await project("person_record_matches", "negative", "ark:/61903/1:1:ABCD-123");
+        expect(errors.map((e) => e.message).join(" ")).toMatch(/has no sidecar/);
+      });
+
+      it("rejects one under a record_read logged without a sidecar", async () => {
+        const errors = await project("record_read", "positive", "ark:/61903/1:1:ABCD-123");
+        expect(errors.map((e) => e.message).join(" ")).toMatch(/has no sidecar/);
+      });
+    });
+
     it("D5: rejects a record_persona_id that does not match any persona in a record_read sidecar", async () => {
       const research = {
         ...minimalResearch,
