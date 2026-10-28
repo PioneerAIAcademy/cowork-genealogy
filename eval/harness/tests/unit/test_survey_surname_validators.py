@@ -196,3 +196,23 @@ def test_columns_fail_without_ruled_out():
     bad = _NOTES.replace(" Ruled Out |", "").replace("|---|---|---|---|---|---|", "|---|---|---|---|---|")
     _expect_failure(check_columns, "lacks", before_state=EMPTY,
                     after_state=_state([_entry(notes=bad)]), test=POSITIVE)
+
+
+def _pipeless(notes):
+    """The same tables in GFM's other spelling, with no outer pipes."""
+    return "\n".join(
+        line.strip("|").strip() if line.startswith("|") else line
+        for line in notes.splitlines()
+    )
+
+
+def test_table_checks_accept_pipeless_tables():
+    after = _state([_entry(notes=_pipeless(_NOTES))])
+    assert _run(check_grouping, before_state=EMPTY, after_state=after, test=POSITIVE) == "passed"
+    assert _run(check_columns, before_state=EMPTY, after_state=after, test=POSITIVE) == "passed"
+
+
+def test_columns_fail_on_pipeless_table_without_ark():
+    bad = _pipeless(_NOTES.replace("| Record ARK | Ruled Out |", "| Record ID | Ruled Out |"))
+    _expect_failure(check_columns, "lacks", before_state=EMPTY,
+                    after_state=_state([_entry(notes=bad)]), test=POSITIVE)
