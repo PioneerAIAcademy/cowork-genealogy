@@ -894,6 +894,10 @@ class SkillRunResult:
     # derives `spawned_agents` and `spawn_prompts` from those records, and two
     # gating universal validators read them, so this field now decides outcomes.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # A direct test's delegation as the main thread was handed it, with
+    # `<workspace>` replaced by the run's folder; None on a routed test. The
+    # verbatim-relay validator and the judge read this, not the raw test text.
+    delegation_sent: str | None = None
     # What each spawned subagent RETURNED, as {"subagent_type", "text"}, in call
     # order. Empty when the agent under test returned nothing. A ROUTED run
     # CAN spawn agents (`ut_timeline_008` spawns `record-extractor`), so a

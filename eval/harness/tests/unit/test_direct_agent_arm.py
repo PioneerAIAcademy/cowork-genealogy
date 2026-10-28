@@ -22,7 +22,12 @@ from pathlib import Path
 import pytest
 
 from harness.loader import load_test_from_dict
-from harness.orchestrator import MissingPairAgentError, _compute_outcome, _prompt_for
+from harness.orchestrator import (
+    MissingPairAgentError,
+    _compute_outcome,
+    _prompt_for,
+    _resolved_delegation,
+)
 from harness.runlog import derive_activated
 from harness.skill_runner import (
     BUILTIN_ARG_TRUNCATE,
@@ -100,6 +105,17 @@ def test_direct_prompt_carries_the_delegation_verbatim_and_names_the_agent():
     prompt = _prompt_for(spec)
     assert DELEGATION in prompt, "the relay is asserted verbatim downstream"
     assert 'subagent_type "research-exhaustiveness"' in prompt
+
+
+def test_direct_prompt_replaces_the_workspace_placeholder(tmp_path):
+    """A literal `<workspace>` reads to the agent as "no project" (#3935); a
+    production caller always sends a real path."""
+    spec = load_test_from_dict(_raw(delegation=DELEGATION + "\nprojectPath: <workspace>"))
+    sent = _resolved_delegation(spec, tmp_path)
+    assert sent == DELEGATION + f"\nprojectPath: {tmp_path}"
+    prompt = _prompt_for(spec, tmp_path)
+    assert sent in prompt
+    assert "<workspace>" not in prompt
 
 
 def test_routed_prompt_is_the_user_message_unchanged():

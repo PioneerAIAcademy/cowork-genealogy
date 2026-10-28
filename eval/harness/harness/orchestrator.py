@@ -782,7 +782,7 @@ async def _execute_single_run(
             # its validators report "skipped" on the whole population they were
             # written for — the defect behind `refinement_targets` (#2021 F12)
             # and `index_error_source` (#1606), twice.
-            "delegation": spec.delegation,
+            "delegation": getattr(result, "delegation_sent", None) or spec.delegation,
             # Also threaded in: `index_error_source`, the one attached source a
             # doctrine test declares to be an indexing error — deterministic
             # ground truth for
@@ -802,7 +802,8 @@ async def _execute_single_run(
             # A direct-agent test has no user turn (#2246) and its delegation is
             # the only text the run was handed, so it takes that slot — without
             # the fallback a year the delegation supplied reads as invented.
-            "user_message": spec.user_message or (spec.delegation or ""),
+            "user_message": spec.user_message
+            or (getattr(result, "delegation_sent", None) or spec.delegation or ""),
             # Also threaded in: `negative`, so a hand-back validator can read
             # the owner a direct-arm negative names in `correct_skill`
             # (test_check_warnings.test_hand_back_names_its_owner, issue #2118).
@@ -1191,7 +1192,7 @@ async def _execute_skill_with_retry(
                     seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
-                        user_message=_prompt_for(spec),
+                        user_message=_prompt_for(spec, workspace),
                         workspace=workspace,
                         fixture_names=spec.mcp_fixtures,
                         fixtures_dir=paths.fixtures_dir,
@@ -1227,6 +1228,8 @@ async def _execute_skill_with_retry(
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)
                     result.pg_store_faults = pg_store_faults(workspace)
+                    if spec.is_direct:
+                        result.delegation_sent = _resolved_delegation(spec, workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
@@ -1822,7 +1825,23 @@ class MissingPairAgentError(Exception):
     """A direct test names a `skill` with no agent file of the same name."""
 
 
-def _prompt_for(spec: TestSpec) -> str:
+WORKSPACE_PLACEHOLDER = "<workspace>"
+
+
+def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
+    """`input.delegation` with `<workspace>` replaced by the run's folder.
+
+    A production caller always sends a real absolute path. Left literal, the
+    placeholder reads to the agent as "no project", and a Haiku agent hands back
+    naming init-project instead of surveying (#3935).
+    """
+    delegation = spec.delegation or ""
+    if workspace is None:
+        return delegation
+    return delegation.replace(WORKSPACE_PLACEHOLDER, str(workspace))
+
+
+def _prompt_for(spec: TestSpec, workspace: Path | None = None) -> str:
     """What the main thread is sent.
 
     A routed test gets its `user_message` unchanged. A direct test gets the
@@ -1845,7 +1864,7 @@ def _prompt_for(spec: TestSpec) -> str:
             f"{spec.skill!r}`; if this pair's agent is named differently, the "
             f"direct arm cannot address it."
         )
-    return direct_dispatch_prompt(spec.skill, spec.delegation or "")
+    return direct_dispatch_prompt(spec.skill, _resolved_delegation(spec, workspace))
 
 
 def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
@@ -2169,7 +2188,8 @@ def build_judge_grade_kwargs(
             "a conclusion that is WRONG. An agent that refuses the outcome this text "
             "asserts may be behaving exactly as required. Judge correctness from the "
             "rubric and the per-test context alone — never from what the delegation "
-            "claims about the answer.)\n\n" + (spec.delegation or "")
+            "claims about the answer.)\n\n"
+            + (getattr(result, "delegation_sent", None) or spec.delegation or "")
         )
         _spawned = spawned_agents(getattr(result, "builtin_tool_calls", []) or [])
         judge_ran = [
