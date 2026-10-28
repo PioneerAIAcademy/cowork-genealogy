@@ -4,7 +4,7 @@
     "skill": "hypothesis-tracking",
     "name": "A hypothesis needing more evidence routes to research-plan, not question-selection (E)",
     "type": "positive",
-    "description": "flynn-competing-fathers carries two competing parentage hypotheses for the open q_001: h_001 supported and h_002 still active. Deciding between them needs a record nobody has fetched. Section E moves that route to research-plan: the evidence that would separate two candidates is a SEARCH on the question already open, and asking question-selection for a new question would leave q_001 unfinished while a second competes with it.",
+    "description": "flynn-parentage-open carries two competing parentage hypotheses for the open q_001, both active: Thomas Flynn (dwelling 84) and Michael Flynn (dwelling 210) each had a Patrick of the right age in 1850. The censuses, the death certificate and the baptism search are done and none separates them; each father's probate, Patrick's marriage record and his obituary have not been searched. Section E moves that route to research-plan: the evidence that would separate two candidates is a SEARCH on the question already open, and asking question-selection for a new question would leave q_001 unfinished.",
     "tags": [
       "hypothesis-tracking",
       "competing-candidates",
@@ -16,15 +16,15 @@
   },
   "input": {
     "delegation": "Review the competing parentage hypotheses for q_001 and say what happens next.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-parentage-not-proved"
+    "scenario": "flynn-parentage-open"
   },
   "judge_context": [
-    "Neither hypothesis can be settled from what is on file: the scenario holds two equally-plausible candidate fathers and nothing that separates them. What would separate them is a record nobody has fetched.",
+    "Neither hypothesis can be settled from what is on file: both 1850 households had a Patrick of matching age, the 1860 census finds him boarding with no Flynn, the death certificate leaves the father blank, and the baptism does not survive. Records that could separate the two fathers have not been searched: each father's probate or estate file, Patrick's marriage record, his obituary.",
     "The next-step recommendation must name **research-plan**, so the deciding record is planned as items on q_001, which is still open.",
     "Naming **question-selection**, or recommending a new research question, is the failure this test exists for. The evidence that would decide between two hypotheses is a SEARCH on the question already open, not a second question competing with it. This is the routing section E changed.",
     "**The last line must be the offer**, written exactly as \"Continue with planning the searches?\". The host parses only the last line, so a reply naming research-plan mid-text and ending some other way offers the researcher nothing.",
     "Ruling either hypothesis out would be wrong here and should be charged: nothing on file refutes either. Leaving both `active` is correct.",
-    "Do not charge the agent on the TIER or on any proof language; this scenario's `not_proved` reading is `ut_proof_conclusion`'s subject."
+    "q_001 is open and not declared exhaustive. Recommending research-exhaustiveness or a proof conclusion instead of planning the unsearched records is a failure here: those records could name the father."
   ],
   "judge_reads_files": true,
   "execution": {
