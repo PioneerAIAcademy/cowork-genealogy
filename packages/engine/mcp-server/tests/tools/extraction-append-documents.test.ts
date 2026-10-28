@@ -1184,6 +1184,51 @@ describe("extraction_append: documents", () => {
       expect(await rolesOf("capture:probate-96-42")).toMatchObject({ "Paul Meacham": "decedent", "Isaac Porter": "administrator_1" });
     });
 
+    describe("against the transcription's own formula", () => {
+      const TEXT = "KNOW YE, That I Paul Meacham of Southwick, in consideration of forty pounds paid by John Dewey of Westfield, have sold land. In presence of Gad Palmer.";
+      const stage = async (transcription: string) =>
+        (await stageSearchResults({
+          projectPath: dir,
+          tool: "image_transcribe",
+          response: { query: { imageId: "deed384" }, results: [{ id: "deed384", source: { imageId: "deed384" }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription }] },
+        }))!.resultsRef;
+      const swappedDeed = () =>
+        deed(meacham().map((p) => (p.id === "p1" ? { ...p, statedRelation: "grantee" } : p.id === "p2" ? { ...p, statedRelation: "grantor" } : p)));
+
+      it("refuses swapped labels, quotes the phrase, and writes nothing", async () => {
+        const before = await readFile(join(dir, "research.json"), "utf8");
+        const r = await run([{ recordId: "capture:deed-swap", document: swappedDeed(), transcriptionRef: await stage(TEXT) }]);
+        expect(r.ok).toBe(false);
+        expect(r.errors?.join(" ")).toMatch(/KNOW YE, That I Paul Meacham/);
+        expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
+      });
+
+      it("writes the same deed when labelled as the page says", async () => {
+        const r = await run([{ recordId: "capture:deed-ok", document: deed(meacham()), transcriptionRef: await stage(TEXT) }]);
+        expect(r.ok).toBe(true);
+      });
+
+      it("writes a deed in a form the patterns do not cover, labels unchanged", async () => {
+        const text = "This Indenture between Paul Meacham of the one part and John Dewey of the other part";
+        const r = await run([{ recordId: "capture:deed-indenture", document: swappedDeed(), transcriptionRef: await stage(text) }]);
+        expect(r.ok).toBe(true);
+        expect((await rolesOf("capture:deed-indenture"))["Paul Meacham"]).toBe("grantee");
+      });
+
+      it("checks nothing, and still writes, when the cited transcription file cannot be read", async () => {
+        const doc = JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+        doc.log.push({ id: "log_001", performed: "2026-01-01T00:00:00Z", tool: "image_transcribe", query: { imageId: "gone" }, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json" });
+        await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+        const r = await run([{ recordId: "capture:deed-gone", document: swappedDeed(), transcriptionRef: "results/log_001.json" }]);
+        expect(r.ok).toBe(true);
+        expect((await rolesOf("capture:deed-gone"))["Paul Meacham"]).toBe("grantee");
+      });
+
+      it("checks nothing for a pasted-text document with no transcriptionRef", async () => {
+        expect((await run([{ recordId: "capture:deed-pasted", document: swappedDeed() }])).ok).toBe(true);
+      });
+    });
+
     it("breaks a tie on the probate fact by the flagged principal, then by order", () => {
       const both = [
         person("p1", "A", "One", undefined, [{ type: "probate" }]),

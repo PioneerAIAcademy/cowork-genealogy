@@ -31,7 +31,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
@@ -72,6 +72,11 @@ const CLOSED_ENUMS = {
   not_reached_kind: new Set([
     "nil_search", "browse_only", "over_transport_cap", "paywalled",
     "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
+    // Step mode, decision 21: a source this question never planned, recorded by
+    // the "not exhaustive" choice so the declaration says what it left rather
+    // than silently omitting it. The only kind naming a source the agent CHOSE
+    // not to reach rather than one it could not.
+    "deferred",
   ]),
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
@@ -88,11 +93,6 @@ const CLOSED_ENUMS = {
     "GenealogyBank", "FindAGrave-Plus",
     "FamilySearch-Partner", "LibraryAccess", "other", "none",
   ]),
-  holding_type: new Set([
-    "document", "prior_research", "oral_knowledge", "gedcom",
-    "photo", "artifact", "other",
-  ]),
-  holding_confidence: new Set(["confident", "unsure"]),
   severity: new Set(["high", "medium", "low"]),
   evaluation_focus: new Set([
     "pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand",
@@ -251,7 +251,6 @@ export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}(
 // so a new id-prefixed section cannot get here without a check, or drift from it.
 export const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
-  known_holdings: "kh_",
   questions: "q_",
   plans: "pl_",
   plan_items: "pli_",
@@ -520,6 +519,19 @@ function checkIsoDate(
  */
 export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
 
+/** Whether a `conflicts[]` entry is settled: `resolved` or `moot` (issue #2359).
+ *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
+ *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
+ *  disputing its sources. Not every status read asks that question:
+ *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
+ *  this on any document the validator accepts. The harness keeps a Python copy,
+ *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
+ *  `test_settled_conflict_parity.py` runs both over the same conflicts. */
+export function isSettledConflict(c: any): boolean {
+  return SETTLED_CONFLICT_STATUSES.has(c?.status);
+}
+
 function checkRefExists(
   refId: string,
   validIds: Set<string>,
@@ -648,7 +660,7 @@ const NULLABLE_FIELDS = new Set([
 // tests/validation/validator.test.ts.
 export const RESEARCH_SHAPES = {
   document: new Set([
-    "project", "researcher_profile", "known_holdings", "questions", "plans",
+    "project", "researcher_profile", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
     "localities", "warning_justifications", "namesakes",
@@ -659,10 +671,6 @@ export const RESEARCH_SHAPES = {
   ]),
   researcher_profile: new Set([
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
-  ]),
-  known_holding: new Set([
-    "id", "holding_type", "description", "relates_to_person_ids",
-    "relevant_facts", "confidence", "promoted", "created",
   ]),
   question: new Set([
     "id", "question", "rationale", "selection_basis", "priority", "status",
@@ -722,7 +730,7 @@ export const RESEARCH_SHAPES = {
     "identity_question", "competing_assertion_ids", "status",
     "preferred_assertion_id", "resolution_rationale",
     "independence_analysis", "weighing_analysis", "blocks_question_ids",
-    "resolution_kind", "resolved_value",
+    "resolution_kind", "resolved_value", "weighed_log_entry_ids",
   ]),
   hypothesis: new Set([
     "id", "claim", "status", "supporting_assertion_ids",
@@ -802,7 +810,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, path, `missing top-level section '${section}'`);
     }
   }
-  checkAllowedKeys(data, RESEARCH_SHAPES.document, "research documents", path, report);
+  // Projects created before #2069 still carry the deleted known_holdings
+  // section, and no tool can remove a top-level key, so it warns instead of
+  // failing every later validation.
+  const { known_holdings: retiredHoldings, ...current } = data;
+  if (retiredHoldings !== undefined) {
+    addWarning(
+      report,
+      path,
+      "retired section 'known_holdings' is ignored: it was deleted from the schema (#2069) and nothing reads it. No action needed."
+    );
+  }
+  checkAllowedKeys(current, RESEARCH_SHAPES.document, "research documents", path, report);
 
   if (typeof data.project !== "object" || data.project === null) {
     addError(report, path, "project must be an object");
@@ -860,41 +879,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ia = rp.intended_audience;
       if (ia !== null && ia !== undefined && typeof ia !== "string") {
         addError(report, rpPath, "intended_audience must be a string");
-      }
-    }
-  }
-
-  // Known holdings (optional)
-  const holdings = data.known_holdings;
-  if (holdings !== null && holdings !== undefined) {
-    if (!Array.isArray(holdings)) {
-      addError(report, `${path}/known_holdings`, "known_holdings must be an array");
-    } else {
-      for (let i = 0; i < holdings.length; i++) {
-        const kh = holdings[i];
-        const khPath = `${path}/known_holdings[${i}]`;
-        if (!isObjectEntry(kh, khPath, report)) continue;
-        checkRequired(kh, [
-          "id", "holding_type", "description", "confidence", "promoted", "created",
-        ], khPath, report, NULLABLE_FIELDS);
-        checkAllowedKeys(kh, RESEARCH_SHAPES.known_holding, "known_holdings entries", khPath, report);
-        if ("id" in kh) {
-          checkIdPrefix(kh.id, ID_PREFIXES.known_holdings, khPath, report);
-        }
-        if ("holding_type" in kh) {
-          checkEnum(kh.holding_type, "holding_type", khPath, report);
-        }
-        if ("confidence" in kh) {
-          checkEnum(kh.confidence, "holding_confidence", khPath, report);
-        }
-        if ("promoted" in kh && typeof kh.promoted !== "boolean") {
-          addError(report, khPath, "promoted must be a boolean");
-        }
-        checkIsoDate(kh, "created", khPath, report);
-        const rtp = kh.relates_to_person_ids;
-        if (rtp !== null && rtp !== undefined && !Array.isArray(rtp)) {
-          addError(report, khPath, "relates_to_person_ids must be an array");
-        }
       }
     }
   }
@@ -1008,6 +992,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           }
           if (nr.kind === "wiki_named_untouched" && (nr.wiki_title === null || nr.wiki_title === undefined)) {
             addError(report, nrp, "wiki_title is required (non-null) when kind is 'wiki_named_untouched'");
+          }
+          // A `deferred` entry is the only record of a source this question chose
+          // not to plan, and "Search more" plans from it (step mode, section B): the
+          // film, image or URL lives in `description`, so one with none names nothing.
+          if (nr.kind === "deferred" && (typeof nr.description !== "string" || nr.description.trim() === "")) {
+            addError(report, nrp, "description is required (non-blank) when kind is 'deferred': name the source left unsearched");
           }
         }
       }
@@ -1505,7 +1495,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // Collected here, and read by the proof_summaries block below. Safe
       // because validateResearch is a single sequential pass and conflicts
       // precede proof_summaries in it.
-      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+      if (isSettledConflict(c) && typeof c.id === "string") {
         ids.settled_conflicts.add(c.id);
       }
     }
@@ -1522,6 +1512,22 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if (ct === "identity" && !c.identity_question) {
       addError(report, cp, "identity conflict requires identity_question");
+    }
+    // The question's log entries conflict-resolution has weighed. Optional,
+    // and it mirrors search_stop.log_entry_ids, so it is checked the same
+    // way: an array whose every id resolves to a real log entry. Absent is
+    // allowed; null is not, because the JSON Schema has no null branch.
+    if ("weighed_log_entry_ids" in c) {
+      const weighed = c.weighed_log_entry_ids;
+      if (!Array.isArray(weighed)) {
+        addError(report, cp, "weighed_log_entry_ids must be an array");
+      } else {
+        weighed.forEach((l: unknown, j: number) => {
+          const wp = `${cp}/weighed_log_entry_ids[${j}]`;
+          if (typeof l !== "string") addError(report, wp, "must be a string");
+          else checkRefExists(l, ids.log, "log entry", wp, report);
+        });
+      }
     }
     // identity_question is the question's text — schema type string|null. Reject
     // any other type (notably the boolean form that slipped past this validator
@@ -2494,7 +2500,7 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings, proof_summaries[].claims[].relationship,
+  // timelines, proof_summaries[].claims[].relationship,
   // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
@@ -2616,6 +2622,20 @@ async function validateSidecars(
     }
 
     if (!entry.results_ref) {
+      // An accepted hint stages nothing: extraction_append verified the persona id
+      // against its own read at write time. What can still be checked is that the
+      // assertion is about the hinted record.
+      if (isAcceptedHint(entry)) {
+        const hinted = typeof entry.query?.recordId === "string" ? arkToBareId(entry.query.recordId) : "";
+        if (hinted === "" || arkToBareId(String(a.record_id ?? "")) !== hinted) {
+          addError(
+            report,
+            ap,
+            `has record_persona_id under hint entry '${logId}', but record_id '${a.record_id}' is not the hinted record '${entry.query?.recordId ?? ""}'`,
+          );
+        }
+        continue;
+      }
       addError(report, ap, `has record_persona_id but its log entry '${logId}' has no sidecar (results_ref is null)`);
       continue;
     }

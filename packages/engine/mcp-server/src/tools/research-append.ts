@@ -22,7 +22,7 @@ import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
-import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -46,6 +46,7 @@ import {
   readMatchScores,
   findRecordedScore,
   type MatchScoreFile,
+  type ScoredPersona,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { normalizeString } from "../utils/string-similarity.js";
@@ -68,7 +69,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -96,12 +97,15 @@ import {
   factTypeKey,
   isTwoParty,
   recordPartyKeyer,
+  personaRolesById,
+  sameRecord,
 } from "../utils/record-persona.js";
 import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/relatives.js";
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
+import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -180,7 +184,6 @@ const SECTIONS: Record<string, SectionConfig> = {
     },
   },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
-  known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
   localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
   // A row is never retired and never re-pointed: person_id is the person it
   // shadows, so it is not among the fields an update may set.
@@ -1042,8 +1045,7 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
         (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
           (aid: string) => linked.has(aid),
         ) &&
-        c.status !== "resolved" &&
-        c.status !== "moot",
+        !isSettledConflict(c),
     )
     .map((c: any) => c.id);
   if (unresolved.length > 0) {
@@ -2171,15 +2173,17 @@ function personEvidenceScoreInvariants(
       : research;
   if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
-  // Exact lookup on (assertion, tree person) -- the pair the writer was called
-  // with and the pair this entry carries, so the two sides cannot disagree.
-  // Keying on the PARTY instead could not see a score written by the fetched
-  // route, which resolves a real persons[].id where the assertion carries null:
-  // the gate then refused precisely the links whose call HAD been made. Persona
-  // granularity (ADR-0009 constraint 3) survives because an assertion is a
-  // (record, party) pair, so a second persona is a different assertion.
+  // Exact lookup on (assertion, tree person) first -- the pair the writer was
+  // called with and the pair this entry carries. Keying on the PARTY instead
+  // could not see a score written by the fetched route, which resolves a real
+  // persons[].id where the assertion carries null. Then the persona arm: a score
+  // that compared this assertion's verified persona with this tree person
+  // answers for every fact of that persona (#3552; match-scores.ts header). A
+  // second persona of the record is a different persona, so ADR-0009
+  // constraint 3 holds.
   const file = matchScores.get(recordId) ?? null;
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
+  const persona = scoredPersonaOf(assertion, recordId, assertions, batchAssertions);
+  if (findRecordedScore(file, entry.assertion_id, entry.person_id, persona) !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -2192,6 +2196,12 @@ function personEvidenceScoreInvariants(
     ? ` This assertion's own party is '${role}'; if '${entry.person_id}' is a DIFFERENT party ` +
       `on the same record, pass that party's recordRole so the score compares the right two ` +
       `people.`
+    : "";
+  // The persona arm is why one call is enough per persona; say so, or the agent
+  // repeats the identical call for each fact.
+  const personaHint = persona
+    ? ` One score covers every fact of persona '${persona.personaId}' on this record: score it ` +
+      `once for '${entry.person_id}' and the links for its other facts need no further call.`
     : "";
   // An assertion this same call CREATES cannot already have a score: `same_person`
   // reads research.json and throws on an assertion that is not in it, and the
@@ -2215,8 +2225,29 @@ function personEvidenceScoreInvariants(
       `'${entry.person_id}' }) first, then write the link with the score it returns. The tool ` +
       `assembles both sides itself, so this costs one call and no payload. If that call cannot ` +
       `score the pairing, or if '${entry.person_id}' was created out of this very record, do NOT ` +
-      `score it: leave match_score null and say why in the rationale.${roleHint}`,
+      `score it: leave match_score null and say why in the rationale.${roleHint}${personaHint}`,
   ];
+}
+
+/** The persona a link's assertion is about, with the roles its record gives it,
+ *  or undefined when no score can be shared: the assertion carries no persona
+ *  id; it names a second person (`isTwoParty`), so its link may be about that
+ *  other party; or the record gives the id to more than one role, so it names no
+ *  single party (`same_person` passes over such an id the same way). The
+ *  record's assertions are gathered with `sameRecord`, the rule `same_person`
+ *  scores by, from `batchAssertions` (the document plus this call's appends)
+ *  when given. */
+function scoredPersonaOf(
+  assertion: any,
+  recordId: string,
+  assertions: readonly any[],
+  batchAssertions?: Map<string, any>,
+): ScoredPersona | undefined {
+  const personaId = assertion?.record_persona_id;
+  if (typeof personaId !== "string" || personaId === "" || isTwoParty(assertion?.fact_type)) return undefined;
+  const pool = batchAssertions ? [...batchAssertions.values()] : assertions;
+  const roles = personaRolesById(pool.filter((a) => sameRecord(a?.record_id, recordId))).get(personaId);
+  return roles !== undefined && roles.size === 1 ? { personaId, roles } : undefined;
 }
 
 /** Whether a record persona `same_person` could score against is reachable for
@@ -4210,30 +4241,41 @@ function questionResolvedInvariants(
   // correlated.
   if (beforeResearch) {
     const disputed = disputedSourceIds(beforeResearch);
-    if (disputed.size > 0) {
-      const assertionSource = new Map<string, string>();
-      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
-        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    const assertionSource = new Map<string, string>();
+    for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+      if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    }
+    const blocking = new Set<string>();
+    for (const ps of summaries) {
+      if (ps?.question_id !== entry?.id) continue;
+      for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+        const src = assertionSource.get(aid);
+        for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
       }
-      const blocking = new Set<string>();
-      for (const ps of summaries) {
-        if (ps?.question_id !== entry?.id) continue;
-        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
-          const src = assertionSource.get(aid);
-          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
-        }
-      }
-      if (blocking.size > 0) {
-        return [
-          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
-            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
-            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
-            "sources behind it have never been correlated. This is not the same as a question " +
-            "researched and found empty, which `not_proved` does close — here the work is " +
-            "unfinished rather than finished with nothing. Leave the question open, record the " +
-            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
-        ];
-      }
+    }
+    // Reaching the conflicts through the summary's cited assertions misses the
+    // case that matters most: a `not_proved` summary citing NOTHING. Its
+    // `supporting_assertion_ids` is empty, so the loop above finds nothing to
+    // dispute and the question resolves straight over an open conflict -- which
+    // is exactly what decision 12 says must not happen, and exactly the shape a
+    // wrap-up produces. A conflict naming this question in `blocks_question_ids`
+    // is blocking it by its own declaration, with no assertion needed -- so this
+    // runs even when no source is disputed at all.
+    for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
+      if (isSettledConflict(c) || typeof c?.id !== "string") continue;
+      const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
+      if (blocks.includes(entry?.id)) blocking.add(c.id);
+    }
+    if (blocking.size > 0) {
+      return [
+        `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+          `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+          "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+          "sources behind it have never been correlated. This is not the same as a question " +
+          "researched and found empty, which `not_proved` does close — here the work is " +
+          "unfinished rather than finished with nothing. Leave the question open, record the " +
+          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+      ];
     }
   }
 
@@ -4252,7 +4294,9 @@ function questionResolvedInvariants(
  *
  *  A conflict names the assertions that compete; each assertion names the
  *  source it came from. Those sources are the ones whose reliability is
- *  currently in question. */
+ *  currently in question. A `moot` conflict disputes nothing: it is settled
+ *  like a `resolved` one, so both refusals built on this name only conflicts
+ *  that really are unresolved (issue #2359). */
 function disputedSourceIds(research: any): Map<string, string[]> {
   const assertionSource = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
@@ -4260,7 +4304,7 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   }
   const bySource = new Map<string, string[]>();
   for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
-    if (!c || c.status === "resolved") continue;
+    if (!c || isSettledConflict(c)) continue;
     for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
       const src = assertionSource.get(aid);
       if (!src) continue;
@@ -4372,7 +4416,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
     if (!c || typeof c !== "object") continue;
     const key = conflictKey(c.id);
     if (key) recorded.add(key);
-    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+    if (isSettledConflict(c)) {
       if (key) settled.add(key);
       for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
     }
@@ -5042,11 +5086,14 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
  *  `statuses`, read from the given snapshot. Shared by the in-flight gates so
  *  which plans and items count is decided once.
  *
- *  `statuses` defaults to `in_progress` alone, which is what the new-question
- *  gate below asks for. `planCompleteInvariants` additionally passes `planned`
- *  (issue #1830): an undisposed item leaves the record unable to say whether it
- *  was answered by what is already held or simply never run. The two gates ask
- *  different questions of the same plan, so the status set is the caller's. */
+ *  `statuses` defaults to `in_progress` alone. No caller takes that default any
+ *  more: `planCompleteInvariants` passes `planned` too (issue #1830) -- an
+ *  undisposed item leaves the record unable to say whether it was answered by
+ *  what is already held or simply never run -- and the new-question gate passes
+ *  `PLAN_ITEM_OUTSTANDING`, every status but `completed` and `skipped`, because
+ *  step mode's rule is about a question with work left rather than work running.
+ *  The two gates ask different questions of the same plan, so the status set is
+ *  the caller's. */
 export function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
@@ -5077,100 +5124,105 @@ export function activePlanItems(
   return found;
 }
 
-/** A new question may not be created while any unresolved question has an
- *  active-plan item `in_progress`, with two exceptions.
- *
- *  (1) chesworthrm, 2026-09-29: the new question may target an unresolved
- *  conflict that blocks the in-flight question. Checked against `conflicts[]`
- *  — an `unresolved` conflict must list the in-flight question in
- *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
- *  filled-in `unblocks` alone proves nothing.
- *
- *  (2) issue #3259: a `person_warnings` contradiction on an in-scope person is
- *  Priority 1 the same way an unresolved conflict is, but a contradiction is
- *  never persisted anywhere in `research.json` -- `person_warnings` is a live,
- *  read-only call, and a `questions[]` entry carries no `personId` to check it
- *  against -- so there is no document this guard can read the way it reads
- *  `conflicts[]` for (1). Trusted on the new question's own
- *  `selection_basis: "unresolved_conflict"` alone, the same self-reported
- *  trust this guard already extends to every OTHER `selection_basis` value
- *  outside the in-progress scenario (`hypothesis_test`, `timeline_gap`, etc.
- *  are never verified here either). Unlike (1), not scoped to `unblocks`
- *  naming the specific in-flight question -- a contradiction found this call
- *  is not necessarily about whatever is already in progress, so requiring
- *  `unblocks` to name it would be a false claim the eval judge would
- *  rightly flag. A known, accepted gap (ADR-0011 limit 1: false-allow over
- *  false-refusal) until person_warnings output has somewhere to persist.
- *
- *  There is deliberately no general "add a question anyway" override: the tool
- *  cannot tell a real user override from a delegation that claims one, and the
- *  override's shape (`depends_on` naming the in-flight question) is exactly how
- *  `ut_question_selection_d01` fails. A user who wants to move on marks the
- *  in-flight item done or skipped first.
- *
- *  jud-sdev's review, 2026-10-16: as first shipped, `selfReportedContradiction`
- *  was a single boolean applied to every active-plan item, so it switched the
- *  WHOLE guard off -- including (1)'s conflict-scoped check and the no-override
- *  rule above -- for any append carrying that one `selection_basis` string,
- *  regardless of what else the entry claimed. Narrowed to also require an empty
- *  `depends_on`, which puts the `ut_question_selection_d01` guarantee back: an
- *  entry shaped like that override (naming the in-flight question in
- *  `depends_on`) is refused even when it also claims
- *  `selection_basis: "unresolved_conflict"`. NOT fully closed by this narrowing:
- *  a question with `unblocks` naming the in-flight question and no `depends_on`
- *  still takes (2)'s free pass even when it is actually about a conflict
- *  `conflicts[]` already documents -- in which case (1)'s stricter check (that
- *  conflict's `blocks_question_ids` must list the in-flight question) never
- *  gets a chance to run. jud-sdev's review (2026-10-19) found "ruled to leave
- *  it" here was never actually true -- that was an internal call in this
- *  session's own conversation, not an on-the-record decision from the lead who
- *  made the 2026-09-29 ruling this would narrow. Put to DallanQ on issue #3259
- *  (2026-10-19) instead; PENDING as of this commit. Current behavior:
- *  unscoped against `unblocks`, on the same self-reported trust the rest of
- *  this exception already rests on (`person_warnings` output has no document
- *  to verify the claim against either way), since tightening it further risks
- *  the false-refusal direction ADR-0011 limit 1 says to avoid -- but that
- *  tradeoff is exactly what is pending a ruling, not settled.
- *
- *  Same pre-call snapshot and active-plan discipline as
- *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
- *  question's plan is settled, so neither blocks. */
-function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
-  const unresolvedQuestions = new Set<string>(
+/** Statuses that mean a question is still being worked: every one but
+ *  `resolved`. Derived, not listed, so a status added later blocks by default —
+ *  the safe direction, and the one the enum lint asks for. */
+const QUESTION_STILL_OPEN = new Set(
+  [...VALIDATOR_ENUMS.question_status].filter((s) => s !== "resolved"),
+);
+
+/** Plan-item statuses that mean the item is still to do: every one but
+ *  `completed` and `skipped`. Derived for the same reason. */
+const PLAN_ITEM_OUTSTANDING = [...VALIDATOR_ENUMS.plan_item_status].filter(
+  (s) => s !== "completed" && s !== "skipped",
+);
+
+/** The same rule for a batch: `newQuestionWhileAnotherIsOpenInvariants` below
+ *  reads the pre-call snapshot, so a question appended by an EARLIER op of this
+ *  call is invisible to it, and one `ops` batch could open several questions
+ *  at once (decision 4: one question per run). Any question in the working
+ *  document that the snapshot lacks, other than this op's own, was opened in
+ *  this call and blocks this one. */
+function secondQuestionInOneCallInvariants(entry: any, research: any, preCallResearch: any): string[] {
+  const before = new Set<string>(
     (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
-      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
-      .map((q: any) => q.id),
+      .map((q: any) => q?.id)
+      .filter((id: unknown): id is string => typeof id === "string"),
   );
-  const unblocks = new Set<string>(
-    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
-  );
-  const conflictBlocked = new Set<string>();
-  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
-    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
-    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
-  }
-  const selfReportedContradiction =
-    entry?.selection_basis === "unresolved_conflict" &&
-    !(Array.isArray(entry?.depends_on) && entry.depends_on.length > 0);
-  const refused = activePlanItems(
-    preCallResearch,
-    (plan) =>
-      unresolvedQuestions.has(plan.question_id) &&
-      !selfReportedContradiction &&
-      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
-  ).map((item) => `${item.itemId} (on ${item.questionId})`);
-  if (refused.length === 0) return [];
-  const ids = refused.sort().join(", ");
+  const openedThisCall = (Array.isArray(research?.questions) ? research.questions : [])
+    .map((q: any) => q?.id)
+    .filter((id: unknown): id is string => typeof id === "string" && !before.has(id) && id !== entry?.id);
+  if (openedThisCall.length === 0) return [];
   return [
-    `a new question cannot be opened while research is still running: ${ids} ` +
-      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
-      "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. Three exceptions: (1) a question that resolves " +
-      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
-      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
-      "this check reads the project as it stood before the call, so write the resolution in " +
-      "its own call and append the new question in the next one; (3) a question with " +
-      "`selection_basis: \"unresolved_conflict\"` driven by a person_warnings contradiction.",
+    `a new question cannot be opened while another is still open: ${openedThisCall.sort().join(", ")} ` +
+      "was opened earlier in this same call. Open one question at a time: write the first, " +
+      "and offer the next one when the first is concluded.",
+  ];
+}
+
+/** A new question may not be opened while another question is still open.
+ *
+ *  Step mode (decision 25, section E) replaces the older in-flight gate, which
+ *  keyed on `plan_items` standing at `in_progress`. That gate let a second
+ *  question start whenever the first happened to have no running item — between
+ *  two steps, or before planning had begun — so "one question at a time" held
+ *  only by accident of timing. This keys on the QUESTION, which is the thing
+ *  the rule is actually about.
+ *
+ *  **The one exemption: a question with a proof summary and nothing left to do.**
+ *  proof-conclusion can conclude a question and still have to leave it open — an
+ *  identity conflict at `not_proved` (`agents/proof-conclusion.md:144-150`) —
+ *  and such a question must not lock the project against every new one. Both
+ *  halves are needed: E's own route can hand a concluded question fresh searches
+ *  (conflict-resolution, then research-plan), and while those are open a second
+ *  question waits, exactly as the old gate required of an in-flight item.
+ *
+ *  **A `resources_spent` stop does not unlock the project.** The "not
+ *  exhaustive" choice writes one, and admitting a new question there would leave
+ *  the old one unconcluded without the researcher ever being asked. The refusal
+ *  is what sends that case to the wrap-up offer, which is the point: a wrap-up
+ *  DOES unlock the project, because dispose closes every open item and
+ *  proof-conclusion writes the summary.
+ *
+ *  An item waiting only on an upload does not count as work in progress
+ *  (section I): the researcher is the blocker there, and the question would
+ *  otherwise be locked by a hand-off nobody can close from inside the project.
+ *
+ *  Decidable from the documents alone — `questions[].status`,
+ *  `proof_summaries[].question_id`, `plans[].items[].status` and `log[]` — so
+ *  ADR-0011 puts it here rather than in a skill body.
+ */
+function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: any): string[] {
+  const concluded = new Set<string>(
+    (Array.isArray(preCallResearch?.proof_summaries) ? preCallResearch.proof_summaries : [])
+      .map((summary: any) => summary?.question_id)
+      .filter((id: unknown): id is string => typeof id === "string"),
+  );
+  const waitingOnUpload = awaitingUploadItemIds(preCallResearch?.log);
+  const blocking: string[] = [];
+  for (const question of Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : []) {
+    if (typeof question?.id !== "string" || !QUESTION_STILL_OPEN.has(question.status)) continue;
+    const outstanding = activePlanItems(
+      preCallResearch,
+      (plan) => plan.question_id === question.id,
+      PLAN_ITEM_OUTSTANDING,
+    ).filter((item) => !waitingOnUpload.has(item.itemId));
+    if (concluded.has(question.id) && outstanding.length === 0) continue;
+    blocking.push(
+      outstanding.length === 0
+        ? `${question.id} (${question.status}, no proof summary)`
+        : `${question.id} (${question.status}, ${outstanding.map((i) => i.itemId).sort().join(", ")} still to do)`,
+    );
+  }
+  if (blocking.length === 0) return [];
+  return [
+    `a new question cannot be opened while another is still open: ${blocking.sort().join("; ")}. ` +
+      "Write no question now. Report which question is open and offer to wrap it up: a wrap-up " +
+      "disposes its remaining items and writes its proof summary, which is what frees the " +
+      "project for the next question. The one question that does NOT block is one that already " +
+      "has a proof summary and no `planned` or `in_progress` item left on its active plan — a " +
+      "conclusion that had to leave the question open, such as an identity conflict at " +
+      "`not_proved`. A `resources_spent` search stop is not a conclusion and does not unlock it.",
   ];
 }
 
@@ -6897,10 +6949,14 @@ function applyOne(
             "'competitor' naming the winning assertion, 'tree' where the tree's existing conclusion " +
             "stands, or 'synthesis' with a resolved_value) or 'moot' (with a rationale for why it " +
             "no longer matters) — then retry completing the project. A conflict you weighed and " +
-            "could not settle is still recorded as 'resolved' with all three analyses and " +
-            "resolution_kind 'tree', saying in resolution_rationale why it cannot be settled and " +
-            "what would settle it — a deferral is a finding, not an omission, but it is not " +
-            "'moot', which means the conflict no longer matters. " +
+            "could not settle STAYS 'unresolved' (decision 12): write all three analyses on it " +
+            "and say in resolution_rationale what would settle it, but do NOT record it " +
+            "'resolved' with resolution_kind 'tree'. That kind means the tree's existing " +
+            "conclusion won the weighing, which is a finding about the evidence; \"I could not " +
+            "tell\" is not that finding, and recording it as one makes an open question read as " +
+            "a settled one. It is not 'moot' either, which means the conflict no longer matters. " +
+            "Such a project does not complete: conclude the question at the tier the evidence " +
+            "reaches, 'not_proved' included, and let the run end on that open conclusion. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
@@ -6961,7 +7017,7 @@ function applyOne(
     array = parent[config.nested.field];
     idPool = idPoolOf(research, section, config);
   } else {
-    // Initialize an absent optional section (e.g. known_holdings) on first write.
+    // Initialize an absent optional section (e.g. localities) on first write.
     if (research[section] === undefined) research[section] = [];
     if (!Array.isArray(research[section])) {
       throw new ResearchAppendError(`research.json '${section}' is not an array`);
@@ -7222,7 +7278,8 @@ function applyOne(
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
     if (op.op === "append") {
-      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
@@ -8157,6 +8214,7 @@ async function prepareOps(
   tree: SimplifiedGedcomX,
   projectPath: string,
   fmt: (i: number, msg: string) => string,
+  hintReads?: ReadonlyMap<string, string>,
 ): Promise<PreparedOps> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -8532,7 +8590,11 @@ async function prepareOps(
     const logId = entry.log_entry_id;
     const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
     if (logEntry) {
-      const ref = logEntry.results_ref;
+      // An accepted hint's entry stages nothing; extraction_append read the record
+      // in the same call and names that staged read, which stands in for a sidecar.
+      const hintRef = isAcceptedHint(logEntry) ? hintReads?.get(logEntry.id) : undefined;
+      const ref = hintRef ?? logEntry.results_ref;
+      const producer = hintRef ? "record_read" : logEntry.tool;
       if (!ref) {
         // Staging gap (#699): a record/full-text search that RETURNED results
         // but staged no sidecar. D2 auto-fill resolves record_persona_id from
@@ -8587,7 +8649,7 @@ async function prepareOps(
           // carry) matched nothing every time, which either rejected a persona-linked write with an empty
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
-          const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
+          const personaBearing = PERSONA_BEARING_PRODUCERS.has(producer);
           const resultId = (r: any): string | undefined => {
             const v = personaBearing ? r?.recordId : r?.id;
             return typeof v === "string" ? v : undefined;
@@ -8687,6 +8749,17 @@ async function prepareOps(
               }
             }
           }
+        } else if (hintRef && entry.record_persona_id != null) {
+          // The document validator cannot re-check a hint's persona later, so an
+          // unreadable read refuses rather than skipping enforcement.
+          errors.push(
+            fmt(
+              i,
+              `record_persona_id '${entry.record_persona_id}' cannot be verified — the record read ` +
+                `'${hintRef}' staged for hint entry '${logId}' is missing or unreadable`,
+            ),
+          );
+          continue;
         }
       }
     }
@@ -8865,6 +8938,10 @@ export interface ResearchAppendOptions {
    *  attachment shape (`isAttachmentLink`) skip the score gate. Never set by a
    *  tool caller. */
   attachmentLink?: boolean;
+  /** extraction_append's recordIds mode: accepted-hint log id -> the staged
+   *  `record_read` of that record, made in the same call. D2 verifies persona ids
+   *  under the hint's sidecar-less entry against it. Never set by a tool caller. */
+  hintReads?: ReadonlyMap<string, string>;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
   /** Report only the first failing op, and do not judge the rest of the batch.
@@ -9225,7 +9302,7 @@ export async function researchAppend(
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
-    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options.hintReads);
 
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
@@ -9703,7 +9780,7 @@ function documentFailure(c: {
     return c.namesake.length > 0 ? { errors: c.namesake, hints: [personEvidence] } : undefined;
   }
   // Shape errors surface here (the document validator, not applyOne), so this is the
-  // site the evaluations/known_holdings rejections land on.
+  // site the evaluations rejections land on.
   const mapped = mapValidationErrors(formatIssues(c.validation.errors), c.applied, c.isBatch);
   const misroute = emptyCreatedPlanErrors(c.ops, c.doc, c.applied, c.namedByRefusedItems).map((m) =>
     c.fmt(m.index, m.message),
@@ -9885,7 +9962,6 @@ export const RESEARCH_APPEND_SECTIONS = [
   "timelines",
   "proof_summaries",
   "evaluations",
-  "known_holdings",
   "localities",
   "namesakes",
   "project",

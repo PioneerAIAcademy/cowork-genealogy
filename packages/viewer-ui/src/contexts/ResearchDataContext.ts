@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { ResearchData, GedcomxData, SidecarFile } from '../lib/schema'
 import type { FeedbackContext, FeedbackPayload, FeedbackResult } from '../transport'
+import type { ExternalCollectionsData } from '../lib/externalCollections'
 
 export interface IndexEntry {
   item: unknown
@@ -25,6 +26,7 @@ export type SidecarState =
 export interface ResearchDataState {
   research: ResearchData | null
   gedcomx: GedcomxData | null
+  collections: ExternalCollectionsData | null
   error: string | null
   clearError: () => void
   /** A non-error heads-up (e.g. research.json found in a subfolder). Separate
@@ -85,7 +87,6 @@ export function buildIndex(
   // yet (`{}`), both of which `?? []` lets straight through into `for...of`.
   // `asArray` + the optional `?.id` below cover all three shapes.
   const sections: [string, unknown[]][] = [
-    ['known_holdings', asArray(research.known_holdings)],
     ['questions', asArray(research.questions)],
     ['plans', asArray(research.plans)],
     ['log', asArray(research.log)],
