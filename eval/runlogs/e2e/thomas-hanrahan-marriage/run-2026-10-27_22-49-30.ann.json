@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "The tree's Couple relationship (R1/F1) carries exactly the disproven fact this finding says must be absent: Marriage, 1 February 1868, Ballylooby, County Tipperary, Ireland, sourced to the record-hint ark (ark:/61903/1:1:6267-W22Q). The agent's own search log found the real disproving evidence early (1865 NY State Census: Thomas Hanrahan b.1843, wife Joanna b.1846, infant Mary b.1865, Northumberland, Saratoga County) but discounted it over a 3-year birth-year gap from the tree's ca.1840 estimate (matchScore below 0.01, flagged birthYearConflict), then accepted the Irish marriage record as 'confident' (score 0.65) despite that record stating no age or birth year for either party at all -- an inconsistent evidentiary bar applied to the true vs. false candidate.",
+    "f2": "The agent's proof_summaries conclusion (ps_001, tier: probable) affirmatively asserts the opposite of what this finding requires: 'Thomas Hanrahan and Johanna Ryan most likely married on 1 February 1868 at Ballylooby parish, County Tipperary, Ireland.' It did exhaustively search and negative-out the NY marriage/census/naturalization/passenger-list collections, but used those negatives to support the Irish conclusion rather than to flag the Saratoga couple's marriage as unidentified. No statement anywhere in the write-up says the marriage is unproven."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "799a66512b93b1154bc48991f1dfefa68e5b0c3a1e4dc6a9c8a2ec4a79a81105",
+  "blind_bundle_digest": "19c94895f5d6c61e7e3e4961bc3d782c6e7d2e4fc35cc7a55883d2ee7139ae58"
+}
