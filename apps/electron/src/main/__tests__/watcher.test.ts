@@ -419,3 +419,49 @@ describe('fixed-file delivery', () => {
     ])
   })
 })
+
+// The one test that drives real chokidar: a delete followed by a restore is the
+// path a unit test of applyFixedUnlink cannot see, and it was broken (the
+// restored file was never reported) until startWatching re-watched the path.
+describe('startWatching: a deleted file that comes back is seen again', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'collections-restore-'))
+  })
+
+  afterEach(async () => {
+    stopWatching()
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  it('clears on delete and sends the file again when it is restored', async () => {
+    const file = join(dir, 'external-collections.json')
+    await writeFile(join(dir, 'research.json'), '{}', 'utf-8')
+    await writeFile(file, '{"places":{}}', 'utf-8')
+    const send = vi.fn()
+    startWatching(dir, { webContents: { send } } as unknown as Parameters<typeof startWatching>[1])
+    const collectionSends = (): unknown[] =>
+      send.mock.calls.filter((c) => c[0] === 'project:collections-updated').map((c) => c[1])
+
+    await vi.waitFor(() => expect(collectionSends()).toEqual([{ places: {} }]), { timeout: 5000 })
+
+    // Settle first: a delete inside chokidar's own setup of a just-added path
+    // can be missed whatever this code does, and no real file is deleted that
+    // fast. The manual check deleted it after minutes.
+    await new Promise((r) => setTimeout(r, 1000))
+    await rm(file)
+    await vi.waitFor(() => expect(collectionSends()).toEqual([{ places: {} }, null]), {
+      timeout: 5000
+    })
+
+    // Re-watching is asynchronous: a file back within a few milliseconds of the
+    // unlink event lands before chokidar has the path again and is missed.
+    await new Promise((r) => setTimeout(r, 500))
+    await writeFile(file, '{"places":{"P":{"rows":[]}}}', 'utf-8')
+    await vi.waitFor(
+      () => expect(collectionSends().at(-1)).toEqual({ places: { P: { rows: [] } } }),
+      { timeout: 5000 }
+    )
+  }, 20000)
+})

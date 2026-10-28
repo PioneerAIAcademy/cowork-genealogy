@@ -296,6 +296,10 @@ export function startWatching(folderPath: string, mainWindow: BrowserWindow): vo
     const cls = classifyBasename(basename(filePath))
     if (cls.kind === 'fixed') {
       applyFixedUnlink(cls.file, mainWindow)
+      // chokidar drops a watched file path once it is deleted, so a file put
+      // back later would never be seen. Watch the path again.
+      watcher?.unwatch(filePath)
+      watcher?.add(filePath)
       return
     }
     if (cls.kind === 'sidecar') {
