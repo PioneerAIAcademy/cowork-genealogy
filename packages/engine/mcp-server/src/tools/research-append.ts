@@ -4255,6 +4255,18 @@ function questionResolvedInvariants(
           for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
         }
       }
+      // Reaching the conflicts through the summary's cited assertions misses the
+      // case that matters most: a `not_proved` summary citing NOTHING. Its
+      // `supporting_assertion_ids` is empty, so the loop above finds nothing to
+      // dispute and the question resolves straight over an open conflict -- which
+      // is exactly what decision 12 says must not happen, and exactly the shape a
+      // wrap-up produces. A conflict naming this question in `blocks_question_ids`
+      // is blocking it by its own declaration, with no assertion needed.
+      for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
+        if (c?.status !== "unresolved" || typeof c?.id !== "string") continue;
+        const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
+        if (blocks.includes(entry?.id)) blocking.add(c.id);
+      }
       if (blocking.size > 0) {
         return [
           `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
