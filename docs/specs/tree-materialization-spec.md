@@ -337,7 +337,24 @@ qualify.
   whose hint is the subject's own record, 8 a namesake's, 20 unlabelled) and 0
   of 1.
 
-Known let-throughs, none with an executed op in the corpus:
+**The recorded party (both arms).** A link whose `same_person` score is on
+record says which party it is about: the score file
+(`results/.scores/`, same-person-tool-spec "The recorded score") keeps the
+`record_role` the call compared, which is the call's `recordRole`, else the
+assertion's own role. An assertion whose recorded score for the target names a
+role other than the one the op writes (the persona's `recordRole`, or the named
+party's `relatedRole`; compared case- and spelling-folded) does not qualify for
+that target. No score, or one with no role, changes nothing. The tool reads the
+score files of the records the call's ops touch. Measured by the `scored` line
+of `dev/replay-materialize-link.ts`, which rebuilds each run's score files from
+its `same_person` calls: 0 of the corpus's persona and named-party ops change
+verdict (109 of 1,224 calls scored a party other than the assertion's own;
+with every scored link read as another party's, 168 ops would).
+
+Known let-throughs, none with an executed op in the corpus. The first two close
+when the link carries a score that compared the other party; they stay open for
+an unscored link, and for one scored as the assertion's own party, the default
+when `same_person` is called without `recordRole`:
 
 - On the persona arm, a one-party assertion the agent linked to both people
   still carries the persona onto the other one when no other persona of the
@@ -349,7 +366,7 @@ Known let-throughs, none with an executed op in the corpus:
   someone else), the named role's own one-party assertions carry no `probable`
   or `confident` link, and the gender check cannot tell them apart: the op
   passes no gender, the target's gender is `Unknown` (which the op's gender then
-  fills), or the two match. Nothing in the documents says which party the
+  fills), or the two match. Nothing else in the documents says which party the
   naming assertion's link to the target is about.
 - A same-named father's persona still lands on his son's name-only stub made
   from the same record: the stub's name equals the father's, so it traces to

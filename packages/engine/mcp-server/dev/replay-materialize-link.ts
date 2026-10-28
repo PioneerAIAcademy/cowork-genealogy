@@ -25,6 +25,12 @@
 //                qualifies, the rule before issue #3363: what this rule adds.
 //   baseline     of those, the ones admitted without the starting-tree ids.
 //   named-party  every named-party op the arm's decision refuses.
+//   scored       ops admitted on the final state but refused once the run's
+//                recorded parties are read (issue #2537 case 1): each run's
+//                `same_person` calls rebuilt as score files, the party being the
+//                call's `recordRole`, else the assertion's own role, as the tool
+//                records it. Also how many of those calls scored a party other
+//                than the assertion's own, the only ones that can decide a link.
 //   exempt       persona ops onto a person minted from the op's own record
 //                (`mintedFromThisRecord`), explicit ones by their personId and
 //                implicit ones by every person their persona's facts reach in
@@ -47,6 +53,7 @@ import {
   personaTargetRefusal,
 } from "../src/tools/materialize-facts.js";
 import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
+import { scoreKey, type MatchScoreFile } from "../src/utils/match-scores.js";
 import { bareName, opsOf, readRunLog, repoRoot, responseOf, runLogFiles, toolCalls } from "./runlog-calls.js";
 
 const VERBOSE = process.argv.includes("--verbose");
@@ -62,7 +69,7 @@ function readJson(path: string): any {
 type Fire = { run: string; detail: string };
 type Tally = {
   examined: { persona: number; batched: number; namedParty: number };
-  fires: Record<"persona" | "twoParty" | "baseline" | "namedParty", Fire[]>;
+  fires: Record<"persona" | "twoParty" | "baseline" | "namedParty" | "scored", Fire[]>;
   exempt: { explicit: number; implicit: number; kept: number; anotherParty: Fire[]; noParty: Fire[] };
   why: Record<string, number>;
   dates: string[];
@@ -70,7 +77,7 @@ type Tally = {
 };
 const tally = (): Tally => ({
   examined: { persona: 0, batched: 0, namedParty: 0 },
-  fires: { persona: [], twoParty: [], baseline: [], namedParty: [] },
+  fires: { persona: [], twoParty: [], baseline: [], namedParty: [], scored: [] },
   exempt: { explicit: 0, implicit: 0, kept: 0, anotherParty: [], noParty: [] },
   why: {},
   dates: [],
@@ -80,6 +87,31 @@ const buckets = { succeeded: tally(), unrecorded: tally() };
 let runs = 0;
 let noStartingTree = 0;
 let noFinalState = 0;
+let scoreCalls = 0;
+let otherPartyScores = 0;
+
+/** The run's same_person calls as the score files the tool would have written. */
+function rebuiltScores(file: string, assertions: any[]): Map<string, MatchScoreFile> {
+  const out = new Map<string, MatchScoreFile>();
+  for (const call of toolCalls(readRunLog(file))) {
+    if (bareName(call) !== "same_person") continue;
+    const aid = call.args.assertionId;
+    const pid = call.args.treePersonId;
+    if (typeof aid !== "string" || typeof pid !== "string") continue;
+    const a = assertions.find((x) => x?.id === aid);
+    if (!a || typeof a.record_id !== "string") continue;
+    scoreCalls++;
+    const role = typeof call.args.recordRole === "string" ? call.args.recordRole : a.record_role;
+    if (role !== a.record_role) otherPartyScores++;
+    const f = out.get(a.record_id) ?? { record_id: a.record_id, scores: {} };
+    f.scores[scoreKey(aid, pid)] = {
+      record_id: a.record_id, record_persona_id: null, record_role: role ?? null, tree_person_id: pid, score: 0,
+      matched: true, assertion_id: aid, record_source: "record_read", computed: "",
+    };
+    out.set(a.record_id, f);
+  }
+  return out;
+}
 
 const strong = (e: any) => e.confidence === "probable" || e.confidence === "confident";
 
@@ -99,6 +131,7 @@ for (const file of runFiles) {
   const links: any[] = Array.isArray(research.person_evidence) ? research.person_evidence : [];
   const date = /run-(\d{4}-\d{2}-\d{2})/.exec(file)?.[1];
   runs++;
+  const scores = rebuiltScores(file, assertions);
 
   for (const call of toolCalls(readRunLog(file))) {
     if (bareName(call) !== "materialize_facts") continue;
@@ -138,13 +171,21 @@ for (const file of runFiles) {
         if (!named) continue;
         const refusal = namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting, op.name);
         if (refusal !== null) t.fires.namedParty.push({ run: file, detail: `${personId} <- ${op.assertionId} (${op.relatedRole})` });
+        else if (namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting, op.name, tree, scores) !== null) {
+          t.fires.scored.push({ run: file, detail: `named ${personId} <- ${op.assertionId} (${op.relatedRole})` });
+        }
         continue;
       }
 
       if (typeof op.recordId !== "string" || typeof op.recordRole !== "string") continue;
       t.examined.persona++;
       if (batched) t.examined.batched++;
-      if (personaTargetRefusal(tree, research, op, starting) === null) continue;
+      if (personaTargetRefusal(tree, research, op, starting) === null) {
+        if (personaTargetRefusal(tree, research, op, starting, tree, scores) !== null) {
+          t.fires.scored.push({ run: file, detail: `persona ${personId} <- ${op.recordId} ${op.recordRole}` });
+        }
+        continue;
+      }
 
       const persona = new Set<string>(
         assertions
@@ -184,6 +225,7 @@ const show = (list: Fire[]) => {
 
 const sha = execFileSync("git", ["rev-parse", "--short=9", "HEAD"], { cwd: repoRoot, encoding: "utf-8" }).trim();
 console.log(`measured at ${sha} (working tree of this checkout)`);
+console.log(`same_person calls rebuilt as scores: ${scoreCalls}, of which ${otherPartyScores} scored a party other than the assertion's own`);
 console.log(`Runs replayed: ${runs} (skipped ${noFinalState} with no final state; ${noStartingTree} have no starting tree, so the baseline cannot apply to them)`);
 for (const [name, t] of Object.entries(buckets)) {
   t.dates.sort();
@@ -204,6 +246,8 @@ for (const [name, t] of Object.entries(buckets)) {
       (t.examined.namedParty === 0 ? " (no named-party op here names a personId, so the arm has no population)" : ""),
   );
   show(t.fires.namedParty);
+  console.log(`\nscored: ${t.fires.scored.length} admitted on the final state but refused once the recorded parties are read`);
+  show(t.fires.scored);
   const exempt = t.exempt.explicit + t.exempt.implicit;
   console.log(
     `\nexempt: ${exempt} (op, person) pair(s) onto a person minted from the op's record (${t.exempt.explicit} ` +
