@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 6, hint-samples.csv row 209, flag adds_son, confidence 3). Draft transcribed from an 1899 Costa Rican civil birth registration of José Vidal García Abarca at San Juan de Dios naming Juan García and Manuela Abarca as parents; unverified."
+  "image_basis": false,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:QL6V-B2NV",
+    "identity": "same"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 6, hint-samples.csv row 209, flag adds_son, confidence 3). Resolved 2026-10-27 as a TRUE MATCH on index/record evidence (image_basis false). José Vidal García Abarca, b. 22 Oct 1899 San Juan de Dios (civil birth ark:/61903/1:1:QL6V-B2FY; baptism 24 Oct 1899 ark:/61903/1:1:NQ2L-5MY; death 28 Feb 1901 ark:/61903/1:1:7XRW-KN6Z), legitimate son of Juan García and Manuela Abarca of San Juan de Dios. The parents' marriage (church 14 Jan 1891 Aserrí, ark:/61903/1:1:66DM-DGK8 and ark:/61903/1:1:66DM-DGK4; civil marriage 14 Jan 1892 / registered 15 Jan 1892 San José, ark:/61903/1:1:6KJJ-CFF4 and ark:/61903/1:1:6KJJ-CFF3) names the bride as Manuela Abarca Fallas, daughter of Rafael Abarca and Francisca Fallas — the subject (own baptism 12 Jun 1873, ark:/61903/1:1:NQ22-Z7Z, same parents). The 1899 register image (ark:/61903/3:1:33S7-9THH-ZP3) was read and calibrated but carries only single surnames and no grandparents, so it corroborates rather than establishes the mother's identity; identity rests on the marriage/baptism index records. The subject G7XQ-GMG is a duplicate of GSJN-6X7 (same parents, name, birth year, husband, one marriage recorded in two systems), to whose child GZ54-NLV the hint is already attached; the correct fix is a duplicate-profile merge, not re-attachment. Resolved by the researcher; independent second genealogist Isaac Boateng concurred."
 }

@@ -84,7 +84,6 @@ def compliant():
             op="update",
             fields={"experience_level": "novice"},
         ),
-        call("research_append", section="known_holdings", op="append", entry={}),
     ]
 
 
@@ -98,7 +97,7 @@ def test_a_hand_serialized_run_fails_even_though_the_files_would_look_right():
     assert "project_create" in str(e)
 
 
-def test_the_profile_and_holdings_calls_alone_are_not_enough():
+def test_the_profile_call_alone_is_not_enough():
     """They write into a project; they cannot bring one into being."""
     calls = [c for c in compliant() if not c["tool"].endswith("project_create")]
     e = must_fail(check, calls, NO_PROFILE, POSITIVE, NO_ASK)
@@ -109,7 +108,7 @@ def test_the_profile_and_holdings_calls_alone_are_not_enough():
 
 def test_project_create_alone_is_enough():
     """It writes both documents, so there is no second call to require. A
-    project with no volunteered holdings legitimately makes exactly one call."""
+    project whose researcher names no site access legitimately makes exactly one call."""
     check([call("project_create", projectPath="/p", objective="x")], NO_PROFILE, POSITIVE, NO_ASK)
 
 
