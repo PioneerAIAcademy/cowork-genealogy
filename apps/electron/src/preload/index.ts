@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('api', {
   onGedcomxUpdated: (callback: (data: unknown) => void) => {
     ipcRenderer.on('project:gedcomx-updated', (_e, data) => callback(data))
   },
+  onCollectionsUpdated: (callback: (data: unknown) => void) => {
+    ipcRenderer.on('project:collections-updated', (_e, data) => callback(data))
+  },
   onWatchError: (callback: (error: string) => void) => {
     ipcRenderer.on('project:watch-error', (_e, error) => callback(error))
   },
@@ -23,6 +26,7 @@ contextBridge.exposeInMainWorld('api', {
   removeAllWatchListeners: () => {
     ipcRenderer.removeAllListeners('project:research-updated')
     ipcRenderer.removeAllListeners('project:gedcomx-updated')
+    ipcRenderer.removeAllListeners('project:collections-updated')
     ipcRenderer.removeAllListeners('project:watch-error')
     ipcRenderer.removeAllListeners('project:folder-notice')
     ipcRenderer.removeAllListeners('project:sidecar-updated')

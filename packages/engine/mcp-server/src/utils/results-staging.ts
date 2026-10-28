@@ -79,6 +79,16 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  */
 export const PERSONA_BEARING_PRODUCERS = new Set(["record_search", "record_read"]);
 
+/**
+ * An accepted FamilySearch hint's log entry: the positive `person_record_matches`
+ * verdict `search-hints` logs. It stages nothing, so the record behind it is read
+ * by `extraction_append`, whose staged read verifies the persona ids written under
+ * this entry (research_append D2) and the validator accepts them (D5).
+ */
+export function isAcceptedHint(logEntry: any): boolean {
+  return logEntry?.tool === "person_record_matches" && logEntry?.outcome === "positive";
+}
+
 export interface StagedHandle {
   resultsRef: string;
   returnedCount: number;
