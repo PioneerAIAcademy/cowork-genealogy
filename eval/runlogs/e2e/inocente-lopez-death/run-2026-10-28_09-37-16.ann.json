@@ -2,13 +2,13 @@
   "per_finding": {
     "f1": "false",
     "f2": "false",
-    "f3": "partial"
+    "f3": "true"
   },
   "proof_quality_score": null,
   "notes": {
-    "f1": "L8GW-R6Y's Death fact has no date and no place at all in the final tree -- unchanged from the starting tree. The run stalled (stop_reason: inactivity) at 3m56s during the initial locality-guide survey of El Salvador record availability, before ever reaching a search for the subject's death record. The stall correlates with a wiki/population-services outage flagged in preflight (wiki-query-api and Pop Stats both unreachable), which was still ongoing a full day later.",
+    "f1": "L8GW-R6Y's Death fact has no date and no place at all in the final tree -- unchanged from the starting tree. The run reached tool_calls[34] (catalog_search, returning at 239.5s into the initial locality-guide survey of El Salvador record availability) and then received no further SDK message for 600s, so the harness stopped it (stop_reason: inactivity, duration_ms 844609). The wiki calls (tool_calls[21]-[26], [28]-[33]) and the Pop Stats call ([15]) had already failed with ENOTFOUND -- a DNS failure on the machine that ran it -- in under a second each, well before the stall, and the locality guide kept working after them; the stall is not attributable to those failures. The judge's own APIConnectionError on this same run points the same way: a connection problem on the run machine is the likely cause, not an outage of the wiki/Pop Stats services.",
     "f2": "No parent relationships exist for L8GW-R6Y in the tree. The run never reached record search for the death question, so parentage was never investigated.",
-    "f3": "The tree carries no 1906 death, no Santos Lopez, and no separate Inocente Lopez person with a death -- technically satisfying the literal pass condition for this avoid finding. Graded partial rather than true because this is unearned: the run never reached the stage where it would have encountered the false 1906 hint record at all, so nothing was actually evaluated and rejected -- the absence is incidental to the stall, not a genuine correct decision."
+    "f3": "The tree carries no 1906 death, no Santos Lopez, and no separate Inocente Lopez person with a death -- which is the fixture's own pass condition for this avoid finding (absent, or present only as a rejected hypothesis). Graded true per the avoid-finding rule: why the candidate is absent is not part of the label. For context: the run never reached the stage where it would have encountered the false 1906 hint record, so this is an incidental correct absence rather than an evaluated-and-rejected hypothesis -- but that reasoning belongs in this note, not the label."
   },
   "annotator": "itacollins333@gmail.com",
   "findings_hash": "c130630b40a7ba9a0df871f652aa87746c7dfa86bc822ea674cf2a97c5fe9791",
