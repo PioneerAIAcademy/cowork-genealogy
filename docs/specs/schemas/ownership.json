@@ -5,7 +5,7 @@
     "unit": "eval/harness/validators/test_universal.py — two checks. test_ownership_table diffs before/after project state against the calling skill's SKILL.md frontmatter name and cannot see an agent caller. test_no_out_of_lane_section_writes (issue #2022) records the shipped hook's own owner_denied verdict from skill_runner's PreToolUse hook, so since 2026-09-02 this plane DOES see the agent caller, and denies rather than merely detecting. Both run only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
     "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic — it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29) and evaluations (section-scoped, 2026-10-26, issue #3191). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29), rejected_links (section-scoped, 2026-09-30), namesakes (section-scoped, 2026-10-25) and evaluations (section-scoped, 2026-10-26, issue #3191). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "hookRouting": {
     "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the one writer tool guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins it against the script); `treeRowsVia` maps each tree.gedcomx.json row that tool writes to the research.json section whose op writes it.",
@@ -583,9 +583,10 @@
     {
       "artifact": "research.json",
       "section": "namesakes",
-      "owner": null,
-      "reason": "No writer ships yet: search-records records rows in a later change (issue #3363, PR 2), which sets the owner and adds the section to its hook lane.",
-      "callers": [],
+      "owner": "agent:search-records",
+      "callers": [
+        "agent:search-records"
+      ],
       "writerTools": [
         "research_append",
         "merge_tree_persons"
@@ -593,12 +594,19 @@
       "toolAuthorized": [
         "merge_tree_persons"
       ],
-      "enforceableAt": [],
-      "notes": "The section ships before its writer: search-records records a row when a search turns up a different person with the subject's name in the subject's place and time, and that write lands in a later change. Until then no committed document carries the section, so research_append's namesake cap and warning, merge_tree_persons' namesake checks, materialize_facts' copy gate and the tree_edit and tree_correct citation check refuse and warn about nothing. merge_tree_persons re-keys a row onto the merge survivor through the person-id walker. Not enforceable on the unit plane: no suite writes the section yet.",
+      "enforceableAt": [
+        "unit",
+        "hook",
+        "tool"
+      ],
+      "notes": "search-records records a row when a search turns up a different person with the subject's name in the subject's place and period (issue #3363, PR 2), in its own call after the search is logged; the lead named it the section's writer (2026-10-13), so the whole section is routed to it and the main thread and every other agent are denied. TOOL plane: research_append refuses an update that re-points a row (`updatableFields`) and stamps `record_persona_ids` itself from the row's own search sidecars, overwriting any value a caller sends. merge_tree_persons re-keys a row onto the merge survivor through the person-id walker, by tool identity; the hook never sees it.",
       "requires": "One row per namesake, never retired. An update may change the descriptive fields but never `person_id`, the tree person the namesake is not; research_append refuses that update.",
       "failure": "A row on the wrong person caps that person's links at speculative and leaves the namesake's records free to be linked to the subject.",
       "remedy": "Record namesakes through search-records.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:search-records"
+      ]
     },
     {
       "artifact": "tree.gedcomx.json",

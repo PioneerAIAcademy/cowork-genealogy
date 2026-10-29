@@ -1266,8 +1266,8 @@ one on the delegation tools:
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
    `proof_summaries` to `proof-conclusion`, `person_evidence` and
-   `rejected_links` to `person-evidence`, and `evaluations` to
-   `gps-mentor`, `OWNED_DECLARATIONS` reserves
+   `rejected_links` to `person-evidence`, `namesakes` to `search-records`, and
+   `evaluations` to `gps-mentor`, `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
