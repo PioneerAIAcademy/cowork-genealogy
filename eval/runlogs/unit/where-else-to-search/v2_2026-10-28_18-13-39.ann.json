@@ -1,0 +1,302 @@
+{
+  "run_log": "v2_2026-10-28_18-13-39.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Judge error. The judge context only requires marriage rows to rank AHEAD of unrelated dated rows — it does not forbid other rows. All seven marriage collections come first and the Alabama State Census 1855 is last, which is a reasonable 8th pick: it places the household in the marriage decade. Every link and year matches the tool output."
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Judge error. Its only complaint is \"Covers 1865–1956\" for the GAR records whose linkText says 1865-1936 — but the tool returned startYear 1865 / endYear 1956, and the judge context says explicitly: \"A startYear-endYear wider than the years in the linkText is correct: the tool reports the merged span of duplicate rows.\" Both required collections (Civil War Muster Rolls, GAR Membership Records) are included."
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Checked the external_links_search result: the seven buildable marriage-named rows are all selected and ranked first; the census sits last, as the judge context asks (\"marriage rows rank ahead of an unrelated dated row\"). Nothing better was passed over — the remaining marriage rows (genwed, I Dream of Genealogy) are not buildable and are listed under \"Also listed\"."
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Same judge error: the 1865–1956 span is exactly what the tool returned, and the judge context says a span wider than the linkText is correct. Every other reason uses only the linkText, the tool's years or \"Undated collection\", and the access value."
+    }
+  ]
+}
