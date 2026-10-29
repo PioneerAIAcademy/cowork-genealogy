@@ -138,7 +138,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites, search-full-text and search-hints agents may update only `items[].status` after executing an item (search-hints sets the status of its 'review pending hints' item, issue #3153). `extraction_append`, whoever calls it, moves an `in_progress` item on an active plan to `completed` once a record one of its positive or partial `record_search` searches found is extracted, and changes nothing else.",
+      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites, search-full-text and search-hints agents may update only `items[].status` after executing an item (search-hints sets the status of its 'review pending hints' item, issue #3153). `extraction_append`, whoever calls it, moves an `in_progress` item on an active plan to `completed` once a record or full-text hit one of its positive or partial `record_search` or `fulltext_search` searches found is extracted, and changes nothing else.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through the research-plan agent.",
       "override": "none",

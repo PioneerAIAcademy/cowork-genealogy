@@ -1424,7 +1424,9 @@ page it came from is normally nameable.
 **Never a refusal**, and the reason is not squeamishness: two legitimate shapes
 reach here with no filename — a PDF capture, and an `image_transcribe` run with
 no `projectPath`, which stages nothing and so has no file to name. Refusing
-either would block correct work to catch a documentation gap.
+either would block correct work to catch a documentation gap. A source whose log
+entry is a `fulltext_search` (a full-text hit, read from FamilySearch's own
+transcript) stores no page at all, so the warning skips it.
 
 Fires on `update` as well as `append` — a transcription added later is the same
 gap — and reads the PERSISTED entry rather than the op's `fields`, so an update
@@ -2391,17 +2393,19 @@ In order:
 6. **Complete the plan item** (decided by the lead 2026-10-19
    and 2026-10-20). For every record the call extracted or found already
    extracted, an `in_progress` item on an active plan becomes `completed` once
-   **any** of its plan-tied positive or partial `record_search` entries lists
-   that record in its sidecar (`results[].recordId`), under any of its persona
-   ARKs (step 1's widening).
+   **any** of its plan-tied positive or partial `record_search` or
+   `fulltext_search` entries lists that record in its sidecar
+   (`results[].recordId`, or a full-text hit's `results[].id`), under any of its
+   persona ARKs (step 1's widening).
    - **Why ANY.** "Every entry" left 124 of 617 previously-completed
      FamilySearch items stuck on the 2026-10-19 corpus probe, and one
      extraction already puts "the plan item's evidence in hand" (lead,
      2026-08-23).
    - **Why it is read off the saved results.** That covers a fresh read, a
      reused read, a re-send, and a record two items both found.
-   - **Only `record_search` sidecars**, because a full-text result names an
-     image, never a record.
+   - **`record_search` and `fulltext_search` sidecars.** A full-text hit is
+     extracted under its own id (§11.7), so its search lists it by `id`
+     (Richard, 2026-10-28).
    - **Each item is its own write**, because one refused item fails a whole
      batch. A refusal (for example, capture-pending on an item whose latest
      entry is an uncaptured external hand-off) is reported in
@@ -2695,8 +2699,8 @@ document travels as a tool parameter.
 | `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
-| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. |
-| `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written. §5.4's warning still fires when a transcription lands without one. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. **A full-text hit** (Richard, 2026-10-28), `results/<log_id>.json#<hit id>` (a `ref` from `sidecar_read`'s `#hits`), is cited under the logged `fulltext_search` entry whose `results_ref` is the part before `#`, and nothing new is logged; the hit's `textDocument` is copied as the `transcription`, the source's `url` defaults to the hit's `sourceUrl`, and no `image_filename` is written. That document is refused when the search is still staged (log the search first), the base is not a logged `fulltext_search`, the hit is not in its results or carries no transcript, `recordId` is not the hit's id, or an earlier document in the call cites the same hit: one document per hit. |
+| `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written, except for a full-text hit `transcriptionRef`, which writes no `image_filename`. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
 | `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
 
@@ -2804,7 +2808,7 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | `date_certainty` | `computed` includes `date` | `approximate`. |
 | information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
-| `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as `image_transcribe`'s machine transcription, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined. Nothing on this path is `original`. |
+| `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as a machine transcription, `image_transcribe`'s or a full-text hit's, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined; a full-text hit's `notes` read "read from FamilySearch's full-text machine transcription of the page image" instead. Nothing on this path is `original`. |
 | relationship assertions | `relationships` | §11.6's arms, plus `sibling`. Census: none from edges, as §11.6. |
 | `record_persona_id` | — | **Never set.** Local ids name nothing outside the document. |
 | negative evidence | both `absentPersons` lists | Merged. The caller's entries come first, and duplicates by `name` are dropped. |
@@ -2823,6 +2827,12 @@ and no genealogist sign-off gates them.
 | probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
 | probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
 | probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
+| land | **a grantor's own statements:** their name, sex, residence, marital status, the relationships they state ("Mary my wife"), and the conveyance itself (date, place, consideration, land, and each party's part in it) | the grantor | `self` | `primary` |
+| land | **the grantee's, and any other party's, name and sex** | the grantor | `self` | `primary` |
+| land | the grantee's, and any other party's, **residence** | the grantor | `self` | `indeterminate` |
+| land | the witnesses' names, sex and presence | the witnesses | `witness` | `primary` |
+| land | the acknowledging officer (justice of the peace) and the register's recording: the officer's name, sex and part, and the acknowledgment and recording date and place | the officer | `official_duty` | `primary` |
+| land | **beyond the transaction:** anyone's age, birthplace or birth, a decedent's death ("late of X, deceased"), a non-grantor's stated relationship, a grantor's occupation | the grantor | `family_not_present` | `secondary` |
 | newspaper announcement | **the announced event and its people**: the principals' names and residences, the date and place, officiant, attendants and guests, the parents' names | the announcement's submitter (usually unnamed family) | `household_member` | `indeterminate` |
 | newspaper announcement | **life history**: the principals' birthplaces and birth dates, education, occupations, earlier residences | the announcement's submitter | `family_not_present` | `secondary` |
 
@@ -2879,6 +2889,8 @@ above leave a case open:
 - A named informant replaces the generic string on the family rows only
   (`household_member`, `family_not_present`), never on an officiant's,
   clerk's, enumerator's or witness's row.
+
+The land rows are the genealogist's ruling (2026-10-27), on document mode only. There the roles are read from `statedRelation` (grantor, grantee, witness, officer); on the indexed path they are positional, so no row is keyed on them and a land record keeps the default and the "no table row covers a land record yet" note. The transaction is the grantor's own act, so the grantor's statements and the conveyance are `self` / `primary`. The grantee's name is `primary`, but their residence is `indeterminate`: the deed gives it on the grantor's say-so. Everything beyond the transaction is secondhand. A named `informant` replaces the generic string on the `family_not_present` rows only, never on a grantor, witness or officer row.
 
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows

@@ -4244,8 +4244,8 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  *
  *  **Never a refusal, and the reason matters.** Two legitimate shapes reach here
  *  with no filename: a PDF capture, and an `image_transcribe` run with no
- *  `projectPath` (nothing was staged, so there is no file to name). Refusing
- *  either would block correct work to catch a documentation gap, which is the
+ *  `projectPath` (nothing was staged, so there is no file to name); a full-text
+ *  hit's source stores no page at all and is skipped. Refusing either would block correct work to catch a documentation gap, which is the
  *  wrong trade for a provenance nudge — `guardrail-enforcement-spec.md` marks it
  *  advisory in the instrument table for exactly that reason.
  *
@@ -4265,6 +4265,10 @@ function transcriptionWithoutImageWarnings(research: any, applied: AppliedOp[]):
     if (!entry) continue;
     if (factText(entry.transcription) === undefined) continue;
     if (factText(entry.image_filename) !== undefined) continue;
+    // A full-text hit's text is FamilySearch's own transcript: no page is stored
+    // for it, so there is no filename to name.
+    const logged = (Array.isArray(research.log) ? research.log : []).find((e: any) => e?.id === entry.log_entry_id);
+    if (logged?.tool === "fulltext_search") continue;
     out.push(
       `source '${a.entryId}' records a transcription but no image_filename — name the ` +
         `page the text was read from, so a later reader can check it. The value is the ` +
@@ -9245,14 +9249,15 @@ async function prepareOps(
 /** Lane scoping for a narrow caller (e.g. `extraction_append`).
  *
  *  This is a second FUNCTION PARAMETER, deliberately not a field on
- *  `ResearchAppendInput`: `index.ts` dispatches with `researchAppend(args)`, a
- *  single argument built from `request.params.arguments`, so an extra key on the
- *  tool input can never reach this object. The restriction is therefore
+ *  `ResearchAppendInput`: `server.ts` dispatches with `researchAppend(args)`, a
+ *  single argument built from `request.params.arguments` (and refuses a key that
+ *  is not a parameter first), so an extra key on the tool input can never reach
+ *  this object. The restriction is therefore
  *  unforgeable from the LLM side — a caller cannot widen its own lane.
  *
  *  It also lives here, in the module, rather than in the dispatch layer, because
  *  `eval/harness/harness/mock_mcp.py` imports these functions directly and never
- *  routes through `index.ts`. A gate in dispatch would be invisible to every
+ *  routes through `server.ts`. A gate in dispatch would be invisible to every
  *  eval run. */
 export interface ResearchAppendOptions {
   /** Sections this caller may write. Omitted = every section (`research_append`). */
