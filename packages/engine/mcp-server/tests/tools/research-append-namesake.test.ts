@@ -1303,6 +1303,15 @@ describe("tree-derived namesake pairs (#3681)", () => {
       ]);
     });
 
+    it("reads past an initial to the first given name", () => {
+      const t = pairTree();
+      t.persons[0].names = [{ given: "J. William", surname: "Pratt" }];
+      t.persons[1].names = [{ given: "William", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA).map((q) => q.personId)).toEqual([SO]);
+      t.persons[0].names = [{ given: "J. R.", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA)).toEqual([]);
+    });
+
     it("marks siblings born the same year, who may be one person entered twice", () => {
       const t = pairTree();
       t.persons.push(person("KWPP-004", "John", "Pratt", "Male", { facts: [fsDated("Christening", "3 Mar 1850")] }));
@@ -1333,6 +1342,20 @@ describe("tree-derived namesake pairs (#3681)", () => {
       person_evidence: [standing("pe_001", "a_001", FA), standing("pe_002", "a_002", FA), standing("pe_003", "a_004", FA)],
     });
     expect(pairRecordFacts(census, census.assertions[3], FA)).toMatchObject({ role: "son", birth: 1850 });
+  });
+
+  it("pairRecordFacts reads a year from a value's words but not from a house number", () => {
+    const r = research({
+      namesakes: [],
+      sources: [source("src_001", "S1")],
+      assertions: [
+        assertion("a_001", "src_001", MAR, "head", "name", "John Pratt"),
+        assertion("a_002", "src_001", MAR, "head", "residence", "1912 Oak Street, Niles"),
+        assertion("a_003", "src_001", MAR, "head", "birth", "born circa 1850, Niles"),
+      ],
+      person_evidence: [standing("pe_001", "a_001", SO)],
+    });
+    expect(pairRecordFacts(r, r.assertions[0], SO)).toMatchObject({ year: 1850, birth: 1850 });
   });
 
   describe("independentLife (rule 3)", () => {
@@ -1485,6 +1508,50 @@ describe("tree-derived namesake pairs (#3681)", () => {
       expect(judge(FA, burial("1891"), died).fits).toBe(false);
     });
 
+    it("does not need the deceased alive at a later event of their own death or estate", () => {
+      // A will proved in 1872 for the father, who died in 1870; the son lived to 1920.
+      const probate = (personId: string, extra: any[] = []) =>
+        research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", MAR, "testator", "name", "John Pratt"),
+            assertion("a_002", "src_001", MAR, "testator", "probate", "1872", { date: "1872" }),
+            ...extra,
+          ],
+          person_evidence: [standing("pe_001", "a_001", personId)],
+        });
+      const t = pairTree();
+      t.persons[0].facts = [fsDated("Birth", "1820"), fsDated("Death", "1870")];
+      t.persons[1].facts = [fsDated("Birth", "1850"), fsDated("Death", "1920")];
+      const died = [assertion("a_003", "src_001", MAR, "testator", "death", "1870", { date: "1870" })];
+      expect(judge(FA, probate(FA, died), t)).toEqual({
+        fits: true,
+        ties: [{ partner: SO, relation: "child", test: "lifespan" }],
+        reasons: [],
+      });
+      // With no death on the record nothing tells them apart, and the probate rules neither out.
+      expect(judge(FA, probate(FA), t).fits).toBe(true);
+      expect(judge(SO, probate(SO), t).ties).toEqual([]);
+    });
+
+    it("reads a party re-extracted without persona ids as the same party, not a second one", () => {
+      const t = pairTree();
+      t.persons[0].facts = [];
+      t.persons[1].facts = [];
+      const r = research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", MAR, "groom", "name", "John Pratt", { record_persona_id: "p1", log_entry_id: "log_001" }),
+          assertion("a_002", "src_001", MAR, "bride", "name", "Jane Doe", { record_persona_id: "p2", log_entry_id: "log_001" }),
+          assertion("a_003", "src_001", MAR, "groom", "name", "John Pratt", { log_entry_id: "log_002" }),
+        ],
+        person_evidence: [standing("pe_001", "a_001", SO), standing("pe_002", "a_003", FA)],
+      });
+      expect(judge(SO, r, t).ties).toEqual([]);
+    });
+
     it("refuses a record that rules every partner out but does not fit the person either", () => {
       const t = pairTree();
       t.persons[0].facts = [fsDated("Birth", "1820"), fsDated("Death", "1890")];
@@ -1573,6 +1640,9 @@ describe("tree-derived namesake pairs (#3681)", () => {
         ]);
         const asRow = namesakeVerdicts(FA, { ...r, namesakes: [{ ...ROW, person_id: FA }] }, household());
         expect(asRow?.verdicts.get("pe_001")?.allowed).toBe(true);
+        // A row holder with a namesake in the tree gets the same check.
+        const both = namesakeVerdicts(FA, { ...r, namesakes: [{ ...ROW, person_id: FA }] }, household(), { derivedPairs: true });
+        expect(both?.verdicts.get("pe_001")).toMatchObject({ allowed: false, blockedBy: expect.arrayContaining(["pair"]) });
         const verdict = namesakeVerdicts(FA, r, household(), { derivedPairs: true })?.verdicts.get("pe_001");
         expect(verdict?.allowed).toBe(false);
         expect(verdict?.blockedBy).toContain("pair");
