@@ -147,7 +147,7 @@ session — see [gps-research-flow.md](gps-research-flow.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" in the [README](../README.md#a-note-on-responsibility). | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
+| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skill for the project's state one step per turn, and ending each step by offering the next. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" in the [README](../README.md#a-note-on-responsibility). | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
 | **forget-and-rederive** | Sets up a practice run: strips information you already have out of the project tree so it has to be re-derived from records. Always dry-runs first and reports only redacted counts. Requires you to also not look the answer back up — the FamilySearch tree still has it, so the FS tree-reading tools are off-limits for those people afterward. | "Forget what you know about Patrick's parents and find them again" / "Hide his parents and see if you can re-derive them" |
 
 ### Planning the research
@@ -241,8 +241,8 @@ don't load it explicitly.
 9. hypothesis-tracking (agent) Track competing candidates
 10. research-exhaustiveness  Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop
-                             back to step 3 (extend plan) or step 2
-                             (FAN pivot). If exhaustive, advance.
+                             back to step 3 (extend plan), a FAN pivot
+                             included. If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
     tree-edit (agent)        Merge persons, correct facts
 12. Ask "where are we?"      Answered by the main thread from the project state
