@@ -119,7 +119,7 @@ def _minimal_run_log(skill: str = "demo", scenario: str | None = None) -> dict:
                 ],
             }
         ],
-        "totals": {},
+        "totals": dict.fromkeys(_TOTALS_KEYS, 0),
     }
 
 
@@ -600,7 +600,7 @@ def _log_with(skill: str, test_spec: dict, run_entry: dict) -> dict:
                 "runs": [run_entry],
             }
         ],
-        "totals": {},
+        "totals": dict.fromkeys(_TOTALS_KEYS, 0),
     }
 
 
@@ -1103,7 +1103,7 @@ def test_reaggregate_repairs_a_stale_summary_without_touching_the_envelope(tmp_p
     path = tmp_path / "v1_2026-10-09_00-00-00.json"
     path.write_text(json.dumps(_stale_log()), encoding="utf-8")
 
-    changed = judge_regrade.reaggregate_log(path)
+    changed, _ = judge_regrade.reaggregate_log(path)
 
     assert changed == ["ut_demo_001"]
     out = json.loads(path.read_text(encoding="utf-8"))
@@ -1132,5 +1132,148 @@ def test_reaggregate_leaves_a_consistent_log_unwritten(tmp_path):
     path.write_text(json.dumps(log), encoding="utf-8")
     before = path.read_text(encoding="utf-8")
 
-    assert judge_regrade.reaggregate_log(path) == []
+    assert judge_regrade.reaggregate_log(path) == ([], [])
     assert path.read_text(encoding="utf-8") == before
+
+
+_TOTALS_KEYS = (
+    "duration_ms", "input_tokens", "cached_input_tokens", "output_tokens",
+    "judge_input_tokens", "judge_cached_input_tokens", "judge_output_tokens",
+    "skill_cost_usd", "judge_cost_usd", "total_cost_usd",
+)
+
+
+def _mandatory_log(*, outcome="partial", score=2, sample=None):
+    """A schema-valid log whose single test is gradeable and mandatory.
+
+    `test_id` is `ut_demo_999`, which has no spec in the `disk_tree` corpus, so
+    `regrade_run_log`'s loop `continue`s past it and no judge call is made. The
+    sample refresh runs over `log["tests"]` afterwards, so it still sees it.
+
+    `_minimal_run_log` is not schema-valid on its own — nothing else in this
+    file writes through `validate_run_log` — so the per-entry and per-run
+    required fields are filled in here.
+    """
+    log = _minimal_run_log(scenario="demo-scenario")
+    dims = [{"source": "rubric", "name": "Confidence calibration",
+             "score": score, "rationale": "x"}]
+    entry = log["tests"][0]
+    entry.update({
+        "test_id": "ut_demo_999",
+        "test_type": "positive",
+        "expected_outcome": "pass",
+        "scenario": "demo-scenario",
+        "mcp_fixtures": [],
+        "flaky": False,
+        "totals": dict.fromkeys(_TOTALS_KEYS, 0),
+        "outcome": outcome,
+        "outcome_summary": {
+            "per_run_outcomes": [outcome],
+            "aggregated_dimensions": dims,
+            "review_dimensions": dims,
+        },
+    })
+    for i, run in enumerate(entry["runs"]):
+        run.pop("judge_skipped", None)
+        run.update({
+            "run_id": f"r{i}", "duration_ms": 0, "input_tokens": 0,
+            "cached_input_tokens": 0, "output_tokens": 0, "skill_cost_usd": 0.0,
+        })
+        run.setdefault("validators", {"passed": True, "results": []})
+        run.setdefault("judge", {"skipped": False, "dimensions": dims,
+                                 "judge_cost_usd": 0.0})
+        run["output"]["file_changes"] = None
+        run["output"].setdefault("files_created", [])
+    log["totals"] = dict.fromkeys(_TOTALS_KEYS, 0)
+    if sample is not None:
+        log["review_sample"] = {"tests": list(sample), "cursor": [], "seed": 1}
+    return log
+
+
+def test_regrade_adds_a_newly_mandatory_test_to_the_review_sample(
+    disk_tree, monkeypatch
+):
+    """A regrade that moves a test into `is_mandatory` owes it a sample slot.
+
+    `review_sample` is derived from the runs, exactly as `outcome` and the
+    dimension summaries are, so a regrade that refreshes those and not this one
+    shrinks the annotation debt it just created: rule 3 iterates the STORED
+    sample, so a test the regrade scored a 2 on is gradeable, mandatory, and
+    owed by nobody. Found on `person-evidence` v5, where the regrade moved
+    `ut_person_evidence_n7v` pass -> partial with Confidence calibration at 2 —
+    the only such case across 38 regraded logs, which is why nothing caught it.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(sample=["ut_demo_other"])
+    path = _write_log(disk_tree, log)
+
+    result = judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert "ut_demo_999" in written["review_sample"]["tests"]
+    # Union, never re-select: a test a human has already annotated must not be
+    # dropped, which would strand those corrections.
+    assert "ut_demo_other" in written["review_sample"]["tests"]
+    # The rotation state is not ours to touch.
+    assert written["review_sample"]["seed"] == 1
+    assert written["review_sample"]["cursor"] == []
+    # And the operator is told what debt the regrade created.
+    assert result.review_sample_added == ["ut_demo_999"]
+
+
+def test_regrade_leaves_an_already_complete_review_sample_alone(
+    disk_tree, monkeypatch
+):
+    """The other direction: a sample that already lists the test is untouched.
+
+    Without this the fix could "pass" by rewriting the key every run, which
+    would churn every regraded log and make a real addition unreadable in a
+    diff.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(sample=["ut_demo_999"])
+    path = _write_log(disk_tree, log)
+
+    result = judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written["review_sample"]["tests"] == ["ut_demo_999"]
+    assert result.review_sample_added == []
+
+
+def test_regrade_leaves_a_non_mandatory_test_out_of_the_sample(
+    disk_tree, monkeypatch
+):
+    """A clean pass is not mandatory, so it must not be added.
+
+    The guard that keeps this from degenerating into "sample every test",
+    which would owe a correction for every dimension of every run and make the
+    sampling mechanism pointless.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(outcome="pass", score=3, sample=["ut_demo_other"])
+    path = _write_log(disk_tree, log)
+
+    result = judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written["review_sample"]["tests"] == ["ut_demo_other"]
+    assert result.review_sample_added == []
+
+
+def test_regrade_without_a_review_sample_adds_no_key(disk_tree, monkeypatch):
+    """A log written before sampling shipped must not GAIN a `review_sample`.
+
+    Rule 3 already demands every dimension of every test from such a log. A
+    synthesized sample would silently NARROW that to the mandatory few, which
+    is the opposite of the debt this fix exists to preserve.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(sample=None)
+    log.pop("review_sample", None)
+    path = _write_log(disk_tree, log)
+
+    judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert "review_sample" not in written

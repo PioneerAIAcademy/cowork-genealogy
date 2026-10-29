@@ -69,6 +69,7 @@ from harness.scenario_brief import (
     load_scenario_brief,
     readme_fallback_warning,
 )
+from harness.review_sample import is_gradeable, is_mandatory
 from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
 from harness.runlog import (
@@ -107,6 +108,9 @@ class RegradeResult:
     runs_regraded: int = 0
     tests_scored_moved: list[str] = field(default_factory=list)
     tests_outcome_moved: list[tuple[str, str, str]] = field(default_factory=list)  # (test_id, old, new)
+    # Tests the regrade moved into `is_mandatory` that the stored sample did
+    # not list, so the operator sees the annotation debt the regrade created.
+    review_sample_added: list[str] = field(default_factory=list)
     fallback_scenarios: set[str] = field(default_factory=set)
     error: str | None = None
 
@@ -739,6 +743,8 @@ def regrade_run_log(
                     (test_id, old_outcome or "", aggregated)
                 )
 
+    result.review_sample_added.extend(_refresh_review_sample(log))
+
     # Stamp envelope. Both fingerprints: a regrade is what clears rule 2b, and
     # rule 2b has a prompt half and a render half.
     log["judge_prompt_hash"] = judge.judge_prompt_hash()
@@ -785,7 +791,40 @@ def _consequential(entry: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
-def reaggregate_log(path: Path) -> list[str]:
+def _refresh_review_sample(log: dict[str, Any]) -> list[str]:
+    """Add every newly-mandatory test to `review_sample`; return what was added.
+
+    `review_sample` is derived from the runs, exactly as `outcome` and the
+    dimension summaries are, so a pass that refreshes those and not this one
+    shrinks the annotation debt it just created: rule 3 iterates the STORED
+    sample, so a test a regrade has just scored a 2 on is gradeable, mandatory,
+    and owed by nobody.
+
+    **Union, never re-select.** The three rotation slots and the random one are
+    drawn against a `seed` and a `cursor` this function does not own, and
+    dropping a test a human has already annotated would strand those
+    corrections. Only `tests` is touched.
+
+    **A log with no `review_sample` does not gain one.** Every such log predates
+    sampling, and rule 3 already demands every dimension of every test from it;
+    synthesizing a sample would narrow that to the mandatory few.
+    """
+    sample = log.get("review_sample")
+    if sample is None:
+        return []
+    mandatory = {
+        t["test_id"]
+        for t in log.get("tests") or []
+        if t.get("test_id") and is_gradeable(t) and is_mandatory(t)
+    }
+    before = set(sample.get("tests") or [])
+    added = sorted(mandatory - before)
+    if added:
+        sample["tests"] = sorted(before | mandatory)
+    return added
+
+
+def reaggregate_log(path: Path) -> tuple[list[str], list[str]]:
     """Rebuild every test entry's derived fields from the grades already stored.
 
     Zero model calls, zero cost: `runs[].judge.dimensions` and `runs[].outcome`
@@ -798,8 +837,11 @@ def reaggregate_log(path: Path) -> list[str]:
     re-graded it — exactly the false ACTIVE this fingerprint exists to prevent,
     and it would silently un-refuse a suite rule 2 is holding stale.
 
-    Returns the test ids whose stored entry changed; empty means the file was
-    already consistent and nothing is written.
+    Returns `(changed_test_ids, review_sample_added)`. Both empty means the
+    file was already consistent and nothing is written. The two are separate
+    because a log can need one repair and not the other, and reporting a
+    sample-only write as "0 tests re-aggregated" told the operator nothing had
+    happened while a committed artifact changed under them.
     """
     log = json.loads(path.read_text(encoding="utf-8"))
     changed: list[str] = []
@@ -821,13 +863,18 @@ def reaggregate_log(path: Path) -> list[str]:
             test_entry.update(snapshot)
             continue
         changed.append(str(test_entry.get("test_id")))
-    if not changed:
-        return []
+    # Same derived-from-runs repair as the entries above, and the reason this
+    # path can fix a log an earlier regrade left short without paying for a
+    # re-judge. Runs even when no entry moved: a log whose summaries are
+    # already consistent can still carry a sample that is not.
+    sample_added = _refresh_review_sample(log)
+    if not changed and not sample_added:
+        return [], []
     validate_run_log(log)
     tmp = path.parent / (path.name + ".tmp")
     tmp.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
     _replace_with_retry(tmp, path)
-    return changed
+    return changed, sample_added
 
 
 # ---- Dry-run (no model call) ----------------------------------------------
@@ -1024,10 +1071,17 @@ def main(argv: list[str] | None = None) -> int:
         targets = collect_regradeable_logs(only_skill=args.skill, scratch=True)
         touched = 0
         for target in targets:
-            changed = reaggregate_log(target.path)
-            if changed:
+            changed, sample_added = reaggregate_log(target.path)
+            if changed or sample_added:
                 touched += 1
-                print(f"  {target.skill}: {len(changed)} test(s) re-aggregated")
+                parts = []
+                if changed:
+                    parts.append(f"{len(changed)} test(s) re-aggregated")
+                if sample_added:
+                    parts.append(
+                        "review_sample += " + ", ".join(sample_added)
+                    )
+                print(f"  {target.skill}: {'; '.join(parts)}")
         if touched == 0:
             print("Every committed run log's summary already matches its runs.")
         return 0
