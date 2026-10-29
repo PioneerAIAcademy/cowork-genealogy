@@ -715,9 +715,9 @@ def report_resolution_precedes_identity(before_state, after_state):
 
     observations = []
     # Index by position so a duplicate-id state produces a message a reader can
-    # tell apart. Ids are not unique in practice: `validator.ts` accepts a
-    # duplicated `conflicts[].id` (measured: `c_003` duplicated, one `resolved`
-    # and one `unresolved`, validates clean with 0 errors).
+    # tell apart. `validator.ts` refuses a duplicated `conflicts[].id`, but only
+    # when a write introduces it: a project that already carried one keeps
+    # validating, because `validateIntroduced` tolerates pre-existing errors.
     # Position in `conflicts` as written, NOT in the dict-filtered view. With a
     # non-dict entry first, enumerating the filtered list printed 0 and 1 where
     # the array positions are 1 and 2 — so the index pointed at the wrong entry

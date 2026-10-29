@@ -205,6 +205,14 @@ every id field and every field that references one is validated against its
 prefix, so an assertion id of `assert_001` or a `plan_item_id` holding a `q_`
 value is rejected at write time.
 
+**Ids are unique within their section.** Two entries in one section may not
+share an id, and plan-item ids are one pool across every plan, since
+`log[].plan_item_id` resolves against all of them. The validator refuses a
+write that introduces a duplicate. A project that already carried one keeps
+accepting writes (an error present before the call is demoted to a warning),
+but `validate_research_schema` reports it, and the agent cannot repair it:
+`research_append` never changes an entry's `id`.
+
 | Prefix | Section | Example |
 |--------|---------|---------|
 | `rp_` | project | `rp_001` |
