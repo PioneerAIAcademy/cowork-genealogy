@@ -16,8 +16,8 @@ a run log that its instrument moved since it was written (issue #2479, PR 3):
   serve; ``live`` is the remaining ``LIVE_TOOLS``, which every suite advertises.
 - ``live_modules`` -- the compiled entry module of each live tool a run called.
 
-The suite-specific halves (``validators.suite``, ``tools.fixture``) block;
-``validators.shared``, ``tools.live`` and ``live_modules`` warn, because a
+``validators.suite`` blocks. ``tools.fixture`` warns (lead, 2026-10-29), and
+so do ``validators.shared``, ``tools.live`` and ``live_modules``, because a
 blocking corpus-wide input would owe a paid re-run of every suite (decided
 2026-10-14 on issue #2479; see eval/CLAUDE.md, rule 2c).
 
