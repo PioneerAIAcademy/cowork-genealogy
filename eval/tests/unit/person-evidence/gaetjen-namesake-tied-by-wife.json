@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_person_evidence_028",
+    "skill": "person-evidence",
+    "name": "A namesake on record does not stop a link the record ties to him through his wife and daughter",
+    "type": "positive",
+    "description": "The must-not-fire half of ut_person_evidence_wfh, on the same subject with the same two namesakes recorded on I1 Hermann Gaetjen. The record to link is his daughter's 1913 marriage, which names her parents as Hermann Gaetjen and Amelia Nichols: the mother is his wife I4 and the bride his daughter I3. That tie lets the father's link to I1 stand at probable or better. The agent must link the father of the bride to I1 at probable or confident, with the mother linked to I4 (and the bride to I3) so the tie is on file. A refusal met by linking the father first is recovered by linking the mother or bride first, or in the same call. Issue #3363, PR 2.",
+    "tags": [
+      "namesake",
+      "score-discipline",
+      "re-invoke-safe",
+      "namesake-tied"
+    ]
+  },
+  "input": {
+    "delegation": "Question: q_001 (when and from where in Germany did Hermann Gaetjen immigrate; tree I1 Hermann, husband of I4 Amelia Nichols, father of I2 Henry Joseph b. 5 May 1878 San Francisco and I3 Amelia Otillie b. 23 Aug 1883 California).\nLink these to the right people in the tree:\n- src_003, assertions a_020 to a_027: 21 July 1913 San Francisco marriage of Amelie Ottilie Gaetjen (b. 1884) and William Chadwick Fralich. It names the father of the bride, Hermann Gaetjen (a_020), and the mother of the bride, Amelia Nichols (a_021); it records the bride as the child of each (a_025, a_026) and the father as the mother's spouse (a_027).\nDecide identity yourself with same_person scoring. Context: two other Hermann Gaetjens of California are recorded as namesakes of I1 (one b. 1873, naturalized San Francisco 1900, d. 1957; one b. 1827, d. 1899 Butte County).\n\nprojectPath: <workspace>",
+    "scenario": "gaetjen-namesake-tied-marriage"
+  },
+  "mcp_fixtures": [
+    "same-person-gaetjen-marriage-father",
+    "same-person-gaetjen-marriage-mother",
+    "same-person-gaetjen-marriage-bride"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "judge_context": [
+    "The marriage names the bride's parents as Hermann Gaetjen and Amelia Nichols. Amelia Nichols is I1's wife (I4) and the bride is his daughter (I3), so this record ties itself to I1 through his family, and a link from the father of the bride (a_020) to I1 at probable or confident is correct. Two namesakes are recorded for I1, so research_append refuses that link unless the mother's link to I4 (or the bride's to I3) is written in the same call or before it.",
+    "GROUNDING: decide what the run DID from its tool calls. The run passes when it ends with a_020 linked to I1 at probable or confident and a_021 linked to I4 at probable or better. A refused first attempt that the agent recovers from by linking the mother or bride first is correct, not a defect. Leaving a_020 speculative or unlinked when the record names I1's wife and daughter is the failure this test guards: it is the over-correction the namesake cap must not cause.",
+    "Do not require links for the groom or for every bride assertion; scoring and linking the bride to I3 is welcome but not required."
+  ]
+}

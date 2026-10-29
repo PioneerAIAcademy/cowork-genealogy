@@ -1,6 +1,6 @@
 {
   "tool": "image_search",
-  "description": "Lists the image IDs inside Schuylkill County, Pennsylvania mixed-item image group 008116090 — the single browse-only film that bundles three record sets (Wills and Estate Records, Land and Property Deeds, Loose Probate Papers) as separate item sections. Drives the mixed-volume browse (ut_search_images_012): image_search returns the WHOLE film's images in one call (there is no in-volume / item-section filter), so locating the will-book section is manual page navigation. 22 images, sorted by the trailing page number.",
+  "description": "Lists the image IDs inside Schuylkill County, Pennsylvania mixed-item image group 008116090 — the single browse-only film that bundles three record sets (Wills and Estate Records, Land and Property Deeds, Loose Probate Papers) as separate item sections. Drives the mixed-volume browse (ut_search_images_012): image_search returns the WHOLE film's images in one call. Its `item` route needs an item number, which this test never supplies, so locating the will-book section is manual page navigation. The predicate is imageGroupNumber only, so a call that also carries `item` gets the whole film too. 22 images, sorted by the trailing page number.",
   "args": {
     "imageGroupNumber": "008116090"
   },

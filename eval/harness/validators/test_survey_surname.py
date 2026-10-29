@@ -236,7 +236,10 @@ def test_household_grouping_and_slave_schedule(before_state, after_state, test):
     """d5: in the logged table, the two stubs sharing a recordArk (Edmund and
     Mary) are one row, and the slave-schedule stub sits under its own heading.
 
-    Reads the table from the survey_surname log entry's notes."""
+    Reads the table from the survey_surname log entry's notes. A heading is any
+    non-table line, since the body asks for a sub-section, not a markdown `#`.
+    A table line is any other line with a pipe: GFM tables may omit the outer
+    ones, and a `#` heading may carry a pipe (`### 1850 | United States ...`)."""
     if "household-grouping" not in test.get("tags", []):
         pytest.skip("not a household-grouping test")
     text = _survey_table(before_state, after_state)
@@ -244,9 +247,9 @@ def test_household_grouping_and_slave_schedule(before_state, after_state, test):
     population, slave, heading = [], [], ""
     for line in text.lower().splitlines():
         s = line.strip()
-        if s.startswith("#"):
+        if s.startswith("#") or (s and "|" not in s):
             heading = s
-        elif s.startswith("|"):
+        elif s:
             (slave if "slave" in heading else population).append(s)
     assert slave, "no table rows under a heading naming the slave schedule"
     assert any("edmund" in r for r in slave), (
@@ -265,7 +268,7 @@ _REQUIRED_COLUMNS = ("year", "county", "head", "other", "ark", "ruled")
 
 def _is_rule(line):
     body = line.replace("|", "").replace(":", "").replace(" ", "")
-    return line.startswith("|") and bool(body) and set(body) == {"-"}
+    return "|" in line and bool(body) and set(body) == {"-"}
 
 
 def test_table_has_rubric_columns(before_state, after_state, test):
@@ -281,7 +284,7 @@ def test_table_has_rubric_columns(before_state, after_state, test):
     for s, nxt in zip(lines, lines[1:] + [""]):
         if s.startswith("#"):
             heading = s
-        elif s.startswith("|") and _is_rule(nxt):
+        elif "|" in s and _is_rule(nxt):
             if "schedule" in heading and "population" not in heading:
                 continue
             headers.append(s)
