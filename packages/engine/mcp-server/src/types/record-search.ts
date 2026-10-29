@@ -1,7 +1,7 @@
 // FamilySearch Search API Response Types
 // GET https://www.familysearch.org/service/search/hr/v2/personas
 
-import type { SimplifiedGedcomX } from "./gedcomx.js";
+import type { GedcomXField, SimplifiedGedcomX } from "./gedcomx.js";
 import type { RankSearchMatchesResult } from "./rank-search-matches.js";
 import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
@@ -43,7 +43,7 @@ export interface FSPerson {
   // Person-level indexing fields — `PR_AGE`, `Role`. Declared so the shape is
   // honest, and deliberately NOT read: the batch number lives on the gedcomx
   // root's `fields[]`, never here (#1592).
-  fields?: FSField[];
+  fields?: GedcomXField[];
 }
 
 export interface FSSourceTitle {
@@ -55,23 +55,6 @@ export interface FSSourceDescription {
   about?: string;
   titles?: FSSourceTitle[];
   identifiers?: Record<string, string[]>;
-}
-
-export interface FSFieldValue {
-  labelId?: string;
-  text?: string;
-}
-
-/**
- * An entry-level indexing field. FamilySearch hangs several of these off the
- * gedcomx root (batch number, film number, record group, unique id); the same
- * `fields` key also appears on persons, names, facts and places, carrying
- * entirely different content (`PR_AGE`, `Role`) — so only the ROOT array is
- * the batch's home.
- */
-export interface FSField {
-  type?: string;
-  values?: FSFieldValue[];
 }
 
 /**
@@ -90,7 +73,12 @@ export interface FSGedcomx {
   persons?: FSPerson[];
   relationships?: FSRecordRelationship[];
   sourceDescriptions?: FSSourceDescription[];
-  fields?: FSField[];
+  // Entry-level indexing fields. FamilySearch hangs several of these off the
+  // gedcomx root (batch number, film number, record group, unique id); the same
+  // `fields` key also appears on persons, names, facts and places, carrying
+  // entirely different content (`PR_AGE`, `Role`) — so only the ROOT array is
+  // the batch's home.
+  fields?: GedcomXField[];
 }
 
 export interface FSEntryContent {
