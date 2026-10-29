@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, January to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26); the rest is not started. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). The rest is filed as issues (2026-10-29, "Who builds what") and not started. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -8,10 +8,10 @@
 - A web app shows each user's projects, takes uploads, links the user's own OpenRouter account for transcription, collects feedback and offers a download.
 - It runs two of the three tiers in [the handoff plan](familysearch-handoff.md), configured for the beta: the Python web tier with chat switched off, and the MCP tool server. There is no worker and no queue, because Claude runs in Cowork.
 - The beta's code is the handoff's code. Every remaining difference is listed under "Differences from the handoff", with its reason.
-- The lead makes every change to the handoff's built code, as items in this plan. Each change before launch is additive and keeps the handoff's behavior as the default, so nothing there needs rework; the two After-launch changes replace the worker's FamilySearch bearer and the grant refresher. The handoff plan's "Alignment with the self-hosted beta" section lists them.
+- The team builds the code, from one issue per item or part of an item, and Richard reviews every change to the handoff's code. Each change before launch is additive and keeps the handoff's behavior as the default, so nothing there needs rework; the two After-launch changes replace the worker's FamilySearch bearer and the grant refresher. The handoff plan's "Alignment with the self-hosted beta" section lists them.
 - It deploys to the lead's own AWS account and Neon, and uses no FamilySearch AWS resources.
 - It runs from the week of 11 January to July 2027. Then everything is deleted.
-- The lead builds it with Claude.
+- The lead does what needs his AWS account, Neon or GeneFun: the domain and FamilySearch's approval (P0.1), the skeleton (P0.3), the loopback bounce (P0.4), the environments, monitoring and release (D1–D3), the private feedback repo, its Apps Script copy and `/triage-feedback` (D5), the policies (L1), every decision and checkpoint, the Phase 4 runs and the July purge. Every other item is an issue; "Who builds what" lists them.
 
 ## Decisions (lead, 2026-10-25 and 2026-10-26)
 
@@ -291,7 +291,7 @@ The bounce is not an access control. Until launch day, admission reads an allowl
   - the key is stored under the same Fernet key;
   - unlinking.
 - **Pages:**
-  - with chat off: `/privacy`, `/terms`, and the onboarding page at `/` for a browser with no session;
+  - with chat off: `/privacy`, `/terms`, and the onboarding screen, which the SPA shows a signed-out browser whose link names no project (the server never sees a link's hash, so a project link goes to sign-in);
   - the account menu, which shows the account id, and with chat off a deletion code. The code is an HMAC of the user id under the session secret, shown only there.
 - **Done when:**
   - a cookie for user A cannot reach user B's project by any route;
@@ -472,7 +472,7 @@ The purge, rehearsed on a copy first:
 
 ## Changes to the handoff's code
 
-The lead makes each of these, as items in this plan. Each is additive and keeps the handoff's behavior as the default, so Richard reworks nothing. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there; E1 and W1 add `/livez` there as a health path that touches no store.
+The team makes each of these, from the issues under "Who builds what". Each is additive and keeps the handoff's behavior as the default, so Richard reworks nothing. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there; E1 and W1 add `/livez` there as a health path that touches no store.
 - **Done:** PR #3852 added `project_list` (`src/tools/project-list.ts`, `src/server.ts`, `src/tool-schemas.ts`, `manifest.json`, `dev/smoke-calls.ts`, `dev/smoke-http.ts` and the stores) and the research router's project step, which `eb-worker.zip` carries. On the handoff's tools tier, `project_list` lists the worker's project. A worker bundle with the router's project step needs a tools tier that has `project_list`, so tools deploys first.
 - **Web tier,** `apps/server/proto/web/` (`app.py`, `auth.py`, `feedback.py`, `spa.py`): W1, W2 and W3. Chat on stays the default.
 - **Web bundle,** `apps/server/proto/eb-web/`: the nginx file.
@@ -485,9 +485,44 @@ The lead makes each of these, as items in this plan. Each is additive and keeps 
 - **The plugin,** which `eb-worker.zip` carries: G3's spelling, G5's wording and the reconnect fallback.
 - **If chosen or needed:** G4's writer-tool checks, in the writer tools they touch, and E5's `record_search` trim (`src/tools/record-search.ts`).
 
+## Who builds what
+
+The lead does the items "What this is" names. The team builds the rest from these issues; an issue labelled `senior` needs a senior developer. Each issue's "Blocked on" line orders them.
+
+| Item | Issue | Level |
+|---|---|---|
+| S1 Schema | issue #3977 | junior |
+| E1 One front door | issue #3984 | senior |
+| E2 Project tools: links, uploads, settings | issue #3978 | junior |
+| E2 Project tools: the connector's `project_list` | issue #3991 | senior |
+| E3 Session end and wording | issue #3995 | senior |
+| E4 Limits: process-wide | issue #3979 | junior |
+| E4 Limits: per user | issue #3999 | senior |
+| E5 Fit for a connector | issue #3996 | junior |
+| W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior |
+| W1 Settings: pool, TLS, nginx | issue #3980 | senior |
+| W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior |
+| W2 Sign-in: Claude's authorization server | issue #3997 | senior |
+| W3 Project routes: viewer data | issue #3981 | senior |
+| W3 Project routes: uploads and download | issue #3987 | senior |
+| W3 Project routes: feedback | issue #3986 | junior |
+| W3 Project routes: OpenRouter linking | issue #3988 | senior |
+| W3 Project routes: policy pages and account data | issue #3993 | junior |
+| W4 Browser app: flags, project links, list, polling | issue #3994 | junior |
+| W4 Browser app: print view | issue #3982 | junior |
+| W4 Browser app: onboarding (D4), account menu, upload, OpenRouter, download | issue #4001 | junior |
+| S2 Deleting and blocking one user | issue #4000 | senior |
+| G3 Connector tool names | issue #3989 | junior |
+| G5 Capture wording | issue #3990 | junior |
+| D3 step 6: the plugin's connector build and marketplace layout | issue #3983 | junior |
+| Reconnect fallback, if P0.2 calls for it | issue #4002 | senior |
+| After launch | issue #4003 | senior |
+
+P0.2 is issue #3529. G4's writer-tool checks get an issue only if the lead chooses them; E5's `record_search` trim is in issue #3996, conditional on P0.2.
+
 ## After launch (February–March 2027)
 
-The lead makes these too, with Richard reviewing:
+The team makes these too, from one issue, with Richard reviewing:
 - **The worker's half of the one door.**
   - The worker mints a per-attempt token, stamps its hash on the turn with `STAMP_BEARER_SQL`, and puts only that token in `mcp.json`. The door admits it as it admits today's stamp, on its open turn and project, then loads the FamilySearch token stored for the turn's project owner and applies E3's session-end hook, as it does for a connector token.
   - The tools tier gets `FS_TOKEN_ENC_KEY` and `SELECT` on `familysearch_tokens` and `users`.
