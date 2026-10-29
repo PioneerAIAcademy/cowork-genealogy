@@ -59,6 +59,8 @@ repo's identifier-casing rule):
   projectStatus: string | null,          // research.project.status
   objective: string | null,              // research.project.objective, verbatim
   subjectPersonIds: string[],            // research.project.subject_person_ids; [] when absent
+  narrationGuidance: string | null,      // researcher_profile.narration_guidance, verbatim
+  subscriptions: string[],               // researcher_profile.subscriptions; [] when absent
   openQuestions: [{
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
@@ -163,6 +165,12 @@ Projection rules:
   only surface that returns the objective: `research_query` serves array sections only, so without it a
   cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
   `research.json` whole.
+- **`narrationGuidance`** / **`subscriptions`** — `researcher_profile.narration_guidance`
+  (verbatim; `null` when absent or not a string) and `researcher_profile.subscriptions` (strings
+  only; `[]` when absent). Every skill's Narration line and `search-external-sites` read these;
+  no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
+  facts are not here: `tree_query` serves them, so this projection does not grow for callers
+  that never need them.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only, `[]` when absent. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.

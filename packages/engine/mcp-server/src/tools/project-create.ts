@@ -78,6 +78,7 @@ import {
 } from "../utils/person-read-tree.js";
 import { treePidOfArk } from "../utils/ark.js";
 import type { SimplifiedFact } from "../types/gedcomx.js";
+import { PERSON_READ_REF_REMOVED } from "../utils/tool-hint-messages.js";
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
@@ -248,11 +249,7 @@ export async function runProjectCreate(
       throw new ProjectCreateError("projectPath is required");
     }
     if (input.personReadRef !== undefined) {
-      throw new ProjectCreateError(
-        "personReadRef is no longer accepted: pass personId, the subject's FamilySearch ID, " +
-          "and project_create reads the person and builds the starting tree itself. Do not " +
-          "call person_read first.",
-      );
+      throw new ProjectCreateError(PERSON_READ_REF_REMOVED);
     }
 
     const objective = typeof input.objective === "string" ? input.objective.trim() : "";

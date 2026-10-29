@@ -1504,6 +1504,60 @@ describe("extraction_append: documents", () => {
     });
   });
 
+  describe("land classification rows (genealogist ruling, 2026-10-27)", () => {
+    const person = (id: string, given: string, surname: string, statedRelation: string, facts: any[]) =>
+      ({ id, gender: "male", names: [{ given, surname }], statedRelation, facts });
+    const deed = (informant?: { name: string }) => ({
+      recordType: "land",
+      documentForm: "page_image",
+      source: { title: "Hampshire Co. deeds, p. 384", repository: "FamilySearch" },
+      ...(informant ? { informant } : {}),
+      persons: [
+        person("p1", "Paul", "Meacham", "grantor", [
+          { type: "residence", place: "Southwick" },
+          { type: "birth", date: "1740" },
+          { type: "conveyance", date: "1790" },
+          { type: "role", value: "grantor" },
+        ]),
+        person("p2", "John", "Dewey", "grantee", [{ type: "residence", place: "Westfield" }, { type: "birth", date: "1750" }]),
+        person("p3", "Gad", "Palmer", "witness", [{ type: "residence", place: "Southwick" }]),
+        person("p4", "John", "Ingersoll", "justice of the peace", [{ type: "residence", place: "Westfield" }, { type: "acknowledgment", date: "1790" }]),
+      ],
+    });
+    const rowOf = (as: any[], role: string, fact: string, nth = 0) =>
+      as.filter((a) => a.record_role === role && a.fact_type === fact)[nth];
+    const cls = (a: any) => [a?.information_quality, a?.informant_proximity, a?.informant];
+
+    it("classifies each party's facts by the ruling, and none takes the default", async () => {
+      const r = await run([{ recordId: "capture:deed-rows", document: deed() }]);
+      expect(r.ok).toBe(true);
+      const as = await assertionsFor("capture:deed-rows");
+      expect(cls(rowOf(as, "grantor_1", "name"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "residence"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "conveyance"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "birth"))).toEqual(["secondary", "family_not_present", "the grantor"]);
+      expect(cls(rowOf(as, "grantee", "name"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantee", "residence"))).toEqual(["indeterminate", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantee", "birth"))).toEqual(["secondary", "family_not_present", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "role"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "grantor_1", "sex"))).toEqual(["primary", "self", "the grantor"]);
+      expect(cls(rowOf(as, "witness_1", "name"))).toEqual(["primary", "witness", "the witnesses"]);
+      expect(cls(rowOf(as, "witness_1", "residence"))).toEqual(["indeterminate", "self", "the grantor"]);
+      expect(cls(rowOf(as, "justice_of_the_peace_1", "residence"))).toEqual(["indeterminate", "self", "the grantor"]);
+      expect(cls(rowOf(as, "justice_of_the_peace_1", "acknowledgment"))).toEqual(["primary", "official_duty", "the acknowledging officer (justice of the peace or register)"]);
+      expect(as.some((a: any) => a.information_quality === "indeterminate" && a.informant_proximity === "unknown")).toBe(false);
+      expect(r.records[0].summary).not.toMatch(/no table row covers/);
+    });
+
+    it("a named informant replaces the generic string on the family rows only", async () => {
+      await run([{ recordId: "capture:deed-informant", document: deed({ name: "Hampshire Registry copyist" }) }]);
+      const as = await assertionsFor("capture:deed-informant");
+      expect(rowOf(as, "grantor_1", "birth").informant).toBe("Hampshire Registry copyist");
+      expect(rowOf(as, "grantor_1", "name").informant).toBe("the grantor");
+      expect(rowOf(as, "witness_1", "name").informant).toBe("the witnesses");
+    });
+  });
+
   describe("deed and probate roles are read, and a couple must be stated (#3660)", () => {
     const person = (id: string, given: string, surname: string, statedRelation?: string, facts: any[] = []) =>
       ({ id, gender: "male", names: [{ given, surname }], ...(statedRelation ? { statedRelation } : {}), facts });
@@ -1683,5 +1737,186 @@ describe("extraction_append: documents", () => {
       const obit = { recordType: "obituary", documentForm: "verbatim_transcript", source: src("Obituary"), persons: [son, inLaw], relationships: couple };
       expect(validateStructuredDocument(obit)).toEqual([]);
     });
+  });
+});
+
+// ─── a full-text hit, extracted from its own transcript (issue #3522) ─────────
+
+import { readFileSync } from "fs";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { arkToBareId } from "../../src/utils/ark.js";
+
+describe("extraction_append: a full-text hit (#3522)", () => {
+  // A real fulltext_search sidecar: 20 hits, each with its own distinct
+  // textDocument, so text copied from the wrong hit can never pass.
+  const g9gj = JSON.parse(
+    readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..",
+        "eval", "fixtures", "scenarios", "g9gj-proof-update-after-later-search", "results", "log_003.json"),
+      "utf8",
+    ),
+  );
+  const hits: Array<{ id: string; textDocument: string; sourceUrl?: string }> = g9gj.payload.results;
+  const hitRef = (i: number) => `results/log_003.json#${arkToBareId(hits[i].id)}`;
+
+  const birth = (title = "Massachusetts, Births, 1859") => ({
+    recordType: "birth",
+    documentForm: "page_image",
+    source: { title, repository: "FamilySearch" },
+    persons: [
+      { id: "p1", principal: true, gender: "male", names: [{ given: "John", surname: "Driscoll" }], facts: [{ type: "birth", date: "1859" }] },
+    ],
+  });
+
+  let dir: string;
+  const read = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const run = (documents: any[]) =>
+    runExtractionAppend({ projectPath: dir, documents } as any, noReader, LOCAL) as unknown as Promise<ExtractionBatchResult>;
+  const stagePage = async () =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{ id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription: "Harold Dean Whitaker, 91, of Logan…" }],
+      },
+    }))!.resultsRef;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extraction-fulltext-test-"));
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(join(dir, "results", "log_003.json"), JSON.stringify(g9gj), "utf8");
+    const r: any = research();
+    r.questions = [{
+      id: "q_001", question: "Who were the parents of John Driscoll?", rationale: "Birth not yet found",
+      selection_basis: "objective_decomposition", priority: "high", status: "open", depends_on: [], unblocks: [],
+      created: "2026-01-01", resolved: null, resolution_assertion_ids: [],
+      search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+    }];
+    r.plans = [{
+      id: "pl_001", question_id: "q_001", status: "active", created: "2026-01-01",
+      items: [{
+        id: "pli_001", sequence: 1, record_type: "birth", jurisdiction: "Boston, Suffolk, Massachusetts, United States",
+        date_range: "1855-1862", repository: "FamilySearch", rationale: "The register should name him", fallback_for: null, status: "in_progress",
+      }],
+    }];
+    r.log = [{
+      id: "log_003", plan_item_id: "pli_001", performed: "2026-01-01T00:00:00Z", tool: "fulltext_search",
+      query: { text: "Driscoll" }, outcome: "positive", results_examined: 20, external_site: null, results_ref: "results/log_003.json",
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [] }), "utf8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("extracts a hit from its own transcript, citing the full-text search that found it", async () => {
+    const r = await run([{ recordId: hits[4].id, document: birth(), transcriptionRef: hitRef(4) }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records[0]).toMatchObject({ status: "extracted", logId: "log_003" });
+    const after = await read();
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_003"]);
+    const s = after.sources[0];
+    expect(s.log_entry_id).toBe("log_003");
+    expect(s.transcription).toBe(hits[4].textDocument);
+    expect(s.source_classification).toBe("derivative");
+    expect(s.notes).toMatch(/FamilySearch's full-text machine transcription/);
+    expect(s.url).toBe(hits[4].sourceUrl);
+    expect(s.citation).toContain(hits[4].sourceUrl as string);
+    expect(s).not.toHaveProperty("image_filename");
+    // No page is stored for a hit, so the "name the page" nudge has nothing to ask for.
+    expect((r.records[0].warnings ?? []).join(" ")).not.toMatch(/image_filename/);
+  });
+
+  it("extracts two different hits of one search in one call", async () => {
+    const r = await run([
+      { recordId: hits[4].id, document: birth(), transcriptionRef: hitRef(4) },
+      { recordId: hits[7].id, document: birth("Massachusetts, Births, 1859, page 8"), transcriptionRef: hitRef(7) },
+    ]);
+    expect(r.records.map((x: any) => x.status), JSON.stringify(r)).toEqual(["extracted", "extracted"]);
+    expect((await read()).sources.map((s: any) => s.transcription)).toEqual([hits[4].textDocument, hits[7].textDocument]);
+  });
+
+  it("refuses a hit with no transcript, writing nothing", async () => {
+    const bare = JSON.parse(
+      readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..",
+          "eval", "fixtures", "scenarios", "research-competing-parent-sets-no-hypotheses", "results", "log_020.json"),
+        "utf8",
+      ),
+    );
+    await writeFile(join(dir, "results", "log_020.json"), JSON.stringify(bare), "utf8");
+    const r0: any = await read();
+    r0.log.push({ ...r0.log[0], id: "log_020", plan_item_id: null, results_ref: "results/log_020.json" });
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    const hit = bare.payload.results[0];
+    const r = await run([{ recordId: hit.id, document: birth(), transcriptionRef: `results/log_020.json#${arkToBareId(hit.id)}` }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].errors?.join(" ")).toMatch(/no transcript/);
+    expect((await read()).sources).toHaveLength(0);
+  });
+
+  it("writes no image_filename for a hit, even one the agent relayed", async () => {
+    const r = await run([{ recordId: hits[4].id, document: birth(), transcriptionRef: hitRef(4), imageFilename: "images/relayed.jpg" }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await read()).sources[0]).not.toHaveProperty("image_filename");
+  });
+
+  it("completes the plan item the full-text search served", async () => {
+    const r = await run([{ recordId: hits[4].id, document: birth(), transcriptionRef: hitRef(4) }]);
+    expect(r.planItems?.completed).toEqual(["pli_001"]);
+    expect((await read()).plans[0].items[0].status).toBe("completed");
+  });
+
+  it("refuses a document whose recordId is not the hit it cites, writing nothing", async () => {
+    const r = await run([{ recordId: hits[5].id, document: birth(), transcriptionRef: hitRef(4) }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].status).toBe("refused");
+    expect(r.records[0].errors?.join(" ")).toMatch(/hit/);
+    expect((await read()).sources).toHaveLength(0);
+  });
+
+  it("refuses a hit the search did not return, writing nothing", async () => {
+    const r = await run([{ recordId: "ark:/61903/3:1:ZZZZ-ZZZZ-ZZZ", document: birth(), transcriptionRef: "results/log_003.json#ZZZZ-ZZZZ-ZZZ" }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].status).toBe("refused");
+    expect((await read()).sources).toHaveLength(0);
+  });
+
+  it("refuses a hit of a search not yet logged, without refusing the page beside it", async () => {
+    const stagedSearch = await stageSearchResults({ projectPath: dir, tool: "fulltext_search", response: g9gj.payload });
+    const r = await run([
+      { recordId: hits[1].id, document: birth(), transcriptionRef: `${stagedSearch!.resultsRef}#${arkToBareId(hits[1].id)}` },
+      { recordId: "capture:page-beside", document: birth("A page beside it"), transcriptionRef: await stagePage() },
+    ]);
+    expect(r.records.map((x: any) => x.status)).toEqual(["refused", "extracted"]);
+    expect(r.records[0].errors?.join(" ")).toMatch(/log the search first/);
+    expect((await read()).log.filter((e: any) => e.tool === "image_transcribe")).toHaveLength(1);
+  });
+
+  it("takes one document per hit, refusing a second that cites the same hit", async () => {
+    const r = await run([
+      { recordId: hits[4].id, document: birth(), transcriptionRef: hitRef(4) },
+      { recordId: hits[4].id, document: birth("Massachusetts, Births, 1859, second entry"), transcriptionRef: hitRef(4) },
+    ]);
+    expect(r.records.map((x: any) => x.status)).toEqual(["extracted", "refused"]);
+    expect(r.records[1].errors?.join(" ")).toMatch(/single document/);
+    expect((await read()).sources).toHaveLength(1);
+  });
+
+  it("refuses a hit selector on a transcription that is not a full-text search", async () => {
+    const logged = await researchLogAppend({
+      projectPath: dir,
+      ops: [{ tool: "image_transcribe", query: { imageId: "004022578_00190" }, outcome: "positive", resultsExamined: 1, stagedResultsRef: await stagePage() }],
+    } as any);
+    const finalized = (logged as any).results[0].resultsRef as string;
+    const r = await run([{ recordId: "capture:page", document: birth(), transcriptionRef: `${finalized}#x` }]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].status).toBe("refused");
+    // Refused by the tool check, not by a hit lookup that happened to miss.
+    expect(r.records[0].errors?.join(" ")).toMatch(/fulltext_search.*image_transcribe/);
+    expect((await read()).sources).toHaveLength(0);
   });
 });

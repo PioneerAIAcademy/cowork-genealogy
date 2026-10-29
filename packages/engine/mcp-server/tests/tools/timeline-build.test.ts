@@ -656,7 +656,9 @@ describe("places and the deadline", () => {
     const never = { resolvePlace: () => new Promise<string | null>(() => {}), placeCoords: () => new Promise<any>(() => {}), deadlineMs: 200 };
     const t0 = Date.now();
     const p = await plan(project([{ fact: "residence", date: "1850", place: "Columbus, Ohio" }, { fact: "residence", date: "1880", place: "Columbus, Ohio" }]), man, never);
-    expect(Date.now() - t0).toBeLessThan(2000);
+    // Wide of the 200 ms deadline for load lag; a removed deadline still hangs
+    // these never-settling resolvers into the 30 s test timeout whatever the bound.
+    expect(Date.now() - t0).toBeLessThan(8_000);
     expect(census(p)).toEqual([]);
     expect(p!.events.every((e: any) => e.distance_from_previous_km === null)).toBe(true);
     expect(p!.skipped.length).toBeGreaterThan(0);

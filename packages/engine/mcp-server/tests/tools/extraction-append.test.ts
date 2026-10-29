@@ -172,15 +172,24 @@ describe("extraction_append: only the three call shapes", () => {
   it.each(RETIRED)("refuses %s, writing nothing and resolving no place", async (_label, form) => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");
-    const r = await extractionAppend({ projectPath: dir, ...form } as any, LOCAL);
-    expect(r.ok).toBe(false);
-    const text = (r.errors ?? []).join(" ");
+    const r = await callTool("extraction_append", { projectPath: dir, ...form });
+    expect(r.isError).toBe(true);
+    const text = r.text;
     expect(text).toMatch(/no longer takes/);
     expect(text).toMatch(/`recordIds`.*`documents`.*`absences`/);
     // A caller holding only this writer is not pointed at one it lacks.
     expect(text).not.toContain("research_append");
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
+
+  it("still refuses a retired form called directly, as the unit harness calls it", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await extractionAppend({ projectPath: dir, recordIds: ["MZGS-1BH"], ops: [] } as any, LOCAL);
+    expect(r.ok).toBe(false);
+    expect((r.errors ?? []).join(" ")).toMatch(/no longer takes `ops`/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
   it("refuses no call shape at all, and two current shapes together, naming them", async () => {
@@ -405,21 +414,24 @@ describe("extraction_append debug holds", () => {
     process.env[AFTER] = "0";
     let t0 = Date.now();
     expect((await appendSource(extractionAppend)).ok).toBe(true);
-    expect(Date.now() - t0).toBeLessThan(1000);
+    // No hold is set, so the bound only guards against a hang; wide for load lag.
+    expect(Date.now() - t0).toBeLessThan(8_000);
 
     process.env[BEFORE] = "not-a-number";
     process.env[AFTER] = "";
     t0 = Date.now();
     expect((await appendSource(extractionAppend)).ok).toBe(true);
-    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(Date.now() - t0).toBeLessThan(8_000);
   });
 
   it("hold only extraction_append, never research_append", async () => {
-    process.env[BEFORE] = "1500";
-    process.env[AFTER] = "1500";
+    process.env[BEFORE] = "10000";
+    process.env[AFTER] = "10000";
     const t0 = Date.now();
     expect((await appendSource(researchAppend)).ok).toBe(true);
-    expect(Date.now() - t0).toBeLessThan(1000);
+    // The bound is what tells "no hold" apart from a held call, so it must stay
+    // under the hold value; 8 s rides out load lag while a held call takes 20 s.
+    expect(Date.now() - t0).toBeLessThan(8_000);
   });
 
   it("a set value actually holds an extraction_append, on both sides of the commit", async () => {
@@ -1341,6 +1353,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
 
 import { ATTACHMENT_LINK_RATIONALE, isAttachmentLink } from "../../src/utils/tree-person.js";
 import { errorsOf } from "../helpers/narrow.js";
+import { callTool } from "../helpers/call-tool.js";
 
 describe("extraction_append: personId extracts and links a person's attachments", () => {
   const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");

@@ -62,6 +62,7 @@ import { judgeSupplied, placeAnswer, type PlaceAnswer } from "../utils/place-ver
 import { sidecarReader } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
+import { treeEditRejection } from "../utils/tool-hint-messages.js";
 
 export type TreeEditOperation =
   | "add_fact"
@@ -105,9 +106,7 @@ export interface OpGate {
 
 const EDIT_GATE: OpGate = {
   allowed: new Set<string>(ADD_OPERATIONS),
-  rejection: (operation) =>
-    `tree_edit only adds — '${operation}' is a correction/removal op; ` +
-    "corrections and removals live in tree_correct",
+  rejection: treeEditRejection,
 };
 
 /** One edit. The body of a single call, or one element of a batch `ops`. */

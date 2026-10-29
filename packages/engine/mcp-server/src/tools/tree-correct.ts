@@ -17,12 +17,11 @@ import {
   type TreeEditInput,
   type TreeEditResult,
 } from "./tree-edit.js";
+import { treeCorrectRejection } from "../utils/tool-hint-messages.js";
 
 const CORRECT_GATE: OpGate = {
   allowed: new Set<string>(CORRECT_OPERATIONS),
-  rejection: (operation) =>
-    `tree_correct only corrects or removes — '${operation}' is an additive op; ` +
-    "additions live in tree_edit",
+  rejection: treeCorrectRejection,
 };
 
 export type TreeCorrectInput = TreeEditInput;

@@ -817,6 +817,33 @@ function classify(
 const DOCUMENT_ONLY_TYPES: ReadonlySet<RecordType> = new Set(["obituary", "probate", "newspaper_announcement"]);
 
 /**
+ * The deed rows, document mode only (genealogist ruling, 2026-10-27). The roles
+ * are read from `statedRelation` there; on the indexed path they are positional,
+ * so no row is keyed on them. Facts about the transaction are the grantor's own
+ * act; the grantee's residence and every fact beyond the transaction are not.
+ */
+function classifyLandRow(role: string, factType: string): Classification {
+  const grantor = "the grantor";
+  const identity = /^(name|sex|role)$/.test(factType);
+  if (/^witness(_\d+)?$/.test(role) && identity) {
+    return { informant: "the witnesses", informant_proximity: "witness", information_quality: "primary" };
+  }
+  const officer = "the acknowledging officer (justice of the peace or register)";
+  if ((/^(justice_of_the_peace|register|notary(_public)?|clerk)(_\d+)?$/.test(role) && identity) || /^(recorded|recording|acknowledg(ed|ment)|registered|registration)$/.test(factType)) {
+    return { informant: officer, informant_proximity: "official_duty", information_quality: "primary" };
+  }
+  const transaction = /^(conveyance|sale|purchase|transfer|grant|land[_ ]?grant|deed|release|quitclaim|mortgage|lease|land|consideration|role)$/.test(factType);
+  const ownStatement = /^(name|sex|residence|relationship|marital[_ ]status)$/.test(factType);
+  if (transaction || (/^grantor(_\d+)?$/.test(role) && ownStatement) || (!/^grantor(_\d+)?$/.test(role) && /^(name|sex)$/.test(factType))) {
+    return { informant: grantor, informant_proximity: "self", information_quality: "primary" };
+  }
+  if (!/^grantor(_\d+)?$/.test(role) && factType === "residence") {
+    return { informant: grantor, informant_proximity: "self", information_quality: "indeterminate" };
+  }
+  return { informant: grantor, informant_proximity: "family_not_present", information_quality: "secondary" };
+}
+
+/**
  * The obituary, probate and newspaper-announcement rows. All of them are the
  * genealogist's rulings (2026-09-29 and 2026-09-30); spec §11.7 holds the tables.
  * Keyed on role, fact type and, for residences, date, because "recent family
@@ -869,6 +896,8 @@ function classifyDocumentRow(
     }
     return { informant: petitioner, informant_proximity: "household_member", information_quality: "indeterminate" };
   }
+
+  if (recordType === "land") return classifyLandRow(role, factType);
 
   // newspaper_announcement
   const submitter = "the announcement's submitter (usually unnamed family)";
@@ -1135,7 +1164,7 @@ export function extractRecord(
     const role = roles.get(party.id) ?? "other_1";
     let cls =
       clsOverride ??
-      (DOCUMENT_ONLY_TYPES.has(recordType)
+      (DOCUMENT_ONLY_TYPES.has(recordType) || (recordType === "land" && mode?.landRoles)
         ? classifyDocumentRow(recordType, role, factType, extra, mode, mode?.statedRelations.get(party.id))
         : classify(
             recordType,

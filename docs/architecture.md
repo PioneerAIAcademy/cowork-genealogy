@@ -653,6 +653,13 @@ Architecturally:
   have a live spec, and the spec is what the implementation gets checked
   against. Copy `src/tools/wikipedia.ts` and its sibling four files as the
   template.
+- **Every key the handler reads is on the schema.** `server.ts` refuses any
+  argument key absent from the tool's `inputSchema.properties` before the
+  handler runs (`rejectUnknownArgs`, `src/utils/unknown-args.ts`), so a key the
+  handler reads but the schema omits is unreachable over MCP while every
+  handler-level test stays green. Advertise it, or, for a deliberate unadvertised
+  alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
+  that list). The unit harness calls handlers directly and never runs the guard.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
@@ -988,13 +995,18 @@ they have different fixes, and only one of them is a description problem.
    test with a `user_message`, no `grade_on_invariant`, and a
    `negative.correct_skill` naming the agent asserts that the utterance routes
    there, and the harness resolves an agent file as a valid target.
-   **No agent carries one today.** All 18 committed negatives that name an agent
-   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
-   routing branch, so the verdict is the tag-gated invariant validator alone and
-   the hand-off is never checked. A miss against any agent is therefore
-   unmeasured, not evidence about its description. Add the missed utterance as
-   such a negative first, and diagnose the delegation before editing any
-   description.
+   `research`'s suite hosts them (`eval/tests/unit/research/route-agent-*.json`),
+   because a message the main thread should hand straight to an agent must not
+   enter `research` first. A negative that sets `grade_on_invariant` is not one:
+   `grading_mode_for` resolves that flag *before* the routing branch, so its
+   verdict is the tag-gated invariant validator alone and the hand-off is never
+   checked. Add a missed utterance as a routing negative first, and diagnose the
+   delegation before editing any description. A miss is recorded, not edited
+   away: run new routing negatives on their own first, in a scratch run that is
+   never committed; delete any that misses and post its per-run results where
+   that agent's triggering is tracked; then commit the suite run with the rest.
+   Never mark one `xfail`, widen its `correct_skill`, or add `grade_on_invariant`
+   to make it pass.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
