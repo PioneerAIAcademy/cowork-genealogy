@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_research_028",
+    "skill": "research",
+    "name": "A request to find ancestors with data problems goes straight to the check-warnings agent, not research",
+    "type": "negative",
+    "description": "This routing negative asks for ancestors with data problems after the research assistant stopped working. The correct first hop is check-warnings because a data-problem check is not on research's bounded list. Routing mode passes only on a spawn of that agent with research never activating, so it measures the agent's description directly.",
+    "tags": [
+      "routing"
+    ]
+  },
+  "input": {
+    "user_message": "How can I get a list of ancestors that have problems. My AI Research Assistance no longer works",
+    "scenario": "empty-folder-no-project"
+  },
+  "judge_context": [
+    "This is a ROUTING negative. The harness grades it in routing mode: it passes only if the main thread spawns @plugin:check-warnings and research never activates. Do not grade the routing decision yourself; your scores are diagnostic only.",
+    "There is no project, and none should be created."
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": [
+      "check-warnings"
+    ],
+    "explanation": "Ruling 2026-10-27: for this message the main thread's correct first hop is the check-warnings agent itself, not research. A data-problem check is not on research's closed bounded list (research/SKILL.md, \"Bounded request or job\"), so research capturing this message would run it as a job. A miss is recorded, never made green by adding grade_on_invariant or widening correct_skill."
+  }
+}
