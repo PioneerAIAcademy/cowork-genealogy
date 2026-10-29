@@ -144,11 +144,13 @@ type Fit = { kept: string } | { why: string; unnamed?: true };
  * FamilySearch's own choice; and some part of the text names it, as
  * `record_read` checks a fact's own text (`textNamesPlace`), or it is the
  * one-word list's entry for the text. The engine's own lookup (`lookup`), found
- * from the text, may instead lie in the state, province or country the text
- * ends with (`endsWithItsJurisdiction`): "near Nueva Italia, Michoacán, Mexico"
- * takes "Nueva Italia de Ruiz, Múgica, Michoacan, Mexico", and "Boght Reformed,
- * Church" no "Church, Hillsdale, Michigan, United States". A failed lookup fits
- * it as written.
+ * from the text, may instead lie in the state or province the text ends with,
+ * or in its country and in a jurisdiction a part of the text names
+ * (`endsWithItsJurisdiction`): "near Nueva Italia, Michoacán, Mexico" takes
+ * "Nueva Italia de Ruiz, Múgica, Michoacan, Mexico", while "Laibach, Krain,
+ * Austria" takes no "Krainberg, Villach Land, Carinthia, Austria", nor "Boght
+ * Reformed, Church" "Church, Hillsdale, Michigan, United States". A failed
+ * lookup fits it as written.
  */
 export async function fitsText(place: string, value: string, lookup = false): Promise<Fit> {
   if (countryConsistency(place, value) === "contradiction") return { why: "it names a different country than the place" };
@@ -186,7 +188,7 @@ const KEPT_WHEN =
  *  case and accents aside, is stored with no warning: FamilySearch's from the
  *  record, or the lookup's when the text's not naming the value was the only
  *  reason to refuse it and the text confirms the lookup (`placeAnswer`) or ends
- *  with the state, province or country it lies in (`endsWithItsJurisdiction`):
+ *  with the state or province it lies in (`endsWithItsJurisdiction`):
  *  "Balto., Md." keeps "Baltimore, Maryland, United States", which the lookup
  *  gives too, and "at the home of her daughter" no "Of, Trabzon, Türkiye". */
 export async function judgeSupplied(

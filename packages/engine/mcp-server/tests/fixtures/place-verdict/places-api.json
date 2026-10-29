@@ -1,5 +1,5 @@
 {
- "_about": "FamilySearch Places API answers recorded 2026-10-29 (Accept-Language: en) for the cases in tests/utils/place-verdict-recorded.test.ts, as the fetchers in src/utils/place-api.ts return them, coordinates dropped: searchPlace by \"<name as searched>|<date>|<~ when fuzzy>\", getPlaceById by representation id, getPlaceReps by place id. The search for \"Washington, United States\" found 479 places; kept are the ones whose full name is that name, the only ones familySearchPlace reads.",
+ "_about": "FamilySearch Places API answers recorded 2026-10-29 (Accept-Language: en) for the cases in tests/utils/place-verdict-recorded.test.ts, as the fetchers in src/utils/place-api.ts return them, coordinates dropped: searchPlace by \"<name as searched>|<date>|<~ when fuzzy>\", getPlaceById by representation id, getPlaceReps by place id. The searches for \"Washington, United States\" (479 places) and \"Hamburg\" keep only the places whose full name is that name, the only ones familySearchPlace reads.",
  "search": {
   "Armagh, Armagh, County Armagh, Northern Ireland, United Kingdom||": [
    {
@@ -2170,6 +2170,2979 @@
     "type": "Township",
     "score": 68
    }
+  ],
+  "Aberdeen, Aberdeenshire, Scotland||": [
+   {
+    "placeId": "5059940",
+    "placeRepId": "10582388",
+    "name": "Aberdeen",
+    "fullName": "Aberdeen, Aberdeenshire, Scotland, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/+1891",
+    "score": 100
+   },
+   {
+    "placeId": "5059940",
+    "placeRepId": "2242482",
+    "name": "Aberdeen",
+    "fullName": "Aberdeen, Aberdeenshire, Scotland",
+    "type": "Town",
+    "dateRange": "+1179/+1801",
+    "score": 99
+   }
+  ],
+  "Aberdeen, Brown, South Dakota||": [
+   {
+    "placeId": "1171791",
+    "placeRepId": "4897767",
+    "name": "Aberdeen",
+    "fullName": "Aberdeen, Brown, South Dakota, United States",
+    "type": "City",
+    "dateRange": "+1889/",
+    "score": 100
+   },
+   {
+    "placeId": "1172675",
+    "placeRepId": "4895292",
+    "name": "Aberdeen Township",
+    "fullName": "Aberdeen Township, Brown, South Dakota, United States",
+    "type": "Township",
+    "dateRange": "+1889/",
+    "score": 97
+   },
+   {
+    "placeId": "1171791",
+    "placeRepId": "4897768",
+    "name": "Aberdeen",
+    "fullName": "Aberdeen, Brown, Dakota Territory, United States",
+    "type": "City",
+    "dateRange": "+1879/+1889",
+    "score": 85
+   },
+   {
+    "placeId": "1172675",
+    "placeRepId": "4895293",
+    "name": "Aberdeen Township",
+    "fullName": "Aberdeen Township, Brown, Dakota Territory, United States",
+    "type": "Township",
+    "dateRange": "/+1889",
+    "score": 80
+   }
+  ],
+  "Aberdeen, Brown, South Dakota, United States||": [
+   {
+    "placeId": "1171791",
+    "placeRepId": "4897767",
+    "name": "Aberdeen",
+    "fullName": "Aberdeen, Brown, South Dakota, United States",
+    "type": "City",
+    "dateRange": "+1889/",
+    "score": 100
+   },
+   {
+    "placeId": "1172675",
+    "placeRepId": "4895292",
+    "name": "Aberdeen Township",
+    "fullName": "Aberdeen Township, Brown, South Dakota, United States",
+    "type": "Township",
+    "dateRange": "+1889/",
+    "score": 100
+   },
+   {
+    "placeId": "1171791",
+    "placeRepId": "4897768",
+    "name": "Aberdeen",
+    "fullName": "Aberdeen, Brown, Dakota Territory, United States",
+    "type": "City",
+    "dateRange": "+1879/+1889",
+    "score": 90
+   },
+   {
+    "placeId": "1172675",
+    "placeRepId": "4895293",
+    "name": "Aberdeen Township",
+    "fullName": "Aberdeen Township, Brown, Dakota Territory, United States",
+    "type": "Township",
+    "dateRange": "/+1889",
+    "score": 87
+   }
+  ],
+  "Bangor, Caernarfonshire, Wales||": [
+   {
+    "placeId": "6158586",
+    "placeRepId": "10578950",
+    "name": "Bangor",
+    "fullName": "Bangor, Caernarfonshire, Wales, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "3491004",
+    "placeRepId": "10578949",
+    "name": "Bangor",
+    "fullName": "Bangor, Caernarfonshire, Wales, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/+1974",
+    "score": 100
+   },
+   {
+    "placeId": "6158586",
+    "placeRepId": "2962844",
+    "name": "Bangor",
+    "fullName": "Bangor, Caernarfonshire, Wales",
+    "type": "Parish",
+    "dateRange": "/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "3491004",
+    "placeRepId": "1647403",
+    "name": "Bangor",
+    "fullName": "Bangor, Caernarfonshire, Wales",
+    "type": "Town",
+    "dateRange": "+600/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "6256693",
+    "placeRepId": "10578951",
+    "name": "Bangor and Beaumaris",
+    "fullName": "Bangor and Beaumaris, Caernarfonshire, Wales, United Kingdom",
+    "type": "Poor Law Union",
+    "dateRange": "+1801/",
+    "score": 97
+   },
+   {
+    "placeId": "6256693",
+    "placeRepId": "3040223",
+    "name": "Bangor and Beaumaris",
+    "fullName": "Bangor and Beaumaris, Caernarfonshire, Wales",
+    "type": "Poor Law Union",
+    "dateRange": "/+1801",
+    "score": 95
+   }
+  ],
+  "Bangor, Penobscot, Maine||": [
+   {
+    "placeId": "524632",
+    "placeRepId": "4273067",
+    "name": "Bangor",
+    "fullName": "Bangor, Penobscot, Maine, United States",
+    "type": "City",
+    "dateRange": "+1820/",
+    "score": 100
+   }
+  ],
+  "Bangor, Penobscot, Maine, United States||": [
+   {
+    "placeId": "524632",
+    "placeRepId": "4273067",
+    "name": "Bangor",
+    "fullName": "Bangor, Penobscot, Maine, United States",
+    "type": "City",
+    "dateRange": "+1820/",
+    "score": 100
+   }
+  ],
+  "Bezirk Lemberg, Galicia||": [
+   {
+    "placeId": "6396555",
+    "placeRepId": "3460721",
+    "name": "Bezirk Lemberg",
+    "fullName": "Bezirk Lemberg, Galicia",
+    "type": "District",
+    "dateRange": "+1772/+1918",
+    "score": 100
+   }
+  ],
+  "Boston, Lincolnshire, England||": [
+   {
+    "placeId": "6256058",
+    "placeRepId": "3041337",
+    "name": "Boston",
+    "fullName": "Boston, Lincolnshire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/",
+    "score": 100
+   },
+   {
+    "placeId": "6139646",
+    "placeRepId": "2971374",
+    "name": "Boston",
+    "fullName": "Boston, Lincolnshire, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6256947",
+    "placeRepId": "3040503",
+    "name": "Boston",
+    "fullName": "Boston, Lincolnshire, England, United Kingdom",
+    "type": "Poor Law Union",
+    "dateRange": "+1834/+1930",
+    "score": 100
+   },
+   {
+    "placeId": "6139646",
+    "placeRepId": "10602215",
+    "name": "Boston",
+    "fullName": "Boston, Lincolnshire, England",
+    "type": "Town",
+    "dateRange": "+1200/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "1955218",
+    "placeRepId": "1111",
+    "name": "Parts of Holland",
+    "fullName": "Parts of Holland, Lincolnshire, England, United Kingdom",
+    "type": "Division",
+    "dateRange": "+1888/+1974",
+    "score": 84
+   }
+  ],
+  "Boston, Suffolk, Massachusetts||": [
+   {
+    "placeId": "561096",
+    "placeRepId": "4229284",
+    "name": "Boston",
+    "fullName": "Boston, Suffolk, Massachusetts, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   },
+   {
+    "placeId": "561096",
+    "placeRepId": "4229283",
+    "name": "Boston",
+    "fullName": "Boston, Suffolk, Massachusetts Bay Colony, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1643/+1776",
+    "score": 95
+   }
+  ],
+  "Boston, Suffolk, Massachusetts, United States||": [
+   {
+    "placeId": "561096",
+    "placeRepId": "4229284",
+    "name": "Boston",
+    "fullName": "Boston, Suffolk, Massachusetts, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "Brünn, Mähren, Austria||": [
+   {
+    "placeId": "1941345",
+    "placeRepId": "12038005",
+    "name": "Brünn",
+    "fullName": "Brünn, Moravia",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "1941346",
+    "placeRepId": "11082705",
+    "name": "Brünn",
+    "fullName": "Brünn, Moravia",
+    "type": "City",
+    "dateRange": "/+1918",
+    "score": 99
+   },
+   {
+    "placeId": "1941346",
+    "placeRepId": "444880",
+    "name": "Brno",
+    "fullName": "Brno, Moravia, Czechoslovakia",
+    "type": "City",
+    "dateRange": "+1918/+1949",
+    "score": 82
+   },
+   {
+    "placeId": "3799409",
+    "placeRepId": "6747360",
+    "name": "Brunn",
+    "fullName": "Brunn, Waidhofen an der Thaya, Lower Austria, Austria",
+    "type": "Populated Place",
+    "score": 75
+   },
+   {
+    "placeId": "3799410",
+    "placeRepId": "6747359",
+    "name": "Brunn",
+    "fullName": "Brunn, Waidhofen an der Thaya, Lower Austria, Austria",
+    "type": "Populated Place",
+    "score": 75
+   },
+   {
+    "placeId": "3799411",
+    "placeRepId": "6747358",
+    "name": "Brunn",
+    "fullName": "Brunn, St. Pölten Land, Lower Austria, Austria",
+    "type": "Populated Place",
+    "score": 75
+   },
+   {
+    "placeId": "3799412",
+    "placeRepId": "6747357",
+    "name": "Brunn",
+    "fullName": "Brunn, Kirchdorf, Upper Austria, Austria",
+    "type": "Populated Place",
+    "score": 75
+   },
+   {
+    "placeId": "3799413",
+    "placeRepId": "6747356",
+    "name": "Brunn",
+    "fullName": "Brunn, Leoben, Styria, Austria",
+    "type": "Populated Place",
+    "score": 75
+   },
+   {
+    "placeId": "3799402",
+    "placeRepId": "6747350",
+    "name": "Brunn",
+    "fullName": "Brunn, Neunkirchen, Lower Austria, Austria",
+    "type": "Populated Place",
+    "score": 75
+   },
+   {
+    "placeId": "3799407",
+    "placeRepId": "6747347",
+    "name": "Brunn",
+    "fullName": "Brunn, Krems, Lower Austria, Austria",
+    "type": "Municipality",
+    "score": 75
+   },
+   {
+    "placeId": "3799406",
+    "placeRepId": "6747346",
+    "name": "Brunn",
+    "fullName": "Brunn, Melk, Lower Austria, Austria",
+    "type": "Municipality",
+    "score": 75
+   },
+   {
+    "placeId": "3799396",
+    "placeRepId": "6747340",
+    "name": "Brunn",
+    "fullName": "Brunn, Krems, Lower Austria, Austria",
+    "type": "Municipality",
+    "score": 75
+   },
+   {
+    "placeId": "2180313",
+    "placeRepId": "6176873",
+    "name": "Brunn",
+    "fullName": "Brunn, Zwettl, Lower Austria, Austria",
+    "type": "Municipality",
+    "score": 75
+   },
+   {
+    "placeId": "2180314",
+    "placeRepId": "6176872",
+    "name": "Brunn",
+    "fullName": "Brunn, Neunkirchen, Lower Austria, Austria",
+    "type": "Farm",
+    "score": 75
+   },
+   {
+    "placeId": "2180315",
+    "placeRepId": "6176871",
+    "name": "Brunn",
+    "fullName": "Brunn, Hermagor, Carinthia, Austria",
+    "type": "Farm",
+    "score": 75
+   },
+   {
+    "placeId": "1958433",
+    "placeRepId": "5944826",
+    "name": "Brunn",
+    "fullName": "Brunn, Salzburg Umgebung, Salzburg, Austria",
+    "type": "Division",
+    "score": 75
+   },
+   {
+    "placeId": "3799414",
+    "placeRepId": "6747355",
+    "name": "Brunn",
+    "fullName": "Brunn, Feldbach, Styria, Austria",
+    "type": "Hamlet",
+    "dateRange": "/+2012",
+    "score": 75
+   },
+   {
+    "placeId": "6354079",
+    "placeRepId": "8091414",
+    "name": "Pölfing-Brunn",
+    "fullName": "Pölfing-Brunn, Deutschlandsberg, Styria, Austria",
+    "type": "Municipality",
+    "dateRange": "+1322/",
+    "score": 73
+   },
+   {
+    "placeId": "6352928",
+    "placeRepId": "8090470",
+    "name": "Brunn an der Wild",
+    "fullName": "Brunn an der Wild, Horn, Lower Austria, Austria",
+    "type": "Municipality",
+    "dateRange": "+1250/",
+    "score": 73
+   },
+   {
+    "placeId": "6352927",
+    "placeRepId": "8090458",
+    "name": "Brunn am Gebirge",
+    "fullName": "Brunn am Gebirge, Mödling, Lower Austria, Austria",
+    "type": "Municipality",
+    "dateRange": "+1168/",
+    "score": 73
+   },
+   {
+    "placeId": "3799405",
+    "placeRepId": "6747349",
+    "name": "Brunn am Steinfelde",
+    "fullName": "Brunn am Steinfelde, Wiener Neustadt-Land, Lower Austria, Austria",
+    "type": "Municipality",
+    "score": 73
+   },
+   {
+    "placeId": "1941345",
+    "placeRepId": "444890",
+    "name": "Brno-Venkov",
+    "fullName": "Brno-Venkov, Czechoslovakia",
+    "type": "District",
+    "dateRange": "+1918/+1992",
+    "score": 69
+   },
+   {
+    "placeId": "5198338",
+    "placeRepId": "262045",
+    "name": "Moravia",
+    "fullName": "Moravia",
+    "type": "Principality or Emirate",
+    "dateRange": "+1004/+1918",
+    "score": 63
+   }
+  ],
+  "Brünn, Moravia||": [
+   {
+    "placeId": "1941345",
+    "placeRepId": "12038005",
+    "name": "Brünn",
+    "fullName": "Brünn, Moravia",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "1941346",
+    "placeRepId": "444880",
+    "name": "Brno",
+    "fullName": "Brno, Moravia, Czechoslovakia",
+    "type": "City",
+    "dateRange": "+1918/+1949",
+    "score": 100
+   },
+   {
+    "placeId": "1941346",
+    "placeRepId": "11082705",
+    "name": "Brünn",
+    "fullName": "Brünn, Moravia",
+    "type": "City",
+    "dateRange": "/+1918",
+    "score": 98
+   },
+   {
+    "placeId": "1941345",
+    "placeRepId": "444890",
+    "name": "Brno-Venkov",
+    "fullName": "Brno-Venkov, Czechoslovakia",
+    "type": "District",
+    "dateRange": "+1918/+1992",
+    "score": 84
+   }
+  ],
+  "Bratislava, Slovakia||": [
+   {
+    "placeId": "1939504",
+    "placeRepId": "444160",
+    "name": "Bratislava",
+    "fullName": "Bratislava, Slovakia",
+    "type": "City",
+    "dateRange": "+1993/",
+    "score": 100
+   },
+   {
+    "placeId": "6253027",
+    "placeRepId": "12621054",
+    "name": "Bratislavský",
+    "fullName": "Bratislavský, Slovakia",
+    "type": "Region",
+    "dateRange": "+1996/",
+    "score": 94
+   },
+   {
+    "placeId": "6330042",
+    "placeRepId": "3453705",
+    "name": "Bratislava III",
+    "fullName": "Bratislava III, Bratislava, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330043",
+    "placeRepId": "3453704",
+    "name": "Bratislava IV",
+    "fullName": "Bratislava IV, Bratislava, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330040",
+    "placeRepId": "3453703",
+    "name": "Bratislava I",
+    "fullName": "Bratislava I, Bratislava, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330041",
+    "placeRepId": "3453702",
+    "name": "Bratislava II",
+    "fullName": "Bratislava II, Bratislava, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330044",
+    "placeRepId": "3453697",
+    "name": "Bratislava V",
+    "fullName": "Bratislava V, Bratislava, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   }
+  ],
+  "Brno, Czechia||": [
+   {
+    "placeId": "1941346",
+    "placeRepId": "444882",
+    "name": "Brno",
+    "fullName": "Brno, Czechia",
+    "type": "Independent City",
+    "dateRange": "+1993/",
+    "score": 100
+   },
+   {
+    "placeId": "1941345",
+    "placeRepId": "444892",
+    "name": "Brno-Venkov",
+    "fullName": "Brno-Venkov, Czechia",
+    "type": "District",
+    "dateRange": "+1993/",
+    "score": 94
+   },
+   {
+    "placeId": "1930929",
+    "placeRepId": "4884",
+    "name": "South Moravia",
+    "fullName": "South Moravia, Czechia",
+    "type": "Region",
+    "dateRange": "+1993/",
+    "score": 94
+   },
+   {
+    "placeId": "6548834",
+    "placeRepId": "388385",
+    "name": "Brno Diocese",
+    "fullName": "Brno Diocese, Czechia",
+    "type": "Diocese",
+    "dateRange": "+1777/",
+    "score": 88
+   }
+  ],
+  "Chernivtsi, Chernivtsi, Ukraine||": [
+   {
+    "placeId": "10246109",
+    "placeRepId": "11792531",
+    "name": "Chernivtsi District",
+    "fullName": "Chernivtsi District, Chernivtsi, Ukraine",
+    "type": "District",
+    "dateRange": "+2020/",
+    "score": 100
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "7344554",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Chernivtsi, Ukraine",
+    "type": "Independent City",
+    "dateRange": "+1991/+2020",
+    "score": 99
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "11792536",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Chernivtsi District, Chernivtsi, Ukraine",
+    "type": "City",
+    "dateRange": "+2020/",
+    "score": 96
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "9175738",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Chernivtsi, Ukraine, Soviet Union",
+    "type": "Independent City",
+    "dateRange": "+1944/+1991",
+    "score": 96
+   },
+   {
+    "placeId": "4221185",
+    "placeRepId": "7098324",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Chernivtsi, Vinnytsia, Ukraine",
+    "type": "Town",
+    "dateRange": "+1991/+2020",
+    "score": 95
+   },
+   {
+    "placeId": "4221185",
+    "placeRepId": "9132652",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Chernivtsi, Vinnytsia, Ukraine, Soviet Union",
+    "type": "Town",
+    "dateRange": "+1932/+1991",
+    "score": 91
+   }
+  ],
+  "Cluj-Napoca, Cluj, Romania||": [
+   {
+    "placeId": "5060714",
+    "placeRepId": "2241610",
+    "name": "Cluj-Napoca",
+    "fullName": "Cluj-Napoca, Cluj, Romania",
+    "type": "Town",
+    "dateRange": "+1974/",
+    "score": 100
+   },
+   {
+    "placeId": "5060714",
+    "placeRepId": "2241609",
+    "name": "Cluj",
+    "fullName": "Cluj, Cluj, Romania",
+    "type": "Town",
+    "dateRange": "/+1974",
+    "score": 95
+   }
+  ],
+  "Czernowitz District, Bukovina||": [
+   {
+    "placeId": "10246109",
+    "placeRepId": "12645552",
+    "name": "Czernowitz District",
+    "fullName": "Czernowitz District, Bukovina",
+    "type": "District",
+    "dateRange": "+1775/+1918",
+    "score": 98
+   },
+   {
+    "placeId": "6531647",
+    "placeRepId": "388401",
+    "name": "Cernăuţi",
+    "fullName": "Cernăuţi, Bukovina, Romania",
+    "type": "District",
+    "dateRange": "+1918/+1944",
+    "score": 89
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "2241770",
+    "name": "Cernăuţi",
+    "fullName": "Cernăuţi, Cernăuţi, Bukovina, Romania",
+    "type": "City",
+    "dateRange": "+1918/+1944",
+    "score": 86
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "2241771",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Czernowitz District, Bukovina",
+    "type": "City",
+    "dateRange": "+1774/+1918",
+    "score": 82
+   }
+  ],
+  "Czernowitz, Bukowina, Austria||": [
+   {
+    "placeId": "10246109",
+    "placeRepId": "12645552",
+    "name": "Czernowitz District",
+    "fullName": "Czernowitz District, Bukovina",
+    "type": "District",
+    "dateRange": "+1775/+1918",
+    "score": 96
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "2241771",
+    "name": "Chernivtsi",
+    "fullName": "Chernivtsi, Czernowitz District, Bukovina",
+    "type": "City",
+    "dateRange": "+1774/+1918",
+    "score": 90
+   },
+   {
+    "placeId": "5060773",
+    "placeRepId": "2241770",
+    "name": "Cernăuţi",
+    "fullName": "Cernăuţi, Cernăuţi, Bukovina, Romania",
+    "type": "City",
+    "dateRange": "+1918/+1944",
+    "score": 77
+   },
+   {
+    "placeId": "6531647",
+    "placeRepId": "388401",
+    "name": "Cernăuţi",
+    "fullName": "Cernăuţi, Bukovina, Romania",
+    "type": "District",
+    "dateRange": "+1918/+1944",
+    "score": 74
+   },
+   {
+    "placeId": "5198055",
+    "placeRepId": "262427",
+    "name": "Bukovina",
+    "fullName": "Bukovina",
+    "type": "Duchy",
+    "dateRange": "+1849/+1918",
+    "score": 63
+   }
+  ],
+  "Dover, Kent, Delaware||": [
+   {
+    "placeId": "183159",
+    "placeRepId": "3800859",
+    "name": "Dover",
+    "fullName": "Dover, Kent, Delaware, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "Dover, Kent, Delaware, United States||": [
+   {
+    "placeId": "183159",
+    "placeRepId": "3800859",
+    "name": "Dover",
+    "fullName": "Dover, Kent, Delaware, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "Dover, Kent, England||": [
+   {
+    "placeId": "3487953",
+    "placeRepId": "1610518",
+    "name": "Dover",
+    "fullName": "Dover, Kent, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "3487953",
+    "placeRepId": "10615705",
+    "name": "Dover",
+    "fullName": "Dover, Kent, England",
+    "type": "Town",
+    "dateRange": "+1067/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "6255992",
+    "placeRepId": "3041262",
+    "name": "Dover",
+    "fullName": "Dover, Kent, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/",
+    "score": 94
+   },
+   {
+    "placeId": "6256886",
+    "placeRepId": "3040047",
+    "name": "Dover",
+    "fullName": "Dover, Kent, England, United Kingdom",
+    "type": "Poor Law Union",
+    "dateRange": "+1834/+1930",
+    "score": 94
+   },
+   {
+    "placeId": "6140046",
+    "placeRepId": "2974283",
+    "name": "Dover St James the Apostle",
+    "fullName": "Dover St James the Apostle, Kent, England, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/",
+    "score": 88
+   },
+   {
+    "placeId": "6140045",
+    "placeRepId": "2974280",
+    "name": "Dover St Mary the Virgin",
+    "fullName": "Dover St Mary the Virgin, Kent, England, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/",
+    "score": 88
+   },
+   {
+    "placeId": "6140045",
+    "placeRepId": "10615708",
+    "name": "Dover St Mary the Virgin",
+    "fullName": "Dover St Mary the Virgin, Kent, England",
+    "type": "Parish",
+    "dateRange": "/+1801",
+    "score": 86
+   },
+   {
+    "placeId": "6140046",
+    "placeRepId": "10615707",
+    "name": "Dover St James the Apostle",
+    "fullName": "Dover St James the Apostle, Kent, England",
+    "type": "Parish",
+    "dateRange": "/+1801",
+    "score": 86
+   }
+  ],
+  "Fort Smith, Fort Smith, Northwest Territories, Canada||": [
+   {
+    "placeId": "4426685",
+    "placeRepId": "7211953",
+    "name": "Fort Smith",
+    "fullName": "Fort Smith, Fort Smith, Northwest Territories, Canada",
+    "type": "Town",
+    "dateRange": "+1874/",
+    "score": 100
+   }
+  ],
+  "Fort Smith, Sebastian, Arkansas||": [
+   {
+    "placeId": "72591",
+    "placeRepId": "3617132",
+    "name": "Fort Smith",
+    "fullName": "Fort Smith, Sebastian, Arkansas, United States",
+    "type": "City",
+    "dateRange": "+1851/",
+    "score": 100
+   }
+  ],
+  "Fort Smith, Sebastian, Arkansas, United States||": [
+   {
+    "placeId": "72591",
+    "placeRepId": "3617132",
+    "name": "Fort Smith",
+    "fullName": "Fort Smith, Sebastian, Arkansas, United States",
+    "type": "City",
+    "dateRange": "+1851/",
+    "score": 100
+   }
+  ],
+  "Hamburg||": [
+   {
+    "placeId": "1928661",
+    "placeRepId": "10907849",
+    "name": "Hamburg",
+    "fullName": "Hamburg",
+    "type": "Independent City",
+    "dateRange": "+1189/+1871",
+    "score": 86
+   }
+  ],
+  "Hamburg, Erie, New York||": [
+   {
+    "placeId": "904996",
+    "placeRepId": "4608366",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Erie, New York, United States",
+    "type": "Town",
+    "dateRange": "+1821/",
+    "score": 100
+   },
+   {
+    "placeId": "878567",
+    "placeRepId": "4661958",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Hamburg, Erie, New York, United States",
+    "type": "Village",
+    "score": 95
+   }
+  ],
+  "Hamburg, Erie, New York, United States||": [
+   {
+    "placeId": "904996",
+    "placeRepId": "4608366",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Erie, New York, United States",
+    "type": "Town",
+    "dateRange": "+1821/",
+    "score": 100
+   },
+   {
+    "placeId": "878567",
+    "placeRepId": "4661958",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Hamburg, Erie, New York, United States",
+    "type": "Village",
+    "score": 96
+   }
+  ],
+  "Hay River, Dunn, Wisconsin||": [
+   {
+    "placeId": "1473395",
+    "placeRepId": "5523544",
+    "name": "Hay River",
+    "fullName": "Hay River, Dunn, Wisconsin, United States",
+    "type": "Town",
+    "score": 97
+   }
+  ],
+  "Hay River, Dunn, Wisconsin, United States||": [
+   {
+    "placeId": "1473395",
+    "placeRepId": "5523544",
+    "name": "Hay River",
+    "fullName": "Hay River, Dunn, Wisconsin, United States",
+    "type": "Town",
+    "score": 100
+   }
+  ],
+  "Hay River, Fort Smith, Northwest Territories, Canada||": [
+   {
+    "placeId": "4426358",
+    "placeRepId": "7212529",
+    "name": "Hay River",
+    "fullName": "Hay River, Fort Smith, Northwest Territories, Canada",
+    "type": "Town",
+    "dateRange": "+1868/",
+    "score": 100
+   }
+  ],
+  "Helsingfors, Nyland, Russia||": [
+   {
+    "placeId": "1949157",
+    "placeRepId": "436367",
+    "name": "Helsinki",
+    "fullName": "Helsinki, Uusimaa, Finland",
+    "type": "Major City",
+    "dateRange": "+1550/",
+    "score": 100
+   },
+   {
+    "placeId": "1962619",
+    "placeRepId": "897",
+    "name": "Uusimaa",
+    "fullName": "Uusimaa, Finland",
+    "type": "Province",
+    "dateRange": "+1831/+1997",
+    "score": 70
+   }
+  ],
+  "Helsinki, Uusimaa, Finland||": [
+   {
+    "placeId": "1949157",
+    "placeRepId": "436367",
+    "name": "Helsinki",
+    "fullName": "Helsinki, Uusimaa, Finland",
+    "type": "Major City",
+    "dateRange": "+1550/",
+    "score": 100
+   }
+  ],
+  "Kaschau, Abaúj-Torna, Hungary||": [
+   {
+    "placeId": "5060825",
+    "placeRepId": "2241756",
+    "name": "Kassa",
+    "fullName": "Kassa, Abaúj-Torna, Hungary",
+    "type": "City",
+    "dateRange": "+1881/+1920",
+    "score": 94
+   },
+   {
+    "placeId": "6416422",
+    "placeRepId": "3459567",
+    "name": "Torna",
+    "fullName": "Torna, Abaúj-Torna, Hungary",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 80
+   },
+   {
+    "placeId": "6439732",
+    "placeRepId": "3408179",
+    "name": "Torna",
+    "fullName": "Torna, Abaúj-Torna, Hungary",
+    "type": "Municipality",
+    "dateRange": "/+1918",
+    "score": 80
+   },
+   {
+    "placeId": "5060825",
+    "placeRepId": "2241755",
+    "name": "Kassa",
+    "fullName": "Kassa, Abaúj, Hungary",
+    "type": "City",
+    "dateRange": "+1230/+1881",
+    "score": 79
+   },
+   {
+    "placeId": "9479501",
+    "placeRepId": "10909314",
+    "name": "Torna",
+    "fullName": "Torna, Hungary",
+    "type": "County (Top level)",
+    "dateRange": "+1200/+1881",
+    "score": 66
+   },
+   {
+    "placeId": "6253038",
+    "placeRepId": "351953",
+    "name": "Abaúj-Torna",
+    "fullName": "Abaúj-Torna, Hungary",
+    "type": "County (Top level)",
+    "dateRange": "+1881/+1950",
+    "score": 65
+   }
+  ],
+  "Kassa, Abaúj-Torna, Hungary||": [
+   {
+    "placeId": "5060825",
+    "placeRepId": "2241756",
+    "name": "Kassa",
+    "fullName": "Kassa, Abaúj-Torna, Hungary",
+    "type": "City",
+    "dateRange": "+1881/+1920",
+    "score": 94
+   },
+   {
+    "placeId": "10499051",
+    "placeRepId": "12242107",
+    "name": "Kassa",
+    "fullName": "Kassa, Torna, Hungary",
+    "type": "City",
+    "score": 94
+   },
+   {
+    "placeId": "6416196",
+    "placeRepId": "3459900",
+    "name": "Kassai járás",
+    "fullName": "Kassai járás, Abaúj-Torna, Hungary",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 89
+   },
+   {
+    "placeId": "6416422",
+    "placeRepId": "3459567",
+    "name": "Torna",
+    "fullName": "Torna, Abaúj-Torna, Hungary",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 80
+   },
+   {
+    "placeId": "6439732",
+    "placeRepId": "3408179",
+    "name": "Torna",
+    "fullName": "Torna, Abaúj-Torna, Hungary",
+    "type": "Municipality",
+    "dateRange": "/+1918",
+    "score": 80
+   },
+   {
+    "placeId": "5060825",
+    "placeRepId": "2241755",
+    "name": "Kassa",
+    "fullName": "Kassa, Abaúj, Hungary",
+    "type": "City",
+    "dateRange": "+1230/+1881",
+    "score": 79
+   },
+   {
+    "placeId": "9479501",
+    "placeRepId": "10909314",
+    "name": "Torna",
+    "fullName": "Torna, Hungary",
+    "type": "County (Top level)",
+    "dateRange": "+1200/+1881",
+    "score": 66
+   },
+   {
+    "placeId": "6253038",
+    "placeRepId": "351953",
+    "name": "Abaúj-Torna",
+    "fullName": "Abaúj-Torna, Hungary",
+    "type": "County (Top level)",
+    "dateRange": "+1881/+1950",
+    "score": 65
+   }
+  ],
+  "Kaunas, Kaunas, Lithuania||": [
+   {
+    "placeId": "1932739",
+    "placeRepId": "10954584",
+    "name": "Kaunas",
+    "fullName": "Kaunas, Kaunas, Lithuania",
+    "type": "Independent City",
+    "dateRange": "+1918/",
+    "score": 100
+   },
+   {
+    "placeId": "1932738",
+    "placeRepId": "447512",
+    "name": "Kaunas District",
+    "fullName": "Kaunas District, Kaunas, Lithuania",
+    "type": "Municipality",
+    "dateRange": "+1990/",
+    "score": 100
+   },
+   {
+    "placeId": "1932739",
+    "placeRepId": "5954835",
+    "name": "Kaunas",
+    "fullName": "Kaunas, Kaunas, Lithuania, Soviet Union",
+    "type": "Independent City",
+    "dateRange": "+1940/+1950",
+    "score": 96
+   },
+   {
+    "placeId": "1932739",
+    "placeRepId": "12087400",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Vilna, Russian Empire",
+    "type": "City",
+    "dateRange": "+1795/+1842",
+    "score": 81
+   }
+  ],
+  "Kiev, Kiev Uyezd, Kiev Viceroyalty, Russian Empire||": [
+   {
+    "placeId": "1929439",
+    "placeRepId": "12879346",
+    "name": "Kiev",
+    "fullName": "Kiev, Kiev Uyezd, Kiev Viceroyalty, Russian Empire",
+    "type": "City",
+    "dateRange": "+1781/+1796",
+    "score": 100
+   },
+   {
+    "placeId": "1929439",
+    "placeRepId": "11853155",
+    "name": "Kiev",
+    "fullName": "Kiev, Kiev, Kiev Governorate, Russian Empire",
+    "type": "City",
+    "dateRange": "+1796/+1922",
+    "score": 98
+   }
+  ],
+  "Kiev, Kiev, Russia||": [
+   {
+    "placeId": "1929439",
+    "placeRepId": "12879346",
+    "name": "Kiev",
+    "fullName": "Kiev, Kiev Uyezd, Kiev Viceroyalty, Russian Empire",
+    "type": "City",
+    "dateRange": "+1781/+1796",
+    "score": 95
+   },
+   {
+    "placeId": "1929439",
+    "placeRepId": "11692585",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Kiev Governorate, Russian Empire",
+    "type": "City",
+    "dateRange": "+1701/+1781",
+    "score": 93
+   },
+   {
+    "placeId": "1929439",
+    "placeRepId": "11853155",
+    "name": "Kiev",
+    "fullName": "Kiev, Kiev, Kiev Governorate, Russian Empire",
+    "type": "City",
+    "dateRange": "+1796/+1922",
+    "score": 93
+   },
+   {
+    "placeId": "9592652",
+    "placeRepId": "11083374",
+    "name": "Kiev",
+    "fullName": "Kiev, Kiev Governorate, Russian Empire",
+    "type": "County",
+    "dateRange": "+1796/+1922",
+    "score": 93
+   },
+   {
+    "placeId": "9592652",
+    "placeRepId": "12046372",
+    "name": "Kiev Uyezd",
+    "fullName": "Kiev Uyezd, Kiev Viceroyalty, Russian Empire",
+    "type": "County",
+    "dateRange": "+1781/+1796",
+    "score": 88
+   }
+  ],
+  "Klaipeda, Klaipėda, Lithuania||": [
+   {
+    "placeId": "5059720",
+    "placeRepId": "2242662",
+    "name": "Klaipeda",
+    "fullName": "Klaipeda, Klaipėda, Lithuania",
+    "type": "Independent City",
+    "dateRange": "+1990/",
+    "score": 100
+   },
+   {
+    "placeId": "1932734",
+    "placeRepId": "447547",
+    "name": "Klaipėda District",
+    "fullName": "Klaipėda District, Klaipėda, Lithuania",
+    "type": "Municipality",
+    "dateRange": "+1990/",
+    "score": 100
+   }
+  ],
+  "Košice, Slovakia||": [
+   {
+    "placeId": "1949699",
+    "placeRepId": "426137",
+    "name": "Košice-okolie",
+    "fullName": "Košice-okolie, Slovakia",
+    "type": "District",
+    "dateRange": "+1993/",
+    "score": 100
+   },
+   {
+    "placeId": "5060825",
+    "placeRepId": "7344520",
+    "name": "Košice",
+    "fullName": "Košice, Slovakia",
+    "type": "City",
+    "dateRange": "+1993/",
+    "score": 96
+   },
+   {
+    "placeId": "1931136",
+    "placeRepId": "5086",
+    "name": "Košice",
+    "fullName": "Košice, Slovakia",
+    "type": "Region",
+    "dateRange": "+1996/",
+    "score": 96
+   },
+   {
+    "placeId": "1949700",
+    "placeRepId": "426147",
+    "name": "Košice-Mesto",
+    "fullName": "Košice-Mesto, Slovakia",
+    "type": "District",
+    "dateRange": "+1993/",
+    "score": 89
+   },
+   {
+    "placeId": "1939468",
+    "placeRepId": "1967",
+    "name": "East Slovakia",
+    "fullName": "East Slovakia, Czechoslovakia",
+    "type": "Region",
+    "dateRange": "+1960/+1993",
+    "score": 86
+   },
+   {
+    "placeId": "6330052",
+    "placeRepId": "3453748",
+    "name": "Košice IV",
+    "fullName": "Košice IV, Košice, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330049",
+    "placeRepId": "3453742",
+    "name": "Košice I",
+    "fullName": "Košice I, Košice, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330051",
+    "placeRepId": "3453739",
+    "name": "Košice III",
+    "fullName": "Košice III, Košice, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "6330050",
+    "placeRepId": "3453738",
+    "name": "Košice II",
+    "fullName": "Košice II, Košice, Slovakia",
+    "type": "Borough",
+    "dateRange": "+1993/",
+    "score": 85
+   },
+   {
+    "placeId": "10964879",
+    "placeRepId": "13087301",
+    "name": "Košice",
+    "fullName": "Košice, Michal nad Žitavou, Nové Zámky, Slovakia",
+    "type": "Hamlet",
+    "score": 82
+   }
+  ],
+  "Kolozsvár, Kolozs, Hungary||": [
+   {
+    "placeId": "6416213",
+    "placeRepId": "3459917",
+    "name": "Kolozsvár",
+    "fullName": "Kolozsvár, Kolozs, Hungary",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "6449140",
+    "placeRepId": "3399033",
+    "name": "Kolozsvár",
+    "fullName": "Kolozsvár, Kolozs, Hungary",
+    "type": "City",
+    "dateRange": "/+1918",
+    "score": 100
+   }
+  ],
+  "Kovno, Kovno, Russia||": [
+   {
+    "placeId": "9505220",
+    "placeRepId": "10954577",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Russian Empire",
+    "type": "County",
+    "dateRange": "+1842/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "1932739",
+    "placeRepId": "10954581",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Kovno, Russian Empire",
+    "type": "City",
+    "dateRange": "+1842/+1918",
+    "score": 94
+   },
+   {
+    "placeId": "1932739",
+    "placeRepId": "12087400",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Vilna, Russian Empire",
+    "type": "City",
+    "dateRange": "+1795/+1842",
+    "score": 90
+   },
+   {
+    "placeId": "5197775",
+    "placeRepId": "260503",
+    "name": "Prussia",
+    "fullName": "Prussia, Germany",
+    "type": "State",
+    "dateRange": "+1871/+1947",
+    "score": 86
+   }
+  ],
+  "Kovno, Kovno, Russian Empire||": [
+   {
+    "placeId": "9505220",
+    "placeRepId": "10954577",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Russian Empire",
+    "type": "County",
+    "dateRange": "+1842/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "1932739",
+    "placeRepId": "10954581",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Kovno, Russian Empire",
+    "type": "City",
+    "dateRange": "+1842/+1918",
+    "score": 94
+   },
+   {
+    "placeId": "1932739",
+    "placeRepId": "12087400",
+    "name": "Kovno",
+    "fullName": "Kovno, Kovno, Vilna, Russian Empire",
+    "type": "City",
+    "dateRange": "+1795/+1842",
+    "score": 90
+   },
+   {
+    "placeId": "5197775",
+    "placeRepId": "260503",
+    "name": "Prussia",
+    "fullName": "Prussia, Germany",
+    "type": "State",
+    "dateRange": "+1871/+1947",
+    "score": 86
+   }
+  ],
+  "Krainberg, Villach Land, Carinthia, Austria||": [
+   {
+    "placeId": "3795441",
+    "placeRepId": "6743339",
+    "name": "Krainberg",
+    "fullName": "Krainberg, Villach Land, Carinthia, Austria",
+    "type": "Town",
+    "score": 100
+   }
+  ],
+  "Kutaisi, Imereti, Georgia||": [
+   {
+    "placeId": "3604224",
+    "placeRepId": "152082",
+    "name": "Kutaisi",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930570",
+    "placeRepId": "4419",
+    "name": "Kutaisi",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930570",
+    "placeRepId": "449282",
+    "name": "Kutaisi",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia, Soviet Union",
+    "type": "City",
+    "dateRange": "/+1991",
+    "score": 95
+   }
+  ],
+  "Kutaisi, Imereti, Republic of Georgia||": [
+   {
+    "placeId": "3604224",
+    "placeRepId": "152082",
+    "name": "Kutaisi",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930570",
+    "placeRepId": "4419",
+    "name": "Kutaisi",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930570",
+    "placeRepId": "449282",
+    "name": "Kutaisi",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia, Soviet Union",
+    "type": "City",
+    "dateRange": "/+1991",
+    "score": 93
+   }
+  ],
+  "Kyiv, Ukraine||": [
+   {
+    "placeId": "1929439",
+    "placeRepId": "5345",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Ukraine",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1929438",
+    "placeRepId": "5344",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Ukraine",
+    "type": "Region",
+    "dateRange": "+1991/",
+    "score": 96
+   },
+   {
+    "placeId": "1929439",
+    "placeRepId": "12043673",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Ukraine, Soviet Union",
+    "type": "City",
+    "dateRange": "+1922/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "10561463",
+    "placeRepId": "12328754",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Ukraine, Soviet Union",
+    "type": "County",
+    "dateRange": "+1923/+1930",
+    "score": 93
+   },
+   {
+    "placeId": "1929438",
+    "placeRepId": "449790",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Ukraine, Soviet Union",
+    "type": "Region",
+    "dateRange": "+1923/+1991",
+    "score": 89
+   },
+   {
+    "placeId": "10364559",
+    "placeRepId": "11989567",
+    "name": "Kyiv",
+    "fullName": "Kyiv, Voznesensk, Mykolaiv, Ukraine",
+    "type": "Village",
+    "dateRange": "+2020/",
+    "score": 84
+   },
+   {
+    "placeId": "1929438",
+    "placeRepId": "13564868",
+    "name": "Kiev",
+    "fullName": "Kiev, Ukraine, Soviet Union",
+    "type": "Governorate",
+    "dateRange": "+1917/+1925",
+    "score": 84
+   },
+   {
+    "placeId": "9592652",
+    "placeRepId": "11971487",
+    "name": "Kiev Uyezd",
+    "fullName": "Kiev Uyezd, Kyiv, Ukraine, Soviet Union",
+    "type": "County",
+    "dateRange": "+1923/+1925",
+    "score": 79
+   },
+   {
+    "placeId": "6257844",
+    "placeRepId": "9328264",
+    "name": "Kyiv Ukraine Temple",
+    "fullName": "Kyiv Ukraine Temple, Kyiv, Ukraine",
+    "type": "Temple of The Church of Jesus Christ of Latter-day Saints",
+    "dateRange": "+2010/",
+    "score": 76
+   },
+   {
+    "placeId": "10364559",
+    "placeRepId": "12061541",
+    "name": "Chervonyy Kyiv",
+    "fullName": "Chervonyy Kyiv, Domanivka, Mykolaiv, Ukraine",
+    "type": "Village",
+    "dateRange": "+1991/+2020",
+    "score": 76
+   },
+   {
+    "placeId": "10364559",
+    "placeRepId": "13990678",
+    "name": "Chervonyy Kyiv",
+    "fullName": "Chervonyy Kyiv, Domanivka, Mykolaiv, Ukraine, Soviet Union",
+    "type": "Village",
+    "dateRange": "+1937/+1991",
+    "score": 76
+   }
+  ],
+  "Laibach, Krain, Austria||": [
+   {
+    "placeId": "1930476",
+    "placeRepId": "11874761",
+    "name": "Laibach",
+    "fullName": "Laibach, Carniola",
+    "type": "City",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "6396604",
+    "placeRepId": "3460701",
+    "name": "Laibach",
+    "fullName": "Laibach, Carniola",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "3795441",
+    "placeRepId": "6743339",
+    "name": "Krainberg",
+    "fullName": "Krainberg, Villach Land, Carinthia, Austria",
+    "type": "Town",
+    "score": 68
+   },
+   {
+    "placeId": "5198532",
+    "placeRepId": "262133",
+    "name": "Carniola",
+    "fullName": "Carniola",
+    "type": "Duchy",
+    "dateRange": "+1364/+1918",
+    "score": 67
+   }
+  ],
+  "Lancaster, Lancashire, England||": [
+   {
+    "placeId": "3484497",
+    "placeRepId": "11013326",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "City",
+    "dateRange": "+1974/",
+    "score": 100
+   },
+   {
+    "placeId": "6256036",
+    "placeRepId": "3041344",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/+2005",
+    "score": 100
+   },
+   {
+    "placeId": "6256921",
+    "placeRepId": "3040479",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "Poor Law Union",
+    "dateRange": "+1834/+1930",
+    "score": 100
+   },
+   {
+    "placeId": "3484497",
+    "placeRepId": "10605995",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England",
+    "type": "Town",
+    "dateRange": "+1100/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "3484497",
+    "placeRepId": "1617160",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/+1974",
+    "score": 96
+   }
+  ],
+  "Lemberg, Galizien, Österreich||": [
+   {
+    "placeId": "6396555",
+    "placeRepId": "3460721",
+    "name": "Bezirk Lemberg",
+    "fullName": "Bezirk Lemberg, Galicia",
+    "type": "District",
+    "dateRange": "+1772/+1918",
+    "score": 98
+   },
+   {
+    "placeId": "6396332",
+    "placeRepId": "11576127",
+    "name": "Lʹviv",
+    "fullName": "Lʹviv, Bezirk Lemberg, Galicia",
+    "type": "City",
+    "dateRange": "+1772/+1918",
+    "score": 97
+   },
+   {
+    "placeId": "3794961",
+    "placeRepId": "11771467",
+    "name": "Lemberg",
+    "fullName": "Lemberg, Hartberg-Fürstenfeld, Styria, Austria",
+    "type": "Municipality",
+    "dateRange": "+2013/",
+    "score": 80
+   },
+   {
+    "placeId": "6460008",
+    "placeRepId": "8030247",
+    "name": "Lemberg",
+    "fullName": "Lemberg, Cilli, Styria, Austria",
+    "type": "Municipality",
+    "score": 80
+   },
+   {
+    "placeId": "3794960",
+    "placeRepId": "6743279",
+    "name": "Lemberg",
+    "fullName": "Lemberg, Amstetten, Lower Austria, Austria",
+    "type": "Populated Place",
+    "score": 80
+   },
+   {
+    "placeId": "3794961",
+    "placeRepId": "6743280",
+    "name": "Lemberg",
+    "fullName": "Lemberg, Hartberg, Styria, Austria",
+    "type": "Municipality",
+    "dateRange": "/+2012",
+    "score": 76
+   },
+   {
+    "placeId": "5198374",
+    "placeRepId": "262034",
+    "name": "Galicia",
+    "fullName": "Galicia",
+    "type": "Country",
+    "dateRange": "+1772/+1918",
+    "score": 67
+   }
+  ],
+  "Ljubljana, Slovenia||": [
+   {
+    "placeId": "1930476",
+    "placeRepId": "4237",
+    "name": "Ljubljana",
+    "fullName": "Ljubljana, Slovenia",
+    "type": "Municipality",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930476",
+    "placeRepId": "449176",
+    "name": "Ljubljana",
+    "fullName": "Ljubljana, Slovenia, Yugoslavia",
+    "type": "City",
+    "dateRange": "+1918/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "5061630",
+    "placeRepId": "2241922",
+    "name": "Ljubljana",
+    "fullName": "Ljubljana, Ljubljana, Slovenia",
+    "type": "Town",
+    "dateRange": "+1991/",
+    "score": 88
+   },
+   {
+    "placeId": "5061630",
+    "placeRepId": "7344672",
+    "name": "Ljubljana",
+    "fullName": "Ljubljana, Ljubljana, Slovenia, Yugoslavia",
+    "type": "Town",
+    "dateRange": "/+1991",
+    "score": 84
+   },
+   {
+    "placeId": "5061630",
+    "placeRepId": "7344673",
+    "name": "Ljubljana",
+    "fullName": "Ljubljana, Ljubljana-Center, Ljubljana, Slovenia, Yugoslavia",
+    "type": "Town",
+    "dateRange": "/+1991",
+    "score": 82
+   }
+  ],
+  "London Township, Middlesex, Ontario, Canada||": [
+   {
+    "placeId": "6367612",
+    "placeRepId": "8172704",
+    "name": "London Township",
+    "fullName": "London Township, Middlesex, Ontario, Canada",
+    "type": "Township",
+    "dateRange": "+1867/+1998",
+    "score": 96
+   },
+   {
+    "placeId": "6367612",
+    "placeRepId": "8172703",
+    "name": "London Township",
+    "fullName": "London Township, Middlesex, Canada West, British North America",
+    "type": "Township",
+    "dateRange": "+1841/+1867",
+    "score": 91
+   },
+   {
+    "placeId": "6367612",
+    "placeRepId": "8172702",
+    "name": "London Township",
+    "fullName": "London Township, Middlesex, Upper Canada, British North America",
+    "type": "Township",
+    "dateRange": "+1798/+1841",
+    "score": 91
+   },
+   {
+    "placeId": "4425808",
+    "placeRepId": "7213690",
+    "name": "London",
+    "fullName": "London, Middlesex, Canada West, British North America",
+    "type": "Town",
+    "dateRange": "+1841/+1855",
+    "score": 91
+   },
+   {
+    "placeId": "4425808",
+    "placeRepId": "7213689",
+    "name": "London",
+    "fullName": "London, Middlesex, Upper Canada, British North America",
+    "type": "Village",
+    "dateRange": "+1826/+1841",
+    "score": 91
+   },
+   {
+    "placeId": "4425808",
+    "placeRepId": "11805489",
+    "name": "London",
+    "fullName": "London, Ontario, Canada",
+    "type": "City",
+    "dateRange": "+1867/",
+    "score": 90
+   },
+   {
+    "placeId": "6283645",
+    "placeRepId": "3052405",
+    "name": "London District",
+    "fullName": "London District, Upper Canada, British North America",
+    "type": "District",
+    "dateRange": "+1798/+1841",
+    "score": 79
+   },
+   {
+    "placeId": "6305419",
+    "placeRepId": "8132881",
+    "name": "Middlesex Centre",
+    "fullName": "Middlesex Centre, Middlesex, Ontario, Canada",
+    "type": "Township",
+    "dateRange": "+1998/",
+    "score": 78
+   }
+  ],
+  "London, England||": [
+   {
+    "placeId": "1986327",
+    "placeRepId": "24718",
+    "name": "London",
+    "fullName": "London, England, United Kingdom",
+    "type": "Major City",
+    "dateRange": "+1801/",
+    "score": 99
+   },
+   {
+    "placeId": "1986327",
+    "placeRepId": "10704704",
+    "name": "London",
+    "fullName": "London, England",
+    "type": "Major City",
+    "dateRange": "+927/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "6256610",
+    "placeRepId": "3041881",
+    "name": "Diocese of London",
+    "fullName": "Diocese of London, England, United Kingdom",
+    "type": "Diocese",
+    "dateRange": "+1801/",
+    "score": 90
+   },
+   {
+    "placeId": "6256610",
+    "placeRepId": "13561412",
+    "name": "Diocese of London",
+    "fullName": "Diocese of London, England",
+    "type": "Diocese",
+    "dateRange": "/+1801",
+    "score": 88
+   },
+   {
+    "placeId": "1955204",
+    "placeRepId": "10619517",
+    "name": "Middlesex",
+    "fullName": "Middlesex, England",
+    "type": "County (Top level)",
+    "dateRange": "+927/+1801",
+    "score": 85
+   },
+   {
+    "placeId": "6113486",
+    "placeRepId": "7721831",
+    "name": "London England Temple",
+    "fullName": "London England Temple, Newchapel, Surrey, England, United Kingdom",
+    "type": "Temple of The Church of Jesus Christ of Latter-day Saints",
+    "dateRange": "+1958/",
+    "score": 75
+   }
+  ],
+  "London, Middlesex, Ontario||": [
+   {
+    "placeId": "6367612",
+    "placeRepId": "8172704",
+    "name": "London Township",
+    "fullName": "London Township, Middlesex, Ontario, Canada",
+    "type": "Township",
+    "dateRange": "+1867/+1998",
+    "score": 97
+   },
+   {
+    "placeId": "4425808",
+    "placeRepId": "7213690",
+    "name": "London",
+    "fullName": "London, Middlesex, Canada West, British North America",
+    "type": "Town",
+    "dateRange": "+1841/+1855",
+    "score": 95
+   },
+   {
+    "placeId": "4425808",
+    "placeRepId": "7213689",
+    "name": "London",
+    "fullName": "London, Middlesex, Upper Canada, British North America",
+    "type": "Village",
+    "dateRange": "+1826/+1841",
+    "score": 95
+   },
+   {
+    "placeId": "4425808",
+    "placeRepId": "11805489",
+    "name": "London",
+    "fullName": "London, Ontario, Canada",
+    "type": "City",
+    "dateRange": "+1867/",
+    "score": 91
+   },
+   {
+    "placeId": "6367612",
+    "placeRepId": "8172703",
+    "name": "London Township",
+    "fullName": "London Township, Middlesex, Canada West, British North America",
+    "type": "Township",
+    "dateRange": "+1841/+1867",
+    "score": 90
+   },
+   {
+    "placeId": "6367612",
+    "placeRepId": "8172702",
+    "name": "London Township",
+    "fullName": "London Township, Middlesex, Upper Canada, British North America",
+    "type": "Township",
+    "dateRange": "+1798/+1841",
+    "score": 90
+   },
+   {
+    "placeId": "6283645",
+    "placeRepId": "3052405",
+    "name": "London District",
+    "fullName": "London District, Upper Canada, British North America",
+    "type": "District",
+    "dateRange": "+1798/+1841",
+    "score": 79
+   },
+   {
+    "placeId": "6305419",
+    "placeRepId": "8132881",
+    "name": "Middlesex Centre",
+    "fullName": "Middlesex Centre, Middlesex, Ontario, Canada",
+    "type": "Township",
+    "dateRange": "+1998/",
+    "score": 79
+   }
+  ],
+  "Lubljana, Slovenia||": [
+   {
+    "placeId": "1927180",
+    "placeRepId": "35",
+    "name": "Slovenia",
+    "fullName": "Slovenia",
+    "type": "Country",
+    "dateRange": "+1991/",
+    "score": 90
+   },
+   {
+    "placeId": "1927180",
+    "placeRepId": "3297",
+    "name": "Slovenia",
+    "fullName": "Slovenia, Yugoslavia",
+    "type": "Country",
+    "dateRange": "+1918/+1991",
+    "score": 79
+   },
+   {
+    "placeId": "6253000",
+    "placeRepId": "280",
+    "name": "Europe",
+    "fullName": "Europe",
+    "type": "Continent",
+    "score": 76
+   }
+  ],
+  "Lviv, Lviv, Ukraine||": [
+   {
+    "placeId": "6396332",
+    "placeRepId": "3460490",
+    "name": "Lviv",
+    "fullName": "Lviv, Lviv, Ukraine",
+    "type": "Independent City",
+    "dateRange": "+1991/+2020",
+    "score": 100
+   },
+   {
+    "placeId": "10271450",
+    "placeRepId": "11834765",
+    "name": "Lviv District",
+    "fullName": "Lviv District, Lviv, Ukraine",
+    "type": "District",
+    "dateRange": "+2020/",
+    "score": 100
+   },
+   {
+    "placeId": "6396332",
+    "placeRepId": "8148005",
+    "name": "Lviv",
+    "fullName": "Lviv, Lviv, Ukraine, Soviet Union",
+    "type": "Independent City",
+    "dateRange": "+1945/+1991",
+    "score": 100
+   },
+   {
+    "placeId": "6396332",
+    "placeRepId": "11834767",
+    "name": "Lviv",
+    "fullName": "Lviv, Lviv District, Lviv, Ukraine",
+    "type": "City",
+    "dateRange": "+2020/",
+    "score": 92
+   },
+   {
+    "placeId": "1967581",
+    "placeRepId": "553588",
+    "name": "Kamianka-Buzka",
+    "fullName": "Kamianka-Buzka, Lviv, Ukraine",
+    "type": "District",
+    "dateRange": "+1991/+2020",
+    "score": 81
+   },
+   {
+    "placeId": "1967605",
+    "placeRepId": "553560",
+    "name": "Horodok",
+    "fullName": "Horodok, Lviv, Ukraine",
+    "type": "District",
+    "dateRange": "+1991/+2020",
+    "score": 81
+   },
+   {
+    "placeId": "1949609",
+    "placeRepId": "436777",
+    "name": "Pustomyty",
+    "fullName": "Pustomyty, Lviv, Ukraine",
+    "type": "District",
+    "dateRange": "+1991/+2020",
+    "score": 81
+   },
+   {
+    "placeId": "1949674",
+    "placeRepId": "436717",
+    "name": "Zhovkva Raion",
+    "fullName": "Zhovkva Raion, Lviv, Ukraine",
+    "type": "District",
+    "dateRange": "+1991/+2020",
+    "score": 81
+   },
+   {
+    "placeId": "1949633",
+    "placeRepId": "436676",
+    "name": "Peremyshliany Raion",
+    "fullName": "Peremyshliany Raion, Lviv, Ukraine",
+    "type": "District",
+    "dateRange": "+1991/+2020",
+    "score": 81
+   }
+  ],
+  "Massachusetts Bay Colony, British Colonial America||": [
+   {
+    "placeId": "52",
+    "placeRepId": "10686216",
+    "name": "Massachusetts Bay Colony",
+    "fullName": "Massachusetts Bay Colony, British Colonial America",
+    "type": "Colony",
+    "dateRange": "+1628/+1776",
+    "score": 100
+   }
+  ],
+  "Memel, East Prussia, Prussia, Germany||": [
+   {
+    "placeId": "6272452",
+    "placeRepId": "7786082",
+    "name": "Memel",
+    "fullName": "Memel, East Prussia, Prussia, Germany",
+    "type": "District",
+    "dateRange": "+1878/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "5059720",
+    "placeRepId": "11946786",
+    "name": "Memel",
+    "fullName": "Memel, Memel, East Prussia, Prussia, Germany",
+    "type": "City",
+    "dateRange": "+1878/+1918",
+    "score": 96
+   }
+  ],
+  "Memel, Ostpreussen, Preussen||": [
+   {
+    "placeId": "6272452",
+    "placeRepId": "7786082",
+    "name": "Memel",
+    "fullName": "Memel, East Prussia, Prussia, Germany",
+    "type": "District",
+    "dateRange": "+1878/+1918",
+    "score": 97
+   },
+   {
+    "placeId": "6272452",
+    "placeRepId": "10899587",
+    "name": "Memel",
+    "fullName": "Memel, East Prussia, Prussia",
+    "type": "District",
+    "dateRange": "+1818/+1829",
+    "score": 97
+   },
+   {
+    "placeId": "5059720",
+    "placeRepId": "11946786",
+    "name": "Memel",
+    "fullName": "Memel, Memel, East Prussia, Prussia, Germany",
+    "type": "City",
+    "dateRange": "+1878/+1918",
+    "score": 94
+   },
+   {
+    "placeId": "5059720",
+    "placeRepId": "11946783",
+    "name": "Memel",
+    "fullName": "Memel, Memel, East Prussia, Prussia",
+    "type": "City",
+    "dateRange": "+1818/+1829",
+    "score": 90
+   }
+  ],
+  "Placentia, Newfoundland and Labrador, Canada||": [
+   {
+    "placeId": "4425022",
+    "placeRepId": "2179549",
+    "name": "Placentia",
+    "fullName": "Placentia, Newfoundland and Labrador, Canada",
+    "type": "Town",
+    "dateRange": "+1949/",
+    "score": 100
+   }
+  ],
+  "Placentia, Orange, California||": [
+   {
+    "placeId": "1542880",
+    "placeRepId": "5494978",
+    "name": "Placentia",
+    "fullName": "Placentia, Orange, California, United States",
+    "type": "City",
+    "dateRange": "+1893/",
+    "score": 100
+   }
+  ],
+  "Placentia, Orange, California, United States||": [
+   {
+    "placeId": "1542880",
+    "placeRepId": "5494978",
+    "name": "Placentia",
+    "fullName": "Placentia, Orange, California, United States",
+    "type": "City",
+    "dateRange": "+1893/",
+    "score": 100
+   }
+  ],
+  "Placentia, Stann Creek, British Honduras||": [
+   {
+    "placeId": "8366020",
+    "placeRepId": "3472038",
+    "name": "Placentia",
+    "fullName": "Placentia, Stann Creek, Belize",
+    "type": "Locality",
+    "dateRange": "+1973/",
+    "score": 100
+   },
+   {
+    "placeId": "8366020",
+    "placeRepId": "13991782",
+    "name": "Placentia",
+    "fullName": "Placentia, Stann Creek, British Honduras",
+    "type": "Village",
+    "dateRange": "/+1973",
+    "score": 99
+   },
+   {
+    "placeId": "9560699",
+    "placeRepId": "11042495",
+    "name": "Placencia",
+    "fullName": "Placencia, Stann Creek, Belize",
+    "type": "Town",
+    "dateRange": "+1973/",
+    "score": 95
+   },
+   {
+    "placeId": "9560699",
+    "placeRepId": "13991787",
+    "name": "Placencia",
+    "fullName": "Placencia, Stann Creek, British Honduras",
+    "type": "Town",
+    "dateRange": "+1820/+1973",
+    "score": 91
+   }
+  ],
+  "Plymouth, Devon, England||": [
+   {
+    "placeId": "6255859",
+    "placeRepId": "3041150",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Devon, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/",
+    "score": 100
+   },
+   {
+    "placeId": "1930709",
+    "placeRepId": "449389",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Devon, England, United Kingdom",
+    "type": "City",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6256755",
+    "placeRepId": "3040163",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Devon, England, United Kingdom",
+    "type": "Poor Law Union",
+    "dateRange": "+1834/+1930",
+    "score": 100
+   },
+   {
+    "placeId": "1930709",
+    "placeRepId": "10904644",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Devon, England",
+    "type": "Town",
+    "dateRange": "+1000/+1801",
+    "score": 99
+   }
+  ],
+  "Plymouth, Plymouth, Massachusetts||": [
+   {
+    "placeId": "560143",
+    "placeRepId": "4229024",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Plymouth, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/",
+    "score": 100
+   },
+   {
+    "placeId": "560143",
+    "placeRepId": "4229023",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Plymouth, Massachusetts Bay Colony, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1691/+1776",
+    "score": 95
+   }
+  ],
+  "Plymouth, Plymouth, Massachusetts, United States||": [
+   {
+    "placeId": "560143",
+    "placeRepId": "4229024",
+    "name": "Plymouth",
+    "fullName": "Plymouth, Plymouth, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "Portsmouth, Hampshire, England||": [
+   {
+    "placeId": "1930711",
+    "placeRepId": "449386",
+    "name": "Portsmouth",
+    "fullName": "Portsmouth, Hampshire, England, United Kingdom",
+    "type": "City",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "1930711",
+    "placeRepId": "10606160",
+    "name": "Portsmouth",
+    "fullName": "Portsmouth, Hampshire, England",
+    "type": "City",
+    "dateRange": "+1180/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "6258374",
+    "placeRepId": "3039599",
+    "name": "Portsmouth Liberty",
+    "fullName": "Portsmouth Liberty, Hampshire, England, United Kingdom",
+    "type": "Hundred",
+    "dateRange": "+1801/",
+    "score": 92
+   },
+   {
+    "placeId": "6258374",
+    "placeRepId": "10606607",
+    "name": "Portsmouth Liberty",
+    "fullName": "Portsmouth Liberty, Hampshire, England",
+    "type": "Hundred",
+    "dateRange": "/+1801",
+    "score": 90
+   },
+   {
+    "placeId": "6255938",
+    "placeRepId": "3041253",
+    "name": "Portsea Island",
+    "fullName": "Portsea Island, Hampshire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/",
+    "score": 86
+   }
+  ],
+  "Portsmouth, Rockingham, New Hampshire||": [
+   {
+    "placeId": "804389",
+    "placeRepId": "4577042",
+    "name": "Portsmouth",
+    "fullName": "Portsmouth, Rockingham, New Hampshire, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   },
+   {
+    "placeId": "804389",
+    "placeRepId": "4577041",
+    "name": "Portsmouth",
+    "fullName": "Portsmouth, Rockingham, New Hampshire, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1769/+1776",
+    "score": 96
+   }
+  ],
+  "Portsmouth, Rockingham, New Hampshire, United States||": [
+   {
+    "placeId": "804389",
+    "placeRepId": "4577042",
+    "name": "Portsmouth",
+    "fullName": "Portsmouth, Rockingham, New Hampshire, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "Pozsony, Pozsony, Hungary||": [
+   {
+    "placeId": "1939504",
+    "placeRepId": "10735765",
+    "name": "Pozsony",
+    "fullName": "Pozsony, Pozsony, Hungary",
+    "type": "City",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "6416325",
+    "placeRepId": "3459753",
+    "name": "Pozsony",
+    "fullName": "Pozsony, Pozsony, Hungary",
+    "type": "District",
+    "dateRange": "/+1918",
+    "score": 100
+   }
+  ],
+  "Prag, Böhmen, Österreich||": [
+   {
+    "placeId": "1929960",
+    "placeRepId": "10336712",
+    "name": "Prague",
+    "fullName": "Prague, Bohemia",
+    "type": "City",
+    "dateRange": "+850/+1918",
+    "score": 99
+   },
+   {
+    "placeId": "1929960",
+    "placeRepId": "10340717",
+    "name": "Prague",
+    "fullName": "Prague, Bohemia, Czechoslovakia",
+    "type": "City",
+    "dateRange": "+1918/+1949",
+    "score": 75
+   },
+   {
+    "placeId": "1941327",
+    "placeRepId": "10336711",
+    "name": "Bohemia",
+    "fullName": "Bohemia",
+    "type": "Country",
+    "dateRange": "+1002/+1918",
+    "score": 62
+   }
+  ],
+  "Prague, Bohemia||": [
+   {
+    "placeId": "1929960",
+    "placeRepId": "10336712",
+    "name": "Prague",
+    "fullName": "Prague, Bohemia",
+    "type": "City",
+    "dateRange": "+850/+1918",
+    "score": 98
+   },
+   {
+    "placeId": "1929960",
+    "placeRepId": "5809",
+    "name": "Prague",
+    "fullName": "Prague, Czechia",
+    "type": "Major City",
+    "dateRange": "+1993/",
+    "score": 97
+   },
+   {
+    "placeId": "1929960",
+    "placeRepId": "10340717",
+    "name": "Prague",
+    "fullName": "Prague, Bohemia, Czechoslovakia",
+    "type": "City",
+    "dateRange": "+1918/+1949",
+    "score": 95
+   },
+   {
+    "placeId": "1930940",
+    "placeRepId": "4867",
+    "name": "Central Bohemia",
+    "fullName": "Central Bohemia, Czechia",
+    "type": "Region",
+    "dateRange": "+1993/",
+    "score": 85
+   }
+  ],
+  "Prague, Czechia||": [
+   {
+    "placeId": "1929960",
+    "placeRepId": "5809",
+    "name": "Prague",
+    "fullName": "Prague, Czechia",
+    "type": "Major City",
+    "dateRange": "+1993/",
+    "score": 100
+   },
+   {
+    "placeId": "1930940",
+    "placeRepId": "4867",
+    "name": "Central Bohemia",
+    "fullName": "Central Bohemia, Czechia",
+    "type": "Region",
+    "dateRange": "+1993/",
+    "score": 94
+   }
+  ],
+  "Pressburg, Pressburg, Hungary||": [
+   {
+    "placeId": "1939504",
+    "placeRepId": "10735765",
+    "name": "Pozsony",
+    "fullName": "Pozsony, Pozsony, Hungary",
+    "type": "City",
+    "dateRange": "/+1918",
+    "score": 98
+   }
+  ],
+  "Republic of Georgia||": [
+   {
+    "placeId": "1927047",
+    "placeRepId": "252",
+    "name": "Republic of Georgia",
+    "fullName": "Republic of Georgia",
+    "type": "Country",
+    "dateRange": "+1991/",
+    "score": 94
+   },
+   {
+    "placeId": "1927047",
+    "placeRepId": "3914",
+    "name": "Republic of Georgia",
+    "fullName": "Republic of Georgia, Soviet Union",
+    "type": "Country",
+    "dateRange": "+1921/+1991",
+    "score": 85
+   },
+   {
+    "placeId": "6253000",
+    "placeRepId": "280",
+    "name": "Europe",
+    "fullName": "Europe",
+    "type": "Continent",
+    "score": 79
+   },
+   {
+    "placeId": "9499439",
+    "placeRepId": "10946886",
+    "name": "Transcaucasia",
+    "fullName": "Transcaucasia, Soviet Union",
+    "type": "Country",
+    "dateRange": "+1922/+1936",
+    "score": 73
+   },
+   {
+    "placeId": "1927047",
+    "placeRepId": "10935886",
+    "name": "Georgian Governorate",
+    "fullName": "Georgian Governorate, Russian Empire",
+    "type": "Governorate",
+    "dateRange": "+1801/+1918",
+    "score": 65
+   }
+  ],
+  "Riga, Latvia||": [
+   {
+    "placeId": "1927446",
+    "placeRepId": "3052",
+    "name": "Riga",
+    "fullName": "Riga, Latvia",
+    "type": "Independent City",
+    "dateRange": "+1931/",
+    "score": 100
+   },
+   {
+    "placeId": "9537220",
+    "placeRepId": "11752684",
+    "name": "Riga",
+    "fullName": "Riga, Latvia",
+    "type": "District",
+    "dateRange": "+1991/+2009",
+    "score": 100
+   },
+   {
+    "placeId": "9537220",
+    "placeRepId": "11003060",
+    "name": "Riga",
+    "fullName": "Riga, Latvia",
+    "type": "County",
+    "dateRange": "+1918/+1949",
+    "score": 99
+   },
+   {
+    "placeId": "9537220",
+    "placeRepId": "12365881",
+    "name": "Riga",
+    "fullName": "Riga, Latvia, Soviet Union",
+    "type": "District",
+    "dateRange": "+1949/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "1927446",
+    "placeRepId": "13565146",
+    "name": "Riga",
+    "fullName": "Riga, Latvia, Soviet Union",
+    "type": "City",
+    "dateRange": "+1940/+1990",
+    "score": 95
+   },
+   {
+    "placeId": "1927446",
+    "placeRepId": "11003061",
+    "name": "Riga",
+    "fullName": "Riga, Riga, Latvia",
+    "type": "City",
+    "dateRange": "+1918/+1931",
+    "score": 92
+   },
+   {
+    "placeId": "10322012",
+    "placeRepId": "12497580",
+    "name": "Livonia",
+    "fullName": "Livonia, Russian Empire",
+    "type": "Governorate",
+    "dateRange": "+1721/+1918",
+    "score": 88
+   },
+   {
+    "placeId": "1927446",
+    "placeRepId": "13565145",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "type": "City",
+    "dateRange": "+1721/+1918",
+    "score": 87
+   },
+   {
+    "placeId": "9537220",
+    "placeRepId": "11003056",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "type": "County",
+    "dateRange": "+1721/+1918",
+    "score": 87
+   },
+   {
+    "placeId": "1927446",
+    "placeRepId": "11003062",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Sweden",
+    "type": "City",
+    "dateRange": "+1713/+1721",
+    "score": 87
+   }
+  ],
+  "Riga, Livland, Russia||": [
+   {
+    "placeId": "1927446",
+    "placeRepId": "13565145",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "type": "City",
+    "dateRange": "+1721/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "9537220",
+    "placeRepId": "11003056",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "type": "County",
+    "dateRange": "+1721/+1918",
+    "score": 100
+   }
+  ],
+  "Riga, Livonia, Russian Empire||": [
+   {
+    "placeId": "1927446",
+    "placeRepId": "13565145",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "type": "City",
+    "dateRange": "+1721/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "9537220",
+    "placeRepId": "11003056",
+    "name": "Riga",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "type": "County",
+    "dateRange": "+1721/+1918",
+    "score": 100
+   }
+  ],
+  "Savannah, Chatham, Georgia||": [
+   {
+    "placeId": "286750",
+    "placeRepId": "3904624",
+    "name": "Savannah",
+    "fullName": "Savannah, Chatham, Georgia, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "Savannah, Chatham, Georgia, United States||": [
+   {
+    "placeId": "286750",
+    "placeRepId": "3904624",
+    "name": "Savannah",
+    "fullName": "Savannah, Chatham, Georgia, United States",
+    "type": "City",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "St. John's, Newfoundland and Labrador, Canada||": [
+   {
+    "placeId": "5060997",
+    "placeRepId": "2241580",
+    "name": "St. John's",
+    "fullName": "St. John's, Newfoundland and Labrador, Canada",
+    "type": "City",
+    "dateRange": "+1949/",
+    "score": 100
+   }
+  ],
+  "Svitavy, Moravská Třebová, Morava, Rakousko||": [
+   {
+    "placeId": "4430832",
+    "placeRepId": "11908297",
+    "name": "Zwittau",
+    "fullName": "Zwittau, Mährisch Trübau, Moravia",
+    "type": "Municipality",
+    "dateRange": "/+1918",
+    "score": 99
+   },
+   {
+    "placeId": "4430832",
+    "placeRepId": "7194123",
+    "name": "Svitavy",
+    "fullName": "Svitavy, Moravská Třebová, Moravia, Czechoslovakia",
+    "type": "Municipality",
+    "dateRange": "+1918/+1949",
+    "score": 84
+   }
+  ],
+  "Svitavy, Svitavy, Czechia||": [
+   {
+    "placeId": "4430832",
+    "placeRepId": "7194126",
+    "name": "Svitavy",
+    "fullName": "Svitavy, Svitavy, Czechia",
+    "type": "Municipality",
+    "dateRange": "+1993/",
+    "score": 100
+   }
+  ],
+  "Tbilisi, Georgia||": [
+   {
+    "placeId": "1928280",
+    "placeRepId": "2406",
+    "name": "Tbilisi",
+    "fullName": "Tbilisi, Republic of Georgia",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1928280",
+    "placeRepId": "446493",
+    "name": "Tbilisi",
+    "fullName": "Tbilisi, Republic of Georgia, Soviet Union",
+    "type": "City",
+    "dateRange": "+1921/+1991",
+    "score": 94
+   }
+  ],
+  "Tbilisi, Republic of Georgia||": [
+   {
+    "placeId": "1928280",
+    "placeRepId": "2406",
+    "name": "Tbilisi",
+    "fullName": "Tbilisi, Republic of Georgia",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1928280",
+    "placeRepId": "446493",
+    "name": "Tbilisi",
+    "fullName": "Tbilisi, Republic of Georgia, Soviet Union",
+    "type": "City",
+    "dateRange": "+1921/+1991",
+    "score": 91
+   }
+  ],
+  "Vilna, Vilna, Russia||": [
+   {
+    "placeId": "1931100",
+    "placeRepId": "11000250",
+    "name": "Vilna",
+    "fullName": "Vilna, Vilna, Russian Empire",
+    "type": "County",
+    "dateRange": "+1795/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "1932698",
+    "placeRepId": "11000624",
+    "name": "Vilna",
+    "fullName": "Vilna, Vilna, Vilna, Russian Empire",
+    "type": "City",
+    "dateRange": "+1795/+1920",
+    "score": 94
+   }
+  ],
+  "Vilna, Vilna, Russian Empire||": [
+   {
+    "placeId": "1931100",
+    "placeRepId": "11000250",
+    "name": "Vilna",
+    "fullName": "Vilna, Vilna, Russian Empire",
+    "type": "County",
+    "dateRange": "+1795/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "1932698",
+    "placeRepId": "11000624",
+    "name": "Vilna",
+    "fullName": "Vilna, Vilna, Vilna, Russian Empire",
+    "type": "City",
+    "dateRange": "+1795/+1920",
+    "score": 94
+   }
+  ],
+  "Vilnius, Vilnius, Lithuania||": [
+   {
+    "placeId": "1932698",
+    "placeRepId": "447573",
+    "name": "Vilnius",
+    "fullName": "Vilnius, Vilnius, Lithuania",
+    "type": "Independent City",
+    "dateRange": "+1990/",
+    "score": 100
+   },
+   {
+    "placeId": "1931100",
+    "placeRepId": "12772010",
+    "name": "Vilnius",
+    "fullName": "Vilnius, Vilnius, Grand Duchy of Lithuania",
+    "type": "District",
+    "dateRange": "+1413/+1795",
+    "score": 96
+   },
+   {
+    "placeId": "1932699",
+    "placeRepId": "447574",
+    "name": "Vilnius District",
+    "fullName": "Vilnius District, Vilnius, Lithuania",
+    "type": "Municipality",
+    "dateRange": "+1990/",
+    "score": 94
+   },
+   {
+    "placeId": "1932698",
+    "placeRepId": "11000624",
+    "name": "Vilna",
+    "fullName": "Vilna, Vilna, Vilna, Russian Empire",
+    "type": "City",
+    "dateRange": "+1795/+1920",
+    "score": 88
+   }
+  ],
+  "Whitehorse, Dewey, South Dakota||": [
+   {
+    "placeId": "1163625",
+    "placeRepId": "4913847",
+    "name": "Whitehorse",
+    "fullName": "Whitehorse, Dewey, South Dakota, United States",
+    "type": "Village",
+    "dateRange": "+1905/",
+    "score": 100
+   },
+   {
+    "placeId": "6497332",
+    "placeRepId": "8081334",
+    "name": "Cheyenne River Reservation",
+    "fullName": "Cheyenne River Reservation, Dewey, South Dakota, United States",
+    "type": "Reservation or Reserve",
+    "dateRange": "+1868/",
+    "score": 86
+   }
+  ],
+  "Whitehorse, Dewey, South Dakota, United States||": [
+   {
+    "placeId": "1163625",
+    "placeRepId": "4913847",
+    "name": "Whitehorse",
+    "fullName": "Whitehorse, Dewey, South Dakota, United States",
+    "type": "Village",
+    "dateRange": "+1905/",
+    "score": 100
+   },
+   {
+    "placeId": "6497332",
+    "placeRepId": "8081334",
+    "name": "Cheyenne River Reservation",
+    "fullName": "Cheyenne River Reservation, Dewey, South Dakota, United States",
+    "type": "Reservation or Reserve",
+    "dateRange": "+1868/",
+    "score": 86
+   }
+  ],
+  "Whitehorse, Yukon, Canada||": [
+   {
+    "placeId": "5060994",
+    "placeRepId": "2241574",
+    "name": "Whitehorse",
+    "fullName": "Whitehorse, Yukon, Canada",
+    "type": "City",
+    "dateRange": "+1898/",
+    "score": 100
+   }
+  ],
+  "Athens, Athens, Attica, Greece||": [
+   {
+    "placeId": "5061593",
+    "placeRepId": "2241891",
+    "name": "Athens",
+    "fullName": "Athens, Athens, Attica, Greece",
+    "type": "City",
+    "dateRange": "+2011/",
+    "score": 100
+   },
+   {
+    "placeId": "5061593",
+    "placeRepId": "12882166",
+    "name": "Athens",
+    "fullName": "Athens, Athens, Attica, Greece",
+    "type": "City",
+    "dateRange": "+1943/+1964",
+    "score": 99
+   },
+   {
+    "placeId": "5061593",
+    "placeRepId": "12882164",
+    "name": "Athens",
+    "fullName": "Athens, Athens, Attica, Greece",
+    "type": "City",
+    "dateRange": "+1889/+1909",
+    "score": 99
+   },
+   {
+    "placeId": "5061593",
+    "placeRepId": "12882163",
+    "name": "Athens",
+    "fullName": "Athens, Athens, Attica, Greece",
+    "type": "City",
+    "dateRange": "+1834/+1899",
+    "score": 99
+   }
   ]
  },
  "description": {
@@ -2477,6 +5450,705 @@
    "fullName": "Dundee, Westmoreland, Jamaica",
    "type": "Village",
    "parentPlaceRepId": "3326"
+  },
+  "26": {
+   "placeId": "1927188",
+   "placeRepId": "26",
+   "name": "Romania",
+   "fullName": "Romania",
+   "type": "Country",
+   "dateRange": "+1859/"
+  },
+  "35": {
+   "placeId": "1927180",
+   "placeRepId": "35",
+   "name": "Slovenia",
+   "fullName": "Slovenia",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "55": {
+   "placeId": "1927032",
+   "placeRepId": "55",
+   "name": "Lithuania",
+   "fullName": "Lithuania",
+   "type": "Country",
+   "dateRange": "+1918/"
+  },
+  "70": {
+   "placeId": "1927014",
+   "placeRepId": "70",
+   "name": "Latvia",
+   "fullName": "Latvia",
+   "type": "Country",
+   "dateRange": "+1918/"
+  },
+  "132": {
+   "placeId": "1927165",
+   "placeRepId": "132",
+   "name": "Czechia",
+   "fullName": "Czechia",
+   "type": "Country",
+   "dateRange": "+1993/"
+  },
+  "145": {
+   "placeId": "1927146",
+   "placeRepId": "145",
+   "name": "Slovakia",
+   "fullName": "Slovakia",
+   "type": "Country",
+   "dateRange": "+1993/"
+  },
+  "167": {
+   "placeId": "1927132",
+   "placeRepId": "167",
+   "name": "Ukraine",
+   "fullName": "Ukraine",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "202": {
+   "placeId": "1927095",
+   "placeRepId": "202",
+   "name": "Finland",
+   "fullName": "Finland",
+   "type": "Country",
+   "dateRange": "+1030/"
+  },
+  "252": {
+   "placeId": "1927047",
+   "placeRepId": "252",
+   "name": "Republic of Georgia",
+   "fullName": "Republic of Georgia",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "263": {
+   "placeId": "1863885",
+   "placeRepId": "263",
+   "name": "British Colonial America",
+   "fullName": "British Colonial America",
+   "type": "Colony",
+   "dateRange": "+1607/+1867"
+  },
+  "265": {
+   "placeId": "1986311",
+   "placeRepId": "265",
+   "name": "Wales",
+   "fullName": "Wales",
+   "type": "Country",
+   "dateRange": "+48/+1801"
+  },
+  "266": {
+   "placeId": "1986318",
+   "placeRepId": "266",
+   "name": "Scotland",
+   "fullName": "Scotland",
+   "type": "Country",
+   "dateRange": "+843/+1801"
+  },
+  "897": {
+   "placeId": "1962619",
+   "placeRepId": "897",
+   "name": "Uusimaa",
+   "fullName": "Uusimaa, Finland",
+   "type": "Province",
+   "dateRange": "+1831/+1997",
+   "parentPlaceRepId": "202"
+  },
+  "1108": {
+   "placeId": "1955240",
+   "placeRepId": "1108",
+   "name": "Caernarfonshire",
+   "fullName": "Caernarfonshire, Wales",
+   "type": "County (Top level)",
+   "dateRange": "+1284/+1801",
+   "parentPlaceRepId": "265"
+  },
+  "2406": {
+   "placeId": "1928280",
+   "placeRepId": "2406",
+   "name": "Tbilisi",
+   "fullName": "Tbilisi, Republic of Georgia",
+   "type": "Independent City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "252"
+  },
+  "3052": {
+   "placeId": "1927446",
+   "placeRepId": "3052",
+   "name": "Riga",
+   "fullName": "Riga, Latvia",
+   "type": "Independent City",
+   "dateRange": "+1931/",
+   "parentPlaceRepId": "70"
+  },
+  "3506": {
+   "placeId": "1927958",
+   "placeRepId": "3506",
+   "name": "Aberdeenshire",
+   "fullName": "Aberdeenshire, Scotland",
+   "type": "County (Top level)",
+   "dateRange": "+1124/+1801",
+   "parentPlaceRepId": "266"
+  },
+  "4237": {
+   "placeId": "1930476",
+   "placeRepId": "4237",
+   "name": "Ljubljana",
+   "fullName": "Ljubljana, Slovenia",
+   "type": "Municipality",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "35"
+  },
+  "4888": {
+   "placeId": "1931093",
+   "placeRepId": "4888",
+   "name": "Klaipėda",
+   "fullName": "Klaipėda, Lithuania",
+   "type": "County (Top level)",
+   "dateRange": "+1923/",
+   "parentPlaceRepId": "55"
+  },
+  "4889": {
+   "placeId": "1931092",
+   "placeRepId": "4889",
+   "name": "Kaunas",
+   "fullName": "Kaunas, Lithuania",
+   "type": "County (Top level)",
+   "dateRange": "+1918/",
+   "parentPlaceRepId": "55"
+  },
+  "4897": {
+   "placeId": "1931100",
+   "placeRepId": "4897",
+   "name": "Vilnius",
+   "fullName": "Vilnius, Lithuania",
+   "type": "County (Top level)",
+   "dateRange": "+1990/",
+   "parentPlaceRepId": "55"
+  },
+  "5219": {
+   "placeId": "1929298",
+   "placeRepId": "5219",
+   "name": "Cluj",
+   "fullName": "Cluj, Romania",
+   "type": "County (Top level)",
+   "dateRange": "+1918/",
+   "parentPlaceRepId": "26"
+  },
+  "5299": {
+   "placeId": "1929448",
+   "placeRepId": "5299",
+   "name": "Chernivtsi",
+   "fullName": "Chernivtsi, Ukraine",
+   "type": "Region",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "167"
+  },
+  "5342": {
+   "placeId": "1929436",
+   "placeRepId": "5342",
+   "name": "Lviv",
+   "fullName": "Lviv, Ukraine",
+   "type": "Region",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "167"
+  },
+  "5345": {
+   "placeId": "1929439",
+   "placeRepId": "5345",
+   "name": "Kyiv",
+   "fullName": "Kyiv, Ukraine",
+   "type": "City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "167"
+  },
+  "5809": {
+   "placeId": "1929960",
+   "placeRepId": "5809",
+   "name": "Prague",
+   "fullName": "Prague, Czechia",
+   "type": "Major City",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "132"
+  },
+  "25710": {
+   "placeId": "1972294",
+   "placeRepId": "25710",
+   "name": "Imereti",
+   "fullName": "Imereti, Republic of Georgia",
+   "type": "Region",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "252"
+  },
+  "152082": {
+   "placeId": "3604224",
+   "placeRepId": "152082",
+   "name": "Kutaisi",
+   "fullName": "Kutaisi, Imereti, Republic of Georgia",
+   "type": "City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "25710"
+  },
+  "262034": {
+   "placeId": "5198374",
+   "placeRepId": "262034",
+   "name": "Galicia",
+   "fullName": "Galicia",
+   "type": "Country",
+   "dateRange": "+1772/+1918"
+  },
+  "262045": {
+   "placeId": "5198338",
+   "placeRepId": "262045",
+   "name": "Moravia",
+   "fullName": "Moravia",
+   "type": "Principality or Emirate",
+   "dateRange": "+1004/+1918"
+  },
+  "262427": {
+   "placeId": "5198055",
+   "placeRepId": "262427",
+   "name": "Bukovina",
+   "fullName": "Bukovina",
+   "type": "Duchy",
+   "dateRange": "+1849/+1918"
+  },
+  "436367": {
+   "placeId": "1949157",
+   "placeRepId": "436367",
+   "name": "Helsinki",
+   "fullName": "Helsinki, Uusimaa, Finland",
+   "type": "Major City",
+   "dateRange": "+1550/",
+   "parentPlaceRepId": "897"
+  },
+  "444160": {
+   "placeId": "1939504",
+   "placeRepId": "444160",
+   "name": "Bratislava",
+   "fullName": "Bratislava, Slovakia",
+   "type": "City",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "145"
+  },
+  "444646": {
+   "placeId": "1941285",
+   "placeRepId": "444646",
+   "name": "Svitavy",
+   "fullName": "Svitavy, Czechia",
+   "type": "District",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "132"
+  },
+  "444882": {
+   "placeId": "1941346",
+   "placeRepId": "444882",
+   "name": "Brno",
+   "fullName": "Brno, Czechia",
+   "type": "Independent City",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "132"
+  },
+  "447573": {
+   "placeId": "1932698",
+   "placeRepId": "447573",
+   "name": "Vilnius",
+   "fullName": "Vilnius, Vilnius, Lithuania",
+   "type": "Independent City",
+   "dateRange": "+1990/",
+   "parentPlaceRepId": "4897"
+  },
+  "2241610": {
+   "placeId": "5060714",
+   "placeRepId": "2241610",
+   "name": "Cluj-Napoca",
+   "fullName": "Cluj-Napoca, Cluj, Romania",
+   "type": "Town",
+   "dateRange": "+1974/",
+   "parentPlaceRepId": "5219"
+  },
+  "2242482": {
+   "placeId": "5059940",
+   "placeRepId": "2242482",
+   "name": "Aberdeen",
+   "fullName": "Aberdeen, Aberdeenshire, Scotland",
+   "type": "Town",
+   "dateRange": "+1179/+1801",
+   "parentPlaceRepId": "3506"
+  },
+  "2242662": {
+   "placeId": "5059720",
+   "placeRepId": "2242662",
+   "name": "Klaipeda",
+   "fullName": "Klaipeda, Klaipėda, Lithuania",
+   "type": "Independent City",
+   "dateRange": "+1990/",
+   "parentPlaceRepId": "4888"
+  },
+  "2962844": {
+   "placeId": "6158586",
+   "placeRepId": "2962844",
+   "name": "Bangor",
+   "fullName": "Bangor, Caernarfonshire, Wales",
+   "type": "Parish",
+   "dateRange": "/+1801",
+   "parentPlaceRepId": "1108"
+  },
+  "3460490": {
+   "placeId": "6396332",
+   "placeRepId": "3460490",
+   "name": "Lviv",
+   "fullName": "Lviv, Lviv, Ukraine",
+   "type": "Independent City",
+   "dateRange": "+1991/+2020",
+   "parentPlaceRepId": "5342"
+  },
+  "3460721": {
+   "placeId": "6396555",
+   "placeRepId": "3460721",
+   "name": "Bezirk Lemberg",
+   "fullName": "Bezirk Lemberg, Galicia",
+   "type": "District",
+   "dateRange": "+1772/+1918",
+   "parentPlaceRepId": "262034"
+  },
+  "3496009": {
+   "placeId": "8577280",
+   "placeRepId": "3496009",
+   "name": "Kovno",
+   "fullName": "Kovno, Russian Empire",
+   "type": "Governorate",
+   "dateRange": "+1842/+1918",
+   "parentPlaceRepId": "10554855"
+  },
+  "7194126": {
+   "placeId": "4430832",
+   "placeRepId": "7194126",
+   "name": "Svitavy",
+   "fullName": "Svitavy, Svitavy, Czechia",
+   "type": "Municipality",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "444646"
+  },
+  "7344520": {
+   "placeId": "5060825",
+   "placeRepId": "7344520",
+   "name": "Košice",
+   "fullName": "Košice, Slovakia",
+   "type": "City",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "145"
+  },
+  "7344554": {
+   "placeId": "5060773",
+   "placeRepId": "7344554",
+   "name": "Chernivtsi",
+   "fullName": "Chernivtsi, Chernivtsi, Ukraine",
+   "type": "Independent City",
+   "dateRange": "+1991/+2020",
+   "parentPlaceRepId": "5299"
+  },
+  "10278964": {
+   "placeId": "1927123",
+   "placeRepId": "10278964",
+   "name": "British Honduras",
+   "fullName": "British Honduras",
+   "type": "Colony",
+   "dateRange": "+1700/+1973"
+  },
+  "10336712": {
+   "placeId": "1929960",
+   "placeRepId": "10336712",
+   "name": "Prague",
+   "fullName": "Prague, Bohemia",
+   "type": "City",
+   "dateRange": "+850/+1918",
+   "parentPlaceRepId": "10336711"
+  },
+  "10554855": {
+   "placeId": "1927021",
+   "placeRepId": "10554855",
+   "name": "Russian Empire",
+   "fullName": "Russian Empire",
+   "type": "Country",
+   "dateRange": "/+1917"
+  },
+  "10560044": {
+   "placeId": "1927926",
+   "placeRepId": "10560044",
+   "name": "Devon",
+   "fullName": "Devon, England",
+   "type": "County (Top level)",
+   "dateRange": "+901/+1801",
+   "parentPlaceRepId": "10579912"
+  },
+  "10560312": {
+   "placeId": "1930686",
+   "placeRepId": "10560312",
+   "name": "Kent",
+   "fullName": "Kent, England",
+   "type": "County (Top level)",
+   "dateRange": "+1067/+1801",
+   "parentPlaceRepId": "10579912"
+  },
+  "10560313": {
+   "placeId": "1927896",
+   "placeRepId": "10560313",
+   "name": "Lancashire",
+   "fullName": "Lancashire, England",
+   "type": "County (Top level)",
+   "dateRange": "+1182/+1801",
+   "parentPlaceRepId": "10579912"
+  },
+  "10560315": {
+   "placeId": "1927892",
+   "placeRepId": "10560315",
+   "name": "Lincolnshire",
+   "fullName": "Lincolnshire, England",
+   "type": "County (Top level)",
+   "dateRange": "+1086/+1801",
+   "parentPlaceRepId": "10579912"
+  },
+  "10579912": {
+   "placeId": "1986340",
+   "placeRepId": "10579912",
+   "name": "England",
+   "fullName": "England",
+   "type": "Country",
+   "dateRange": "+927/+1801"
+  },
+  "10602215": {
+   "placeId": "6139646",
+   "placeRepId": "10602215",
+   "name": "Boston",
+   "fullName": "Boston, Lincolnshire, England",
+   "type": "Town",
+   "dateRange": "+1200/+1801",
+   "parentPlaceRepId": "10560315"
+  },
+  "10604925": {
+   "placeId": "1927904",
+   "placeRepId": "10604925",
+   "name": "Hampshire",
+   "fullName": "Hampshire, England",
+   "type": "County (Top level)",
+   "dateRange": "+755/+1801",
+   "parentPlaceRepId": "10579912"
+  },
+  "10605995": {
+   "placeId": "3484497",
+   "placeRepId": "10605995",
+   "name": "Lancaster",
+   "fullName": "Lancaster, Lancashire, England",
+   "type": "Town",
+   "dateRange": "+1100/+1801",
+   "parentPlaceRepId": "10560313"
+  },
+  "10606160": {
+   "placeId": "1930711",
+   "placeRepId": "10606160",
+   "name": "Portsmouth",
+   "fullName": "Portsmouth, Hampshire, England",
+   "type": "City",
+   "dateRange": "+1180/+1801",
+   "parentPlaceRepId": "10604925"
+  },
+  "10615705": {
+   "placeId": "3487953",
+   "placeRepId": "10615705",
+   "name": "Dover",
+   "fullName": "Dover, Kent, England",
+   "type": "Town",
+   "dateRange": "+1067/+1801",
+   "parentPlaceRepId": "10560312"
+  },
+  "10686216": {
+   "placeId": "52",
+   "placeRepId": "10686216",
+   "name": "Massachusetts Bay Colony",
+   "fullName": "Massachusetts Bay Colony, British Colonial America",
+   "type": "Colony",
+   "dateRange": "+1628/+1776",
+   "parentPlaceRepId": "263"
+  },
+  "10704704": {
+   "placeId": "1986327",
+   "placeRepId": "10704704",
+   "name": "London",
+   "fullName": "London, England",
+   "type": "Major City",
+   "dateRange": "+927/+1801",
+   "parentPlaceRepId": "10579912"
+  },
+  "10904644": {
+   "placeId": "1930709",
+   "placeRepId": "10904644",
+   "name": "Plymouth",
+   "fullName": "Plymouth, Devon, England",
+   "type": "Town",
+   "dateRange": "+1000/+1801",
+   "parentPlaceRepId": "10560044"
+  },
+  "10907849": {
+   "placeId": "1928661",
+   "placeRepId": "10907849",
+   "name": "Hamburg",
+   "fullName": "Hamburg",
+   "type": "Independent City",
+   "dateRange": "+1189/+1871"
+  },
+  "10944799": {
+   "placeId": "6283634",
+   "placeRepId": "10944799",
+   "name": "Vilna",
+   "fullName": "Vilna, Russian Empire",
+   "type": "Governorate",
+   "dateRange": "+1795/+1922",
+   "parentPlaceRepId": "10554855"
+  },
+  "10954577": {
+   "placeId": "9505220",
+   "placeRepId": "10954577",
+   "name": "Kovno",
+   "fullName": "Kovno, Kovno, Russian Empire",
+   "type": "County",
+   "dateRange": "+1842/+1918",
+   "parentPlaceRepId": "3496009"
+  },
+  "10954584": {
+   "placeId": "1932739",
+   "placeRepId": "10954584",
+   "name": "Kaunas",
+   "fullName": "Kaunas, Kaunas, Lithuania",
+   "type": "Independent City",
+   "dateRange": "+1918/",
+   "parentPlaceRepId": "4889"
+  },
+  "11000250": {
+   "placeId": "1931100",
+   "placeRepId": "11000250",
+   "name": "Vilna",
+   "fullName": "Vilna, Vilna, Russian Empire",
+   "type": "County",
+   "dateRange": "+1795/+1918",
+   "parentPlaceRepId": "10944799"
+  },
+  "11901980": {
+   "placeId": "1929438",
+   "placeRepId": "11901980",
+   "name": "Kiev Viceroyalty",
+   "fullName": "Kiev Viceroyalty, Russian Empire",
+   "type": "Viceroyalty",
+   "dateRange": "+1781/+1796",
+   "parentPlaceRepId": "10554855"
+  },
+  "12038005": {
+   "placeId": "1941345",
+   "placeRepId": "12038005",
+   "name": "Brünn",
+   "fullName": "Brünn, Moravia",
+   "type": "District",
+   "dateRange": "/+1918",
+   "parentPlaceRepId": "262045"
+  },
+  "12046372": {
+   "placeId": "9592652",
+   "placeRepId": "12046372",
+   "name": "Kiev Uyezd",
+   "fullName": "Kiev Uyezd, Kiev Viceroyalty, Russian Empire",
+   "type": "County",
+   "dateRange": "+1781/+1796",
+   "parentPlaceRepId": "11901980"
+  },
+  "12497580": {
+   "placeId": "10322012",
+   "placeRepId": "12497580",
+   "name": "Livonia",
+   "fullName": "Livonia, Russian Empire",
+   "type": "Governorate",
+   "dateRange": "+1721/+1918",
+   "parentPlaceRepId": "10554855"
+  },
+  "12645552": {
+   "placeId": "10246109",
+   "placeRepId": "12645552",
+   "name": "Czernowitz District",
+   "fullName": "Czernowitz District, Bukovina",
+   "type": "District",
+   "dateRange": "+1775/+1918",
+   "parentPlaceRepId": "262427"
+  },
+  "12879346": {
+   "placeId": "1929439",
+   "placeRepId": "12879346",
+   "name": "Kiev",
+   "fullName": "Kiev, Kiev Uyezd, Kiev Viceroyalty, Russian Empire",
+   "type": "City",
+   "dateRange": "+1781/+1796",
+   "parentPlaceRepId": "12046372"
+  },
+  "13565145": {
+   "placeId": "1927446",
+   "placeRepId": "13565145",
+   "name": "Riga",
+   "fullName": "Riga, Livonia, Russian Empire",
+   "type": "City",
+   "dateRange": "+1721/+1918",
+   "parentPlaceRepId": "12497580"
+  },
+  "13991758": {
+   "placeId": "1929313",
+   "placeRepId": "13991758",
+   "name": "Stann Creek",
+   "fullName": "Stann Creek, British Honduras",
+   "type": "District",
+   "dateRange": "+1882/+1973",
+   "parentPlaceRepId": "10278964"
+  },
+  "13991782": {
+   "placeId": "8366020",
+   "placeRepId": "13991782",
+   "name": "Placentia",
+   "fullName": "Placentia, Stann Creek, British Honduras",
+   "type": "Village",
+   "dateRange": "/+1973",
+   "parentPlaceRepId": "13991758"
+  },
+  "27": {
+   "placeId": "1927189",
+   "placeRepId": "27",
+   "name": "Greece",
+   "fullName": "Greece",
+   "type": "Country"
+  },
+  "5637": {
+   "placeId": "1929733",
+   "placeRepId": "5637",
+   "name": "Attica",
+   "fullName": "Attica, Greece",
+   "type": "Region",
+   "dateRange": "+1836/",
+   "parentPlaceRepId": "27"
+  },
+  "2241891": {
+   "placeId": "5061593",
+   "placeRepId": "2241891",
+   "name": "Athens",
+   "fullName": "Athens, Athens, Attica, Greece",
+   "type": "City",
+   "dateRange": "+2011/",
+   "parentPlaceRepId": "12644312"
+  },
+  "12644312": {
+   "placeId": "10687042",
+   "placeRepId": "12644312",
+   "name": "Athens",
+   "fullName": "Athens, Attica, Greece",
+   "type": "Municipality",
+   "dateRange": "+1899/",
+   "parentPlaceRepId": "5637"
   }
  },
  "reps": {
@@ -3197,6 +6869,1664 @@
     "dateRange": "+1894/",
     "names": [
      "Church"
+    ]
+   }
+  ],
+  "72591": [
+   {
+    "placeRepId": "3617132",
+    "fullName": "Fort Smith, Sebastian, Arkansas, United States",
+    "dateRange": "+1851/",
+    "names": [
+     "Fort Smith"
+    ]
+   },
+   {
+    "placeRepId": "10929773",
+    "fullName": "Fort Smith, Crawford, Arkansas, United States",
+    "dateRange": "+1820/+1851",
+    "names": [
+     "Fort Smith"
+    ]
+   }
+  ],
+  "183159": [
+   {
+    "placeRepId": "3800859",
+    "fullName": "Dover, Kent, Delaware, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Dover"
+    ]
+   }
+  ],
+  "286750": [
+   {
+    "placeRepId": "3904624",
+    "fullName": "Savannah, Chatham, Georgia, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Savannah"
+    ]
+   },
+   {
+    "placeRepId": "3904622",
+    "fullName": "Savannah, Christ Church, Georgia, British Colonial America",
+    "dateRange": "+1733/+1776",
+    "names": [
+     "Savannah"
+    ]
+   }
+  ],
+  "524632": [
+   {
+    "placeRepId": "4273067",
+    "fullName": "Bangor, Penobscot, Maine, United States",
+    "dateRange": "+1820/",
+    "names": [
+     "Bangor"
+    ]
+   },
+   {
+    "placeRepId": "4273068",
+    "fullName": "Bangor, Penobscot, Massachusetts, United States",
+    "dateRange": "+1816/+1820",
+    "names": [
+     "Bangor"
+    ]
+   },
+   {
+    "placeRepId": "4273069",
+    "fullName": "Bangor, Hancock, Massachusetts, United States",
+    "dateRange": "+1790/+1816",
+    "names": [
+     "Bangor"
+    ]
+   },
+   {
+    "placeRepId": "11695199",
+    "fullName": "Bangor, Lincoln, Massachusetts, United States",
+    "dateRange": "+1769/+1790",
+    "names": [
+     "Bangor"
+    ]
+   }
+  ],
+  "560143": [
+   {
+    "placeRepId": "4229024",
+    "fullName": "Plymouth, Plymouth, Massachusetts, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Plymouth"
+    ]
+   },
+   {
+    "placeRepId": "4229023",
+    "fullName": "Plymouth, Plymouth, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1691/+1776",
+    "names": [
+     "Plymouth"
+    ]
+   },
+   {
+    "placeRepId": "10346711",
+    "fullName": "Plymouth, Plymouth, Plymouth Colony, British Colonial America",
+    "dateRange": "+1689/+1691",
+    "names": [
+     "Plymouth"
+    ]
+   },
+   {
+    "placeRepId": "10564035",
+    "fullName": "Plymouth, Plymouth Colony, British Colonial America",
+    "dateRange": "+1620/+1686",
+    "names": [
+     "Plymouth"
+    ]
+   }
+  ],
+  "561096": [
+   {
+    "placeRepId": "4229284",
+    "fullName": "Boston, Suffolk, Massachusetts, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Boston"
+    ]
+   },
+   {
+    "placeRepId": "4229283",
+    "fullName": "Boston, Suffolk, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1643/+1776",
+    "names": [
+     "Boston"
+    ]
+   },
+   {
+    "placeRepId": "10346921",
+    "fullName": "Boston, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1625/+1643",
+    "names": [
+     "Boston"
+    ]
+   }
+  ],
+  "804389": [
+   {
+    "placeRepId": "4577042",
+    "fullName": "Portsmouth, Rockingham, New Hampshire, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Portsmouth"
+    ]
+   },
+   {
+    "placeRepId": "4577041",
+    "fullName": "Portsmouth, Rockingham, New Hampshire, British Colonial America",
+    "dateRange": "+1769/+1776",
+    "names": [
+     "Portsmouth"
+    ]
+   },
+   {
+    "placeRepId": "10564259",
+    "fullName": "Portsmouth, New Hampshire, British Colonial America",
+    "dateRange": "+1679/+1769",
+    "names": [
+     "Portsmouth"
+    ]
+   },
+   {
+    "placeRepId": "10564260",
+    "fullName": "Portsmouth, Norfolk, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1653/+1679",
+    "names": [
+     "Portsmouth"
+    ]
+   },
+   {
+    "placeRepId": "10703570",
+    "fullName": "Strawbery Banke, Norfolk, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1643/+1653",
+    "names": [
+     "Strawbery Banke"
+    ]
+   },
+   {
+    "placeRepId": "10564261",
+    "fullName": "Strawbery Banke, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1630/+1643",
+    "names": [
+     "Strawbery Banke"
+    ]
+   },
+   {
+    "placeRepId": "10905207",
+    "fullName": "Piscataqua, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1628/+1630",
+    "names": [
+     "Piscataqua"
+    ]
+   }
+  ],
+  "904996": [
+   {
+    "placeRepId": "4608366",
+    "fullName": "Hamburg, Erie, New York, United States",
+    "dateRange": "+1821/",
+    "names": [
+     "Hamburg"
+    ]
+   }
+  ],
+  "1163625": [
+   {
+    "placeRepId": "4913847",
+    "fullName": "Whitehorse, Dewey, South Dakota, United States",
+    "dateRange": "+1905/",
+    "names": [
+     "Whitehorse"
+    ]
+   }
+  ],
+  "1171791": [
+   {
+    "placeRepId": "4897767",
+    "fullName": "Aberdeen, Brown, South Dakota, United States",
+    "dateRange": "+1889/",
+    "names": [
+     "Aberdeen"
+    ]
+   },
+   {
+    "placeRepId": "4897768",
+    "fullName": "Aberdeen, Brown, Dakota Territory, United States",
+    "dateRange": "+1879/+1889",
+    "names": [
+     "Aberdeen"
+    ]
+   }
+  ],
+  "1473395": [
+   {
+    "placeRepId": "5523544",
+    "fullName": "Hay River, Dunn, Wisconsin, United States",
+    "names": [
+     "Hay River"
+    ]
+   }
+  ],
+  "1542880": [
+   {
+    "placeRepId": "5494978",
+    "fullName": "Placentia, Orange, California, United States",
+    "dateRange": "+1893/",
+    "names": [
+     "Placentia"
+    ]
+   }
+  ],
+  "1927446": [
+   {
+    "placeRepId": "13565146",
+    "fullName": "Riga, Latvia, Soviet Union",
+    "dateRange": "+1940/+1990",
+    "names": [
+     "ריגע",
+     "Rige",
+     "Riika",
+     "Рига",
+     "Riga",
+     "Rīgõ",
+     "Ryga",
+     "Riga",
+     "Rīga",
+     "Ryga",
+     "ריגה",
+     "Riia"
+    ]
+   },
+   {
+    "placeRepId": "3052",
+    "fullName": "Riga, Latvia",
+    "dateRange": "+1931/",
+    "names": [
+     "ריגע",
+     "Riika",
+     "Рига",
+     "Riga",
+     "Rīgõ",
+     "Ryga",
+     "Riga",
+     "Rīga",
+     "Ryga",
+     "ריגה",
+     "Riia"
+    ]
+   },
+   {
+    "placeRepId": "11003061",
+    "fullName": "Riga, Riga, Latvia",
+    "dateRange": "+1918/+1931",
+    "names": [
+     "ריגע",
+     "Riika",
+     "Рига",
+     "Riga",
+     "Rīgõ",
+     "Ryga",
+     "Riga",
+     "Rīga",
+     "Ryga",
+     "ריגה",
+     "Riia"
+    ]
+   },
+   {
+    "placeRepId": "13565145",
+    "fullName": "Riga, Livonia, Russian Empire",
+    "dateRange": "+1721/+1918",
+    "names": [
+     "Riika",
+     "Рига",
+     "Riga",
+     "Ryga",
+     "Riga",
+     "Rīga",
+     "Riia",
+     "ריגע",
+     "Rige",
+     "Riga",
+     "Rīgõ",
+     "Ryga",
+     "ריגה"
+    ]
+   },
+   {
+    "placeRepId": "11003062",
+    "fullName": "Riga, Livonia, Sweden",
+    "dateRange": "+1713/+1721",
+    "names": [
+     "ריגע",
+     "Riika",
+     "Рига",
+     "Riga",
+     "Rīgõ",
+     "Ryga",
+     "Riga",
+     "Rīga",
+     "Ryga",
+     "ריגה",
+     "Riia"
+    ]
+   }
+  ],
+  "1928280": [
+   {
+    "placeRepId": "2406",
+    "fullName": "Tbilisi, Republic of Georgia",
+    "dateRange": "+1991/",
+    "names": [
+     "Тбилиси",
+     "თბილისი",
+     "Tbilisi"
+    ]
+   },
+   {
+    "placeRepId": "446493",
+    "fullName": "Tbilisi, Republic of Georgia, Soviet Union",
+    "dateRange": "+1921/+1991",
+    "names": [
+     "Тбилиси",
+     "თბილისი",
+     "Tbilisi"
+    ]
+   },
+   {
+    "placeRepId": "11015948",
+    "fullName": "Tiflis, Tiflis, Tiflis, Russian Empire",
+    "dateRange": "+1846/+1917",
+    "names": [
+     "Թիֆլիս",
+     "Тифлис",
+     "თბილისი",
+     "Tiflis",
+     "Tiflis",
+     "Tiflisa"
+    ]
+   }
+  ],
+  "1928661": [
+   {
+    "placeRepId": "2035",
+    "fullName": "Hamburg, Germany",
+    "dateRange": "+1871/",
+    "names": [
+     "Hamburg"
+    ]
+   },
+   {
+    "placeRepId": "10907849",
+    "fullName": "Hamburg",
+    "dateRange": "+1189/+1871",
+    "names": [
+     "Hamburg"
+    ]
+   }
+  ],
+  "1929439": [
+   {
+    "placeRepId": "5345",
+    "fullName": "Kyiv, Ukraine",
+    "dateRange": "+1991/",
+    "names": [
+     "Киев",
+     "Київ",
+     "Kyiv"
+    ]
+   },
+   {
+    "placeRepId": "12043673",
+    "fullName": "Kyiv, Ukraine, Soviet Union",
+    "dateRange": "+1922/+1991",
+    "names": [
+     "קיעוו",
+     "Kiew",
+     "Киев",
+     "Київ",
+     "Kyiv",
+     "Kijów",
+     "Kyyiv"
+    ]
+   },
+   {
+    "placeRepId": "11853155",
+    "fullName": "Kiev, Kiev, Kiev Governorate, Russian Empire",
+    "dateRange": "+1796/+1922",
+    "names": [
+     "Kiev",
+     "Киев",
+     "Київ"
+    ]
+   },
+   {
+    "placeRepId": "12879346",
+    "fullName": "Kiev, Kiev Uyezd, Kiev Viceroyalty, Russian Empire",
+    "dateRange": "+1781/+1796",
+    "names": [
+     "Київ",
+     "Kiev"
+    ]
+   },
+   {
+    "placeRepId": "11692585",
+    "fullName": "Kyiv, Kiev Governorate, Russian Empire",
+    "dateRange": "+1701/+1781",
+    "names": [
+     "Kyjev",
+     "קיעוו",
+     "Kiew",
+     "Киев",
+     "Київ",
+     "Kijevas",
+     "Kyiv",
+     "Kijeva",
+     "Kijów",
+     "Kyyiv"
+    ]
+   }
+  ],
+  "1929960": [
+   {
+    "placeRepId": "5809",
+    "fullName": "Prague, Czechia",
+    "dateRange": "+1993/",
+    "names": [
+     "Praha",
+     "Prag",
+     "Прага",
+     "Prague",
+     "Praga",
+     "Prague",
+     "Praga"
+    ]
+   },
+   {
+    "placeRepId": "5810",
+    "fullName": "Prague, Czechoslovakia",
+    "dateRange": "+1949/+1993",
+    "names": [
+     "Praha",
+     "Prag",
+     "Прага",
+     "Prague",
+     "Praga",
+     "Prague",
+     "Praga"
+    ]
+   },
+   {
+    "placeRepId": "10340717",
+    "fullName": "Prague, Bohemia, Czechoslovakia",
+    "dateRange": "+1918/+1949",
+    "names": [
+     "Praha",
+     "Prag",
+     "Прага",
+     "Prague",
+     "Praga",
+     "Prague",
+     "Praga"
+    ]
+   },
+   {
+    "placeRepId": "10336712",
+    "fullName": "Prague, Bohemia",
+    "dateRange": "+850/+1918",
+    "names": [
+     "Praha",
+     "Prag",
+     "Прага",
+     "Prague",
+     "Praga",
+     "Prague",
+     "Praga"
+    ]
+   }
+  ],
+  "1930476": [
+   {
+    "placeRepId": "4237",
+    "fullName": "Ljubljana, Slovenia",
+    "dateRange": "+1991/",
+    "names": [
+     "Ljubljana"
+    ]
+   },
+   {
+    "placeRepId": "449176",
+    "fullName": "Ljubljana, Slovenia, Yugoslavia",
+    "dateRange": "+1918/+1991",
+    "names": [
+     "Ljubljana"
+    ]
+   },
+   {
+    "placeRepId": "11874761",
+    "fullName": "Laibach, Carniola",
+    "dateRange": "/+1918",
+    "names": [
+     "Laibach",
+     "Ljubljana"
+    ]
+   }
+  ],
+  "1930709": [
+   {
+    "placeRepId": "449389",
+    "fullName": "Plymouth, Devon, England, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "Plymouth"
+    ]
+   },
+   {
+    "placeRepId": "10904644",
+    "fullName": "Plymouth, Devon, England",
+    "dateRange": "+1000/+1801",
+    "names": [
+     "Plymouth"
+    ]
+   }
+  ],
+  "1930711": [
+   {
+    "placeRepId": "449386",
+    "fullName": "Portsmouth, Hampshire, England, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "Portsmouth"
+    ]
+   },
+   {
+    "placeRepId": "10606160",
+    "fullName": "Portsmouth, Hampshire, England",
+    "dateRange": "+1180/+1801",
+    "names": [
+     "Portsmouth"
+    ]
+   }
+  ],
+  "1931100": [
+   {
+    "placeRepId": "4897",
+    "fullName": "Vilnius, Lithuania",
+    "dateRange": "+1990/",
+    "names": [
+     "Vilnius",
+     "Vilnius"
+    ]
+   },
+   {
+    "placeRepId": "12485638",
+    "fullName": "Wilno-Troki, Wilno, Poland",
+    "dateRange": "+1918/+1939",
+    "names": [
+     "Віленска-Троцкі",
+     "Vilniaus-Trakų apskritis",
+     "Wilno-Troki",
+     "Powiat wileńsko-trocki"
+    ]
+   },
+   {
+    "placeRepId": "11000250",
+    "fullName": "Vilna, Vilna, Russian Empire",
+    "dateRange": "+1795/+1918",
+    "names": [
+     "Виленский уезд",
+     "Vilenskiy Uyezd",
+     "Vilniaus apskritis",
+     "Vilna",
+     "wileński"
+    ]
+   },
+   {
+    "placeRepId": "12772010",
+    "fullName": "Vilnius, Vilnius, Grand Duchy of Lithuania",
+    "dateRange": "+1413/+1795",
+    "names": [
+     "Vilniaus apskritis",
+     "Vilnius",
+     "Powiat wileński"
+    ]
+   }
+  ],
+  "1932698": [
+   {
+    "placeRepId": "447573",
+    "fullName": "Vilnius, Vilnius, Lithuania",
+    "dateRange": "+1990/",
+    "names": [
+     "Вильнюс",
+     "Вільнюс",
+     "Vilnius",
+     "Vilnius",
+     "Vilnius",
+     "Wilno"
+    ]
+   },
+   {
+    "placeRepId": "11898221",
+    "fullName": "Vilnius, Lithuania, Soviet Union",
+    "dateRange": "+1940/+1990",
+    "names": [
+     "Вильнюс",
+     "Вільнюс",
+     "Vilnius",
+     "Vilnius",
+     "Viļņa",
+     "Wilno"
+    ]
+   },
+   {
+    "placeRepId": "10626580",
+    "fullName": "Wilno, Wilno, Poland",
+    "dateRange": "+1920/+1940",
+    "names": [
+     "Вильно",
+     "Vilʹno",
+     "Вільно",
+     "Vilnius",
+     "Wilno",
+     "Viļņa",
+     "Wilno"
+    ]
+   },
+   {
+    "placeRepId": "11000624",
+    "fullName": "Vilna, Vilna, Vilna, Russian Empire",
+    "dateRange": "+1795/+1920",
+    "names": [
+     "ווילנע",
+     "Wilna",
+     "Вильна",
+     "Vilʹna",
+     "Вільно",
+     "Vilnius",
+     "Vilna",
+     "Viļņa",
+     "Wilna"
+    ]
+   },
+   {
+    "placeRepId": "11859369",
+    "fullName": "Vilnius, Grand Duchy of Lithuania",
+    "dateRange": "/+1795",
+    "names": [
+     "Vilnius"
+    ]
+   }
+  ],
+  "1932739": [
+   {
+    "placeRepId": "13744315",
+    "fullName": "Kaunas, Lithuania, Soviet Union",
+    "dateRange": "+1950/+1990",
+    "names": [
+     "Kaunas"
+    ]
+   },
+   {
+    "placeRepId": "5954835",
+    "fullName": "Kaunas, Kaunas, Lithuania, Soviet Union",
+    "dateRange": "+1940/+1950",
+    "names": [
+     "קאוונע",
+     "Kaunas",
+     "Каўнас",
+     "Каунас",
+     "Kaunas",
+     "Kaunas",
+     "Kauņa",
+     "Kowno",
+     "קובנה"
+    ]
+   },
+   {
+    "placeRepId": "10954584",
+    "fullName": "Kaunas, Kaunas, Lithuania",
+    "dateRange": "+1918/",
+    "names": [
+     "קאוונע",
+     "Kaunas",
+     "Каўнас",
+     "Ковно",
+     "Kaunas",
+     "Kaunas",
+     "Kauņa",
+     "Kowno",
+     "קובנה"
+    ]
+   },
+   {
+    "placeRepId": "10954581",
+    "fullName": "Kovno, Kovno, Kovno, Russian Empire",
+    "dateRange": "+1842/+1918",
+    "names": [
+     "קאוונע",
+     "Kauen",
+     "Каўнас",
+     "Ковно",
+     "Kaunas",
+     "Kovno",
+     "Kauņa",
+     "Kowno",
+     "קובנה"
+    ]
+   },
+   {
+    "placeRepId": "12087400",
+    "fullName": "Kovno, Kovno, Vilna, Russian Empire",
+    "dateRange": "+1795/+1842",
+    "names": [
+     "קאוונע",
+     "Kaunas",
+     "Каўнас",
+     "Каунас",
+     "Kaunas",
+     "Kovno",
+     "Kauņa",
+     "Kowno",
+     "קובנה"
+    ]
+   },
+   {
+    "placeRepId": "13746789",
+    "fullName": "Kaunas, Grand Duchy of Lithuania",
+    "dateRange": "/+1795",
+    "names": [
+     "Kaunas",
+     "Kaunas"
+    ]
+   }
+  ],
+  "1939504": [
+   {
+    "placeRepId": "444160",
+    "fullName": "Bratislava, Slovakia",
+    "dateRange": "+1993/",
+    "names": [
+     "Bratislava"
+    ]
+   },
+   {
+    "placeRepId": "444159",
+    "fullName": "Bratislava, Czechoslovakia",
+    "dateRange": "+1918/+1993",
+    "names": [
+     "Pressburg",
+     "Bratislava",
+     "Pozsony"
+    ]
+   },
+   {
+    "placeRepId": "10735765",
+    "fullName": "Pozsony, Pozsony, Hungary",
+    "dateRange": "/+1918",
+    "names": [
+     "Pressburg",
+     "Prešporok",
+     "Pozsony"
+    ]
+   }
+  ],
+  "1941345": [
+   {
+    "placeRepId": "444892",
+    "fullName": "Brno-Venkov, Czechia",
+    "dateRange": "+1993/",
+    "names": [
+     "Brno-Venkov"
+    ]
+   },
+   {
+    "placeRepId": "444890",
+    "fullName": "Brno-Venkov, Czechoslovakia",
+    "dateRange": "+1918/+1992",
+    "names": [
+     "Brno-Venkov"
+    ]
+   },
+   {
+    "placeRepId": "12038005",
+    "fullName": "Brünn, Moravia",
+    "dateRange": "/+1918",
+    "names": [
+     "Brno",
+     "Brünn"
+    ]
+   }
+  ],
+  "1941346": [
+   {
+    "placeRepId": "444882",
+    "fullName": "Brno, Czechia",
+    "dateRange": "+1993/",
+    "names": [
+     "Brno",
+     "Brünn"
+    ]
+   },
+   {
+    "placeRepId": "444881",
+    "fullName": "Brno, Czechoslovakia",
+    "dateRange": "+1949/+1993",
+    "names": [
+     "Brno",
+     "Brünn"
+    ]
+   },
+   {
+    "placeRepId": "444880",
+    "fullName": "Brno, Moravia, Czechoslovakia",
+    "dateRange": "+1918/+1949",
+    "names": [
+     "Brno",
+     "Brünn"
+    ]
+   },
+   {
+    "placeRepId": "11082705",
+    "fullName": "Brünn, Moravia",
+    "dateRange": "/+1918",
+    "names": [
+     "Brno",
+     "Brünn"
+    ]
+   }
+  ],
+  "1949157": [
+   {
+    "placeRepId": "436367",
+    "fullName": "Helsinki, Uusimaa, Finland",
+    "dateRange": "+1550/",
+    "names": [
+     "העלסינקי",
+     "Helsinki",
+     "Хельсинки",
+     "Helsingfors",
+     "Helsinkis",
+     "Helsinki",
+     "Helsingi"
+    ]
+   }
+  ],
+  "1986327": [
+   {
+    "placeRepId": "24718",
+    "fullName": "London, England, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "Londýn",
+     "Лондон",
+     "London",
+     "Londres"
+    ]
+   },
+   {
+    "placeRepId": "10704704",
+    "fullName": "London, England",
+    "dateRange": "+927/+1801",
+    "names": [
+     "Londýn",
+     "Лондон",
+     "Londinium",
+     "London",
+     "Londres"
+    ]
+   }
+  ],
+  "3484497": [
+   {
+    "placeRepId": "11013326",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "dateRange": "+1974/",
+    "names": [
+     "Lancaster"
+    ]
+   },
+   {
+    "placeRepId": "1617160",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "dateRange": "+1801/+1974",
+    "names": [
+     "Lancaster"
+    ]
+   },
+   {
+    "placeRepId": "10605995",
+    "fullName": "Lancaster, Lancashire, England",
+    "dateRange": "+1100/+1801",
+    "names": [
+     "Lancaster"
+    ]
+   }
+  ],
+  "3487953": [
+   {
+    "placeRepId": "1610518",
+    "fullName": "Dover, Kent, England, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "Dover"
+    ]
+   },
+   {
+    "placeRepId": "10615705",
+    "fullName": "Dover, Kent, England",
+    "dateRange": "+1067/+1801",
+    "names": [
+     "Dover"
+    ]
+   }
+  ],
+  "3604224": [
+   {
+    "placeRepId": "152082",
+    "fullName": "Kutaisi, Imereti, Republic of Georgia",
+    "dateRange": "+1991/",
+    "names": [
+     "ქუთაისი",
+     "Kutaisi"
+    ]
+   },
+   {
+    "placeRepId": "1608903",
+    "fullName": "Kutaisi, Kutaisi, Republic of Georgia, Soviet Union",
+    "dateRange": "+1921/+1991",
+    "names": [
+     "ქუთაისი",
+     "Kutaisi"
+    ]
+   },
+   {
+    "placeRepId": "13100742",
+    "fullName": "Kutaisi, Kutaisi, Kutaisi, Russian Empire",
+    "dateRange": "/+1921",
+    "names": [
+     "Kutaisi"
+    ]
+   }
+  ],
+  "3795441": [
+   {
+    "placeRepId": "6743339",
+    "fullName": "Krainberg, Villach Land, Carinthia, Austria",
+    "names": [
+     "Krainberg"
+    ]
+   }
+  ],
+  "4425022": [
+   {
+    "placeRepId": "2179549",
+    "fullName": "Placentia, Newfoundland and Labrador, Canada",
+    "dateRange": "+1949/",
+    "names": [
+     "Placentia",
+     "Plaisance"
+    ]
+   },
+   {
+    "placeRepId": "12121699",
+    "fullName": "Placentia, Newfoundland",
+    "dateRange": "+1713/+1949",
+    "names": [
+     "Placentia"
+    ]
+   },
+   {
+    "placeRepId": "10933018",
+    "fullName": "Placentia, Terre-Neuve, New France",
+    "dateRange": "+1655/+1713",
+    "names": [
+     "Placentia",
+     "Plaisance"
+    ]
+   }
+  ],
+  "4426358": [
+   {
+    "placeRepId": "7212529",
+    "fullName": "Hay River, Fort Smith, Northwest Territories, Canada",
+    "dateRange": "+1868/",
+    "names": [
+     "Hay River"
+    ]
+   }
+  ],
+  "4426685": [
+   {
+    "placeRepId": "7211953",
+    "fullName": "Fort Smith, Fort Smith, Northwest Territories, Canada",
+    "dateRange": "+1874/",
+    "names": [
+     "Fort Smith"
+    ]
+   }
+  ],
+  "5059720": [
+   {
+    "placeRepId": "2242662",
+    "fullName": "Klaipeda, Klaipėda, Lithuania",
+    "dateRange": "+1990/",
+    "names": [
+     "Клайпеда",
+     "Klaipėda",
+     "Klaipeda"
+    ]
+   },
+   {
+    "placeRepId": "13033925",
+    "fullName": "Klaipėda, Lithuania, Soviet Union",
+    "dateRange": "+1950/+1990",
+    "names": [
+     "Клайпеда",
+     "Klaipėda"
+    ]
+   },
+   {
+    "placeRepId": "7345124",
+    "fullName": "Klaipėda, Lithuania",
+    "dateRange": "+1918/+1950",
+    "names": [
+     "Klaipėda"
+    ]
+   },
+   {
+    "placeRepId": "11946786",
+    "fullName": "Memel, Memel, East Prussia, Prussia, Germany",
+    "dateRange": "+1878/+1918",
+    "names": [
+     "Memel",
+     "Мемель",
+     "Klaipėda",
+     "Memel",
+     "Mēmele",
+     "Klaipeda"
+    ]
+   },
+   {
+    "placeRepId": "11946785",
+    "fullName": "Memel, Memel, Province of Prussia, Prussia",
+    "dateRange": "+1867/+1878",
+    "names": [
+     "Memel",
+     "Мемель",
+     "Klaipėda",
+     "Memel",
+     "Mēmele",
+     "Klaipeda"
+    ]
+   },
+   {
+    "placeRepId": "11946784",
+    "fullName": "Memel, Memel, Province of Prussia, Prussia",
+    "dateRange": "+1829/+1867",
+    "names": [
+     "Memel",
+     "Мемель",
+     "Klaipėda",
+     "Memel",
+     "Mēmele",
+     "Klaipeda"
+    ]
+   },
+   {
+    "placeRepId": "11946783",
+    "fullName": "Memel, Memel, East Prussia, Prussia",
+    "dateRange": "+1818/+1829",
+    "names": [
+     "Memel",
+     "Мемель",
+     "Klaipėda",
+     "Memel",
+     "Mēmele",
+     "Klaipeda"
+    ]
+   }
+  ],
+  "5059940": [
+   {
+    "placeRepId": "2242481",
+    "fullName": "Aberdeen, Scotland, United Kingdom",
+    "dateRange": "+1891/",
+    "names": [
+     "Aberdeen"
+    ]
+   },
+   {
+    "placeRepId": "10582388",
+    "fullName": "Aberdeen, Aberdeenshire, Scotland, United Kingdom",
+    "dateRange": "+1801/+1891",
+    "names": [
+     "Aberdeen"
+    ]
+   },
+   {
+    "placeRepId": "2242482",
+    "fullName": "Aberdeen, Aberdeenshire, Scotland",
+    "dateRange": "+1179/+1801",
+    "names": [
+     "Aberdeen"
+    ]
+   }
+  ],
+  "5060714": [
+   {
+    "placeRepId": "2241610",
+    "fullName": "Cluj-Napoca, Cluj, Romania",
+    "dateRange": "+1974/",
+    "names": [
+     "Klausenburg",
+     "Claudiopolis",
+     "Kolozsvár",
+     "Cluj-Napoca"
+    ]
+   },
+   {
+    "placeRepId": "2241612",
+    "fullName": "Cluj-Napoca, Transylvania, Romania",
+    "dateRange": "+1974/",
+    "names": [
+     "Klausenburg",
+     "Claudiopolis",
+     "Kolozsvár",
+     "Cluj-Napoca"
+    ]
+   },
+   {
+    "placeRepId": "2241609",
+    "fullName": "Cluj, Cluj, Romania",
+    "dateRange": "/+1974",
+    "names": [
+     "Klausenburg",
+     "Claudiopolis",
+     "Kolozsvár",
+     "Cluj"
+    ]
+   },
+   {
+    "placeRepId": "2241611",
+    "fullName": "Cluj, Transylvania, Romania",
+    "dateRange": "/+1974",
+    "names": [
+     "Klausenburg",
+     "Claudiopolis",
+     "Kolozsvár",
+     "Cluj"
+    ]
+   },
+   {
+    "placeRepId": "2241614",
+    "fullName": "Kolozsvár, Transylvania, Hungary",
+    "dateRange": "/+1974",
+    "names": [
+     "Klausenburg",
+     "Claudiopolis",
+     "Kolozsvár",
+     "Cluj"
+    ]
+   }
+  ],
+  "5060773": [
+   {
+    "placeRepId": "11792536",
+    "fullName": "Chernivtsi, Chernivtsi District, Chernivtsi, Ukraine",
+    "dateRange": "+2020/",
+    "names": [
+     "טשערנאָוויץ",
+     "Czernowitz",
+     "Черновцы",
+     "Чернівці",
+     "Chernivtsi",
+     "Czerniowce",
+     "Csernovic",
+     "Cernăuţi",
+     "Chernivtsi"
+    ]
+   },
+   {
+    "placeRepId": "7344554",
+    "fullName": "Chernivtsi, Chernivtsi, Ukraine",
+    "dateRange": "+1991/+2020",
+    "names": [
+     "טשערנאוויץ",
+     "Czernowitz",
+     "Черновцы",
+     "Чернівці",
+     "Chernivtsi",
+     "Czerniowce",
+     "Csernovic",
+     "Cernăuţi",
+     "Chernivtsi"
+    ]
+   },
+   {
+    "placeRepId": "9175738",
+    "fullName": "Chernivtsi, Chernivtsi, Ukraine, Soviet Union",
+    "dateRange": "+1944/+1991",
+    "names": [
+     "טשערנאוויץ",
+     "Czernowitz",
+     "Черновцы",
+     "Чернівці",
+     "Chernivtsi",
+     "Czerniowce",
+     "Csernovic",
+     "Cernăuţi",
+     "Chernivtsi"
+    ]
+   },
+   {
+    "placeRepId": "2241770",
+    "fullName": "Cernăuţi, Cernăuţi, Bukovina, Romania",
+    "dateRange": "+1918/+1944",
+    "names": [
+     "טשערנאוויץ",
+     "Czernowitz",
+     "Черновцы",
+     "Чернівці",
+     "Czerniowce",
+     "Csernovic",
+     "Cernăuţi",
+     "Chernivtsi"
+    ]
+   },
+   {
+    "placeRepId": "2241771",
+    "fullName": "Chernivtsi, Czernowitz District, Bukovina",
+    "dateRange": "+1774/+1918",
+    "names": [
+     "טשערנאוויץ",
+     "Czernowitz",
+     "Черновцы",
+     "Чернівці",
+     "Chernivtsi",
+     "Czerniowce",
+     "Csernovic",
+     "Cernăuţi"
+    ]
+   }
+  ],
+  "5060825": [
+   {
+    "placeRepId": "7344520",
+    "fullName": "Košice, Slovakia",
+    "dateRange": "+1993/",
+    "names": [
+     "Kaschau",
+     "Košice",
+     "Košice"
+    ]
+   },
+   {
+    "placeRepId": "7344517",
+    "fullName": "Košice, Košice-Mesto, Czechoslovakia",
+    "dateRange": "+1920/+1993",
+    "names": [
+     "Kaschau",
+     "Košice",
+     "Košice"
+    ]
+   },
+   {
+    "placeRepId": "2241756",
+    "fullName": "Kassa, Abaúj-Torna, Hungary",
+    "dateRange": "+1881/+1920",
+    "names": [
+     "Kaschau",
+     "Кошиці",
+     "Košice",
+     "Kassa",
+     "Kassa"
+    ]
+   },
+   {
+    "placeRepId": "2241755",
+    "fullName": "Kassa, Abaúj, Hungary",
+    "dateRange": "+1230/+1881",
+    "names": [
+     "Kaschau",
+     "Кошиці",
+     "Košice",
+     "Kassa",
+     "Kassa"
+    ]
+   }
+  ],
+  "5060994": [
+   {
+    "placeRepId": "2241574",
+    "fullName": "Whitehorse, Yukon, Canada",
+    "dateRange": "+1898/",
+    "names": [
+     "Whitehorse"
+    ]
+   }
+  ],
+  "5060997": [
+   {
+    "placeRepId": "2241580",
+    "fullName": "St. John's, Newfoundland and Labrador, Canada",
+    "dateRange": "+1949/",
+    "names": [
+     "St. John's"
+    ]
+   },
+   {
+    "placeRepId": "10936319",
+    "fullName": "St. John's, Newfoundland",
+    "dateRange": "+1510/+1949",
+    "names": [
+     "St. John's"
+    ]
+   }
+  ],
+  "6139646": [
+   {
+    "placeRepId": "2971374",
+    "fullName": "Boston, Lincolnshire, England, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "Boston"
+    ]
+   },
+   {
+    "placeRepId": "10602215",
+    "fullName": "Boston, Lincolnshire, England",
+    "dateRange": "+1200/+1801",
+    "names": [
+     "Boston"
+    ]
+   }
+  ],
+  "6158586": [
+   {
+    "placeRepId": "10578950",
+    "fullName": "Bangor, Caernarfonshire, Wales, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "Bangor"
+    ]
+   },
+   {
+    "placeRepId": "2962844",
+    "fullName": "Bangor, Caernarfonshire, Wales",
+    "dateRange": "/+1801",
+    "names": [
+     "Bangor"
+    ]
+   }
+  ],
+  "6272452": [
+   {
+    "placeRepId": "7786082",
+    "fullName": "Memel, East Prussia, Prussia, Germany",
+    "dateRange": "+1878/+1918",
+    "names": [
+     "Kreis Memel",
+     "Klaipėdos apskritis",
+     "Memel"
+    ]
+   },
+   {
+    "placeRepId": "11858641",
+    "fullName": "Memel, Province of Prussia, Prussia",
+    "dateRange": "+1829/+1878",
+    "names": [
+     "Kreis Memel",
+     "Klaipėdos apskritis",
+     "Memel"
+    ]
+   },
+   {
+    "placeRepId": "10899587",
+    "fullName": "Memel, East Prussia, Prussia",
+    "dateRange": "+1818/+1829",
+    "names": [
+     "Kreis Memel",
+     "Klaipėdos apskritis",
+     "Memel"
+    ]
+   }
+  ],
+  "6367612": [
+   {
+    "placeRepId": "8172704",
+    "fullName": "London Township, Middlesex, Ontario, Canada",
+    "dateRange": "+1867/+1998",
+    "names": [
+     "London Township"
+    ]
+   },
+   {
+    "placeRepId": "8172703",
+    "fullName": "London Township, Middlesex, Canada West, British North America",
+    "dateRange": "+1841/+1867",
+    "names": [
+     "London Township"
+    ]
+   },
+   {
+    "placeRepId": "8172702",
+    "fullName": "London Township, Middlesex, Upper Canada, British North America",
+    "dateRange": "+1798/+1841",
+    "names": [
+     "London Township"
+    ]
+   }
+  ],
+  "6396332": [
+   {
+    "placeRepId": "11834767",
+    "fullName": "Lviv, Lviv District, Lviv, Ukraine",
+    "dateRange": "+2020/",
+    "names": [
+     "Львов",
+     "Львів",
+     "Lviv",
+     "L'viv"
+    ]
+   },
+   {
+    "placeRepId": "3460490",
+    "fullName": "Lviv, Lviv, Ukraine",
+    "dateRange": "+1991/+2020",
+    "names": [
+     "Lemberg",
+     "Львов",
+     "Lviv",
+     "Lavov",
+     "Ilyvó",
+     "Lʹviv",
+     "לעמבערג",
+     "Leopolis",
+     "Львів",
+     "Lwów",
+     "לבוב",
+     "Liov",
+     "Lavov"
+    ]
+   },
+   {
+    "placeRepId": "8148005",
+    "fullName": "Lviv, Lviv, Ukraine, Soviet Union",
+    "dateRange": "+1945/+1991",
+    "names": [
+     "Lemberg",
+     "Львов",
+     "Lviv",
+     "Lavov",
+     "Ilyvó",
+     "Lʹviv",
+     "לעמבערג",
+     "Leopolis",
+     "Львів",
+     "Lwów",
+     "לבוב",
+     "Liov",
+     "Lavov"
+    ]
+   },
+   {
+    "placeRepId": "10337334",
+    "fullName": "Lviv, Lwów, Poland",
+    "dateRange": "+1918/+1945",
+    "names": [
+     "Lemberg",
+     "Львов",
+     "Lviv",
+     "Lavov",
+     "Ilyvó",
+     "Lʹviv",
+     "לעמבערג",
+     "Leopolis",
+     "Львів",
+     "Lwów",
+     "לבוב",
+     "Liov",
+     "Lavov"
+    ]
+   },
+   {
+    "placeRepId": "11576127",
+    "fullName": "Lʹviv, Bezirk Lemberg, Galicia",
+    "dateRange": "+1772/+1918",
+    "names": [
+     "Lemberg",
+     "Лемберг",
+     "Lavov",
+     "Lemberg",
+     "Ilyvó",
+     "Lʹviv",
+     "לעמבערג",
+     "Leopolis",
+     "Лемберг",
+     "Lwów",
+     "לבוב",
+     "Liov",
+     "Lavov"
+    ]
+   }
+  ],
+  "6396555": [
+   {
+    "placeRepId": "12470476",
+    "fullName": "Lwów, Lwów, Poland",
+    "dateRange": "+1918/+1939",
+    "names": [
+     "Львівський повіт",
+     "Lwów"
+    ]
+   },
+   {
+    "placeRepId": "3460721",
+    "fullName": "Bezirk Lemberg, Galicia",
+    "dateRange": "+1772/+1918",
+    "names": [
+     "Bezirk Lemberg",
+     "Львовский уезд",
+     "Львівський повіт",
+     "Powiat lwowski"
+    ]
+   },
+   {
+    "placeRepId": "12769615",
+    "fullName": "Lwów, Ruthenia, Poland",
+    "dateRange": "+1434/+1772",
+    "names": [
+     "Львов",
+     "Lwów",
+     "Lwów"
+    ]
+   }
+  ],
+  "6416213": [
+   {
+    "placeRepId": "3459917",
+    "fullName": "Kolozsvár, Kolozs, Hungary",
+    "dateRange": "/+1918",
+    "names": [
+     "Kolozsvár"
+    ]
+   }
+  ],
+  "8366020": [
+   {
+    "placeRepId": "3472038",
+    "fullName": "Placentia, Stann Creek, Belize",
+    "dateRange": "+1973/",
+    "names": [
+     "Placentia"
+    ]
+   },
+   {
+    "placeRepId": "13991782",
+    "fullName": "Placentia, Stann Creek, British Honduras",
+    "dateRange": "/+1973",
+    "names": [
+     "Placentia"
+    ]
+   }
+  ],
+  "9505220": [
+   {
+    "placeRepId": "10954577",
+    "fullName": "Kovno, Kovno, Russian Empire",
+    "dateRange": "+1842/+1918",
+    "names": [
+     "Ковенский уезд",
+     "Kauno apskritis",
+     "Kovno"
+    ]
+   },
+   {
+    "placeRepId": "10954580",
+    "fullName": "Kovno, Vilna, Russian Empire",
+    "dateRange": "+1795/+1842",
+    "names": [
+     "Ковенскі павет",
+     "Ковенский уезд",
+     "Kauno apskritis",
+     "Kovno",
+     "Powiat kowieński"
+    ]
+   }
+  ],
+  "10246109": [
+   {
+    "placeRepId": "11792531",
+    "fullName": "Chernivtsi District, Chernivtsi, Ukraine",
+    "dateRange": "+2020/",
+    "names": [
+     "Черновицкий район",
+     "Чернівецький район",
+     "Chernivtsi District"
+    ]
+   },
+   {
+    "placeRepId": "12645552",
+    "fullName": "Czernowitz District, Bukovina",
+    "dateRange": "+1775/+1918",
+    "names": [
+     "Bezirk Czernowitz",
+     "Черновецкий уезд",
+     "Чернівецький повіт",
+     "Czernowitz District",
+     "Czerniwci",
+     "Cernăuți"
     ]
    }
   ]

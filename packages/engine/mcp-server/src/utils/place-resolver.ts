@@ -563,7 +563,8 @@ const SEA_NAME = /\b(?:seas?|gulf)\b/i;
  * in today, keyed by `foldPlaceKey`, under that country: Brazil's own name,
  * which the country guard's alias table does not carry, and the historical
  * states matcher-lab m13's list builder counts inside one modern country (stage
- * S4, "historical states count inside their modern countries", `m13/final/fl.py`).
+ * S4, "historical states count inside their modern countries", `m13/final/fl.py`),
+ * and British Honduras, Belize's colonial name, which FamilySearch dates to 1973.
  * Left out of that map: England, Scotland and Wales (the United Kingdom, in
  * `countryOfPlace`); a state it puts in several modern countries (Prussia,
  * Czechoslovakia, the Soviet Union), which keeps its own name; and Burma and
@@ -574,6 +575,7 @@ const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
   Object.entries({
     Australia: ["christmas island"],
     Austria: ["carinthia", "styria"],
+    Belize: ["british honduras"],
     Brazil: ["brasil"],
     Canada: ["british north america", "newfoundland"],
     Chile: ["captaincy general of chile"],
@@ -615,21 +617,30 @@ const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
  * its English name ("México" is Mexico, "USA" the United States); and England,
  * Scotland, Wales and Northern Ireland are the United Kingdom ("Campbeltown,
  * Argyll, Scotland" is a United Kingdom record, as "…, Scotland, United
- * Kingdom" is). Null for a place with no segment, and for one that ends in no
+ * Kingdom" is). Any other last segment is its own name (`countryToday` maps
+ * none). Null for a place with no segment, and for one that ends in no
  * country: the World, a continent, an ocean or a sea.
  */
 export function countryOfPlace(place: string): string | null {
   const last = placeSegments(place).at(-1);
   if (last === undefined) return null;
+  const named = countryToday(last) ?? last;
+  return NOT_COUNTRIES.has(named.toLowerCase()) || SEA_NAME.test(named) ? null : named;
+}
+
+/** The country of today a place's last segment names, by `COUNTRY_TODAY` or the
+ *  alias table (`canonicalCountry`), England, Scotland, Wales and Northern
+ *  Ireland as the United Kingdom; null when neither knows it. */
+function countryToday(last: string): string | null {
   const known = canonicalCountry(last);
-  const named =
+  return (
     COUNTRY_TODAY.get(foldPlaceKey(last)) ??
     (known === null
-      ? last
+      ? null
       : UK_CONSTITUENTS.has(known)
         ? "United Kingdom"
-        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "));
-  return NOT_COUNTRIES.has(named.toLowerCase()) || SEA_NAME.test(named) ? null : named;
+        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "))
+  );
 }
 
 /**
@@ -777,6 +788,8 @@ const DIVISIONS: Record<string, string> = {
   alberta: "AB", newfoundland: "NL",
 };
 const DIVISION_CODES: ReadonlySet<string> = new Set(Object.values(DIVISIONS));
+/** The Canadian provinces' codes; every other division lies in the United States. */
+const CANADIAN_CODES: ReadonlySet<string> = new Set(["ON", "QC", "NS", "NB", "MB", "BC", "PE", "SK", "AB", "NL"]);
 
 /** The US state, Puerto Rico or Canadian province one part of a place names,
  *  by name ("Utah Territory", "Québec") or postal code ("QC"), else null. */
@@ -818,15 +831,30 @@ export function divisionContradiction(place: string, standardPlace: string): boo
   return named.some((code) => code !== null) && !named.includes(written);
 }
 
-/** The place text's last part names the US state, Puerto Rico, Canadian
- *  province (`textDivision`) or country (`countryConsistency`) the standard
- *  place lies in: "Balto., Md." ends with Maryland, where "Baltimore, Maryland,
- *  United States" lies; "at the home of her daughter" names no such place. */
+/** The place text's last part names the US state, Puerto Rico or Canadian
+ *  province (`textDivision`) the standard place lies in, or its country
+ *  (`countryConsistency`) when a part of the text that is no country names the
+ *  place or one of its jurisdictions, as `checkFirstPlace` compares names:
+ *  "Balto., Md." ends with Maryland, where "Baltimore, Maryland, United States"
+ *  lies, and "La Unión, Guerrero, Mexico" names Guerrero, where "La Unión de
+ *  Isidoro Montes de Oca, Guerrero, Mexico" lies. Lying in the text's country
+ *  is not enough: "Laibach, Krain, Austria" names no part of "Krainberg,
+ *  Villach Land, Carinthia, Austria" but Austria, and "at the home of her
+ *  daughter" no place at all. */
 export function endsWithItsJurisdiction(place: string, standardPlace: string): boolean {
   const written = textDivision(place);
   if (written !== null) return placeSegments(standardPlace).some((segment) => divisionOf(segment) === written);
-  return countryConsistency(place, standardPlace) === "ok";
+  if (countryConsistency(place, standardPlace) !== "ok") return false;
+  const parts = placeSegments(place).filter((part) => canonicalCountry(part) === null);
+  return placeSegments(standardPlace).some((segment) => parts.some((part) => sameName(part, segment)));
 }
+
+/** Countries the alias table carries that an old record names for an empire
+ *  whose lands lie in several countries today: the Russian Empire, the
+ *  Austrian Empire, the Kingdom of Hungary, and the German Empire with Prussia
+ *  ("Preussen"). "Helsingfors, Nyland, Russia" is Helsinki, Finland, and
+ *  "Lemberg, Galizien, Österreich" Lviv, Ukraine. */
+const EMPIRES: ReadonlySet<string> = new Set(["russia", "austria", "hungary", "germany"]);
 
 /**
  * The place text names a country, and FamilySearch puts `standard` in another:
@@ -834,28 +862,41 @@ export function endsWithItsJurisdiction(place: string, standardPlace: string): b
  * judged by the place's own jurisdiction chain ("Thornton, Lancashire, England"
  * is not "Thornton, Natal, South Africa"). The text's country is its last
  * part's, when the alias table knows it ("Rakousko" is Austria, "England" the
- * United Kingdom); else, when its last part is a US state or Canadian province
- * that `standard` does not name, the United States or Canada ("Worth, Illinois"
- * is not "Wœrth, Bas-Rhin, France"). The place's country is the root of its
- * chain, as `countryOfPlace` names it. The chain is read from FamilySearch only
- * when the two differ, for the root's dates: a root FamilySearch dates as
- * ended, a former state (Bohemia to 1918, Czechoslovakia to 1992), is not
- * judged, since its lands lie in today's countries, perhaps the text's
- * ("Svitavy, Moravská Třebová, Morava, Rakousko" keeps "Svitavy, Moravská
- * Třebová, Moravia, Czechoslovakia"). Nor is historic Ireland against Northern
- * Ireland, nor a chain that cannot be read.
+ * United Kingdom) and it is no empire (`EMPIRES`, not judged); else, when its
+ * last part is a US state or Canadian province that `standard` does not name,
+ * the one country that holds it ("Worth, Illinois" is not "Wœrth, Bas-Rhin,
+ * France", nor "Fort Smith, Sebastian, Arkansas" "Fort Smith, Fort Smith,
+ * Northwest Territories, Canada"). The place's country is the root of its
+ * chain, as `countryOfPlace` names it. A root FamilySearch dates as ended, a
+ * former state (Bohemia to 1918, Czechoslovakia to 1992), is not judged, since
+ * its lands lie in today's countries, perhaps the text's ("Svitavy, Moravská
+ * Třebová, Morava, Rakousko" keeps "Svitavy, Moravská Třebová, Moravia,
+ * Czechoslovakia"), unless the text's country is the United States or Canada
+ * and `countryToday` maps the root to a country of today, by which it is
+ * judged: "Boston, Suffolk, Massachusetts" is not "Boston, Lincolnshire,
+ * England" (England to 1801, the United Kingdom today). A root it does not map
+ * (British Colonial America, Czechoslovakia) is still not judged. Nor is
+ * historic Ireland against Northern Ireland, a bare "Georgia", the state (lead,
+ * 2026-08-27), against a place FamilySearch puts in the Republic of Georgia
+ * ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia"), nor a chain that
+ * cannot be read. The chain is read from FamilySearch only when the answer
+ * turns on the root's dates.
  */
 export async function countryContradiction(placeText: string, standard: FamilySearchPlace): Promise<boolean> {
   const segments = placeSegments(standard.fullName);
+  const textCountry = canonicalCountry(placeSegments(placeText).at(-1) ?? "");
+  const division = textCountry === null ? textDivision(placeText) : null;
   const named =
-    canonicalCountry(placeSegments(placeText).at(-1) ?? "") !== null
-      ? [countryOfPlace(placeText)]
-      : textDivision(placeText) !== null && !segments.some((s) => divisionOf(s) !== null)
-        ? ["United States", "Canada"]
-        : [];
+    textCountry !== null
+      ? EMPIRES.has(textCountry) ? null : countryOfPlace(placeText)
+      : division !== null && !segments.some((s) => divisionOf(s) !== null)
+        ? CANADIAN_CODES.has(division) ? "Canada" : "United States"
+        : null;
   const country = countryOfPlace(standard.fullName);
-  if (named.length === 0 || country === null || named.includes(country)) return false;
-  if (named[0] === "Ireland" && segments.some((s) => canonicalCountry(s) === "northern ireland")) return false;
+  if (named === null || country === null || named === country) return false;
+  if (named === "Ireland" && segments.some((s) => canonicalCountry(s) === "northern ireland")) return false;
+  if (division === "GA" && country === "Republic of Georgia" && segments.length > 1) return false;
+  if ((named === "United States" || named === "Canada") && countryToday(segments[segments.length - 1]) !== null) return true;
   const repId = standard.places.find((p) => p.placeRepId !== undefined)?.placeRepId;
   let root = repId === undefined ? null : await getRepInfo(repId);
   for (let up = 0; root?.parentRepId !== undefined && up < 12; up++) root = await getRepInfo(root.parentRepId);

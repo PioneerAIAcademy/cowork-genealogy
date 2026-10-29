@@ -270,12 +270,14 @@ describe("divisionContradiction — a US state, Puerto Rico or Canadian province
   });
 });
 
-describe("endsWithItsJurisdiction: the text ends with the state, province or country a standard place lies in", () => {
+describe("endsWithItsJurisdiction: the text ends with the state or province a standard place lies in, or with its country and names a part of it", () => {
   it.each([
     ["Balto., Md.", "Baltimore, Maryland, United States"],
     ["Cincinatti, Hamilton, Ohio, USA", "Cincinnati, Hamilton, Ohio, United States"],
     ["Seattle, Washington", "Washington, United States"],
     ["La Unión, Guerrero, Mexico", "La Unión de Isidoro Montes de Oca, Guerrero, Mexico"],
+    ["near Nueva Italia, Michoacán, Mexico", "Nueva Italia de Ruiz, Múgica, Michoacan, Mexico"],
+    ["St. Bartholomew, Wednesbury, Staffordshire, England", "Wednesbury, Staffordshire, England, United Kingdom"],
   ])("%j holds %j", (place, standard) => {
     expect(endsWithItsJurisdiction(place, standard)).toBe(true);
   });
@@ -285,6 +287,11 @@ describe("endsWithItsJurisdiction: the text ends with the state, province or cou
     ["Boght Reformed, Church", "Church, Hillsdale, Michigan, United States"],
     ["Houston, Ohio", "Houston, Harris, Texas, United States"],
     ["Paris, France", "Paris, Lamar, Texas, United States"],
+    // In the text's country, but in no jurisdiction the text names.
+    ["Laibach, Krain, Austria", "Krainberg, Villach Land, Carinthia, Austria"],
+    ["St Mary'S, Forfarshire (Angus), Scotland", "Forfar, Angus, Scotland, United Kingdom"],
+    // A jurisdiction the text names, in a country the text does not name.
+    ["Perth, Perthshire", "Perth, Perth, Ontario, Canada"],
   ])("%j does not hold %j", (place, standard) => {
     expect(endsWithItsJurisdiction(place, standard)).toBe(false);
   });
@@ -318,6 +325,7 @@ describe("countryOfPlace (a record's country from its own place)", () => {
     expect(countryOfPlace("Wallaceburg, Kent, Upper Canada, British North America")).toBe("Canada");
     expect(countryOfPlace("Honolulu, Oahu, Kingdom of Hawaii")).toBe("United States");
     expect(countryOfPlace("Dili, Portuguese Timor")).toBe("Timor-Leste");
+    expect(countryOfPlace("Placentia, Stann Creek, British Honduras")).toBe("Belize");
   });
 
   it("keeps the name of a historical state in several countries today, and reads only the last segment", () => {

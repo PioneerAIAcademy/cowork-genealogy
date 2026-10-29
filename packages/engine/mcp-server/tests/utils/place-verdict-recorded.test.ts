@@ -60,6 +60,28 @@ describe("a supplied standard_place must lie in the state, province and country 
     // A US state the value does not name puts the text in the United States.
     ["Worth, Illinois", "Wœrth, Bas-Rhin, France", "Worth, Cook, Illinois, United States"],
     ["Lancaster, Lancaster, Pennsylvania", "Lancaster, Lancashire, England, United Kingdom", "Lancaster, Lancaster, Pennsylvania, United States"],
+    // The United States alone, not Canada: these values name no province the
+    // division table knows.
+    ["Fort Smith, Sebastian, Arkansas", "Fort Smith, Fort Smith, Northwest Territories, Canada", "Fort Smith, Sebastian, Arkansas, United States"],
+    ["Whitehorse, Dewey, South Dakota", "Whitehorse, Yukon, Canada", "Whitehorse, Dewey, South Dakota, United States"],
+    ["Hay River, Dunn, Wisconsin", "Hay River, Fort Smith, Northwest Territories, Canada", "Hay River, Dunn, Wisconsin, United States"],
+    ["Placentia, Orange, California", "Placentia, Newfoundland and Labrador, Canada", "Placentia, Orange, California, United States"],
+    // Against the United States, a root FamilySearch ends is judged by the
+    // country of today it lies in: England, Wales and Scotland end in 1801 (the
+    // United Kingdom), Hamburg in 1871 (Germany), British Honduras in 1973 (Belize).
+    ["Boston, Suffolk, Massachusetts", "Boston, Lincolnshire, England", "Boston, Suffolk, Massachusetts, United States"],
+    ["Lancaster, Lancaster, Pennsylvania", "Lancaster, Lancashire, England", "Lancaster, Lancaster, Pennsylvania, United States"],
+    ["Plymouth, Plymouth, Massachusetts", "Plymouth, Devon, England", "Plymouth, Plymouth, Massachusetts, United States"],
+    ["Dover, Kent, Delaware", "Dover, Kent, England", "Dover, Kent, Delaware, United States"],
+    ["Portsmouth, Rockingham, New Hampshire", "Portsmouth, Hampshire, England", "Portsmouth, Rockingham, New Hampshire, United States"],
+    ["Bangor, Penobscot, Maine", "Bangor, Caernarfonshire, Wales", "Bangor, Penobscot, Maine, United States"],
+    ["Aberdeen, Brown, South Dakota", "Aberdeen, Aberdeenshire, Scotland", "Aberdeen, Brown, South Dakota, United States"],
+    ["Hamburg, Erie, New York", "Hamburg", "Hamburg, Erie, New York, United States"],
+    ["Hamburg, Erie, New York, United States", "Hamburg", "Hamburg, Erie, New York, United States"],
+    ["Placentia, Orange, California", "Placentia, Stann Creek, British Honduras", "Placentia, Orange, California, United States"],
+    // A bare Georgia is the state (lead, 2026-08-27): the country itself is not
+    // a place in it.
+    ["Savannah, Chatham, Georgia", "Republic of Georgia", "Savannah, Chatham, Georgia, United States"],
   ])("refuses %j's %j as in another country, and takes the lookup", async (place, supplied, lookup) => {
     expect(await keptSupplied(place, supplied)).toEqual({ why: "it lies in a different country than the place" });
     expect(await judged(place, supplied)).toEqual({
@@ -75,6 +97,23 @@ describe("a supplied standard_place must lie in the state, province and country 
     expect(await keptSupplied("March, Cambridgeshire, England", "March, Cape Province, South Africa")).toEqual({
       why: "it lies in a different country than the place",
     });
+  });
+
+  it("judges a root FamilySearch ends by its country of today against Canada too", async () => {
+    // England ends in 1801; Ontario is Canada's.
+    expect(await keptSupplied("London, Middlesex, Ontario", "London, England")).toEqual({
+      why: "it lies in a different country than the place",
+    });
+  });
+
+  it.each([
+    // Georgia's text, but another country than the Republic of Georgia.
+    ["Athens, Clarke, Georgia", "Athens, Athens, Attica, Greece"],
+    // Another state's text, or one that names the United States itself.
+    ["Tbilisi, Montana", "Tbilisi, Republic of Georgia"],
+    ["Tbilisi, Georgia, United States", "Tbilisi, Republic of Georgia"],
+  ])("still refuses %j's %j as in another country", async (place, supplied) => {
+    expect(await keptSupplied(place, supplied)).toEqual({ why: "it lies in a different country than the place" });
   });
 
   it("reads no country from a state or province the value names itself", async () => {
@@ -122,6 +161,31 @@ describe("a supplied standard_place must lie in the state, province and country 
     ["Bogotá, Santafé de Bogotá, Cundinamarca, Colombia", "Bogotá D. C., Cundinamarca, Colombia"],
     // Historic Ireland holds Northern Ireland.
     ["Armagh, Armagh, Ireland", "Armagh, Armagh, County Armagh, Northern Ireland, United Kingdom"],
+    // A root FamilySearch ends that no country of today is mapped to is not
+    // judged against the United States either.
+    ["Boston, Suffolk, Massachusetts", "Massachusetts Bay Colony, British Colonial America"],
+    // A Canadian province's text names Canada.
+    ["St. John's, Newfoundland", "St. John's, Newfoundland and Labrador, Canada"],
+    // An empire the text names held lands in today's countries.
+    ["Helsingfors, Nyland, Russia", "Helsinki, Uusimaa, Finland"],
+    ["Kovno, Kovno, Russia", "Kaunas, Kaunas, Lithuania"],
+    ["Vilna, Vilna, Russia", "Vilnius, Vilnius, Lithuania"],
+    ["Riga, Livland, Russia", "Riga, Latvia"],
+    ["Kiev, Kiev, Russia", "Kyiv, Ukraine"],
+    ["Lemberg, Galizien, Österreich", "Lviv, Lviv, Ukraine"],
+    ["Laibach, Krain, Austria", "Ljubljana, Slovenia"],
+    ["Prag, Böhmen, Österreich", "Prague, Czechia"],
+    ["Brünn, Mähren, Austria", "Brno, Czechia"],
+    ["Svitavy, Moravská Třebová, Morava, Rakousko", "Svitavy, Svitavy, Czechia"],
+    ["Czernowitz, Bukowina, Austria", "Chernivtsi, Chernivtsi, Ukraine"],
+    ["Pressburg, Pressburg, Hungary", "Bratislava, Slovakia"],
+    ["Kolozsvár, Kolozs, Hungary", "Cluj-Napoca, Cluj, Romania"],
+    ["Kaschau, Abaúj-Torna, Hungary", "Košice, Slovakia"],
+    ["Memel, Ostpreussen, Preussen", "Klaipeda, Klaipėda, Lithuania"],
+    // A bare Georgia is the state (lead, 2026-08-27), but no reason to refuse a
+    // place FamilySearch puts in the Republic of Georgia.
+    ["Tbilisi, Georgia", "Tbilisi, Republic of Georgia"],
+    ["Kutaisi, Imereti, Georgia", "Kutaisi, Imereti, Republic of Georgia"],
   ])("keeps %j's %j", async (place, supplied) => {
     expect(await keptSupplied(place, supplied)).toEqual({ kept: supplied });
     expect(await judged(place, supplied)).toEqual({ standardPlace: supplied });
@@ -147,13 +211,26 @@ describe("judgeSupplied: the lookup that stands in for a refused value", () => {
     });
   });
 
-  it("may lie in the country the text ends with in place of being named by it", async () => {
+  it("may lie in the text's country and in a jurisdiction it names in place of being named by it", async () => {
     expect(await judged("La Unión, Guerrero, Mexico", "La Unión, Guerrero, Mexico")).toEqual({
       standardPlace: "La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
       warning:
         "standard_place 'La Unión, Guerrero, Mexico' for 'La Unión, Guerrero, Mexico' was replaced by 'La Unión de " +
         "Isidoro Montes de Oca, Guerrero, Mexico', the engine's lookup: FamilySearch's place standard has no place of " +
         `that name. ${KEPT_WHEN}`,
+    });
+  });
+
+  it("may not stand in for a value merely by lying in the text's country", async () => {
+    // FamilySearch's search for the text finds Krainberg, in Carinthia, Austria;
+    // the text names Laibach in Krain.
+    expect(await judged("Laibach, Krain, Austria", "Lubljana, Slovenia")).toEqual({
+      standardPlace: null,
+      warning:
+        "standard_place 'Lubljana, Slovenia' for 'Laibach, Krain, Austria' was not kept: FamilySearch's place " +
+        "standard has no place of that name, and the engine has none for it: the engine's place lookup answer " +
+        "'Krainberg, Villach Land, Carinthia, Austria' does not fit it either: no part of the place text names that " +
+        `place. ${KEPT_WHEN}`,
     });
   });
 
