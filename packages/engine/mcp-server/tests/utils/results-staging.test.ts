@@ -12,6 +12,7 @@ import {
   resolveStagedRef,
   readStagedResults,
   readSidecarSearch,
+  checkStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -582,6 +583,25 @@ describe("resolveStagedRef", () => {
     await writeFile(join(dir, STAGING_SUBDIR, `${good}.json`), JSON.stringify({ payload: { results: [{ id: "R1" }] } }));
     expect(await readStagedResults(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual([{ id: "R1" }]);
     await expect(readStagedResults(dir, at("00000000-0000-4000-8000-000000000000"))).rejects.toThrow("does not exist");
+  });
+
+  // A '#' carries a full-text hit selector, which only sidecar_read reads (issue
+  // #3522). `<uuid>#1` is two edits from `<uuid>`, so without the guard it was
+  // silently read as the whole staged file.
+  it("never corrects a ref carrying a '#' hit selector, and the readers refuse it", async () => {
+    const good = "dbef78b1-1e5f-438a-ac1d-9bee233874f9";
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    await writeFile(
+      join(dir, STAGING_SUBDIR, `${good}.json`),
+      JSON.stringify({ tool: "fulltext_search", payload: { results: [{ id: "R1" }] } }),
+    );
+    for (const withHit of [`${STAGING_SUBDIR}/${good}#1`, `${at(good)}#R1`]) {
+      expect(await resolveStagedRef(dir, withHit)).toEqual({ ref: withHit });
+      await expect(readStagedResults(dir, withHit)).rejects.toThrow(/hit selector.*sidecar_read/);
+      await expect(
+        checkStagedResults({ projectPath: dir, stagedResultsRef: withHit, expectedTool: "fulltext_search" }),
+      ).rejects.toThrow(/hit selector.*sidecar_read/);
+    }
   });
 });
 
