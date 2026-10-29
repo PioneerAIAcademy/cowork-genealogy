@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 56 tools.
+The MCP server exposes 57 tools.
 
 ### FamilySearch records and places
 
@@ -69,7 +69,7 @@ way project state changes.
 | `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being. Given a `personId`, it reads the person from FamilySearch, builds the starting tree, writes the house profile and the transcribed memories, and returns a short summary | FamilySearch (with `personId`); none otherwise |
 | `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
-| `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/`, a text upload under `uploads/`, or a staged transcription under `results/` — one file, or several at once by `refs`. Refuses a staged search result, images, `research.json` and the tree with a pointer to the tool that serves each | None |
+| `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/`, a text upload under `uploads/`, a staged transcription under `results/`, or one full-text hit's transcript by `results/<file>#<hit id>` (`#hits` lists the hits) — one file, or several at once by `refs`. Refuses any other search or record result, images, `research.json` and the tree with a pointer to the tool that serves each | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
 | `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. BOTH hosted planes end the turn on this tool's name via a `PreToolUse` hook, the prototype worker and the hosted alpha; in Cowork and e2e no such hook binds, so it returns a harmless acknowledgement and the run carries on | None |
 | `extraction_append` | Extracts records in code: FamilySearch records by `recordIds` (read, logged and classified from the extraction table), any other source as a structured document from the `record-structurer` agent, a nil search as negative evidence by `absences`, and, by `personId`, every indexed record FamilySearch has attached to one tree person, each linked to that person as an unverified candidate. Classifications are set here and are final | None |
@@ -97,6 +97,7 @@ way project state changes.
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter). Requires `projectPath`: the page is staged and the tool returns `staged.resultsRef`, a `digest` and `found`, not the text — read it with `sidecar_read`, extract it by handing the ref to `record-structurer`. No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. | OpenRouter (+ OAuth for imageId/ark) |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
+| `tree_query` | Read-only filtered read of tree.gedcomx.json (persons with names, facts, ark; Couple and ParentChild edges with facts; cited sources with authors) — what agents call instead of opening the tree file | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
 | `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's projects (objective, subjects, status) and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |

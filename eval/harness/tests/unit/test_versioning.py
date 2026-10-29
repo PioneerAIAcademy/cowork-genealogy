@@ -1,5 +1,6 @@
 """Tests for harness.versioning — filename classification + next-version logic."""
 
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,8 @@ from harness.versioning import (
     classify,
     classify_ann,
     is_releasable_invocation,
+    landed_order,
+    latest_full_skill_runlog,
     newest_full_skill_runlog,
     next_filename_for,
     prunable_candidates,
@@ -321,3 +324,84 @@ def test_newest_ignores_scratch_annotations_and_other_files():
     }
     assert _newest(logs) == "v1.json"
     assert _newest({"README.md": {}}) is None
+
+
+# ---- landing order ------------------------------------------------------------
+#
+# Two PRs that run one suite can merge in the opposite order to the one they ran in
+# (timeline, 2026-10-29: #4017's re-run `v1_..._16-30-05` merged after #3812's
+# `v1_..._19-24-55`). The log that merged last is the one CI checked against the
+# tree that followed, so it is the latest.
+
+RAN_FIRST = "v1_2026-10-23_16-30-05.json"
+RAN_LAST = "v1_2026-10-23_19-24-55.json"
+
+
+def _git(repo: Path, *args: str) -> None:
+    subprocess.run(
+        ["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+        cwd=repo, check=True, capture_output=True, text=True, encoding="utf-8",
+    )
+
+
+def _commit_log(repo: Path, name: str) -> None:
+    (repo / "logs" / name).write_text("{}", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", name)
+
+
+@pytest.fixture
+def repo(tmp_path):
+    (tmp_path / "logs").mkdir()
+    _git(tmp_path, "init", "-q", "-b", "main")
+    _commit_log(tmp_path, ".gitkeep")
+    return tmp_path
+
+
+def test_the_log_that_landed_last_wins_over_the_one_that_ran_last(repo):
+    _commit_log(repo, RAN_LAST)
+    _commit_log(repo, RAN_FIRST)
+    logs = repo / "logs"
+    assert latest_full_skill_runlog(logs)[0] == RAN_LAST
+    assert latest_full_skill_runlog(logs, "main")[0] == RAN_FIRST
+
+
+def test_a_merged_branch_lands_at_its_merge_commit(repo):
+    """First-parent: the branch's own commit predates main's, but its log reached
+    main when the branch merged."""
+    _git(repo, "checkout", "-q", "-b", "pr")
+    _commit_log(repo, RAN_FIRST)
+    _git(repo, "checkout", "-q", "main")
+    _commit_log(repo, RAN_LAST)
+    _git(repo, "merge", "-q", "--no-ff", "-m", "merge pr", "pr")
+    assert latest_full_skill_runlog(repo / "logs", "main")[0] == RAN_FIRST
+
+
+def test_a_log_the_ref_never_added_is_newer_than_every_landed_one(repo):
+    """A log a PR adds is not on the base yet; it lands last when the PR merges."""
+    _commit_log(repo, RAN_LAST)
+    (repo / "logs" / RAN_FIRST).write_text("{}", encoding="utf-8")
+    assert latest_full_skill_runlog(repo / "logs", "main")[0] == RAN_FIRST
+
+
+def test_a_log_promoted_by_rename_lands_at_the_rename(repo):
+    _commit_log(repo, "v2_2026-10-01_00-00-00.json")
+    _commit_log(repo, "v2_2026-10-05_00-00-00.json")
+    _git(repo, "mv", "logs/v2_2026-10-01_00-00-00.json", "logs/v2.json")
+    _git(repo, "commit", "-m", "release")
+    assert landed_order(repo / "logs", "main")["v2.json"] == 4
+    assert latest_full_skill_runlog(repo / "logs", "main")[0] == "v2.json"
+
+
+def test_no_git_answer_falls_back_to_run_time(tmp_path):
+    for name in (RAN_FIRST, RAN_LAST):
+        (tmp_path / name).write_text("{}", encoding="utf-8")
+    assert landed_order(tmp_path, "main") is None
+    assert latest_full_skill_runlog(tmp_path, "main")[0] == RAN_LAST
+
+
+def test_an_unknown_ref_falls_back_to_run_time(repo):
+    _commit_log(repo, RAN_LAST)
+    _commit_log(repo, RAN_FIRST)
+    assert landed_order(repo / "logs", "no-such-ref") is None
+    assert latest_full_skill_runlog(repo / "logs", "no-such-ref")[0] == RAN_LAST

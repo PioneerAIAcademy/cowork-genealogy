@@ -42,6 +42,7 @@ const EXEMPT: Array<{ file: string; enumName: string; why: string }> = [
   { file: "record-search.ts", enumName: "gender", why: "FamilySearch search-API `sex` qualifier, owned upstream" },
   { file: "person-search.ts", enumName: "gender", why: "FamilySearch search-API `sex` qualifier, owned upstream" },
   { file: "record-search.ts", enumName: "registration_event", why: "FamilySearch upstream record types in PLAN_RECORD_TYPE_ALIASES; the overlap with the registration enum is coincidence" },
+  { file: "research-append.ts", enumName: "registration_event", why: "RECORD_TYPE_TERMS search vocabulary for the vital/vital_record record types (birth/death/marriage); the overlap with the registration enum is coincidence, not a re-typing of it" },
 ];
 
 function closedEnums(): Map<string, Set<string>> {

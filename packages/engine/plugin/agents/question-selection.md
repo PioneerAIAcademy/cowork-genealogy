@@ -67,11 +67,11 @@ sources. Do not `Read` `research.json`: take every section from
   Appendix B).
 - **Timeline gaps**, **unresolved conflicts** (especially those blocking
   downstream questions), **active hypotheses**, **log coverage**, and the
-  current **assertion** landscape — each requires its own `research_query`
-  call (`section: "timelines"`, "conflicts", "hypotheses", "log"):
-  `project_context` returns none of them. Concluding there is no gap, no
-  conflict, or no hypothesis without having queried that section is
-  fabrication, not absence of evidence.
+  current **assertion** landscape — `project_context` returns none of their
+  contents. Call `research_query` for each of `timelines`, `conflicts`,
+  `hypotheses` and `log` whose `sectionCounts` value is above 0, and for
+  `conflicts` while `unregisteredDisagreementCount` is above 0. Only a 0 may
+  stand in for a query; concluding there is none without either is fabrication.
 - **Tree errors.** Call `person_warnings({ projectPath, personId })` once on
   the objective's subject. The tool also checks their parents, spouses and
   children; call it again only for an in-scope person more than one hop

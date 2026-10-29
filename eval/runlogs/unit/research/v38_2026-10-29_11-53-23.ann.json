@@ -1,9 +1,9 @@
 {
-  "run_log": "v36_2026-10-27_08-27-02.json",
+  "run_log": "v38_2026-10-29_11-53-23.json",
   "annotator": "Francisbucci2@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_s59",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_s59",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_s59",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,17 +27,97 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "corrected_score": 3,
+      "comment": "Routing to question-selection to register the question before searching is what the router's rules require when no question exists yet."
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -48,18 +128,10 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "judge is correct"
+      "comment": "Agree. It stated no record names the mother, but that isn't backed by the tool results it read."
     },
     {
-      "test_id": "ut_research_s7e",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_s7e",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_s7e",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -75,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_si3",
+      "test_id": "ut_research_l4g",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -83,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_si3",
+      "test_id": "ut_research_l4g",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,55 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_si3",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rs5",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rs5",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rs5",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rx4",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rx4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rx4",
+      "test_id": "ut_research_l4g",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -152,15 +176,15 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "judge is correct"
+      "comment": "Agree. It treated the parents named in the 1861 record as the Burton-household Robert's parents without that identity being established."
     },
     {
       "test_id": "ut_research_gm4",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_gm4",
