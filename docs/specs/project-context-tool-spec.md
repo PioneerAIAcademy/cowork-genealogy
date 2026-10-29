@@ -107,6 +107,11 @@ repo's identifier-casing rule):
     planItemId: string | null,
     performed: string | null,
   }],
+  exhaustedImageGroups: [{               // films whose browse cap is spent — §2.5
+    imageGroup: string,                  // film number, e.g. "008230326"
+    imagesRead: number,                  // distinct images counted, >= 20
+    planItemIds: string[],               // open plan items with an image_search log entry on it
+  }],
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
@@ -188,10 +193,76 @@ exists and gates nothing. A superseded verdict does not count — a
 replacement is itself present and satisfies the join; if nothing replaced it, the
 critique no longer stands.
 
-`nextStep` orders by what blocks what: an unresolved conflict outranks a question
+`nextStep` orders by what blocks what: **an unsettled conflict that has weighed
+everything** outranks **a conflict that wants evidence already planned**, which
+outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
-outranks competing parent sets, which outrank a missing resolve, which outranks a
-missing summary. A missing critique is never a next step.
+outranks competing parent sets, which outrank **the researcher's choice**, which
+outranks a missing resolve, which outranks a missing summary. A missing critique
+is never a next step.
+
+**An unsettled conflict that has weighed everything ends the research** (step
+mode, section E; decision 12). When every open conflict carries an
+`independence_analysis` and a `weighed_log_entry_ids` covering every log entry
+the question owns (the same coverage set as the researcher's choice below), and
+no `planned` or `in_progress` item is left (one waiting only on an upload aside),
+`nextStep` is `proof-conclusion — unsettled conflict …`: re-running
+conflict-resolution there would weigh the same evidence again. Once the question
+has a `not_proved` summary with `shortfall: "conflict"`, `nextStep` is null — the
+research ended on the conflict. One log entry the weighed list does not cover is
+new evidence and routes back to conflict-resolution.
+
+**A conflict that wants evidence already planned routes to the search** (step
+mode, section E). conflict-resolution sends a conflict needing new evidence to
+research-plan, which writes plan items on the SAME question rather than opening
+a helper one; hypothesis-tracking, timeline and proof-conclusion gain the same
+route in their own PRs.
+
+**Nothing acts on this rung until the router follows `nextStep`.** The field is
+advisory, and the router's conflict row still sends any conflict straight to
+conflict-resolution until step mode's PR 2 lands. Until then this rung and the
+router disagree, which `make e2e-routing-agreement` counts. When every open conflict carries an `independence_analysis` and
+the question's active plan still has an open item (one waiting only on an
+upload aside), `nextStep` names that item's search — `search-records`, or
+`search-external-sites — <pli> (<repo>)` when its repository is not
+FamilySearch. Without this rung the conflict rung below fires on every pass and
+the items those agents just asked for never run.
+
+`independence_analysis` is the marker because conflict-resolution fills it on
+every analysis, resolved or not — non-blank, so a whitespace value is not an
+analysis. A conflict not yet analysed still goes to conflict-resolution first,
+even beside an analysed one. Once the items close, the rung above decides
+whether anything is left to weigh.
+
+**It reads neither the conflict's type nor which item was planned for it.** An
+identity conflict routes to the search like any other, and any open item on the
+active plan satisfies it, not only one planned for the conflict. Both are
+deliberate: the rung's job is to stop the conflict rung firing while work is
+outstanding, not to choose the work. A record found by an item still open and
+not yet extracted outranks the search — re-running the search that found it
+would find it again. An uncited entry on a closed item does not: inconclusive
+`partial`s and link lists stay uncited for good, and `extraction_append` cites
+the read, not the search that found the record. An item waiting only on the
+researcher's upload is skipped, as it is everywhere else in this ladder.
+
+**The researcher's choice is the one rung that names no step** (step mode,
+section B). When a question's search stopped on `resources_spent`, it has no
+proof summary, no `planned` or `in_progress` item is left on its active plan,
+and every log entry the question owns is listed in `search_stop.log_entry_ids`,
+`nextStep` reads `researcher's choice: research-plan or proof-conclusion
+(default …)`. The search ran out of budget rather than out of sources, so
+searching on and concluding are both defensible and the document cannot settle
+which — the default comes from the stop's own `justification`: "Overturn risk:
+low" means conclude; "Overturn risk: high — <sources>" means plan, since it names
+a source that could change the answer; and an older stop that wrote free prose
+means plan too.
+
+"Every log entry the question owns" is wider than the `plan_item_id` filter used
+everywhere else in this ladder: it is the entries on the question's plan items
+**plus** each later entry that closes one of their external-site hand-offs,
+matched by URL. A researcher's upload carries no `plan_item_id`, so under the
+plain filter it could never undo a choice the stop predates, and the question
+would sit at the choice for good.
 
 **Evidence nobody has linked to a person routes to person-evidence.** When a
 question has assertions extracted for it, none of them carries a live
@@ -217,7 +288,9 @@ scenario questions. The only `research` routing test among those scenarios is
 assertion cites by `log_entry_id` reports extraction. An external-site entry whose
 capture has not come back does not count, because it is an open hand-off. Otherwise
 the lowest-sequence `planned` or `in_progress` item on a plan that is still active
-decides. A repository naming FamilySearch, or none at all, reports `search-records`.
+decides, skipping any item that waits only on the researcher's upload — the same
+skip the rest of this ladder applies, so a question whose only open item is waiting
+names no search. A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
@@ -396,6 +469,34 @@ its values can sum past `total`. Places and record types are sorted. The field i
 absent when no list is stored, and also when the file cannot be read: a broken
 cache file must never fail the whole projection.
 
+### 2.5 `exhaustedImageGroups` — films whose browse cap is spent
+
+The image cap (`image-transcribe-tool-spec.md` §5.8) allows 20 distinct images per
+film per project, and nothing resets it. A cap refusal only reaches the agent that
+hit it, so a router that re-spawns `search-images` for the same plan item pays for
+an agent that is refused on its first page (2 of 4 browse spawns in one hosted
+session of 2026-10-14). This field lets the router see the spent film before it spawns.
+
+Computed at read time from `results/image-browse.jsonl`, the cap's own log
+(`exhaustedImageGroups` in `src/utils/browse-budget.ts`, which shares its line
+parser with the cap check): every film with at least 20 distinct `image_id`s, sorted
+by film. Nothing is persisted. `planItemIds` are the distinct `plan_item_id`s of
+`research.json` `log` entries with `tool: "image_search"` whose
+`query.imageGroupNumber` belongs to that film (its part before the first `_`), so
+the router can match the plan item it is about to delegate (plan items carry no
+image group). Only `image_search` entries count: that is the tool `search-images`
+logs a browse under, and a `fulltext_search` entry scoped to the same film is not a
+browse. Only items still `planned` or `in_progress` on an `active` plan are listed:
+once `research-plan` disposes of an item it drops off, so the router does not send it
+back on the next pass; the film itself stays listed while its cap is spent. `[]` when
+no film is spent, and when the log is absent or unreadable — like
+the cap itself, the field never fails a call. Reads that named no project are
+counted in memory only and are not visible here.
+
+The description tells the router never to delegate a browse of a listed film and to
+send its `planItemIds` to `research-plan` to dispose of (lead, 2026-10-28); the
+`research` router's `search-images` row says the same.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -495,6 +596,13 @@ untouched.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
+- **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
+  items of its `image_search` entries, across sub-volumes of the film, and not those
+  of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn
+  log line is skipped; a spent film with no `image_search` entry lists with
+  `planItemIds: []`; an empty project gives `[]`; a `completed` or `skipped` item,
+  and an item on a `superseded` plan, drop off while `planned` and `in_progress`
+  items on the active plan stay.
 
 ## 6. Consumers / wiring
 

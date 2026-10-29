@@ -25,6 +25,8 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
+import importlib.util
+import json
 import re
 import sys
 import time
@@ -61,6 +63,24 @@ from harness.delegation import foreground_rewrite
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
+
+
+_STEP_BOUNDARY = (
+    Path(__file__).resolve().parents[3]
+    / "packages" / "engine" / "plugin" / "hooks" / "step_boundary.py"
+)
+
+
+def load_step_boundary():
+    """The plugin's step boundary, loaded as a library -- the same file the worker and
+    the e2e orchestrator load, so the three planes cannot drift apart. Mirrors how
+    `context_policy.py` loads `guard_project_files.py`."""
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", _STEP_BOUNDARY)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {_STEP_BOUNDARY}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 # v1 permissive allowlist + disallow-tool backstop (per the user's tightening).
@@ -227,7 +247,8 @@ BUILTIN_ARG_TRUNCATE = 200
 #
 # The direct-agent arm (#2246) also reads this field: its verbatim assertion
 # `test_direct_delegation_relayed_verbatim` compares the recorded prompt against
-# the test's `input.delegation`, so a cut here is a false red on a run that
+# the test's `input.delegation` (with `<workspace>` replaced by the run's
+# folder), so a cut here is a false red on a run that
 # relayed perfectly.
 _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 
@@ -874,6 +895,10 @@ class SkillRunResult:
     # derives `spawned_agents` and `spawn_prompts` from those records, and two
     # gating universal validators read them, so this field now decides outcomes.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # A direct test's delegation as the main thread was handed it, with
+    # `<workspace>` replaced by the run's folder; None on a routed test. The
+    # verbatim-relay validator and the judge read this, not the raw test text.
+    delegation_sent: str | None = None
     # What each spawned subagent RETURNED, as {"subagent_type", "text"}, in call
     # order. Empty when the agent under test returned nothing. A ROUTED run
     # CAN spawn agents (`ut_timeline_008` spawns `record-extractor`), so a
@@ -932,6 +957,7 @@ async def run_skill(
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
     tool_search: bool = True,
+    step_mode: str | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -988,6 +1014,28 @@ async def run_skill(
     # (non-aborted) termination.
     routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
+    # The step boundary (decision 25), OPT-IN per test via `execution.step_mode`.
+    #
+    # None means no gate, which is every test in the corpus today: PR 1 ships the
+    # mechanism, and a test opts in by declaring the mode its turn runs under. Enforcing
+    # by default would change what every existing test measures, and the only place that
+    # would show is a paid run -- so the default is the one that cannot surprise anyone.
+    #
+    # `ctx` is read from the workspace's own research.json, lazily, as the worker reads
+    # it: research-plan is gated on it in `step` (after research-exhaustiveness) and in
+    # `wrapup` (dispose, the order's first member), so without it a `wrapup` test could
+    # never dispose. A workspace with no research.json reads as no open items.
+    _step_gate = None
+    if step_mode:
+        _boundary = load_step_boundary()
+
+        def _step_ctx() -> dict:
+            path = workspace / "research.json"
+            data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+            return _boundary.step_ctx(data if isinstance(data, dict) else {})
+
+        _step_gate = _boundary.StepGate(boundary=_boundary, mode=step_mode, ctx=_step_ctx)
+
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
     # the negative-test short-circuit above: that one DENIES AND STOPS, because
     # a negative test's verdict is sealed the moment routing happens. A positive
@@ -1077,6 +1125,33 @@ async def run_skill(
         # Telemetry only — never gates, denies, or counts toward any limit.
         if (builtin_record := builtin_call_record(tool_name, input_data)):
             builtin_tool_calls.append(builtin_record)
+        # The step boundary, BEFORE the stubs: a stub's canned reply must never
+        # replace a step denial, or the test would record the hand-off as taken.
+        # Only when the test declared a mode; otherwise `_step_gate` is None and this
+        # is inert, which is every test in the corpus today.
+        if _step_gate is not None:
+            try:
+                _verdict = _step_gate.check(
+                    tool_name, input_data.get("tool_input") or {},
+                    subagent=bool(input_data.get("agent_id")),
+                )
+            except Exception:  # noqa: BLE001 - a hook that raises fails a call the test was entitled to make
+                _verdict = None
+            if _verdict is not None:
+                _step_decision, _step_reason = _verdict
+                out = {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": _step_reason,
+                    }
+                }
+                # The halt is the backstop: a second crossing ends the run, as the
+                # worker's does, so a test cannot measure a turn that ran past it.
+                if _step_decision == "halt":
+                    out["continue_"] = False
+                    out["stopReason"] = _step_reason
+                return out
         # Track skill invocations so we can populate skills_invoked.
         if tool_name == "Skill":
             tool_input = input_data.get("tool_input", {}) or {}

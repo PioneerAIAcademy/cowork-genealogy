@@ -66,6 +66,24 @@ export function collectionKey(url: string): string {
   return url;
 }
 
+/** Whether a url names one specific collection (an Ancestry collection id or a
+ *  MyHeritage collection page), as opposed to a site's or an archive's own search. */
+export function namesCollection(url: string): boolean {
+  return (ANCESTRY_ID.test(url) && /ancestry\./i.test(url)) || MYHERITAGE_COLLECTION.test(url);
+}
+
+/** Every stored row's `collectionKey`, across all places: a collection is checked
+ *  against the whole file, so no free-text place has to be matched to a stored one. */
+export function storedCollectionKeys(doc: ExternalCollectionsDoc | null): Set<string> {
+  const keys = new Set<string>();
+  for (const entry of Object.values(doc?.places ?? {})) {
+    for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
+      if (typeof row?.url === "string") keys.add(collectionKey(row.url));
+    }
+  }
+  return keys;
+}
+
 /** Code-unit order: `localeCompare` would make the stored bytes depend on the host's locale. */
 function cmp(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;

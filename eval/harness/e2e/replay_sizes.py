@@ -100,7 +100,7 @@ NO_PROJECT = '"reason":"no_project"'
 #: Errors that mean the reconstructed state lacks something the call needed.
 _STATE_ERROR = re.compile(r"not found in|missing or not an array|is not valid JSON|Person '[^']*' not found")
 #: Errors that mean the recorded *arguments* are now rejected.
-_ARG_ERROR = re.compile(r"is not one of|is not a supported filter|is required|must be|expected .* got|Invalid|has no parameter|takes no parameters")
+_ARG_ERROR = re.compile(r"is not one of|is not a supported filter|is required|must be|expected .* got|Invalid|has no parameter|takes no parameters|Nothing was run: an argument the tool does not take")
 NET_BLOCKED = "replay-sizes: network blocked"
 NET_GUARD = f"data:text/javascript,globalThis.fetch=()=>{{throw new Error('{NET_BLOCKED}')}}"
 #: The first commit whose build writes `build-info.json` (#2126).

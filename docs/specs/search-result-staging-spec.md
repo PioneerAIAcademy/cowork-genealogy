@@ -39,11 +39,18 @@ than taking it as an argument.
 
 ## 2. Scope
 
-The sidecar-producing search tools: **`record_search`**, **`fulltext_search`**,
-and **`external_links_search`** (`tool: "external_links_search"`) — the tools whose
-payloads become `results/` sidecars per `research-log-protocol.md`. The staging
-logic is a shared util so adding a producer is a one-line opt-in
-(`external_links_search` was added as the third, 2026-07).
+The sidecar-producing search tools: **`record_search`** and **`fulltext_search`**
+— the tools whose payloads become `results/` sidecars per
+`research-log-protocol.md`. The staging logic is a shared util so adding a
+producer is a one-line opt-in.
+
+**`external_links_search` no longer stages (2026-10).** It was added as a
+third producer in 2026-07 and removed again: its durable copy is the place's
+full list in `external-collections.json`, and a staged sidecar the caller never
+logged set off the unlogged-search note. Its old `results/<log_id>.json`
+sidecars stay readable and finalizable; nothing migrates them, and
+`unloggedStagedSearches` skips any staged file whose `tool` is no longer in
+`STAGING_SEARCH_TOOLS`.
 
 **Two acquisition producers joined them:** **`image_transcribe`**
 and **`record_read`** (a live read given a `projectPath`). Acquisition has the same problem
@@ -52,7 +59,7 @@ was retained nowhere until extraction wrote `sources[].transcription` — and AD
 ("whatever a step acquires, the host fetches and stages") puts it in this channel. They stage a
 **single document**, so the envelope is a **one-element `results[]`** (§5) rather than a second
 shape: `returned_count` is 1 and finalize recomputes it as usual. The engine exports the two sets
-separately — `STAGING_SEARCH_TOOLS` (the three above) and `STAGING_CAPABLE_TOOLS` (every producer)
+separately — `STAGING_SEARCH_TOOLS` (the two above) and `STAGING_CAPABLE_TOOLS` (every producer)
 — and the eval mock's search notes mirror the SEARCH set (`eval/CLAUDE.md`, "Eval vs production parity").
 **Every nag stays on the search set:** the nil-search note, the unlogged-search note (the reader
 skips an acquisition file) and `research_log_append`'s retained-none warning (§6). Record-extraction
@@ -63,9 +70,11 @@ read. An acquisition file that is never finalized is removed by the TTL prune li
 **A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
 it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
 so none of the search notes fire on it. Its file is not a log sidecar: no shipped flow
-finalizes it with `research_log_append`. `project_create` builds the starting tree
-from it (`personReadRef`; `project-create-tool-spec.md` §4) without consuming it, and it is otherwise
-TTL-pruned. The eval mock
+finalizes it with `research_log_append`, and nothing builds a tree from it any more:
+`project_create` reads the person itself (`personId`; `project-create-tool-spec.md` §4).
+A staged read is evidence only: `project_create` checks a hand-entered fact or
+relationship against every staged `person_read` before citing it to the FamilySearch
+Family Tree. It is never consumed, and is TTL-pruned. The eval mock
 stages a canned `person_read` through the tool's own compiled `stagePersonRead`, so the envelope
 has one definition.
 
@@ -83,14 +92,9 @@ full payload, it drops the heavy per-result field from the *inline* copy so a
 broad search can't overflow the model's token cap — the bulk lives in the
 sidecar, which `record_read` and `rank_search_matches` read host-side. Each
 producer strips its own heavy field: `record_search` drops `gedcomx`,
-`fulltext_search` drops `textDocument` (the AI-transcribed page), and
-`external_links_search` bounds the inline `results[]` (optional `host` filter +
-a 200-row cap) while staging the full year-filtered set. The `record_search` and
-`fulltext_search` strips are unconditional once staged (so the protection can't be
-forgotten) and never run on an un-staged search (nothing was retained to re-read).
-`external_links_search`'s cap is the exception: it applies on every call, staged or
-not, because the tool also keeps the full list in `external-collections.json` and
-says when it cut (`inlineCapped`; `external-links-search-tool-spec.md`).
+and `fulltext_search` drops `textDocument` (the AI-transcribed page). Both strips
+are unconditional once staged (so the protection can't be forgotten) and never
+run on an un-staged search (nothing was retained to re-read).
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and
@@ -180,7 +184,9 @@ part of `staged`.
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
   results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found?, image_ref? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
-  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
+  extraction id convention, as `record-structurer` uses it), and `source` is the query's input
+  plus, for an `imageId` or `ark`, `place`: the image group's coverage place
+  (`image-transcribe-tool-spec.md` §5.5.1). The tool also returns a `digest` beside the handle.
 - `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
   `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
   reads it back unchanged.
@@ -206,8 +212,8 @@ part of `staged`.
 
 ### 6.0 Near-copy resolution (`resolveStagedRef`)
 
-Every consumer of a staged ref — `research_log_append` (each op), `project_create`
-(`personReadRef`), and the read-only `readStagedResults` behind `record_read` and
+Every consumer of a staged ref — `research_log_append` (each op) and the read-only
+`readStagedResults` behind `record_read` and
 `rank_search_matches` — first maps a mis-copied ref onto the one staged file it
 names, then runs its own checks on that canonical ref.
 
@@ -226,11 +232,6 @@ names, then runs its own checks on that canonical ref.
 
 A staged name is a random v4 UUID, so two staged files within 3 edits of each other
 do not occur in practice; the single-candidate rule still refuses that case.
-
-`project_create` alone has a second, later step: a `personReadRef` this resolution
-leaves unusable falls back to the newest staged `person_read` of the person named in
-`subjectPersonIds[0]` (`project-create-tool-spec.md` §4). That step matches on the
-stated person, never on the ref's name, so it does not widen the rule above.
 
 When the log editor is called with `stagedResultsRef`, it (host-side):
 
@@ -273,8 +274,7 @@ the log editor behaves exactly as its own spec describes.
 **The staged `query` (`payloadQuery`).** `record_search` and `fulltext_search`
 stage their whole response, which carries `query: echoQuery(input)`: every
 argument the call sent, `undefined` dropped and `null` kept. No other producer
-stages an echo of its arguments — `external_links_search` stages only its links,
-and `image_transcribe` and `record_read` stage an identifier they build
+stages an echo of its arguments — `image_transcribe` and `record_read` stage an identifier they build
 themselves (`person_read` likewise builds its own `{ personId, relatives,
 sourceDescriptions }`, and drops `projectPath`). Finalize returns that `query` with host plumbing removed
 (`projectPath`, an absolute host path meaningless on another machine, and
@@ -324,7 +324,7 @@ same ground truth production does.
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
 - **The un-finalized set is also a signal, not only garbage.** `stageSearchResults`
-  prunes it; `unloggedStagedSearches(projectPath)` *reads* its search files, and all three staging
+  prunes it; `unloggedStagedSearches(projectPath)` *reads* its search files, and both staging
   search tools surface what it returns as an advisory note (contract in
   `record-search-tool-spec-v2.md`). What makes it a signal rather than a file count is
   the pairing rule: `research_log_append` only WARNS when a staging search tool logs

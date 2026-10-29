@@ -59,6 +59,9 @@ def test_an_error_is_measured_as_its_plain_text_on_a_real_capture():
     ("'targetId' is not a supported filter for section 'plans'", "argument"),
     ("research_query has no parameter `planId`; the nearest are `planItemId`", "argument"),
     ("project_list takes no parameters; drop `projectPath`.", "argument"),
+    ("tree_edit only adds — 'update_fact' is a correction/removal op; corrections and removals live in "
+     "tree_correct. Nothing was run: an argument the tool does not take would have been ignored, not applied.",
+     "argument"),
     ("something else broke", "other"),
 ])
 def test_errors_are_classified_so_only_state_errors_can_exit_3(text, cls):

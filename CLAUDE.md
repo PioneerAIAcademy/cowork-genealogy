@@ -83,6 +83,13 @@ locked-out audience.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
+- `small-and-simple/` — single-purpose functions (a few FamilySearch calls and
+  an LLM call each) for FamilySearch to run inside its own Node server.
+  Independent of everything else here: own `package.json` and lockfile, imports
+  nothing from `packages/`, and its CI job is `small-and-simple.yml`. It
+  re-implements engine pieces (user agent, retry, image fetch) on purpose, so
+  "Code reuse" below does not apply across that line. Its README owns the
+  contract each solution follows.
 - `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
   Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
@@ -420,10 +427,11 @@ workflow itself or building one of its skills.
 ## Researcher profile in `research.json`
 
 Per-project context about the researcher lives in a `researcher_profile`
-section of `research.json`. `init-project` writes a fixed profile at
-project start (`experience_level: "novice"` and one house-style
-`narration_guidance` string) and asks nothing about the researcher; the
-only opening-turn question is the research objective, non-blocking. Every
+section of `research.json`. `project_create` writes a fixed profile on every
+create (`experience_level: "novice"` and one house-style `narration_guidance`
+string, whose one source is the engine constant `HOUSE_RESEARCHER_PROFILE`), and
+`init-project` asks nothing about the researcher; the only opening-turn
+question is the research objective, non-blocking. Every
 shipped skill carries a one-line `**Narration:**` instruction that tells Claude
 to read `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. The `search-wikipedia` **agent** is the deliberate
@@ -514,7 +522,9 @@ change, with different (and easy-to-undercount) site lists:
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
-The fixed profile and the objective question live in `agents/init-project.md`.
+The fixed profile lives in `HOUSE_RESEARCHER_PROFILE`
+(`packages/engine/mcp-server/src/tools/project-create.ts`); the objective
+question lives in `agents/init-project.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
@@ -808,7 +818,8 @@ Where to look first:
   installs `unboundProjectStore` as the process store so nothing falls through
   to the file backend. **No module outside
   `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
-  reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
+  reader (`src/utils/bundled-data.ts`) — enforced by
+  `tests/packaging/no-fs-outside-store.test.ts`, which
   also fails when an exemption stops being needed. A second backend runs
   `tests/store/conformance.ts`. That second backend is `PgS3ProjectStore`
   (`pg-s3-project-store.ts`) — constructor-scoped to one project, documents in

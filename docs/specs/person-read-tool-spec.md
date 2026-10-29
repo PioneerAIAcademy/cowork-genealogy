@@ -116,10 +116,10 @@ after the memories merge, through the shared `stageSearchResults`
   top-level `notes[]` and every source's response-only fields (`notes`, `text`,
   `image_ref`, `artifact_url`). Nothing is stripped on the way in.
 
-It exists so the starting tree is built host-side from the staged copy rather
-than the model re-typing it into `project_create`: init-project passes
-`staged.resultsRef` to `project_create` as `personReadRef`
-(`project-create-tool-spec.md` §4). It is **not a search**: it is in
+A staged read is evidence, not an input: `project_create` reads the person
+itself (`personId`, `project-create-tool-spec.md` §4), and checks a hand-entered
+fact or relationship against the project's staged reads before citing it to the
+FamilySearch Family Tree. It is **not a search**: it is in
 `STAGING_CAPABLE_TOOLS` and not `STAGING_SEARCH_TOOLS`, so no search note fires on
 it, and no shipped flow finalizes it with `research_log_append`. An unconsumed
 file is removed by the 24h TTL prune. Staging is best-effort: a failure never
@@ -553,7 +553,7 @@ sd.attribution.contributor.resourceId — who attached it
 | 200 | Success | Parse and convert response |
 | 204 | Living person (empty body) | Return `{ persons: [{ id, living: true, ... }], relationships: [], sources: [] }` |
 | 301 | Person merged into another | Read new ID from `Location` header, re-fetch |
-| 401 | Token expired/invalid | Let auth error propagate |
+| 401 | Token expired/invalid | Throw `rejectedTokenMessage`: the login instruction on the desktop, the hosted reconnect instruction in hosted mode |
 | 403 | Restricted person | Throw descriptive error |
 | 404 | Person not found | Throw descriptive error |
 | 410 | Person deleted | Throw descriptive error |

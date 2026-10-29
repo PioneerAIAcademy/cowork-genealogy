@@ -27,8 +27,8 @@ export const SECTIONS_NEAR_MISS =
 /** The cross-tool redirects of `tree_edit` and `tree_correct`. */
 export const treeEditRejection = (operation: string): string =>
   `tree_edit only adds — '${operation}' is a correction/removal op; ` +
-  "corrections and removals live in tree_correct";
+  "corrections and removals live in tree_correct.";
 
 export const treeCorrectRejection = (operation: string): string =>
   `tree_correct only corrects or removes — '${operation}' is an additive op; ` +
-  "additions live in tree_edit";
+  "additions live in tree_edit.";

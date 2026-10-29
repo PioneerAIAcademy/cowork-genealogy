@@ -2,13 +2,6 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
 import { resolveStandardPlaceToPlaceId, ambiguousPlaceError } from "../utils/place-resolver.js";
 import {
-  stageSearchResults,
-  unloggedStagedSearches,
-  formatUnloggedRefs,
-  UNLOGGED_SEARCHES_NOTE,
-  NIL_SEARCH_NEEDS_LOG_NOTE,
-} from "../utils/results-staging.js";
-import {
   dedupeCollections,
   recordExternalCollections,
   EXTERNAL_COLLECTIONS_FILE,
@@ -41,8 +34,8 @@ const FS_EXTERNAL_URL =
 const FETCH_COUNT = 1000;
 
 // Cap on the inline `results[]` only, applied on every call after dedupe. The
-// stored list (`external-collections.json`) holds every row and the staged
-// sidecar every year-filtered row; `inlineCapped` says when this cut the inline copy.
+// stored list (`external-collections.json`) holds every row; `inlineCapped` says
+// when this cut the inline copy.
 const INLINE_CAP = 200;
 
 // An undated resource (no start and no end year) is always included, regardless
@@ -200,72 +193,39 @@ export async function externalLinksSearchTool(
           )
         );
 
-  // The full year-filtered set (all hosts). This is what gets staged to disk —
-  // host filtering and the inline cap narrow only the inline copy. Most specific
+  // The full year-filtered set (all hosts); host filtering and the inline cap
+  // narrow it below. Most specific
   // place first (more comma segments), so a county's own few rows lead and the
   // 200 cap falls on the end of its state's long list, never on them. The sort is
   // stable over the stored order (place, then key), so it stays deterministic.
   const depth = (place: string): number => place.split(",").length;
   const allLinks: PlaceExternalLink[] = [...matchedRows]
     .sort((a, b) => depth(b.place) - depth(a.place))
-    .map((r) => ({
-    url: r.url,
-    linkText: r.link_text,
-  }));
+    .map((r) => {
+      // The span the year filter tested, so a caller can cite it. Both or neither:
+      // a one-sided row counts as that single year, exactly as includeCollection reads it.
+      const start = yearNum(r.start_year);
+      const end = yearNum(r.end_year);
+      const link: PlaceExternalLink = { url: r.url, linkText: r.link_text };
+      if (start !== null || end !== null) {
+        link.startYear = start ?? (end as number);
+        link.endYear = end ?? (start as number);
+      }
+      return link;
+    });
 
   const query: ExternalLinksSearchResult["query"] = { standardPlace };
   if (startYear != null) query.startYear = startYear;
   if (endYear != null) query.endYear = endYear;
 
-  // Read BEFORE this call stages its own response, or the count includes the search
-  // being answered right now. Advisory: never throws, 0 on any failure.
-  const unloggedStaged =
-    input.projectPath !== undefined
-      ? await unloggedStagedSearches(input.projectPath)
-      : [];
-
+  // No result staging: `external-collections.json` is the durable copy, and a fetch
+  // is not a search the log owes an entry for (#2995).
   const out: ExternalLinksSearchResult = {
     query,
     totalForPlace,
     returned: 0,
-    // Both notes are declared here, ahead of `results`, for the same reason
-    // record_search orders them so: a field after the largest field is the first
-    // thing a size bound drops.
-    ...(unloggedStaged.length > 0
-      ? {
-          unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace(
-            "{n}",
-            String(unloggedStaged.length),
-          ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
-        }
-      : {}),
-    // Keyed on the PRE-FILTER set. `results` below is host-filtered and capped, so a
-    // `host:` search against a place whose links are all on other hosts returns an
-    // empty `results` with a non-null `staged` — telling the model to record a
-    // negative finding there would deny a place that has records.
-    ...(input.projectPath !== undefined && allLinks.length === 0
-      ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
-      : {}),
     results: [],
   };
-
-  // Host-side result staging (search-result-staging-spec.md). Stage the FULL
-  // year-filtered set BEFORE any host filter or inline cap, so the complete link
-  // list is retained on disk (research record + feedback bundles) even when the
-  // inline copy is narrowed. Purely additive and best-effort: a staging failure
-  // never fails a successful search.
-  if (input.projectPath !== undefined) {
-    try {
-      out.staged = await stageSearchResults({
-        projectPath: input.projectPath,
-        tool: "external_links_search",
-        response: { results: allLinks },
-      });
-    } catch (error) {
-      out.staged = null;
-      out.stagingError = error instanceof Error ? error.message : String(error);
-    }
-  }
 
   // Narrow the inline copy. The `host` filter is the caller's explicit query
   // narrowing (return only their target site's links), so it always applies.
@@ -314,10 +274,8 @@ export const externalLinksSearchToolSchema = {
     "included. With no years, every resource for the place is returned. " +
     "Pass `host` to filter to a single target site (e.g. 'ancestry.com'); the " +
     "response returns only matching links plus `returned` (their count). Pass " +
-    "`projectPath` to stage the full year-filtered set to disk and get a " +
-    "`staged.resultsRef` handle (pass it to research_log_append as " +
-    "`stagedResultsRef` so the complete link list is retained); the full list is also " +
-    "stored for research_query({section: 'external_collections'}). Inline `results[]` is " +
+    "`projectPath` to store the place's full list (every year, every host) in the " +
+    "project for research_query({section: 'external_collections'}). Inline `results[]` is " +
     "deduplicated and capped at 200 (`inlineCapped`). A whole country such as the United " +
     "States is too large: ask for a state.",
   inputSchema: {
@@ -348,16 +306,14 @@ export const externalLinksSearchToolSchema = {
           "Optional target-site host substring (e.g. 'ancestry.com', 'findagrave.com'). " +
           "When supplied, the inline `results[]` is filtered to links whose URL contains it — " +
           "returning the small exact set you need instead of every curated site for the place. " +
-          "The full unfiltered set is still what gets staged to disk when `projectPath` is passed.",
+          "The stored list is never filtered.",
       },
       projectPath: {
         type: "string",
         description:
-          "Absolute path to the active project directory. When supplied, the tool stages the full " +
-          "year-filtered link set host-side and returns a `staged.resultsRef` handle — pass that to " +
-          "research_log_append as `stagedResultsRef` so the complete list is retained in the log " +
-          "sidecar (and rides along in a feedback bundle) without you re-serializing it, and " +
-          "stores the place's full list. Omit only for a throwaway exploratory lookup you will not log.",
+          "Absolute path to the active project directory. When supplied, the tool stores the " +
+          "place's full list in external-collections.json, read back with " +
+          "research_query({section: 'external_collections'}). Omit only outside a project.",
       },
     },
     required: ["standardPlace"],

@@ -93,8 +93,9 @@ than an error.
    `record_id` is stored as a resolver **URL** on 561 of the corpus's 10,554
    assertions and as a bare `ark:` on 9,993, so a raw string compare misses.
    `resultsRef` is passed **only** when the log entry's tool is in
-   `PERSONA_BEARING_PRODUCERS` (i.e. `record_search`). A `fulltext_search` or
-   `external_links_search` entry carries a `results_ref` too, but its results
+   `PERSONA_BEARING_PRODUCERS` (`record_search` and `record_read`). A
+   `fulltext_search` entry, or a legacy `external_links_search` one from before
+   that tool stopped staging, carries a `results_ref` too, but its results
    hold no `gedcomx` and key on `id` rather than `recordId` — 300 corpus
    assertions sit on exactly that shape, and handing the ref over would look up
    nothing.
@@ -383,8 +384,9 @@ was (ADR-0009 constraint 2). **It is not yet unforgeable.**
 payload, but it can author the file. Closing that is a precondition for the
 refusal step trusting this record, and it touches ADR-0005, which owns the list.
 
-**Location: `results/.scores/<sha256(arkToBareId(record_id))>.json`, one file per
-record, holding a map.** Under `results/` because architecture.md §6.1 already
+**Location: `results/.scores/<sha256(lowercase(toArk(record_id)))>.json`, one file
+per record, holding a map.** `toArk`, not `arkToBareId`: the canonical ARK keeps
+`1:1:X`, `1:2:X` and `3:1:X` apart (`scoresRef`). Under `results/` because architecture.md §6.1 already
 carries that pattern; under a **dot-directory** because the validator's orphan
 check lists `results/` non-recursively and errors on any unreferenced top-level
 `*.json` — both store backends list direct children only, so a dot-directory is
@@ -397,7 +399,8 @@ not become two files.
 { "record_id": "ark:/61903/1:1:MARR-8T3",
   "scores": { "<assertion_id>|<tree_person_id>": { "record_persona_id": …, "record_role": …,
               "tree_person_id": …, "score": 0.87, "confidence": 5, "matched": true,
-              "assertion_id": "a_005", "record_source": "record_read", "computed": "…" } } }
+              "assertion_id": "a_005", "record_source": "record_read", "computed": "…",
+              "party_resolved": true } } }
 ```
 
 **Why a per-record map rather than one file per pairing.** One read answers every
@@ -430,7 +433,30 @@ derives both from the same sibling lookup (and an explicit `recordPersonaId`)
 that route 1 uses, and a call for the father files the father's persona in both
 places. Where only a fetch can tell, such as a party found by name or one whose id the
 record gives to several roles, the harness files the assertion's own id (when one
-role carries it) or null. Neither is part of the lookup key.
+role carries it) or null. Neither is part of the map key.
+
+**`party_resolved: true`** marks an entry whose `record_persona_id` is the
+persona this call compared. Every entry this tool writes carries it, on both
+routes. The harness's `buildRecordedScore` stamps it too, on the persona it
+derives from the documents; where only a fetch could tell, that is null or the
+assertion's own id, and the writer's role check refuses an entry whose persona
+and role disagree. Entries from earlier builds do not, and are not that:
+an earlier build scored a multi-person record's first person whatever id was
+asked while filing that id, and filed the assertion's own persona for a
+`recordRole` call.
+
+**The persona arm.** `research_append`'s gate reads the map by the key first,
+then by persona: when the link's assertion carries a `record_persona_id` P that
+its record's assertions give exactly one role, and names no second person, an
+entry with `party_resolved`, `record_persona_id` P, the same `tree_person_id`,
+and a `record_role` the record gives P answers for that link. So one call per
+(persona, tree person) covers every fact of the persona that carries P except a
+relationship, marriage or other two-person assertion, which needs its own call. It rests on one assumption, stated
+rather than tested: a live `record_read` and a staged `record_read` or
+`record_search` of one record give its persons the same `id`, so the persona the
+fetched route resolves is the one extraction stamped. If they ever differ, the
+fetched route finds no P and files a different id, and the arm simply misses:
+no wrong party is attached. Spec of the gate: `research-append-tool-spec.md`, §5.
 
 ADR-0009 constraint 3 says to key on (`record_id`, `record_persona_id`) and not
 on `record_id` alone, so that a second persona of an already-linked record

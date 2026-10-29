@@ -984,3 +984,18 @@ def test_a_block_written_before_usage_source_existed_is_flagged():
 )
 def test_shapes_with_at_most_one_readable_init_are_not_flagged(usage):
     assert result_message_covers_last_query_only(usage) is False
+
+
+def test_external_collection_keys_reach_the_result_file(tmp_path: Path):
+    """The §9.1 provenance count reads this field from committed runs (#2995)."""
+    keys = {"Pennsylvania, United States": ["ancestry:7163"]}
+    result = E2eResult(
+        test_id="t", captured_at="2026-10-12_10-00-00", verdict="pass",
+        stop_reason="completed", judge_output={}, usage={}, tool_calls=[], tags={},
+        external_collection_keys=keys,
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path, final_tree=None, final_research=None,
+        timestamp="2026-10-12_10-00-00",
+    )
+    assert json.loads(paths["result"].read_text(encoding="utf-8"))["external_collection_keys"] == keys

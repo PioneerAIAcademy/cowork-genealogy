@@ -1,5 +1,6 @@
 """The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
-``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration) and, on the D18
+``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration, and end the turn when a
+proof-conclusion call completes the project) and, on the D18
 autonomous arm only, ``Stop`` (veto the model's voluntary yield, ``make_stop_hook``).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
@@ -47,6 +48,7 @@ identifiers reach it through a closure, never a global.
 from __future__ import annotations
 
 import dataclasses
+import importlib.util
 import json
 import os
 import re
@@ -74,9 +76,12 @@ from app.agent.continue_policy import (
     TERMINAL_NO_PROGRESS,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
+    completion_halt_summary,
     project_completed,
     should_continue_run,
+    status_before_call,
     terminal_reason,
+    wants_status_before,
 )
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
@@ -102,6 +107,7 @@ GATEWAY_AGENT_MODELS = {
     "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
     # Not yet served through TAP's gateway: first seen there at U14's check.
     "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
+    "claude-sonnet-5-5": "us.anthropic.claude-sonnet-5-5",
 }
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
@@ -404,6 +410,40 @@ def _deny(reason: str) -> dict[str, Any]:
 # executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
+# ── The step boundary (decision 25) ──────────────────────────────────────────────
+#
+# `step_boundary.py` ships in the plugin and is loaded as a LIBRARY, the way
+# `context_policy.py` loads `guard_project_files.py`. It is not a hook anywhere:
+# this worker is the only plane that ENFORCES the boundary, and it does so from
+# its own `PreToolUse` below.
+
+def _default_plugin_dir() -> Path:
+    """Where the plugin is. ``ENGINE_PLUGIN_DIR`` in the deployed image, which the
+    worker's predeploy hook puts at ``/opt/genealogy/plugin``; the checkout otherwise.
+    Read the same way ``worker.py`` reads it, so the two cannot point at different
+    copies."""
+    env = os.environ.get("ENGINE_PLUGIN_DIR")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parents[4] / "packages" / "engine" / "plugin"
+
+
+def load_step_boundary(path: Path | None = None):
+    """Import the plugin's step boundary. Raises if it is missing.
+
+    A checkout always has the file and the worker bundle ships the plugin, so an image
+    without it is broken in a way that must be LOUD -- the alternative is a turn that
+    silently enforces no boundary, which looks exactly like the feature working.
+    """
+    target = Path(path) if path is not None else _default_plugin_dir() / "hooks" / "step_boundary.py"
+    spec = importlib.util.spec_from_file_location("_genealogy_step_boundary", target)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load the step boundary at {target}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 # U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
 # checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
 STORE_UNAVAILABLE_REASON = (
@@ -449,6 +489,7 @@ def make_pretool_hook(
     halt: Callable[..., str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
+    step_gate: Any | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -465,6 +506,13 @@ def make_pretool_hook(
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
     ``halt``, so the audit trail shows where the turn was cut.
+
+    ``step_gate`` is decision 25's carrier: a ``StepGate`` for THIS turn, or None to
+    enforce no boundary. It is consulted after the halt and delivered arms, so a
+    researcher's stop and a met bounded request both still outrank it -- a turn being
+    stopped on purpose must not be re-decided as a boundary crossing. Its first
+    crossing DENIES and its second HALTS, and a gate that raises is treated as no
+    opinion, because a hook that raises fails a call the user was entitled to make.
 
     A ``halt()`` that raises HALTS with ``STORE_UNAVAILABLE_REASON``, logs
     ``ev=halt_failed`` and calls ``on_halt_failed()`` (U23). The worker's halt classifies
@@ -569,9 +617,51 @@ def make_pretool_hook(
             # comment said 157). Appended rather than prepended, the reason eats most of
             # the window and the summary is cut. What the researcher most needs leads.
             return _halt(delivered_stop_reason(summary))
+        # The step boundary (decision 25). It sits AFTER the halt and delivered arms, so
+        # the researcher's own stop and a met bounded request both still outrank it: a
+        # turn being stopped on purpose must not be re-decided as a boundary crossing.
+        step_verdict = None
         try:
-            protected = direct_project_file_write(tool_name, tool_input)
-            if protected:
+            if step_gate is not None:
+                # Truthiness, as both harnesses read it: a main-thread call carrying
+                # `agent_id: null` is still the router's, and must still be gated.
+                step_verdict = step_gate.check(
+                    tool_name, tool_input, subagent=bool(data.get("agent_id"))
+                )
+        except Exception as exc:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
+            step_verdict = None
+            if log is not None:
+                log(ev="step_boundary_failed", turn_id=turn_id, tool_name=tool_name,
+                    error=f"{type(exc).__name__}: {exc}")
+        if step_verdict is not None and step_verdict[0] == "halt":
+            # The backstop. `_halt` denies the call it stops, so the step the model was
+            # told not to start does not run on its way out.
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name or "unknown",
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="halt", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id, reason=step_verdict[1])
+            return _halt(step_verdict[1])
+        try:
+            # A boundary deny is final: the other clauses can only deny too, and the
+            # step reason is the one the model must act on.
+            protected = (
+                None if step_verdict is not None
+                else direct_project_file_write(tool_name, tool_input)
+            )
+            if step_verdict is not None:
+                decision, reason = "deny", step_verdict[1]
+            elif protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
             elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
@@ -630,7 +720,8 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
     "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
     "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
-    "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
+    "person_person_matches", "person_record_matches", "person_search", "project_create", "rank_search_matches",
+    "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
     "tree_gaps", "volume_bisect", "volume_search",
 })
@@ -649,12 +740,23 @@ def make_posttool_hook(
     turn_id: str,
     finish: Callable[[str], None],
     log: Callable[..., None] | None = None,
+    research: Callable[[], Mapping[str, Any] | None] | None = None,
+    status_before: Callable[[str | None], Any] | None = None,
+    on_completed: Callable[[str], None] | None = None,
 ):
     """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
     stamps the row the PreToolUse hook wrote with the call's duration (acceptance
-    criterion 4). Never raises and never changes what the model sees; a failed stamp is
-    one log line. A call in flight when its worker is killed keeps a NULL duration.
-    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``."""
+    criterion 4). Never raises; a failed stamp is one log line. Its one effect on the turn
+    is the completion halt below. A call in flight when its worker is killed keeps a NULL duration.
+    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``.
+
+    The completion halt (#3542 lead 1), armed when ``research``, ``status_before`` (the
+    project's status read just before this call, by its ``tool_use_id``) and
+    ``on_completed`` are given: after the main-thread proof-conclusion call that completes the project, end the
+    turn on the agent's ``summary_for_user``, the same predicate as the alpha. Exactly
+    ``{"continue_": False, "stopReason": ...}``: ``_halt``'s deny half is PreToolUse-shaped
+    and means nothing after the call ran. ``on_completed`` records the turn ``completed``,
+    because no Stop hook fires after a halt (``dev/probe_posttool_halt.py``)."""
 
     async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         data = input_data if isinstance(input_data, dict) else {}
@@ -672,7 +774,19 @@ def make_posttool_hook(
                     agent_id=data.get("agent_id"))
         except Exception:  # noqa: BLE001, S110 - an alarm signal must not fail the call
             pass
-        return {}
+        if research is None or status_before is None or on_completed is None:
+            return {}
+        try:
+            summary = completion_halt_summary(data, status_before(use_id), research)
+            if summary is None:
+                return {}
+            on_completed(summary)
+            return {"continue_": False, "stopReason": summary}
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            if log is not None:
+                log(ev="completion_halt_failed", turn_id=turn_id,
+                    error=f"{type(exc).__name__}: {exc}")
+            return {}
 
     return _posttool
 
@@ -696,7 +810,8 @@ def make_posttool_hook(
 RESUME_CONTINUE_TEXT = (
     "Your previous attempt at this message was interrupted while work was in "
     "progress (the worker restarted). Re-read research.json and continue the same "
-    "task from where it stopped; do not start over, and do not ask the user anything."
+    "task from where it stopped; do not start over. Finish the step that was running "
+    "and end with its \"Continue with ...?\" line, as the step would have."
 )
 
 

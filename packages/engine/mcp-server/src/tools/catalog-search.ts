@@ -13,7 +13,7 @@
  */
 import type { Principal } from "../auth/principal.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
-import { BROWSER_USER_AGENT } from "../constants.js";
+import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import {
   mapWithConcurrency,
@@ -25,6 +25,7 @@ import type {
   CatalogSearchInput,
   CatalogSearchResult,
 } from "../types/catalog-search.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const SEARCH_URL =
   "https://www.familysearch.org/service/search/catalog/v3/search";
@@ -45,12 +46,10 @@ const MAX_HYDRATE = 25;
 
 /** What the film notes of an answer are fitted into: the whole answer, as the
  *  server serializes it (`JSON.stringify(result)`, compact), stays at or under
- *  this many characters. Under the 50,000 at which Claude Code saves a tool
- *  result to a file instead of handing it to the agent
- *  (docs/specs/sidecar-read-tool-spec.md section 4), with margin. It caps this
+ *  this many characters — the shared `TOOL_RESULT_CHAR_BUDGET`. It caps this
  *  tool's whole answer, which is not what `SIDECAR_READ_MAX_CHARS` caps (one
  *  `sidecar_read` page); the two values happen to be equal. */
-export const ANSWER_CHAR_BUDGET = 40_000;
+export const ANSWER_CHAR_BUDGET = TOOL_RESULT_CHAR_BUDGET;
 
 /** Anchored at tool ENTRY, under Cowork's 60s MCP bridge abort. Bounds
  *  hydration; place resolution exposes no budget to bound. */
@@ -808,8 +807,10 @@ export async function catalogSearchTool(
       // fsFetch has already re-read tokens.json once; a 401 still here means
       // the session is genuinely not accepted, which is the user's to fix.
       throw new Error(
-        "FamilySearch session not accepted; call the login tool to " +
-          "re-authenticate." + (detail ? ` Upstream said: ${detail}` : ""),
+        (await rejectedTokenMessage(
+          principal,
+          "FamilySearch session not accepted; call the login tool to re-authenticate.",
+        )) + (detail ? ` Upstream said: ${detail}` : ""),
       );
     }
     if (res.status === 403) {
