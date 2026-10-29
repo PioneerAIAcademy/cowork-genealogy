@@ -9,6 +9,12 @@
 // Spec: docs/specs/project-context-tool-spec.md.
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import {
+  RESEARCH_QUERY_SECTIONS,
+  RESEARCH_QUERY_OPTIONAL_SECTIONS,
+  EXTERNAL_COLLECTIONS_SECTION,
+  disagreementsInScope,
+} from "./research-query.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
@@ -160,6 +166,15 @@ export type ProjectContextResult =
        *  rows with research_query({section: "external_collections"}). Absent when no
        *  list is stored or the file cannot be read. */
       externalCollections?: Record<string, ProjectContextCollectionCounts>;
+      /** Entries per research.json section research_query serves, matching that
+       *  query's unfiltered `count`: 0 for an absent optional section, null for a
+       *  section research_query would refuse (a required one absent, or any one
+       *  not an array). A 0 answers that section without a query; a null does not. */
+      sectionCounts: Record<string, number | null>;
+      /** Project-wide count of the unregistered disagreements research_query's
+       *  `conflicts` section reports beside its items — so `conflicts: 0` alone
+       *  does not mean that query would come back empty. */
+      unregisteredDisagreementCount: number;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -305,6 +320,22 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   const questionStatuses = questionStates(research, tree);
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
+
+  const sectionCounts: Record<string, number | null> = {};
+  for (const section of RESEARCH_QUERY_SECTIONS) {
+    if (section === EXTERNAL_COLLECTIONS_SECTION) continue;
+    const entries = research?.[section];
+    sectionCounts[section] = Array.isArray(entries)
+      ? entries.length
+      : entries === undefined && RESEARCH_QUERY_OPTIONAL_SECTIONS.has(section)
+        ? 0
+        : null;
+  }
+  const unregisteredDisagreementCount = disagreementsInScope(
+    research,
+    { projectPath: input.projectPath, section: "conflicts" },
+    undefined,
+  ).length;
   const externalCollections = await externalCollectionCounts(input.projectPath);
   const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research);
 
@@ -324,6 +355,8 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     awaitingUser,
     exhaustedImageGroups: exhausted,
     ...(externalCollections ? { externalCollections } : {}),
+    sectionCounts,
+    unregisteredDisagreementCount,
   };
 }
 
@@ -422,6 +455,10 @@ export const projectContextSchema = {
     "entry with the same urlGenerated. subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). externalCollections counts stored curated " +
     "collections per place by record type (rows: research_query external_collections). " +
+    "sectionCounts gives the entry count of every research.json section research_query " +
+    "serves (null when research_query would refuse the section), and unregisteredDisagreementCount the project-wide count of " +
+    "unregistered disagreements research_query's conflicts section reports — a section " +
+    "counted 0 needs no query, except conflicts while that count is above 0. " +
     "exhaustedImageGroups [{imageGroup, imagesRead, planItemIds}] lists films whose 20-image " +
     "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
     "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +

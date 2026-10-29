@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
-import { planItemFlags } from "../utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -5346,6 +5346,25 @@ function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: a
   ];
 }
 
+/** A `fan_pivot` question exists to advance a question whose direct evidence
+ *  ran out, so its `unblocks` must name a question still open in the pre-call
+ *  snapshot. Decidable from `questions[]` alone (ADR-0011). Every committed e2e
+ *  `fan_pivot` append that left `unblocks` empty (3 of 4) depended on an open
+ *  `q_001` it would have advanced. */
+function fanPivotUnblocksInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.selection_basis !== "fan_pivot") return [];
+  const open = (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+    .filter((q: any) => typeof q?.id === "string" && QUESTION_STILL_OPEN.has(q.status))
+    .map((q: any) => q.id as string);
+  const unblocks = Array.isArray(entry?.unblocks) ? entry.unblocks : [];
+  if (unblocks.some((id: unknown) => typeof id === "string" && open.includes(id))) return [];
+  return [
+    "a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out" +
+      (open.length > 0 ? ` (open: ${open.sort().join(", ")})` : " — no question is open, so there is none to pivot from") +
+      ". Its family, associates and neighbors are researched to advance that question.",
+  ];
+}
+
 /** A plan item may not stand at `completed` unless some `log[]` entry carries
  *  its id in `plan_item_id`. Completing an item asserts the search it names was
  *  done; the log is where a search is recorded, so an item completed with
@@ -5642,6 +5661,15 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
       `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
       `instead: ${ran.id} names this item, so the completion is attributed.`,
   ];
+}
+
+/** A plan item names one place (`compoundJurisdictionError`). Checked on an
+ *  append and on a change to `jurisdiction` only, so a compound item written
+ *  before this rule does not strand an unrelated edit. */
+function compoundJurisdictionInvariants(item: any, research: any): string[] {
+  const localities = Array.isArray(research?.localities) ? research.localities : [];
+  const error = compoundJurisdictionError(item ?? {}, localities);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
@@ -7489,6 +7517,7 @@ function applyOne(
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
+      invariantErrors.push(...fanPivotUnblocksInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
@@ -7607,6 +7636,9 @@ function applyOne(
         );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        if (item && storedItem?.jurisdiction !== item.jurisdiction) {
+          invariantErrors.push(...compoundJurisdictionInvariants(item, research));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
@@ -7689,6 +7721,9 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
+      invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(

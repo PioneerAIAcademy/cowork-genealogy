@@ -9,28 +9,7 @@
     "created": "2026-05-15",
     "updated": "2026-05-15"
   },
-  "questions": [
-    {
-      "id": "q_001",
-      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?",
-      "rationale": "This is the primary research objective.",
-      "selection_basis": "objective_decomposition",
-      "priority": "high",
-      "status": "open",
-      "depends_on": [],
-      "unblocks": [],
-      "created": "2026-05-15",
-      "resolved": null,
-      "resolution_assertion_ids": [],
-      "search_stop": {
-        "stopped_because": null,
-        "justification": null,
-        "log_entry_ids": [],
-        "stop_criteria": null,
-        "not_reached": []
-      }
-    }
-  ],
+  "questions": [],
   "plans": [],
   "log": [
     {
@@ -97,9 +76,7 @@
       "informant_bias_notes": "Compiled online tree with no original sources cited. The basis for this claim is unknown — it may derive from another unsourced tree, a misidentification, or an unrecorded family tradition. Cannot be treated as evidence until verified against original records.",
       "record_basis": "inferred",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": [
-        "q_001"
-      ]
+      "extracted_for_question_ids": []
     }
   ],
   "person_evidence": [
@@ -127,9 +104,7 @@
       "ruled_out": false,
       "ruled_out_reason": null,
       "notes": "Claim derives from a single unsourced online family tree. No original record has corroborated this. Must be treated as a hypothesis to be tested, not an established fact.",
-      "related_question_ids": [
-        "q_001"
-      ]
+      "related_question_ids": []
     }
   ],
   "timelines": [],
