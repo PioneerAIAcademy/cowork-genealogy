@@ -1094,3 +1094,90 @@ def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_sta
         if not any(re.search(rf"\b{re.escape(value)}\b", p) for p in prompts)
     ]
     assert not missing, f"the search-hints hand-off does not carry {', '.join(missing)}"
+
+
+_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_SEGMENT_BREAK = re.compile(r"\n|(?<=[.:;!?])\s+|[\"“”()\[\]]")
+_YEAR_RANGE = re.compile(r"\d{4}\s*[-–—]\s*\d{4}(?!\d)")
+_RECORD_WORD = re.compile(
+    r"\b(records?|registrations?|registers?|census(es)?|church|court|births|deaths|"
+    r"marriages|baptisms|christenings|burials|probate|land|tax|military|index|books|"
+    r"parish|civil|vital|immigration|passengers?|naturali[sz]ations?|cemeter(y|ies)|"
+    r"newspapers)\b",
+    re.IGNORECASE,
+)
+_REPOSITORY_WORD = re.compile(r"\b(archives?|library|museum|office|society)\b", re.IGNORECASE)
+
+
+def _normalised_title(text: str) -> str:
+    text = re.sub(r"[–—]", "-", text.casefold())
+    return re.sub(r"\s*-\s*", "-", re.sub(r"\s+", " ", text)).strip(" ,")
+
+
+def _collection_title_candidates(reply: str) -> list[str]:
+    """Runs of reply text shaped like a FamilySearch collection title: from the
+    segment's first capital, holding a comma and a record word, through a year range.
+    A run whose first field names a repository (an archive, library, museum, office
+    or society) is a repository recommendation, not a collection, and is dropped."""
+    reply = re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply))
+    found = []
+    for segment in _SEGMENT_BREAK.split(reply):
+        start = re.search(r"[A-Z]", segment)
+        if not start:
+            continue
+        run = segment[start.start():]
+        years = _YEAR_RANGE.search(run)
+        if not years:
+            continue
+        run = run[: years.end()]
+        if "," not in run or not _RECORD_WORD.search(run):
+            continue
+        if _REPOSITORY_WORD.search(run.split(",")[0]):
+            continue
+        found.append(run)
+    return found
+
+
+def _returned_collection_titles(tool_calls) -> list[str]:
+    titles = []
+    for call in tool_calls or []:
+        if bare_tool_name(str(call.get("tool", ""))) != "collections_search":
+            continue
+        response = call.get("response")
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except ValueError:
+                continue
+        for result in (response or {}).get("results") or []:
+            if isinstance(result, dict) and result.get("title"):
+                titles.append(result["title"])
+    return titles
+
+
+def test_names_collections_only_from_search(text_response, tool_calls, test):
+    """Tag-gated (``names-collections-only-from-search``), issue #4011: a reply names a
+    FamilySearch collection only when a ``collections_search`` result in the session
+    returned it. The Kenya alpha session listed "Kenya, Civil Registration, deaths
+    1904–1967" as searchable from memory; FamilySearch has no Kenya collections.
+
+    Precision over recall: a title with no record word, no year range or no comma is not
+    seen, and a non-FamilySearch repository is excluded by its first field. Proven both
+    ways in ``tests/unit/test_research_collections_from_search_validator.py``.
+    """
+    if "names-collections-only-from-search" not in test.get("tags", []):
+        pytest.skip("not a names-collections-only-from-search test")
+    returned = [_normalised_title(t) for t in _returned_collection_titles(tool_calls)]
+    unreturned = [
+        candidate
+        for candidate in _collection_title_candidates(text_response or "")
+        if not any(
+            _normalised_title(candidate).endswith(title) or title.endswith(_normalised_title(candidate))
+            for title in returned
+        )
+    ]
+    assert not unreturned, (
+        f"the reply names FamilySearch collection title(s) no collections_search result "
+        f"returned: {unreturned}. Returned titles: {returned or 'none'}. Name a collection "
+        "only from a collections_search result, or say it is unconfirmed."
+    )
