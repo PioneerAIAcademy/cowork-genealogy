@@ -1805,8 +1805,9 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
   control plane sets the outer limit: `/connect` gives a session more than 72 h
   past `projects.created` only a read-only connection (`SESSION_MAX_AGE` in
   `app/sessions.py`), because its sandbox still runs the agent code it was created
-  with. The chat replays and the client shows no composer; read-only is
-  client-enforced. `/resume` and the read endpoints stay open, so an ended
+  with. The chat replays and the client shows no composer, and the credential
+  proxy refuses the session's Claude calls, because reading it resumes its
+  sandbox. `/resume` and the read endpoints stay open, so an ended
   session's research can still be read.
   **A turn cannot run through the cap, though.** `set_timeout` cannot push a
   running sandbox's end time past its hour: five minutes after create,
