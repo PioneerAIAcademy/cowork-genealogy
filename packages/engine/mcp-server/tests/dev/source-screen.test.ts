@@ -492,6 +492,11 @@ describe("selectSubjectPersona", () => {
     expect(select(edgeRead([asParent, { ...asParent, child: "KIN2-111" }]), parentsRecord())).toEqual({ persona_id: "f", selected_by: "role:parent" });
   });
 
+  it("a source on two edges where only one edge finds a persona is no_relationship, not that edge's pick", () => {
+    expect(select(edgeRead([asParent], "Male"), parentsRecord())).toEqual({ persona_id: "f", selected_by: "role:parent" });
+    expect(select(edgeRead([asParent, asSpouse], "Male"), parentsRecord())).toEqual({ unscored: "no_relationship" });
+  });
+
   it("no candidates, or none of the subject's gender, is no_relationship", () => {
     expect(select(edgeRead([asParent]), { persons: [rp("c", "Female", ark("E1"))], relationships: [] })).toEqual({ unscored: "no_relationship" });
     expect(select(edgeRead([asParent], "Male"), { persons: [rp("m", "Female"), rp("c", "Male", ark("E1"))], relationships: [pc("m", "c")] })).toEqual({ unscored: "no_relationship" });
