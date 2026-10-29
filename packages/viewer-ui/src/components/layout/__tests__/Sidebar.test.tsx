@@ -58,3 +58,31 @@ describe('Sidebar survives unavailable storage', () => {
     expect(document.documentElement.dataset.theme).toBe('dark')
   })
 })
+
+describe('Sidebar Collections entry', () => {
+  it('counts every stored collection row across places', () => {
+    const row = {
+      key: 'k',
+      url: 'https://example.com/',
+      link_text: 'A',
+      record_types: ['Census', 'Tax'],
+      place: 'P',
+      cost: '',
+      content_type: '',
+      start_year: '',
+      end_year: ''
+    }
+    vi.mocked(useResearchData).mockReturnValue(
+      buildMockContext({
+        collections: {
+          places: { A: { rows: [row, { ...row, key: 'k2' }] }, B: { rows: [{ ...row, key: 'k3' }] } }
+        }
+      })
+    )
+
+    render(<Sidebar />)
+
+    const entry = screen.getByRole('button', { name: /Collections/ })
+    expect(entry).toHaveTextContent('Collections3')
+  })
+})

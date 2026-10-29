@@ -22,7 +22,7 @@ import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
-import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -46,6 +46,7 @@ import {
   readMatchScores,
   findRecordedScore,
   type MatchScoreFile,
+  type ScoredPersona,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { normalizeString } from "../utils/string-similarity.js";
@@ -57,7 +58,9 @@ import {
   UK_CONSTITUENTS,
   placeTypeKey,
   resolveStandardPlace,
+  repIdToStandardPlace,
   countryConsistency,
+  countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
   type PlaceCoords,
@@ -68,7 +71,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -80,9 +83,10 @@ import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
+  loadStoredCollectionUrls,
   readExternalCollections,
-  storedCollectionKeys,
   EXTERNAL_COLLECTIONS_FILE,
+  type StoredCollectionUrls,
   type ExternalCollectionsDoc,
   type StoredCollectionRow,
 } from "../utils/external-collections-store.js";
@@ -96,6 +100,8 @@ import {
   factTypeKey,
   isTwoParty,
   recordPartyKeyer,
+  personaRolesById,
+  sameRecord,
 } from "../utils/record-persona.js";
 import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/relatives.js";
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
@@ -1042,8 +1048,7 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
         (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
           (aid: string) => linked.has(aid),
         ) &&
-        c.status !== "resolved" &&
-        c.status !== "moot",
+        !isSettledConflict(c),
     )
     .map((c: any) => c.id);
   if (unresolved.length > 0) {
@@ -2171,15 +2176,17 @@ function personEvidenceScoreInvariants(
       : research;
   if (entry.match_score == null && !personaReachable(entry, reachabilityView)) return [];
 
-  // Exact lookup on (assertion, tree person) -- the pair the writer was called
-  // with and the pair this entry carries, so the two sides cannot disagree.
-  // Keying on the PARTY instead could not see a score written by the fetched
-  // route, which resolves a real persons[].id where the assertion carries null:
-  // the gate then refused precisely the links whose call HAD been made. Persona
-  // granularity (ADR-0009 constraint 3) survives because an assertion is a
-  // (record, party) pair, so a second persona is a different assertion.
+  // Exact lookup on (assertion, tree person) first -- the pair the writer was
+  // called with and the pair this entry carries. Keying on the PARTY instead
+  // could not see a score written by the fetched route, which resolves a real
+  // persons[].id where the assertion carries null. Then the persona arm: a score
+  // that compared this assertion's verified persona with this tree person
+  // answers for every fact of that persona (#3552; match-scores.ts header). A
+  // second persona of the record is a different persona, so ADR-0009
+  // constraint 3 holds.
   const file = matchScores.get(recordId) ?? null;
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
+  const persona = scoredPersonaOf(assertion, recordId, assertions, batchAssertions);
+  if (findRecordedScore(file, entry.assertion_id, entry.person_id, persona) !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -2192,6 +2199,12 @@ function personEvidenceScoreInvariants(
     ? ` This assertion's own party is '${role}'; if '${entry.person_id}' is a DIFFERENT party ` +
       `on the same record, pass that party's recordRole so the score compares the right two ` +
       `people.`
+    : "";
+  // The persona arm is why one call is enough per persona; say so, or the agent
+  // repeats the identical call for each fact.
+  const personaHint = persona
+    ? ` One score covers every fact of persona '${persona.personaId}' on this record: score it ` +
+      `once for '${entry.person_id}' and the links for its other facts need no further call.`
     : "";
   // An assertion this same call CREATES cannot already have a score: `same_person`
   // reads research.json and throws on an assertion that is not in it, and the
@@ -2215,8 +2228,29 @@ function personEvidenceScoreInvariants(
       `'${entry.person_id}' }) first, then write the link with the score it returns. The tool ` +
       `assembles both sides itself, so this costs one call and no payload. If that call cannot ` +
       `score the pairing, or if '${entry.person_id}' was created out of this very record, do NOT ` +
-      `score it: leave match_score null and say why in the rationale.${roleHint}`,
+      `score it: leave match_score null and say why in the rationale.${roleHint}${personaHint}`,
   ];
+}
+
+/** The persona a link's assertion is about, with the roles its record gives it,
+ *  or undefined when no score can be shared: the assertion carries no persona
+ *  id; it names a second person (`isTwoParty`), so its link may be about that
+ *  other party; or the record gives the id to more than one role, so it names no
+ *  single party (`same_person` passes over such an id the same way). The
+ *  record's assertions are gathered with `sameRecord`, the rule `same_person`
+ *  scores by, from `batchAssertions` (the document plus this call's appends)
+ *  when given. */
+function scoredPersonaOf(
+  assertion: any,
+  recordId: string,
+  assertions: readonly any[],
+  batchAssertions?: Map<string, any>,
+): ScoredPersona | undefined {
+  const personaId = assertion?.record_persona_id;
+  if (typeof personaId !== "string" || personaId === "" || isTwoParty(assertion?.fact_type)) return undefined;
+  const pool = batchAssertions ? [...batchAssertions.values()] : assertions;
+  const roles = personaRolesById(pool.filter((a) => sameRecord(a?.record_id, recordId))).get(personaId);
+  return roles !== undefined && roles.size === 1 ? { personaId, roles } : undefined;
 }
 
 /** Whether a record persona `same_person` could score against is reachable for
@@ -3377,6 +3411,52 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+/** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
+ *  each row the call appended, or updated through `record_ids` or
+ *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
+ *  count what a persona-keyed refusal would catch. Overwrites whatever the
+ *  caller supplied; an update cannot set the field (`updatableFields`). A found
+ *  record id is stored in the sidecar's form, as an assertion's is. */
+export async function stampNamesakePersonas(
+  research: any,
+  ops: ReadonlyArray<ResearchAppendOp>,
+  applied: ReadonlyArray<AppliedOp>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<void> {
+  const logById = new Map<string, any>(
+    (Array.isArray(research?.log) ? research.log : [])
+      .filter((e: any) => e && typeof e.id === "string")
+      .map((e: any) => [e.id, e]),
+  );
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  for (const a of applied) {
+    if (a.section !== "namesakes" || a.noop) continue;
+    const fields = (ops[a.opIndex] as any)?.fields;
+    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    const row = rows.find((r) => r && r.id === a.entryId);
+    if (!row) continue;
+    const stamp: Record<string, string> = {};
+    const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
+      if (typeof id !== "string") return id;
+      for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+        const entry = logById.get(logId);
+        if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+        const hit = (await readResults(entry.results_ref))?.find(
+          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
+        );
+        if (!hit) continue;
+        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
+        return hit.recordId;
+      }
+      // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
+      return id;
+    });
+    row.record_ids = await Promise.all(recordIds);
+    if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
+    else delete row.record_persona_ids;
+  }
+}
+
 /** What the namesake warning lists for one person. */
 export interface NamesakeRowListing {
   personId: string;
@@ -3650,15 +3730,16 @@ export function namesakeCitationRefusals(
             ? `it has no probable or confident link to '${c.personId}'`
             : judgedStrong === undefined
               ? `its only link to '${c.personId}' rests on an assertion that records an absence, which ties nothing`
-              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it"}`;
+              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${(v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it").replace(/\.$/, "")}`;
         findings.push({
           index: c.index,
           message:
             `'${c.personId}' has a recorded namesake (${own.map((r) => `'${r.id}'`).join(", ")}), so a record goes ` +
             `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
             `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
-            `Nothing was written. Cite only records that tie to '${c.personId}', or tie the record first through ` +
-            "person-evidence; a relationship added in this same call does not count, so add it in an earlier call.",
+            `Nothing was written. Cite only records that tie to '${c.personId}', or hand the link to the ` +
+            "person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same " +
+            "call does not count, so add it in an earlier call.",
         });
       }
     }
@@ -4210,42 +4291,41 @@ function questionResolvedInvariants(
   // correlated.
   if (beforeResearch) {
     const disputed = disputedSourceIds(beforeResearch);
-    if (disputed.size > 0) {
-      const assertionSource = new Map<string, string>();
-      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
-        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    const assertionSource = new Map<string, string>();
+    for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+      if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    }
+    const blocking = new Set<string>();
+    for (const ps of summaries) {
+      if (ps?.question_id !== entry?.id) continue;
+      for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+        const src = assertionSource.get(aid);
+        for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
       }
-      const blocking = new Set<string>();
-      for (const ps of summaries) {
-        if (ps?.question_id !== entry?.id) continue;
-        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
-          const src = assertionSource.get(aid);
-          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
-        }
-      }
-      // Reaching the conflicts through the summary's cited assertions misses the
-      // case that matters most: a `not_proved` summary citing NOTHING. Its
-      // `supporting_assertion_ids` is empty, so the loop above finds nothing to
-      // dispute and the question resolves straight over an open conflict -- which
-      // is exactly what decision 12 says must not happen, and exactly the shape a
-      // wrap-up produces. A conflict naming this question in `blocks_question_ids`
-      // is blocking it by its own declaration, with no assertion needed.
-      for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
-        if (c?.status !== "unresolved" || typeof c?.id !== "string") continue;
-        const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
-        if (blocks.includes(entry?.id)) blocking.add(c.id);
-      }
-      if (blocking.size > 0) {
-        return [
-          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
-            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
-            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
-            "sources behind it have never been correlated. This is not the same as a question " +
-            "researched and found empty, which `not_proved` does close — here the work is " +
-            "unfinished rather than finished with nothing. Leave the question open, record the " +
-            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
-        ];
-      }
+    }
+    // Reaching the conflicts through the summary's cited assertions misses the
+    // case that matters most: a `not_proved` summary citing NOTHING. Its
+    // `supporting_assertion_ids` is empty, so the loop above finds nothing to
+    // dispute and the question resolves straight over an open conflict -- which
+    // is exactly what decision 12 says must not happen, and exactly the shape a
+    // wrap-up produces. A conflict naming this question in `blocks_question_ids`
+    // is blocking it by its own declaration, with no assertion needed -- so this
+    // runs even when no source is disputed at all.
+    for (const c of Array.isArray(beforeResearch?.conflicts) ? beforeResearch.conflicts : []) {
+      if (isSettledConflict(c) || typeof c?.id !== "string") continue;
+      const blocks = Array.isArray(c?.blocks_question_ids) ? c.blocks_question_ids : [];
+      if (blocks.includes(entry?.id)) blocking.add(c.id);
+    }
+    if (blocking.size > 0) {
+      return [
+        `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+          `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+          "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+          "sources behind it have never been correlated. This is not the same as a question " +
+          "researched and found empty, which `not_proved` does close — here the work is " +
+          "unfinished rather than finished with nothing. Leave the question open, record the " +
+          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+      ];
     }
   }
 
@@ -4264,7 +4344,9 @@ function questionResolvedInvariants(
  *
  *  A conflict names the assertions that compete; each assertion names the
  *  source it came from. Those sources are the ones whose reliability is
- *  currently in question. */
+ *  currently in question. A `moot` conflict disputes nothing: it is settled
+ *  like a `resolved` one, so both refusals built on this name only conflicts
+ *  that really are unresolved (issue #2359). */
 function disputedSourceIds(research: any): Map<string, string[]> {
   const assertionSource = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
@@ -4272,7 +4354,7 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   }
   const bySource = new Map<string, string[]>();
   for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
-    if (!c || c.status === "resolved") continue;
+    if (!c || isSettledConflict(c)) continue;
     for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
       const src = assertionSource.get(aid);
       if (!src) continue;
@@ -4384,7 +4466,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
     if (!c || typeof c !== "object") continue;
     const key = conflictKey(c.id);
     if (key) recorded.add(key);
-    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+    if (isSettledConflict(c)) {
       if (key) settled.add(key);
       for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
     }
@@ -5475,20 +5557,6 @@ function planItemSkipInvariants(
     );
   }
   return errors;
-}
-
-/** The curated collections in `external-collections.json`, by `collectionKey`, or
- *  why they could not be read. Every place's rows, so a plan item's free-text
- *  jurisdiction never has to be matched to a stored place. Read once per call,
- *  before the sync apply loop, and only when an op sets `collection_url`. */
-export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
-
-async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
-  try {
-    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
-  }
 }
 
 /** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
@@ -6833,6 +6901,19 @@ function applyOne(
       if (config.singleton.createWhenAbsent && target === undefined) {
         target = {};
         research[section] = target;
+        // Placed right after `project` so an agent paging a long research.json
+        // finds it near the top. In place, because `research` is the caller's
+        // object: delete and re-add every key that follows `project`.
+        const keys = Object.keys(research);
+        const projectAt = keys.indexOf("project");
+        if (projectAt !== -1) {
+          for (const k of keys.slice(projectAt + 1)) {
+            if (k === section) continue;
+            const value = research[k];
+            delete research[k];
+            research[k] = value;
+          }
+        }
       } else {
         throw new ResearchAppendError(`research.json '${section}' is missing or not an object`);
       }
@@ -7742,33 +7823,79 @@ function applyOne(
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
-/** Find a converter-resolved standard_place inside a sidecar record's
- *  simplified gedcomx whose fact `place` matches `place` (trimmed,
- *  case-insensitive). Never geocode what the source record already resolved. */
-function sidecarStandardPlace(gx: any, place: string): string | null {
+/** The converter-resolved standard_place a sidecar record's simplified gedcomx
+ *  gives an assertion's own fact: the facts of its `record_persona_id` (the
+ *  persona's own, and those of a relationship whose `person1` or `person2` it
+ *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
+ *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
+ *  case-insensitive). Null unless every such fact carries the same one, so one
+ *  fact's name never lands on another person's or another fact's. Never geocode
+ *  what the source record already resolved. */
+function sidecarStandardPlace(gx: any, entry: any): string | null {
   if (!gx || typeof gx !== "object") return null;
-  const want = place.trim().toLowerCase();
-  const factLists: any[][] = [];
+  const persona = entry.record_persona_id;
+  const facts: any[] = [];
   for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
-    if (p && Array.isArray(p.facts)) factLists.push(p.facts);
+    if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
   }
   for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
-    if (r && Array.isArray(r.facts)) factLists.push(r.facts);
+    if ((r?.person1 === persona || r?.person2 === persona) && Array.isArray(r.facts)) facts.push(...r.facts);
   }
-  for (const facts of factLists) {
-    for (const f of facts) {
-      if (
-        f &&
-        typeof f.place === "string" &&
-        f.place.trim().toLowerCase() === want &&
-        typeof f.standard_place === "string" &&
-        f.standard_place.length > 0
-      ) {
-        return f.standard_place;
-      }
-    }
+  const want = entry.place.trim().toLowerCase();
+  const names = new Set(
+    facts
+      .filter(
+        (f) =>
+          typeof f?.place === "string" &&
+          f.place.trim().toLowerCase() === want &&
+          canonicalFactKey(f.type) === canonicalFactKey(entry.fact_type),
+      )
+      .map((f) => f.standard_place),
+  );
+  const [name] = names;
+  return names.size === 1 && typeof name === "string" ? name : null;
+}
+
+/** A sidecar result's record id: record_search and record_read stage GedcomX
+ *  personas keyed on `recordId`, the persona-less producers (full text,
+ *  external links) transcripts keyed on `id` (#2038). */
+function sidecarResultId(tool: string, r: any): string | undefined {
+  const v = PERSONA_BEARING_PRODUCERS.has(tool) ? r?.recordId : r?.id;
+  return typeof v === "string" ? v : undefined;
+}
+
+/**
+ * The country of the sidecar record an assertion comes from, by its producer,
+ * never read off the assertions' places (`countryOfPlace` names it, and says
+ * which places are no country):
+ * - a FamilySearch record (record_search, record_read): its Collection source's
+ *   coverage place, the coverage's `standard_place` (a live `record_read`
+ *   resolves it), else its `place_rep_id` resolved by id. A World collection
+ *   gives none (matcher-lab m13's list builder, stage S2);
+ * - a page `image_transcribe` read: its source's `place`, the coverage place of
+ *   the FamilySearch image group (the film) it was read from (lead, 2026-10-29).
+ *   A full-text record is extracted from its page this way.
+ * Null when the record names no such place.
+ */
+async function recordCountryOf(producer: string | undefined, record: any): Promise<string | null> {
+  if (producer === "image_transcribe") {
+    return typeof record?.source?.place === "string" ? countryOfPlace(record.source.place) : null;
   }
-  return null;
+  const sources: any[] = Array.isArray(record?.gedcomx?.sources) ? record.gedcomx.sources : [];
+  const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
+  let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
+  if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
+  return place ? countryOfPlace(place) : null;
+}
+
+/** The sidecar record an assertion's country comes from: the result its
+ *  record_id names, else, for a page `image_transcribe` staged, that page. The
+ *  sidecar holds the one transcription its log entry logged
+ *  (`extraction_append` logs the staged ref it cites), and a record_id the
+ *  caller chose ("capture:…", a record ARK) need not be the page's id. */
+function countrySidecarRecord(producer: string | undefined, results: any[] | null, matched: any): any {
+  if (matched) return matched;
+  return producer === "image_transcribe" && results?.length === 1 ? results[0] : null;
 }
 
 interface PreparedOps {
@@ -7902,9 +8029,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = factTypeKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
-  return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
+  return [a.source_id, arkToBareId(a.record_id), log, who, canonicalFactKey(a.fact_type)].join("\u0000");
+}
+
+/** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
+ *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
+ *  `birth_registration`. */
+function canonicalFactKey(ft: unknown): string {
+  const key = factTypeKey(ft);
+  return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
@@ -8170,6 +8303,28 @@ async function checkLocalityFirstPlaces(
   }
 }
 
+/** A per-call reader of a sidecar's `payload.results`, cached by ref: null when
+ *  the ref is outside the project, unreadable, or holds no results array. */
+function sidecarResultsReader(projectPath: string): (ref: string) => Promise<any[] | null> {
+  const cache = new Map<string, any[] | null>();
+  return async (ref) => {
+    if (cache.has(ref)) return cache.get(ref)!;
+    let results: any[] | null = null;
+    if (isInsideProject(projectPath, ref)) {
+      try {
+        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
+        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
+          results = sc.payload.results;
+        }
+      } catch {
+        // unreadable sidecar — the document validator reports it; skip enforcement
+      }
+    }
+    cache.set(ref, results);
+    return results;
+  };
+}
+
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
  *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
  *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
@@ -8182,6 +8337,7 @@ async function prepareOps(
   tree: SimplifiedGedcomX,
   projectPath: string,
   fmt: (i: number, msg: string) => string,
+  hintReads?: ReadonlyMap<string, string>,
 ): Promise<PreparedOps> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -8437,30 +8593,17 @@ async function prepareOps(
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
   }
-  const sidecarCache = new Map<string, any[] | null>();
-  const readSidecarResults = async (ref: string): Promise<any[] | null> => {
-    if (sidecarCache.has(ref)) return sidecarCache.get(ref)!;
-    let results: any[] | null = null;
-    if (isInsideProject(projectPath, ref)) {
-      try {
-        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
-        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
-          results = sc.payload.results;
-        }
-      } catch {
-        // unreadable sidecar — the document validator reports it; skip enforcement
-      }
-    }
-    sidecarCache.set(ref, results);
-    return results;
-  };
+  const readSidecarResults = sidecarResultsReader(projectPath);
 
-  // The other places each record's assertions name in this batch: a bare place
-  // ("Shenandoah") is resolved against them, not against the whole world.
+  // The other places each record's assertions name in this batch, each by its
+  // standard_place when it has one, else its place: a bare place ("Shenandoah")
+  // is resolved against them, not against the whole world. A record read's
+  // named fact carries its as-written text ("Den Haag") as `place`, so the
+  // standard is the one that still names the fact's jurisdictions.
   const placesByRecord = new Map<string, string[]>();
   for (const op of ops) {
     const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
-    const place = e ? factText(e.place) : undefined;
+    const place = e ? (factText(e.standard_place) ?? factText(e.place)) : undefined;
     if (!place) continue;
     const key = String(e.record_id ?? "");
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
@@ -8468,15 +8611,21 @@ async function prepareOps(
 
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
-   *  `dropContradiction`, when it is left unset instead. */
+   *  `dropContradiction`, when it is left unset instead. `countryRecord` is the
+   *  sidecar record the assertion comes from and `countryProducer` the tool that
+   *  staged it, which give the resolver the record's country
+   *  (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
     matchedRecord: any,
-    dropContradiction = false,
+    dropContradiction: boolean,
+    countryProducer: string | undefined,
+    countryRecord: any,
   ): Promise<void> => {
     // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
+    // resolved — copy the standard_place the sidecar gives this assertion's own
+    // fact (same persona, fact type and place string).
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
     // only a fully omitted field triggers resolution. A non-place phrase
     // ("Same House") is left unset, silently: it has no standard form.
@@ -8489,17 +8638,19 @@ async function prepareOps(
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry);
         if (sp) source = "sidecar";
       }
       if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
+        // resolveStandardPlace returns null on a miss and can throw on a
+        // failure (a bare name's top-hit search does), and the catch makes the
+        // two look the same here — both warrant the warning (a silently
+        // unresolved place is part of the wrong-geocode theme).
         try {
           const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
             .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+          const recordCountry = () => recordCountryOf(countryProducer, countryRecord);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces, recordCountry })) ?? null;
         } catch {
           sp = null;
         }
@@ -8554,10 +8705,16 @@ async function prepareOps(
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
+    let countryProducer: string | undefined;
+    let countryRecord: any = null;
     const logId = entry.log_entry_id;
     const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
     if (logEntry) {
-      const ref = logEntry.results_ref;
+      // An accepted hint's entry stages nothing; extraction_append read the record
+      // in the same call and names that staged read, which stands in for a sidecar.
+      const hintRef = isAcceptedHint(logEntry) ? hintReads?.get(logEntry.id) : undefined;
+      const ref = hintRef ?? logEntry.results_ref;
+      const producer = hintRef ? "record_read" : logEntry.tool;
       if (!ref) {
         // Staging gap (#699): a record/full-text search that RETURNED results
         // but staged no sidecar. D2 auto-fill resolves record_persona_id from
@@ -8612,11 +8769,8 @@ async function prepareOps(
           // carry) matched nothing every time, which either rejected a persona-linked write with an empty
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
-          const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
-          const resultId = (r: any): string | undefined => {
-            const v = personaBearing ? r?.recordId : r?.id;
-            return typeof v === "string" ? v : undefined;
-          };
+          const personaBearing = PERSONA_BEARING_PRODUCERS.has(producer);
+          const resultId = (r: any): string | undefined => sidecarResultId(producer, r);
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
             (r) => r && typeof r === "object" && resultId(r) !== undefined && arkToBareId(resultId(r)!) === key,
@@ -8712,11 +8866,24 @@ async function prepareOps(
               }
             }
           }
+        } else if (hintRef && entry.record_persona_id != null) {
+          // The document validator cannot re-check a hint's persona later, so an
+          // unreadable read refuses rather than skipping enforcement.
+          errors.push(
+            fmt(
+              i,
+              `record_persona_id '${entry.record_persona_id}' cannot be verified — the record read ` +
+                `'${hintRef}' staged for hint entry '${logId}' is missing or unreadable`,
+            ),
+          );
+          continue;
         }
+        countryProducer = producer;
+        countryRecord = countrySidecarRecord(producer, results, matchedRecord);
       }
     }
 
-    await applyPlaceLevers(entry, i, matchedRecord);
+    await applyPlaceLevers(entry, i, matchedRecord, false, countryProducer, countryRecord);
   }
 
   // An assertions update that corrects `place` to another place and says nothing of
@@ -8734,7 +8901,14 @@ async function prepareOps(
     const place = factText(fields.place);
     if (!cur || place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    await applyPlaceLevers(view, i, null, true);
+    const logEntry = typeof view.log_entry_id === "string" ? logById.get(view.log_entry_id) : undefined;
+    const results = typeof logEntry?.results_ref === "string" ? await readSidecarResults(logEntry.results_ref) : null;
+    const key = arkToBareId(String(view.record_id ?? ""));
+    const record = results?.find((r) => {
+      const id = sidecarResultId(logEntry.tool, r);
+      return id !== undefined && arkToBareId(id) === key;
+    });
+    await applyPlaceLevers(view, i, null, true, logEntry?.tool, countrySidecarRecord(logEntry?.tool, results, record));
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {
@@ -8890,6 +9064,10 @@ export interface ResearchAppendOptions {
    *  attachment shape (`isAttachmentLink`) skip the score gate. Never set by a
    *  tool caller. */
   attachmentLink?: boolean;
+  /** extraction_append's recordIds mode: accepted-hint log id -> the staged
+   *  `record_read` of that record, made in the same call. D2 verifies persona ids
+   *  under the hint's sidecar-less entry against it. Never set by a tool caller. */
+  hintReads?: ReadonlyMap<string, string>;
   /** Tool name used in lane-rejection text, so a narrow caller names itself. */
   toolName?: string;
   /** Report only the first failing op, and do not judge the rest of the batch.
@@ -9250,7 +9428,7 @@ export async function researchAppend(
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
-    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options.hintReads);
 
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
@@ -9329,6 +9507,8 @@ export async function researchAppend(
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+
+    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(projectPath));
 
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on

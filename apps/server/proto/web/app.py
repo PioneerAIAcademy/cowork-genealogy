@@ -38,7 +38,7 @@ Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads 
   session_activity.payload
       -> {"type": "agent_event", "event": {**payload, "kind": "task_progress"}}   (no id)
   documents.version moved
-      -> {"type": "research_updated" | "gedcomx_updated", "name", "data": <doc>}  (no id)
+      -> {"type": "research_updated" | "gedcomx_updated" | "document_updated", "name", "data": <doc>}  (no id)
 
 Only ``session_events`` frames carry ``id: <seq>``, so ``Last-Event-ID`` is always a seq
 and the transient frames are never replayed -- the same split as TRANSIENT_KINDS in the

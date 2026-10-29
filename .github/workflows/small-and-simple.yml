@@ -1,0 +1,30 @@
+name: small-and-simple
+
+# Typecheck and offline tests for small-and-simple/, which has its own
+# package.json and lockfile and is not part of the pnpm workspace or the engine.
+# The live evals call FamilySearch and OpenRouter and are run by hand.
+#
+# No `paths:` filter, so the job always reports and can be a required check
+# (see engine-tests.yml).
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  small-and-simple:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: small-and-simple
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: small-and-simple/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
