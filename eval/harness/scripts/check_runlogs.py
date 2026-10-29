@@ -18,13 +18,13 @@ docs/plan/eval-runlog-versioning.md §C6:
              reports skill-side stale (a regrade cannot satisfy a log
              that owes a paid `make eval-skill` run).
     Rule 2c  the graded run log's `instrument` fingerprint matches the
-             current one: BLOCKS on `validators.suite` / `tools.fixture`,
-             warns on `validators.shared` / `tools.live` / `live_modules`, and,
-             on a log the PR did not add, on a blocking half main already had
-             (`base_instrument`).
+             current one: BLOCKS on `validators.suite`, warns on
+             `tools.fixture` / `validators.shared` / `tools.live` /
+             `live_modules`, and, on a log the PR did not add, on a suite
+             validator main already had (`base_suite_validators`).
              Also graded on every suite the PR's paths could move
              (`instrument_touched_suites`). Reads the engine build, and the
-             base checkout's at `BASE_TREE`.
+             base checkout at `BASE_TREE`.
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale
@@ -115,6 +115,7 @@ from harness.instrument import (  # noqa: E402
     load_tool_catalog,
     suite_validator_file,
     validator_harness_imports,
+    validators_fingerprint,
 )
 
 
@@ -906,32 +907,13 @@ def _tool_catalog() -> dict:
     return _tool_catalog_cache
 
 
-@functools.lru_cache(maxsize=None)
-def _base_tool_catalog(root: Path) -> dict | None:
-    """`_tool_catalog` for the base checkout at `root`, or None, warning once,
-    when it cannot be read."""
-    engine = root / "packages" / "engine" / "mcp-server"
-    try:
-        return load_tool_catalog(engine / "build", require_fresh=True, src_dir=engine / "src")
-    except CatalogUnavailable as e:
-        gh_warning(
-            f"rule 2c could not read main's tool catalog ({e}), so it cannot tell an "
-            f"instrument change main already had from one this PR made; it blocks on both."
-        )
-        return None
-
-
-def base_instrument(skill: str) -> dict | None:
-    """The suite's instrument as BASE_SHA has it, from the checkout of BASE_SHA
-    the workflow builds at `BASE_TREE`. None when there is none to read."""
+def base_suite_validators(skill: str) -> str | None:
+    """`validators.suite` as BASE_SHA has it, from the checkout of BASE_SHA the
+    workflow makes at `BASE_TREE`. None when there is none to read."""
     base = os.environ.get("BASE_TREE")
-    if not base:
+    if not base or not Path(base).is_dir():
         return None
-    root = Path(base)
-    catalog = _base_tool_catalog(root)
-    if catalog is None:
-        return None
-    return instrument_for(skill, root, catalog=catalog)
+    return validators_fingerprint(skill, Path(base) / "eval" / "harness" / "validators")["suite"]
 
 
 def _harness_imports_moved(path: str, validators_dir: Path) -> bool:
@@ -988,22 +970,22 @@ def rule2c_instrument(
 ) -> int:
     """Rule 2c: the run log's `instrument` fingerprint matches the current one.
 
-    BLOCKS on the suite-specific halves -- `validators.suite` (`test_<skill>.py`)
-    and `tools.fixture` (the tools this suite serves from its own fixtures):
-    clearing one costs that one suite's run. WARNS on the corpus-wide halves --
-    `validators.shared`, `tools.live`, `live_modules` -- because blocking on them
+    BLOCKS on `validators.suite` (`test_<skill>.py`): clearing it costs that one
+    suite's run. WARNS on everything else: `tools.fixture` (the tools this suite
+    serves from its own fixtures; lead, 2026-10-29), and the corpus-wide
+    `validators.shared`, `tools.live`, `live_modules`, because blocking on them
     would owe a paid re-run of every suite (decided 2026-10-14 on issue #2479).
     A log with no `instrument` (written before the field) warns and passes.
     Downgrades a block to a warning when rule 2 itself blocked this same log in
     this run (`rule2_blocked`), so the one re-run is owed once; a snapshot that is
     merely stale is not enough, since rule 2 does not run on instrument-arm suites.
     Also downgrades when the PR carries `eval-cosmetic-skip:<skill>`, exactly as
-    rule 2 does: a senior judged the change behaviour-neutral (a typo in a tool
-    description, say), and a new push voids the label. And, on a log this PR did
-    not add (`compare_base`), warns rather than blocks on a half `main` already
-    had at its current value (`base_instrument`): that change was waived or owed
-    on the PR that made it, and every later PR touching engine source would
-    otherwise inherit it. Returns 1 on block, 0 otherwise.
+    rule 2 does: a senior judged the change behaviour-neutral, and a new push
+    voids the label. And, on a log this PR did not add (`compare_base`), warns
+    rather than blocks on a suite validator `main` already has
+    (`base_suite_validators`): that change was waived or owed on the PR that made
+    it, and every later PR touching a validator would otherwise inherit it.
+    Returns 1 on block, 0 otherwise.
     """
     stored = log.get("instrument")
     head = f"skill `{skill}`: `{filename}`, {graded},"
@@ -1028,30 +1010,20 @@ def rule2c_instrument(
     def moved(group: str, key: str) -> bool:
         return (stored.get(group) or {}).get(key) != current[group][key]
 
-    suite_halves = [
-        ("validators", "suite", f"validators.suite (`eval/harness/validators/{suite_validator_file(skill)}`)"),
-        ("tools", "fixture", "tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)"),
-    ]
-    base = (
-        base_instrument(skill)
-        if compare_base and any(moved(g, k) for g, k, _ in suite_halves)
-        else None
-    )
     blocking = []
-    inherited = []
-    for group, key, text in suite_halves:
-        if moved(group, key):
-            if base is not None and base[group][key] == current[group][key]:
-                inherited.append(text)
-            else:
-                blocking.append(text)
-    if inherited:
-        gh_warning(
-            f"{head} was produced or graded by an instrument that has since changed: "
-            f"{'; '.join(inherited)}. `main` already has that change, so this PR did "
-            f"not make it and rule 2c warns; the suite's next run re-records it."
-        )
+    if moved("validators", "suite"):
+        suite = f"validators.suite (`eval/harness/validators/{suite_validator_file(skill)}`)"
+        if compare_base and base_suite_validators(skill) == current["validators"]["suite"]:
+            gh_warning(
+                f"{head} was produced or graded by an instrument that has since changed: "
+                f"{suite}. `main` already has that change, so this PR did not make it "
+                f"and rule 2c warns; the suite's next run re-records it."
+            )
+        else:
+            blocking.append(suite)
     warning = []
+    if moved("tools", "fixture"):
+        warning.append("tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)")
     if moved("validators", "shared"):
         warning.append(
             "validators.shared (`test_universal.py` / `validators_lib.py`, or a harness "
@@ -2367,8 +2339,8 @@ def main() -> int:
     )
     instrument_touched_skills = instrument_touched_suites(touched_paths, all_suites)
     # A shared MCP fixture's `tool` field feeds `tools.fixture`, so a changed fixture
-    # opens rule 2c on the suites that reference it -- graded on this PR, not left
-    # for the next author to touch them.
+    # opens rule 2c on the suites that reference it -- reported (a warning) on this
+    # PR, not left for the next author to touch them.
     instrument_touched_skills |= fixture_touched_skills
     instrument_touched_skills -= exempt_suiteless
 

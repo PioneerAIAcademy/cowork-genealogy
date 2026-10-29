@@ -20,11 +20,11 @@ name: Check runlog discipline
 #
 #   Rule 2c (blocking on suite-specific inputs): The same run log's
 #   `instrument` fingerprint matches the current validators and advertised
-#   tool schemas. A change to the suite's own validator file or to a tool its
-#   fixtures serve blocks; a change to the shared validators, the LIVE_TOOLS
-#   schemas or a live tool's compiled module warns, and so, on a log the PR
-#   did not add, does a change main already had. Needs the engine built at the
-#   PR and at its base, so this job builds both.
+#   tool schemas. A change to the suite's own validator file blocks; a change
+#   to a tool schema, the shared validators or a live tool's compiled module
+#   warns, and so, on a log the PR did not add, does a suite validator main
+#   already had. Needs the engine build and a checkout of the base, so this
+#   job makes both.
 #
 #   Rule 3 (blocking): The same run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
@@ -224,18 +224,14 @@ jobs:
           npm ci
           npm run build
 
-      # Rule 2c blocks only on an instrument change this PR makes. One main already
+      # Rule 2c blocks only on a suite validator this PR changes. One main already
       # has -- waived on the PR that made it -- warns, so later PRs do not inherit
-      # it. Telling the two apart needs main's tool catalog as well as this PR's.
-      - name: Build the engine at the base (rule 2c compares against main's catalog)
+      # it. Telling the two apart needs main's validator files.
+      - name: Check out the base (rule 2c compares against main's validators)
         if: steps.scope.outputs.needs_engine == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
-          cd "$RUNNER_TEMP/base/packages/engine/mcp-server"
-          npm ci
-          npm run build
+        run: git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
 
       - name: Run runlog discipline checks
         if: steps.scope.outputs.relevant == 'true'

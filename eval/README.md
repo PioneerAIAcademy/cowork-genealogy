@@ -196,7 +196,7 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 
 - `schema_version` (currently `3`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
-- `instrument` — what produced and graded the run, beside the skill-side `snapshot`: `validators.{suite,shared}` (normalised AST of the validator files), `tools.{fixture,live}` (the advertised tool schemas) and `live_modules` (the compiled module of each live tool the run called). Optional; read by check_runlogs rule 2c, which blocks on the suite-specific halves and warns on the rest.
+- `instrument` — what produced and graded the run, beside the skill-side `snapshot`: `validators.{suite,shared}` (normalised AST of the validator files), `tools.{fixture,live}` (the advertised tool schemas) and `live_modules` (the compiled module of each live tool the run called). Optional; read by check_runlogs rule 2c, which blocks on `validators.suite` and warns on the rest.
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures, and plugin agents — a full-body key for an agent the run executes, a `packages/engine/plugin/agents/<name>.md#frontmatter` key, digesting only `name`/`description`/`tools`/`disallowedTools`, for every other staged agent in a routing suite like `research`, named in its SKILL.md or not). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
   - `outcome` (`pass | partial | fail | aborted`; suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it)
@@ -244,7 +244,7 @@ That edit changes the skill-side snapshot, which flips the latest run log
 changed. A senior can waive that for a genuinely behavior-neutral edit by
 applying a **PR label** — no branch checkout, no commands, nothing to install.
 
-The same label waives rule 2c for that skill, so a typo fix in an advertised tool description does not owe a paid re-run either.
+The same label waives rule 2c for that skill. An advertised tool description edit needs no label: rule 2c only warns on it.
 
 A waiver is applied once, on the PR that makes the change. Later PRs do not
 re-apply it: a run log they did not add blocks only on what they changed

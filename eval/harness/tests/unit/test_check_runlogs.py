@@ -2096,23 +2096,23 @@ def test_rule2_fallback_blocks_only_on_a_file_the_pr_changed(
 def test_main_compares_rule2c_with_main_only_on_a_log_the_pr_did_not_add(
     tmp_path, monkeypatch, capsys, pr_adds_the_log
 ):
-    """`main` moved `tools.fixture` before this PR. A log the PR adds must still match
-    the tree it merges into; main's own latest log only warns."""
+    """`main` changed the suite's validator before this PR. A log the PR adds must
+    still match the tree it merges into; main's own latest log only warns."""
     skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
     name = "v3_2026-10-29_10-00-00.json" if pr_adds_the_log else "v3.json"
     _put_runlog(skill_dir, name, active=True, instrument=_instr())
-    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
-    monkeypatch.setattr(check_runlogs, "base_instrument", lambda skill: _instr(tools__fixture=_H["0"]))
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
     _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" if pr_adds_the_log else f"{_RUNLOGS_REL}/v3.ann.json"])
 
     rc = check_runlogs.main()
     out = capsys.readouterr().out
     if pr_adds_the_log:
-        assert rc == 1 and "tools.fixture" in _only_line(out, "::error")
+        assert rc == 1 and "validators.suite" in _only_line(out, "::error")
         assert "already has that change" not in out
     else:
         assert rc == 0, out
-        assert "tools.fixture" in _only_line(out, "already has that change")
+        assert "validators.suite" in _only_line(out, "already has that change")
 
 
 def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
@@ -2770,9 +2770,9 @@ def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_pat
 
 # --- Rule 2c (instrument fingerprint) — issue #2479 PR 3 ---------------------
 #
-# Blocks on the suite-specific halves (`validators.suite`, `tools.fixture`),
-# warns on the corpus-wide ones (`validators.shared`, `tools.live`,
-# `live_modules`) so no change ever owes a re-run of every suite.
+# Blocks on `validators.suite`. Warns on `tools.fixture` (lead, 2026-10-29) and on
+# the corpus-wide halves (`validators.shared`, `tools.live`, `live_modules`) so no
+# change ever owes a re-run of every suite.
 
 _H = {c: c * 64 for c in "abcdef0123456789"}
 
@@ -2801,33 +2801,26 @@ def test_rule2c_passes_silently_when_nothing_moved(monkeypatch, capsys):
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize(
-    "moved, names",
-    [
-        ({"validators__suite": _H["0"]}, "validators.suite"),
-        ({"tools__fixture": _H["0"]}, "tools.fixture"),
-    ],
-    ids=["suite-validator", "fixture-tool"],
-)
-def test_rule2c_blocks_on_a_suite_specific_change(monkeypatch, capsys, moved, names):
-    _stub_current_instrument(monkeypatch, _instr(**moved))
+def test_rule2c_blocks_on_a_suite_validator_change(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
-    assert "::error" in out and names in out and "skill `demo`" in out
+    assert "::error" in out and "validators.suite" in out and "skill `demo`" in out
     assert "make eval-skill SKILL=demo" in out
 
 
 @pytest.mark.parametrize(
     "moved, names",
     [
+        ({"tools__fixture": _H["0"]}, "tools.fixture"),
         ({"validators__shared": _H["0"]}, "validators.shared"),
         ({"tools__live": _H["0"]}, "tools.live"),
         ({"live_modules__research_append": _H["0"]}, "live_modules (research_append)"),
     ],
-    ids=["shared-validators", "live-tool-schema", "live-module"],
+    ids=["fixture-tool", "shared-validators", "live-tool-schema", "live-module"],
 )
-def test_rule2c_only_warns_on_a_corpus_wide_change(monkeypatch, capsys, moved, names):
+def test_rule2c_only_warns_on_a_change_outside_the_suite_validator(monkeypatch, capsys, moved, names):
     _stub_current_instrument(monkeypatch, _instr(**moved))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 0
@@ -2876,45 +2869,40 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
     assert "::error" in out and "tool-schemas.js" in out
 
 
-# A suite-specific half main already has at its current value was waived or owed
-# on the PR that moved it (#4017 moved `wiki_read` for 8 suites and waived them;
-# every later PR touching engine source inherited the 8 blocks). It warns.
+# A suite validator main already has at its current value was waived or owed on
+# the PR that changed it, so a log this PR did not add only warns on it.
 
 
-@pytest.mark.parametrize("half", ["validators__suite", "tools__fixture"])
-def test_rule2c_warns_on_a_half_main_already_has(monkeypatch, capsys, half):
-    _stub_current_instrument(monkeypatch, _instr(**{half: _H["0"]}))
-    monkeypatch.setattr(check_runlogs, "base_instrument", lambda skill: _instr(**{half: _H["0"]}))
+def test_rule2c_warns_on_a_suite_validator_main_already_has(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 0
     out = capsys.readouterr().out
     assert "::error" not in out
-    assert "::warning" in out and "`main` already has that change" in out
-    assert half.replace("__", ".") in out
+    assert "validators.suite" in _only_line(out, "`main` already has that change")
 
 
 @pytest.mark.parametrize(
-    "base",
-    [_instr(), _instr(tools__fixture=_H["1"]), None],
-    ids=["base-unmoved", "base-moved-elsewhere", "no-base"],
+    "base", [_H["a"], _H["1"], None], ids=["base-at-stored", "base-elsewhere", "no-base"]
 )
-def test_rule2c_blocks_on_a_half_this_pr_moved(monkeypatch, capsys, base):
+def test_rule2c_blocks_on_a_suite_validator_this_pr_changed(monkeypatch, capsys, base):
     """`main` at the stored value, `main` at a third value, or no base to read: the PR
-    moved the half, or nothing says it did not."""
-    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
-    monkeypatch.setattr(check_runlogs, "base_instrument", lambda skill: base)
+    changed the validator, or nothing says it did not."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: base)
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
-    assert "::error" in out and "tools.fixture" in out
+    assert "::error" in out and "validators.suite" in out
     assert "already has that change" not in out
 
 
 def test_rule2c_blocks_and_skips_main_when_the_pr_added_the_log(monkeypatch, capsys):
     """A log the PR adds is its own evidence: it must match the tree it merges into."""
-    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     monkeypatch.setattr(
-        check_runlogs, "base_instrument", lambda skill: pytest.fail("base read for the PR's own log")
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for the PR's own log")
     )
     rc = check_runlogs.rule2c_instrument(
         "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", compare_base=False
@@ -2923,50 +2911,38 @@ def test_rule2c_blocks_and_skips_main_when_the_pr_added_the_log(monkeypatch, cap
     assert "::error" in capsys.readouterr().out
 
 
-def test_rule2c_reads_no_base_when_only_a_corpus_wide_half_moved(monkeypatch, capsys):
-    _stub_current_instrument(monkeypatch, _instr(tools__live=_H["0"]))
+def test_rule2c_reads_no_base_when_only_a_warn_only_half_moved(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"], tools__live=_H["0"]))
     monkeypatch.setattr(
-        check_runlogs, "base_instrument", lambda skill: pytest.fail("base read for a warn-only half")
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for a warn-only half")
     )
     assert check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json") == 0
 
 
-def test_base_instrument_reads_the_base_checkout(monkeypatch, tmp_path):
-    seen = {}
+def test_base_suite_validators_reads_the_base_checkout(monkeypatch, tmp_path):
+    from harness import instrument as instr_mod
 
-    def _load(build, **kwargs):
-        seen["build"] = build
-        return {"t": {}}
-
+    validators = tmp_path / "eval" / "harness" / "validators"
+    validators.mkdir(parents=True)
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert ctx\n", encoding="utf-8")
     monkeypatch.setenv("BASE_TREE", str(tmp_path))
-    check_runlogs._base_tool_catalog.cache_clear()
-    monkeypatch.setattr(check_runlogs, "load_tool_catalog", _load)
-    monkeypatch.setattr(
-        check_runlogs, "instrument_for", lambda skill, root, **k: {"root": root, "catalog": k["catalog"]}
-    )
-    got = check_runlogs.base_instrument("demo")
-    check_runlogs._base_tool_catalog.cache_clear()
-    assert got == {"root": tmp_path, "catalog": {"t": {}}}
-    assert seen["build"] == tmp_path / "packages" / "engine" / "mcp-server" / "build"
+    got = check_runlogs.base_suite_validators("demo")
+    assert got == instr_mod.validators_fingerprint("demo", validators)["suite"]
+
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert not ctx\n", encoding="utf-8")
+    assert check_runlogs.base_suite_validators("demo") != got
 
 
-def test_base_instrument_is_none_with_no_base_tree(monkeypatch):
-    monkeypatch.delenv("BASE_TREE", raising=False)
-    monkeypatch.setattr(check_runlogs, "_base_tool_catalog", lambda root: pytest.fail("catalog read"))
-    assert check_runlogs.base_instrument("demo") is None
+@pytest.mark.parametrize("base_tree", [None, "missing"], ids=["unset", "no-such-dir"])
+def test_base_suite_validators_is_none_with_no_base_checkout(monkeypatch, tmp_path, base_tree):
+    if base_tree is None:
+        monkeypatch.delenv("BASE_TREE", raising=False)
+    else:
+        monkeypatch.setenv("BASE_TREE", str(tmp_path / base_tree))
+    assert check_runlogs.base_suite_validators("demo") is None
 
 
-def test_base_instrument_warns_once_when_the_base_catalog_cannot_be_read(monkeypatch, tmp_path, capsys):
-    monkeypatch.setenv("BASE_TREE", str(tmp_path))
-    check_runlogs._base_tool_catalog.cache_clear()
-    assert check_runlogs.base_instrument("demo") is None
-    assert check_runlogs.base_instrument("other") is None
-    check_runlogs._base_tool_catalog.cache_clear()
-    out = capsys.readouterr().out
-    assert out.count("::warning") == 1 and "main's tool catalog" in out and "tool-schemas.js" in out
-
-
-_AGENT_REL = "packages/engine/plugin/agents/scout.md"
+_SCOUT_REL = "packages/engine/plugin/agents/scout.md"
 
 
 @pytest.mark.parametrize(
@@ -2974,9 +2950,9 @@ _AGENT_REL = "packages/engine/plugin/agents/scout.md"
     [
         (_TRACKED_REL, {_TRACKED_REL}, None, True),
         (_TRACKED_REL, {"some/other/file.md"}, None, False),
-        (_AGENT_REL + "#frontmatter", {_AGENT_REL}, True, True),
-        (_AGENT_REL + "#frontmatter", {_AGENT_REL}, False, False),
-        (_AGENT_REL + "#frontmatter", set(), None, False),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, True, True),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, False, False),
+        (_SCOUT_REL + "#frontmatter", set(), None, False),
     ],
     ids=["changed", "untouched", "frontmatter-changed", "body-only", "agent-untouched"],
 )
@@ -3331,7 +3307,7 @@ def test_a_non_test_validator_module_marks_every_suite(monkeypatch):
 
 def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeypatch, capsys, tmp_path):
     """A shared MCP fixture's `tool` field feeds `tools.fixture`; changing it is
-    graded on the PR that makes it, not left for the next author of those suites."""
+    reported on the PR that makes it. `tools.fixture` warns (lead, 2026-10-29)."""
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     _seed_instrument_suite(runlogs, monkeypatch, _instr())
@@ -3345,8 +3321,9 @@ def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeyp
     monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/fixtures/mcp/shared-fix.json"])
     rc = check_runlogs.main()
     out = capsys.readouterr().out
-    assert rc == 1, out
-    assert "skill `convert-dates`" in out and "tools.fixture" in out
+    assert rc == 0, out
+    warned = _only_line(out, "tools.fixture")
+    assert warned.startswith("::warning") and "skill `convert-dates`" in warned
 
 
 # --- #3568: a touched agent gates a suite only if its graded log can see it -----
