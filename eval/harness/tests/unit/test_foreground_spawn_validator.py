@@ -29,8 +29,12 @@ REPO = next(
 sys.path.insert(0, str(REPO / "eval/harness/validators"))
 
 from test_research import (  # noqa: E402
-    test_every_agent_spawn_runs_in_the_foreground as validator,
+    test_every_agent_spawn_runs_in_the_foreground as _validator,
 )
+
+
+def validator(test, calls, skills_invoked=("research",)):
+    return _validator(test, calls, list(skills_invoked))
 
 TEST = {"tags": ["routing"]}
 
@@ -127,3 +131,17 @@ def test_a_run_with_no_spawn_is_skipped_not_passed():
 
 def test_a_non_spawn_tool_call_is_not_mistaken_for_a_spawn():
     _expect_skip([{"tool": "Read", "args": {"file_path": "/x"}}])
+
+
+def test_a_spawn_with_the_router_never_entered_is_skipped():
+    """A message that never reached /research: the main thread spawned the agent
+    itself, so the router's foreground rule does not apply to it."""
+    with pytest.raises(BaseException) as excinfo:
+        validator(TEST, [_spawn()], skills_invoked=["historical-context"])
+    assert excinfo.typename == "Skipped"
+
+
+def test_the_router_entered_among_others_still_grades():
+    with pytest.raises(BaseException) as excinfo:
+        validator(TEST, [_spawn()], skills_invoked=["historical-context", "research"])
+    assert excinfo.typename == "AssertionError"

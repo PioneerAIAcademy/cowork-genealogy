@@ -893,7 +893,7 @@ def _backgrounded(args: dict) -> bool | None:
     return None
 
 
-def test_every_agent_spawn_runs_in_the_foreground(test, builtin_tool_calls):
+def test_every_agent_spawn_runs_in_the_foreground(test, builtin_tool_calls, skills_invoked):
     """Decision 27: every ``@plugin:`` spawn carries ``run_in_background: false``.
 
     A step has to finish inside its own turn. A backgrounded spawn returns
@@ -915,6 +915,11 @@ def test_every_agent_spawn_runs_in_the_foreground(test, builtin_tool_calls):
     fails wholesale -- it is one that pins behaviour the prose now requires.
     Replayed over the older v9 it does fail.
     """
+    # The rule is the router's. When /research never ran, the main thread spawned
+    # the agent itself (the triggering tests mined in #4027), and nothing told it
+    # to ask for the foreground.
+    if "research" not in (skills_invoked or []):
+        pytest.skip("the router was not entered")
     spawns = _agent_spawns(builtin_tool_calls)
     if not spawns:
         pytest.skip("no Agent spawn in this run")
