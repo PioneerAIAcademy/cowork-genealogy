@@ -3,17 +3,17 @@ name: small-and-simple
 # Typecheck and offline tests for small-and-simple/, which has its own
 # package.json and lockfile and is not part of the pnpm workspace or the engine.
 # The live evals call FamilySearch and OpenRouter and are run by hand.
+#
+# No `paths:` filter, so the job always reports and can be a required check
+# (see engine-tests.yml).
 on:
   pull_request:
-    paths:
-      - 'small-and-simple/**'
-      - '.github/workflows/small-and-simple.yml'
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  small-and-simple:
     runs-on: ubuntu-latest
     defaults:
       run:

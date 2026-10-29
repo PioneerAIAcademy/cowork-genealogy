@@ -88,6 +88,20 @@ describe("transcribeImage", () => {
     expect(out.imageUrl).toBe(calls[1].url);
   });
 
+  it.each([null, undefined, { ark: 5 }, { imageId: 5 }])("reports input %j as bad_input", async (input) => {
+    const { fetch } = fakeFetch();
+    const { llm } = fakeLlm("x");
+    const call = transcribeImage(input as never, { fsToken: "t", fetch, llm });
+    expect(await codeOf(call)).toBe("bad_input");
+  });
+
+  it("reports a download that dies mid-body as upstream", async () => {
+    const broken = new ReadableStream({ start: (c) => c.error(new TypeError("terminated")) });
+    const { fetch } = fakeFetch(new Response(broken, { headers: { "content-type": "image/jpeg" } }));
+    const { llm } = fakeLlm("x");
+    expect(await codeOf(transcribeImage({ imageId: "1_2" }, { fsToken: "t", fetch, llm }))).toBe("upstream");
+  });
+
   it.each([
     [403, "forbidden"],
     [401, "unauthorized"],
@@ -153,6 +167,13 @@ describe("openRouterLlm", () => {
     const llm = openRouterLlm({ apiKey: "k", fetch });
     expect(await codeOf(llm.complete({ prompt: "p", images: [big], maxTokens: 1 }))).toBe("too_large");
     expect(calls).toHaveLength(0);
+  });
+
+  it("reports a response that is not JSON as upstream", async () => {
+    const { fetch } = fakeFetch(new Response("<html>", { status: 200 }));
+    expect(await codeOf(openRouterLlm({ apiKey: "k", fetch }).complete({ prompt: "p", maxTokens: 1 }))).toBe(
+      "upstream",
+    );
   });
 
   it("maps a rejected key to unauthorized", async () => {

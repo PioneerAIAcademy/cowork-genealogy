@@ -50,14 +50,19 @@ export const IMAGE_ACCEPT = "image/*,*/*";
 
 /** The URLs to try, in order, for an image reference. */
 export function imageUrls(ref: ImageRef): string[] {
-  if ((ref.ark ? 1 : 0) + (ref.imageId ? 1 : 0) !== 1) {
+  const given: unknown[] = [ref?.ark, ref?.imageId];
+  if (given.some((v) => v !== undefined && typeof v !== "string")) {
+    throw new SolutionError("bad_input", "ark and imageId must be strings.");
+  }
+  if (given.filter(Boolean).length !== 1) {
     throw new SolutionError("bad_input", "Give exactly one of ark or imageId.");
   }
   if (ref.imageId) {
-    if (!IMAGE_ID_RE.test(ref.imageId.trim())) {
-      throw new SolutionError("bad_input", `imageId '${ref.imageId}' is not of the form 004884748_02613.`);
+    const imageId = ref.imageId.trim();
+    if (!IMAGE_ID_RE.test(imageId)) {
+      throw new SolutionError("bad_input", `imageId '${imageId}' is not of the form 004884748_02613.`);
     }
-    return [`https://familysearch.org/das/v2/dgs:${ref.imageId.trim()}/dist.jpg`];
+    return [`https://familysearch.org/das/v2/dgs:${imageId}/dist.jpg`];
   }
   const ark = ref.ark!.trim();
   const match = IMAGE_ARK_RE.exec(ark);
@@ -103,7 +108,10 @@ export async function fetchFsImage(ref: ImageRef, deps: FsDeps): Promise<FsImage
     );
     const contentType = (res.headers.get("content-type") ?? "").split(";")[0].trim();
     if (res.ok && contentType.startsWith("image/")) {
-      return { bytes: new Uint8Array(await res.arrayBuffer()), contentType, url };
+      const body = await res.arrayBuffer().catch((error) => {
+        throw new SolutionError("upstream", `FamilySearch image download failed: ${String(error)}`);
+      });
+      return { bytes: new Uint8Array(body), contentType, url };
     }
     await res.body?.cancel();
     status = res.status;

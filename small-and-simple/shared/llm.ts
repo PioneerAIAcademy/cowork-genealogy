@@ -91,7 +91,9 @@ export function openRouterLlm({ apiKey, model = DEFAULT_MODEL, fetch: fetchImpl 
         const body = (await res.text().catch(() => "")).slice(0, 300);
         throw new SolutionError("upstream", `OpenRouter returned ${res.status}${body ? `: ${body}` : ""}`);
       }
-      const data = (await res.json()) as ChatResponse;
+      const data = (await res.json().catch(() => {
+        throw new SolutionError("upstream", "OpenRouter's response did not finish or was not JSON.");
+      })) as ChatResponse;
       const choice = data.choices?.[0];
       return {
         text: choice?.message?.content?.trim() ?? "",

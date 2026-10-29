@@ -86,8 +86,10 @@ locked-out audience.
 - `small-and-simple/` — single-purpose functions (a few FamilySearch calls and
   an LLM call each) for FamilySearch to run inside its own Node server.
   Independent of everything else here: own `package.json` and lockfile, imports
-  nothing from `packages/`, and its CI job is `small-and-simple.yml`. Its README
-  owns the contract each solution follows.
+  nothing from `packages/`, and its CI job is `small-and-simple.yml`. It
+  re-implements engine pieces (user agent, retry, image fetch) on purpose, so
+  "Code reuse" below does not apply across that line. Its README owns the
+  contract each solution follows.
 - `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
   Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
