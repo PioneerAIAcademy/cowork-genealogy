@@ -75,6 +75,7 @@ import {
   isRelationshipEstablishing,
 } from "../utils/source-ref-resolver.js";
 import { recordBasisOf } from "../utils/record-basis.js";
+import { findRecordedScore, readMatchScores, type MatchScoreFile } from "../utils/match-scores.js";
 
 import {
   ASSERTION_FACT_ATTRS,
@@ -111,6 +112,48 @@ interface OpContext {
   startingPersonIds: ReadonlySet<string>;
   beforeTree: SimplifiedGedcomX;
   warnings: string[];
+  /** The `same_person` score files of the records this call's ops touch. */
+  scores: RecordedScores;
+}
+
+/** Score files by record id, as `readMatchScores` returns them. */
+export type RecordedScores = ReadonlyMap<string, MatchScoreFile>;
+
+/** Whether a recorded `same_person` score says the link of `assertionId` to
+ *  `personId` is about a party other than `role`. The score records the party
+ *  it compared, so a link scored as the bride is not the groom's, whatever its
+ *  assertion's role. No score, or one with no role: not known, so false. */
+function scoredAsOtherParty(
+  scores: RecordedScores | undefined,
+  recordId: unknown,
+  assertionId: string,
+  personId: string,
+  role: unknown,
+): boolean {
+  const scored = findRecordedScore(scores?.get(String(recordId)) ?? null, assertionId, personId)?.record_role;
+  if (typeof scored !== "string" || scored.trim() === "") return false;
+  return normNamePart(scored) !== normNamePart(String(role ?? ""));
+}
+
+/** Read the score files of every record `ops` touch: a persona op's `recordId`,
+ *  a named-party op's assertion's `record_id`. */
+async function readScoresFor(projectPath: string, research: any, ops: readonly any[]): Promise<RecordedScores> {
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  const recordIds = new Set<string>();
+  for (const op of ops) {
+    if (!op || typeof op !== "object") continue;
+    if (typeof op.recordId === "string") recordIds.add(op.recordId);
+    if (typeof op.assertionId === "string") {
+      const rec = assertions.find((a) => a?.id === op.assertionId)?.record_id;
+      if (typeof rec === "string") recordIds.add(rec);
+    }
+  }
+  const out = new Map<string, MatchScoreFile>();
+  for (const id of recordIds) {
+    const file = await readMatchScores(projectPath, id);
+    if (file !== null) out.set(id, file);
+  }
+  return out;
 }
 
 /** The party of a record an op writes: which of the record's roles are its own,
@@ -610,6 +653,7 @@ function applyNamedPartyOp(
   if (existingId !== undefined) {
     const refusal = namedPartyTargetRefusal(
       tree, research, assertion, relatedRole, existingId, op.gender, ctx.startingPersonIds, { given, surname }, ctx.beforeTree,
+      ctx.scores,
     );
     if (refusal !== null) throw new MaterializeFactsError(refusal);
   }
@@ -1043,8 +1087,13 @@ function personaQualifying(
   recordId: unknown,
   recordRole: unknown,
   personId: string,
+  scores?: RecordedScores,
 ): { qualifying: Set<string>; heldBy?: string } {
-  const own = ownPersonaAssertionIds(research, recordId, recordRole);
+  const own = new Set(
+    [...ownPersonaAssertionIds(research, recordId, recordRole)].filter(
+      (id) => !scoredAsOtherParty(scores, recordId, id, personId, recordRole),
+    ),
+  );
   const to = strongLinkTargets(research);
   for (const id of onePartyAssertionIds(research, recordId, (role) => role !== recordRole)) {
     const targets = to.get(id);
@@ -1102,6 +1151,7 @@ export function namedPartyTargetRefusal(
   startingPersonIds: ReadonlySet<string>,
   name: { given?: string; surname?: string } | undefined,
   namesakeTree: SimplifiedGedcomX = tree,
+  scores?: RecordedScores,
 ): string | null {
   const recordId = assertion.record_id;
   const roleOf = (role: unknown) => normNamePart(String(role ?? ""));
@@ -1135,7 +1185,11 @@ export function namedPartyTargetRefusal(
 
   const named = onePartyAssertionIds(research, recordId, (role) => roleOf(role) === wanted);
   const namedTo = [...new Set(links.filter((e) => strong(e) && named.has(e.assertion_id)).map((e) => String(e.person_id)))];
-  const qualifying = namedTo.length > 0 ? named : new Set<string>([String(assertion.id), ...named]);
+  const qualifying = new Set(
+    [...(namedTo.length > 0 ? named : [String(assertion.id), ...named])].filter(
+      (id) => !scoredAsOtherParty(scores, recordId, id, personId, relatedRole),
+    ),
+  );
   const what =
     namedTo.length > 0
       ? `one of the '${relatedRole}' persona's own assertions on record '${recordId}' (they are ` +
@@ -1176,7 +1230,7 @@ function personaGate(
   tree: SimplifiedGedcomX,
   ctx: OpContext,
 ): LinkGate {
-  const { qualifying } = personaQualifying(research, recordId, recordRole, personId);
+  const { qualifying } = personaQualifying(research, recordId, recordRole, personId, ctx.scores);
   return linkGate(
     tree, research, personId, recordId, qualifying, "this persona", ctx.startingPersonIds,
     personaParty(research, recordId, recordRole), ctx.beforeTree,
@@ -1266,6 +1320,7 @@ export function personaTargetRefusal(
   op: MaterializeFactsOp,
   startingPersonIds?: ReadonlySet<string>,
   namesakeTree: SimplifiedGedcomX = tree,
+  scores?: RecordedScores,
 ): string | null {
   const personId = str(op.personId);
   if (personId === undefined) return null;
@@ -1273,7 +1328,7 @@ export function personaTargetRefusal(
     (a: any) => a && a.record_id === op.recordId && a.record_role === op.recordRole,
   );
   if (!persona.some(writesPersonLevel)) return null;
-  const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId);
+  const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId, scores);
   const refusal = existingPersonLinkRefusal(
     tree,
     research,
@@ -1303,7 +1358,7 @@ function requireLinkToExistingPerson(
   op: MaterializeFactsOp,
   ctx: OpContext,
 ): void {
-  const refusal = personaTargetRefusal(tree, research, op, ctx.startingPersonIds, ctx.beforeTree);
+  const refusal = personaTargetRefusal(tree, research, op, ctx.startingPersonIds, ctx.beforeTree, ctx.scores);
   if (refusal !== null) throw new MaterializeFactsError(refusal);
 }
 
@@ -1350,7 +1405,10 @@ export async function materializeFacts(
     // place): block only on errors THIS call introduces, not pre-existing drift
     // in a section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-    const ctx: OpContext = { startingPersonIds, beforeTree, warnings: [] };
+    const scores = await readScoresFor(
+      projectPath, research, Array.isArray(input.ops) ? input.ops : [input],
+    );
+    const ctx: OpContext = { startingPersonIds, beforeTree, warnings: [], scores };
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {

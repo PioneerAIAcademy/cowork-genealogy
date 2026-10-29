@@ -3,6 +3,7 @@ import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 
 // ─── fixture builders (valid research.json + tree.gedcomx.json) ───────────────
@@ -395,6 +396,41 @@ describe("materialize_facts", () => {
       expect(out.ok).toBe(true);
     });
 
+
+    /** A same_person score recorded for (assertion, person), comparing `role`. */
+    const scoredAs = (assertionId: string, personId: string, role: string) =>
+      recordMatchScore(dir, {
+        record_id: "REC-MARR", record_persona_id: null, record_role: role, tree_person_id: personId, score: 0.9,
+        matched: true, assertion_id: assertionId, record_source: "record_read", computed: "2026-10-28T00:00:00Z",
+      });
+
+    // The let-through (tree-materialization-spec §4.3): the wife's name is linked
+    // to her husband too, and the groom's own name is not yet linked to him, so
+    // nothing in the links says he is not her. A same_person score that compared
+    // him as the groom does.
+    const ferberUnheld = () => ferberLinks().filter((e) => e.id !== "pe_001");
+
+    it("refuses the wife persona onto her husband when her name's link to him was scored as the groom", async () => {
+      const r = research({ sources: [S1], assertions: ferber() });
+      r.person_evidence = ferberUnheld();
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      await scoredAs("a_031", "I3", "groom");
+      const out = await copyWife("I3");
+      expect(out.ok).toBe(false);
+      expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+      expect((await copyWife("I5")).ok).toBe(true);
+    });
+
+    it("still copies it when that score compared him as the wife, or when no score was recorded", async () => {
+      const r = research({ sources: [S1], assertions: ferber() });
+      r.person_evidence = ferberUnheld();
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      expect((await copyWife("I3")).ok).toBe(true);
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      await scoredAs("a_031", "I3", "Wife");
+      expect((await copyWife("I3")).ok).toBe(true);
+    });
+
     // An assertion about a second person filed on this persona is linked to
     // that person too, so its link says nothing about who this persona is.
     it.each(["Father", "Mother", "parents", "father_name", "mother_name", "parent_name", "father_birthplace", "mother_birthplace", "filiation", "spouse", "Couple", "informant"])(
@@ -578,6 +614,43 @@ describe("materialize_facts", () => {
       const him = findPerson(await readTree(), "I3");
       expect(him.names).toHaveLength(1);
       expect(him.facts ?? []).toHaveLength(0);
+    });
+
+
+    // The named-party let-through (§4.3): the marriage assertion is linked to
+    // both, nothing of the groom's own is linked to him, and no gender is passed,
+    // so the links cannot say which party its link to him is about. A score that
+    // compared him as the groom can.
+    const unheldGroom = () => {
+      const r = research({ sources: [S1], assertions: [...namedBride(), assertion("a_023", { record_id: "REC-MARR", record_role: "groom", fact_type: "name", value: "Thomas Flynn" })] });
+      r.person_evidence = [
+        pe("probable", { id: "pe_002", assertion_id: "a_021", person_id: "I3" }),
+        pe("probable", { id: "pe_003", assertion_id: "a_021", person_id: "I2" }),
+      ];
+      return r;
+    };
+    const UNSEXED_GROOM = { id: "I3", gender: "Unknown", names: [{ id: "N3", given: "Thomas", surname: "Flynn" }] };
+    const brideOnto = async (personId: string) =>
+      single(
+        await materializeFacts({
+          projectPath: dir, personId, assertionId: "a_021", relatedRole: "bride", name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+
+    it("refuses the bride onto the groom when the marriage link to him was scored as the groom", async () => {
+      await writeProject(tree({ persons: [MARY, UNSEXED_GROOM] }), unheldGroom(), { link: false });
+      await scoredAs("a_021", "I3", "groom");
+      const out = await brideOnto("I3");
+      expect(out.ok).toBe(false);
+      expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+    });
+
+    it("still writes her there with no score, and onto herself when her link was scored as the bride", async () => {
+      await writeProject(tree({ persons: [MARY, UNSEXED_GROOM] }), unheldGroom(), { link: false });
+      expect((await brideOnto("I3")).ok).toBe(true);
+      await writeProject(tree({ persons: [MARY, UNSEXED_GROOM] }), unheldGroom(), { link: false });
+      await scoredAs("a_021", "I2", "bride");
+      expect((await brideOnto("I2")).ok).toBe(true);
     });
 
     // The own-party check in the allowing direction: it must refuse the groom
