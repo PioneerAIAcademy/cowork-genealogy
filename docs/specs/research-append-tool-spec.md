@@ -728,7 +728,8 @@ stays an opt-out, as on an append. The levers:
      converter-resolved `standard_place`, it is **copied** — no geocoding call.
      The op's own fact is a fact of its `record_persona_id` (the persona's own,
      or one of a relationship whose `person1` or `person2` it is, as a
-     couple's marriage; a ParentChild relationship's facts are not read) whose
+     couple's marriage; a ParentChild relationship's facts are not read, and an
+     assertion with no `record_persona_id`, or an empty one, reads none) whose
      type is the op's `fact_type` once both are folded as "Boundary shape normalization" folds
      labels ("Baptism" is `christening`, "BirthRegistration" is
      `birth_registration`) and whose `place` equals the op's place string
@@ -1755,19 +1756,21 @@ resolve check passes the exact entry the rule exists to stop.
 On a `timelines` append or update reached as an MCP caller
 (`researchAppendFromCaller`), each event's supplied `standard_place` is judged as
 `tree_edit` judges a fact's (tree-edit-tool-spec §4.1.1). It is kept when the
-event has a `place` that is not a non-place phrase, the value names no other
-country than it, FamilySearch's place search finds a place of that full name,
-and some part of the place text names that place (or the value is the one-word
-list's entry for the text). It is kept in FamilySearch's spelling, with no
-warning and its distances unchanged; a failed lookup keeps it as written.
-Otherwise the engine's answer replaces it, or it becomes `null`, with a warning
-naming the event (`events[<k>]: standard_place '<supplied>' … was replaced by …`
-or `… was not kept …`); an answer that is the value itself replaces nothing. The
-answer is the `standard_place` the record of each of the event's
-`assertion_ids` gives that assertion's own fact for the event's place text
-(§3.6, Lever B step 1's copy, from the sidecar the assertion's log entry
-names), else `resolveStandardPlace(place)` when the place text confirms it
-(`unconfirmedByText`, §3.6); none when those records give two or more, for a
+event has a `place` that is not a non-place phrase and the value fits that
+place's text (`fitsText`): it names no other country than it, FamilySearch's
+place search finds a place of that full name, that place lies in no other US
+state, Puerto Rico, Canadian province or country than the text names, and some
+part of the place text names it (or the value is the one-word list's entry for
+the text). It is kept in FamilySearch's spelling, with no warning and its
+distances unchanged; a failed lookup keeps it as written. Otherwise the
+engine's answer replaces it, or it becomes `null`, with a warning naming the
+event (`events[<k>]: standard_place '<supplied>' … was replaced by …` or `… was
+not kept …`); an answer that is the value itself replaces nothing. The answer
+is the `standard_place` the record of each of the event's `assertion_ids` gives
+that assertion's own fact for the event's place text (§3.6, Lever B step 1's
+copy, from the sidecar the assertion's log entry names), else
+`resolveStandardPlace(place)` when it fits the place text as a lookup must
+(tree-edit-tool-spec §4.1.1); none when those records give two or more, for a
 non-place phrase, or for an answer naming another country. When the value is replaced by another place, or
 by none, `distance_from_previous_km` becomes `null` on that event and the next,
 since both were measured from the old value; a replacement FamilySearch finds to

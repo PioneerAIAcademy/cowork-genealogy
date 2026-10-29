@@ -8069,10 +8069,11 @@ function applyOne(
  *  fact carries; every name, when they carry two or more, which the writers
  *  read as the record disagreeing with itself; else none. So one person's name
  *  never lands on another person's fact, and one fact's name never lands on
- *  another fact of the same person. The one way the engine takes FamilySearch's
- *  standardization from a record: Lever B's copy, and `RecordStandards`. */
+ *  another fact of the same person. An assertion naming no persona reads
+ *  nothing. The one way the engine takes FamilySearch's standardization from a
+ *  record: Lever B's copy, and `RecordStandards`. */
 function sidecarStandardPlaces(gx: any, persona: unknown, factType: unknown, place: string): string[] {
-  if (!gx || typeof gx !== "object") return [];
+  if (!gx || typeof gx !== "object" || typeof persona !== "string" || persona === "") return [];
   const facts: any[] = [];
   for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
     if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
@@ -8584,12 +8585,12 @@ async function checkLocalityFirstPlaces(
 /**
  * A caller's own standard_place on a timeline event is judged as a tree fact's
  * is (place-verdict.ts): kept, in FamilySearch's spelling and with its
- * distances, when it is a FamilySearch standard place the event's place text
- * names, else replaced by the engine's answer (FamilySearch's own on the
- * records of the event's assertions, `RecordStandards`, else the resolver's
- * when the text confirms it) or null, with a warning. The distances measured
- * from it, on that event and the next, become null when the replacement is
- * another place, not the same place spelled another way.
+ * distances, when it is a FamilySearch standard place that fits the event's
+ * place text (`fitsText`), else replaced by the engine's answer (FamilySearch's
+ * own on the records of the event's assertions, `RecordStandards`, else the
+ * resolver's when it fits the text) or null, with a warning. The distances
+ * measured from it, on that event and the next, become null when the
+ * replacement is another place, not the same place spelled another way.
  */
 async function judgeTimelinePlaces(
   ops: ResearchAppendOp[],

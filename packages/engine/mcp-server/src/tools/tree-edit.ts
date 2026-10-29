@@ -513,13 +513,13 @@ async function applyOperation(
   const wantResolve = input.resolveStandardPlace !== false;
 
   // A fact's standard_place (place-verdict.ts). A supplied one is kept, in
-  // FamilySearch's spelling, when it is a FamilySearch standard place the fact's
-  // own place text names; otherwise, and to fill a fact with none unless
-  // `resolveStandardPlace` is false, the engine's answer: the standard_place the
-  // records it cites give the same text on facts of its own type
-  // (`RecordStandards`, for `people`, the persons holding it), else the
-  // resolver's when the text confirms it, with the places of the holder's other
-  // facts (`siblings`) as context for a bare place. Never fails the edit.
+  // FamilySearch's spelling, when it is a FamilySearch standard place that
+  // fits the fact's own place text (`fitsText`); otherwise, and to fill a fact
+  // with none unless `resolveStandardPlace` is false, the engine's answer: the
+  // standard_place the records it cites give the same text on facts of its own
+  // type (`RecordStandards`, for `people`, the persons holding it), else the
+  // resolver's when the text confirms it, with the places of the holder's
+  // other facts (`siblings`) as context for a bare place. Never fails the edit.
   const settlePlace = async (
     fact: SimplifiedFact,
     supplied: boolean,

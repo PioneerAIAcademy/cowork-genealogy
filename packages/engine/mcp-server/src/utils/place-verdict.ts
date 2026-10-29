@@ -5,14 +5,12 @@
  * record a tree fact cites").
  *
  * A supplied standard_place is kept when the fact has a place that is not a
- * non-place phrase, the value names no other country than that place,
- * FamilySearch's place search finds a place whose full name is the value (case
- * and accents aside), and some part of the place text names that place, as
- * `record_read` checks a fact's text (`textNamesPlace`), or the value is the
- * one-word list's entry for the text (lead, 2026-10-29: the place must fit the
- * fact's own text, "yes, definitely"). It is kept in FamilySearch's spelling. A
- * failed lookup keeps it as written. Otherwise the engine's own answer replaces
- * it, or none is kept, and a warning says which and why.
+ * non-place phrase and the value fits that place's text (`fitsText`; lead,
+ * 2026-10-29: the place must fit the fact's own text, "yes, definitely"): it
+ * is a FamilySearch standard place the text names, in no other state,
+ * province or country than the text names. It is kept in FamilySearch's
+ * spelling. A failed lookup keeps it as written. Otherwise the engine's own
+ * answer replaces it, or none is kept, and a warning says which and why.
  *
  * The engine's own answer for a place text, which also fills a fact with none:
  * 1. FamilySearch's own standardization of the same text on the records the
@@ -20,11 +18,15 @@
  *    different values are doubt, and doubt is no standard_place;
  * 2. otherwise the writer's own lookup, kept only when the text confirms it.
  * A non-place phrase ("Same House") has none, and an answer naming a different
- * country than the text is dropped.
+ * country than the text is dropped. A lookup that replaces a supplied value
+ * must fit the text as the value had to.
  */
 import {
   canonicalCountry,
   countryConsistency,
+  countryContradiction,
+  divisionContradiction,
+  endsWithItsJurisdiction,
   familySearchPlace,
   isNonPlacePhrase,
   placeSegments,
@@ -128,19 +130,46 @@ export async function placeAnswer(
   return { standardPlace: answer, from: fromRecords.length === 1 ? "record" : "lookup" };
 }
 
+/** A standard place that fits a place text, in FamilySearch's spelling, or why
+ *  it does not; `unnamed` when the text's not naming it is the only reason. */
+type Fit = { kept: string } | { why: string; unnamed?: true };
+
+/**
+ * Whether `value` fits place text `place`: it names no other country than the
+ * text (`countryConsistency`); FamilySearch's place search finds a place whose
+ * full name is the value, case and accents aside; that place lies in no other
+ * US state, Puerto Rico or Canadian province than the text ends with
+ * (`divisionContradiction`) and in no other country than the text names
+ * (`countryContradiction`), the two checks `record_read` makes of
+ * FamilySearch's own choice; and some part of the text names it, as
+ * `record_read` checks a fact's own text (`textNamesPlace`), or it is the
+ * one-word list's entry for the text. The engine's own lookup (`lookup`), found
+ * from the text, may instead lie in the state, province or country the text
+ * ends with (`endsWithItsJurisdiction`): "near Nueva Italia, Michoacán, Mexico"
+ * takes "Nueva Italia de Ruiz, Múgica, Michoacan, Mexico", and "Boght Reformed,
+ * Church" no "Church, Hillsdale, Michigan, United States". A failed lookup fits
+ * it as written.
+ */
+export async function fitsText(place: string, value: string, lookup = false): Promise<Fit> {
+  if (countryConsistency(place, value) === "contradiction") return { why: "it names a different country than the place" };
+  const found = await familySearchPlace(value);
+  if (found === false) return { why: "FamilySearch's place standard has no place of that name" };
+  if (found === null) return { kept: value };
+  if (divisionContradiction(place, found.fullName)) return { why: "it names a different state or province than the place" };
+  if (await countryContradiction(place, found)) return { why: "it lies in a different country than the place" };
+  const named =
+    isListAnswer(place, found.fullName) ||
+    (await textNamesPlace(found, place)) !== false ||
+    (lookup && endsWithItsJurisdiction(place, found.fullName));
+  return named ? { kept: found.fullName } : { why: "no part of the place text names that place", unnamed: true };
+}
+
 /** What a writer keeps of a supplied standard_place for `place`: the value in
  *  FamilySearch's spelling (as written when a lookup failed), or why none. */
-export async function keptSupplied(place: unknown, supplied: string): Promise<{ kept: string } | { why: string }> {
+export async function keptSupplied(place: unknown, supplied: string): Promise<Fit> {
   if (typeof place !== "string" || place.trim() === "") return { why: "the fact has no place" };
   if (isNonPlacePhrase(place)) return { why: `'${place}' names no place` };
-  if (countryConsistency(place, supplied) === "contradiction") return { why: "it names a different country than the place" };
-  const found = await familySearchPlace(supplied);
-  if (found === false) return { why: "FamilySearch's place standard has no place of that name" };
-  if (found === null) return { kept: supplied };
-  if (!isListAnswer(place, found.fullName) && (await textNamesPlace(found, place)) === false) {
-    return { why: "no part of the place text names that place" };
-  }
-  return { kept: found.fullName };
+  return fitsText(place, supplied);
 }
 
 const KEPT_WHEN =
@@ -150,9 +179,16 @@ const KEPT_WHEN =
 /** What a writer stores when a caller supplied `supplied` for `place`: the
  *  value, in FamilySearch's spelling, with no warning when it is kept;
  *  otherwise the engine's own answer for the place text (`answer`, asked only
- *  then), or null, with a warning that says which and why. An answer that is
- *  the supplied value itself, case and accents aside, is stored with no
- *  warning: nothing was replaced. */
+ *  then), or null, with a warning that says which and why. The lookup's answer,
+ *  before the fill's own check on the text (`placeAnswer`), replaces the value
+ *  only when it fits the text as a lookup must (`fitsText`); FamilySearch's own
+ *  from the record is not judged. An answer that is the supplied value itself,
+ *  case and accents aside, is stored with no warning: FamilySearch's from the
+ *  record, or the lookup's when the text's not naming the value was the only
+ *  reason to refuse it and the text confirms the lookup (`placeAnswer`) or ends
+ *  with the state, province or country it lies in (`endsWithItsJurisdiction`):
+ *  "Balto., Md." keeps "Baltimore, Maryland, United States", which the lookup
+ *  gives too, and "at the home of her daughter" no "Of, Trabzon, Türkiye". */
 export async function judgeSupplied(
   place: unknown,
   supplied: string,
@@ -160,17 +196,31 @@ export async function judgeSupplied(
 ): Promise<{ standardPlace: string | null; warning?: string }> {
   const k = await keptSupplied(place, supplied);
   if ("kept" in k) return { standardPlace: k.kept };
-  const why = k.why;
   const text = typeof place === "string" && place.trim() !== "" ? place : undefined;
   const head = `standard_place '${supplied}'${text === undefined ? "" : ` for '${text}'`}`;
-  const a = text === undefined || isNonPlacePhrase(text) ? null : await answer(text);
-  if (a !== null && a.standardPlace !== null && placeTextKey(a.standardPlace) === placeTextKey(supplied)) {
-    return { standardPlace: a.standardPlace };
+  const notKept = (reason?: string) => ({
+    standardPlace: null,
+    warning: `${head} was not kept: ${k.why}${reason === undefined ? "" : `, and the engine has none for it: ${reason}`}. ${KEPT_WHEN}`,
+  });
+  const replaced = (standardPlace: string, whose: string) => ({
+    standardPlace,
+    warning: `${head} was replaced by '${standardPlace}', ${whose}: ${k.why}. ${KEPT_WHEN}`,
+  });
+  if (text === undefined || isNonPlacePhrase(text)) return notKept();
+  const a = await answer(text);
+  const isSupplied = (value: string) => placeTextKey(value) === placeTextKey(supplied);
+  if (a.standardPlace !== null && a.from === "record") {
+    return isSupplied(a.standardPlace)
+      ? { standardPlace: a.standardPlace }
+      : replaced(a.standardPlace, "FamilySearch's standardization of the same place on the record it cites");
   }
-  if (a !== null && a.standardPlace !== null) {
-    const whose = a.from === "record" ? "FamilySearch's standardization of the same place on the record it cites" : "the engine's lookup";
-    return { standardPlace: a.standardPlace, warning: `${head} was replaced by '${a.standardPlace}', ${whose}: ${why}. ${KEPT_WHEN}` };
-  }
-  const none = a === null ? "" : `, and the engine has none for it: ${a.reason}`;
-  return { standardPlace: null, warning: `${head} was not kept: ${why}${none}. ${KEPT_WHEN}` };
+  let looked: string;
+  if (a.standardPlace !== null) looked = a.standardPlace;
+  else if (a.why === "unconfirmed" && a.dropped !== undefined) looked = a.dropped;
+  else return notKept(a.reason);
+  const confirmed = a.standardPlace !== null || endsWithItsJurisdiction(text, looked);
+  if (k.unnamed === true && confirmed && isSupplied(looked)) return { standardPlace: looked };
+  const fit = await fitsText(text, looked, true);
+  if ("kept" in fit) return replaced(fit.kept, "the engine's lookup");
+  return notKept(a.standardPlace === null ? a.reason : `the engine's place lookup answer '${looked}' does not fit it either: ${fit.why}`);
 }

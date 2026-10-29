@@ -733,7 +733,9 @@ describe("tree_edit", () => {
         `standard_place 'Bamenda, Mezam, Northwest Region, Cameroon' for '${BROMWICH}' was replaced by '${UK}', ` +
           `the engine's lookup: it names a different country than the place. ${KEPT_WHEN}`,
       ]);
-      expect(realPlace).not.toHaveBeenCalled();
+      // Only the lookup's answer is checked against FamilySearch: the supplied
+      // value was refused before any search.
+      expect(realPlace.mock.calls).toEqual([[UK]]);
     });
 
     it("is judged even when resolveStandardPlace is false, which fills nothing that has no value", async () => {
@@ -873,6 +875,60 @@ describe("tree_edit", () => {
           `that name, and the engine has none for it: ${disagree}. ${KEPT_WHEN}`,
       ]);
       expect(placeWarnings(unsupplied)).toEqual([`could not resolve standard_place for '${SCHUYLKILL}' (left unset): ${disagree}`]);
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("reads nothing for a cited assertion naming no persona, not even a ParentChild relationship's facts", async () => {
+      for (const persona of [undefined, ""]) {
+        const { record_persona_id: _none, ...rest } = assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL);
+        const { tree, research } = project([persona === undefined ? rest : { ...rest, record_persona_id: persona }], [
+          link("pe_001", "a_001"),
+        ]);
+        await writeProject(tree, research);
+        await writeSidecar({});
+        const sidecar = JSON.parse(await readFile(join(dir, "results", "log_001.json"), "utf-8"));
+        const gx = sidecar.payload.results[0].gedcomx;
+        const fact = { id: "F9", type: "Residence", place: SCHUYLKILL, standard_place: FS };
+        gx.relationships.push({ id: "r3", type: "ParentChild", parent: "p1", child: "p2", facts: [fact] });
+        gx.persons.push({ id: "", facts: [fact] });
+        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+        const r = await addResidence(SCHUYLKILL);
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect((await added(r)).standard_place).toBe(ENGINE);
+      }
+    });
+
+    it("add_fact on a Couple by relationshipId reads the records cited through either partner's link", async () => {
+      const { tree, research } = project(
+        [{ ...assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL), fact_type: "marriage" }],
+        [link("pe_001", "a_001", "I2")],
+      );
+      (tree.persons as any[]).push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Doyle", preferred: true }], facts: [] });
+      (tree.relationships as any[]).push({ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] });
+      await writeProject(tree, research);
+      await writeSidecar({ couple: [{ place: SCHUYLKILL, standard_place: FS }] });
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        relationshipId: "R1",
+        fact: { type: "Marriage", date: "1845", place: SCHUYLKILL, standard_place: OTHER, sources: [{ ref: "S1" }] },
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await readTree()).relationships[0].facts[0].standard_place).toBe(FS);
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("tree_correct update_fact: a fact citing a source reads the records a live link ties to its person", async () => {
+      const { tree, research } = project([assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL)], [link("pe_001", "a_001")]);
+      (tree.persons[0].facts as any[]).push({ id: "F2", type: "Residence", date: "1850", place: SCHUYLKILL, sources: [{ ref: "S1" }] });
+      await writeProject(tree, research);
+      await writeSidecar({ p1: [{ place: SCHUYLKILL, standard_place: FS }] });
+      const r = await treeCorrect({ projectPath: dir, operation: "update_fact", personId: "I1", factId: "F2", fact: { standard_place: OTHER } });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await readTree()).persons[0].facts.find((f: any) => f.id === "F2").standard_place).toBe(FS);
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     });
 

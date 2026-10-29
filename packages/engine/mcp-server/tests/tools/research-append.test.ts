@@ -10896,6 +10896,22 @@ describe("research_append (composite persist + enforcement)", () => {
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     });
 
+    it("is the one value two of the persona's facts of the type give the text alike, with no lookup", async () => {
+      await writeProject(sidecarResearch());
+      const rec: any = sidecarRecord();
+      rec.gedcomx.persons[0].facts.push({ id: "F2", type: "Residence", place: "Pottsville, Pennsylvania", standard_place: POTTSVILLE });
+      await writeSidecar([rec]);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [fromRecord("Pottsville, Pennsylvania", { fact_type: "residence", record_persona_id: "p_1" })],
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect((await readResearch()).assertions[1].standard_place).toBe(POTTSVILLE);
+      expect(r.unresolvedPlaces).toBeUndefined();
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
     it("is never a parent-child relationship's fact, though the persona is its parent or child", async () => {
       await writeProject(sidecarResearch());
       const rec: any = sidecarRecord();

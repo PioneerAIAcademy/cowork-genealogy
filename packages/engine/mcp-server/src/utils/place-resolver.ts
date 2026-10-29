@@ -44,6 +44,10 @@ interface RepInfo {
   placeId?: string;
   latitude?: number;
   longitude?: number;
+  /** The representation of its jurisdiction, the next place up its chain. */
+  parentRepId?: string;
+  /** When it is valid: FamilySearch's formal range ("+1918/+1992"). */
+  dateRange?: string;
 }
 
 export interface ResolveOpts {
@@ -683,10 +687,10 @@ export function standardPlaceNamedInText(place: string, standardPlace: string): 
 }
 
 /** A standard place as FamilySearch's place search gives it: its full name, and
- *  every place (id and type) of that full name. */
+ *  every place (id, type and the representation of that name) of that full name. */
 export interface FamilySearchPlace {
   fullName: string;
-  places: { placeId?: string; type?: string }[];
+  places: { placeId?: string; placeRepId?: string; type?: string }[];
 }
 
 /**
@@ -715,7 +719,9 @@ export async function familySearchPlace(name: string): Promise<FamilySearchPlace
   if (fullName === undefined) return false;
   return {
     fullName,
-    places: entries.filter((e) => e.fullName === fullName).map(({ placeId, type }) => ({ placeId, type })),
+    places: entries
+      .filter((e) => e.fullName === fullName)
+      .map(({ placeId, placeRepId, type }) => ({ placeId, placeRepId, type })),
   };
 }
 
@@ -781,25 +787,80 @@ function divisionOf(part: string): string | null {
   return DIVISION_CODES.has(key.toUpperCase()) ? key.toUpperCase() : null;
 }
 
-/**
- * `countryConsistency` one level down, for the United States and Canada: true
- * when the place text's last part, after a trailing "United States", "Canada"
- * or "British North America", names a US state, Puerto Rico or a Canadian
- * province, and the standard place names one or more of them among its
- * jurisdictions (every part but its own name), none of them that one. "St
- * Leonard, St Leonard, Quebec" was given Madawaska, New Brunswick, and
- * "Hormigueros, 1, Hormigueros, Puerto Rico" the town of Puerto Rico in Hidalgo,
- * Texas. A standard place that names none is not judged.
- */
-export function divisionContradiction(place: string, standardPlace: string): boolean {
+/** The US state, Puerto Rico or Canadian province a place text's last part
+ *  names, after a trailing "United States", "Canada" or "British North
+ *  America", else null. */
+function textDivision(place: string): string | null {
   const parts = placeSegments(place);
   const nation = (part: string) =>
     ["united states", "canada"].includes(canonicalCountry(part) ?? "") || foldPlaceName(part) === "british north america";
   while (parts.length > 0 && nation(parts[parts.length - 1])) parts.pop();
-  const written = parts.length > 0 ? divisionOf(parts[parts.length - 1]) : null;
+  return parts.length > 0 ? divisionOf(parts[parts.length - 1]) : null;
+}
+
+/**
+ * `countryConsistency` one level down, for the United States and Canada: true
+ * when the place text's last part (`textDivision`) names a US state, Puerto Rico
+ * or a Canadian province, and the standard place names one or more of them
+ * among its jurisdictions (every part but its own name), none of them that one.
+ * "St Leonard, St Leonard, Quebec" was given Madawaska, New Brunswick, and
+ * "Hormigueros, 1, Hormigueros, Puerto Rico" the town of Puerto Rico in Hidalgo,
+ * Texas. A standard place that names none among its jurisdictions is judged by
+ * its own name, which is one when the place is a state or province itself:
+ * "Washington, Washington, Pennsylvania" is not "Washington, United States".
+ * One that names none at all is not judged.
+ */
+export function divisionContradiction(place: string, standardPlace: string): boolean {
+  const written = textDivision(place);
   if (written === null) return false;
-  const named = placeSegments(standardPlace).slice(1).map(divisionOf);
+  const [own = null, ...jurisdictions] = placeSegments(standardPlace).map(divisionOf);
+  const named = jurisdictions.some((code) => code !== null) ? jurisdictions : [own];
   return named.some((code) => code !== null) && !named.includes(written);
+}
+
+/** The place text's last part names the US state, Puerto Rico, Canadian
+ *  province (`textDivision`) or country (`countryConsistency`) the standard
+ *  place lies in: "Balto., Md." ends with Maryland, where "Baltimore, Maryland,
+ *  United States" lies; "at the home of her daughter" names no such place. */
+export function endsWithItsJurisdiction(place: string, standardPlace: string): boolean {
+  const written = textDivision(place);
+  if (written !== null) return placeSegments(standardPlace).some((segment) => divisionOf(segment) === written);
+  return countryConsistency(place, standardPlace) === "ok";
+}
+
+/**
+ * The place text names a country, and FamilySearch puts `standard` in another:
+ * `countryConsistency` for any country, not only those its alias table carries,
+ * judged by the place's own jurisdiction chain ("Thornton, Lancashire, England"
+ * is not "Thornton, Natal, South Africa"). The text's country is its last
+ * part's, when the alias table knows it ("Rakousko" is Austria, "England" the
+ * United Kingdom); else, when its last part is a US state or Canadian province
+ * that `standard` does not name, the United States or Canada ("Worth, Illinois"
+ * is not "Wœrth, Bas-Rhin, France"). The place's country is the root of its
+ * chain, as `countryOfPlace` names it. The chain is read from FamilySearch only
+ * when the two differ, for the root's dates: a root FamilySearch dates as
+ * ended, a former state (Bohemia to 1918, Czechoslovakia to 1992), is not
+ * judged, since its lands lie in today's countries, perhaps the text's
+ * ("Svitavy, Moravská Třebová, Morava, Rakousko" keeps "Svitavy, Moravská
+ * Třebová, Moravia, Czechoslovakia"). Nor is historic Ireland against Northern
+ * Ireland, nor a chain that cannot be read.
+ */
+export async function countryContradiction(placeText: string, standard: FamilySearchPlace): Promise<boolean> {
+  const segments = placeSegments(standard.fullName);
+  const named =
+    canonicalCountry(placeSegments(placeText).at(-1) ?? "") !== null
+      ? [countryOfPlace(placeText)]
+      : textDivision(placeText) !== null && !segments.some((s) => divisionOf(s) !== null)
+        ? ["United States", "Canada"]
+        : [];
+  const country = countryOfPlace(standard.fullName);
+  if (named.length === 0 || country === null || named.includes(country)) return false;
+  if (named[0] === "Ireland" && segments.some((s) => canonicalCountry(s) === "northern ireland")) return false;
+  const repId = standard.places.find((p) => p.placeRepId !== undefined)?.placeRepId;
+  let root = repId === undefined ? null : await getRepInfo(repId);
+  for (let up = 0; root?.parentRepId !== undefined && up < 12; up++) root = await getRepInfo(root.parentRepId);
+  if (root === null || root.parentRepId !== undefined) return false;
+  return repYears(root.dateRange)?.to === Infinity;
 }
 
 /** Highest-scoring entry (FamilySearch ranks by relevance), else first. */
@@ -1169,6 +1230,8 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
         placeId: place.placeId,
         latitude: place.latitude,
         longitude: place.longitude,
+        parentRepId: place.parentPlaceRepId,
+        dateRange: place.dateRange,
       }
     : null;
   repInfoCache.set(repId, info);

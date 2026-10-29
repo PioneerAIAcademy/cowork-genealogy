@@ -30,6 +30,7 @@ import {
   countryConsistency,
   standardPlaceNamedInText,
   divisionContradiction,
+  endsWithItsJurisdiction,
   countryOfPlace,
   deriveContextName,
   __clearPlaceResolverCachesForTests,
@@ -250,6 +251,12 @@ describe("divisionContradiction — a US state, Puerto Rico or Canadian province
     expect(divisionContradiction(place, standard)).toBe(true);
   });
 
+  it("reads a standard place that names no state among its jurisdictions by its own name: a state itself", () => {
+    expect(divisionContradiction("Washington, Washington, Pennsylvania", "Washington, United States")).toBe(true);
+    expect(divisionContradiction("Seattle, King, Washington", "Washington, United States")).toBe(false);
+    expect(divisionContradiction("Ky", "Kentucky, United States")).toBe(false);
+  });
+
   it.each([
     ["the same state", "Salem, Essex, Massachusetts", "Salem, Essex, Massachusetts, United States"],
     ["the same province by another name", "Montreal, Canada East", "Montreal, Montreal, Quebec, Canada"],
@@ -260,6 +267,26 @@ describe("divisionContradiction — a US state, Puerto Rico or Canadian province
     ["an empty text", "", "Springfield, Penobscot, Maine, United States"],
   ])("does not refuse %s", (_label, place, standard) => {
     expect(divisionContradiction(place, standard)).toBe(false);
+  });
+});
+
+describe("endsWithItsJurisdiction: the text ends with the state, province or country a standard place lies in", () => {
+  it.each([
+    ["Balto., Md.", "Baltimore, Maryland, United States"],
+    ["Cincinatti, Hamilton, Ohio, USA", "Cincinnati, Hamilton, Ohio, United States"],
+    ["Seattle, Washington", "Washington, United States"],
+    ["La Unión, Guerrero, Mexico", "La Unión de Isidoro Montes de Oca, Guerrero, Mexico"],
+  ])("%j holds %j", (place, standard) => {
+    expect(endsWithItsJurisdiction(place, standard)).toBe(true);
+  });
+
+  it.each([
+    ["at the home of her daughter", "Of, Trabzon, Türkiye"],
+    ["Boght Reformed, Church", "Church, Hillsdale, Michigan, United States"],
+    ["Houston, Ohio", "Houston, Harris, Texas, United States"],
+    ["Paris, France", "Paris, Lamar, Texas, United States"],
+  ])("%j does not hold %j", (place, standard) => {
+    expect(endsWithItsJurisdiction(place, standard)).toBe(false);
   });
 });
 
@@ -1670,7 +1697,10 @@ describe("familySearchPlace: a supplied standard_place as FamilySearch's own", (
       entry({ placeRepId: "1", placeId: "P1", fullName: "Parácuaro, Michoacán, Mexico", type: "Municipality" }),
       entry({ placeRepId: "2", placeId: "P2", fullName: "Parácuaro, Guanajuato, Mexico" }),
     ]);
-    const parácuaro = { fullName: "Parácuaro, Michoacán, Mexico", places: [{ placeId: "P1", type: "Municipality" }] };
+    const parácuaro = {
+      fullName: "Parácuaro, Michoacán, Mexico",
+      places: [{ placeId: "P1", placeRepId: "1", type: "Municipality" }],
+    };
     expect(await familySearchPlace("paracuaro, michoacan, MEXICO")).toEqual(parácuaro);
     expect(await familySearchPlace("Parácuaro, Michoacán, Mexico")).toEqual(parácuaro);
     expect(mockSearchPlace).toHaveBeenCalledTimes(1);

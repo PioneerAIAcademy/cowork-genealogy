@@ -1,0 +1,3204 @@
+{
+ "_about": "FamilySearch Places API answers recorded 2026-10-29 (Accept-Language: en) for the cases in tests/utils/place-verdict-recorded.test.ts, as the fetchers in src/utils/place-api.ts return them, coordinates dropped: searchPlace by \"<name as searched>|<date>|<~ when fuzzy>\", getPlaceById by representation id, getPlaceReps by place id. The search for \"Washington, United States\" found 479 places; kept are the ones whose full name is that name, the only ones familySearchPlace reads.",
+ "search": {
+  "Armagh, Armagh, County Armagh, Northern Ireland, United Kingdom||": [
+   {
+    "placeId": "6355072",
+    "placeRepId": "3451346",
+    "name": "Armagh",
+    "fullName": "Armagh, Armagh, County Armagh, Northern Ireland, United Kingdom",
+    "type": "Civil Registration District",
+    "score": 97
+   }
+  ],
+  "Baltimore, Maryland, United States||": [
+   {
+    "placeId": "3172",
+    "placeRepId": "396445",
+    "name": "Baltimore",
+    "fullName": "Baltimore, Maryland, United States",
+    "type": "Independent City",
+    "dateRange": "+1851/",
+    "score": 100
+   },
+   {
+    "placeId": "2529",
+    "placeRepId": "395453",
+    "name": "Baltimore",
+    "fullName": "Baltimore, Maryland, United States",
+    "type": "County",
+    "dateRange": "+1776/",
+    "score": 100
+   },
+   {
+    "placeId": "3172",
+    "placeRepId": "3497995",
+    "name": "Baltimore",
+    "fullName": "Baltimore, Baltimore, Maryland, United States",
+    "type": "City",
+    "dateRange": "+1776/+1851",
+    "score": 94
+   }
+  ],
+  "Balto., Md.||": [
+   {
+    "placeId": "3172",
+    "placeRepId": "396445",
+    "name": "Baltimore",
+    "fullName": "Baltimore, Maryland, United States",
+    "type": "Independent City",
+    "dateRange": "+1851/",
+    "score": 92
+   },
+   {
+    "placeId": "3172",
+    "placeRepId": "3497995",
+    "name": "Baltimore",
+    "fullName": "Baltimore, Baltimore, Maryland, United States",
+    "type": "City",
+    "dateRange": "+1776/+1851",
+    "score": 84
+   },
+   {
+    "placeId": "3172",
+    "placeRepId": "3497996",
+    "name": "Baltimore",
+    "fullName": "Baltimore, Baltimore, Maryland, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1729/+1776",
+    "score": 84
+   }
+  ],
+  "Bklyn, Kings, New York||": [
+   {
+    "placeId": "904622",
+    "placeRepId": "4608874",
+    "name": "Brooklyn",
+    "fullName": "Brooklyn, Kings, New York, United States",
+    "type": "City",
+    "dateRange": "+1776/+1898",
+    "score": 93
+   },
+   {
+    "placeId": "904622",
+    "placeRepId": "4608873",
+    "name": "Brooklyn",
+    "fullName": "Brooklyn, Kings, New York Colony, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1683/+1776",
+    "score": 86
+   },
+   {
+    "placeId": "720",
+    "placeRepId": "393151",
+    "name": "Kings",
+    "fullName": "Kings, New York, United States",
+    "type": "County",
+    "dateRange": "+1776/+1898",
+    "score": 81
+   }
+  ],
+  "Boght Corners, Colonie, Albany, New York, United States||": [
+   {
+    "placeId": "871021",
+    "placeRepId": "4649291",
+    "name": "Boght Corners",
+    "fullName": "Boght Corners, Colonie, Albany, New York, United States",
+    "type": "Hamlet",
+    "score": 100
+   }
+  ],
+  "Boght Reformed, Church||": [
+   {
+    "placeId": "11422646",
+    "placeRepId": "13561369",
+    "name": "Church",
+    "fullName": "Church, Hillsdale, Michigan, United States",
+    "type": "Hamlet",
+    "dateRange": "+1894/",
+    "score": 69
+   },
+   {
+    "placeId": "6480381",
+    "placeRepId": "8015227",
+    "name": "Church",
+    "fullName": "Church, Clarion, Pennsylvania, United States",
+    "type": "Forest",
+    "dateRange": "+1850/",
+    "score": 69
+   },
+   {
+    "placeId": "1567437",
+    "placeRepId": "5485809",
+    "name": "Church",
+    "fullName": "Church, Sussex, Virginia, United States",
+    "type": "Populated Place",
+    "score": 69
+   },
+   {
+    "placeId": "499744",
+    "placeRepId": "4205959",
+    "name": "Church",
+    "fullName": "Church, Vernon, Louisiana, United States",
+    "type": "Place of Worship",
+    "score": 69
+   },
+   {
+    "placeId": "443350",
+    "placeRepId": "4129100",
+    "name": "Church",
+    "fullName": "Church, Grayson, Kentucky, United States",
+    "type": "Locality",
+    "score": 69
+   },
+   {
+    "placeId": "409569",
+    "placeRepId": "4104070",
+    "name": "Church",
+    "fullName": "Church, Allamakee, Iowa, United States",
+    "type": "Hamlet",
+    "dateRange": "+1868/",
+    "score": 69
+   },
+   {
+    "placeId": "6680763",
+    "placeRepId": "3353971",
+    "name": "Church",
+    "fullName": "Church, Somerset, England, United Kingdom",
+    "type": "Populated Place",
+    "dateRange": "+1801/",
+    "score": 69
+   },
+   {
+    "placeId": "3489082",
+    "placeRepId": "1613211",
+    "name": "Church",
+    "fullName": "Church, Lancashire, England, United Kingdom",
+    "type": "Village",
+    "dateRange": "+1801/",
+    "score": 69
+   },
+   {
+    "placeId": "2176868",
+    "placeRepId": "700767",
+    "name": "Church",
+    "fullName": "Church, Chirumanzu, Midlands, Zimbabwe",
+    "type": "Farm",
+    "dateRange": "+1980/",
+    "score": 69
+   },
+   {
+    "placeId": "10268296",
+    "placeRepId": "11828578",
+    "name": "Church",
+    "fullName": "Church, Sussex, Kings, New Brunswick, Canada",
+    "type": "Cemetery",
+    "score": 69
+   },
+   {
+    "placeId": "544082",
+    "placeRepId": "8372641",
+    "name": "Church",
+    "fullName": "Church, Norwell, Plymouth, Massachusetts, United States",
+    "type": "Cemetery",
+    "dateRange": "+1776/",
+    "score": 69
+   },
+   {
+    "placeId": "6159914",
+    "placeRepId": "10582217",
+    "name": "Church",
+    "fullName": "Church, Radnorshire, Wales, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/+1974",
+    "score": 69
+   },
+   {
+    "placeId": "6159866",
+    "placeRepId": "10582216",
+    "name": "Church",
+    "fullName": "Church, Radnorshire, Wales, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/+1974",
+    "score": 69
+   },
+   {
+    "placeId": "6160837",
+    "placeRepId": "3060736",
+    "name": "Church",
+    "fullName": "Church, North Dakota, United States",
+    "type": "County",
+    "dateRange": "+1889/+1892",
+    "score": 69
+   },
+   {
+    "placeId": "1567437",
+    "placeRepId": "5485810",
+    "name": "Church",
+    "fullName": "Church, Sussex, Virginia, British Colonial America",
+    "type": "Populated Place",
+    "score": 63
+   },
+   {
+    "placeId": "2176868",
+    "placeRepId": "700765",
+    "name": "Church",
+    "fullName": "Church, Chilimanzi, Midlands, Southern Rhodesia",
+    "type": "Farm",
+    "dateRange": "/+1980",
+    "score": 63
+   },
+   {
+    "placeId": "6160837",
+    "placeRepId": "3060735",
+    "name": "Church",
+    "fullName": "Church, Dakota Territory, United States",
+    "type": "County",
+    "dateRange": "+1887/+1889",
+    "score": 63
+   },
+   {
+    "placeId": "3489082",
+    "placeRepId": "10618761",
+    "name": "Church",
+    "fullName": "Church, Lancashire, England",
+    "type": "Village",
+    "dateRange": "/+1801",
+    "score": 63
+   },
+   {
+    "placeId": "6680763",
+    "placeRepId": "10594824",
+    "name": "Church",
+    "fullName": "Church, Somerset, England",
+    "type": "Populated Place",
+    "dateRange": "/+1801",
+    "score": 63
+   },
+   {
+    "placeId": "6159914",
+    "placeRepId": "2964380",
+    "name": "Church",
+    "fullName": "Church, Radnorshire, Wales",
+    "type": "Parish",
+    "dateRange": "/+1801",
+    "score": 63
+   },
+   {
+    "placeId": "6159866",
+    "placeRepId": "2963545",
+    "name": "Church",
+    "fullName": "Church, Radnorshire, Wales",
+    "type": "Parish",
+    "dateRange": "/+1801",
+    "score": 63
+   },
+   {
+    "placeId": "544082",
+    "placeRepId": "8372640",
+    "name": "Church",
+    "fullName": "Church, Norwell, Plymouth, Massachusetts Bay Colony, British Colonial America",
+    "type": "Cemetery",
+    "dateRange": "+1691/+1776",
+    "score": 63
+   },
+   {
+    "placeId": "10069686",
+    "placeRepId": "11585270",
+    "name": "San Pedro Apóstol",
+    "fullName": "San Pedro Apóstol, Conguaco, Jutiapa, Guatemala",
+    "type": "Catholic Parish",
+    "score": 61
+   },
+   {
+    "placeId": "6680290",
+    "placeRepId": "3360736",
+    "name": "Church Iccomb",
+    "fullName": "Church Iccomb, Worcestershire, England, United Kingdom",
+    "type": "Populated Place",
+    "dateRange": "+1801/",
+    "score": 61
+   },
+   {
+    "placeId": "6680572",
+    "placeRepId": "3360679",
+    "name": "Church Bridge",
+    "fullName": "Church Bridge, Staffordshire, England, United Kingdom",
+    "type": "Populated Place",
+    "dateRange": "+1801/",
+    "score": 61
+   },
+   {
+    "placeId": "6681687",
+    "placeRepId": "3355243",
+    "name": "Church Iccomb",
+    "fullName": "Church Iccomb, Gloucestershire, England, United Kingdom",
+    "type": "Populated Place",
+    "dateRange": "+1801/",
+    "score": 61
+   },
+   {
+    "placeId": "6682163",
+    "placeRepId": "3354526",
+    "name": "Church Wilne",
+    "fullName": "Church Wilne, Derbyshire, England, United Kingdom",
+    "type": "Village",
+    "dateRange": "+1801/",
+    "score": 61
+   },
+   {
+    "placeId": "10221313",
+    "placeRepId": "11746455",
+    "name": "Liston Church",
+    "fullName": "Liston Church, Liston, Essex, England, United Kingdom",
+    "type": "Place of Worship",
+    "dateRange": "+1801/",
+    "score": 61
+   },
+   {
+    "placeId": "9326157",
+    "placeRepId": "11794438",
+    "name": "Reformed Church",
+    "fullName": "Reformed Church, Fredericia, Vejle, Denmark",
+    "type": "Parish",
+    "dateRange": "+1970/+2006",
+    "score": 54
+   },
+   {
+    "placeId": "6682163",
+    "placeRepId": "10608922",
+    "name": "Church Wilne",
+    "fullName": "Church Wilne, Derbyshire, England",
+    "type": "Village",
+    "dateRange": "/+1801",
+    "score": 53
+   },
+   {
+    "placeId": "6681687",
+    "placeRepId": "10607732",
+    "name": "Church Iccomb",
+    "fullName": "Church Iccomb, Gloucestershire, England",
+    "type": "Populated Place",
+    "dateRange": "/+1801",
+    "score": 53
+   },
+   {
+    "placeId": "6680572",
+    "placeRepId": "10594600",
+    "name": "Church Bridge",
+    "fullName": "Church Bridge, Staffordshire, England",
+    "type": "Populated Place",
+    "dateRange": "/+1801",
+    "score": 53
+   },
+   {
+    "placeId": "6680290",
+    "placeRepId": "10586865",
+    "name": "Church Iccomb",
+    "fullName": "Church Iccomb, Worcestershire, England",
+    "type": "Populated Place",
+    "dateRange": "/+1801",
+    "score": 53
+   },
+   {
+    "placeId": "10221313",
+    "placeRepId": "11747486",
+    "name": "Liston Church",
+    "fullName": "Liston Church, Liston, Essex, England",
+    "type": "Place of Worship",
+    "dateRange": "+1150/+1801",
+    "score": 53
+   },
+   {
+    "placeId": "737425",
+    "placeRepId": "4497164",
+    "name": "Sherryl",
+    "fullName": "Sherryl, Granite, Montana, United States",
+    "type": "Hamlet",
+    "dateRange": "+1889/",
+    "score": 52
+   },
+   {
+    "placeId": "124838",
+    "placeRepId": "3721281",
+    "name": "Aurora",
+    "fullName": "Aurora, Etowah, Alabama, United States",
+    "type": "Village",
+    "dateRange": "+1868/",
+    "score": 52
+   },
+   {
+    "placeId": "4005653",
+    "placeRepId": "1919633",
+    "name": "Church Town",
+    "fullName": "Church Town, Taughboyne, County Donegal, Ireland",
+    "type": "Populated Place",
+    "score": 48
+   },
+   {
+    "placeId": "9326157",
+    "placeRepId": "10729023",
+    "name": "Reformed Church",
+    "fullName": "Reformed Church, Fredericia, Trinitatis, Elbo, Vejle, Denmark",
+    "type": "Parish",
+    "dateRange": "+1793/+1970",
+    "score": 46
+   },
+   {
+    "placeId": "9326157",
+    "placeRepId": "11761259",
+    "name": "Reformed Church",
+    "fullName": "Reformed Church, Fredericia, Trinitatis, Elbo, Vejle, Denmark",
+    "type": "Parish",
+    "dateRange": "+1721/+1793",
+    "score": 46
+   },
+   {
+    "placeId": "124838",
+    "placeRepId": "11870166",
+    "name": "Aurora",
+    "fullName": "Aurora, Marshall, Alabama, United States",
+    "type": "Village",
+    "dateRange": "+1836/+1868",
+    "score": 44
+   },
+   {
+    "placeId": "871021",
+    "placeRepId": "4649291",
+    "name": "Boght Corners",
+    "fullName": "Boght Corners, Colonie, Albany, New York, United States",
+    "type": "Hamlet",
+    "score": 42
+   },
+   {
+    "placeId": "871021",
+    "placeRepId": "4649292",
+    "name": "Boght Corners",
+    "fullName": "Boght Corners, Albany, New York Colony, British Colonial America",
+    "type": "Hamlet",
+    "dateRange": "/+1776",
+    "score": 34
+   }
+  ],
+  "Bogotá D. C., Cundinamarca, Colombia||": [
+   {
+    "placeId": "1929943",
+    "placeRepId": "10904108",
+    "name": "Bogotá D. C.",
+    "fullName": "Bogotá D. C., Cundinamarca, Colombia",
+    "type": "City",
+    "dateRange": "+1538/",
+    "score": 100
+   }
+  ],
+  "Brooklyn, Kings, New York, United States||": [
+   {
+    "placeId": "904622",
+    "placeRepId": "4608874",
+    "name": "Brooklyn",
+    "fullName": "Brooklyn, Kings, New York, United States",
+    "type": "City",
+    "dateRange": "+1776/+1898",
+    "score": 100
+   },
+   {
+    "placeId": "720",
+    "placeRepId": "393151",
+    "name": "Kings",
+    "fullName": "Kings, New York, United States",
+    "type": "County",
+    "dateRange": "+1776/+1898",
+    "score": 89
+   }
+  ],
+  "Church, Hillsdale, Michigan, United States||": [
+   {
+    "placeId": "11422646",
+    "placeRepId": "13561369",
+    "name": "Church",
+    "fullName": "Church, Hillsdale, Michigan, United States",
+    "type": "Hamlet",
+    "dateRange": "+1894/",
+    "score": 100
+   }
+  ],
+  "Cincinatti, Hamilton, Ohio||": [
+   {
+    "placeId": "1011175",
+    "placeRepId": "4813309",
+    "name": "Cincinnati",
+    "fullName": "Cincinnati, Hamilton, Ohio, United States",
+    "type": "City",
+    "dateRange": "+1803/",
+    "score": 94
+   }
+  ],
+  "Cincinnati, Hamilton, Ohio, United States||": [
+   {
+    "placeId": "1011175",
+    "placeRepId": "4813309",
+    "name": "Cincinnati",
+    "fullName": "Cincinnati, Hamilton, Ohio, United States",
+    "type": "City",
+    "dateRange": "+1803/",
+    "score": 100
+   }
+  ],
+  "Dittersbach, Polička, Bohemia||": [
+   {
+    "placeId": "4431478",
+    "placeRepId": "11914169",
+    "name": "Dittersbach",
+    "fullName": "Dittersbach, Polička, Bohemia",
+    "type": "Municipality",
+    "dateRange": "/+1918",
+    "score": 100
+   },
+   {
+    "placeId": "4431478",
+    "placeRepId": "7198787",
+    "name": "Stašov",
+    "fullName": "Stašov, Polička, Bohemia, Czechoslovakia",
+    "type": "Populated Place",
+    "dateRange": "+1918/+1960",
+    "score": 95
+   }
+  ],
+  "Dundee, Forfarshire, Scotland||": [
+   {
+    "placeId": "5059883",
+    "placeRepId": "10743175",
+    "name": "Dundee",
+    "fullName": "Dundee, Forfarshire, Scotland, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/+1894",
+    "score": 100
+   },
+   {
+    "placeId": "5059883",
+    "placeRepId": "10743176",
+    "name": "Dundee",
+    "fullName": "Dundee, Forfarshire, Scotland",
+    "type": "Town",
+    "dateRange": "+1305/+1801",
+    "score": 99
+   }
+  ],
+  "Dundee, Forfarshire, Scotland, United Kingdom||": [
+   {
+    "placeId": "5059883",
+    "placeRepId": "10743175",
+    "name": "Dundee",
+    "fullName": "Dundee, Forfarshire, Scotland, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/+1894",
+    "score": 100
+   }
+  ],
+  "Dundee, Westmoreland, Jamaica||": [
+   {
+    "placeId": "10485018",
+    "placeRepId": "12212336",
+    "name": "Dundee",
+    "fullName": "Dundee, Westmoreland, Jamaica",
+    "type": "Village",
+    "score": 100
+   }
+  ],
+  "Hampden, Massachusetts||": [
+   {
+    "placeId": "2519",
+    "placeRepId": "395420",
+    "name": "Hampden",
+    "fullName": "Hampden, Massachusetts, United States",
+    "type": "County",
+    "dateRange": "+1812/",
+    "score": 100
+   },
+   {
+    "placeId": "559990",
+    "placeRepId": "4228437",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampden, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1812/",
+    "score": 94
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "4273029",
+    "name": "Hampden",
+    "fullName": "Hampden, Penobscot, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1816/+1820",
+    "score": 94
+   },
+   {
+    "placeId": "550747",
+    "placeRepId": "10548627",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampshire, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1812",
+    "score": 94
+   },
+   {
+    "placeId": "509754",
+    "placeRepId": "8309747",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampden, Penobscot, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "/+1820",
+    "score": 91
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "11695836",
+    "name": "Hampden",
+    "fullName": "Hampden, Hancock, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1790/+1816",
+    "score": 90
+   },
+   {
+    "placeId": "559990",
+    "placeRepId": "10346740",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampshire, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1812",
+    "score": 90
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "11783775",
+    "name": "Hampden",
+    "fullName": "Hampden, Lincoln, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1790",
+    "score": 90
+   },
+   {
+    "placeId": "550747",
+    "placeRepId": "12497309",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampshire, Massachusetts Bay Colony, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1741/+1776",
+    "score": 88
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "11783776",
+    "name": "Hampden",
+    "fullName": "Hampden, Lincoln, Massachusetts Bay Colony, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1767/+1776",
+    "score": 88
+   },
+   {
+    "placeId": "559990",
+    "placeRepId": "10346763",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampshire, Massachusetts Bay Colony, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1741/+1776",
+    "score": 88
+   }
+  ],
+  "Hampden, Massachusetts, United States||": [
+   {
+    "placeId": "2519",
+    "placeRepId": "395420",
+    "name": "Hampden",
+    "fullName": "Hampden, Massachusetts, United States",
+    "type": "County",
+    "dateRange": "+1812/",
+    "score": 100
+   },
+   {
+    "placeId": "559990",
+    "placeRepId": "4228437",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampden, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1812/",
+    "score": 95
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "4273029",
+    "name": "Hampden",
+    "fullName": "Hampden, Penobscot, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1816/+1820",
+    "score": 95
+   },
+   {
+    "placeId": "550747",
+    "placeRepId": "10548627",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampshire, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1812",
+    "score": 95
+   },
+   {
+    "placeId": "509754",
+    "placeRepId": "8309747",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampden, Penobscot, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "/+1820",
+    "score": 93
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "11695836",
+    "name": "Hampden",
+    "fullName": "Hampden, Hancock, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1790/+1816",
+    "score": 91
+   },
+   {
+    "placeId": "559990",
+    "placeRepId": "10346740",
+    "name": "Hampden",
+    "fullName": "Hampden, Hampshire, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1812",
+    "score": 91
+   },
+   {
+    "placeId": "524584",
+    "placeRepId": "11783775",
+    "name": "Hampden",
+    "fullName": "Hampden, Lincoln, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1790",
+    "score": 91
+   }
+  ],
+  "Hampden, Penobscot, Maine, United States||": [
+   {
+    "placeId": "524584",
+    "placeRepId": "4273028",
+    "name": "Hampden",
+    "fullName": "Hampden, Penobscot, Maine, United States",
+    "type": "Town",
+    "dateRange": "+1820/",
+    "score": 100
+   }
+  ],
+  "Iisalmen kaupunki, Kuopio, Finland||": [
+   {
+    "placeId": "4087152",
+    "placeRepId": "1904177",
+    "name": "Iisalmen kaupunki",
+    "fullName": "Iisalmen kaupunki, Kuopio, Finland",
+    "type": "City",
+    "dateRange": "+1860/+1997",
+    "score": 100
+   }
+  ],
+  "Kiev Governorate, Russian Empire||": [
+   {
+    "placeId": "1929438",
+    "placeRepId": "10907979",
+    "name": "Kiev Governorate",
+    "fullName": "Kiev Governorate, Russian Empire",
+    "type": "Governorate",
+    "dateRange": "+1721/+1917",
+    "score": 100
+   },
+   {
+    "placeId": "1929438",
+    "placeRepId": "11901980",
+    "name": "Kiev Viceroyalty",
+    "fullName": "Kiev Viceroyalty, Russian Empire",
+    "type": "Viceroyalty",
+    "dateRange": "+1781/+1796",
+    "score": 85
+   }
+  ],
+  "La Unión de Isidoro Montes de Oca, Guerrero, Mexico||": [
+   {
+    "placeId": "6114097",
+    "placeRepId": "2943779",
+    "name": "La Unión de Isidoro Montes de Oca",
+    "fullName": "La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+    "type": "Municipality",
+    "dateRange": "+1849/",
+    "score": 100
+   },
+   {
+    "placeId": "9760082",
+    "placeRepId": "11259868",
+    "name": "Region Acapulco",
+    "fullName": "Region Acapulco, Guerrero, Mexico",
+    "type": "Region",
+    "dateRange": "+1942/",
+    "score": 86
+   },
+   {
+    "placeId": "6114077",
+    "placeRepId": "2943821",
+    "name": "Petatlán",
+    "fullName": "Petatlán, Guerrero, Mexico",
+    "type": "Municipality",
+    "dateRange": "+1935/",
+    "score": 86
+   },
+   {
+    "placeId": "6114086",
+    "placeRepId": "2943765",
+    "name": "Técpan de Galeana",
+    "fullName": "Técpan de Galeana, Guerrero, Mexico",
+    "type": "Municipality",
+    "dateRange": "+1952/",
+    "score": 86
+   },
+   {
+    "placeId": "3947054",
+    "placeRepId": "6917061",
+    "name": "Zacatula",
+    "fullName": "Zacatula, La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+    "type": "Village",
+    "score": 86
+   },
+   {
+    "placeId": "10104521",
+    "placeRepId": "11621208",
+    "name": "Montes de Oca",
+    "fullName": "Montes de Oca, Guerrero, Mexico",
+    "type": "Judicial District",
+    "dateRange": "+1898/+1985",
+    "score": 78
+   }
+  ],
+  "La Unión, Guerrero, Mexico||": [
+   {
+    "placeId": "6114097",
+    "placeRepId": "2943779",
+    "name": "La Unión de Isidoro Montes de Oca",
+    "fullName": "La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+    "type": "Municipality",
+    "dateRange": "+1849/",
+    "score": 100
+   },
+   {
+    "placeId": "10069620",
+    "placeRepId": "11585081",
+    "name": "La Unión",
+    "fullName": "La Unión, La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+    "type": "City",
+    "dateRange": "+1870/",
+    "score": 95
+   },
+   {
+    "placeId": "4989501",
+    "placeRepId": "7304276",
+    "name": "La Unión",
+    "fullName": "La Unión, Ayutla de los Libres, Guerrero, Mexico",
+    "type": "Town",
+    "score": 95
+   },
+   {
+    "placeId": "9760082",
+    "placeRepId": "11259868",
+    "name": "Region Acapulco",
+    "fullName": "Region Acapulco, Guerrero, Mexico",
+    "type": "Region",
+    "dateRange": "+1942/",
+    "score": 86
+   },
+   {
+    "placeId": "6114077",
+    "placeRepId": "2943821",
+    "name": "Petatlán",
+    "fullName": "Petatlán, Guerrero, Mexico",
+    "type": "Municipality",
+    "dateRange": "+1935/",
+    "score": 86
+   },
+   {
+    "placeId": "6114086",
+    "placeRepId": "2943765",
+    "name": "Técpan de Galeana",
+    "fullName": "Técpan de Galeana, Guerrero, Mexico",
+    "type": "Municipality",
+    "dateRange": "+1952/",
+    "score": 86
+   },
+   {
+    "placeId": "3947054",
+    "placeRepId": "6917061",
+    "name": "Zacatula",
+    "fullName": "Zacatula, La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+    "type": "Village",
+    "score": 86
+   },
+   {
+    "placeId": "10104521",
+    "placeRepId": "11621208",
+    "name": "Montes de Oca",
+    "fullName": "Montes de Oca, Guerrero, Mexico",
+    "type": "Judicial District",
+    "dateRange": "+1898/+1985",
+    "score": 78
+   },
+   {
+    "placeId": "10104515",
+    "placeRepId": "11621202",
+    "name": "Galeana",
+    "fullName": "Galeana, Guerrero, Mexico",
+    "type": "Judicial District",
+    "dateRange": "+1900/+1985",
+    "score": 74
+   }
+  ],
+  "Lancaster, Lancashire, England, United Kingdom||": [
+   {
+    "placeId": "3484497",
+    "placeRepId": "11013326",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "City",
+    "dateRange": "+1974/",
+    "score": 100
+   },
+   {
+    "placeId": "6256036",
+    "placeRepId": "3041344",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/+2005",
+    "score": 100
+   },
+   {
+    "placeId": "6256921",
+    "placeRepId": "3040479",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "Poor Law Union",
+    "dateRange": "+1834/+1930",
+    "score": 100
+   },
+   {
+    "placeId": "3484497",
+    "placeRepId": "1617160",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancashire, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/+1974",
+    "score": 99
+   }
+  ],
+  "Lancaster, Lancaster, Pennsylvania||": [
+   {
+    "placeId": "1121200",
+    "placeRepId": "4838241",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, United States",
+    "type": "City",
+    "dateRange": "+1818/",
+    "score": 100
+   },
+   {
+    "placeId": "1121200",
+    "placeRepId": "10743189",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, United States",
+    "type": "Borough",
+    "dateRange": "+1776/+1818",
+    "score": 96
+   },
+   {
+    "placeId": "1121200",
+    "placeRepId": "4838242",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, British Colonial America",
+    "type": "Borough",
+    "dateRange": "+1742/+1776",
+    "score": 96
+   },
+   {
+    "placeId": "1121200",
+    "placeRepId": "10743190",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, British Colonial America",
+    "type": "Town",
+    "dateRange": "+1729/+1742",
+    "score": 96
+   }
+  ],
+  "Lancaster, Lancaster, Pennsylvania, United States||": [
+   {
+    "placeId": "1121200",
+    "placeRepId": "4838241",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, United States",
+    "type": "City",
+    "dateRange": "+1818/",
+    "score": 100
+   },
+   {
+    "placeId": "1121200",
+    "placeRepId": "10743189",
+    "name": "Lancaster",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, United States",
+    "type": "Borough",
+    "dateRange": "+1776/+1818",
+    "score": 99
+   }
+  ],
+  "March, Cambridgeshire, England||": [
+   {
+    "placeId": "6142105",
+    "placeRepId": "2976707",
+    "name": "March",
+    "fullName": "March, Cambridgeshire, England, United Kingdom",
+    "type": "Chapelry",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "3483326",
+    "placeRepId": "1623492",
+    "name": "March",
+    "fullName": "March, Cambridgeshire, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6142105",
+    "placeRepId": "10618163",
+    "name": "March",
+    "fullName": "March, Cambridgeshire, England",
+    "type": "Chapelry",
+    "dateRange": "/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "3483326",
+    "placeRepId": "10618159",
+    "name": "March",
+    "fullName": "March, Cambridgeshire, England",
+    "type": "Town",
+    "dateRange": "/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "6682348",
+    "placeRepId": "3354481",
+    "name": "March Baptists",
+    "fullName": "March Baptists, Cambridgeshire, England, United Kingdom",
+    "type": "Place of Worship",
+    "dateRange": "+1801/",
+    "score": 97
+   },
+   {
+    "placeId": "6682351",
+    "placeRepId": "3354478",
+    "name": "March Independent",
+    "fullName": "March Independent, Cambridgeshire, England, United Kingdom",
+    "type": "Place of Worship",
+    "dateRange": "+1801/",
+    "score": 97
+   },
+   {
+    "placeId": "6682353",
+    "placeRepId": "3354453",
+    "name": "March Wesleyan Methodists",
+    "fullName": "March Wesleyan Methodists, Cambridgeshire, England, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/",
+    "score": 97
+   },
+   {
+    "placeId": "6682353",
+    "placeRepId": "10618172",
+    "name": "March Wesleyan Methodists",
+    "fullName": "March Wesleyan Methodists, Cambridgeshire, England",
+    "type": "Parish",
+    "dateRange": "/+1801",
+    "score": 95
+   },
+   {
+    "placeId": "6682351",
+    "placeRepId": "10618169",
+    "name": "March Independent",
+    "fullName": "March Independent, Cambridgeshire, England",
+    "type": "Place of Worship",
+    "dateRange": "/+1801",
+    "score": 95
+   },
+   {
+    "placeId": "6682348",
+    "placeRepId": "10618166",
+    "name": "March Baptists",
+    "fullName": "March Baptists, Cambridgeshire, England",
+    "type": "Place of Worship",
+    "dateRange": "/+1801",
+    "score": 95
+   },
+   {
+    "placeId": "6255808",
+    "placeRepId": "3041102",
+    "name": "North Witchford",
+    "fullName": "North Witchford, Cambridgeshire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/",
+    "score": 86
+   }
+  ],
+  "March, Cambridgeshire, England, United Kingdom||": [
+   {
+    "placeId": "6142105",
+    "placeRepId": "2976707",
+    "name": "March",
+    "fullName": "March, Cambridgeshire, England, United Kingdom",
+    "type": "Chapelry",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "3483326",
+    "placeRepId": "1623492",
+    "name": "March",
+    "fullName": "March, Cambridgeshire, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6682348",
+    "placeRepId": "3354481",
+    "name": "March Baptists",
+    "fullName": "March Baptists, Cambridgeshire, England, United Kingdom",
+    "type": "Place of Worship",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6682351",
+    "placeRepId": "3354478",
+    "name": "March Independent",
+    "fullName": "March Independent, Cambridgeshire, England, United Kingdom",
+    "type": "Place of Worship",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6682353",
+    "placeRepId": "3354453",
+    "name": "March Wesleyan Methodists",
+    "fullName": "March Wesleyan Methodists, Cambridgeshire, England, United Kingdom",
+    "type": "Parish",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "6255808",
+    "placeRepId": "3041102",
+    "name": "North Witchford",
+    "fullName": "North Witchford, Cambridgeshire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/",
+    "score": 86
+   }
+  ],
+  "March, Cape Province, South Africa||": [
+   {
+    "placeId": "4118381",
+    "placeRepId": "6795243",
+    "name": "March",
+    "fullName": "March, Cape Province, South Africa",
+    "type": "Populated Place",
+    "dateRange": "/+1980",
+    "score": 100
+   },
+   {
+    "placeId": "4118382",
+    "placeRepId": "6795242",
+    "name": "March",
+    "fullName": "March, Cape Province, South Africa",
+    "type": "Populated Place",
+    "dateRange": "/+1980",
+    "score": 100
+   }
+  ],
+  "March, Transvaal, South Africa||": [
+   {
+    "placeId": "4118381",
+    "placeRepId": "6795244",
+    "name": "March",
+    "fullName": "March, Transvaal, South Africa",
+    "type": "Populated Place",
+    "score": 100
+   },
+   {
+    "placeId": "4118382",
+    "placeRepId": "6795241",
+    "name": "March",
+    "fullName": "March, Transvaal, South Africa",
+    "type": "Populated Place",
+    "score": 100
+   }
+  ],
+  "Massachusettes,USA||": [
+   {
+    "placeId": "1",
+    "placeRepId": "1",
+    "name": "United States",
+    "fullName": "United States",
+    "type": "Country",
+    "dateRange": "+1776/",
+    "score": 82
+   },
+   {
+    "placeId": "6253011",
+    "placeRepId": "290",
+    "name": "North America",
+    "fullName": "North America",
+    "type": "Continent",
+    "score": 69
+   },
+   {
+    "placeId": "10382679",
+    "placeRepId": "12369522",
+    "name": "ussa",
+    "fullName": "ussa, Minsk, Minsk, Russian Empire",
+    "type": "Colony",
+    "dateRange": "+1793/+1917",
+    "score": 60
+   },
+   {
+    "placeId": "2535500",
+    "placeRepId": "42573",
+    "name": "Usa",
+    "fullName": "Usa, Palau",
+    "type": "Island(s)",
+    "score": 56
+   },
+   {
+    "placeId": "6596778",
+    "placeRepId": "7910121",
+    "name": "Usa",
+    "fullName": "Usa, Kirov, Russia, Soviet Union",
+    "type": "Populated Place",
+    "score": 56
+   },
+   {
+    "placeId": "4602694",
+    "placeRepId": "7022162",
+    "name": "Usa",
+    "fullName": "Usa, Tosa-shi, Kōchi-ken, Japan",
+    "type": "Populated Place",
+    "score": 56
+   },
+   {
+    "placeId": "3258223",
+    "placeRepId": "6628448",
+    "name": "Usa",
+    "fullName": "Usa, Komi ASSR, Russia, Soviet Union",
+    "type": "Populated Place",
+    "score": 56
+   },
+   {
+    "placeId": "1949875",
+    "placeRepId": "5946921",
+    "name": "Usa",
+    "fullName": "Usa, Usa-shi, Ōita-ken, Japan",
+    "type": "Village",
+    "score": 56
+   },
+   {
+    "placeId": "4573776",
+    "placeRepId": "1977969",
+    "name": "Usa",
+    "fullName": "Usa, Machaze, Manica, Mozambique",
+    "type": "Populated Place",
+    "score": 56
+   },
+   {
+    "placeId": "3758462",
+    "placeRepId": "1778528",
+    "name": "Usa",
+    "fullName": "Usa, Rafi, Niger, Nigeria",
+    "type": "Village",
+    "score": 56
+   },
+   {
+    "placeId": "3654859",
+    "placeRepId": "1536758",
+    "name": "Usa",
+    "fullName": "Usa, Kagua-Erave, Southern Highlands, Papua New Guinea",
+    "type": "Village",
+    "score": 56
+   },
+   {
+    "placeId": "5043618",
+    "placeRepId": "7312994",
+    "name": "Usa",
+    "fullName": "Usa, Palakka, Bone, South Sulawesi, Indonesia",
+    "type": "Village",
+    "score": 56
+   },
+   {
+    "placeId": "3497447",
+    "placeRepId": "1643190",
+    "name": "Usa",
+    "fullName": "Usa, Usa River, Meru, Arusha, Tanzania",
+    "type": "Populated Place",
+    "score": 56
+   },
+   {
+    "placeId": "10532577",
+    "placeRepId": "12295018",
+    "name": "Usa",
+    "fullName": "Usa, Nishiki-chō, Kuga-gun, Yamaguchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1955/+2006",
+    "score": 56
+   },
+   {
+    "placeId": "10570417",
+    "placeRepId": "12343426",
+    "name": "Usa",
+    "fullName": "Usa, Takaoka-chō, Takaoka-gun, Kōchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1958/+1959",
+    "score": 56
+   },
+   {
+    "placeId": "10570417",
+    "placeRepId": "12343425",
+    "name": "Usa",
+    "fullName": "Usa, Usa-chō, Takaoka-gun, Kōchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1922/+1958",
+    "score": 56
+   },
+   {
+    "placeId": "10532577",
+    "placeRepId": "12295017",
+    "name": "Usa",
+    "fullName": "Usa, Takane-son, Kuga-gun, Yamaguchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1889/+1955",
+    "score": 56
+   },
+   {
+    "placeId": "10570417",
+    "placeRepId": "12343424",
+    "name": "Usa",
+    "fullName": "Usa, Usa-mura, Takaoka-gun, Kōchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1889/+1922",
+    "score": 56
+   },
+   {
+    "placeId": "4786777",
+    "placeRepId": "7440911",
+    "name": "Usa",
+    "fullName": "Usa, Roslavl Rayon, Smolensk, Russia, Soviet Union",
+    "type": "Populated Place",
+    "dateRange": "/+1991",
+    "score": 52
+   },
+   {
+    "placeId": "4786777",
+    "placeRepId": "10691966",
+    "name": "Usa",
+    "fullName": "Usa, Roslavl Uyezd, Smolensk, Russian Empire",
+    "type": "Populated Place",
+    "dateRange": "/+1922",
+    "score": 52
+   },
+   {
+    "placeId": "1941699",
+    "placeRepId": "431437",
+    "name": "Usa-shi",
+    "fullName": "Usa-shi, Ōita-ken, Japan",
+    "type": "City",
+    "dateRange": "+1967/",
+    "score": 48
+   },
+   {
+    "placeId": "10382679",
+    "placeRepId": "12021816",
+    "name": "usa",
+    "fullName": "usa, Dzyarzhynsk, Minsk, Belarus",
+    "type": "Hamlet",
+    "dateRange": "+1992/",
+    "score": 48
+   },
+   {
+    "placeId": "10378460",
+    "placeRepId": "12015308",
+    "name": "usa",
+    "fullName": "usa, Stowbtsy, Minsk, Belarus",
+    "type": "Farm",
+    "dateRange": "+1992/",
+    "score": 48
+   },
+   {
+    "placeId": "1941700",
+    "placeRepId": "431438",
+    "name": "Usa-gun",
+    "fullName": "Usa-gun, Ōita-ken, Japan",
+    "type": "County",
+    "dateRange": "+1871/+2005",
+    "score": 48
+   },
+   {
+    "placeId": "10378460",
+    "placeRepId": "13682385",
+    "name": "Usa",
+    "fullName": "Usa, Stołpce, Nowogródek, Poland",
+    "type": "Hamlet",
+    "dateRange": "+1921/+1938",
+    "score": 45
+   },
+   {
+    "placeId": "6596778",
+    "placeRepId": "3283765",
+    "name": "usa",
+    "fullName": "usa, Kirov, Russia",
+    "type": "Populated Place",
+    "score": 45
+   },
+   {
+    "placeId": "3258223",
+    "placeRepId": "1423763",
+    "name": "usa",
+    "fullName": "usa, Komi Republic, Russia",
+    "type": "Populated Place",
+    "score": 45
+   },
+   {
+    "placeId": "10570417",
+    "placeRepId": "12343427",
+    "name": "Usachō Usa",
+    "fullName": "Usachō Usa, Tosa-shi, Kōchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1959/",
+    "score": 45
+   },
+   {
+    "placeId": "10532577",
+    "placeRepId": "12295019",
+    "name": "Nishikimachi Usa",
+    "fullName": "Nishikimachi Usa, Iwakuni-shi, Yamaguchi-ken, Japan",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+2006/",
+    "score": 45
+   },
+   {
+    "placeId": "1941699",
+    "placeRepId": "12764820",
+    "name": "Usa-machi",
+    "fullName": "Usa-machi, Usa-gun, Ōita-ken, Japan",
+    "type": "Town",
+    "dateRange": "+1889/+1967",
+    "score": 41
+   },
+   {
+    "placeId": "10378460",
+    "placeRepId": "12518353",
+    "name": "usa",
+    "fullName": "usa, Valozhyn, Nowogródek, Poland",
+    "type": "Farm",
+    "dateRange": "+1918/+1945",
+    "score": 41
+   },
+   {
+    "placeId": "10378460",
+    "placeRepId": "12378051",
+    "name": "ussa",
+    "fullName": "ussa, Oshmiany, Vilna, Russian Empire",
+    "type": "Farm",
+    "dateRange": "+1801/+1917",
+    "score": 41
+   },
+   {
+    "placeId": "10570417",
+    "placeRepId": "12343423",
+    "name": "Usa-mura",
+    "fullName": "Usa-mura, Takaoka-gun, Kōchi-ken, Japan",
+    "type": "Village",
+    "dateRange": "+1871/+1889",
+    "score": 41
+   },
+   {
+    "placeId": "10532577",
+    "placeRepId": "12295016",
+    "name": "Usa-mura",
+    "fullName": "Usa-mura, Kuga-gun, Yamaguchi-ken, Japan",
+    "type": "Village",
+    "dateRange": "+1871/+1889",
+    "score": 41
+   },
+   {
+    "placeId": "1941700",
+    "placeRepId": "431439",
+    "name": "Usa-gun",
+    "fullName": "Usa-gun, Buzen no kuni, Japan",
+    "type": "County",
+    "dateRange": "/+1871",
+    "score": 41
+   },
+   {
+    "placeId": "10570417",
+    "placeRepId": "12343068",
+    "name": "Usa-mura",
+    "fullName": "Usa-mura, Takaoka-gun, Tosa no kuni, Japan",
+    "type": "Village",
+    "dateRange": "/+1871",
+    "score": 41
+   },
+   {
+    "placeId": "10532577",
+    "placeRepId": "12294663",
+    "name": "Usa-mura",
+    "fullName": "Usa-mura, Kuga-gun, Suō no kuni, Japan",
+    "type": "Village",
+    "dateRange": "/+1871",
+    "score": 41
+   },
+   {
+    "placeId": "4979090",
+    "placeRepId": "2544503",
+    "name": "Ūsah",
+    "fullName": "Ūsah, Ghaznī, Afghanistan",
+    "type": "Populated Place",
+    "score": 40
+   },
+   {
+    "placeId": "3140428",
+    "placeRepId": "1161269",
+    "name": "Ūsah",
+    "fullName": "Ūsah, Ghaznī, Afghanistan",
+    "type": "Populated Place",
+    "score": 40
+   },
+   {
+    "placeId": "4786777",
+    "placeRepId": "2409963",
+    "name": "usa",
+    "fullName": "usa, Roslavlsky, Smolensk, Russia",
+    "type": "Populated Place",
+    "dateRange": "+1991/",
+    "score": 37
+   }
+  ],
+  "Massachusetts, United States||": [
+   {
+    "placeId": "52",
+    "placeRepId": "371",
+    "name": "Massachusetts",
+    "fullName": "Massachusetts, United States",
+    "type": "State",
+    "dateRange": "+1776/",
+    "score": 100
+   },
+   {
+    "placeId": "6427770",
+    "placeRepId": "9412701",
+    "name": "Massachusetts Gore",
+    "fullName": "Massachusetts Gore, North Franklin Territory, Franklin, Maine, United States",
+    "type": "Township",
+    "dateRange": "+1850/",
+    "score": 78
+   },
+   {
+    "placeId": "561056",
+    "placeRepId": "4229299",
+    "name": "Milton",
+    "fullName": "Milton, Norfolk, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1793/",
+    "score": 74
+   },
+   {
+    "placeId": "9365334",
+    "placeRepId": "10780704",
+    "name": "Osborne Cemetery",
+    "fullName": "Osborne Cemetery, Alford, Berkshire, Massachusetts, United States",
+    "type": "Cemetery",
+    "dateRange": "+1746/",
+    "score": 73
+   },
+   {
+    "placeId": "541962",
+    "placeRepId": "4293909",
+    "name": "Spring Street Cemetery",
+    "fullName": "Spring Street Cemetery, Essex, Essex, Massachusetts, United States",
+    "type": "Cemetery",
+    "dateRange": "+1784/",
+    "score": 73
+   },
+   {
+    "placeId": "554331",
+    "placeRepId": "8376886",
+    "name": "Milton",
+    "fullName": "Milton, Milton, Suffolk, Massachusetts, United States",
+    "type": "Populated Place",
+    "dateRange": "+1776/",
+    "score": 71
+   },
+   {
+    "placeId": "561056",
+    "placeRepId": "4229298",
+    "name": "Milton",
+    "fullName": "Milton, Suffolk, Massachusetts, United States",
+    "type": "Town",
+    "dateRange": "+1776/+1793",
+    "score": 69
+   }
+  ],
+  "Norway, Norway||": [
+   {
+    "placeId": "514349",
+    "placeRepId": "8305990",
+    "name": "Norway",
+    "fullName": "Norway, Norway, Oxford, Massachusetts, United States",
+    "type": "Town",
+    "score": 85
+   },
+   {
+    "placeId": "885570",
+    "placeRepId": "4627012",
+    "name": "Norway",
+    "fullName": "Norway, Norway, Herkimer, New York, United States",
+    "type": "Hamlet",
+    "score": 85
+   },
+   {
+    "placeId": "514349",
+    "placeRepId": "8305989",
+    "name": "Norway",
+    "fullName": "Norway, Norway, Cumberland, Massachusetts, United States",
+    "type": "Town",
+    "score": 80
+   }
+  ],
+  "Norway, Norway, Oxford, Massachusetts, United States||": [
+   {
+    "placeId": "514349",
+    "placeRepId": "8305990",
+    "name": "Norway",
+    "fullName": "Norway, Norway, Oxford, Massachusetts, United States",
+    "type": "Town",
+    "score": 100
+   }
+  ],
+  "Of, Trabzon, Türkiye||": [
+   {
+    "placeId": "9240082",
+    "placeRepId": "10561210",
+    "name": "Of",
+    "fullName": "Of, Trabzon, Türkiye",
+    "type": "District",
+    "dateRange": "+1923/",
+    "score": 100
+   },
+   {
+    "placeId": "6065529",
+    "placeRepId": "3036406",
+    "name": "Of",
+    "fullName": "Of, Of, Trabzon, Türkiye",
+    "type": "Town",
+    "score": 94
+   }
+  ],
+  "Palatinate, Bavaria, Germany||": [
+   {
+    "placeId": "6355016",
+    "placeRepId": "3451287",
+    "name": "Palatinate",
+    "fullName": "Palatinate, Bavaria, Germany",
+    "type": "Region",
+    "dateRange": "+1871/+1945",
+    "score": 100
+   },
+   {
+    "placeId": "1928656",
+    "placeRepId": "2040",
+    "name": "Rhineland-Palatinate",
+    "fullName": "Rhineland-Palatinate, Germany",
+    "type": "State",
+    "dateRange": "+1946/",
+    "score": 81
+   }
+  ],
+  "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire||": [
+   {
+    "placeId": "4208808",
+    "placeRepId": "10914527",
+    "name": "Popruzhna",
+    "fullName": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire",
+    "type": "Town",
+    "dateRange": "+1800/+1923",
+    "score": 100
+   },
+   {
+    "placeId": "4215836",
+    "placeRepId": "11622984",
+    "name": "Krasilovka",
+    "fullName": "Krasilovka, Tarashcha, Kiev Governorate, Russian Empire",
+    "type": "Village",
+    "dateRange": "+1793/+1922",
+    "score": 86
+   },
+   {
+    "placeId": "9563178",
+    "placeRepId": "11956673",
+    "name": "Bila Tserkva Okrug",
+    "fullName": "Bila Tserkva Okrug, Kiev Viceroyalty, Russian Empire",
+    "type": "District",
+    "dateRange": "+1793/+1796",
+    "score": 86
+   },
+   {
+    "placeId": "4205477",
+    "placeRepId": "11623080",
+    "name": "Stavishche",
+    "fullName": "Stavishche, Tarashcha, Kiev Governorate, Russian Empire",
+    "type": "Town",
+    "dateRange": "+1793/+1922",
+    "score": 78
+   }
+  ],
+  "Portland, Cumberland, Maine||": [
+   {
+    "placeId": "525129",
+    "placeRepId": "4274076",
+    "name": "Portland",
+    "fullName": "Portland, Cumberland, Maine, United States",
+    "type": "City",
+    "dateRange": "+1820/",
+    "score": 100
+   }
+  ],
+  "Portland, Cumberland, Maine, United States||": [
+   {
+    "placeId": "525129",
+    "placeRepId": "4274076",
+    "name": "Portland",
+    "fullName": "Portland, Cumberland, Maine, United States",
+    "type": "City",
+    "dateRange": "+1820/",
+    "score": 100
+   }
+  ],
+  "Portland, Multnomah, Oregon, United States||": [
+   {
+    "placeId": "1044737",
+    "placeRepId": "4772345",
+    "name": "Portland",
+    "fullName": "Portland, Multnomah, Oregon, United States",
+    "type": "City",
+    "dateRange": "+1854/",
+    "score": 100
+   },
+   {
+    "placeId": "2686",
+    "placeRepId": "395920",
+    "name": "Clackamas",
+    "fullName": "Clackamas, Oregon, United States",
+    "type": "County",
+    "dateRange": "+1843/",
+    "score": 86
+   },
+   {
+    "placeId": "2717",
+    "placeRepId": "395703",
+    "name": "Washington",
+    "fullName": "Washington, Oregon, United States",
+    "type": "County",
+    "dateRange": "+1843/",
+    "score": 86
+   }
+  ],
+  "San Juan, Puerto Rico||": [
+   {
+    "placeId": "5931810",
+    "placeRepId": "384360",
+    "name": "San Juan",
+    "fullName": "San Juan, Puerto Rico",
+    "type": "Municipality",
+    "dateRange": "+1521/",
+    "score": 100
+   },
+   {
+    "placeId": "9834895",
+    "placeRepId": "11336837",
+    "name": "Distrito Senatorial de San Juan",
+    "fullName": "Distrito Senatorial de San Juan, Puerto Rico",
+    "type": "District",
+    "score": 100
+   },
+   {
+    "placeId": "1927167",
+    "placeRepId": "134",
+    "name": "Spain",
+    "fullName": "Spain",
+    "type": "Country",
+    "score": 86
+   },
+   {
+    "placeId": "5943765",
+    "placeRepId": "3250082",
+    "name": "Viejo San Juan",
+    "fullName": "Viejo San Juan, San Juan Antiguo, San Juan, Puerto Rico",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1521/",
+    "score": 88
+   }
+  ],
+  "Springfield, Hampden, Massachusetts||": [
+   {
+    "placeId": "561085",
+    "placeRepId": "4229340",
+    "name": "Springfield",
+    "fullName": "Springfield, Hampden, Massachusetts, United States",
+    "type": "City",
+    "dateRange": "+1812/",
+    "score": 100
+   }
+  ],
+  "Springfield, Hampden, Massachusetts, United States||": [
+   {
+    "placeId": "561085",
+    "placeRepId": "4229340",
+    "name": "Springfield",
+    "fullName": "Springfield, Hampden, Massachusetts, United States",
+    "type": "City",
+    "dateRange": "+1812/",
+    "score": 100
+   }
+  ],
+  "Springfield, Sangamon, Illinois, United States||": [
+   {
+    "placeId": "380949",
+    "placeRepId": "4033952",
+    "name": "Springfield",
+    "fullName": "Springfield, Sangamon, Illinois, United States",
+    "type": "City",
+    "dateRange": "+1828/",
+    "score": 100
+   },
+   {
+    "placeId": "384504",
+    "placeRepId": "4035592",
+    "name": "Springfield Township",
+    "fullName": "Springfield Township, Sangamon, Illinois, United States",
+    "type": "Township",
+    "dateRange": "+1860/",
+    "score": 100
+   },
+   {
+    "placeId": "383212",
+    "placeRepId": "4036394",
+    "name": "Capital Township",
+    "fullName": "Capital Township, Sangamon, Illinois, United States",
+    "type": "Township",
+    "dateRange": "+1878/",
+    "score": 74
+   }
+  ],
+  "Svitavy, Moravská Třebová, Moravia, Czechoslovakia||": [
+   {
+    "placeId": "4430832",
+    "placeRepId": "7194123",
+    "name": "Svitavy",
+    "fullName": "Svitavy, Moravská Třebová, Moravia, Czechoslovakia",
+    "type": "Municipality",
+    "dateRange": "+1918/+1949",
+    "score": 100
+   }
+  ],
+  "Thornton, Lancashire, England||": [
+   {
+    "placeId": "3479293",
+    "placeRepId": "10607576",
+    "name": "Thornton",
+    "fullName": "Thornton, Lancashire, England",
+    "type": "Village",
+    "dateRange": "+1086/+1801",
+    "score": 100
+   },
+   {
+    "placeId": "6143849",
+    "placeRepId": "2975743",
+    "name": "Thornton",
+    "fullName": "Thornton, Lancashire, England, United Kingdom",
+    "type": "Town",
+    "dateRange": "+1801/",
+    "score": 100
+   },
+   {
+    "placeId": "3479295",
+    "placeRepId": "1630717",
+    "name": "Thornton",
+    "fullName": "Thornton, Lancashire, England, United Kingdom",
+    "type": "Village",
+    "dateRange": "+1801/+1974",
+    "score": 100
+   },
+   {
+    "placeId": "6143849",
+    "placeRepId": "10622969",
+    "name": "Thornton",
+    "fullName": "Thornton, Lancashire, England",
+    "type": "Village",
+    "dateRange": "/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "3479295",
+    "placeRepId": "10602627",
+    "name": "Thornton",
+    "fullName": "Thornton, Lancashire, England",
+    "type": "Village",
+    "dateRange": "+1050/+1801",
+    "score": 99
+   },
+   {
+    "placeId": "6256011",
+    "placeRepId": "3041323",
+    "name": "Fylde",
+    "fullName": "Fylde, Lancashire, England, United Kingdom",
+    "type": "Civil Registration District",
+    "dateRange": "+1837/+1974",
+    "score": 86
+   }
+  ],
+  "Thornton, Natal, South Africa||": [
+   {
+    "placeId": "2222966",
+    "placeRepId": "6198647",
+    "name": "Thornton",
+    "fullName": "Thornton, Natal, South Africa",
+    "type": "Farm",
+    "score": 100
+   },
+   {
+    "placeId": "2222965",
+    "placeRepId": "6198646",
+    "name": "Thornton",
+    "fullName": "Thornton, Natal, South Africa",
+    "type": "Farm",
+    "score": 100
+   }
+  ],
+  "Troup, Central, Sri Lanka||": [
+   {
+    "placeId": "2126199",
+    "placeRepId": "649171",
+    "name": "Troup",
+    "fullName": "Troup, Central, Sri Lanka",
+    "type": "Farm",
+    "score": 100
+   }
+  ],
+  "Troup, Georgia, United States||": [
+   {
+    "placeId": "2454",
+    "placeRepId": "395325",
+    "name": "Troup",
+    "fullName": "Troup, Georgia, United States",
+    "type": "County",
+    "dateRange": "+1826/",
+    "score": 100
+   }
+  ],
+  "Usa, Palau||": [
+   {
+    "placeId": "2535500",
+    "placeRepId": "42573",
+    "name": "Usa",
+    "fullName": "Usa, Palau",
+    "type": "Island(s)",
+    "score": 100
+   }
+  ],
+  "Wœrth, Bas-Rhin, France||": [
+   {
+    "placeId": "6410868",
+    "placeRepId": "9518984",
+    "name": "Wœrth",
+    "fullName": "Wœrth, Bas-Rhin, France",
+    "type": "Canton",
+    "dateRange": "+1919/",
+    "score": 100
+   },
+   {
+    "placeId": "4019089",
+    "placeRepId": "6892286",
+    "name": "Woerth",
+    "fullName": "Woerth, Bas-Rhin, France",
+    "type": "Municipality",
+    "score": 100
+   },
+   {
+    "placeId": "4019090",
+    "placeRepId": "6892281",
+    "name": "Woerth",
+    "fullName": "Woerth, Matzenheim, Bas-Rhin, France",
+    "type": "Populated Place",
+    "score": 94
+   }
+  ],
+  "Washington, United States||": [
+   {
+    "placeId": "58",
+    "placeRepId": "373",
+    "name": "Washington",
+    "fullName": "Washington, United States",
+    "type": "State",
+    "dateRange": "+1853/",
+    "score": 100
+   }
+  ],
+  "Washington, Washington, Pennsylvania||": [
+   {
+    "placeId": "1121220",
+    "placeRepId": "4838258",
+    "name": "Washington",
+    "fullName": "Washington, Washington, Pennsylvania, United States",
+    "type": "City",
+    "dateRange": "+1850/",
+    "score": 100
+   }
+  ],
+  "Washington, Washington, Pennsylvania, United States||": [
+   {
+    "placeId": "1121220",
+    "placeRepId": "4838258",
+    "name": "Washington",
+    "fullName": "Washington, Washington, Pennsylvania, United States",
+    "type": "City",
+    "dateRange": "+1850/",
+    "score": 100
+   }
+  ],
+  "Worth, Cook, Illinois, United States||": [
+   {
+    "placeId": "376063",
+    "placeRepId": "4064949",
+    "name": "Worth",
+    "fullName": "Worth, Cook, Illinois, United States",
+    "type": "Town",
+    "dateRange": "+1850/",
+    "score": 100
+   },
+   {
+    "placeId": "384676",
+    "placeRepId": "4034689",
+    "name": "Township of Worth",
+    "fullName": "Township of Worth, Cook, Illinois, United States",
+    "type": "Township",
+    "dateRange": "+1849/",
+    "score": 100
+   },
+   {
+    "placeId": "359106",
+    "placeRepId": "3991823",
+    "name": "Blue Island",
+    "fullName": "Blue Island, Cook, Illinois, United States",
+    "type": "City",
+    "dateRange": "+1836/",
+    "score": 99
+   },
+   {
+    "placeId": "383200",
+    "placeRepId": "4036389",
+    "name": "Calumet Township",
+    "fullName": "Calumet Township, Cook, Illinois, United States",
+    "type": "Township",
+    "score": 73
+   }
+  ],
+  "Worth, Illinois||": [
+   {
+    "placeId": "376063",
+    "placeRepId": "4064949",
+    "name": "Worth",
+    "fullName": "Worth, Cook, Illinois, United States",
+    "type": "Town",
+    "dateRange": "+1850/",
+    "score": 100
+   },
+   {
+    "placeId": "384676",
+    "placeRepId": "4034689",
+    "name": "Township of Worth",
+    "fullName": "Township of Worth, Cook, Illinois, United States",
+    "type": "Township",
+    "dateRange": "+1849/",
+    "score": 98
+   },
+   {
+    "placeId": "384677",
+    "placeRepId": "4034688",
+    "name": "Worth Township",
+    "fullName": "Worth Township, Woodford, Illinois, United States",
+    "type": "Township",
+    "dateRange": "+1854/",
+    "score": 98
+   },
+   {
+    "placeId": "359106",
+    "placeRepId": "3991823",
+    "name": "Blue Island",
+    "fullName": "Blue Island, Cook, Illinois, United States",
+    "type": "City",
+    "dateRange": "+1836/",
+    "score": 92
+   },
+   {
+    "placeId": "383200",
+    "placeRepId": "4036389",
+    "name": "Calumet Township",
+    "fullName": "Calumet Township, Cook, Illinois, United States",
+    "type": "Township",
+    "score": 68
+   }
+  ]
+ },
+ "description": {
+  "1": {
+   "placeId": "1",
+   "placeRepId": "1",
+   "name": "United States",
+   "fullName": "United States",
+   "type": "Country",
+   "dateRange": "+1776/"
+  },
+  "56": {
+   "placeId": "1927033",
+   "placeRepId": "56",
+   "name": "United Kingdom",
+   "fullName": "United Kingdom",
+   "type": "Country",
+   "dateRange": "+1801/"
+  },
+  "90": {
+   "placeId": "1927006",
+   "placeRepId": "90",
+   "name": "Jamaica",
+   "fullName": "Jamaica",
+   "type": "Country"
+  },
+  "93": {
+   "placeId": "1927005",
+   "placeRepId": "93",
+   "name": "Palau",
+   "fullName": "Palau",
+   "type": "Country",
+   "dateRange": "+1550/"
+  },
+  "177": {
+   "placeId": "1927115",
+   "placeRepId": "177",
+   "name": "South Africa",
+   "fullName": "South Africa",
+   "type": "Country",
+   "dateRange": "+1910/"
+  },
+  "204": {
+   "placeId": "1927089",
+   "placeRepId": "204",
+   "name": "France",
+   "fullName": "France",
+   "type": "Country",
+   "dateRange": "+843/"
+  },
+  "240": {
+   "placeId": "1927054",
+   "placeRepId": "240",
+   "name": "Sri Lanka",
+   "fullName": "Sri Lanka",
+   "type": "Country"
+  },
+  "267": {
+   "placeId": "1986340",
+   "placeRepId": "267",
+   "name": "England",
+   "fullName": "England, United Kingdom",
+   "type": "Country",
+   "dateRange": "+1801/",
+   "parentPlaceRepId": "56"
+  },
+  "278": {
+   "placeId": "6118213",
+   "placeRepId": "278",
+   "name": "Czechoslovakia",
+   "fullName": "Czechoslovakia",
+   "type": "Country",
+   "dateRange": "+1918/+1992"
+  },
+  "303": {
+   "placeId": "5931730",
+   "placeRepId": "303",
+   "name": "Puerto Rico",
+   "fullName": "Puerto Rico",
+   "type": "Dependency or Protectorate",
+   "dateRange": "+1493/"
+  },
+  "371": {
+   "placeId": "52",
+   "placeRepId": "371",
+   "name": "Massachusetts",
+   "fullName": "Massachusetts, United States",
+   "type": "State",
+   "dateRange": "+1776/",
+   "parentPlaceRepId": "1"
+  },
+  "2280": {
+   "placeId": "1928438",
+   "placeRepId": "2280",
+   "name": "Central",
+   "fullName": "Central, Sri Lanka",
+   "type": "Province",
+   "dateRange": "+1833/",
+   "parentPlaceRepId": "240"
+  },
+  "3326": {
+   "placeId": "1927202",
+   "placeRepId": "3326",
+   "name": "Westmoreland",
+   "fullName": "Westmoreland, Jamaica",
+   "type": "Parish",
+   "parentPlaceRepId": "90"
+  },
+  "3688": {
+   "placeId": "1927896",
+   "placeRepId": "3688",
+   "name": "Lancashire",
+   "fullName": "Lancashire, England, United Kingdom",
+   "type": "County (Top level)",
+   "dateRange": "+1801/",
+   "parentPlaceRepId": "267"
+  },
+  "42573": {
+   "placeId": "2535500",
+   "placeRepId": "42573",
+   "name": "Usa",
+   "fullName": "Usa, Palau",
+   "type": "Island(s)",
+   "parentPlaceRepId": "93"
+  },
+  "352081": {
+   "placeId": "6279970",
+   "placeRepId": "352081",
+   "name": "Cape Province",
+   "fullName": "Cape Province, South Africa",
+   "type": "Province",
+   "dateRange": "+1910/+1994",
+   "parentPlaceRepId": "177"
+  },
+  "352082": {
+   "placeId": "6279971",
+   "placeRepId": "352082",
+   "name": "Transvaal",
+   "fullName": "Transvaal, South Africa",
+   "type": "Province",
+   "dateRange": "+1910/+1994",
+   "parentPlaceRepId": "177"
+  },
+  "352083": {
+   "placeId": "6279972",
+   "placeRepId": "352083",
+   "name": "Natal",
+   "fullName": "Natal, South Africa",
+   "type": "Province",
+   "dateRange": "+1910/+1994",
+   "parentPlaceRepId": "177"
+  },
+  "384360": {
+   "placeId": "5931810",
+   "placeRepId": "384360",
+   "name": "San Juan",
+   "fullName": "San Juan, Puerto Rico",
+   "type": "Municipality",
+   "dateRange": "+1521/",
+   "parentPlaceRepId": "303"
+  },
+  "392711": {
+   "placeId": "436",
+   "placeRepId": "392711",
+   "name": "Oxford",
+   "fullName": "Oxford, Massachusetts, United States",
+   "type": "County",
+   "dateRange": "+1805/+1820",
+   "parentPlaceRepId": "371"
+  },
+  "442056": {
+   "placeId": "1937622",
+   "placeRepId": "442056",
+   "name": "Bas-Rhin",
+   "fullName": "Bas-Rhin, France",
+   "type": "Department",
+   "dateRange": "+1790/",
+   "parentPlaceRepId": "204"
+  },
+  "649171": {
+   "placeId": "2126199",
+   "placeRepId": "649171",
+   "name": "Troup",
+   "fullName": "Troup, Central, Sri Lanka",
+   "type": "Farm",
+   "parentPlaceRepId": "2280"
+  },
+  "3433020": {
+   "placeId": "6530631",
+   "placeRepId": "3433020",
+   "name": "Moravská Třebová",
+   "fullName": "Moravská Třebová, Moravia, Czechoslovakia",
+   "type": "District",
+   "dateRange": "+1918/+1960",
+   "parentPlaceRepId": "10705028"
+  },
+  "4273204": {
+   "placeId": "524974",
+   "placeRepId": "4273204",
+   "name": "Norway",
+   "fullName": "Norway, Oxford, Massachusetts, United States",
+   "type": "Town",
+   "dateRange": "+1805/+1820",
+   "parentPlaceRepId": "392711"
+  },
+  "6198647": {
+   "placeId": "2222966",
+   "placeRepId": "6198647",
+   "name": "Thornton",
+   "fullName": "Thornton, Natal, South Africa",
+   "type": "Farm",
+   "parentPlaceRepId": "352083"
+  },
+  "6795243": {
+   "placeId": "4118381",
+   "placeRepId": "6795243",
+   "name": "March",
+   "fullName": "March, Cape Province, South Africa",
+   "type": "Populated Place",
+   "dateRange": "/+1980",
+   "parentPlaceRepId": "352081"
+  },
+  "6795244": {
+   "placeId": "4118381",
+   "placeRepId": "6795244",
+   "name": "March",
+   "fullName": "March, Transvaal, South Africa",
+   "type": "Populated Place",
+   "parentPlaceRepId": "352082"
+  },
+  "7194123": {
+   "placeId": "4430832",
+   "placeRepId": "7194123",
+   "name": "Svitavy",
+   "fullName": "Svitavy, Moravská Třebová, Moravia, Czechoslovakia",
+   "type": "Municipality",
+   "dateRange": "+1918/+1949",
+   "parentPlaceRepId": "3433020"
+  },
+  "8305990": {
+   "placeId": "514349",
+   "placeRepId": "8305990",
+   "name": "Norway",
+   "fullName": "Norway, Norway, Oxford, Massachusetts, United States",
+   "type": "Town",
+   "parentPlaceRepId": "4273204"
+  },
+  "9518984": {
+   "placeId": "6410868",
+   "placeRepId": "9518984",
+   "name": "Wœrth",
+   "fullName": "Wœrth, Bas-Rhin, France",
+   "type": "Canton",
+   "dateRange": "+1919/",
+   "parentPlaceRepId": "442056"
+  },
+  "10336711": {
+   "placeId": "1941327",
+   "placeRepId": "10336711",
+   "name": "Bohemia",
+   "fullName": "Bohemia",
+   "type": "Country",
+   "dateRange": "+1002/+1918"
+  },
+  "10705028": {
+   "placeId": "5198338",
+   "placeRepId": "10705028",
+   "name": "Moravia",
+   "fullName": "Moravia, Czechoslovakia",
+   "type": "Region",
+   "dateRange": "+1918/+1949",
+   "parentPlaceRepId": "278"
+  },
+  "10705541": {
+   "placeId": "6530594",
+   "placeRepId": "10705541",
+   "name": "Polička",
+   "fullName": "Polička, Bohemia",
+   "type": "District",
+   "dateRange": "/+1918",
+   "parentPlaceRepId": "10336711"
+  },
+  "11013326": {
+   "placeId": "3484497",
+   "placeRepId": "11013326",
+   "name": "Lancaster",
+   "fullName": "Lancaster, Lancashire, England, United Kingdom",
+   "type": "City",
+   "dateRange": "+1974/",
+   "parentPlaceRepId": "3688"
+  },
+  "11914169": {
+   "placeId": "4431478",
+   "placeRepId": "11914169",
+   "name": "Dittersbach",
+   "fullName": "Dittersbach, Polička, Bohemia",
+   "type": "Municipality",
+   "dateRange": "/+1918",
+   "parentPlaceRepId": "10705541"
+  },
+  "12212336": {
+   "placeId": "10485018",
+   "placeRepId": "12212336",
+   "name": "Dundee",
+   "fullName": "Dundee, Westmoreland, Jamaica",
+   "type": "Village",
+   "parentPlaceRepId": "3326"
+  }
+ },
+ "reps": {
+  "52": [
+   {
+    "placeRepId": "371",
+    "fullName": "Massachusetts, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts",
+     "Массачусетс",
+     "Massachusetts",
+     "Massachusetts",
+     "Масачузетс",
+     "マサチューセッツ州",
+     "Masačiusetsas",
+     "Massachusetts",
+     "Masačūsetsa",
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts",
+     "Մասաչուսեթս",
+     "马萨诸塞州",
+     "麻薩諸塞州",
+     "მასაჩუსეტსი",
+     "Массачусетс",
+     "Massachusetts",
+     "Massachusetts",
+     "Masatusa",
+     "Massachusetts",
+     "Masaçusetsi",
+     "Массачусеттс",
+     "ម៉ាស្សាឈូសេត",
+     "Massachusetts",
+     "매사추세츠 주",
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts",
+     "Masachusets",
+     "Massachusetts",
+     "Massachusetts",
+     "ماساتشوستس",
+     "Massachusetts",
+     "แมสซาซูเซตส์",
+     "マサチューセッツ州",
+     "Massachusetts",
+     "ماساچوست",
+     "Mesasūseti",
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts",
+     "Massachusetts"
+    ]
+   },
+   {
+    "placeRepId": "10686216",
+    "fullName": "Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1628/+1776",
+    "names": [
+     "Massachusetts Bay Colony"
+    ]
+   }
+  ],
+  "2454": [
+   {
+    "placeRepId": "395325",
+    "fullName": "Troup, Georgia, United States",
+    "dateRange": "+1826/",
+    "names": [
+     "Troup"
+    ]
+   }
+  ],
+  "2519": [
+   {
+    "placeRepId": "395420",
+    "fullName": "Hampden, Massachusetts, United States",
+    "dateRange": "+1812/",
+    "names": [
+     "Hampden"
+    ]
+   }
+  ],
+  "2529": [
+   {
+    "placeRepId": "395453",
+    "fullName": "Baltimore, Maryland, United States",
+    "dateRange": "+1776/",
+    "names": [
+     "Baltimore"
+    ]
+   },
+   {
+    "placeRepId": "395454",
+    "fullName": "Baltimore, Maryland, British Colonial America",
+    "dateRange": "+1659/+1776",
+    "names": [
+     "Baltimore"
+    ]
+   }
+  ],
+  "3172": [
+   {
+    "placeRepId": "396445",
+    "fullName": "Baltimore, Maryland, United States",
+    "dateRange": "+1851/",
+    "names": [
+     "Baltimore"
+    ]
+   },
+   {
+    "placeRepId": "3497995",
+    "fullName": "Baltimore, Baltimore, Maryland, United States",
+    "dateRange": "+1776/+1851",
+    "names": [
+     "Baltimore"
+    ]
+   },
+   {
+    "placeRepId": "3497996",
+    "fullName": "Baltimore, Baltimore, Maryland, British Colonial America",
+    "dateRange": "+1729/+1776",
+    "names": [
+     "Baltimore"
+    ]
+   }
+  ],
+  "376063": [
+   {
+    "placeRepId": "4064949",
+    "fullName": "Worth, Cook, Illinois, United States",
+    "dateRange": "+1850/",
+    "names": [
+     "Worth"
+    ]
+   }
+  ],
+  "525129": [
+   {
+    "placeRepId": "4274076",
+    "fullName": "Portland, Cumberland, Maine, United States",
+    "dateRange": "+1820/",
+    "names": [
+     "Portland"
+    ]
+   },
+   {
+    "placeRepId": "4274077",
+    "fullName": "Portland, Cumberland, Massachusetts, United States",
+    "dateRange": "+1776/+1820",
+    "names": [
+     "Portland"
+    ]
+   },
+   {
+    "placeRepId": "11692636",
+    "fullName": "Portland, Cumberland, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1691/+1776",
+    "names": [
+     "Portland"
+    ]
+   },
+   {
+    "placeRepId": "11695670",
+    "fullName": "Portland, York, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1652/+1691",
+    "names": [
+     "Portland"
+    ]
+   }
+  ],
+  "561085": [
+   {
+    "placeRepId": "4229340",
+    "fullName": "Springfield, Hampden, Massachusetts, United States",
+    "dateRange": "+1812/",
+    "names": [
+     "Springfield"
+    ]
+   },
+   {
+    "placeRepId": "10346758",
+    "fullName": "Springfield, Hampshire, Massachusetts, United States",
+    "dateRange": "+1776/+1812",
+    "names": [
+     "Springfield"
+    ]
+   },
+   {
+    "placeRepId": "10346780",
+    "fullName": "Springfield, Hampshire, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1662/+1776",
+    "names": [
+     "Springfield"
+    ]
+   },
+   {
+    "placeRepId": "10346786",
+    "fullName": "Springfield, Massachusetts Bay Colony, British Colonial America",
+    "dateRange": "+1636/+1662",
+    "names": [
+     "Springfield"
+    ]
+   }
+  ],
+  "871021": [
+   {
+    "placeRepId": "4649291",
+    "fullName": "Boght Corners, Colonie, Albany, New York, United States",
+    "names": [
+     "Boght Corners"
+    ]
+   },
+   {
+    "placeRepId": "4649292",
+    "fullName": "Boght Corners, Albany, New York Colony, British Colonial America",
+    "dateRange": "/+1776",
+    "names": [
+     "Boght Corners"
+    ]
+   }
+  ],
+  "904622": [
+   {
+    "placeRepId": "4608875",
+    "fullName": "Brooklyn, New York City, New York, United States",
+    "dateRange": "+1898/",
+    "names": [
+     "Brooklyn"
+    ]
+   },
+   {
+    "placeRepId": "4608874",
+    "fullName": "Brooklyn, Kings, New York, United States",
+    "dateRange": "+1776/+1898",
+    "names": [
+     "Brooklyn"
+    ]
+   },
+   {
+    "placeRepId": "4608873",
+    "fullName": "Brooklyn, Kings, New York Colony, British Colonial America",
+    "dateRange": "+1683/+1776",
+    "names": [
+     "Brooklyn"
+    ]
+   }
+  ],
+  "1011175": [
+   {
+    "placeRepId": "4813309",
+    "fullName": "Cincinnati, Hamilton, Ohio, United States",
+    "dateRange": "+1803/",
+    "names": [
+     "Cincinnati"
+    ]
+   },
+   {
+    "placeRepId": "4813311",
+    "fullName": "Cincinnati, Hamilton, Northwest Territory, United States",
+    "dateRange": "+1790/+1803",
+    "names": [
+     "Cincinnati"
+    ]
+   }
+  ],
+  "1121200": [
+   {
+    "placeRepId": "4838241",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, United States",
+    "dateRange": "+1818/",
+    "names": [
+     "Lancaster"
+    ]
+   },
+   {
+    "placeRepId": "10743189",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, United States",
+    "dateRange": "+1776/+1818",
+    "names": [
+     "Lancaster"
+    ]
+   },
+   {
+    "placeRepId": "4838242",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, British Colonial America",
+    "dateRange": "+1742/+1776",
+    "names": [
+     "Lancaster"
+    ]
+   },
+   {
+    "placeRepId": "10743190",
+    "fullName": "Lancaster, Lancaster, Pennsylvania, British Colonial America",
+    "dateRange": "+1729/+1742",
+    "names": [
+     "Lancaster"
+    ]
+   }
+  ],
+  "1121220": [
+   {
+    "placeRepId": "4838258",
+    "fullName": "Washington, Washington, Pennsylvania, United States",
+    "dateRange": "+1850/",
+    "names": [
+     "Washington"
+    ]
+   }
+  ],
+  "1929438": [
+   {
+    "placeRepId": "5344",
+    "fullName": "Kyiv, Ukraine",
+    "dateRange": "+1991/",
+    "names": [
+     "Киевская область",
+     "Київська область",
+     "Kyiv"
+    ]
+   },
+   {
+    "placeRepId": "449790",
+    "fullName": "Kyiv, Ukraine, Soviet Union",
+    "dateRange": "+1923/+1991",
+    "names": [
+     "Киевская область",
+     "Київська область",
+     "Kyiv"
+    ]
+   },
+   {
+    "placeRepId": "13564868",
+    "fullName": "Kiev, Ukraine, Soviet Union",
+    "dateRange": "+1917/+1925",
+    "names": [
+     "Kiyewskaya Hubyernya",
+     "Gouvernement Kiew",
+     "Кіеўская губерня",
+     "Киевская губерния",
+     "Kiyevskaya Guberniya",
+     "Київська губернія",
+     "Kiev",
+     "Kyyivsʹka Huberniya"
+    ]
+   },
+   {
+    "placeRepId": "11901980",
+    "fullName": "Kiev Viceroyalty, Russian Empire",
+    "dateRange": "+1781/+1796",
+    "names": [
+     "Киевское наместничество",
+     "Київське намісництво",
+     "Kiev Viceroyalty",
+     "Kyyivsʹke Namisnytstvo"
+    ]
+   },
+   {
+    "placeRepId": "10907979",
+    "fullName": "Kiev Governorate, Russian Empire",
+    "dateRange": "+1721/+1917",
+    "names": [
+     "Kiev Guberniia",
+     "Киевская губерния",
+     "Київська губернія",
+     "Kiev Governorate"
+    ]
+   },
+   {
+    "placeRepId": "11574124",
+    "fullName": "Kyiv, Poland",
+    "dateRange": "+1569/+1793",
+    "names": [
+     "Woiwodschaft Kiew",
+     "Киевское воеводство",
+     "Київське воєводство",
+     "Kyiv",
+     "kijowskie",
+     "Kyyivsʹke Voyevodstvo"
+    ]
+   },
+   {
+    "placeRepId": "12771958",
+    "fullName": "Kiev, Grand Duchy of Lithuania",
+    "dateRange": "+1471/+1569",
+    "names": [
+     "Киевское воеводство",
+     "Kiyevskoye Voyevodstvo",
+     "Київське воєводство",
+     "Kiev",
+     "Kyivske voievodstvo",
+     "Województwo kijowskie",
+     "Kyyivsʹke Voyevodstvo"
+    ]
+   }
+  ],
+  "1929943": [
+   {
+    "placeRepId": "5776",
+    "fullName": "Bogotá, Colombia",
+    "dateRange": "+1954/",
+    "names": [
+     "Bogotá"
+    ]
+   },
+   {
+    "placeRepId": "10904108",
+    "fullName": "Bogotá D. C., Cundinamarca, Colombia",
+    "dateRange": "+1538/",
+    "names": [
+     "Bogotá D. C."
+    ]
+   }
+  ],
+  "2222965": [
+   {
+    "placeRepId": "6198646",
+    "fullName": "Thornton, Natal, South Africa",
+    "names": [
+     "Thornton"
+    ]
+   }
+  ],
+  "2222966": [
+   {
+    "placeRepId": "6198647",
+    "fullName": "Thornton, Natal, South Africa",
+    "names": [
+     "Thornton"
+    ]
+   }
+  ],
+  "3479293": [
+   {
+    "placeRepId": "10607576",
+    "fullName": "Thornton, Lancashire, England",
+    "dateRange": "+1086/+1801",
+    "names": [
+     "Thornton"
+    ]
+   }
+  ],
+  "4087152": [
+   {
+    "placeRepId": "10910176",
+    "fullName": "Iisalmi, Pohjois-Savo, Finland",
+    "dateRange": "+1997/",
+    "names": [
+     "Iisalmi"
+    ]
+   },
+   {
+    "placeRepId": "1904177",
+    "fullName": "Iisalmen kaupunki, Kuopio, Finland",
+    "dateRange": "+1860/+1997",
+    "names": [
+     "Iisalmen kaupunki"
+    ]
+   }
+  ],
+  "4208808": [
+   {
+    "placeRepId": "11985501",
+    "fullName": "Popruzhna, Bila Tserkva, Kyiv, Ukraine",
+    "dateRange": "+2020/",
+    "names": [
+     "Попружна",
+     "Popruzhnaya",
+     "Попружна",
+     "Popruzhna"
+    ]
+   },
+   {
+    "placeRepId": "7086628",
+    "fullName": "Popruzhna, Stavyshche Raion, Kyiv, Ukraine",
+    "dateRange": "+1991/+2020",
+    "names": [
+     "Попружна",
+     "Popruzhnaya",
+     "Попружна",
+     "Popruzhna"
+    ]
+   },
+   {
+    "placeRepId": "9121420",
+    "fullName": "Popruzhna, Stavyshche Raion, Kyiv, Ukraine, Soviet Union",
+    "dateRange": "+1932/+1991",
+    "names": [
+     "Попружная",
+     "Popruzhnaya",
+     "Попружна",
+     "Popruzhna"
+    ]
+   },
+   {
+    "placeRepId": "12027659",
+    "fullName": "Popruzhna, Vynohrad, Uman Okrug, Ukraine, Soviet Union",
+    "dateRange": "+1923/+1930",
+    "names": [
+     "Попружная",
+     "Popruzhnaya",
+     "Попружна",
+     "Popruzhna"
+    ]
+   },
+   {
+    "placeRepId": "10914527",
+    "fullName": "Popruzhna, Tarashcha, Kiev Governorate, Russian Empire",
+    "dateRange": "+1800/+1923",
+    "names": [
+     "Попружная",
+     "Попружна",
+     "Popruzhna"
+    ]
+   },
+   {
+    "placeRepId": "12027677",
+    "fullName": "Popruzhna, Bracław, Poland",
+    "dateRange": "+1569/+1793",
+    "names": [
+     "Попружна",
+     "Popruzhnaya",
+     "Попружна",
+     "Popruzhna"
+    ]
+   }
+  ],
+  "4430832": [
+   {
+    "placeRepId": "7194126",
+    "fullName": "Svitavy, Svitavy, Czechia",
+    "dateRange": "+1993/",
+    "names": [
+     "Svitavy"
+    ]
+   },
+   {
+    "placeRepId": "7194128",
+    "fullName": "Svitavy, Svitavy, Czechoslovakia",
+    "dateRange": "+1949/+1992",
+    "names": [
+     "Svitavy"
+    ]
+   },
+   {
+    "placeRepId": "7194123",
+    "fullName": "Svitavy, Moravská Třebová, Moravia, Czechoslovakia",
+    "dateRange": "+1918/+1949",
+    "names": [
+     "Svitavy"
+    ]
+   },
+   {
+    "placeRepId": "11908297",
+    "fullName": "Zwittau, Mährisch Trübau, Moravia",
+    "dateRange": "/+1918",
+    "names": [
+     "Svitavy",
+     "Zwittau"
+    ]
+   }
+  ],
+  "4431478": [
+   {
+    "placeRepId": "7198790",
+    "fullName": "Stašov, Svitavy, Czechia",
+    "dateRange": "+1993/",
+    "names": [
+     "Stašov"
+    ]
+   },
+   {
+    "placeRepId": "7198792",
+    "fullName": "Stašov, Svitavy, Czechoslovakia",
+    "dateRange": "+1960/",
+    "names": [
+     "Stašov"
+    ]
+   },
+   {
+    "placeRepId": "7198787",
+    "fullName": "Stašov, Polička, Bohemia, Czechoslovakia",
+    "dateRange": "+1918/+1960",
+    "names": [
+     "Stašov"
+    ]
+   },
+   {
+    "placeRepId": "11914169",
+    "fullName": "Dittersbach, Polička, Bohemia",
+    "dateRange": "/+1918",
+    "names": [
+     "Stašov",
+     "Dittersbach"
+    ]
+   }
+  ],
+  "5059883": [
+   {
+    "placeRepId": "10743174",
+    "fullName": "Dundee, Scotland, United Kingdom",
+    "dateRange": "+1894/",
+    "names": [
+     "Dundee"
+    ]
+   },
+   {
+    "placeRepId": "10743175",
+    "fullName": "Dundee, Forfarshire, Scotland, United Kingdom",
+    "dateRange": "+1801/+1894",
+    "names": [
+     "Dundee"
+    ]
+   },
+   {
+    "placeRepId": "10743176",
+    "fullName": "Dundee, Forfarshire, Scotland",
+    "dateRange": "+1305/+1801",
+    "names": [
+     "Dundee"
+    ]
+   }
+  ],
+  "5931810": [
+   {
+    "placeRepId": "384360",
+    "fullName": "San Juan, Puerto Rico",
+    "dateRange": "+1521/",
+    "names": [
+     "San Juan"
+    ]
+   }
+  ],
+  "6114097": [
+   {
+    "placeRepId": "2943779",
+    "fullName": "La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+    "dateRange": "+1849/",
+    "names": [
+     "La Unión de Isidoro Montes de Oca"
+    ]
+   }
+  ],
+  "6142105": [
+   {
+    "placeRepId": "2976707",
+    "fullName": "March, Cambridgeshire, England, United Kingdom",
+    "dateRange": "+1801/",
+    "names": [
+     "March"
+    ]
+   },
+   {
+    "placeRepId": "10618163",
+    "fullName": "March, Cambridgeshire, England",
+    "dateRange": "/+1801",
+    "names": [
+     "March"
+    ]
+   }
+  ],
+  "6355016": [
+   {
+    "placeRepId": "3451287",
+    "fullName": "Palatinate, Bavaria, Germany",
+    "dateRange": "+1871/+1945",
+    "names": [
+     "Pfalz",
+     "Palatinate"
+    ]
+   },
+   {
+    "placeRepId": "12032165",
+    "fullName": "Palatinate, Bavaria",
+    "dateRange": "+1806/+1871",
+    "names": [
+     "Pfalz (Bayern)",
+     "Palatinate"
+    ]
+   },
+   {
+    "placeRepId": "10934675",
+    "fullName": "Palatinate, Holy Roman Empire",
+    "dateRange": "+1085/+1806",
+    "names": [
+     "Kurfürstentum Pfalz",
+     "Palatinate"
+    ]
+   }
+  ],
+  "6355072": [
+   {
+    "placeRepId": "3451346",
+    "fullName": "Armagh, Armagh, County Armagh, Northern Ireland, United Kingdom",
+    "names": [
+     "Armagh"
+    ]
+   }
+  ],
+  "9240082": [
+   {
+    "placeRepId": "10561210",
+    "fullName": "Of, Trabzon, Türkiye",
+    "dateRange": "+1923/",
+    "names": [
+     "Of"
+    ]
+   }
+  ],
+  "11422646": [
+   {
+    "placeRepId": "13561369",
+    "fullName": "Church, Hillsdale, Michigan, United States",
+    "dateRange": "+1894/",
+    "names": [
+     "Church"
+    ]
+   }
+  ]
+ }
+}
