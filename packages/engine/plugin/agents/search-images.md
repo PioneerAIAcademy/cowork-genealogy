@@ -14,7 +14,8 @@ description: >-
   repositories like Ancestry (use search-external-sites), planning what to browse
   (use research-plan), or extracting facts from an image already in hand (use
   the record-structurer agent).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: medium
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -57,7 +58,7 @@ You are invoked with a delegation message naming what to browse:
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
-| `projectPath` | yes | The absolute project-folder path. |
+| `projectPath` | yes | The absolute project-folder path. When it is not an absolute path, use the current working directory. |
 | `standardPlace` | one of these | The place to find a volume for, with a year range when known. |
 | `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `004567123`. |
 | `planItemId` | no | The `pli_` id this browse executes. Absent for an ad-hoc browse. |
