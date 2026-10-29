@@ -538,8 +538,8 @@ The team makes these too, from one issue, with Richard reviewing:
 | Dates | Work |
 |---|---|
 | 26 Oct – 8 Nov | Phase 0 |
-| 2 Nov – 31 Dec | The issues under "Who builds what": S1 by 30 November; W1's chat switch, E1 and W3's viewer routes by 7 December; the issues others wait on by 14 December; the rest by 31 December. G3 after P0.2; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
-| December, once W1, W2 and E1 merge | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce; the first live sign-in in Cowork |
+| 2 Nov – 31 Dec | The issues under "Who builds what". The sign-in chain first: S1 by 20 November, W1's chat switch by 30 November, E1 and W2's first half by 7 December, W2's authorization server by 14 December. Otherwise W3's viewer routes by 7 December, the issues others wait on by 14 December, and the rest by 31 December. G3 after P0.2; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
+| 14 – 20 Dec | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce; the first live sign-in in Cowork |
 | 4 – 17 Jan | The dress rehearsal; the rest of D1; D2–D5; L1 |
 | 18 – 31 Jan | Phase 4 |
 | 1 – 7 Feb | Launch |
