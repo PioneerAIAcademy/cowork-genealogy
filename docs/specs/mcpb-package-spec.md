@@ -120,6 +120,7 @@ The packed `.mcpb` MUST contain:
 | `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point. `build/http.js`, the prototype's entrypoint, rides along and is inert here — nothing in the pack runs it |
 | `config/familysearch.json` | Bundled OAuth clientId — without it every authenticated tool breaks (guarded by `tests/auth/bundled-client-config.test.ts`) |
 | `config/given-name-variants.json` | Bundled given-name variant table for diminutive expansion in `image_transcribe` and backing `get_name_variants` |
+| `config/one-word-places.json` | Bundled list of one-word place texts the resolver standardizes without a search (`src/utils/one-word-places.ts`); without it no one-word place is standardized. Rebuilt by `dev/build-one-word-places.ts` |
 | `node_modules/` | **Production dependencies only** |
 
 The packed `.mcpb` MUST NOT contain:

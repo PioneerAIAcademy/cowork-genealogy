@@ -109,6 +109,7 @@ export interface GedcomXPlaceDescription {
   names?: { value: string }[];
   latitude?: number;
   longitude?: number;
+  identifiers?: Record<string, string[]>;
 }
 
 // SimplifiedGedcomX types — token-efficient format for LLM consumption.
