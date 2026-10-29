@@ -126,8 +126,9 @@ Skills that call this tool after writing project files:
 
 Agents: `person-evidence.md`, `gps-mentor.md`, `hypothesis-tracking.md`,
 `tree-edit.md`, `citation.md` (its Step 6 makes the call, mandatory on every
-write), `validate-schema.md` (its only tool: an
-on-demand, read-only audit).
+write), `validate-schema.md` (an on-demand audit that never edits a file to
+fix an error; inside a project it logs its report as one `validate_schema`
+entry through `research_log_append`).
 
 Referenced in: the "Validate" step of `agents/citation.md`, which absorbed the
 former `citation/references/validation-protocol.md`.
