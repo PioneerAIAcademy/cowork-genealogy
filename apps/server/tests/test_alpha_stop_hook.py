@@ -47,12 +47,15 @@ def _call(hook, payload=None):
 
 def test_the_stop_hook_is_bound_alongside_the_existing_pretool_hook(tmp_path, monkeypatch):
     hooks = _hooks(tmp_path, monkeypatch)
-    assert sorted(hooks) == ["PreToolUse", "Stop"]
+    assert sorted(hooks) == ["PostToolUse", "PreToolUse", "Stop"]
+    # PostToolUse is the completion halt (test_completion_halt.py), scoped to delegations.
+    assert [m.kw["matcher"] for m in hooks["PostToolUse"]] == [real_agent._DELEGATION_MATCHER]
     assert hooks["Stop"][0].kw["matcher"] is None, "a Stop has no tool to match on"
     # TWO PreToolUse matchers, and the split is load-bearing. The deny hook keeps the
     # narrow matcher issue #1915 gave it; the COUNTER has to be unscoped (below).
     matchers = [m.kw["matcher"] for m in hooks["PreToolUse"]]
-    assert matchers == [None, real_agent._PRETOOL_MATCHER], matchers
+    # The third reads the status before a proof-conclusion call (the completion halt).
+    assert matchers == [None, real_agent._PRETOOL_MATCHER, real_agent._DELEGATION_MATCHER], matchers
 
 
 def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path, monkeypatch):
@@ -90,8 +93,10 @@ def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path,
         "the run did five tool calls between the two yields; a counter that missed them ends it here"
 
 
-def test_a_zero_cap_leaves_the_session_exactly_as_it_was(tmp_path, monkeypatch):
-    assert list(_hooks(tmp_path, monkeypatch, max_nudges=0)) == ["PreToolUse"]
+def test_a_zero_cap_binds_no_stop_hook(tmp_path, monkeypatch):
+    # The completion halt's PostToolUse stays: it is not part of autonomy, and step mode
+    # (a zero cap) still ends a completed project's turn on the agent's summary.
+    assert sorted(_hooks(tmp_path, monkeypatch, max_nudges=0)) == ["PostToolUse", "PreToolUse"]
 
 
 def test_it_vetoes_the_yield_while_the_project_is_unfinished(tmp_path, monkeypatch):
