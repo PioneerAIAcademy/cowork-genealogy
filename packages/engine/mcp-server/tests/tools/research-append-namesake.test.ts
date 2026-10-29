@@ -1742,6 +1742,27 @@ describe("tree-derived namesake pairs (#3681)", () => {
         });
       });
 
+      it("carries the person's own entry with a statement naming them, so a daughter's marriage does not tie her brother", () => {
+        // The bride's "child of John Pratt" names her father, whose own entry on the record is linked to him.
+        const t = household();
+        t.persons.push(person("KWPP-009", "Mary", "Pratt", "Female"));
+        t.relationships.push({ id: "R9", type: "ParentChild", parent: FA, child: "KWPP-009" });
+        const r = research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", CEN, "father_of_bride", "name", "John Pratt", { record_persona_id: "p1" }),
+            assertion("a_002", "src_001", CEN, "bride", "name", "Mary Pratt", { record_persona_id: "p2" }),
+            assertion("a_003", "src_001", CEN, "bride", "relationship", "child of John Pratt", {
+              record_persona_id: "p2",
+              structured_value: { relationship_type: "child", related_person_role: "father_of_bride" },
+            }),
+          ],
+          person_evidence: [standing("pe_001", "a_001", FA), standing("pe_002", "a_002", "KWPP-009"), standing("pe_003", "a_003", FA)],
+        });
+        expect(namesakeVerdicts(FA, r, t, { derivedPairs: true })?.verdicts.get("pe_003")?.allowed).toBe(true);
+      });
+
       it("lets the roles tell them apart: the mother of the child is no wife of the child's", () => {
         const r = census([
           ["child", "John Pratt", SO],

@@ -3606,6 +3606,8 @@ export function namesakeVerdicts(
     fields: Array<{ field: CapField; value: string; vouchers: string[]; excluded: string[]; sameCall: boolean; sameNamed: string | null }>;
     blocked: Set<NamesakeBlock>;
     pair: PairJudgement | null;
+    /** The record parties the link speaks for. */
+    speaking: Set<string>;
   }
   // With `only`, the links judged and every link that could vouch for one of
   // them, by an occupation or street address anywhere on its source; the rest
@@ -3720,7 +3722,7 @@ export function namesakeVerdicts(
     // The pair tests say nothing about a stranger, so a row holder is not judged by them.
     const pair =
       pairs.length > 0 && rows.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
-    pending.push({ e, source, tieA: ties, reasons, fields, blocked, pair });
+    pending.push({ e, source, tieA: ties, reasons, fields, blocked, pair, speaking });
   }
   /** A link of a person with no row that the pair tests tie: the record fits
    *  them and rules out every partner. */
@@ -3729,9 +3731,11 @@ export function namesakeVerdicts(
   // A pair member's tie counts only when the record would not tie a partner as
   // well, row or no row: the link judged as the partner's, by ties (a) and (b),
   // with the partner's siblings among their relatives (chesworthrm, 2026-10-29).
-  // The person's assertions on the source that name a second person go with it:
-  // a "child of" naming the person names the persona judged, so left behind it
-  // would tie the partner through the person.
+  // The person's assertions on the source that name a second person go with it,
+  // and so do their own entries of the parties the link speaks for: a "child of"
+  // naming the person names the persona judged, and the father's own entry beside
+  // his daughter's "child of" him is that persona, so either left behind would tie
+  // the partner through the person.
   const sharedWith = new Map<string, { partner: NamesakePartner; ties: NamesakeTie[] }>();
   if (pairs.length > 0) {
     for (const j of pending) {
@@ -3739,7 +3743,14 @@ export function namesakeVerdicts(
       const carried = new Set<string>([String(j.e.id)]);
       for (const x of live) {
         const ax = assertionById.get(x.assertion_id);
-        if (x.person_id === personId && ax && isTwoParty(ax.fact_type) && capSource(ax) === j.source) carried.add(String(x.id));
+        if (
+          x.person_id === personId &&
+          ax &&
+          capSource(ax) === j.source &&
+          (isTwoParty(ax.fact_type) || j.speaking.has(capParty(ax)))
+        ) {
+          carried.add(String(x.id));
+        }
       }
       for (const q of pairs) {
         const moved = {
