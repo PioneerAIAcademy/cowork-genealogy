@@ -13,6 +13,7 @@ import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
 } from "../../src/types/place.js";
+import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -28,6 +29,7 @@ const serverError = () => ({
 beforeEach(() => {
   mockFetch.mockReset();
   __clearPlaceSearchCacheForTests();
+  __clearPlaceResolverCachesForTests();
 });
 
 afterEach(() => {
@@ -773,8 +775,9 @@ describe("fuzzy fallback", () => {
 
     const result = await placeSearchTool({ placeName: "Klein Kozlau" });
 
-    expect(result).toEqual({ results: [] });
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.results).toEqual([]);
+    expect("matchType" in result).toBe(false);
+    expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("~"))).toHaveLength(0);
   });
 
   it("returns an unflagged empty response when the fuzzy query also matches nothing", async () => {
@@ -785,8 +788,9 @@ describe("fuzzy fallback", () => {
 
     const result = await placeSearchTool({ placeName: "Blorp" });
 
-    expect(result).toEqual({ results: [] });
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result.results).toEqual([]);
+    expect("matchType" in result).toBe(false);
+    expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("Blorp~"))).toHaveLength(1);
   });
 
   it("caps a fuzzy result set before the per-entry fetches", async () => {
@@ -934,7 +938,78 @@ describe("placeSearchTool", () => {
 
     const result = await placeSearchTool({ placeName: "NonexistentPlace12345" });
 
-    expect(result).toEqual({ results: [] });
+    expect(result.results).toEqual([]);
+  });
+
+  describe("verdict: what the writers store for the query text", () => {
+    const STORES = /^the writers store this standard_place for this exact place text on a fact that cites no record/;
+    const NONE = "the writers store no standard_place for this text on a fact that cites no record: ";
+
+    it("names the standard_place the writers store", async () => {
+      routeByUrl([
+        { match: "search?q=name:", json: bristolSearchResponse },
+        { match: "description/300", json: description("300", "Bristol, England, United Kingdom", "8300") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const result = await placeSearchTool({ placeName: "Bristol, England" });
+      expect(result.verdict?.standardPlace).toBe("Bristol, England, United Kingdom");
+      expect(result.verdict?.reason).toMatch(STORES);
+    });
+
+    it("judges the query text alone: contextName narrows the candidates, not the verdict", async () => {
+      routeByUrl([
+        { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
+        { match: "description/100", json: description("100", "Paris, Bear Lake, Idaho, United States", "9001") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const result = await placeSearchTool({ placeName: "Paris", contextName: "Idaho" });
+      expect(result.results.map((r) => r.standardPlace)).toEqual(["Paris, Bear Lake, Idaho, United States"]);
+      expect(result.verdict).toEqual({
+        standardPlace: null,
+        reason:
+          NONE +
+          "the engine leaves a one-part place unstandardized unless it can tell which place it is; " +
+          'write its parent jurisdictions into the place text (e.g. "Springfield, Illinois")',
+      });
+    });
+
+    it("is none for a phrase that names no place, which is never looked up", async () => {
+      routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
+      const result = await placeSearchTool({ placeName: "Same House" });
+      expect(result.verdict).toEqual({ standardPlace: null, reason: NONE + "'Same House' names no place" });
+      expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("name:%22Same"))).toHaveLength(1);
+    });
+
+    it("is none when the lookup's answer names a different country than the text", async () => {
+      const cameroon: FSPlaceSearchResponse = {
+        entries: [
+          {
+            id: "700",
+            score: 90.0,
+            content: { gedcomx: { places: [{ id: "700", display: { name: "West", fullName: "West, Cameroon", type: "City" } }] } },
+          },
+        ],
+      };
+      routeByUrl([
+        { match: "search?q=name:", json: cameroon },
+        { match: "description/700", json: description("700", "West, Cameroon", "8700") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const result = await placeSearchTool({ placeName: "West Bromwich, England" });
+      expect(result.verdict).toEqual({
+        standardPlace: null,
+        reason: NONE + "'West, Cameroon' names a different country than the text",
+      });
+    });
+
+    it("is none when nothing is found for a text of several parts", async () => {
+      routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
+      const result = await placeSearchTool({ placeName: "Nowhereville, Kansas" });
+      expect(result.verdict).toEqual({
+        standardPlace: null,
+        reason: NONE + "the engine's place lookup found no place for this text, or failed",
+      });
+    });
   });
 });
 

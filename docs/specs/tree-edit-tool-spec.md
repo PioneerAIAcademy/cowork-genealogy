@@ -185,20 +185,23 @@ tree_edit({
   `primary` on every other fact of the **same `type`** on that holder.
   `primary: false` means "add this without a primary" — the key is deleted
   before the write and any existing primary of the type is left alone. Any
-  other spelling (`"false"`, `null`, `0`) is an input error. If
-  `fact.place` is set and `resolveStandardPlace !== false` and no
-  `fact.standard_place` was supplied, resolve it via `resolveStandardPlace`. When
-  nothing resolves, the field is left unset and a warning is added, unless the
-  place is a non-place phrase such as "Same House" (`isNonPlacePhrase`), which
-  has no standard form to miss. Pass the places of the holder's other facts as
-  context for a bare single-segment place (see research-append-tool-spec
-  §3.6, lever B). A `personId` target whose `fact.type` is a couple event
-  (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
+  other spelling (`"false"`, `null`, `0`) is an input error. The fact's
+  `standard_place` is the **engine's answer** for its `place` (§4.1.1); with
+  none supplied, the answer fills it unless `resolveStandardPlace` is `false`.
+  When there is no answer the field is left unset and a warning is added,
+  unless the place is a non-place phrase such as "Same House"
+  (`isNonPlacePhrase`), which has no standard form to miss. A `personId`
+  target whose `fact.type` is a couple event (`isCoupleEventFactType`) is
+  refused, naming the Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
-  holder. If `place` changed (and not explicitly accompanied by
-  `standard_place`), re-resolve `standard_place`. If `primary: true` set, run the
+  holder. An update that sets `place` or `standard_place` settles the fact's
+  `standard_place` by §4.1.1: a supplied one, alone or beside a new `place`, is
+  judged against the fact's place, and with none supplied the answer fills it.
+  A changed `place` drops the old `standard_place` first, since it was the
+  answer for the old text; with `resolveStandardPlace: false` nothing replaces
+  it, and a warning says so. If `primary: true` set, run the
   same-type swap on that holder. `primary: false` deletes the key on **that fact
   only**, leaving other facts of the type untouched — so a vital type may end
   with no primary at all, which is the point: it is the only way to retire a
@@ -215,8 +218,8 @@ tree_edit({
   an `N` id for each nested name (exactly-one `preferred`), and an `F` id for each
   nested fact (reported as `assignedIds.facts`). Inline facts follow the same rules
   as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
-  carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
-  from `place` when unset. `person.facts` must be an array, and an inline couple
+  carry ids — the tool assigns them"), and each fact's `standard_place` is settled
+  by §4.1.1. `person.facts` must be an array, and an inline couple
   event is refused as on `add_fact`. Synthesized stubs omit `ark`
   (`simplified-gedcomx-spec.md` §4.6). **Name-shape tolerance:** a caller that
   supplies a singular `name: { given, surname, preferred? }` object where the
@@ -229,7 +232,7 @@ tree_edit({
   corroborate an edge that already says this.** Facts
   supplied on a new **Couple** relationship (e.g. its Marriage) get the same
   treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
-  `standard_place` resolution, `assignedIds.facts`. Facts on a `ParentChild` are an
+  `standard_place` by §4.1.1, `assignedIds.facts`. Facts on a `ParentChild` are an
   input error. Endpoint
   integrity (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`
   reference existing persons — tree persons or FS ids already present) and shape (no
@@ -377,6 +380,58 @@ silently reverted the human's edit. Three details the contract turns on:
 It **warns** when it detaches, naming the fields that changed, because that fact
 then leaves the automatic-update set. 31 of 114 `update_fact` ops in the
 committed e2e corpus set one of those fields.
+
+#### 4.1.1 A fact's `standard_place`: the engine's answer
+
+Lead rulings, 2026-10-26: "Mis-standardizing a place is worse than not
+standardizing it"; a supplied `standard_place` is kept only when the engine's own
+rules give the same answer ("A is fine"); and "let's drop the exception and have
+the engine take FamilySearch's standardization from the record a tree fact cites
+instead." Implemented in `src/utils/place-verdict.ts` and
+`src/utils/record-standards.ts`, shared with `research_append`.
+
+**The engine's answer** for a fact's `place`, in order:
+
+1. **The records the fact cites.** A fact cites the records of the assertions
+   behind its `sources` (a ref's research source, that source's assertions'
+   `record_id`s) and of the assertion it was minted from (`assertion_id`). The
+   answer is the `standard_place` the project stores for the same place text,
+   compared with case, accents and spacing aside, on those records: on an
+   assertion from one of them, or on one of their facts (a person's or a
+   couple's) in the sidecar such an assertion was extracted from. Two different
+   values are doubt, and doubt is no `standard_place`; nothing is looked up.
+2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
+   the places of the holder's other facts as context for a bare single-segment
+   place (see research-append-tool-spec §3.6, lever B).
+
+A non-place phrase ("Same House") has no answer, and neither does an answer
+whose country contradicts the text's (`countryConsistency`).
+
+**A supplied `standard_place`** is kept only when it equals that answer. It is
+judged whatever `resolveStandardPlace` says, so passing `false` cannot keep one.
+Otherwise the answer replaces it, or the fact keeps no `standard_place`, and the
+response's `validation.warnings` says which and why:
+- `standard_place '<supplied>' for '<place>' was replaced by '<answer>', the
+  standard place the cited record stores.` (or `…, the engine's lookup.`);
+- `standard_place '<supplied>' for '<place>' was not kept, and the place has
+  none: <reason>.`, the reason naming the non-place phrase, the records'
+  disagreement, a lookup that found nothing (for a one-part text, telling the
+  caller to write its parent jurisdictions into the text), or the other country;
+- `standard_place '<supplied>' was not kept: there is no place text to
+  standardize.`
+
+Each ends by saying a supplied value is kept only when it is the engine's own
+answer, and that a caller who knows more writes the fuller place into the text
+("Springfield, Illinois"). There is no other exception: FamilySearch's
+standardization of the same text on a record the fact does not cite is never a
+reason to keep a value.
+
+**With none supplied** the answer fills the field, unless `resolveStandardPlace`
+is `false`. No answer leaves it unset with `could not resolve standard_place for
+'<place>' (left unset)` (plus `: <the disagreement>` when the cited records
+disagree), or `standard_place '<answer>' contradicts place '<place>' — the place
+text names a different country; cleared (left unset)`; a non-place phrase stays
+silent.
 
 ### 4.2 Return value (compact — never the tree)
 
@@ -623,9 +678,12 @@ Sequence (validate-before-persist, tree-only):
   can grant additive writes without granting identity rewrites/removals.
 - **`standard_place` resolution is internal and on by default.** Removes the
   "call `place_search`, copy the first result's `standardPlace`" hand-step
-  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic. Overridable:
-  pass `standard_place` explicitly, or `resolveStandardPlace: false`, to skip the
-  network call.
+  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic.
+  `resolveStandardPlace: false` skips the lookup for a fact with no supplied
+  value. A supplied `standard_place` is not an override: it is kept only when it
+  is the engine's answer (§4.1.1), because agents copied `place_search`'s first
+  candidate, which is wrong often enough that keeping it unchecked broke the
+  rule that a blank beats a wrong place.
 - **Competing parentage is surfaced by the writer, not by a new tool.** A
   second biological parent of one sex is refused by the warning gate under a
   `competingParentage` id, so the refusal is the detector: it
@@ -689,6 +747,9 @@ Sequence (validate-before-persist, tree-only):
 | `update_relationship` on a Couple | input error — only a ParentChild edge carries a subtype |
 | `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
 | `standard_place` lookup finds nothing, or its network call fails | best-effort: leave `standard_place` unset and add a warning (none for a non-place phrase such as "Same House"); never fail the edit on a place-resolution miss |
+| The records a fact cites store different `standard_place`s for its place text | leave `standard_place` unset, look nothing up, and add a warning naming them (§4.1.1) |
+| A supplied `standard_place` that is not the engine's answer for the place text | write the answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
+| `update_fact` changes `place` with `resolveStandardPlace: false` and no `standard_place` | drop the old `standard_place`, with a warning |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
 | Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |
@@ -725,6 +786,16 @@ The caller (`tree-edit` skill) still:
   both/neither of `personId`/`relationshipId` rejected; `ParentChild` target
   rejected; stale `relationshipId` rejected. A couple event on a `personId`
   is refused in every spelling the matcher folds, and accepted on the Couple.
+- **A supplied `standard_place` (§4.1.1)** — on `add_fact`, `update_fact`,
+  `add_person` and `add_relationship` facts: one equal to the engine's answer is
+  kept silently; a different one is replaced, naming the lookup or the cited
+  record; one the engine leaves blank (non-place phrase, nothing found, a
+  one-part text, another country, no place text) is dropped with the reason;
+  `resolveStandardPlace: false` cannot keep one. The cited record supplies the
+  answer, from an assertion (case and accents aside) or its own person or couple
+  fact in the assertion's sidecar, and never another record's in the same
+  sidecar; a cited record whose facts disagree, or whose answer names another
+  country, gives none; a value only another record stores is replaced.
 - **update_fact** — field merge by `factId`; a place change re-resolves
   `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
   Couple-held fact; a `factId` not on the named holder errors. Retyping a

@@ -660,7 +660,8 @@ with no sidecar is not rejected here. Legitimate sidecar-less entries
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
-the base, no sidecar is consulted (geocoding only), a resolved value is written into
+the base, Lever B's step 1 reads only what the project already stores for its
+record (there is no sidecar-matched result), a resolved value is written into
 the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place.
@@ -694,9 +695,16 @@ stays an opt-out, as on an append. The levers:
   and the guard; a non-place phrase such as "Same House" or "Do", tested by
   `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
   unset with no warning):
-  1. if the op's sidecar-matched record (§3.5) has a fact whose `place` equals the
-     op's place string (trimmed, case-insensitive), its converter-resolved
-     `standard_place` is **copied** — no geocoding call;
+  1. the op's record supplies it: the `standard_place` the project stores for the
+     same place text (case, accents and spacing aside) on the op's `record_id`,
+     from a fact of that record in its sidecar-matched result (§3.5) or in the
+     sidecar of an assertion already stored from it, or from such an assertion
+     itself, is **copied** — no geocoding call. When those give two different
+     values the record is in doubt: the field stays unset, with a warning and an
+     `unresolvedPlaces` entry, and nothing is geocoded. Another record's
+     standard place for the same text is never taken (lead, 2026-10-26: "have
+     the engine take FamilySearch's standardization from the record a tree fact
+     cites"; `src/utils/record-standards.ts`, shared with `tree_edit`);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
@@ -723,7 +731,8 @@ stays an opt-out, as on an append. The levers:
 
   Every value the tool resolved and kept is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
-  so the caller can sanity-check geocoding without re-reading files. Every place
+  so the caller can sanity-check geocoding without re-reading files; `sidecar`
+  marks a value step 1 took from the op's record. Every place
   it looked up and left with no `standard_place` (a miss, or an answer dropped
   by Lever A or the value-derived check above) is listed in
   `unresolvedPlaces: string[]`, as well as warned about, and never in
@@ -1569,6 +1578,22 @@ resolve check passes the exact entry the rule exists to stop.
   `for_place` in the tracked `eval/runlogs/e2e/*/*.final-research.json`): 78
   checkable, 1 refused ("Nueva Italia, Parácuaro, Michoacan, Mexico"), 0
   `lookup_failed`. Over the unit run logs and fixtures: 0 refused.
+
+### 5.9 A caller's timeline event `standard_place` is judged
+
+On a `timelines` append or update reached as an MCP caller
+(`researchAppendFromCaller`), each event's supplied `standard_place` is kept only
+when it is the engine's answer for the event's `place` (lead, 2026-10-26; the
+rule `tree_edit` applies to a fact, tree-edit-tool-spec §4.1.1): the
+`standard_place` the records of the event's `assertion_ids` store for that text,
+case and accents aside, else `resolveStandardPlace(place)`; none when those
+records disagree, for a non-place phrase, or for an answer naming another
+country. Otherwise the answer replaces it, or it becomes `null`, with a warning
+naming the event (`events[<k>]: standard_place '<supplied>' … was replaced by …`
+or `… was not kept …`), and `distance_from_previous_km` becomes `null` on that
+event and the next, since both were measured from the old value. An event with
+no `place` keeps none. `timeline_build` writes through `researchAppend`
+directly, from the project's own standard places, and is not judged.
 
 ## 6. Decisions recorded
 

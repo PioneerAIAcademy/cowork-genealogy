@@ -2841,6 +2841,121 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // A caller's own standard_place on a timeline event is kept only when it is the
+  // engine's answer for the event's place (lead, 2026-10-26), as tree_edit
+  // judges a fact's; a tool's own timeline is not judged.
+  describe("a caller's timeline event standard_place", () => {
+    const SCHUYLKILL = "Schuylkill County, Pennsylvania";
+    const ENGINE = "Schuylkill, Pennsylvania, United States";
+    const RECORD = "Schuylkill, Pennsylvania";
+    const OTHER = "Schuylkill, Pennsylvania, USA";
+    const ev = (place: string | null, standard_place: string | null, km: number | null, ids = ["a_001"]) => ({
+      date: "1850", date_certainty: "exact", event_type: "census", description: "enumerated",
+      place, standard_place, assertion_ids: ids, distance_from_previous_km: km,
+    });
+    const timeline = (events: unknown[]) => ({ label: "test timeline", person_ids: ["I1"], events, gaps: [] });
+    const placeWarnings = (r: any) => r.validation.warnings.filter((w: string) => /standard_place '/.test(w));
+    const append = (events: unknown[]) =>
+      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never);
+    const events = async () => (await readResearch()).timelines[0].events;
+    /** a_002 from record R1 and a_003/a_004 from record R2 store the text: R2's
+     *  two disagree. */
+    const withRecords = () => {
+      const r = phase3Research();
+      const from = (id: string, record: string, standard_place: string) => ({
+        ...validAssertion(id), fact_type: "census", record_id: `ark:/61903/1:1:${record}`, place: SCHUYLKILL, standard_place,
+      });
+      r.assertions.push(from("a_002", "RRRR-111", RECORD), from("a_003", "RRRR-222", RECORD), from("a_004", "RRRR-222", OTHER));
+      return r;
+    };
+
+    it("keeps the engine's own answer, replaces any other, and drops the distances measured from it", async () => {
+      await writeProject();
+      const r = await append([
+        ev(SCHUYLKILL, ENGINE, null),
+        ev("Pittsburgh, Allegheny, Pennsylvania", null, 400),
+        ev(SCHUYLKILL, OTHER, 410),
+        ev("Chicago, Cook, Illinois", null, 900),
+        ev("Boston, Massachusetts", null, 1500),
+      ]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
+        [ENGINE, null],
+        [null, 400],
+        [ENGINE, null],
+        [null, null],
+        [null, 1500],
+      ]);
+      expect(placeWarnings(r)).toEqual([
+        expect.stringMatching(
+          new RegExp(`^events\\[2\\]: standard_place '${OTHER}' for '${SCHUYLKILL}' was replaced by '${ENGINE}', the engine's lookup\\. `),
+        ),
+      ]);
+    });
+
+    it("keeps none on an update's events where the engine has none, naming each", async () => {
+      await writeProject();
+      expect((await append([])).ok).toBe(true);
+      const r = await researchAppendFromCaller({
+        projectPath: dir,
+        ops: [
+          {
+            section: "timelines",
+            op: "update",
+            entryId: "t_001",
+            fields: { events: [ev("Nowhereville, Kansas", "Nowhereville, Kansas, United States", 10), ev(null, "Atlantis", 20)] },
+          },
+        ],
+      } as never);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
+        [null, null],
+        [null, null],
+      ]);
+      expect(placeWarnings(r)).toEqual([
+        expect.stringMatching(/^ops\[0\]: events\[0\]: .*was not kept, and the place has none: the engine's place lookup found no place/),
+        expect.stringMatching(/^ops\[0\]: events\[1\]: standard_place 'Atlantis' was not kept: there is no place text to standardize/),
+      ]);
+    });
+
+    it("takes the standard place the records of the event's assertions store, and none when they disagree", async () => {
+      await writeProject(withRecords());
+      vi.mocked(resolveStandardPlace).mockClear();
+      const r = await append([ev(SCHUYLKILL, RECORD, 5, ["a_002"]), ev(SCHUYLKILL, ENGINE, 6, ["a_002"]), ev(SCHUYLKILL, RECORD, 7, ["a_003"])]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events()).map((e: any) => e.standard_place)).toEqual([RECORD, RECORD, null]);
+      expect(placeWarnings(r)).toEqual([
+        expect.stringContaining(`events[1]: standard_place '${ENGINE}' for '${SCHUYLKILL}' was replaced by '${RECORD}', the standard place the cited record stores. `),
+        expect.stringContaining(
+          `events[2]: standard_place '${RECORD}' for '${SCHUYLKILL}' was not kept, and the place has none: ` +
+            `the records it cites store different standard places for it (${RECORD}; ${OTHER}). `,
+        ),
+      ]);
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("refuses a value that only another record stores for the text", async () => {
+      await writeProject(withRecords());
+      const r = await append([ev(SCHUYLKILL, RECORD, null, ["a_001"])]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events())[0].standard_place).toBe(ENGINE);
+      expect(placeWarnings(r)).toEqual([expect.stringContaining(`was replaced by '${ENGINE}', the engine's lookup. `)]);
+    });
+
+    it("leaves a tool's own timeline as it was written", async () => {
+      await writeProject();
+      const r = await researchAppend({ projectPath: dir, section: "timelines", op: "append", entry: timeline([ev(SCHUYLKILL, OTHER, 410)]) } as never);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events())[0]).toMatchObject({ standard_place: OTHER, distance_from_previous_km: 410 });
+      expect(placeWarnings(r)).toEqual([]);
+    });
+  });
+
   // The US 1890 federal census does not survive and can never fill a gap
   // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
   // times across 3 unit tests; this is the write-boundary backstop.
@@ -9556,6 +9671,71 @@ describe("research_append (composite persist + enforcement)", () => {
     const research = await readResearch();
     expect(research.assertions[1].standard_place).toBe("Pottsville, Schuylkill, Pennsylvania, United States");
     expect(research.assertions[2].standard_place).toBeUndefined();
+  });
+
+  // The engine's answer for a cited record's place (lead, 2026-10-26): what that
+  // record stores for the same text, from its sidecar or an assertion already
+  // stored from it, and none when those disagree.
+  describe("the record's own standard place", () => {
+    const POTTSVILLE = "Pottsville, Schuylkill, Pennsylvania, United States";
+    const fromRecord = (place: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: { ...noId(validAssertion("x", "src_001")), record_id: "ark:/61903/1:1:ABCD-123", log_entry_id: "log_001", place },
+    });
+    const stored = (id: string, record: string, place: string, standard_place: string) => ({
+      ...validAssertion(id), record_id: record, log_entry_id: "log_001", record_persona_id: "p_1", place, standard_place,
+    });
+
+    it("is taken from the sidecar or an assertion already stored, case and accents aside, with no lookup", async () => {
+      const research = sidecarResearch();
+      research.assertions.push(
+        stored("a_002", "ark:/61903/1:1:ABCD-123", "Minersville, Pennsylvania", "Minersville, Schuylkill, Pennsylvania, United States"),
+      );
+      await writeProject(research);
+      const rec = sidecarRecord();
+      rec.gedcomx.persons[0]!.facts![0]!.place = " PÖTTSVILLE,  pennsylvania";
+      await writeSidecar([rec]);
+      const r = await researchAppend({ projectPath: dir, ops: [fromRecord("Pottsville, Pennsylvania"), fromRecord("minersville, pennsylvania")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      const after = await readResearch();
+      expect(after.assertions[2].standard_place).toBe(POTTSVILLE);
+      expect(after.assertions[3].standard_place).toBe("Minersville, Schuylkill, Pennsylvania, United States");
+      expect(r.resolvedPlaces?.map((p) => p.source)).toEqual(["sidecar", "sidecar"]);
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("is none when the record stores different standard places for the text, with a warning and no lookup", async () => {
+      await writeProject(sidecarResearch());
+      const rec = sidecarRecord();
+      rec.gedcomx.persons[0]!.facts!.push({ id: "F2", type: "Death", place: "Pottsville, Pennsylvania", standard_place: "Pottsville, Pennsylvania" });
+      await writeSidecar([rec]);
+      const r = await researchAppend({ projectPath: dir, ops: [fromRecord("Pottsville, Pennsylvania")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect((await readResearch()).assertions[1].standard_place).toBeUndefined();
+      expect(r.unresolvedPlaces).toEqual(["Pottsville, Pennsylvania"]);
+      expect(r.validation.warnings).toContain(
+        "could not resolve standard_place for 'Pottsville, Pennsylvania' (left unset): its record stores different " +
+          `standard places for it (${POTTSVILLE}; Pottsville, Pennsylvania)`,
+      );
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("is never another record's: that record's standard place for the text is not taken", async () => {
+      const research = sidecarResearch();
+      research.assertions.push(stored("a_002", "ark:/61903/1:1:WXYZ-999", "Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania"));
+      await writeProject(research);
+      await writeSidecar();
+      const r = await researchAppend({ projectPath: dir, ops: [fromRecord("Schuylkill County, Pennsylvania")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect((await readResearch()).assertions[2].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+      expect(r.resolvedPlaces).toEqual([
+        { place: "Schuylkill County, Pennsylvania", standardPlace: "Schuylkill, Pennsylvania, United States", source: "geocoded" },
+      ]);
+    });
   });
 
   // ── §3.4.1: source-reuse auto-detection ──

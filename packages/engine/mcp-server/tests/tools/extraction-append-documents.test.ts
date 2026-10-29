@@ -116,6 +116,15 @@ describe("extraction_append: documents", () => {
       expect(validateStructuredDocument(bad).join(" ")).toMatch(/record_basis: not a document field/);
     });
 
+    it("refuses a supplied standard_place: the engine alone standardizes a document's places", async () => {
+      const bad = structuredClone(obituary) as any;
+      bad.persons[0].facts[0].standard_place = "Logan, Cache, Utah, United States";
+      const r = await run([{ recordId: "capture:obituary-whitaker", document: bad, transcriptionRef: await stageScan() }]);
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify(r)).toMatch(/standard_place: not a document field/);
+      expect((await read()).assertions ?? []).toHaveLength(0);
+    });
+
     it("refuses a census with no census block", () => {
       const bad = structuredClone(census1850) as any;
       delete bad.census;

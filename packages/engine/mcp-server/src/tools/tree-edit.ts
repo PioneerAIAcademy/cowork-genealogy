@@ -56,7 +56,9 @@ import {
   noProjectResult,
 } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
-import { resolveStandardPlace, countryConsistency, isNonPlacePhrase } from "../utils/place-resolver.js";
+import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { judgeSupplied, placeAnswer, type PlaceAnswer } from "../utils/place-verdict.js";
+import { RecordStandards, recordsCitedBy } from "../utils/record-standards.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
@@ -449,7 +451,7 @@ function clearPrimaryOfType(holder: FactHolder, type: string | undefined, except
  *
  * Compares the four fields the plan names — type, date, place and value — and
  * deliberately NOT `standard_place`. The twin lookup runs before
- * `maybeResolvePlace`, so the stored fact carries a resolved `standard_place`
+ * `settlePlace`, so the stored fact carries a resolved `standard_place`
  * while the incoming one carries none: comparing it made a retried call whose
  * fact had a resolvable place write a SECOND fact, which is the opposite of the
  * idempotence corroboration exists for. `standard_date` is dropped with it —
@@ -480,52 +482,53 @@ async function applyOperation(
   tree: SimplifiedGedcomX,
   research: any,
   input: TreeEditInput,
+  standards: RecordStandards,
 ): Promise<AppliedOperation> {
   const assignedIds: AssignedIds = {};
   const warnings: string[] = [];
   const wantResolve = input.resolveStandardPlace !== false;
 
-  // Resolve a fact's standard_place in place when it has a place and no explicit
-  // standard_place; best-effort — never fail the edit on a resolution miss.
-  // `siblings` are the other facts on the same holder: a bare place
-  // ("Shenandoah") is resolved against their places, not the whole world.
-  const maybeResolvePlace = async (
-    fact: SimplifiedFact,
-    explicitStandardPlace: boolean,
-    siblings: SimplifiedFact[] = [],
-  ): Promise<void> => {
-    if (wantResolve && fact.place && !explicitStandardPlace) {
+  // A fact's standard_place is the engine's answer for its place (place-verdict.ts):
+  // the standard place the records the fact cites store for that text, else the
+  // resolver's, with the places of the holder's other facts (`siblings`) as
+  // context for a bare place. A supplied one is kept only when it is that
+  // answer, whatever `resolveStandardPlace` says; otherwise the answer replaces
+  // it, or none is kept, with a warning. With none supplied the answer fills it,
+  // unless `resolveStandardPlace` is false. Never fails the edit.
+  const settlePlace = async (fact: SimplifiedFact, supplied: boolean, siblings: SimplifiedFact[] = []): Promise<void> => {
+    const given = supplied && typeof fact.standard_place === "string" ? fact.standard_place : undefined;
+    if (given === undefined && !wantResolve) return;
+    const place = typeof fact.place === "string" && fact.place.trim() !== "" ? fact.place : undefined;
+    let answer: PlaceAnswer | null = null;
+    if (place !== undefined) {
       const contextPlaces = siblings
         .map((f) => f.place)
-        .filter((p): p is string => typeof p === "string" && p !== fact.place);
-      // resolveStandardPlace returns null for a miss and for a network failure
-      // alike, so both warn. A non-place phrase ("Same House") has no standard
-      // form to miss, so it is left unset silently, as research_append does.
-      const sp = await resolveStandardPlace(fact.place, { contextPlaces }).catch(() => null);
-      if (sp) {
-        fact.standard_place = sp;
-      } else {
-        delete fact.standard_place;
-        if (!isNonPlacePhrase(fact.place)) {
-          warnings.push(`could not resolve standard_place for '${fact.place}' (left unset)`);
-        }
-      }
+        .filter((p): p is string => typeof p === "string" && p !== place);
+      const stored = await standards.for(recordsCitedBy(fact, research), place);
+      answer = await placeAnswer(place, stored, () => resolveStandardPlace(place, { contextPlaces }));
     }
-
-    // Country-contradiction guard on whatever standard_place ends up set —
-    // supplied explicitly by the caller OR auto-resolved just above. Mirrors
-    // research_append's countryConsistency guard on assertions (see
-    // place-resolver.ts). tree_edit never fails an edit on a place-resolution
-    // problem (see docs/specs/tree-edit-tool-spec.md), so a contradiction is
-    // nulled + warned here rather than thrown.
-    if (typeof fact.place === "string" && typeof fact.standard_place === "string") {
-      if (countryConsistency(fact.place, fact.standard_place) === "contradiction") {
-        warnings.push(
-          `standard_place '${fact.standard_place}' contradicts place '${fact.place}' — the place text ` +
-            "names a different country; cleared (left unset)",
-        );
-        delete fact.standard_place;
-      }
+    if (given !== undefined) {
+      const judged = judgeSupplied(place, given, answer);
+      if (judged.standardPlace === null) delete fact.standard_place;
+      else fact.standard_place = judged.standardPlace;
+      if (judged.warning) warnings.push(judged.warning);
+      return;
+    }
+    if (answer === null) return;
+    if (answer.standardPlace !== null) {
+      fact.standard_place = answer.standardPlace;
+      return;
+    }
+    delete fact.standard_place;
+    if (answer.why === "not_found") {
+      warnings.push(`could not resolve standard_place for '${place}' (left unset)`);
+    } else if (answer.why === "records_disagree") {
+      warnings.push(`could not resolve standard_place for '${place}' (left unset): ${answer.reason}`);
+    } else if (answer.why === "other_country") {
+      warnings.push(
+        `standard_place '${answer.dropped}' contradicts place '${place}' — the place text ` +
+          "names a different country; cleared (left unset)",
+      );
     }
   };
 
@@ -543,7 +546,7 @@ async function applyOperation(
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
       stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
-      await maybeResolvePlace(fact, input.fact.standard_place !== undefined, holder.facts ?? []);
+      await settlePlace(fact, input.fact.standard_place !== undefined, holder.facts ?? []);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
       holder.facts = [...(holder.facts ?? []), fact];
       assignedIds.fact = fact.id;
@@ -584,6 +587,7 @@ async function applyOperation(
       const factStringsBefore = new Map<string, unknown>(
         FACT_DETACH_FIELDS.map((f) => [f, (existing as Record<string, unknown>)[f]]),
       );
+      const placeBefore = existing.place;
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
         // `primary: false` clears the flag rather than storing a false — the
@@ -604,8 +608,22 @@ async function applyOperation(
             "whole fact (tree_correct remove) instead of nulling its ref.",
         );
       }
-      if (input.fact.place !== undefined) {
-        await maybeResolvePlace(existing, input.fact.standard_place !== undefined, holder.facts ?? []);
+      if (input.fact.place !== undefined || input.fact.standard_place !== undefined) {
+        // A corrected place's old standard_place was the answer for the old text.
+        if (
+          input.fact.standard_place === undefined &&
+          existing.place !== placeBefore &&
+          typeof existing.standard_place === "string"
+        ) {
+          if (!wantResolve) {
+            warnings.push(
+              `standard_place '${existing.standard_place}' was dropped with the old place: ` +
+                `resolveStandardPlace is false, so '${existing.place}' was not standardized`,
+            );
+          }
+          delete existing.standard_place;
+        }
+        await settlePlace(existing, input.fact.standard_place !== undefined, holder.facts ?? []);
       }
       // A human CHANGING any of the fact's own string fields detaches it from
       // the assertion it was minted from (#2472) — the same reading the spec
@@ -614,7 +632,7 @@ async function applyOperation(
       // assertion (indistinguishable from the drift the agreement check reports)
       // and the next assertion update would silently revert the correction.
       //
-      // Runs AFTER maybeResolvePlace so it sees the final `standard_place`: a
+      // Runs AFTER settlePlace so it sees the final `standard_place`: a
       // place change that re-resolves the sidecar is a change to this fact even
       // when the caller never named `standard_place`.
       //
@@ -734,7 +752,7 @@ async function applyOperation(
           stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined, person.facts);
+          await settlePlace(f, f.standard_place !== undefined, person.facts);
           factIds.push(f.id);
         }
         assignedIds.facts = factIds;
@@ -877,7 +895,7 @@ async function applyOperation(
             continue;
           }
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts);
+          await settlePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts);
           // Same primary swap add_fact performs, but only when corroborating:
           // the plan scopes it to the matched edge, and `main` never swapped on
           // a newly created one. `primary` is about to become load-bearing
@@ -1224,6 +1242,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     );
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    const standards = new RecordStandards(projectPath, research);
     // Post-heal, pre-edit snapshot (applyOperation mutates tree in place):
     // block only on errors THIS call introduces, not pre-existing drift in a
     // section it never touched (#1572).
@@ -1261,7 +1280,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
         try {
           gateOperation(op?.operation, gate);
           const snapshot = holderSnapshot();
-          const applied = await applyOperation(tree, research, { ...op, projectPath });
+          const applied = await applyOperation(tree, research, { ...op, projectPath }, standards);
           if (snapshot) introduced.push(...introducedCitations(snapshot, tree, holders, i));
           opWarnings.push(...applied.warnings);
           const r: PerOpResult = { operation: op.operation };
@@ -1324,7 +1343,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     }
     gateOperation(input.operation, gate);
     const snapshot = holderSnapshot();
-    const applied = await applyOperation(tree, research, input);
+    const applied = await applyOperation(tree, research, input, standards);
     const { assignedIds, warnings } = applied;
     const namesakeFindings = namesakeRefusals(snapshot ? introducedCitations(snapshot, tree, holders, null) : []);
     if (namesakeFindings.length > 0) return { ok: false, errors: namesakeFindings.map((f) => f.message) };

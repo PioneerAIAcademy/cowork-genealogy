@@ -148,7 +148,7 @@ Steps:
 
 `placeSearchTool({ placeName, contextName? })` runs `placeSearch`, projects each
 `PlaceResult` to `SimplifiedPlaceResult` via `simplifyPlaceResult`, and returns
-`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`.
+`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict }`.
 
 ### Input
 
@@ -163,13 +163,32 @@ Steps:
 
 ### Output
 
-`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`. The **top-level**
+`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict }`. The **top-level**
 `matchType` is present only when the results came from the fuzzy fallback; on
-an exact hit the field is absent and the response is byte-identical to the
-pre-fallback shape. It is top-level rather than per-result because every result
-in one response comes from one query. It must stay **optional** — the packaging
-fixture-shape test fails a new required field across the recorded
-`eval/fixtures/mcp/` responses. Each `SimplifiedPlaceResult`:
+an exact hit the field is absent. It is top-level rather than per-result because
+every result in one response comes from one query. It must stay **optional** — the
+packaging fixture-shape test fails a new required field across the recorded
+`eval/fixtures/mcp/` responses.
+
+`verdict` is the engine's verdict on the query text, beside the candidates: the
+`standard_place` the writers (`tree_edit`, `tree_correct`, `research_append`,
+`project_create`) store for `placeName` as the place of a fact that cites no
+record, or none, and why (`placeAnswer` in `src/utils/place-verdict.ts`, with
+`resolveStandardPlace(placeName)` as its lookup; tree-edit-tool-spec §4.1.1).
+- `{ "standardPlace": "Bristol, England, United Kingdom", "reason": "the writers store this standard_place for this exact place text on a fact that cites no record, and keep a supplied standard_place only when it is the one they store" }`, or
+- `{ "standardPlace": null, "reason": "the writers store no standard_place for this text on a fact that cites no record: …" }`,
+  the reason naming a non-place phrase ("Same House", never looked up), a
+  lookup that found nothing or failed (for a one-part text, telling the caller
+  to write its parent jurisdictions into the place text, e.g. "Springfield,
+  Illinois"), or an answer naming a different country than the text.
+
+`contextName` narrows the candidates, never the verdict: a writer stores the
+place text it is given, so context belongs in that text. A fact that cites a
+record takes the standard place that record stores for the text first, so the
+verdict is what a writer stores only when no cited record stores one. `verdict`
+is optional in the type, for the same fixture reason as `matchType`;
+`place_search` always returns it, and `place_search_all` does not. Each
+`SimplifiedPlaceResult`:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -388,7 +407,7 @@ ignore it for `wikipediaUrl`.)
 
 | Condition | Behavior |
 |-----------|----------|
-| Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [] }` with no flag |
+| Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [], verdict }` with no flag |
 | A description lookup 404s | Fall back to the search-entry data; do not drop the place |
 | FamilySearch search/description returns other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
 | Wikipedia API fails (any status or network error) | Omit Wikipedia fields (graceful degradation) |
@@ -399,7 +418,8 @@ ignore it for `wikipediaUrl`.)
 
 | File | Contents |
 |------|----------|
-| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[], matchType?: "fuzzy" }`, and the FS/Wikipedia response types. |
+| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict?: { standardPlace, reason } }`, and the FS/Wikipedia response types. |
+| `packages/engine/mcp-server/src/utils/place-verdict.ts` | `placeAnswer`, the writers' rule the `verdict` reports. |
 | `packages/engine/mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
 | `packages/engine/mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
 | `packages/engine/mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |

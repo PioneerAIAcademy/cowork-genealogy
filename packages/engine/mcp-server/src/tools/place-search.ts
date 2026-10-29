@@ -15,7 +15,8 @@ import {
   type SearchPlaceResult,
   type GetPlaceResult,
 } from "../utils/place-api.js";
-import { deriveContextName, mapWithConcurrency } from "../utils/place-resolver.js";
+import { deriveContextName, mapWithConcurrency, resolveStandardPlace } from "../utils/place-resolver.js";
+import { placeAnswer } from "../utils/place-verdict.js";
 
 // Re-export the low-level FamilySearch places fetchers so existing tool/test
 // imports keep resolving from here. Their implementations live in
@@ -226,11 +227,26 @@ export async function placeSearchTool(
     input.placeName,
     input.contextName
   );
-  // Spread rather than assign: an exact hit's response must stay
-  // byte-identical to the pre-fallback shape (no `matchType` key at all).
+  // What the writers store for the query text itself on a fact that cites no
+  // record (place-verdict.ts). `contextName` is not part of a place's text, so
+  // it narrows the candidates, never the verdict.
+  const answer = await placeAnswer(input.placeName, [], () => resolveStandardPlace(input.placeName));
+  // Spread rather than assign: an exact hit carries no `matchType` key at all.
   return {
     results: results.map(simplifyPlaceResult),
     ...(matchType ? { matchType } : {}),
+    verdict:
+      answer.standardPlace !== null
+        ? {
+            standardPlace: answer.standardPlace,
+            reason:
+              "the writers store this standard_place for this exact place text on a fact that cites no " +
+              "record, and keep a supplied standard_place only when it is the one they store",
+          }
+        : {
+            standardPlace: null,
+            reason: `the writers store no standard_place for this text on a fact that cites no record: ${answer.reason}`,
+          },
   };
 }
 

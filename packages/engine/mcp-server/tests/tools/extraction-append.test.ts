@@ -607,6 +607,42 @@ describe("extraction_append: recordIds and absences", () => {
     );
   });
 
+  // The engine's answer for a place on a record (lead, 2026-10-26): the standard
+  // place that record stores for the text, none when its facts disagree, and
+  // never another record's.
+  it("standardizes a place by the record's own facts, none when they disagree, never by another record's", async () => {
+    const seeded = await research();
+    seeded.assertions = [
+      {
+        ...validAssertion("a_001"), record_id: "ark:/61903/1:1:OTHR-111", fact_type: "residence",
+        place: "Jackson, Ohio, United States", standard_place: "Jackson, Jackson, Ohio, United States",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seeded), "utf8");
+    const death = element("death");
+    death.gedcomx.persons[0].facts.push(
+      { type: "Burial", date: "1879", place: "jackson co., ó.", standard_place: "Jackson, Ohio, United States" },
+      { type: "Christening", place: "Scioto T.P., Jackson, Ohio", standard_place: "Scioto, Jackson, Ohio, United States" },
+      { type: "Christening", place: "Scioto T.P., Jackson, Ohio", standard_place: "Jackson, Ohio, United States" },
+    );
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const after = (await research()).assertions.filter((a: any) => a.record_id !== "ark:/61903/1:1:OTHR-111");
+    const placed = (fact_type: string) => after.find((a: any) => a.fact_type === fact_type);
+    expect(placed("birth")).toMatchObject({ place: "Jackson Co., O.", standard_place: "Jackson, Ohio, United States" });
+    expect(placed("residence").place).toBe("Scioto T.P., Jackson, Ohio");
+    expect(placed("residence")).not.toHaveProperty("standard_place");
+    expect(placed("death").place).toBe("Jackson, Ohio, United States");
+    expect(placed("death")).not.toHaveProperty("standard_place");
+    expect(r.records[0].summary.split("\n")).toContain(
+      "Places kept as written, with no standard place found: Jackson, Ohio, United States; Scioto T.P., Jackson, Ohio.",
+    );
+    expect(r.records[0].warnings).toContain(
+      "could not resolve standard_place for 'Scioto T.P., Jackson, Ohio' (left unset): its record stores different " +
+        "standard places for it (Scioto, Jackson, Ohio, United States; Jackson, Ohio, United States)",
+    );
+  });
+
   // ─── an accepted hint's log entry is the record's own (issue #3157) ───────────
 
   const hintEntry = (id: string, recordId: string, outcome = "positive") => ({

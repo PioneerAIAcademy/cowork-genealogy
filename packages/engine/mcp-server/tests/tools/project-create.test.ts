@@ -413,6 +413,7 @@ describe("project_create", () => {
 
 import { readFileSync } from "node:fs";
 import { stagePersonRead } from "../../src/tools/person-read.js";
+import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
 
 const FAMILY = JSON.parse(
@@ -1103,6 +1104,33 @@ describe("project_create — hand-entered places are standardized by the tool", 
     expect(result.validation.warnings.join(" ")).toContain(
       "standard_place \"Boston, Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
     );
+  });
+
+  it("keeps a standard_place the caller typed when it is the engine's own, and says nothing", async () => {
+    const tree = {
+      persons: [person([{ id: "F1", type: "Birth", place: "Boston, Massachusetts", standard_place: "Boston, Suffolk, Massachusetts, United States" }])],
+      relationships: [], sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.validation.warnings.join(" ")).not.toMatch(/standard_place/);
+  });
+
+  it("refuses a typed standard_place that only a record staged in the folder gives the text", async () => {
+    await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: {
+        query: { recordId: "ark:/61903/1:1:ABCD-123" },
+        results: [{ recordId: "ark:/61903/1:1:ABCD-123", gedcomx: { persons: [{ id: "p1", facts: [{ type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }] }] } }],
+      },
+    });
+    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept");
   });
 
   it("fills a hand-entered place the caller left unstandardized, and reports it", async () => {

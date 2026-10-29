@@ -215,7 +215,12 @@ here and left for validation to refuse at its own index. A resolved value is
 reported in `placesFilled`. A caller-supplied value that the resolver replaced or
 could not confirm, or that sat on a fact with no `place`, is named in
 `validation.warnings`; one that did not resolve — no match, a failed lookup, or
-the budget running out — is left unset, never kept.
+the budget running out — is left unset, never kept. This is the writers' rule
+(tree-edit-tool-spec §4.1.1): a supplied value survives, silently, only when it
+is the engine's own answer. A hand-entered fact cites no record the project
+stores, since a new project has no assertions, so the answer is the lookup's,
+and a record staged in the folder that standardizes the same text is never a
+reason to keep a value.
 
 **A place left unstandardized is reported, never silent.** Once the fill has
 run, every fact in the tree that still has a `place` and no `standard_place` —

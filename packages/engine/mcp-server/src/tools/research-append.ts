@@ -63,6 +63,8 @@ import {
   standardPlaceNamedInText,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
+import { judgeSupplied, placeAnswer } from "../utils/place-verdict.js";
+import { RecordStandards, recordsOfAssertions } from "../utils/record-standards.js";
 import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
@@ -7579,35 +7581,6 @@ function applyOne(
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
-/** Find a converter-resolved standard_place inside a sidecar record's
- *  simplified gedcomx whose fact `place` matches `place` (trimmed,
- *  case-insensitive). Never geocode what the source record already resolved. */
-function sidecarStandardPlace(gx: any, place: string): string | null {
-  if (!gx || typeof gx !== "object") return null;
-  const want = place.trim().toLowerCase();
-  const factLists: any[][] = [];
-  for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
-    if (p && Array.isArray(p.facts)) factLists.push(p.facts);
-  }
-  for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
-    if (r && Array.isArray(r.facts)) factLists.push(r.facts);
-  }
-  for (const facts of factLists) {
-    for (const f of facts) {
-      if (
-        f &&
-        typeof f.place === "string" &&
-        f.place.trim().toLowerCase() === want &&
-        typeof f.standard_place === "string" &&
-        f.standard_place.length > 0
-      ) {
-        return f.standard_place;
-      }
-    }
-  }
-  return null;
-}
-
 interface PreparedOps {
   treeMutated: boolean;
   /** Attestations for every record a `person_evidence` op in this batch links
@@ -8009,6 +7982,48 @@ async function checkLocalityFirstPlaces(
   }
 }
 
+/**
+ * A caller's own standard_place on a timeline event is kept only when it is the
+ * engine's answer for the event's place (place-verdict.ts): the standard place
+ * the records of the event's assertions store for that text, else the
+ * resolver's. Otherwise the answer replaces it, or it becomes null, with a
+ * warning, and the distances measured from it, on that event and the next,
+ * become null too.
+ */
+async function judgeTimelinePlaces(
+  ops: ResearchAppendOp[],
+  research: any,
+  projectPath: string,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): Promise<void> {
+  const standards = new RecordStandards(projectPath, research);
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "timelines") continue;
+    const events = ((op.op === "append" ? op.entry : op.fields) as { events?: unknown } | undefined)?.events;
+    if (!Array.isArray(events)) continue;
+    for (const [k, event] of events.entries()) {
+      if (typeof event?.standard_place !== "string") continue;
+      const place = typeof event.place === "string" && event.place.trim() !== "" ? event.place : undefined;
+      const answer =
+        place === undefined
+          ? null
+          : await placeAnswer(
+              place,
+              await standards.for(recordsOfAssertions(event.assertion_ids, research), place),
+              () => resolveStandardPlace(place),
+            );
+      const judged = judgeSupplied(place, event.standard_place, answer);
+      if (judged.standardPlace === event.standard_place) continue;
+      event.standard_place = judged.standardPlace;
+      for (const e of [event, events[k + 1]]) {
+        if (typeof e?.distance_from_previous_km === "number") e.distance_from_previous_km = null;
+      }
+      warnings.push(fmt(i, `events[${k}]: ${judged.warning}`));
+    }
+  }
+}
+
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
  *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
  *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
@@ -8021,6 +8036,7 @@ async function prepareOps(
   tree: SimplifiedGedcomX,
   projectPath: string,
   fmt: (i: number, msg: string) => string,
+  options: ResearchAppendOptions,
 ): Promise<PreparedOps> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -8327,6 +8343,7 @@ async function prepareOps(
    *  to judge. A dropped lookup is warned about and listed in unresolvedPlaces,
    *  never in resolvedPlaces. A place on an assertion flagged as suspicious text
    *  is never looked up, and a refusal shows it as WITHHELD_SUSPICIOUS. */
+  const recordStandards = new RecordStandards(projectPath, research);
   const applyPlaceLevers = async (
     entry: any,
     i: number,
@@ -8339,10 +8356,12 @@ async function prepareOps(
       unresolvedPlaces.push(entry.place);
     };
     // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
-    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution. A non-place phrase
-    // ("Same House") is left unset, silently: it has no standard form.
+    // resolved — take the standard_place its record stores for the same text
+    // (record-standards.ts), from the sidecar or an assertion already stored, and
+    // none when they disagree. `standard_place: null` is an explicit opt-out
+    // (skip resolution + guard); only a fully omitted field triggers
+    // resolution. A non-place phrase ("Same House") is left unset, silently: it
+    // has no standard form.
     let filled: "sidecar" | "geocoded" | null = null;
     if (
       !flaggedText &&
@@ -8350,12 +8369,13 @@ async function prepareOps(
       entry.standard_place === undefined &&
       !isNonPlacePhrase(factText(entry.place)!)
     ) {
-      let sp: string | null = null;
-      if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
-        if (sp) filled = "sidecar";
-      }
-      if (!sp && input.resolveStandardPlace !== false) {
+      const record = new Set([arkToBareId(String(entry.record_id ?? ""))]);
+      const stored = await recordStandards.for(record, entry.place, matchedRecord ? [matchedRecord] : []);
+      let sp: string | null = stored.length === 1 ? stored[0] : null;
+      if (sp) filled = "sidecar";
+      if (stored.length > 1) {
+        unresolved(`: its record stores different standard places for it (${stored.join("; ")})`);
+      } else if (!sp && input.resolveStandardPlace !== false) {
         // resolveStandardPlace swallows network failures and returns null, so
         // a miss and a failure look the same here — both warrant the warning
         // (a silently unresolved place is part of the wrong-geocode theme).
@@ -8745,6 +8765,7 @@ async function prepareOps(
   }
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
+  if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, projectPath, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
@@ -8787,6 +8808,10 @@ export interface ResearchAppendOptions {
    *  message refuses the call, so a caller that chose its op from an earlier
    *  read writes nothing when that read went stale. */
   precondition?: (research: any) => string | null;
+  /** Set only by `researchAppendFromCaller`: a timeline event's standard_place
+   *  is the caller's own, so it is judged (`judgeTimelinePlaces`). A tool builds
+   *  its timeline from the project's own standard places. */
+  judgeSuppliedPlaces?: boolean;
 }
 
 /**
@@ -8860,7 +8885,7 @@ export async function researchAppendFromCaller(
   if (errors.length > 0) {
     return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
   }
-  return researchAppend(input);
+  return researchAppend(input, { judgeSuppliedPlaces: true });
 }
 
 export async function researchAppend(
@@ -8987,7 +9012,7 @@ export async function researchAppend(
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
-    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options);
 
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
