@@ -18,8 +18,8 @@ import {
 import { expandLookingFor } from "../utils/name-variants.js";
 import {
   runOcr,
+  runFoundCheck,
   buildOcrPrompt,
-  parseFound,
   OCR_TIMEOUT_MS,
   OCR_MAX_TOKENS,
   MAX_OCR_INPUT_BYTES,
@@ -254,12 +254,19 @@ export async function imageTranscribeTool(
   }
 
   // Expand recognized given names in lookingFor with historical diminutives
-  // (issue #607). The VLM reads this as natural language, so all forms
-  // (including scribal abbreviations with periods) are included.
+  // (issue #607). The model reads this as natural language, so all forms
+  // (including scribal abbreviations with periods) are included. It feeds ONLY
+  // the text-only found check below — never the OCR prompt, where a hinted name
+  // primes the read to return it in rows the page does not have (issue #3718).
   const lookingForExpansion = input.lookingFor
     ? expandLookingFor(input.lookingFor)
     : null;
   const expandedLookingFor = lookingForExpansion?.expanded ?? input.lookingFor;
+
+  // One budget spans the OCR read AND the found check: the second call runs on
+  // what the first leaves, so lookingFor never widens this leg's worst case.
+  const ocrBudgetMs = Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  const ocrStartedAt = Date.now();
 
   // The transport, the size refusal, the single transport retry, the status
   // triage and the truncation detection all live in utils/ocr.ts (issue #2183)
@@ -268,10 +275,10 @@ export async function imageTranscribeTool(
     bytes,
     contentType,
     sizeBytes,
-    prompt: buildOcrPrompt(expandedLookingFor),
+    prompt: buildOcrPrompt(),
     apiKey,
     model,
-    timeoutMs: opts.ocrTimeoutMs,
+    timeoutMs: ocrBudgetMs,
     maxTokens: OCR_MAX_TOKENS,
   });
   const transcription = ocr.text;
@@ -319,11 +326,27 @@ export async function imageTranscribeTool(
     if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
 
-  // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
-  // line the model never reached, and a target may sit below the cut — a
-  // half-read page must never yield a clean NOT FOUND negative (#1974).
+  // `found` comes from a SECOND, text-only call over the transcription — the
+  // OCR prompt carries no lookingFor (issue #3718). Skipped on a truncated
+  // read: a target may sit below the cut, so a half-read page must never yield
+  // a clean NOT FOUND negative (#1974). Best-effort — any failure omits `found`
+  // (the transcription is the primary payload) — and it runs BEFORE staging so
+  // the staged element and the digest carry it.
   const key = input.lookingFor?.trim();
-  const found = key && !truncated ? parseFound(transcription) : undefined;
+  let found: "FOUND" | "NOT FOUND" | undefined;
+  if (key && !truncated) {
+    try {
+      found = await runFoundCheck({
+        transcription,
+        lookingFor: expandedLookingFor ?? key,
+        apiKey,
+        model,
+        timeoutMs: Math.max(1, ocrBudgetMs - (Date.now() - ocrStartedAt)),
+      });
+    } catch {
+      found = undefined;
+    }
+  }
 
   // Stage the transcription (issue #2489, merged into #2048): the same channel
   // the search tools use, as a ONE-element results[] so finalize's invariants
