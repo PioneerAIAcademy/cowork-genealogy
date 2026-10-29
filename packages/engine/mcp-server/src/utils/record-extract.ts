@@ -25,7 +25,7 @@
 // the caller supplies those. It never writes identity links. It never decides
 // which questions a fact answers; `extracted_for_question_ids` is the caller's.
 
-import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
+import type { SimplifiedFact, SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
 import type { DocumentMode } from "./structured-document.js";
 
@@ -1045,12 +1045,13 @@ export function extractRecord(
   const statedHouseholds: Party[][] = [];
 
   if (recordType === "census") {
-    // Decide the column from the census fact's place and year, per household.
-    const censusFact = ps
-      .flatMap((p) => p.person.facts ?? [])
-      .find((f) => /census/i.test(String(f.type ?? "")));
+    // Decide the column from the census fact's place and year, per household:
+    // the place as FamilySearch sent it when the staged read carries it.
+    const isCensus = (f: SimplifiedFact) => /census/i.test(String(f.type ?? ""));
+    const censusParty = ps.find((p) => (p.person.facts ?? []).some(isCensus));
+    const censusFact = censusParty?.person.facts?.find(isCensus);
     const year = Number(String(censusFact?.date ?? "").match(/\d{4}/)?.[0]);
-    const place = censusFact?.standard_place ?? censusFact?.place;
+    const place = censusParty?.fields?.censusPlace ?? censusFact?.standard_place ?? censusFact?.place;
     const stated =
       mode && "censusStates" in mode
         ? (mode.censusStates ?? null)

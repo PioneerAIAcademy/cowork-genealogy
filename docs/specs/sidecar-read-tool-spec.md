@@ -148,10 +148,15 @@ So the page is built in three steps:
 1. `page = text.slice(offset, offset + maxChars)`.
 2. Shrink `page` from the end until its JSON-escaped body —
    `JSON.stringify(page).length − 2`, the two wrapping quotes excluded — is
-   `≤ 40,000`. Plain text needs no shrink, so a plain-text page is exactly
-   `maxChars`; each step cuts `ceil(over / 6)` code units (a character escapes
-   to at most six), so a step can never overshoot to an empty page and
-   `nextOffset` always advances.
+   `≤ maxChars`. That is the caller's `maxChars`, which is at most 40,000
+   because a larger value was clamped above, so for a `maxChars` under 40,000
+   the bound is that smaller number. Plain text needs no shrink, so a
+   plain-text page is exactly `maxChars`; each step cuts `ceil(over / 6)` code
+   units (a character escapes to at most six) and never below one unit, so the
+   page is never empty and `nextOffset` always advances. For a `maxChars` of 6
+   or more one unit always fits. Below that, a page cut to one unit is returned
+   even when that unit escapes to more than `maxChars` (a control character or
+   a lone surrogate escapes to six).
 3. If `page` now ends on a high surrogate (U+D800–U+DBFF) **and the next code
    unit of the text is a low surrogate** (U+DC00–U+DFFF) — that is, the cut
    would split a pair — move the boundary: back by one unit when the page is
@@ -313,6 +318,7 @@ fixture, not a defect.
 | Site | What |
 |---|---|
 | `src/tools/sidecar-read.ts` | tool, schema, types |
+| `src/utils/text-page.ts` | `fitPage` (§4) and `requireWholeNumber`, shared with `wiki_read` and `wiki_place_page` |
 | `src/store/fs-project-store.ts` | `readText` real-path containment check (§3, §8) |
 | `src/tool-schemas.ts` | `allToolSchemas` |
 | `src/index.ts` | dispatch arm via `writerToolResult` |
