@@ -14,7 +14,12 @@ vi.mock("../../src/utils/place-api.js", async (importOriginal) => {
 
 import { judgeSupplied, keptSupplied, placeAnswer } from "../../src/utils/place-verdict.js";
 import { getPlaceById, getPlaceCandidateNames, getPlaceReps, sanitizeForNameQuery, searchPlace } from "../../src/utils/place-api.js";
-import { __clearPlaceResolverCachesForTests, resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import {
+  __clearPlaceResolverCachesForTests,
+  countryContradiction,
+  familySearchPlace,
+  resolveStandardPlace,
+} from "../../src/utils/place-resolver.js";
 
 const RECORDED = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "place-verdict", "places-api.json"), "utf8"),
@@ -82,6 +87,20 @@ describe("a supplied standard_place must lie in the state, province and country 
     // A bare Georgia is the state (lead, 2026-08-27): the country itself is not
     // a place in it.
     ["Savannah, Chatham, Georgia", "Republic of Georgia", "Savannah, Chatham, Georgia, United States"],
+    // Germany's text takes only the lands of its empire: neither South Africa
+    // nor Namibia is one.
+    ["Hamburg, Hamburg, Germany", "Hamburg, Amathole, Eastern Cape, South Africa", "Hamburg, Germany"],
+    ["Hamburg, Deutschland", "Hamburg, Amathole, Eastern Cape, South Africa", "Hamburg, Germany"],
+    ["Heidelberg, Baden, Germany", "Heidelberg, Garden Route, Western Cape, South Africa", "Heidelberg, Baden, Germany"],
+    ["Berlin, Brandenburg, Preussen", "Berlin, Amathole, Eastern Cape, South Africa", "Berlin, Brandenburg, Prussia, Germany"],
+    ["Marburg, Hessen-Nassau, Preussen", "Marburg, Natal, South Africa", "Marburg, Hesse-Nassau, Prussia, Germany"],
+    [
+      "Hermannsburg, Hannover, Germany",
+      "Hermannsburg, Umzinyathi, KwaZulu-Natal, South Africa",
+      "Hermannsburg, Celle, Hanover, Prussia, Germany",
+    ],
+    ["Grünau, Schlesien, Germany", "Grünau, Karasburg East, Karas, Namibia", "Grunau, Striegau, Silesia, Prussia, Germany"],
+    ["Mariental, Braunschweig, Germany", "Mariental, Mariental Urban, Hardap, Namibia", "Mariental, Helmstedt, Brunswick, Germany"],
   ])("refuses %j's %j as in another country, and takes the lookup", async (place, supplied, lookup) => {
     expect(await keptSupplied(place, supplied)).toEqual({ why: "it lies in a different country than the place" });
     expect(await judged(place, supplied)).toEqual({
@@ -109,11 +128,54 @@ describe("a supplied standard_place must lie in the state, province and country 
   it.each([
     // Georgia's text, but another country than the Republic of Georgia.
     ["Athens, Clarke, Georgia", "Athens, Athens, Attica, Greece"],
-    // Another state's text, or one that names the United States itself.
+    // Another state's text, one that names the United States itself, or the
+    // state's code: only a bare "Georgia" takes the Republic of Georgia's places.
     ["Tbilisi, Montana", "Tbilisi, Republic of Georgia"],
     ["Tbilisi, Georgia, United States", "Tbilisi, Republic of Georgia"],
+    ["Tbilisi, GA", "Tbilisi, Republic of Georgia"],
+    ["Kutaisi, GA", "Kutaisi, Imereti, Republic of Georgia"],
+    // An empire's text, and a same-named place in no land of that empire.
+    ["Sarepta, Saratov, Russia", "Sarepta, Kuils River, Cape Town, Western Cape, South Africa"],
+    ["Marburg, Steiermark, Österreich", "Marburg, Natal, South Africa"],
+    ["Arad, Arad, Hungary", "`Arad, Southern, Israel"],
   ])("still refuses %j's %j as in another country", async (place, supplied) => {
     expect(await keptSupplied(place, supplied)).toEqual({ why: "it lies in a different country than the place" });
+  });
+
+  it.each([
+    // Russia's lands as the empire ended, past those the keeps below pin.
+    ["Reval, Estland, Russia", "Tallinn, Harjumaa, Estonia"],
+    ["Minsk, Minsk, Russia", "Minsk, Belarus"],
+    ["Kishinev, Bessarabia, Russia", "Chișinău, Moldova"],
+    ["Tiflis, Tiflis, Russia", "Tbilisi, Republic of Georgia"],
+    ["Aleksandropol, Erivan, Russia", "Gyumri, Shirak, Armenia"],
+    ["Baku, Baku, Russia", "Baku, Azerbaijan"],
+    ["Verny, Semirechye, Russia", "Almaty, Kazakhstan"],
+    ["Pishpek, Semirechye, Russia", "Bishkek, Kyrgyzstan"],
+    ["Khodzhent, Samarkand, Russia", "Khujand, Sughd, Tajikistan"],
+    ["Askhabad, Transcaspia, Russia", "Ashgabat, Turkmenistan"],
+    ["Tashkent, Syr-Darya, Russia", "Tashkent, Uzbekistan"],
+    ["Kars, Kars, Russia", "Kars, Türkiye"],
+    // Austria's.
+    ["Kaschau, Ungarn, Österreich", "Košice, Slovakia"],
+    ["Zara, Dalmatien, Österreich", "Zadar, Croatia"],
+    ["Suczawa, Bukowina, Österreich", "Suceava, Romania"],
+    ["Sarajevo, Bosnien, Österreich", "Sarajevo, Federation of Bosnia and Herzegovina, Bosnia-Herzegovina"],
+    ["Neusatz, Batschka, Österreich", "Novi Sad, South Bačka, Serbia"],
+    ["Cattaro, Dalmatien, Österreich", "Kotor, Montenegro"],
+    // Hungary's.
+    ["Újvidék, Bács-Bodrog, Hungary", "Novi Sad, South Bačka, Serbia"],
+    ["Eszék, Verőce, Hungary", "Osijek, Osijek-Baranja, Croatia"],
+    ["Ungvár, Ung, Hungary", "Užhorod, Zakarpattia, Ukraine"],
+    ["Muraszombat, Vas, Hungary", "Murska Sobota, Slovenia"],
+    // Germany's.
+    ["Hultschin, Ratibor, Preussen", "Hlučín, Opava, Czechia"],
+  ])("takes %j's %j, in a land of the empire the text names", async (place, value) => {
+    const found = await familySearchPlace(value);
+    if (!found) throw new Error(`FamilySearch has no place ${value}`);
+    expect(await countryContradiction(place, found)).toBe(false);
+    // The value lies in another country than one whose empire held none of it.
+    expect(await countryContradiction("Uppsala, Sweden", found)).toBe(true);
   });
 
   it("reads no country from a state or province the value names itself", async () => {
@@ -245,5 +307,56 @@ describe("judgeSupplied: the lookup that stands in for a refused value", () => {
 
   it("keeps no value a phrase's lookup agrees with, the phrase naming no state or country", async () => {
     expect((await judged("at the home of her daughter", "Of, Trabzon, Türkiye")).standardPlace).toBeNull();
+  });
+});
+
+describe("a US state or Canadian province names the one country that holds it", () => {
+  const CANADA = [
+    "Ontario", "ON", "Canada West", "Upper Canada", "Quebec", "Québec", "QC", "Canada East", "Lower Canada",
+    "Nova Scotia", "NS", "New Brunswick", "Nouveau-Brunswick", "NB", "Manitoba", "MB", "British Columbia", "BC",
+    "Prince Edward Island", "PE", "Saskatchewan", "SK", "Alberta", "AB", "Newfoundland", "NL",
+  ];
+  const STATES = [
+    "Alabama", "AL", "Alaska", "AK", "Arizona", "AZ", "Arkansas", "AR", "California", "CA", "Colorado", "CO",
+    "Connecticut", "CT", "Delaware", "DE", "Florida", "FL", "Georgia", "GA", "Hawaii", "HI", "Idaho", "ID",
+    "Illinois", "IL", "Indiana", "IN", "Iowa", "IA", "Kansas", "KS", "Kentucky", "KY", "Louisiana", "LA",
+    "Maine", "ME", "Maryland", "MD", "Massachusetts", "MA", "Michigan", "MI", "Minnesota", "MN", "Mississippi",
+    "MS", "Missouri", "MO", "Montana", "MT", "Nebraska", "NE", "Nevada", "NV", "New Hampshire", "NH",
+    "New Jersey", "NJ", "New Mexico", "NM", "New York", "NY", "North Carolina", "NC", "North Dakota", "ND",
+    "Ohio", "OH", "Oklahoma", "OK", "Oregon", "OR", "Pennsylvania", "PA", "Rhode Island", "RI",
+    "South Carolina", "SC", "South Dakota", "SD", "Tennessee", "TN", "Texas", "TX", "Utah", "UT", "Vermont", "VT",
+    "Virginia", "VA", "Washington", "WA", "West Virginia", "WV", "Wisconsin", "WI", "Wyoming", "WY",
+    "District of Columbia", "DC", "Puerto Rico", "PR",
+  ];
+  const countries = async () => {
+    const [canada, us] = [await familySearchPlace("Canada"), await familySearchPlace("United States")];
+    if (!canada || !us) throw new Error("FamilySearch has no Canada or United States");
+    return { canada, us };
+  };
+
+  it.each(CANADA)("reads %j as Canada's", async (division) => {
+    const { canada, us } = await countries();
+    expect(await countryContradiction(`Somewhere, ${division}`, canada)).toBe(false);
+    expect(await countryContradiction(`Somewhere, ${division}`, us)).toBe(true);
+  });
+
+  it.each(STATES)("reads %j as the United States'", async (division) => {
+    const { canada, us } = await countries();
+    expect(await countryContradiction(`Somewhere, ${division}`, us)).toBe(false);
+    expect(await countryContradiction(`Somewhere, ${division}`, canada)).toBe(true);
+  });
+});
+
+describe("placeAnswer: a lookup fills a fact with none whatever its text names, as on main", () => {
+  it.each([
+    // Texts of the e2e final trees, each filled right on main.
+    ["West Topsham, Orange, Vermont", "Topsham, Orange, Vermont, United States"],
+    ["Precinct 2, Hill, Texas", "Justice Precinct 2, Hill, Texas, United States"],
+    ["Bystré 30, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia"],
+    ["Maracaibo, Venezuela", "Zulia, Venezuela"],
+    ["Santa Rosa de los Andes, Aconcagua, Chile", "Los Andes, Aconcagua, Chile"],
+    ["<Simmesport, Avoyelles, Louisiana>", "Simmesport, Avoyelles, Louisiana, United States"],
+  ])("fills %j with %j", async (place, lookup) => {
+    expect(await placeAnswer(place, [], () => resolveStandardPlace(place))).toEqual({ standardPlace: lookup, from: "lookup" });
   });
 });

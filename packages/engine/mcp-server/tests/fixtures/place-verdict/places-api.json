@@ -1,5 +1,5 @@
 {
- "_about": "FamilySearch Places API answers recorded 2026-10-29 (Accept-Language: en) for the cases in tests/utils/place-verdict-recorded.test.ts, as the fetchers in src/utils/place-api.ts return them, coordinates dropped: searchPlace by \"<name as searched>|<date>|<~ when fuzzy>\", getPlaceById by representation id, getPlaceReps by place id. The searches for \"Washington, United States\" (479 places) and \"Hamburg\" keep only the places whose full name is that name, the only ones familySearchPlace reads.",
+ "_about": "FamilySearch Places API answers recorded 2026-10-29 and 2026-10-30 (Accept-Language: en) for the cases in tests/utils/place-verdict-recorded.test.ts, as the fetchers in src/utils/place-api.ts return them, coordinates dropped: searchPlace by \"<name as searched>|<date>|<~ when fuzzy>\", getPlaceById by representation id, getPlaceReps by place id. The searches for \"Washington, United States\" (479 places), \"Hamburg\", \"Canada\" and \"United States\" keep only the places whose full name is that name, the only ones familySearchPlace reads.",
  "search": {
   "Armagh, Armagh, County Armagh, Northern Ireland, United Kingdom||": [
    {
@@ -5143,6 +5143,1462 @@
     "dateRange": "+1834/+1899",
     "score": 99
    }
+  ],
+  "<Simmesport, Avoyelles, Louisiana>||": [
+   {
+    "placeId": "481823",
+    "placeRepId": "4173486",
+    "name": "Simmesport",
+    "fullName": "Simmesport, Avoyelles, Louisiana, United States",
+    "type": "Town",
+    "dateRange": "+1840/",
+    "score": 100
+   }
+  ],
+  "`Arad, Southern, Israel||": [
+   {
+    "placeId": "4303713",
+    "placeRepId": "2135600",
+    "name": "`Arad",
+    "fullName": "`Arad, Southern, Israel",
+    "type": "Populated Place",
+    "dateRange": "+1948/",
+    "score": 92
+   }
+  ],
+  "Almaty, Kazakhstan||": [
+   {
+    "placeId": "1930518",
+    "placeRepId": "4462",
+    "name": "Almaty",
+    "fullName": "Almaty, Kazakhstan",
+    "type": "Region",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1928263",
+    "placeRepId": "2412",
+    "name": "Almaty",
+    "fullName": "Almaty, Kazakhstan",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930518",
+    "placeRepId": "449319",
+    "name": "Almaty",
+    "fullName": "Almaty, Kazakhstan, Soviet Union",
+    "type": "Region",
+    "dateRange": "+1925/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "1928263",
+    "placeRepId": "446499",
+    "name": "Almaty",
+    "fullName": "Almaty, Kazakhstan, Soviet Union",
+    "type": "City",
+    "dateRange": "+1925/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "10495204",
+    "placeRepId": "12234136",
+    "name": "Almaty",
+    "fullName": "Almaty, Astana, Kazakhstan",
+    "type": "District",
+    "dateRange": "+1991/",
+    "score": 94
+   },
+   {
+    "placeId": "3600531",
+    "placeRepId": "6672244",
+    "name": "Almaty",
+    "fullName": "Almaty, Almaty, Kazakhstan, Soviet Union",
+    "type": "Populated Place",
+    "score": 94
+   },
+   {
+    "placeId": "10495204",
+    "placeRepId": "12234622",
+    "name": "Almaty",
+    "fullName": "Almaty, Astana, Kazakhstan, Soviet Union",
+    "type": "District",
+    "dateRange": "/+1991",
+    "score": 90
+   },
+   {
+    "placeId": "3600531",
+    "placeRepId": "1605533",
+    "name": "Almaty",
+    "fullName": "Almaty, Medeu, Almaty, Kazakhstan",
+    "type": "Populated Place",
+    "score": 88
+   },
+   {
+    "placeId": "4728211",
+    "placeRepId": "2377395",
+    "name": "Kazakhstan",
+    "fullName": "Kazakhstan, Enbekshikazakh, Almaty, Kazakhstan",
+    "type": "Town",
+    "dateRange": "+1991/",
+    "score": 87
+   },
+   {
+    "placeId": "10644738",
+    "placeRepId": "12482043",
+    "name": "almaty",
+    "fullName": "almaty, Abay, Karaganda, Kazakhstan",
+    "type": "Village",
+    "dateRange": "+1991/",
+    "score": 87
+   },
+   {
+    "placeId": "4728211",
+    "placeRepId": "7411254",
+    "name": "Qazaqstan",
+    "fullName": "Qazaqstan, Almaty, Kazakhstan, Soviet Union",
+    "type": "Town",
+    "dateRange": "/+1991",
+    "score": 86
+   }
+  ],
+  "Ashgabat, Turkmenistan||": [
+   {
+    "placeId": "5061450",
+    "placeRepId": "2241823",
+    "name": "Ashgabat",
+    "fullName": "Ashgabat, Turkmenistan",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "5061450",
+    "placeRepId": "7344606",
+    "name": "Ashgabat",
+    "fullName": "Ashgabat, Ahal, Turkmenistan, Soviet Union",
+    "type": "Town",
+    "dateRange": "/+1991",
+    "score": 90
+   }
+  ],
+  "Baku, Azerbaijan||": [
+   {
+    "placeId": "1927770",
+    "placeRepId": "3811",
+    "name": "Baku",
+    "fullName": "Baku, Azerbaijan",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1927770",
+    "placeRepId": "447196",
+    "name": "Baku",
+    "fullName": "Baku, Azerbaijan, Soviet Union",
+    "type": "Independent City",
+    "dateRange": "+1920/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "5061439",
+    "placeRepId": "2241862",
+    "name": "Baku",
+    "fullName": "Baku, Baku, Azerbaijan",
+    "type": "Populated Place",
+    "dateRange": "+1991/",
+    "score": 90
+   },
+   {
+    "placeId": "5061439",
+    "placeRepId": "7344651",
+    "name": "Baku",
+    "fullName": "Baku, Baku, Azerbaijan, Soviet Union",
+    "type": "Populated Place",
+    "dateRange": "+1920/+1991",
+    "score": 86
+   }
+  ],
+  "Berlin, Amathole, Eastern Cape, South Africa||": [
+   {
+    "placeId": "4123999",
+    "placeRepId": "12844169",
+    "name": "Berlin",
+    "fullName": "Berlin, Amathole, Eastern Cape, South Africa",
+    "type": "Town",
+    "dateRange": "+1994/+2011",
+    "score": 100
+   }
+  ],
+  "Berlin, Brandenburg, Preussen||": [
+   {
+    "placeId": "6332108",
+    "placeRepId": "8094862",
+    "name": "Berlin",
+    "fullName": "Berlin, Brandenburg, Prussia, Germany",
+    "type": "Independent City",
+    "dateRange": "+1871/+1920",
+    "score": 99
+   },
+   {
+    "placeId": "6332108",
+    "placeRepId": "3453398",
+    "name": "Berlin",
+    "fullName": "Berlin, Brandenburg, Prussia",
+    "type": "City",
+    "dateRange": "/+1871",
+    "score": 98
+   }
+  ],
+  "Berlin, Brandenburg, Prussia, Germany||": [
+   {
+    "placeId": "6332108",
+    "placeRepId": "8094862",
+    "name": "Berlin",
+    "fullName": "Berlin, Brandenburg, Prussia, Germany",
+    "type": "Independent City",
+    "dateRange": "+1871/+1920",
+    "score": 100
+   }
+  ],
+  "Bishkek, Kyrgyzstan||": [
+   {
+    "placeId": "1928268",
+    "placeRepId": "2419",
+    "name": "Bishkek",
+    "fullName": "Bishkek, Kyrgyzstan",
+    "type": "Major City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1928268",
+    "placeRepId": "446506",
+    "name": "Bishkek",
+    "fullName": "Bishkek, Kyrgyzstan, Soviet Union",
+    "type": "City",
+    "dateRange": "+1924/+1991",
+    "score": 95
+   }
+  ],
+  "Bystré 30, Polička, Čechy, Rakousko||": [
+   {
+    "placeId": "4442974",
+    "placeRepId": "11900961",
+    "name": "Bistrau",
+    "fullName": "Bistrau, Polička, Bohemia",
+    "type": "Municipality",
+    "dateRange": "/+1918",
+    "score": 95
+   },
+   {
+    "placeId": "4442974",
+    "placeRepId": "7251460",
+    "name": "Bystré",
+    "fullName": "Bystré, Polička, Bohemia, Czechoslovakia",
+    "type": "Populated Place",
+    "dateRange": "+1918/+1960",
+    "score": 81
+   }
+  ],
+  "Canada||": [
+   {
+    "placeId": "1927164",
+    "placeRepId": "133",
+    "name": "Canada",
+    "fullName": "Canada",
+    "type": "Country",
+    "dateRange": "+1867/",
+    "score": 100
+   }
+  ],
+  "Chișinău, Moldova||": [
+   {
+    "placeId": "1928401",
+    "placeRepId": "2251",
+    "name": "Chișinău",
+    "fullName": "Chișinău, Moldova",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "5097665",
+    "placeRepId": "244967",
+    "name": "Chișinău",
+    "fullName": "Chișinău, Moldova",
+    "type": "Populated Place",
+    "dateRange": "+1991/",
+    "score": 96
+   },
+   {
+    "placeId": "1928401",
+    "placeRepId": "446412",
+    "name": "Chișinău",
+    "fullName": "Chișinău, Moldova, Soviet Union",
+    "type": "Independent City",
+    "dateRange": "+1940/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "9502466",
+    "placeRepId": "13979570",
+    "name": "kishinevskii raion",
+    "fullName": "kishinevskii raion, Moldova, Soviet Union",
+    "type": "County",
+    "dateRange": "+1940/+1991",
+    "score": 90
+   },
+   {
+    "placeId": "1930845",
+    "placeRepId": "449472",
+    "name": "Judeţul Chişinău",
+    "fullName": "Judeţul Chişinău, Moldova, Soviet Union",
+    "type": "County",
+    "dateRange": "+1940/+1991",
+    "score": 90
+   },
+   {
+    "placeId": "1928401",
+    "placeRepId": "11970384",
+    "name": "Kishinev",
+    "fullName": "Kishinev, Kishinev, Bessarabia, Russian Empire",
+    "type": "Town",
+    "dateRange": "+1836/+1917",
+    "score": 90
+   },
+   {
+    "placeId": "1928401",
+    "placeRepId": "13979567",
+    "name": "kishinyov",
+    "fullName": "kishinyov, Bessarabia, Russian Empire",
+    "type": "Town",
+    "dateRange": "+1812/+1836",
+    "score": 89
+   },
+   {
+    "placeId": "5097665",
+    "placeRepId": "2246478",
+    "name": "Chișinău",
+    "fullName": "Chișinău, Moldova, Soviet Union",
+    "type": "Populated Place",
+    "dateRange": "+1940/+1991",
+    "score": 89
+   },
+   {
+    "placeId": "9502466",
+    "placeRepId": "13869037",
+    "name": "Ținutul Lăpușna",
+    "fullName": "Ținutul Lăpușna, Bessarabia, Romania",
+    "type": "County",
+    "dateRange": "+1918/+1949",
+    "score": 83
+   },
+   {
+    "placeId": "9502466",
+    "placeRepId": "10951044",
+    "name": "Kishinev",
+    "fullName": "Kishinev, Bessarabia, Russian Empire",
+    "type": "County",
+    "dateRange": "+1836/+1917",
+    "score": 83
+   },
+   {
+    "placeId": "9502466",
+    "placeRepId": "13869036",
+    "name": "orgeevskii uezd",
+    "fullName": "orgeevskii uezd, Bessarabia, Russian Empire",
+    "type": "County",
+    "dateRange": "+1812/+1836",
+    "score": 83
+   }
+  ],
+  "Grünau, Karasburg East, Karas, Namibia||": [
+   {
+    "placeId": "3493536",
+    "placeRepId": "6676784",
+    "name": "Grünau",
+    "fullName": "Grünau, Karasburg East, Karas, Namibia",
+    "type": "Populated Place",
+    "score": 100
+   }
+  ],
+  "Grünau, Schlesien, Germany||": [
+   {
+    "placeId": "4454998",
+    "placeRepId": "12635403",
+    "name": "Grunau",
+    "fullName": "Grunau, Striegau, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 97
+   },
+   {
+    "placeId": "4455164",
+    "placeRepId": "12635260",
+    "name": "Grunau",
+    "fullName": "Grunau, Neisse, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 97
+   },
+   {
+    "placeId": "4445001",
+    "placeRepId": "12634739",
+    "name": "Grunau",
+    "fullName": "Grunau, Breslau, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 97
+   },
+   {
+    "placeId": "4475661",
+    "placeRepId": "12632417",
+    "name": "Grunau",
+    "fullName": "Grunau, Schweidnitz, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 97
+   },
+   {
+    "placeId": "6462638",
+    "placeRepId": "9410565",
+    "name": "Grunau",
+    "fullName": "Grunau, Frankenstein, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 97
+   },
+   {
+    "placeId": "6464388",
+    "placeRepId": "9406260",
+    "name": "Grunau",
+    "fullName": "Grunau, Nimptsch, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 97
+   },
+   {
+    "placeId": "4474563",
+    "placeRepId": "12633525",
+    "name": "Grunau",
+    "fullName": "Grunau, Hirschberg, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 94
+   }
+  ],
+  "Grunau, Striegau, Silesia, Prussia, Germany||": [
+   {
+    "placeId": "4454998",
+    "placeRepId": "12635403",
+    "name": "Grunau",
+    "fullName": "Grunau, Striegau, Silesia, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1919",
+    "score": 100
+   }
+  ],
+  "Gyumri, Shirak, Armenia||": [
+   {
+    "placeId": "8403354",
+    "placeRepId": "389807",
+    "name": "Gyumri",
+    "fullName": "Gyumri, Shirak, Armenia",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   }
+  ],
+  "Hamburg, Amathole, Eastern Cape, South Africa||": [
+   {
+    "placeId": "4121337",
+    "placeRepId": "12319382",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Amathole, Eastern Cape, South Africa",
+    "type": "Town",
+    "dateRange": "+1994/",
+    "score": 100
+   }
+  ],
+  "Hamburg, Deutschland||": [
+   {
+    "placeId": "1928661",
+    "placeRepId": "2035",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Germany",
+    "type": "Major City",
+    "dateRange": "+1871/",
+    "score": 100
+   }
+  ],
+  "Hamburg, Germany||": [
+   {
+    "placeId": "1928661",
+    "placeRepId": "2035",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Germany",
+    "type": "Major City",
+    "dateRange": "+1871/",
+    "score": 100
+   }
+  ],
+  "Hamburg, Hamburg, Germany||": [
+   {
+    "placeId": "1928661",
+    "placeRepId": "2035",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Germany",
+    "type": "Major City",
+    "dateRange": "+1871/",
+    "score": 92
+   },
+   {
+    "placeId": "878567",
+    "placeRepId": "4661958",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Hamburg, Erie, New York, United States",
+    "type": "Village",
+    "score": 63
+   }
+  ],
+  "Heidelberg, Baden, Germany||": [
+   {
+    "placeId": "6415867",
+    "placeRepId": "8145969",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Baden, Germany",
+    "type": "District",
+    "dateRange": "+1871/+1945",
+    "score": 99
+   },
+   {
+    "placeId": "6119826",
+    "placeRepId": "9272700",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Heidelberg, Baden, Germany",
+    "type": "City",
+    "dateRange": "+1871/+1945",
+    "score": 94
+   },
+   {
+    "placeId": "6119826",
+    "placeRepId": "12199545",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Baden-Württemberg, Germany",
+    "type": "Independent City",
+    "dateRange": "+1956/",
+    "score": 93
+   },
+   {
+    "placeId": "6415867",
+    "placeRepId": "12199542",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Baden-Württemberg, Germany",
+    "type": "District",
+    "dateRange": "+1945/+1973",
+    "score": 93
+   },
+   {
+    "placeId": "10370433",
+    "placeRepId": "12001518",
+    "name": "Unter-Rheinkreis",
+    "fullName": "Unter-Rheinkreis, Baden",
+    "type": "District",
+    "dateRange": "+1832/+1864",
+    "score": 85
+   },
+   {
+    "placeId": "10370432",
+    "placeRepId": "12001517",
+    "name": "Neckarkreis",
+    "fullName": "Neckarkreis, Württemberg",
+    "type": "District",
+    "dateRange": "+1818/+1824",
+    "score": 85
+   },
+   {
+    "placeId": "6119826",
+    "placeRepId": "7713117",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Heidelberg, Baden-Württemberg, Germany",
+    "type": "City",
+    "dateRange": "+1945/+1956",
+    "score": 85
+   },
+   {
+    "placeId": "1948592",
+    "placeRepId": "436258",
+    "name": "Rhein-Neckar-Kreis",
+    "fullName": "Rhein-Neckar-Kreis, Baden-Württemberg, Germany",
+    "type": "District",
+    "dateRange": "+1973/",
+    "score": 76
+   }
+  ],
+  "Heidelberg, Garden Route, Western Cape, South Africa||": [
+   {
+    "placeId": "10283670",
+    "placeRepId": "11851193",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Garden Route, Western Cape, South Africa",
+    "type": "Town",
+    "dateRange": "+1994/",
+    "score": 100
+   }
+  ],
+  "Hermannsburg, Celle, Hanover, Prussia, Germany||": [
+   {
+    "placeId": "6300818",
+    "placeRepId": "9509566",
+    "name": "Hermannsburg",
+    "fullName": "Hermannsburg, Celle, Hanover, Prussia, Germany",
+    "type": "Civil Registration District",
+    "dateRange": "+1866/+1946",
+    "score": 100
+   },
+   {
+    "placeId": "6121036",
+    "placeRepId": "9275615",
+    "name": "Hermannsburg",
+    "fullName": "Hermannsburg, Celle, Hanover, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1866/+1946",
+    "score": 100
+   },
+   {
+    "placeId": "6272208",
+    "placeRepId": "11973165",
+    "name": "Celle",
+    "fullName": "Celle, Celle, Lower Saxony, Germany",
+    "type": "City",
+    "dateRange": "+1973/",
+    "score": 78
+   }
+  ],
+  "Hermannsburg, Hannover, Germany||": [
+   {
+    "placeId": "6300818",
+    "placeRepId": "9509566",
+    "name": "Hermannsburg",
+    "fullName": "Hermannsburg, Celle, Hanover, Prussia, Germany",
+    "type": "Civil Registration District",
+    "dateRange": "+1866/+1946",
+    "score": 99
+   },
+   {
+    "placeId": "6121036",
+    "placeRepId": "9275615",
+    "name": "Hermannsburg",
+    "fullName": "Hermannsburg, Celle, Hanover, Prussia, Germany",
+    "type": "Municipality",
+    "dateRange": "+1866/+1946",
+    "score": 99
+   },
+   {
+    "placeId": "6272208",
+    "placeRepId": "11973165",
+    "name": "Celle",
+    "fullName": "Celle, Celle, Lower Saxony, Germany",
+    "type": "City",
+    "dateRange": "+1973/",
+    "score": 77
+   }
+  ],
+  "Hermannsburg, Umzinyathi, KwaZulu-Natal, South Africa||": [
+   {
+    "placeId": "10625564",
+    "placeRepId": "12453175",
+    "name": "Hermannsburg",
+    "fullName": "Hermannsburg, Umzinyathi, KwaZulu-Natal, South Africa",
+    "type": "Village",
+    "dateRange": "+1994/",
+    "score": 100
+   }
+  ],
+  "Hlučín, Opava, Czechia||": [
+   {
+    "placeId": "4440697",
+    "placeRepId": "7263290",
+    "name": "Hlučín",
+    "fullName": "Hlučín, Opava, Czechia",
+    "type": "Municipality",
+    "dateRange": "+1993/",
+    "score": 100
+   }
+  ],
+  "Kars, Türkiye||": [
+   {
+    "placeId": "5966374",
+    "placeRepId": "374145",
+    "name": "Kars",
+    "fullName": "Kars, Türkiye",
+    "type": "Province",
+    "dateRange": "+1923/",
+    "score": 100
+   },
+   {
+    "placeId": "5966374",
+    "placeRepId": "11973636",
+    "name": "Kars",
+    "fullName": "Kars, Ottoman Empire",
+    "type": "Province",
+    "dateRange": "+1585/+1877",
+    "score": 97
+   },
+   {
+    "placeId": "9239726",
+    "placeRepId": "12074624",
+    "name": "Kars",
+    "fullName": "Kars, Kars, Türkiye",
+    "type": "District",
+    "dateRange": "+1923/",
+    "score": 94
+   },
+   {
+    "placeId": "6071957",
+    "placeRepId": "12074646",
+    "name": "Kars",
+    "fullName": "Kars, Kars, Kars, Türkiye",
+    "type": "City",
+    "dateRange": "+1923/",
+    "score": 90
+   },
+   {
+    "placeId": "6071957",
+    "placeRepId": "349694",
+    "name": "Kars",
+    "fullName": "Kars, Kars District, Kars, Ottoman Empire",
+    "type": "Town",
+    "dateRange": "/+1878",
+    "score": 84
+   },
+   {
+    "placeId": "9239726",
+    "placeRepId": "10560854",
+    "name": "Kars District",
+    "fullName": "Kars District, Kars, Ottoman Empire",
+    "type": "District",
+    "dateRange": "/+1877",
+    "score": 83
+   },
+   {
+    "placeId": "4675711",
+    "placeRepId": "12220899",
+    "name": "Kash",
+    "fullName": "Kash, Berat, Janina, Ottoman Empire",
+    "type": "Village",
+    "dateRange": "/+1912",
+    "score": 81
+   },
+   {
+    "placeId": "1927048",
+    "placeRepId": "3912",
+    "name": "Soviet Armenia",
+    "fullName": "Soviet Armenia, Soviet Union",
+    "type": "Country",
+    "dateRange": "+1920/+1991",
+    "score": 79
+   }
+  ],
+  "Khujand, Sughd, Tajikistan||": [
+   {
+    "placeId": "5059984",
+    "placeRepId": "2242247",
+    "name": "Khujand",
+    "fullName": "Khujand, Sughd, Tajikistan",
+    "type": "Populated Place",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "5059984",
+    "placeRepId": "7344963",
+    "name": "Khujand",
+    "fullName": "Khujand, Sughd, Tajikistan, Soviet Union",
+    "type": "Populated Place",
+    "dateRange": "+1930/+1991",
+    "score": 96
+   }
+  ],
+  "Kotor, Montenegro||": [
+   {
+    "placeId": "1943147",
+    "placeRepId": "1264",
+    "name": "Kotor",
+    "fullName": "Kotor, Montenegro",
+    "type": "Municipality",
+    "dateRange": "+2006/",
+    "score": 100
+   },
+   {
+    "placeId": "4686304",
+    "placeRepId": "2073913",
+    "name": "Kotor",
+    "fullName": "Kotor, Montenegro, Yugoslavia",
+    "type": "Town",
+    "score": 100
+   },
+   {
+    "placeId": "1943147",
+    "placeRepId": "433263",
+    "name": "Kotor",
+    "fullName": "Kotor, Montenegro, Yugoslavia",
+    "type": "Municipality",
+    "dateRange": "/+2006",
+    "score": 95
+   }
+  ],
+  "Maracaibo, Venezuela||": [
+   {
+    "placeId": "1929518",
+    "placeRepId": "5379",
+    "name": "Zulia",
+    "fullName": "Zulia, Venezuela",
+    "type": "State",
+    "dateRange": "+1864/",
+    "score": 99
+   },
+   {
+    "placeId": "4243426",
+    "placeRepId": "2101543",
+    "name": "Maracaibo",
+    "fullName": "Maracaibo, Zulia, Venezuela",
+    "type": "City",
+    "dateRange": "+1574/",
+    "score": 94
+   },
+   {
+    "placeId": "1939191",
+    "placeRepId": "442759",
+    "name": "Maracaibo",
+    "fullName": "Maracaibo, Zulia, Venezuela",
+    "type": "Municipality",
+    "dateRange": "+1529/",
+    "score": 94
+   },
+   {
+    "placeId": "4243426",
+    "placeRepId": "12574625",
+    "name": "Maracaibo",
+    "fullName": "Maracaibo, Maracaibo, Zulia, Venezuela",
+    "type": "City",
+    "dateRange": "+1958/",
+    "score": 92
+   },
+   {
+    "placeId": "4243426",
+    "placeRepId": "12574623",
+    "name": "Maracaibo",
+    "fullName": "Maracaibo, Maracaibo, Zulia, Venezuela",
+    "type": "City",
+    "dateRange": "+1958/",
+    "score": 92
+   },
+   {
+    "placeId": "10238641",
+    "placeRepId": "11779432",
+    "name": "Región Zuliana",
+    "fullName": "Región Zuliana, Venezuela",
+    "type": "Region",
+    "score": 85
+   },
+   {
+    "placeId": "10264827",
+    "placeRepId": "11822687",
+    "name": "Venezuela",
+    "fullName": "Venezuela, Lagunillas, Zulia, Venezuela",
+    "type": "Parish",
+    "score": 86
+   },
+   {
+    "placeId": "10280385",
+    "placeRepId": "11846932",
+    "name": "Arquidiócesis de Maracaibo",
+    "fullName": "Arquidiócesis de Maracaibo, Venezuela",
+    "type": "Archdiocese",
+    "dateRange": "+1966/",
+    "score": 81
+   }
+  ],
+  "Marburg, Hesse-Nassau, Prussia, Germany||": [
+   {
+    "placeId": "6272266",
+    "placeRepId": "12035627",
+    "name": "Marburg",
+    "fullName": "Marburg, Hesse-Nassau, Prussia, Germany",
+    "type": "District",
+    "dateRange": "+1866/+1944",
+    "score": 100
+   },
+   {
+    "placeId": "6120823",
+    "placeRepId": "12035708",
+    "name": "Marburg",
+    "fullName": "Marburg, Marburg, Hesse-Nassau, Prussia, Germany",
+    "type": "City",
+    "dateRange": "+1866/+1944",
+    "score": 96
+   }
+  ],
+  "Marburg, Hessen-Nassau, Preussen||": [
+   {
+    "placeId": "6272266",
+    "placeRepId": "12035627",
+    "name": "Marburg",
+    "fullName": "Marburg, Hesse-Nassau, Prussia, Germany",
+    "type": "District",
+    "dateRange": "+1866/+1944",
+    "score": 99
+   },
+   {
+    "placeId": "6120823",
+    "placeRepId": "12035708",
+    "name": "Marburg",
+    "fullName": "Marburg, Marburg, Hesse-Nassau, Prussia, Germany",
+    "type": "City",
+    "dateRange": "+1866/+1944",
+    "score": 95
+   }
+  ],
+  "Marburg, Natal, South Africa||": [
+   {
+    "placeId": "4118384",
+    "placeRepId": "6795290",
+    "name": "Marburg",
+    "fullName": "Marburg, Natal, South Africa",
+    "type": "Populated Place",
+    "score": 100
+   }
+  ],
+  "Mariental, Braunschweig, Germany||": [
+   {
+    "placeId": "6121440",
+    "placeRepId": "7715501",
+    "name": "Mariental",
+    "fullName": "Mariental, Helmstedt, Brunswick, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1946",
+    "score": 97
+   }
+  ],
+  "Mariental, Helmstedt, Brunswick, Germany||": [
+   {
+    "placeId": "6121440",
+    "placeRepId": "7715501",
+    "name": "Mariental",
+    "fullName": "Mariental, Helmstedt, Brunswick, Germany",
+    "type": "Municipality",
+    "dateRange": "+1871/+1946",
+    "score": 100
+   }
+  ],
+  "Mariental, Mariental Urban, Hardap, Namibia||": [
+   {
+    "placeId": "3493196",
+    "placeRepId": "6676015",
+    "name": "Mariental",
+    "fullName": "Mariental, Mariental Urban, Hardap, Namibia",
+    "type": "Town",
+    "dateRange": "+1990/",
+    "score": 100
+   }
+  ],
+  "Minsk, Belarus||": [
+   {
+    "placeId": "1928615",
+    "placeRepId": "2096",
+    "name": "Minsk",
+    "fullName": "Minsk, Belarus",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1928614",
+    "placeRepId": "2095",
+    "name": "Minsk",
+    "fullName": "Minsk, Belarus",
+    "type": "Region",
+    "dateRange": "+1991/",
+    "score": 96
+   },
+   {
+    "placeId": "1936879",
+    "placeRepId": "10921588",
+    "name": "Minsk",
+    "fullName": "Minsk, Belarus, Soviet Union",
+    "type": "District",
+    "dateRange": "+1922/+1938",
+    "score": 93
+   },
+   {
+    "placeId": "1928615",
+    "placeRepId": "446397",
+    "name": "Minsk",
+    "fullName": "Minsk, Minsk, Belarus, Soviet Union",
+    "type": "City",
+    "dateRange": "+1918/+1991",
+    "score": 92
+   },
+   {
+    "placeId": "1936879",
+    "placeRepId": "5954401",
+    "name": "Minsk",
+    "fullName": "Minsk, Minsk, Belarus, Soviet Union",
+    "type": "District",
+    "dateRange": "+1938/+1991",
+    "score": 90
+   },
+   {
+    "placeId": "1928614",
+    "placeRepId": "446396",
+    "name": "Minsk",
+    "fullName": "Minsk, Belarus, Soviet Union",
+    "type": "Region",
+    "dateRange": "+1921/+1991",
+    "score": 89
+   },
+   {
+    "placeId": "10375476",
+    "placeRepId": "12010609",
+    "name": "Belarus",
+    "fullName": "Belarus, Slutsk, Minsk, Belarus",
+    "type": "Colony",
+    "dateRange": "+1992/",
+    "score": 87
+   },
+   {
+    "placeId": "1936879",
+    "placeRepId": "441236",
+    "name": "Minsk District",
+    "fullName": "Minsk District, Minsk, Belarus",
+    "type": "District",
+    "dateRange": "+1991/",
+    "score": 84
+   }
+  ],
+  "Murska Sobota, Slovenia||": [
+   {
+    "placeId": "1930235",
+    "placeRepId": "6083",
+    "name": "Murska Sobota",
+    "fullName": "Murska Sobota, Slovenia",
+    "type": "Municipality",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1930235",
+    "placeRepId": "449889",
+    "name": "Murska Sobota",
+    "fullName": "Murska Sobota, Slovenia, Yugoslavia",
+    "type": "Town",
+    "dateRange": "/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "4683916",
+    "placeRepId": "2079514",
+    "name": "Murska Sobota",
+    "fullName": "Murska Sobota, Murska Sobota, Slovenia",
+    "type": "Populated Place",
+    "dateRange": "+1991/",
+    "score": 94
+   },
+   {
+    "placeId": "4683916",
+    "placeRepId": "7053259",
+    "name": "Murska Sobota",
+    "fullName": "Murska Sobota, Murska Sobota, Slovenia, Yugoslavia",
+    "type": "Populated Place",
+    "dateRange": "/+1991",
+    "score": 90
+   }
+  ],
+  "Novi Sad, South Bačka, Serbia||": [
+   {
+    "placeId": "1950914",
+    "placeRepId": "930",
+    "name": "Novi Sad",
+    "fullName": "Novi Sad, South Bačka, Serbia",
+    "type": "City",
+    "dateRange": "+2006/",
+    "score": 100
+   },
+   {
+    "placeId": "4683605",
+    "placeRepId": "221866",
+    "name": "Novi Sad",
+    "fullName": "Novi Sad, Novi Sad, South Bačka, Serbia",
+    "type": "Populated Place",
+    "dateRange": "+2006/",
+    "score": 94
+   },
+   {
+    "placeId": "1950914",
+    "placeRepId": "425491",
+    "name": "Novi Sad",
+    "fullName": "Novi Sad, Serbia, Yugoslavia",
+    "type": "Municipality",
+    "dateRange": "+1918/+2006",
+    "score": 87
+   }
+  ],
+  "Osijek, Osijek-Baranja, Croatia||": [
+   {
+    "placeId": "5061272",
+    "placeRepId": "11495834",
+    "name": "Osijek",
+    "fullName": "Osijek, Osijek-Baranja, Croatia",
+    "type": "City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "5061272",
+    "placeRepId": "7344859",
+    "name": "Osijek",
+    "fullName": "Osijek, Osijek-Baranja, Croatia, Yugoslavia",
+    "type": "City",
+    "dateRange": "+1918/+1991",
+    "score": 96
+   }
+  ],
+  "Precinct 2, Hill, Texas||": [
+   {
+    "placeId": "6510968",
+    "placeRepId": "8072622",
+    "name": "Justice Precinct 2",
+    "fullName": "Justice Precinct 2, Hill, Texas, United States",
+    "type": "Precinct",
+    "score": 98
+   }
+  ],
+  "Santa Rosa de los Andes, Aconcagua, Chile||": [
+   {
+    "placeId": "4264152",
+    "placeRepId": "7102706",
+    "name": "Los Andes",
+    "fullName": "Los Andes, Los Andes, Valparaíso, Chile",
+    "type": "Municipality",
+    "dateRange": "+1976/",
+    "score": 93
+   },
+   {
+    "placeId": "4264152",
+    "placeRepId": "11083361",
+    "name": "Los Andes",
+    "fullName": "Los Andes, Aconcagua, Chile",
+    "type": "Municipality",
+    "dateRange": "/+1976",
+    "score": 90
+   },
+   {
+    "placeId": "8378154",
+    "placeRepId": "3473168",
+    "name": "Los Andes",
+    "fullName": "Los Andes, Los Andes, Los Andes, Valparaíso, Chile",
+    "type": "City",
+    "dateRange": "+1976/",
+    "score": 87
+   },
+   {
+    "placeId": "1929620",
+    "placeRepId": "5537",
+    "name": "Valparaíso",
+    "fullName": "Valparaíso, Chile",
+    "type": "Region",
+    "dateRange": "+1976/",
+    "score": 80
+   },
+   {
+    "placeId": "8378154",
+    "placeRepId": "12889110",
+    "name": "Los Andes",
+    "fullName": "Los Andes, Los Andes, Aconcagua, Chile",
+    "type": "City",
+    "dateRange": "+1791/+1976",
+    "score": 80
+   }
+  ],
+  "Sarajevo, Federation of Bosnia and Herzegovina, Bosnia-Herzegovina||": [
+   {
+    "placeId": "5061629",
+    "placeRepId": "244896",
+    "name": "Sarajevo",
+    "fullName": "Sarajevo, Federation of Bosnia and Herzegovina, Bosnia-Herzegovina",
+    "type": "City",
+    "dateRange": "+1992/",
+    "score": 100
+   }
+  ],
+  "Sarepta, Kuils River, Cape Town, Western Cape, South Africa||": [
+   {
+    "placeId": "10577781",
+    "placeRepId": "12364032",
+    "name": "Sarepta",
+    "fullName": "Sarepta, Kuils River, Cape Town, Western Cape, South Africa",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+2000/",
+    "score": 98
+   }
+  ],
+  "Suceava, Romania||": [
+   {
+    "placeId": "1929277",
+    "placeRepId": "5126",
+    "name": "Suceava",
+    "fullName": "Suceava, Romania",
+    "type": "County (Top level)",
+    "dateRange": "+1940/",
+    "score": 100
+   },
+   {
+    "placeId": "1929277",
+    "placeRepId": "12247349",
+    "name": "Suceava",
+    "fullName": "Suceava, Bukovina, Romania",
+    "type": "District",
+    "dateRange": "+1918/+1940",
+    "score": 93
+   },
+   {
+    "placeId": "5060694",
+    "placeRepId": "2241642",
+    "name": "Suceava",
+    "fullName": "Suceava, Suceava, Romania",
+    "type": "Town",
+    "score": 88
+   }
+  ],
+  "Tallinn, Harjumaa, Estonia||": [
+   {
+    "placeId": "5061444",
+    "placeRepId": "2241816",
+    "name": "Tallinn",
+    "fullName": "Tallinn, Harjumaa, Estonia",
+    "type": "City",
+    "dateRange": "+1990/",
+    "score": 100
+   },
+   {
+    "placeId": "5061444",
+    "placeRepId": "12598809",
+    "name": "Tallinn",
+    "fullName": "Tallinn, Harjumaa, Estonia",
+    "type": "City",
+    "dateRange": "+1918/+1950",
+    "score": 96
+   },
+   {
+    "placeId": "5061444",
+    "placeRepId": "12498469",
+    "name": "Reval",
+    "fullName": "Reval, Harrien, Duchy of Estonia, Sweden",
+    "type": "City",
+    "dateRange": "+1561/+1710",
+    "score": 88
+   },
+   {
+    "placeId": "5061444",
+    "placeRepId": "11085908",
+    "name": "Reval",
+    "fullName": "Reval, Reval, Estonia, Russian Empire",
+    "type": "City",
+    "dateRange": "+1710/+1918",
+    "score": 88
+   }
+  ],
+  "Tashkent, Uzbekistan||": [
+   {
+    "placeId": "3494370",
+    "placeRepId": "160139",
+    "name": "Tashkent",
+    "fullName": "Tashkent, Uzbekistan",
+    "type": "Independent City",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "1927273",
+    "placeRepId": "3386",
+    "name": "Tashkent",
+    "fullName": "Tashkent, Uzbekistan",
+    "type": "Province",
+    "dateRange": "+1991/",
+    "score": 96
+   },
+   {
+    "placeId": "3494370",
+    "placeRepId": "1646013",
+    "name": "Tashkent",
+    "fullName": "Tashkent, Uzbekistan, Soviet Union",
+    "type": "City",
+    "dateRange": "+1917/+1991",
+    "score": 95
+   },
+   {
+    "placeId": "1927273",
+    "placeRepId": "446998",
+    "name": "Tashkent",
+    "fullName": "Tashkent, Uzbekistan, Soviet Union",
+    "type": "Region",
+    "dateRange": "+1917/+1991",
+    "score": 89
+   },
+   {
+    "placeId": "1932818",
+    "placeRepId": "447818",
+    "name": "Toshkent",
+    "fullName": "Toshkent, Tashkent, Uzbekistan",
+    "type": "District",
+    "dateRange": "+1991/",
+    "score": 79
+   },
+   {
+    "placeId": "1932818",
+    "placeRepId": "5954978",
+    "name": "Toshkent",
+    "fullName": "Toshkent, Tashkent, Uzbekistan, Soviet Union",
+    "type": "District",
+    "score": 74
+   }
+  ],
+  "Užhorod, Zakarpattia, Ukraine||": [
+   {
+    "placeId": "6396361",
+    "placeRepId": "3460397",
+    "name": "Užhorod",
+    "fullName": "Užhorod, Zakarpattia, Ukraine",
+    "type": "Independent City",
+    "dateRange": "+1991/+2020",
+    "score": 100
+   },
+   {
+    "placeId": "1949509",
+    "placeRepId": "436545",
+    "name": "Uzhhorod",
+    "fullName": "Uzhhorod, Zakarpattia, Ukraine",
+    "type": "District",
+    "dateRange": "+1991/",
+    "score": 100
+   },
+   {
+    "placeId": "6396361",
+    "placeRepId": "11983207",
+    "name": "Uzhhorod",
+    "fullName": "Uzhhorod, Uzhhorod, Zakarpattia, Ukraine",
+    "type": "City",
+    "dateRange": "+2020/",
+    "score": 92
+   },
+   {
+    "placeId": "1949509",
+    "placeRepId": "5953665",
+    "name": "Uzhhorod Raion",
+    "fullName": "Uzhhorod Raion, Zakarpattia, Ukraine, Soviet Union",
+    "type": "District",
+    "dateRange": "+1946/+1991",
+    "score": 92
+   },
+   {
+    "placeId": "6396361",
+    "placeRepId": "8147945",
+    "name": "Uzhhorod",
+    "fullName": "Uzhhorod, Uzhhorod Raion, Zakarpattia, Ukraine, Soviet Union",
+    "type": "City",
+    "dateRange": "+1945/+1991",
+    "score": 90
+   }
+  ],
+  "United States||": [
+   {
+    "placeId": "1",
+    "placeRepId": "1",
+    "name": "United States",
+    "fullName": "United States",
+    "type": "Country",
+    "dateRange": "+1776/",
+    "score": 100
+   }
+  ],
+  "West Topsham, Orange, Vermont||": [
+   {
+    "placeId": "1355104",
+    "placeRepId": "5405424",
+    "name": "Topsham",
+    "fullName": "Topsham, Orange, Vermont, United States",
+    "type": "Town",
+    "score": 95
+   },
+   {
+    "placeId": "1352793",
+    "placeRepId": "8609236",
+    "name": "West Topsham",
+    "fullName": "West Topsham, Topsham, Orange, Vermont, United States",
+    "type": "Hamlet",
+    "score": 95
+   },
+   {
+    "placeId": "1355104",
+    "placeRepId": "413855",
+    "name": "Topsham",
+    "fullName": "Topsham, Orange, Republic of Vermont",
+    "type": "Town",
+    "dateRange": "/+1791",
+    "score": 93
+   },
+   {
+    "placeId": "1350244",
+    "placeRepId": "8620369",
+    "name": "East Topsham",
+    "fullName": "East Topsham, Topsham, Orange, Vermont, United States",
+    "type": "Town",
+    "score": 87
+   }
+  ],
+  "Zadar, Croatia||": [
+   {
+    "placeId": "1930876",
+    "placeRepId": "4667",
+    "name": "Zadar",
+    "fullName": "Zadar, Croatia",
+    "type": "County (Top level)",
+    "dateRange": "+1992/",
+    "score": 100
+   },
+   {
+    "placeId": "1930876",
+    "placeRepId": "449503",
+    "name": "Zadar",
+    "fullName": "Zadar, Croatia, Yugoslavia",
+    "type": "County (Top level)",
+    "dateRange": "+1918/+1992",
+    "score": 95
+   },
+   {
+    "placeId": "5061221",
+    "placeRepId": "2242011",
+    "name": "Zadar",
+    "fullName": "Zadar, Zadar, Croatia",
+    "type": "Municipality",
+    "dateRange": "+1992/",
+    "score": 94
+   },
+   {
+    "placeId": "5061221",
+    "placeRepId": "7344730",
+    "name": "Zadar",
+    "fullName": "Zadar, Zadar, Croatia, Yugoslavia",
+    "type": "Municipality",
+    "dateRange": "+1918/+1991",
+    "score": 90
+   }
   ]
  },
  "description": {
@@ -6149,6 +7605,590 @@
    "type": "Municipality",
    "dateRange": "+1899/",
    "parentPlaceRepId": "5637"
+  },
+  "28": {
+   "placeId": "1927190",
+   "placeRepId": "28",
+   "name": "Bosnia-Herzegovina",
+   "fullName": "Bosnia-Herzegovina",
+   "type": "Country",
+   "dateRange": "+1992/"
+  },
+  "34": {
+   "placeId": "1927181",
+   "placeRepId": "34",
+   "name": "Croatia",
+   "fullName": "Croatia",
+   "type": "Country",
+   "dateRange": "+1992/"
+  },
+  "51": {
+   "placeId": "1927028",
+   "placeRepId": "51",
+   "name": "Azerbaijan",
+   "fullName": "Azerbaijan",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "57": {
+   "placeId": "1927034",
+   "placeRepId": "57",
+   "name": "Namibia",
+   "fullName": "Namibia",
+   "type": "Country",
+   "dateRange": "+1990/"
+  },
+  "58": {
+   "placeId": "1927035",
+   "placeRepId": "58",
+   "name": "Uzbekistan",
+   "fullName": "Uzbekistan",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "60": {
+   "placeId": "1927037",
+   "placeRepId": "60",
+   "name": "Turkmenistan",
+   "fullName": "Turkmenistan",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "61": {
+   "placeId": "1927038",
+   "placeRepId": "61",
+   "name": "Tajikistan",
+   "fullName": "Tajikistan",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "91": {
+   "placeId": "1927007",
+   "placeRepId": "91",
+   "name": "Estonia",
+   "fullName": "Estonia",
+   "type": "Country",
+   "dateRange": "+1918/"
+  },
+  "138": {
+   "placeId": "1927155",
+   "placeRepId": "138",
+   "name": "Türkiye",
+   "fullName": "Türkiye",
+   "type": "Country",
+   "dateRange": "+1923/"
+  },
+  "139": {
+   "placeId": "1927154",
+   "placeRepId": "139",
+   "name": "Israel",
+   "fullName": "Israel",
+   "type": "",
+   "dateRange": "+1948/"
+  },
+  "220": {
+   "placeId": "1927072",
+   "placeRepId": "220",
+   "name": "Belarus",
+   "fullName": "Belarus",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "246": {
+   "placeId": "1927051",
+   "placeRepId": "246",
+   "name": "Moldova",
+   "fullName": "Moldova",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "247": {
+   "placeId": "1927048",
+   "placeRepId": "247",
+   "name": "Armenia",
+   "fullName": "Armenia",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "251": {
+   "placeId": "1927046",
+   "placeRepId": "251",
+   "name": "Kyrgyzstan",
+   "fullName": "Kyrgyzstan",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "254": {
+   "placeId": "1927045",
+   "placeRepId": "254",
+   "name": "Kazakhstan",
+   "fullName": "Kazakhstan",
+   "type": "Country",
+   "dateRange": "+1991/"
+  },
+  "261": {
+   "placeId": "1930237",
+   "placeRepId": "261",
+   "name": "Montenegro",
+   "fullName": "Montenegro",
+   "type": "Country",
+   "dateRange": "+2006/"
+  },
+  "262": {
+   "placeId": "1930223",
+   "placeRepId": "262",
+   "name": "Serbia",
+   "fullName": "Serbia",
+   "type": "Country",
+   "dateRange": "+2006/"
+  },
+  "930": {
+   "placeId": "1950914",
+   "placeRepId": "930",
+   "name": "Novi Sad",
+   "fullName": "Novi Sad, South Bačka, Serbia",
+   "type": "City",
+   "dateRange": "+2006/",
+   "parentPlaceRepId": "376107"
+  },
+  "1264": {
+   "placeId": "1943147",
+   "placeRepId": "1264",
+   "name": "Kotor",
+   "fullName": "Kotor, Montenegro",
+   "type": "Municipality",
+   "dateRange": "+2006/",
+   "parentPlaceRepId": "261"
+  },
+  "2096": {
+   "placeId": "1928615",
+   "placeRepId": "2096",
+   "name": "Minsk",
+   "fullName": "Minsk, Belarus",
+   "type": "Independent City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "220"
+  },
+  "2251": {
+   "placeId": "1928401",
+   "placeRepId": "2251",
+   "name": "Chișinău",
+   "fullName": "Chișinău, Moldova",
+   "type": "Independent City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "246"
+  },
+  "2419": {
+   "placeId": "1928268",
+   "placeRepId": "2419",
+   "name": "Bishkek",
+   "fullName": "Bishkek, Kyrgyzstan",
+   "type": "Major City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "251"
+  },
+  "3549": {
+   "placeId": "1928015",
+   "placeRepId": "3549",
+   "name": "Sughd",
+   "fullName": "Sughd, Tajikistan",
+   "type": "Region",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "61"
+  },
+  "3623": {
+   "placeId": "1927836",
+   "placeRepId": "3623",
+   "name": "Harjumaa",
+   "fullName": "Harjumaa, Estonia",
+   "type": "County",
+   "dateRange": "+1918/",
+   "parentPlaceRepId": "91"
+  },
+  "3811": {
+   "placeId": "1927770",
+   "placeRepId": "3811",
+   "name": "Baku",
+   "fullName": "Baku, Azerbaijan",
+   "type": "Independent City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "51"
+  },
+  "4151": {
+   "placeId": "1930348",
+   "placeRepId": "4151",
+   "name": "Eastern Cape",
+   "fullName": "Eastern Cape, South Africa",
+   "type": "Province",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "177"
+  },
+  "4156": {
+   "placeId": "1930345",
+   "placeRepId": "4156",
+   "name": "Federation of Bosnia and Herzegovina",
+   "fullName": "Federation of Bosnia and Herzegovina, Bosnia-Herzegovina",
+   "type": "Province",
+   "dateRange": "+1992/",
+   "parentPlaceRepId": "28"
+  },
+  "4162": {
+   "placeId": "1930354",
+   "placeRepId": "4162",
+   "name": "Western Cape",
+   "fullName": "Western Cape, South Africa",
+   "type": "Province",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "177"
+  },
+  "4260": {
+   "placeId": "1930484",
+   "placeRepId": "4260",
+   "name": "Karas",
+   "fullName": "Karas, Namibia",
+   "type": "Region",
+   "dateRange": "+1992/",
+   "parentPlaceRepId": "57"
+  },
+  "4263": {
+   "placeId": "1930483",
+   "placeRepId": "4263",
+   "name": "Hardap",
+   "fullName": "Hardap, Namibia",
+   "type": "Region",
+   "dateRange": "+1992/",
+   "parentPlaceRepId": "57"
+  },
+  "4462": {
+   "placeId": "1930518",
+   "placeRepId": "4462",
+   "name": "Almaty",
+   "fullName": "Almaty, Kazakhstan",
+   "type": "Region",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "254"
+  },
+  "4473": {
+   "placeId": "1930525",
+   "placeRepId": "4473",
+   "name": "Shirak",
+   "fullName": "Shirak, Armenia",
+   "type": "Province",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "247"
+  },
+  "4659": {
+   "placeId": "1930868",
+   "placeRepId": "4659",
+   "name": "Osijek-Baranja",
+   "fullName": "Osijek-Baranja, Croatia",
+   "type": "County (Top level)",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "34"
+  },
+  "4667": {
+   "placeId": "1930876",
+   "placeRepId": "4667",
+   "name": "Zadar",
+   "fullName": "Zadar, Croatia",
+   "type": "County (Top level)",
+   "dateRange": "+1992/",
+   "parentPlaceRepId": "34"
+  },
+  "5126": {
+   "placeId": "1929277",
+   "placeRepId": "5126",
+   "name": "Suceava",
+   "fullName": "Suceava, Romania",
+   "type": "County (Top level)",
+   "dateRange": "+1940/",
+   "parentPlaceRepId": "26"
+  },
+  "5340": {
+   "placeId": "1929426",
+   "placeRepId": "5340",
+   "name": "Zakarpattia",
+   "fullName": "Zakarpattia, Ukraine",
+   "type": "Region",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "167"
+  },
+  "5661": {
+   "placeId": "1929773",
+   "placeRepId": "5661",
+   "name": "Southern",
+   "fullName": "Southern, Israel",
+   "type": "District",
+   "dateRange": "+1953/",
+   "parentPlaceRepId": "139"
+  },
+  "6083": {
+   "placeId": "1930235",
+   "placeRepId": "6083",
+   "name": "Murska Sobota",
+   "fullName": "Murska Sobota, Slovenia",
+   "type": "Municipality",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "35"
+  },
+  "160139": {
+   "placeId": "3494370",
+   "placeRepId": "160139",
+   "name": "Tashkent",
+   "fullName": "Tashkent, Uzbekistan",
+   "type": "Independent City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "58"
+  },
+  "244896": {
+   "placeId": "5061629",
+   "placeRepId": "244896",
+   "name": "Sarajevo",
+   "fullName": "Sarajevo, Federation of Bosnia and Herzegovina, Bosnia-Herzegovina",
+   "type": "City",
+   "dateRange": "+1992/",
+   "parentPlaceRepId": "4156"
+  },
+  "374145": {
+   "placeId": "5966374",
+   "placeRepId": "374145",
+   "name": "Kars",
+   "fullName": "Kars, Türkiye",
+   "type": "Province",
+   "dateRange": "+1923/",
+   "parentPlaceRepId": "138"
+  },
+  "376107": {
+   "placeId": "5990362",
+   "placeRepId": "376107",
+   "name": "South Bačka",
+   "fullName": "South Bačka, Serbia",
+   "type": "District",
+   "dateRange": "+2006/",
+   "parentPlaceRepId": "262"
+  },
+  "389807": {
+   "placeId": "8403354",
+   "placeRepId": "389807",
+   "name": "Gyumri",
+   "fullName": "Gyumri, Shirak, Armenia",
+   "type": "City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "4473"
+  },
+  "444681": {
+   "placeId": "1941308",
+   "placeRepId": "444681",
+   "name": "Opava",
+   "fullName": "Opava, Czechia",
+   "type": "District",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "132"
+  },
+  "2135600": {
+   "placeId": "4303713",
+   "placeRepId": "2135600",
+   "name": "`Arad",
+   "fullName": "`Arad, Southern, Israel",
+   "type": "Populated Place",
+   "dateRange": "+1948/",
+   "parentPlaceRepId": "5661"
+  },
+  "2241688": {
+   "placeId": "5060637",
+   "placeRepId": "2241688",
+   "name": "Cape Town",
+   "fullName": "Cape Town, Western Cape, South Africa",
+   "type": "Independent City",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "4162"
+  },
+  "2241816": {
+   "placeId": "5061444",
+   "placeRepId": "2241816",
+   "name": "Tallinn",
+   "fullName": "Tallinn, Harjumaa, Estonia",
+   "type": "City",
+   "dateRange": "+1990/",
+   "parentPlaceRepId": "3623"
+  },
+  "2241823": {
+   "placeId": "5061450",
+   "placeRepId": "2241823",
+   "name": "Ashgabat",
+   "fullName": "Ashgabat, Turkmenistan",
+   "type": "Independent City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "60"
+  },
+  "2242247": {
+   "placeId": "5059984",
+   "placeRepId": "2242247",
+   "name": "Khujand",
+   "fullName": "Khujand, Sughd, Tajikistan",
+   "type": "Populated Place",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "3549"
+  },
+  "3040548": {
+   "placeId": "6257375",
+   "placeRepId": "3040548",
+   "name": "Mariental Urban",
+   "fullName": "Mariental Urban, Hardap, Namibia",
+   "type": "Division",
+   "dateRange": "+1992/",
+   "parentPlaceRepId": "4263"
+  },
+  "3055792": {
+   "placeId": "6288984",
+   "placeRepId": "3055792",
+   "name": "Amathole",
+   "fullName": "Amathole, Eastern Cape, South Africa",
+   "type": "District",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "4151"
+  },
+  "3055794": {
+   "placeId": "6289026",
+   "placeRepId": "3055794",
+   "name": "Garden Route",
+   "fullName": "Garden Route, Western Cape, South Africa",
+   "type": "District",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "4162"
+  },
+  "3460397": {
+   "placeId": "6396361",
+   "placeRepId": "3460397",
+   "name": "Užhorod",
+   "fullName": "Užhorod, Zakarpattia, Ukraine",
+   "type": "Independent City",
+   "dateRange": "+1991/+2020",
+   "parentPlaceRepId": "5340"
+  },
+  "6676015": {
+   "placeId": "3493196",
+   "placeRepId": "6676015",
+   "name": "Mariental",
+   "fullName": "Mariental, Mariental Urban, Hardap, Namibia",
+   "type": "Town",
+   "dateRange": "+1990/",
+   "parentPlaceRepId": "3040548"
+  },
+  "6676784": {
+   "placeId": "3493536",
+   "placeRepId": "6676784",
+   "name": "Grünau",
+   "fullName": "Grünau, Karasburg East, Karas, Namibia",
+   "type": "Populated Place",
+   "parentPlaceRepId": "11952799"
+  },
+  "6795290": {
+   "placeId": "4118384",
+   "placeRepId": "6795290",
+   "name": "Marburg",
+   "fullName": "Marburg, Natal, South Africa",
+   "type": "Populated Place",
+   "parentPlaceRepId": "352083"
+  },
+  "7263290": {
+   "placeId": "4440697",
+   "placeRepId": "7263290",
+   "name": "Hlučín",
+   "fullName": "Hlučín, Opava, Czechia",
+   "type": "Municipality",
+   "dateRange": "+1993/",
+   "parentPlaceRepId": "444681"
+  },
+  "10325870": {
+   "placeId": "6279972",
+   "placeRepId": "10325870",
+   "name": "KwaZulu-Natal",
+   "fullName": "KwaZulu-Natal, South Africa",
+   "type": "Province",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "177"
+  },
+  "10325982": {
+   "placeId": "6289003",
+   "placeRepId": "10325982",
+   "name": "Umzinyathi",
+   "fullName": "Umzinyathi, KwaZulu-Natal, South Africa",
+   "type": "District",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "10325870"
+  },
+  "11495834": {
+   "placeId": "5061272",
+   "placeRepId": "11495834",
+   "name": "Osijek",
+   "fullName": "Osijek, Osijek-Baranja, Croatia",
+   "type": "City",
+   "dateRange": "+1991/",
+   "parentPlaceRepId": "4659"
+  },
+  "11851193": {
+   "placeId": "10283670",
+   "placeRepId": "11851193",
+   "name": "Heidelberg",
+   "fullName": "Heidelberg, Garden Route, Western Cape, South Africa",
+   "type": "Town",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "3055794"
+  },
+  "11952799": {
+   "placeId": "10343377",
+   "placeRepId": "11952799",
+   "name": "Karasburg East",
+   "fullName": "Karasburg East, Karas, Namibia",
+   "type": "Division",
+   "dateRange": "+2013/",
+   "parentPlaceRepId": "4260"
+  },
+  "12319382": {
+   "placeId": "4121337",
+   "placeRepId": "12319382",
+   "name": "Hamburg",
+   "fullName": "Hamburg, Amathole, Eastern Cape, South Africa",
+   "type": "Town",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "3055792"
+  },
+  "12357907": {
+   "placeId": "6272971",
+   "placeRepId": "12357907",
+   "name": "Kuils River",
+   "fullName": "Kuils River, Cape Town, Western Cape, South Africa",
+   "type": "Town",
+   "dateRange": "+2000/",
+   "parentPlaceRepId": "2241688"
+  },
+  "12364032": {
+   "placeId": "10577781",
+   "placeRepId": "12364032",
+   "name": "Sarepta",
+   "fullName": "Sarepta, Kuils River, Cape Town, Western Cape, South Africa",
+   "type": "Neighborhood or suburb",
+   "dateRange": "+2000/",
+   "parentPlaceRepId": "12357907"
+  },
+  "12453175": {
+   "placeId": "10625564",
+   "placeRepId": "12453175",
+   "name": "Hermannsburg",
+   "fullName": "Hermannsburg, Umzinyathi, KwaZulu-Natal, South Africa",
+   "type": "Village",
+   "dateRange": "+1994/",
+   "parentPlaceRepId": "10325982"
+  },
+  "12844169": {
+   "placeId": "4123999",
+   "placeRepId": "12844169",
+   "name": "Berlin",
+   "fullName": "Berlin, Amathole, Eastern Cape, South Africa",
+   "type": "Town",
+   "dateRange": "+1994/+2011",
+   "parentPlaceRepId": "3055792"
   }
  },
  "reps": {
@@ -8527,6 +10567,152 @@
      "Czernowitz District",
      "Czerniwci",
      "Cernăuți"
+    ]
+   }
+  ],
+  "4454998": [
+   {
+    "placeRepId": "7224207",
+    "fullName": "Skarżyce, Strzegom, Świdnica, Lower Silesia, Poland",
+    "dateRange": "+1999/",
+    "names": [
+     "Skarżyce"
+    ]
+   },
+   {
+    "placeRepId": "12563825",
+    "fullName": "Skarżyce, Strzegom, Wałbrzych, Poland",
+    "dateRange": "+1975/+1999",
+    "names": [
+     "Skarżyce"
+    ]
+   },
+   {
+    "placeRepId": "7224208",
+    "fullName": "Skarżyce, Świdnica, Wrocław, Poland",
+    "dateRange": "+1945/+1975",
+    "names": [
+     "Skarżyce"
+    ]
+   },
+   {
+    "placeRepId": "12635403",
+    "fullName": "Grunau, Striegau, Silesia, Prussia, Germany",
+    "dateRange": "+1871/+1919",
+    "names": [
+     "Grunau",
+     "Skarżyce"
+    ]
+   }
+  ],
+  "6121440": [
+   {
+    "placeRepId": "7715501",
+    "fullName": "Mariental, Helmstedt, Brunswick, Germany",
+    "dateRange": "+1871/+1946",
+    "names": [
+     "Mariental"
+    ]
+   },
+   {
+    "placeRepId": "7715502",
+    "fullName": "Mariental, Helmstedt, Lower Saxony, Germany",
+    "names": [
+     "Mariental"
+    ]
+   }
+  ],
+  "6272266": [
+   {
+    "placeRepId": "11954657",
+    "fullName": "Marburg, Hesse, Germany",
+    "dateRange": "+1945/+1974",
+    "names": [
+     "Kreis Marburg",
+     "Marburg"
+    ]
+   },
+   {
+    "placeRepId": "12035627",
+    "fullName": "Marburg, Hesse-Nassau, Prussia, Germany",
+    "dateRange": "+1866/+1944",
+    "names": [
+     "Kreis Marburg",
+     "Marburg"
+    ]
+   },
+   {
+    "placeRepId": "11954656",
+    "fullName": "Marburg, Electorate of Hesse",
+    "dateRange": "+1821/+1866",
+    "names": [
+     "Kreis Marburg",
+     "Marburg"
+    ]
+   }
+  ],
+  "6300818": [
+   {
+    "placeRepId": "9509566",
+    "fullName": "Hermannsburg, Celle, Hanover, Prussia, Germany",
+    "dateRange": "+1866/+1946",
+    "names": [
+     "Hermannsburg"
+    ]
+   }
+  ],
+  "6332108": [
+   {
+    "placeRepId": "3453396",
+    "fullName": "Berlin, Germany",
+    "dateRange": "+1920/",
+    "names": [
+     "Berlin"
+    ]
+   },
+   {
+    "placeRepId": "8094862",
+    "fullName": "Berlin, Brandenburg, Prussia, Germany",
+    "dateRange": "+1871/+1920",
+    "names": [
+     "Berlin"
+    ]
+   },
+   {
+    "placeRepId": "3453398",
+    "fullName": "Berlin, Brandenburg, Prussia",
+    "dateRange": "/+1871",
+    "names": [
+     "Berlin"
+    ]
+   }
+  ],
+  "6415867": [
+   {
+    "placeRepId": "12199542",
+    "fullName": "Heidelberg, Baden-Württemberg, Germany",
+    "dateRange": "+1945/+1973",
+    "names": [
+     "Landkreis Heidelberg",
+     "Heidelberg"
+    ]
+   },
+   {
+    "placeRepId": "8145969",
+    "fullName": "Heidelberg, Baden, Germany",
+    "dateRange": "+1871/+1945",
+    "names": [
+     "Bezirksamt Heidelberg",
+     "Heidelberg"
+    ]
+   },
+   {
+    "placeRepId": "3460192",
+    "fullName": "Heidelberg, Baden",
+    "dateRange": "+1806/+1871",
+    "names": [
+     "Oberamt Heidelberg",
+     "Heidelberg"
     ]
    }
   ]

@@ -143,14 +143,17 @@ describe("keptSupplied: what a writer keeps of a supplied standard_place", () =>
 });
 
 describe("placeAnswer: the engine's own answer", () => {
-  it("drops a lookup the text does not confirm, naming it", async () => {
-    expect(await placeAnswer("with his daughter", [], async () => "Hawaii, United States")).toEqual({
+  it("keeps a lookup the text does not name, as main fills it, and drops one naming another country", async () => {
+    // A text of the e2e final trees: West Topsham is a village of Topsham.
+    expect(await placeAnswer("West Topsham, Orange, Vermont", [], async () => "Topsham, Orange, Vermont, United States")).toEqual({
+      standardPlace: "Topsham, Orange, Vermont, United States",
+      from: "lookup",
+    });
+    expect(await placeAnswer("Funchal, England", [], async () => "Funchal, Madeira, Portugal")).toEqual({
       standardPlace: null,
-      why: "unconfirmed",
-      dropped: "Hawaii, United States",
-      reason:
-        "the engine's place lookup answer 'Hawaii, United States' could not be confirmed, as the text names neither a " +
-        "country nor that place",
+      why: "other_country",
+      dropped: "Funchal, Madeira, Portugal",
+      reason: "'Funchal, Madeira, Portugal' names a different country than the text",
     });
   });
 

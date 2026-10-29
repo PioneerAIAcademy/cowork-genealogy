@@ -184,9 +184,10 @@ the lookup is `resolveStandardPlace(placeName, { contextPlaces: [contextName] })
   the reason naming a non-place phrase ("Same House", never looked up), a
   lookup that found nothing or failed (for a one-part text, telling the caller
   to write its parent jurisdictions into the place text, e.g. "Springfield,
-  Illinois"), an answer naming a different country than the text, or an answer
-  the text does not confirm (`unconfirmedByText`: "at the home of her daughter,
-  Mrs. John Smith" names neither a country nor "Of, Trabzon, Türkiye").
+  Illinois"), or an answer naming a different country than the text. An answer
+  the text does not name is still the one the writers store, as on `main`:
+  "Phila., Pa." gives "Philadelphia, Pennsylvania, United States", and "at the
+  home of her daughter, Mrs. John Smith" "Of, Trabzon, Türkiye".
 
 A fact that cites a record takes FamilySearch's own standardization of the text
 on that record first, so the verdict is what a writer fills only when the record

@@ -16,7 +16,7 @@
  * 1. FamilySearch's own standardization of the same text on the records the
  *    fact cites (`RecordStandards`, research_append's Lever B copy). Two
  *    different values are doubt, and doubt is no standard_place;
- * 2. otherwise the writer's own lookup, kept only when the text confirms it.
+ * 2. otherwise the writer's own lookup, as `main` fills it.
  * A non-place phrase ("Same House") has none, and an answer naming a different
  * country than the text is dropped. A lookup that replaces a supplied value
  * must fit the text as the value had to.
@@ -42,15 +42,16 @@ export function placeTextKey(place: string): string {
 
 /**
  * Why the place text does not confirm `standardPlace`, or null when it does:
- * research_append's check on a place taken from a fact's value, which also
- * keeps a phrase that names no place ("with his daughter", "at the home of her
- * daughter") from taking one. Only a pair the country check cannot judge is in
- * question. When the text's last comma part names a country the check knows,
- * the standard place names none it knows. Otherwise its own name, its first
- * segment, must be one of the text's comma parts, unless the text is one word,
- * which the resolver's one-word rule judges, or the standard place is the
- * one-word list's entry for the text: neither need spell the text ("Ky" is
- * Kentucky, "W. Va." West Virginia).
+ * research_append's check on a place taken from a fact's value, and the one a
+ * lookup standing in for a refused value must pass to store that value
+ * silently (`judgeSupplied`), which keeps a phrase that names no place ("at
+ * the home of her daughter") from taking one. Only a pair the country check
+ * cannot judge is in question. When the text's last comma part names a
+ * country the check knows, the standard place names none it knows. Otherwise
+ * its own name, its first segment, must be one of the text's comma parts,
+ * unless the text is one word, which the resolver's one-word rule judges, or
+ * the standard place is the one-word list's entry for the text: neither need
+ * spell the text ("Ky" is Kentucky, "W. Va." West Virginia).
  */
 export function unconfirmedByText(place: string, standardPlace: string): string | null {
   if (countryConsistency(place, standardPlace) !== "unverifiable") return null;
@@ -74,8 +75,8 @@ export type PlaceAnswer =
   | { standardPlace: string; from: "record" | "lookup" }
   | {
       standardPlace: null;
-      why: "not_a_place" | "records_disagree" | "not_found" | "other_country" | "unconfirmed";
-      /** The answer dropped for naming another country, or for the text not confirming it. */
+      why: "not_a_place" | "records_disagree" | "not_found" | "other_country";
+      /** The answer dropped for naming another country. */
       dropped?: string;
       reason: string;
     };
@@ -116,15 +117,6 @@ export async function placeAnswer(
       why: "other_country",
       dropped: answer,
       reason: `'${answer}' names a different country than the text`,
-    };
-  }
-  const unconfirmed = fromRecords.length === 0 ? unconfirmedByText(place, answer) : null;
-  if (unconfirmed !== null) {
-    return {
-      standardPlace: null,
-      why: "unconfirmed",
-      dropped: answer,
-      reason: `the engine's place lookup answer '${answer}' ${unconfirmed}`,
     };
   }
   return { standardPlace: answer, from: fromRecords.length === 1 ? "record" : "lookup" };
@@ -181,16 +173,16 @@ const KEPT_WHEN =
 /** What a writer stores when a caller supplied `supplied` for `place`: the
  *  value, in FamilySearch's spelling, with no warning when it is kept;
  *  otherwise the engine's own answer for the place text (`answer`, asked only
- *  then), or null, with a warning that says which and why. The lookup's answer,
- *  before the fill's own check on the text (`placeAnswer`), replaces the value
- *  only when it fits the text as a lookup must (`fitsText`); FamilySearch's own
- *  from the record is not judged. An answer that is the supplied value itself,
- *  case and accents aside, is stored with no warning: FamilySearch's from the
- *  record, or the lookup's when the text's not naming the value was the only
- *  reason to refuse it and the text confirms the lookup (`placeAnswer`) or ends
- *  with the state or province it lies in (`endsWithItsJurisdiction`):
- *  "Balto., Md." keeps "Baltimore, Maryland, United States", which the lookup
- *  gives too, and "at the home of her daughter" no "Of, Trabzon, Türkiye". */
+ *  then), or null, with a warning that says which and why. The lookup's answer
+ *  replaces the value only when it fits the text as a lookup must (`fitsText`);
+ *  FamilySearch's own from the record is not judged. An answer that is the
+ *  supplied value itself, case and accents aside, is stored with no warning:
+ *  FamilySearch's from the record, or the lookup's when the text's not naming
+ *  the value was the only reason to refuse it and the text confirms the lookup
+ *  (`unconfirmedByText`) or ends with the state or province it lies in
+ *  (`endsWithItsJurisdiction`): "Balto., Md." keeps "Baltimore, Maryland,
+ *  United States", which the lookup gives too, and "at the home of her
+ *  daughter" no "Of, Trabzon, Türkiye". */
 export async function judgeSupplied(
   place: unknown,
   supplied: string,
@@ -216,13 +208,13 @@ export async function judgeSupplied(
       ? { standardPlace: a.standardPlace }
       : replaced(a.standardPlace, "FamilySearch's standardization of the same place on the record it cites");
   }
-  let looked: string;
-  if (a.standardPlace !== null) looked = a.standardPlace;
-  else if (a.why === "unconfirmed" && a.dropped !== undefined) looked = a.dropped;
-  else return notKept(a.reason);
-  const confirmed = a.standardPlace !== null || endsWithItsJurisdiction(text, looked);
-  if (k.unnamed === true && confirmed && isSupplied(looked)) return { standardPlace: looked };
+  if (a.standardPlace === null) return notKept(a.reason);
+  const looked = a.standardPlace;
+  const unconfirmed = unconfirmedByText(text, looked);
+  if (k.unnamed === true && (unconfirmed === null || endsWithItsJurisdiction(text, looked)) && isSupplied(looked)) {
+    return { standardPlace: looked };
+  }
   const fit = await fitsText(text, looked, true);
   if ("kept" in fit) return replaced(fit.kept, "the engine's lookup");
-  return notKept(a.standardPlace === null ? a.reason : `the engine's place lookup answer '${looked}' does not fit it either: ${fit.why}`);
+  return notKept(`the engine's place lookup answer '${looked}' ${unconfirmed ?? `does not fit it either: ${fit.why}`}`);
 }

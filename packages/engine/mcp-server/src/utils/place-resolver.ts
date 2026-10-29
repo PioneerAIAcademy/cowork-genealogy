@@ -770,26 +770,37 @@ export async function samePlace(a: string, b: string): Promise<boolean> {
   return x !== null && x === y;
 }
 
-/** The US states, the District of Columbia, Puerto Rico and the Canadian
- *  provinces, by name (diacritics folded), as their postal codes. */
-const DIVISIONS: Record<string, string> = {
-  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO",
-  connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID",
-  illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME",
-  maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO",
-  montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM",
-  "new york": "NY", "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR",
-  pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN",
-  texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV",
-  wisconsin: "WI", wyoming: "WY", "district of columbia": "DC", "puerto rico": "PR",
-  ontario: "ON", "canada west": "ON", "upper canada": "ON", quebec: "QC", "canada east": "QC",
-  "lower canada": "QC", "nova scotia": "NS", "new brunswick": "NB", "nouveau-brunswick": "NB",
-  manitoba: "MB", "british columbia": "BC", "prince edward island": "PE", saskatchewan: "SK",
-  alberta: "AB", newfoundland: "NL",
+/** The US states, the District of Columbia and Puerto Rico, and the Canadian
+ *  provinces, by name (diacritics folded), as their postal codes, under the
+ *  one country that holds each. */
+const DIVISIONS_BY_COUNTRY: Record<string, Record<string, string>> = {
+  "United States": {
+    alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO",
+    connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID",
+    illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME",
+    maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO",
+    montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM",
+    "new york": "NY", "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR",
+    pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN",
+    texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV",
+    wisconsin: "WI", wyoming: "WY", "district of columbia": "DC", "puerto rico": "PR",
+  },
+  Canada: {
+    ontario: "ON", "canada west": "ON", "upper canada": "ON", quebec: "QC", "canada east": "QC",
+    "lower canada": "QC", "nova scotia": "NS", "new brunswick": "NB", "nouveau-brunswick": "NB",
+    manitoba: "MB", "british columbia": "BC", "prince edward island": "PE", saskatchewan: "SK",
+    alberta: "AB", newfoundland: "NL",
+  },
 };
-const DIVISION_CODES: ReadonlySet<string> = new Set(Object.values(DIVISIONS));
-/** The Canadian provinces' codes; every other division lies in the United States. */
-const CANADIAN_CODES: ReadonlySet<string> = new Set(["ON", "QC", "NS", "NB", "MB", "BC", "PE", "SK", "AB", "NL"]);
+const DIVISIONS: Record<string, string> = Object.fromEntries(
+  Object.values(DIVISIONS_BY_COUNTRY).flatMap((divisions) => Object.entries(divisions)),
+);
+/** The country that holds each division, by its postal code. */
+const DIVISION_COUNTRY: ReadonlyMap<string, string> = new Map(
+  Object.entries(DIVISIONS_BY_COUNTRY).flatMap(([country, divisions]) =>
+    Object.values(divisions).map((code): [string, string] => [code, country]),
+  ),
+);
 
 /** The US state, Puerto Rico or Canadian province one part of a place names,
  *  by name ("Utah Territory", "Québec") or postal code ("QC"), else null. */
@@ -797,7 +808,7 @@ function divisionOf(part: string): string | null {
   const key = foldPlaceName(part).replace(/\.$/, "");
   const name = key.replace(/ (?:territory|state)$/, "");
   if (Object.hasOwn(DIVISIONS, name)) return DIVISIONS[name];
-  return DIVISION_CODES.has(key.toUpperCase()) ? key.toUpperCase() : null;
+  return DIVISION_COUNTRY.has(key.toUpperCase()) ? key.toUpperCase() : null;
 }
 
 /** The US state, Puerto Rico or Canadian province a place text's last part
@@ -849,12 +860,34 @@ export function endsWithItsJurisdiction(place: string, standardPlace: string): b
   return placeSegments(standardPlace).some((segment) => parts.some((part) => sameName(part, segment)));
 }
 
-/** Countries the alias table carries that an old record names for an empire
- *  whose lands lie in several countries today: the Russian Empire, the
- *  Austrian Empire, the Kingdom of Hungary, and the German Empire with Prussia
- *  ("Preussen"). "Helsingfors, Nyland, Russia" is Helsinki, Finland, and
- *  "Lemberg, Galizien, Österreich" Lviv, Ukraine. */
-const EMPIRES: ReadonlySet<string> = new Set(["russia", "austria", "hungary", "germany"]);
+/**
+ * The countries of today, as FamilySearch names them, that hold lands of an
+ * empire an old record names by a country the alias table carries, as the
+ * empire stood when it ended: the Russian Empire (1917), Austria-Hungary and
+ * the Kingdom of Hungary (1918), and the German Empire with Prussia
+ * ("Preussen"). "Helsingfors, Nyland, Russia" is Helsinki, Finland, and
+ * "Lemberg, Galizien, Österreich" Lviv, Ukraine. FamilySearch's own places
+ * bear them out ("Tashkent, Syr-Darya, Russian Empire", "Kars, Russian Empire",
+ * "Sarajevo, Bosnia-Herzegovina, Austria", "Cattaro, Dalmatia", "Muraszombat,
+ * Vas, Hungary", "Memel, East Prussia, Prussia, Germany"); it names Finland
+ * Finland throughout. A land the empire had lost before it ended is not one:
+ * Alaska (1867), Further Austria (1805), Neuchâtel (1816). Nor is a country the
+ * alias table carries (Poland, Hungary, Italy, Denmark), which
+ * `countryConsistency` judges first.
+ */
+const EMPIRE_LANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map(
+  Object.entries({
+    russia: [
+      "Finland", "Estonia", "Latvia", "Lithuania", "Belarus", "Ukraine", "Moldova", "Republic of Georgia", "Armenia",
+      "Azerbaijan", "Kazakhstan", "Kyrgyzstan", "Tajikistan", "Turkmenistan", "Uzbekistan", "Türkiye",
+    ],
+    austria: [
+      "Czechia", "Slovakia", "Slovenia", "Croatia", "Ukraine", "Romania", "Bosnia-Herzegovina", "Serbia", "Montenegro",
+    ],
+    hungary: ["Slovakia", "Romania", "Serbia", "Croatia", "Ukraine", "Slovenia"],
+    germany: ["Lithuania", "Czechia"],
+  }).map(([empire, countries]): [string, ReadonlySet<string>] => [empire, new Set(countries)]),
+);
 
 /**
  * The place text names a country, and FamilySearch puts `standard` in another:
@@ -862,12 +895,15 @@ const EMPIRES: ReadonlySet<string> = new Set(["russia", "austria", "hungary", "g
  * judged by the place's own jurisdiction chain ("Thornton, Lancashire, England"
  * is not "Thornton, Natal, South Africa"). The text's country is its last
  * part's, when the alias table knows it ("Rakousko" is Austria, "England" the
- * United Kingdom) and it is no empire (`EMPIRES`, not judged); else, when its
- * last part is a US state or Canadian province that `standard` does not name,
- * the one country that holds it ("Worth, Illinois" is not "Wœrth, Bas-Rhin,
- * France", nor "Fort Smith, Sebastian, Arkansas" "Fort Smith, Fort Smith,
- * Northwest Territories, Canada"). The place's country is the root of its
- * chain, as `countryOfPlace` names it. A root FamilySearch dates as ended, a
+ * United Kingdom); else, when its last part is a US state or Canadian province
+ * that `standard` does not name, the one country that holds it
+ * (`DIVISIONS_BY_COUNTRY`: "Worth, Illinois" is not "Wœrth, Bas-Rhin, France",
+ * nor "Fort Smith, Sebastian, Arkansas" "Fort Smith, Fort Smith, Northwest
+ * Territories, Canada"). The place's country is the root of its chain, as
+ * `countryOfPlace` names it. An empire's text also takes a country of today
+ * that holds its lands (`EMPIRE_LANDS`: "Lemberg, Galizien, Österreich" keeps
+ * "Lviv, Lviv, Ukraine", while "Hamburg, Hamburg, Germany" is not "Hamburg,
+ * Amathole, Eastern Cape, South Africa"). A root FamilySearch dates as ended, a
  * former state (Bohemia to 1918, Czechoslovakia to 1992), is not judged, since
  * its lands lie in today's countries, perhaps the text's ("Svitavy, Moravská
  * Třebová, Morava, Rakousko" keeps "Svitavy, Moravská Třebová, Moravia,
@@ -878,24 +914,26 @@ const EMPIRES: ReadonlySet<string> = new Set(["russia", "austria", "hungary", "g
  * (British Colonial America, Czechoslovakia) is still not judged. Nor is
  * historic Ireland against Northern Ireland, a bare "Georgia", the state (lead,
  * 2026-08-27), against a place FamilySearch puts in the Republic of Georgia
- * ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia"), nor a chain that
- * cannot be read. The chain is read from FamilySearch only when the answer
- * turns on the root's dates.
+ * ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia"; "Tbilisi, GA" does
+ * not), nor a chain that cannot be read. The chain is read from FamilySearch
+ * only when the answer turns on the root's dates.
  */
 export async function countryContradiction(placeText: string, standard: FamilySearchPlace): Promise<boolean> {
   const segments = placeSegments(standard.fullName);
-  const textCountry = canonicalCountry(placeSegments(placeText).at(-1) ?? "");
+  const last = placeSegments(placeText).at(-1) ?? "";
+  const textCountry = canonicalCountry(last);
   const division = textCountry === null ? textDivision(placeText) : null;
   const named =
     textCountry !== null
-      ? EMPIRES.has(textCountry) ? null : countryOfPlace(placeText)
+      ? countryOfPlace(placeText)
       : division !== null && !segments.some((s) => divisionOf(s) !== null)
-        ? CANADIAN_CODES.has(division) ? "Canada" : "United States"
+        ? (DIVISION_COUNTRY.get(division) ?? null)
         : null;
   const country = countryOfPlace(standard.fullName);
   if (named === null || country === null || named === country) return false;
+  if (EMPIRE_LANDS.get(textCountry ?? "")?.has(country)) return false;
   if (named === "Ireland" && segments.some((s) => canonicalCountry(s) === "northern ireland")) return false;
-  if (division === "GA" && country === "Republic of Georgia" && segments.length > 1) return false;
+  if (foldPlaceName(last) === "georgia" && country === "Republic of Georgia" && segments.length > 1) return false;
   if ((named === "United States" || named === "Canada") && countryToday(segments[segments.length - 1]) !== null) return true;
   const repId = standard.places.find((p) => p.placeRepId !== undefined)?.placeRepId;
   let root = repId === undefined ? null : await getRepInfo(repId);

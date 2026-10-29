@@ -708,7 +708,8 @@ the answer's own name, its first segment, is one of the text's comma parts
 States", while "at the home of her daughter" and "at the home of her daughter,
 Mrs. John Smith" drop "Of, Trabzon, Türkiye". The check is
 `unconfirmedByText` (`src/utils/place-verdict.ts`); `tree_edit`, `tree_correct`
-and `place_search`'s verdict apply it to their own lookups (tree-edit-tool-spec
+and a caller's timeline event apply it to a lookup standing in for a refused
+supplied value, never to a lookup filling a fact with none (tree-edit-tool-spec
 §4.1.1). A dropped answer leaves the place as written, with no
 `standard_place`. The lift holds on an append and on an update that leaves
 `place` alone, such as an `informant_bias_notes` note or `extraction_append`'s

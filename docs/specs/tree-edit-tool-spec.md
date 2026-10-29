@@ -414,17 +414,29 @@ value, project-create-tool-spec "Hand-entered places").
   States");
 - that place lies in no other country than the `place` text names
   (`countryContradiction`). The text's country is its last part's when the
-  country alias table knows it, except Russia, Austria, Hungary and Germany,
-  which an old record names for an empire whose lands lie in several countries
-  today and which are not judged here ("Helsingfors, Nyland, Russia" keeps
-  "Helsinki, Uusimaa, Finland", and "Lemberg, Galizien, Österreich" "Lviv,
-  Lviv, Ukraine"). Else, when its last part is a US state or Canadian province
-  the value does not name, it is the one country that holds that state or
-  province ("Fort Smith, Sebastian, Arkansas" does not keep "Fort Smith, Fort
-  Smith, Northwest Territories, Canada"). The place's is the root of its
-  FamilySearch jurisdiction chain, read for any country, not only those the
-  alias table carries ("Thornton, Lancashire, England" does not keep "Thornton,
-  Natal, South Africa", nor "Worth, Illinois" "Wœrth, Bas-Rhin, France"). A
+  country alias table knows it. Else, when its last part is a US state or
+  Canadian province the value does not name, it is the one country that holds
+  that state or province, by the division table ("Fort Smith, Sebastian,
+  Arkansas" does not keep "Fort Smith, Fort Smith, Northwest Territories,
+  Canada"). The place's is the root of its FamilySearch jurisdiction chain, read
+  for any country, not only those the alias table carries ("Thornton,
+  Lancashire, England" does not keep "Thornton, Natal, South Africa", nor
+  "Worth, Illinois" "Wœrth, Bas-Rhin, France"). Russia, Austria, Hungary and
+  Germany, which an old record names for an empire whose lands lie in several
+  countries today, also take a country of today that holds the empire's lands
+  as it ended, among those the alias table does not carry (`EMPIRE_LANDS`):
+  Russia's are Finland, Estonia, Latvia, Lithuania, Belarus, Ukraine, Moldova,
+  the Republic of Georgia, Armenia, Azerbaijan, Kazakhstan, Kyrgyzstan,
+  Tajikistan, Turkmenistan, Uzbekistan and Türkiye; Austria's Czechia,
+  Slovakia, Slovenia, Croatia, Ukraine, Romania, Bosnia-Herzegovina, Serbia and
+  Montenegro; Hungary's Slovakia, Romania, Serbia, Croatia, Ukraine and
+  Slovenia; Germany's Lithuania and Czechia. So "Helsingfors, Nyland, Russia"
+  keeps "Helsinki, Uusimaa, Finland" and "Lemberg, Galizien, Österreich" "Lviv,
+  Lviv, Ukraine", while "Hamburg, Hamburg, Germany" does not keep "Hamburg,
+  Amathole, Eastern Cape, South Africa". A country the alias table carries
+  (Poland, Hungary, Italy, Denmark) is judged by `countryConsistency` before
+  this check: "Breslau, Schlesien, Preussen" keeps no "Wrocław, Lower Silesia,
+  Poland", as on `main`. A
   root FamilySearch dates as ended, a former state, is not judged, since its
   lands lie in today's countries, perhaps the text's ("Svitavy, Moravská
   Třebová, Morava, Rakousko" keeps "Svitavy, Moravská Třebová, Moravia,
@@ -437,8 +449,9 @@ value, project-create-tool-spec "Hand-entered places").
   historic Ireland against Northern Ireland, nor a bare "Georgia", which is the
   state (lead, 2026-08-27), against a place FamilySearch puts in the Republic
   of Georgia ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia", while
-  "Savannah, Chatham, Georgia" keeps no "Republic of Georgia"), nor a chain
-  that cannot be read;
+  "Savannah, Chatham, Georgia" keeps no "Republic of Georgia", nor "Tbilisi,
+  GA", the state's code, "Tbilisi, Republic of Georgia"), nor a chain that
+  cannot be read;
 - some part of the `place` text names that place, as `record_read` checks a
   fact's own text before it keeps FamilySearch's standard (`textNamesPlace`, the
   check `repIdToStandardPlaceAt` applies, gedcomx-convert-spec "Places on
@@ -467,7 +480,8 @@ below replaces it, or the fact keeps no `standard_place`, and the response's
 An answer that is the supplied value itself, case and accents aside, is stored
 with no warning: nothing was replaced. For the lookup's answer that holds when
 the value was refused only because the text does not name it, and the text
-either confirms the lookup (`unconfirmedByText`, below) or ends with the US
+either confirms the lookup (`unconfirmedByText`, research-append-tool-spec
+§3.6's check on a place taken from a value) or ends with the US
 state, Puerto Rico or Canadian province it lies in
 (`endsWithItsJurisdiction`): "Balto., Md." keeps "Baltimore, Maryland, United
 States", which the lookup gives too, while "at the home of her daughter" keeps
@@ -492,12 +506,11 @@ value is kept.
 2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
    the places of the holder's other facts as context for a bare single-segment
    place, and no record country (see research-append-tool-spec §3.6, lever B).
-   Filling a fact with none, its answer stands only when the `place` text
-   confirms it, by the check research-append-tool-spec §3.6 applies to a place
-   taken from a value (`unconfirmedByText`): "at the home of her daughter,
-   Mrs. John Smith" takes nothing from a lookup that answers "Of, Trabzon,
-   Türkiye", while "412 Vine St, Cincinnati" keeps "Cincinnati, Hamilton, Ohio,
-   United States". Replacing a supplied value, it must fit the `place` text as
+   Filling a fact with none, its answer stands whatever the `place` text names,
+   as on `main` (lead, 2026-10-29): "West Topsham, Orange, Vermont" takes
+   "Topsham, Orange, Vermont, United States", and "at the home of her daughter,
+   Mrs. John Smith" the "Of, Trabzon, Türkiye" the lookup finds in it.
+   Replacing a supplied value, it must fit the `place` text as
    a supplied value must, except that it may lie in the state or province the
    text ends with, or in the country it ends with and in a place one of the
    text's other parts names, in place of being named by it
@@ -514,9 +527,7 @@ contradicts the text's (`countryConsistency`).
 **With none supplied** the answer fills the field, unless `resolveStandardPlace`
 is `false`. No answer leaves it unset with `could not resolve standard_place for
 '<place>' (left unset)` (plus `: <the disagreement>` when FamilySearch's values
-disagree, or `: the engine's place lookup answer '<answer>' could not be
-confirmed, as the text names neither a country nor that place` or `… does not
-name the country the text names` when the text does not confirm the lookup), or
+disagree), or
 `standard_place '<answer>' contradicts place
 '<place>' — the place text names a different country; cleared (left unset)`; a
 non-place phrase stays silent.
@@ -886,13 +897,16 @@ The caller (`tree-edit` skill) still:
   names, read from FamilySearch's chain ("Springfield, Hampden, Massachusetts"
   and Springfield, Illinois; "Thornton, Lancashire, England" and Thornton,
   Natal, South Africa; "Boston, Suffolk, Massachusetts" and Boston,
-  Lincolnshire, England; a former state such as Czechoslovakia is not judged,
-  nor Russia, Austria, Hungary or Germany as the text's country),
+  Lincolnshire, England; Hamburg, Hamburg, Germany and Hamburg, Eastern Cape,
+  South Africa; a former state such as Czechoslovakia is not judged, and
+  Russia, Austria, Hungary or Germany as the text's country takes the lands of
+  its empire: Helsinki, Finland for Helsingfors, Russia),
   one no part of its place text names ("with his daughter" and
   "Hawaii, United States"; "Ky" and "W. Va." keep their list answers), and one
   FamilySearch has no place of are replaced by the engine's answer or dropped,
-  with the reason. A lookup the place text does not confirm fills nothing, and
-  one that does not fit it as a lookup must replaces nothing ("Massachusettes,USA"
+  with the reason. A lookup fills a fact with none whatever its place text
+  names, as on `main`, and one that does not fit the text as a lookup must
+  replaces nothing ("Massachusettes,USA"
   and "Usa, Palau"), on `tree_correct`'s `update_fact` too; a lookup that gives
   the refused value itself keeps it when the text ends with its state
   ("Balto., Md."). `resolveStandardPlace: false`
