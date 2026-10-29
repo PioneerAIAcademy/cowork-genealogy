@@ -49,9 +49,13 @@ divided by key length, after collapsing whitespace.
 
 | | |
 |---|---|
-| Pages read | 10 of 10 |
-| Mean character error rate | 3.8% (range 0.1%–12.8%) |
-| Time per page | 10–20s |
+| Pages read | 10 of 10, on each of two runs |
+| Mean character error rate | 2.3% (range 0.1%–6.4%) |
+| Time per page | 12–27s |
+
+The rate moves between runs even at temperature 0. An earlier run, made before
+Markdown fences were stripped, scored a mean of 3.8%, and single pages swung by
+up to 11 points between the two runs. Treat one run as a rough figure.
 
 These are printed pages. Handwritten records will score worse, and this test set
 does not measure them yet. Adding handwritten pages with verified

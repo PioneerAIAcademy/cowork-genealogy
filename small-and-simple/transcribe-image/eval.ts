@@ -3,14 +3,13 @@
  * human-verified key by character error rate (edit distance / key length, after
  * collapsing whitespace). Calls FamilySearch and OpenRouter; not run in CI.
  *
- *   FS_TOKEN=... OPENROUTER_API_KEY=... npm run eval:transcribe-image
+ *   make eval
  *
- * Either value falls back to ~/.familysearch-mcp/ (tokens.json, config.json).
- * OPENROUTER_MODEL overrides the model.
+ * Credentials: dev/credentials.ts.
  */
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
+import { loadCredentials } from "../dev/credentials.js";
 import { openRouterLlm } from "../shared/llm.js";
 import { transcribeImage } from "./index.js";
 
@@ -21,19 +20,6 @@ interface Case {
 }
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
-
-function fromHomeFile(file: string, field: string): string | undefined {
-  try {
-    return JSON.parse(readFileSync(join(homedir(), ".familysearch-mcp", file), "utf-8"))[field];
-  } catch {
-    return undefined;
-  }
-}
-
-function required(name: string, value: string | undefined): string {
-  if (!value) throw new Error(`Set ${name}.`);
-  return value;
-}
 
 const normalize = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -53,12 +39,8 @@ export function characterErrorRate(candidate: string, key: string): number {
 }
 
 async function main() {
-  const fsToken = required("FS_TOKEN", process.env.FS_TOKEN ?? fromHomeFile("tokens.json", "accessToken"));
-  const apiKey = required(
-    "OPENROUTER_API_KEY",
-    process.env.OPENROUTER_API_KEY ?? fromHomeFile("config.json", "openRouterApiKey"),
-  );
-  const llm = openRouterLlm({ apiKey, model: process.env.OPENROUTER_MODEL });
+  const { fsToken, openRouterApiKey, openRouterModel } = loadCredentials();
+  const llm = openRouterLlm({ apiKey: openRouterApiKey, model: openRouterModel });
   const { cases } = JSON.parse(readFileSync(join(FIXTURES, "fixtures.json"), "utf-8")) as { cases: Case[] };
 
   const rates: number[] = [];

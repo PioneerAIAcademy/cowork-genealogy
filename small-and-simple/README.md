@@ -62,11 +62,14 @@ shared/            code more than one solution will need
   http.ts          fetch with a timeout and a small retry on 429/5xx
   familysearch.ts  FamilySearch quirks, image fetch
   llm.ts           the Llm interface and the OpenRouter adapter
+dev/
+  credentials.ts   where demos and evals get credentials (never used by a solution)
 <solution>/
   index.ts         the exported function
   prompt.ts        the prompt, on its own so it can be tuned without touching code
   *.test.ts        offline tests against a fake fetch and a fake LLM (run in CI)
-  eval.ts          live accuracy check against fixtures/ (run by hand)
+  demo.ts          read one real case and print the result (make demo)
+  eval.ts          live accuracy check against fixtures/ (make eval)
   fixtures/        real cases with human-verified answers
   README.md        input, output, errors, measured accuracy
 ```
@@ -79,7 +82,9 @@ shared/            code more than one solution will need
 4. Add `fixtures/` with real cases and human-verified answers, and an `eval.ts`
    that scores the function against them. Without this, nobody can say how
    often the function is right.
-5. Add a `README.md` with the measured score, then add a row to the table above.
+5. Add a `demo.ts` that runs one real case and prints the result, and give its
+   demo and eval `Makefile` targets.
+6. Add a `README.md` with the measured score, then add a row to the table above.
 
 Move code into `shared/` once a second solution needs it, not before.
 
@@ -97,11 +102,24 @@ Move code into `shared/` once a second solution needs it, not before.
 - **Record vs image ARKs.** `1:1:` and `1:2:` ARKs are records or personas, not
   images. Changing the prefix does not turn one into the other.
 
+## Try it
+
+```sh
+cd small-and-simple
+export FS_TOKEN=...            # a signed-in FamilySearch user's access token
+export OPENROUTER_API_KEY=...
+make demo                      # transcribes a sample page and prints it
+make demo ARK='https://www.familysearch.org/ark:/61903/3:1:...'   # any page
+```
+
+`make demo` prints the transcription, the model and time taken, and a link to
+the scan so you can compare the two side by side. If `FS_TOKEN` or
+`OPENROUTER_API_KEY` is unset, it uses the files the engine's `login` tool
+writes in `~/.familysearch-mcp/`.
+
 ## Commands
 
 ```sh
-npm ci
-npm run typecheck
-npm test                       # offline
-npm run eval:transcribe-image  # live: needs FS_TOKEN and OPENROUTER_API_KEY
+make test    # typecheck and offline tests, what CI runs
+make eval    # live accuracy check against the fixtures
 ```

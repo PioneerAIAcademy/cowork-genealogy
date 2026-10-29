@@ -9,6 +9,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "demo:transcribe-image": "tsx transcribe-image/demo.ts",
     "eval:transcribe-image": "tsx transcribe-image/eval.ts"
   },
   "devDependencies": {

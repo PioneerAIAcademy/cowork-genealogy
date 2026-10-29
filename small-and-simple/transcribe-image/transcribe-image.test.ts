@@ -63,6 +63,16 @@ describe("transcribeImage", () => {
     expect(requests[0].images?.[0]).toEqual({ bytes: JPEG, contentType: "image/jpeg", url: out.imageUrl });
   });
 
+  it.each([
+    ["```text\nHOLT FAMILY. 29\nJOHN b. 1757\n```", "HOLT FAMILY. 29\nJOHN b. 1757"],
+    ["```\nJOHN b. 1757", "JOHN b. 1757"],
+    ["JOHN wrote ``` in the margin", "JOHN wrote ``` in the margin"],
+  ])("strips a Markdown fence around the page: %j", async (raw, text) => {
+    const { fetch } = fakeFetch(image());
+    const { llm } = fakeLlm(raw);
+    expect((await transcribeImage({ imageId: "1_2" }, { fsToken: "t", fetch, llm })).text).toBe(text);
+  });
+
   it("passes truncation through", async () => {
     const { fetch } = fakeFetch(image());
     const { llm } = fakeLlm("first half", true);
