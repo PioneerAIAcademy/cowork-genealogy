@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search for Dixon surname in the 1840 Virginia census, page 1. Pre-1850: only heads of household are named. Returns 4 of 6 results; hasMore is true so the agent must page with offset 100.",
+  "description": "FamilySearch record search for Dixon surname in the 1840 Virginia census, page 1. Pre-1850: only heads of household are named, so every stub is its own household. Returns 100 of 102 results; hasMore is true so the agent must page with offset 100.",
   "args": {
     "surname": "~Dixon",
     "residenceYearFrom": 1840,
@@ -15,9 +15,9 @@
       "residenceYearFrom": 1840,
       "residenceYearTo": 1840
     },
-    "totalMatches": 6,
+    "totalMatches": 102,
     "paginationCappedAt": 4999,
-    "returned": 4,
+    "returned": 100,
     "offset": 0,
     "hasMore": true,
     "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
@@ -26,11 +26,15 @@
         "personId": "XJQV-1840-A",
         "recordId": "XJQV-1840-A",
         "personName": "Edmund Dixon",
-        "score": 0.90,
+        "score": 0.95,
         "sex": "Male",
         "role": "Principal",
         "events": [
-          { "type": "Residence", "date": "1840", "place": "Ohio, Virginia, United States" }
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Ohio, Virginia, United States"
+          }
         ],
         "collectionId": "1803960",
         "collectionTitle": "United States Census, 1840",
@@ -42,10 +46,21 @@
               "id": "P1",
               "gender": "Male",
               "names": [
-                { "id": "N1", "preferred": true, "given": "Edmund", "surname": "Dixon", "type": "BirthName" }
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Edmund",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
               ],
               "facts": [
-                { "id": "F1", "type": "Residence", "date": "1840", "place": "Ohio, Virginia, United States" }
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Ohio, Virginia, United States"
+                }
               ]
             }
           ],
@@ -56,11 +71,15 @@
         "personId": "XJQV-1840-B",
         "recordId": "XJQV-1840-B",
         "personName": "William Dixon",
-        "score": 0.86,
+        "score": 0.948,
         "sex": "Male",
         "role": "Principal",
         "events": [
-          { "type": "Residence", "date": "1840", "place": "Rockingham, Virginia, United States" }
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Rockingham, Virginia, United States"
+          }
         ],
         "collectionId": "1803960",
         "collectionTitle": "United States Census, 1840",
@@ -72,10 +91,21 @@
               "id": "P1",
               "gender": "Male",
               "names": [
-                { "id": "N1", "preferred": true, "given": "William", "surname": "Dixon", "type": "BirthName" }
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "William",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
               ],
               "facts": [
-                { "id": "F1", "type": "Residence", "date": "1840", "place": "Rockingham, Virginia, United States" }
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Rockingham, Virginia, United States"
+                }
               ]
             }
           ],
@@ -86,11 +116,15 @@
         "personId": "XJQV-1840-C",
         "recordId": "XJQV-1840-C",
         "personName": "James Dixon",
-        "score": 0.83,
+        "score": 0.946,
         "sex": "Male",
         "role": "Principal",
         "events": [
-          { "type": "Residence", "date": "1840", "place": "Augusta, Virginia, United States" }
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Augusta, Virginia, United States"
+          }
         ],
         "collectionId": "1803960",
         "collectionTitle": "United States Census, 1840",
@@ -102,10 +136,21 @@
               "id": "P1",
               "gender": "Male",
               "names": [
-                { "id": "N1", "preferred": true, "given": "James", "surname": "Dixon", "type": "BirthName" }
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "James",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
               ],
               "facts": [
-                { "id": "F1", "type": "Residence", "date": "1840", "place": "Augusta, Virginia, United States" }
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Augusta, Virginia, United States"
+                }
               ]
             }
           ],
@@ -116,11 +161,15 @@
         "personId": "XJQV-1840-D",
         "recordId": "XJQV-1840-D",
         "personName": "Henry Dixon",
-        "score": 0.80,
+        "score": 0.944,
         "sex": "Male",
         "role": "Principal",
         "events": [
-          { "type": "Residence", "date": "1840", "place": "Fairfax, Virginia, United States" }
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fairfax, Virginia, United States"
+          }
         ],
         "collectionId": "1803960",
         "collectionTitle": "United States Census, 1840",
@@ -132,10 +181,4341 @@
               "id": "P1",
               "gender": "Male",
               "names": [
-                { "id": "N1", "preferred": true, "given": "Henry", "surname": "Dixon", "type": "BirthName" }
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
               ],
               "facts": [
-                { "id": "F1", "type": "Residence", "date": "1840", "place": "Fairfax, Virginia, United States" }
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fairfax, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G01",
+        "recordId": "XJQV-1840-G01",
+        "personName": "John Dixon",
+        "score": 0.942,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Accomack, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G01",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "John",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Accomack, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G02",
+        "recordId": "XJQV-1840-G02",
+        "personName": "Thomas Dixon",
+        "score": 0.94,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Albemarle, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G02",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Albemarle, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G03",
+        "recordId": "XJQV-1840-G03",
+        "personName": "George Dixon",
+        "score": 0.938,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Amherst, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G03",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Amherst, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G04",
+        "recordId": "XJQV-1840-G04",
+        "personName": "Robert Dixon",
+        "score": 0.936,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Bedford, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G04",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Robert",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Bedford, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G05",
+        "recordId": "XJQV-1840-G05",
+        "personName": "Joseph Dixon",
+        "score": 0.934,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Botetourt, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G05",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Botetourt, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G06",
+        "recordId": "XJQV-1840-G06",
+        "personName": "Charles Dixon",
+        "score": 0.932,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Brunswick, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G06",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Charles",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Brunswick, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G07",
+        "recordId": "XJQV-1840-G07",
+        "personName": "Benjamin Dixon",
+        "score": 0.93,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Campbell, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G07",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Benjamin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Campbell, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G08",
+        "recordId": "XJQV-1840-G08",
+        "personName": "Daniel Dixon",
+        "score": 0.928,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Caroline, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G08",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Daniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Caroline, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G09",
+        "recordId": "XJQV-1840-G09",
+        "personName": "David Dixon",
+        "score": 0.926,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Charlotte, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G09",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "David",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Charlotte, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G10",
+        "recordId": "XJQV-1840-G10",
+        "personName": "Jesse Dixon",
+        "score": 0.924,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Culpeper, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G10",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jesse",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Culpeper, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G11",
+        "recordId": "XJQV-1840-G11",
+        "personName": "Isaac Dixon",
+        "score": 0.922,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Dinwiddie, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G11",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Isaac",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Dinwiddie, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G12",
+        "recordId": "XJQV-1840-G12",
+        "personName": "Nathaniel Dixon",
+        "score": 0.92,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Essex, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G12",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nathaniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Essex, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G13",
+        "recordId": "XJQV-1840-G13",
+        "personName": "Peter Dixon",
+        "score": 0.918,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fauquier, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G13",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Peter",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fauquier, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G14",
+        "recordId": "XJQV-1840-G14",
+        "personName": "Elijah Dixon",
+        "score": 0.916,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fluvanna, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G14",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elijah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fluvanna, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G15",
+        "recordId": "XJQV-1840-G15",
+        "personName": "Lewis Dixon",
+        "score": 0.914,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Goochland, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G15",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Lewis",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Goochland, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G16",
+        "recordId": "XJQV-1840-G16",
+        "personName": "Andrew Dixon",
+        "score": 0.912,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Greenbrier, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G16",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Andrew",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Greenbrier, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G17",
+        "recordId": "XJQV-1840-G17",
+        "personName": "Moses Dixon",
+        "score": 0.91,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Halifax, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G17",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Moses",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Halifax, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G18",
+        "recordId": "XJQV-1840-G18",
+        "personName": "Jacob Dixon",
+        "score": 0.908,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Hanover, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G18",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jacob",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Hanover, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G19",
+        "recordId": "XJQV-1840-G19",
+        "personName": "Abraham Dixon",
+        "score": 0.906,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Isle of Wight, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G19",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Abraham",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Isle of Wight, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G20",
+        "recordId": "XJQV-1840-G20",
+        "personName": "Martin Dixon",
+        "score": 0.904,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Loudoun, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G20",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Martin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Loudoun, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G21",
+        "recordId": "XJQV-1840-G21",
+        "personName": "Elizabeth Dixon",
+        "score": 0.902,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Louisa, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G21",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elizabeth",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Louisa, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G22",
+        "recordId": "XJQV-1840-G22",
+        "personName": "Mary Dixon",
+        "score": 0.9,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Lunenburg, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G22",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Lunenburg, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G23",
+        "recordId": "XJQV-1840-G23",
+        "personName": "Sarah Dixon",
+        "score": 0.898,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Mecklenburg, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G23",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Sarah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Mecklenburg, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G24",
+        "recordId": "XJQV-1840-G24",
+        "personName": "Nancy Dixon",
+        "score": 0.896,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Monongalia, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G24",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nancy",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Monongalia, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G25",
+        "recordId": "XJQV-1840-G25",
+        "personName": "Susan Dixon",
+        "score": 0.894,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Nansemond, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G25",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Susan",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Nansemond, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G26",
+        "recordId": "XJQV-1840-G26",
+        "personName": "John Dixon",
+        "score": 0.892,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Norfolk, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G26",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "John",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Norfolk, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G27",
+        "recordId": "XJQV-1840-G27",
+        "personName": "Thomas Dixon",
+        "score": 0.89,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Orange, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G27",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Orange, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G28",
+        "recordId": "XJQV-1840-G28",
+        "personName": "George Dixon",
+        "score": 0.888,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Pittsylvania, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G28",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Pittsylvania, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G29",
+        "recordId": "XJQV-1840-G29",
+        "personName": "Robert Dixon",
+        "score": 0.886,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Prince Edward, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G29",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Robert",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Prince Edward, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G30",
+        "recordId": "XJQV-1840-G30",
+        "personName": "Joseph Dixon",
+        "score": 0.884,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Shenandoah, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G30",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Shenandoah, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G31",
+        "recordId": "XJQV-1840-G31",
+        "personName": "Charles Dixon",
+        "score": 0.882,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Southampton, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G31",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Charles",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Southampton, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G32",
+        "recordId": "XJQV-1840-G32",
+        "personName": "Benjamin Dixon",
+        "score": 0.88,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Spotsylvania, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G32",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Benjamin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Spotsylvania, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G33",
+        "recordId": "XJQV-1840-G33",
+        "personName": "Daniel Dixon",
+        "score": 0.878,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Surry, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G33",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Daniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Surry, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G34",
+        "recordId": "XJQV-1840-G34",
+        "personName": "David Dixon",
+        "score": 0.876,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Washington, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G34",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "David",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Washington, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G35",
+        "recordId": "XJQV-1840-G35",
+        "personName": "Jesse Dixon",
+        "score": 0.874,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Westmoreland, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G35",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jesse",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Westmoreland, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G36",
+        "recordId": "XJQV-1840-G36",
+        "personName": "Isaac Dixon",
+        "score": 0.872,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Wythe, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G36",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Isaac",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Wythe, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G37",
+        "recordId": "XJQV-1840-G37",
+        "personName": "Nathaniel Dixon",
+        "score": 0.87,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Accomack, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G37",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nathaniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Accomack, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G38",
+        "recordId": "XJQV-1840-G38",
+        "personName": "Peter Dixon",
+        "score": 0.868,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Albemarle, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G38",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Peter",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Albemarle, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G39",
+        "recordId": "XJQV-1840-G39",
+        "personName": "Elijah Dixon",
+        "score": 0.866,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Amherst, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G39",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elijah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Amherst, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G40",
+        "recordId": "XJQV-1840-G40",
+        "personName": "Lewis Dixon",
+        "score": 0.864,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Bedford, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G40",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Lewis",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Bedford, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G41",
+        "recordId": "XJQV-1840-G41",
+        "personName": "Andrew Dixon",
+        "score": 0.862,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Botetourt, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G41",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Andrew",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Botetourt, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G42",
+        "recordId": "XJQV-1840-G42",
+        "personName": "Moses Dixon",
+        "score": 0.86,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Brunswick, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G42",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Moses",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Brunswick, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G43",
+        "recordId": "XJQV-1840-G43",
+        "personName": "Jacob Dixon",
+        "score": 0.858,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Campbell, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G43",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jacob",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Campbell, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G44",
+        "recordId": "XJQV-1840-G44",
+        "personName": "Abraham Dixon",
+        "score": 0.856,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Caroline, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G44",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Abraham",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Caroline, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G45",
+        "recordId": "XJQV-1840-G45",
+        "personName": "Martin Dixon",
+        "score": 0.854,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Charlotte, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G45",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Martin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Charlotte, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G46",
+        "recordId": "XJQV-1840-G46",
+        "personName": "Elizabeth Dixon",
+        "score": 0.852,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Culpeper, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G46",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elizabeth",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Culpeper, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G47",
+        "recordId": "XJQV-1840-G47",
+        "personName": "Mary Dixon",
+        "score": 0.85,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Dinwiddie, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G47",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Dinwiddie, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G48",
+        "recordId": "XJQV-1840-G48",
+        "personName": "Sarah Dixon",
+        "score": 0.848,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Essex, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G48",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Sarah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Essex, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G49",
+        "recordId": "XJQV-1840-G49",
+        "personName": "Nancy Dixon",
+        "score": 0.846,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fauquier, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G49",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nancy",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fauquier, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G50",
+        "recordId": "XJQV-1840-G50",
+        "personName": "Susan Dixon",
+        "score": 0.844,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fluvanna, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G50",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Susan",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fluvanna, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G51",
+        "recordId": "XJQV-1840-G51",
+        "personName": "John Dixon",
+        "score": 0.842,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Goochland, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G51",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "John",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Goochland, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G52",
+        "recordId": "XJQV-1840-G52",
+        "personName": "Thomas Dixon",
+        "score": 0.84,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Greenbrier, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G52",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Greenbrier, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G53",
+        "recordId": "XJQV-1840-G53",
+        "personName": "George Dixon",
+        "score": 0.838,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Halifax, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G53",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Halifax, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G54",
+        "recordId": "XJQV-1840-G54",
+        "personName": "Robert Dixon",
+        "score": 0.836,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Hanover, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G54",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Robert",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Hanover, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G55",
+        "recordId": "XJQV-1840-G55",
+        "personName": "Joseph Dixon",
+        "score": 0.834,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Isle of Wight, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G55",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Isle of Wight, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G56",
+        "recordId": "XJQV-1840-G56",
+        "personName": "Charles Dixon",
+        "score": 0.832,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Loudoun, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G56",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Charles",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Loudoun, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G57",
+        "recordId": "XJQV-1840-G57",
+        "personName": "Benjamin Dixon",
+        "score": 0.83,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Louisa, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G57",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Benjamin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Louisa, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G58",
+        "recordId": "XJQV-1840-G58",
+        "personName": "Daniel Dixon",
+        "score": 0.828,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Lunenburg, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G58",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Daniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Lunenburg, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G59",
+        "recordId": "XJQV-1840-G59",
+        "personName": "David Dixon",
+        "score": 0.826,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Mecklenburg, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G59",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "David",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Mecklenburg, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G60",
+        "recordId": "XJQV-1840-G60",
+        "personName": "Jesse Dixon",
+        "score": 0.824,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Monongalia, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G60",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jesse",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Monongalia, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G61",
+        "recordId": "XJQV-1840-G61",
+        "personName": "Isaac Dixon",
+        "score": 0.822,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Nansemond, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G61",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Isaac",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Nansemond, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G62",
+        "recordId": "XJQV-1840-G62",
+        "personName": "Nathaniel Dixon",
+        "score": 0.82,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Norfolk, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G62",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nathaniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Norfolk, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G63",
+        "recordId": "XJQV-1840-G63",
+        "personName": "Peter Dixon",
+        "score": 0.818,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Orange, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G63",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Peter",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Orange, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G64",
+        "recordId": "XJQV-1840-G64",
+        "personName": "Elijah Dixon",
+        "score": 0.816,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Pittsylvania, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G64",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elijah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Pittsylvania, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G65",
+        "recordId": "XJQV-1840-G65",
+        "personName": "Lewis Dixon",
+        "score": 0.814,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Prince Edward, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G65",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Lewis",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Prince Edward, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G66",
+        "recordId": "XJQV-1840-G66",
+        "personName": "Andrew Dixon",
+        "score": 0.812,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Shenandoah, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G66",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Andrew",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Shenandoah, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G67",
+        "recordId": "XJQV-1840-G67",
+        "personName": "Moses Dixon",
+        "score": 0.81,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Southampton, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G67",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Moses",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Southampton, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G68",
+        "recordId": "XJQV-1840-G68",
+        "personName": "Jacob Dixon",
+        "score": 0.808,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Spotsylvania, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G68",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jacob",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Spotsylvania, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G69",
+        "recordId": "XJQV-1840-G69",
+        "personName": "Abraham Dixon",
+        "score": 0.806,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Surry, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G69",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Abraham",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Surry, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G70",
+        "recordId": "XJQV-1840-G70",
+        "personName": "Martin Dixon",
+        "score": 0.804,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Washington, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G70",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Martin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Washington, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G71",
+        "recordId": "XJQV-1840-G71",
+        "personName": "Elizabeth Dixon",
+        "score": 0.802,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Westmoreland, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G71",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elizabeth",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Westmoreland, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G72",
+        "recordId": "XJQV-1840-G72",
+        "personName": "Mary Dixon",
+        "score": 0.8,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Wythe, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G72",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Wythe, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G73",
+        "recordId": "XJQV-1840-G73",
+        "personName": "Sarah Dixon",
+        "score": 0.798,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Accomack, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G73",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Sarah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Accomack, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G74",
+        "recordId": "XJQV-1840-G74",
+        "personName": "Nancy Dixon",
+        "score": 0.796,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Albemarle, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G74",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nancy",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Albemarle, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G75",
+        "recordId": "XJQV-1840-G75",
+        "personName": "Susan Dixon",
+        "score": 0.794,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Amherst, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G75",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Susan",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Amherst, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G76",
+        "recordId": "XJQV-1840-G76",
+        "personName": "John Dixon",
+        "score": 0.792,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Bedford, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G76",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "John",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Bedford, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G77",
+        "recordId": "XJQV-1840-G77",
+        "personName": "Thomas Dixon",
+        "score": 0.79,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Botetourt, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G77",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Botetourt, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G78",
+        "recordId": "XJQV-1840-G78",
+        "personName": "George Dixon",
+        "score": 0.788,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Brunswick, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G78",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Brunswick, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G79",
+        "recordId": "XJQV-1840-G79",
+        "personName": "Robert Dixon",
+        "score": 0.786,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Campbell, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G79",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Robert",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Campbell, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G80",
+        "recordId": "XJQV-1840-G80",
+        "personName": "Joseph Dixon",
+        "score": 0.784,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Caroline, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G80",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Caroline, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G81",
+        "recordId": "XJQV-1840-G81",
+        "personName": "Charles Dixon",
+        "score": 0.782,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Charlotte, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G81",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Charles",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Charlotte, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G82",
+        "recordId": "XJQV-1840-G82",
+        "personName": "Benjamin Dixon",
+        "score": 0.78,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Culpeper, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G82",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Benjamin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Culpeper, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G83",
+        "recordId": "XJQV-1840-G83",
+        "personName": "Daniel Dixon",
+        "score": 0.778,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Dinwiddie, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G83",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Daniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Dinwiddie, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G84",
+        "recordId": "XJQV-1840-G84",
+        "personName": "David Dixon",
+        "score": 0.776,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Essex, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G84",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "David",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Essex, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G85",
+        "recordId": "XJQV-1840-G85",
+        "personName": "Jesse Dixon",
+        "score": 0.774,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fauquier, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G85",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jesse",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fauquier, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G86",
+        "recordId": "XJQV-1840-G86",
+        "personName": "Isaac Dixon",
+        "score": 0.772,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Fluvanna, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G86",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Isaac",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Fluvanna, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G87",
+        "recordId": "XJQV-1840-G87",
+        "personName": "Nathaniel Dixon",
+        "score": 0.77,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Goochland, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G87",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nathaniel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Goochland, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G88",
+        "recordId": "XJQV-1840-G88",
+        "personName": "Peter Dixon",
+        "score": 0.768,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Greenbrier, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G88",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Peter",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Greenbrier, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G89",
+        "recordId": "XJQV-1840-G89",
+        "personName": "Elijah Dixon",
+        "score": 0.766,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Halifax, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G89",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elijah",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Halifax, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G90",
+        "recordId": "XJQV-1840-G90",
+        "personName": "Lewis Dixon",
+        "score": 0.764,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Hanover, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G90",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Lewis",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Hanover, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G91",
+        "recordId": "XJQV-1840-G91",
+        "personName": "Andrew Dixon",
+        "score": 0.762,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Isle of Wight, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G91",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Andrew",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Isle of Wight, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G92",
+        "recordId": "XJQV-1840-G92",
+        "personName": "Moses Dixon",
+        "score": 0.76,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Loudoun, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G92",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Moses",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Loudoun, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G93",
+        "recordId": "XJQV-1840-G93",
+        "personName": "Jacob Dixon",
+        "score": 0.758,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Louisa, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G93",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jacob",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Louisa, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G94",
+        "recordId": "XJQV-1840-G94",
+        "personName": "Abraham Dixon",
+        "score": 0.756,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Lunenburg, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G94",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Abraham",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Lunenburg, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G95",
+        "recordId": "XJQV-1840-G95",
+        "personName": "Martin Dixon",
+        "score": 0.754,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Mecklenburg, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G95",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Martin",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Mecklenburg, Virginia, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1840-G96",
+        "recordId": "XJQV-1840-G96",
+        "personName": "Elizabeth Dixon",
+        "score": 0.752,
+        "sex": "Female",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Monongalia, Virginia, United States"
+          }
+        ],
+        "collectionId": "1803960",
+        "collectionTitle": "United States Census, 1840",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1840-G96",
+        "treeMatches": [],
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elizabeth",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Monongalia, Virginia, United States"
+                }
               ]
             }
           ],

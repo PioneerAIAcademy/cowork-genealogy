@@ -25,6 +25,7 @@ from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import hashable_key as _hashable_key
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import new_section_entries as _new_section_entries
 from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
@@ -957,3 +958,71 @@ def test_thin_subject_hit_not_extracted(before_state, after_state, builtin_tool_
     _assert_nothing_extracted(
         before_state, after_state, builtin_tool_calls, "the subject is too thin to tell from a namesake",
     )
+
+
+# --- Namesake rows (issue #3363, PR 2) --------------------------------
+
+
+def test_namesake_row_recorded(before_state, after_state, test):
+    """Tag-gated (namesake-row): a search that turned up a same-named person the
+    agent ruled out records him as a `namesakes` row on the subject (Step 6b).
+
+    A row names a subject of the project and cites a `record_search` log entry
+    this run wrote. `research_append` stamps `record_persona_ids` only for a
+    record found in the cited search's own results, so a row with no stamp listed
+    an id the search never returned (a `recordArk`, a retyped id) or cited the
+    wrong log.
+    """
+    if "namesake-row" not in test.get("tags", []):
+        pytest.skip("not a namesake-row scenario")
+    rows = _new_section_entries(before_state, after_state, "namesakes")
+    assert rows, "the agent ruled a same-named person out but recorded no namesakes row"
+    research = after_state.get("research_json") or {}
+    subjects = set((research.get("project") or {}).get("subject_person_ids") or [])
+    searches = {
+        e.get("id") for e in _new_log_entries(before_state, after_state) if e.get("tool") == "record_search"
+    }
+    for row in rows:
+        assert row.get("person_id") in subjects, (
+            f"row {row.get('id')} is on {row.get('person_id')!r}, not a subject of the project {sorted(subjects)}"
+        )
+        assert set(row.get("log_entry_ids") or []) & searches, (
+            f"row {row.get('id')} cites {row.get('log_entry_ids')}, none of them a record_search this run logged"
+        )
+        assert row.get("record_persona_ids"), (
+            f"row {row.get('id')} lists {row.get('record_ids')}, which research_append found in none of the "
+            "cited search's results: copy each recordId verbatim, never recordArk"
+        )
+
+
+def test_no_namesake_row(before_state, after_state, test):
+    """Tag-gated (no-namesake-row): a candidate who may still be the subject is
+    never recorded as his namesake, since a row caps the subject's own links."""
+    if "no-namesake-row" not in test.get("tags", []):
+        pytest.skip("not a no-namesake-row scenario")
+    rows = _new_section_entries(before_state, after_state, "namesakes")
+    assert not rows, f"the agent recorded a namesake for a candidate who may be the subject: {rows}"
+
+
+def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (namesake-warning): when the namesakes write warns that links to
+    the subject are untied, the return hands every listed `pe_` id to
+    person-evidence, the only agent that may lower or tie them."""
+    from harness.skill_runner import agent_return_text
+
+    if "namesake-warning" not in test.get("tags", []):
+        pytest.skip("not a namesake-warning scenario")
+    warned: set[str] = set()
+    for call in tool_calls or []:
+        if _bare_tool_name(call.get("tool")) != "research_append":
+            continue
+        args = _as_mapping(call.get("input") or call.get("args"))
+        ops = args.get("ops") if isinstance(args.get("ops"), list) else [args]
+        if any(isinstance(op, dict) and op.get("section") == "namesakes" for op in ops):
+            warned |= set(re.findall(r"\bpe_\d{3,}\b", json.dumps(call.get("response"), default=str)))
+    assert warned, "no namesakes write returned a warning naming a link, so the scenario did not reach the hand-back"
+    reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
+    hand_back = re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence[^\n]*", reply, re.I)
+    assert hand_back, f"the namesakes write warned about {sorted(warned)}, but no Hand-back: person-evidence line: {reply[:600]!r}"
+    missing = sorted(p for p in warned if p not in hand_back.group(0))
+    assert not missing, f"the person-evidence hand-back omits warned links {missing}: {hand_back.group(0)!r}"

@@ -1868,13 +1868,13 @@ records are added.
 ### `packages/engine/mcp-server/src/types/record-search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
-`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`, `FSField`,
-`FSFieldValue`, `FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
+`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`,
+`FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
 `RecordSearchResult`, `RecordSearchEvent`, `TreeMatch`,
 `RecordSearchToolResponse`).
 
-`FSField` / `FSFieldValue` declare the entry-level `fields[]` array that
-`FSGedcomx` now carries — the batch number's home.
+`FSGedcomx` carries the entry-level `fields[]` array — the batch number's
+home — typed with the shared `GedcomXField` from `types/gedcomx.ts`.
 
 `FSRecordRelationship` declares `FSGedcomx.relationships`, read for the
 facts of the persona's Couple rows (mapping rule 7). Endpoints are matched

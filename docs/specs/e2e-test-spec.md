@@ -880,7 +880,10 @@ the `max_cost_usd` note in §6 step 5.
    worker's `CONTINUE_REASON`
    (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
    two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
-   the copy). Before replying, the hook classifies the agent's closing words
+   the copy). The hosted planes' completion halt is NOT emulated: they end the turn at the
+   PostToolUse of the proof-conclusion call that completes the project
+   (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
+   those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
    (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
    class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
    for a completion claim the two differ — no run log ever carries a
@@ -1245,11 +1248,13 @@ entries in the committed corpus. `research_append` writes a named section, and
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has **four**. `out_of_lane` fires
+`routed` rule, and miss that `owner_denied` has **six**. `out_of_lane` fires
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
 grants it; `declaration` fires on a routed claim, field-scoped rather than
 section-scoped; and `owned_field` fires on a routed field keyed on presence
-rather than on a claim value (`project.status`). All reach this array — the append happens before the rule
+rather than on a claim value (`project.status`); `claim` fires on a conflict's
+analytical product; and `owned_append` fires on a `questions` append from
+anyone but question-selection. All reach this array — the append happens before the rule
 branch — so an entry here does not imply a main-thread caller. Most committed
 entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
 7315364c).

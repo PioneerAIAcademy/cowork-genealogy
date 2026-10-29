@@ -33,6 +33,9 @@
 //       `mergeNamesakeRefusals`, `mergeCarryRefusals` and the pair checks on the
 //       call's state, with brackets, unmoved links, the gates a merge skips and
 //       a replay of lowering every refused link.
+//   §3b merge link checks (#2537): each §3 call through the shipped
+//       `mergeLinkCheckRefusals` on the merged tree and remapped research, no
+//       rows planted; birth places resolve live.
 //   §4  the namesake warning (1d): each committed e2e final state, rows
 //       written in one call on every person holding a live probable or
 //       confident link, then on the fixture subject alone; what
@@ -50,6 +53,10 @@
 //       op by op, so a call that writes one fact or name twice, or removes
 //       one, fails a floor: the shipped check judges what a call adds as a
 //       whole.
+//   §7  item 10 (PR 2): each committed e2e final state carrying rows, read as
+//       written, no row planted: the personas `research_append` stamped, and
+//       what a refusal keyed on them would refuse and spare
+//       (dev/namesake-persona-counts.ts). Zero until runs write rows.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -64,6 +71,7 @@ import {
   carryTriggerSources,
   mergeCarryRefusals,
   mergeDirections,
+  mergeLinkCheckRefusals,
   mergeNamesakeRefusals,
   namesakeRowListings,
   namesakeVerdicts,
@@ -77,7 +85,10 @@ import {
 import { isTwoParty } from "../src/utils/record-persona.js";
 import { joinedPairRefusals, survivorOrderRefusals } from "../src/tools/merge-tree-persons.js";
 import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
+import { mergeGedcomx } from "../src/utils/merge-gedcomx.js";
+import { remapResearchPersonIds } from "../src/tools/merge-shared.js";
 import { personaTargetRefusal } from "../src/tools/materialize-facts.js";
+import { personaStampCounts } from "./namesake-persona-counts.js";
 import { bareName, opsOf, readRunLog, repoRoot, responseOf, toolCalls } from "./runlog-calls.js";
 
 const VERBOSE = process.argv.includes("--verbose");
@@ -788,6 +799,8 @@ function section3(lines: any[], states: FinalState[]): void {
       `${scored} carrying a match score; the move rule would refuse ${moveRefused}`,
   );
 
+  measuredMergeWorlds = worlds;
+
   let replays = 0;
   // The lowering replay: at the call whose part 1 refuses links in A, lower
   // each refused link to speculative (what the routing offers an agent that
@@ -1207,6 +1220,78 @@ function section6(lines: any[], states: FinalState[]): void {
   }
 }
 
+// ─── §3b the link checks a merge runs (#2537) ───────────────────────────────
+
+let measuredMergeWorlds: MergeWorld[] = [];
+
+/** Each §3 call through the shipped `mergeLinkCheckRefusals`, on the merged
+ *  tree and the remapped research, with no namesake rows. Birth places resolve
+ *  live, and a place that does not resolve counts as far apart, so an offline
+ *  run is an upper bound on the contradiction cap. The project dir is empty, so
+ *  no recorded score exists and every moved link carrying one is refused. */
+async function section3b(): Promise<void> {
+  console.log("\n§3b merge link checks: each §3 call through mergeLinkCheckRefusals, no rows planted");
+  const scratch = mkdtempSync(join(tmpdir(), "merge-link-checks-"));
+  let moved = 0;
+  let refused = 0;
+  let unmerged = 0;
+  try {
+    for (const w of measuredMergeWorlds) {
+      const survivorOf = new Map(w.merges.map(([s, c]) => [c, s] as const));
+      const live = ((w.research.person_evidence ?? []) as any[]).filter((e) => e && !e.superseded_by && survivorOf.has(e.person_id));
+      moved += live.length;
+      let merged: any;
+      try {
+        merged = mergeGedcomx(w.tree, null, w.merges);
+      } catch (e) {
+        unmerged += 1;
+        console.log(`    ${w.line.run} #${w.line.call}: ${live.length} live links moved; the core refused the merge: ${e instanceof Error ? e.message : e}`);
+        continue;
+      }
+      const research = structuredClone(w.research);
+      remapResearchPersonIds(research, new Map(survivorOf));
+      const lines = await mergeLinkCheckRefusals(scratch, { research: w.research }, { research, tree: merged }, w.merges, w.startingIds);
+      const findings = lines.filter((l) => l.startsWith("person_evidence"));
+      refused += findings.length;
+      console.log(`    ${w.line.run} #${w.line.call}: ${live.length} live links moved, ${findings.length} refused`);
+      for (const f of findings) console.log(`      ${f}`);
+    }
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+  console.log(`  links moved ${moved}, refused ${refused}; calls the core could not merge ${unmerged}`);
+  floor(moved > 0, "§3b judged no moved link");
+}
+
+// ─── §7 item 10: the stamped namesake personas ──────────────────────────────
+
+function section7(states: FinalState[]): void {
+  const sum = { listed: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
+  const refusedByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+  let carrying = 0;
+  for (const s of states) {
+    if (!Array.isArray(s.research?.namesakes) || s.research.namesakes.length === 0) continue;
+    carrying += 1;
+    const c = personaStampCounts(s.research);
+    for (const k of Object.keys(sum) as Array<keyof typeof sum>) sum[k] += c[k];
+    refusedByLabel[labelOf(s.slug)] += c.wouldRefuse;
+  }
+  console.log(
+    "\n§7  item 10 (PR 2): each committed e2e final state carrying rows, as written; the record_persona_ids " +
+      "research_append stamped and what a refusal keyed on them would do",
+  );
+  console.log(`    final states carrying rows: ${carrying}`);
+  console.log(
+    `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
+      `(d) unstamped though their row cites a persona search with a sidecar: ${sum.absent}`,
+  );
+  console.log(
+    `    (a) probable or confident links a persona rule would refuse: ${sum.wouldRefuse} ` +
+      `(hint is a namesake's: ${refusedByLabel.false}; the subject's own: ${refusedByLabel.true}; unlabelled: ${refusedByLabel.unlabelled})`,
+  );
+  console.log(`    (b) links on a listed record with another persona, which a record-id rule would refuse: ${sum.spared}`);
+}
+
 // ─── main ───────────────────────────────────────────────────────────────────
 
 console.log(`measured at ${sha} (working tree of this checkout)\n`);
@@ -1218,9 +1303,11 @@ const lines = dumpCallStates();
 shapesLine(lines);
 section2(lines, states);
 section3(lines, states);
+await section3b();
 section4(states);
 section5(states);
 section6(lines, states);
+section7(states);
 if (floorsFailed > 0) {
   console.log(`\n${floorsFailed} floor(s) failed`);
   process.exit(1);
