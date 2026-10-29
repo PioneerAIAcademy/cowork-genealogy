@@ -549,18 +549,31 @@ export interface GedcomxData {
 // Sidecar payloads (results/log_NNN.json) — per research-schema-spec §5.4.1
 // ============================================================
 
+/** Mirrors the engine's `TreeMatch` (`mcp-server/src/types/record-search.ts`).
+ *  Both fields are required there, so neither is optional here. */
 export interface TreeMatch {
-  personId: string
-  personName: string
-  treeId?: string
-  ark?: string
+  treePersonId: string
+  stars: number
 }
 
+/** A PARTIAL view of the engine's `RecordSearchResult`
+ *  (`mcp-server/src/types/record-search.ts`): the viewer types only the fields
+ *  it renders. A subset is fine; a field the engine never emits is not, and
+ *  neither is a field required here that is optional there — both make the
+ *  type assert something a real sidecar does not carry.
+ *  `record-search-mirror-drift.test.ts` enforces exactly that. */
 export interface RecordSearchResult {
-  primaryId: string
-  personId?: string
+  /** The engine's required identity field. Optional here because the
+   *  `record_read` adapter in SidecarResultCard builds results without it. */
+  recordId?: string
+  /** Optional in the engine, so optional here. */
+  primaryId?: string
   personName?: string
   score?: number
+  /** The record ARK as `record_search` emits it. The footer link reads this. */
+  recordArk?: string
+  /** NOT an engine field: synthesized by SidecarResultCard's `record_read`
+   *  adapter, and emitted by the mock agent and the sample-project seeds. */
   arkUrl?: string
   collectionTitle?: string
   recordTitle?: string
