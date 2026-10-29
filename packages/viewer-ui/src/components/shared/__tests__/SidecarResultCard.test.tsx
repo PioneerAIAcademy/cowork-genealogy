@@ -69,6 +69,32 @@ describe('SidecarResultCard — record_search', () => {
     )
     expect(screen.queryByText('Tree matches')).toBeNull()
   })
+
+  // #3893: the enslaved people on an 1850 slave schedule carry no `names` key.
+  // getPreferredName used to throw on them and blank the whole viewer.
+  it('renders unnamed slave-schedule persons as (unknown) with their facts', () => {
+    const slaveSchedule = {
+      primaryId: 'S1',
+      recordTitle: 'Household of <Unknown>',
+      gedcomx: {
+        persons: [
+          {
+            id: 'S1',
+            gender: 'Male',
+            names: [{ id: 'n1', preferred: true, given: 'John G', surname: 'Morgan' }]
+          },
+          { id: 'S2', gender: 'Female', facts: [{ id: 'f2', type: 'Birth', date: '1820' }] },
+          { id: 'S3', gender: 'Male', facts: [{ id: 'f3', type: 'Birth', date: '1838' }] }
+        ],
+        relationships: []
+      }
+    } as unknown as RecordSearchResult
+    render(<SidecarResultCard result={slaveSchedule} tool="record_search" defaultExpanded={true} />)
+    expect(screen.getByText('John G Morgan')).toBeInTheDocument()
+    expect(screen.getAllByText('(unknown)')).toHaveLength(2)
+    expect(screen.getByText('b. 1820')).toBeInTheDocument()
+    expect(screen.getByText('b. 1838')).toBeInTheDocument()
+  })
 })
 
 describe('SidecarResultCard — fulltext_search', () => {
@@ -590,7 +616,7 @@ describe('SidecarResultCard — record_read', () => {
     expect(screen.queryByText('PRIMARY')).toBeNull()
   })
 
-  it('survives a malformed person without crashing', () => {
+  it('renders a persona with no names as (unknown) rather than hiding it', () => {
     const persons = [...(result.gedcomx?.persons ?? []), { id: 'p_9' }] as never
     render(
       <SidecarResultCard
@@ -600,6 +626,7 @@ describe('SidecarResultCard — record_read', () => {
       />
     )
     expect(screen.getByText('Thomas Flynn')).toBeInTheDocument()
+    expect(screen.getByText('(unknown)')).toBeInTheDocument()
   })
 })
 

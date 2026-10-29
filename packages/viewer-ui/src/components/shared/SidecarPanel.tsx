@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import FocusTrap from 'focus-trap-react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
+import ErrorBoundary from '../ErrorBoundary'
 import type { RecordSearchResult, SidecarFile, SidecarTool } from '../../lib/schema'
 import SidecarResultCard, {
   ROUTED_TOOLS,
@@ -37,10 +38,12 @@ function SummaryStrip({
 
 function LoadedBody({
   payload,
+  logId,
   focusPersonaId,
   bodyRef
 }: {
   payload: SidecarFile
+  logId: string
   focusPersonaId?: string
   bodyRef: React.Ref<HTMLDivElement>
 }): React.JSX.Element {
@@ -87,13 +90,24 @@ function LoadedBody({
   return (
     <div ref={bodyRef} className={styles.body}>
       {results.map((r, idx) => (
-        <SidecarResultCard
+        <ErrorBoundary
           key={idx}
-          result={r}
-          tool={payload.tool}
-          focusPersonaId={focusPersonaId}
-          defaultExpanded={idx === defaultExpandedIndex}
-        />
+          resetKey={logId}
+          label="this result"
+          message={
+            <>
+              This result in <code>{`results/${logId}.json`}</code> could not be displayed. The
+              other results and the Close button still work.
+            </>
+          }
+        >
+          <SidecarResultCard
+            result={r}
+            tool={payload.tool}
+            focusPersonaId={focusPersonaId}
+            defaultExpanded={idx === defaultExpandedIndex}
+          />
+        </ErrorBoundary>
       ))}
     </div>
   )
@@ -212,6 +226,7 @@ export default function SidecarPanel(): React.JSX.Element | null {
               <SummaryStrip payload={sidecar.payload} />
               <LoadedBody
                 payload={sidecar.payload}
+                logId={sidecar.logId}
                 focusPersonaId={sidecar.focusPersonaId}
                 bodyRef={bodyRef}
               />

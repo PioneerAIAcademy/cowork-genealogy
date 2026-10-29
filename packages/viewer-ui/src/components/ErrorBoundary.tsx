@@ -8,6 +8,9 @@ interface Props {
   resetKey?: string
   /** Overridable so callers can name what failed. */
   label?: string
+  /** Replaces the research.json explanation, for a boundary that guards
+   *  something other than a section (a sidecar result card). */
+  message?: ReactNode
 }
 
 interface State {
@@ -21,7 +24,9 @@ interface State {
  * question missing exhaustive_declaration) previously threw during render and,
  * with no boundary anywhere in the tree, white-screened the entire app — the
  * user saw nothing, not even the other sections (issue #1317). This renders a
- * contained message instead so the rest of the viewer stays usable.
+ * contained message instead so the rest of the viewer stays usable. The sidecar
+ * drawer wraps each result card in one too, so one bad result leaves the drawer
+ * and its Close button working (#3893).
  */
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null }
@@ -49,8 +54,12 @@ export default class ErrorBoundary extends Component<Props, State> {
             Couldn’t display {this.props.label ?? 'this section'}
           </h2>
           <p style={{ margin: 0 }}>
-            Its data in <code>research.json</code> is malformed or incomplete. The rest of the
-            project is still shown — switch to another section from the sidebar.
+            {this.props.message ?? (
+              <>
+                Its data in <code>research.json</code> is malformed or incomplete. The rest of the
+                project is still shown — switch to another section from the sidebar.
+              </>
+            )}
           </p>
         </div>
       )
