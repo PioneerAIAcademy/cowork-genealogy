@@ -1,0 +1,24 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1850 census head of household Thomas Flynn, asked for as the second party (recordRole head_of_household) of a child's relationship assertion such as a_004 or a_007, scored against the tree's Thomas Flynn (I2). Good match, no conflict. For ut_person_evidence_021: no same_person call is required there, but scoring the head is in lane, and with no same_person fixture the tool is unregistered and that call aborts the run (unmatched_tool_call).",
+  "args": {
+    "treePersonId": "I2",
+    "recordRole": "head_of_household"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 8,
+    "score": 0.84,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "Thomas Flynn",
+      "role": "head_of_household"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Thomas Flynn"
+    }
+  }
+}

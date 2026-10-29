@@ -230,6 +230,7 @@ from proto.worker.options import (  # noqa: E402
     plugin_copy_missing,
     hook_path,
     make_posttool_hook,
+    status_before_call,
     make_pretool_hook,
     make_stop_hook,
     dev_paths,
@@ -238,6 +239,7 @@ from proto.worker.options import (  # noqa: E402
     project_completed,
     ProviderError,
     tool_server_url,
+    wants_status_before,
 )
 from proto import grants  # noqa: E402
 from proto import turn_message  # noqa: E402  (the queue body, shared with the web tier)
@@ -1139,8 +1141,10 @@ def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_i
     Two consequences, both recorded in docs/plan/research-step-mode.md. When the
     completing turn closed `stopped`, `budget` or `delivered`, the NEXT ordinary
     turn carries the label -- which is right, since the project is complete and
-    the researcher should be told. And a project completed a SECOND time is never
-    labelled again; that gap is open, with its fix sized in the plan.
+    the researcher should be told. And a project completed a SECOND time is labelled
+    only when the completing proof-conclusion call ends the turn (the completion halt,
+    which sets `completed` itself); otherwise that gap is open, with its fix sized in
+    the plan.
 
     A failed read answers True, which costs one label rather than repeating it."""
     try:
@@ -2605,6 +2609,11 @@ async def _run_turn(
         # record() and finish() leave Postgres alone.
         attempt = {"store_down": False, "progress_reset": False}
 
+        def store_error(exc: BaseException) -> bool:
+            """Whether ``exc`` means Postgres is unreachable (U23's classification)."""
+            return (isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
+                    or bool(getattr(conn, "broken", False)))
+
         def store_unavailable() -> str:
             attempt["store_down"] = True
             terminal["reason"] = STORE_UNAVAILABLE
@@ -2744,8 +2753,7 @@ async def _run_turn(
                     # silently stop passing the flag and revert #3376.
                     reason = check(subagent) if check is handover_clause else check()
                 except Exception as exc:  # noqa: BLE001 - classified: down halts, else next clause
-                    down = (isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
-                            or bool(getattr(conn, "broken", False)))
+                    down = store_error(exc)
                     log(ev="halt_check_failed", turn_id=turn_id, session_id=session_id, clause=clause,
                         error=f"{type(exc).__name__}: {exc}", store_down=down)
                     if down:
@@ -2815,7 +2823,68 @@ async def _run_turn(
             if not attempt["store_down"]:
                 finish_tool_call(conn, turn_id, tool_use_id)
 
-        posttool = make_posttool_hook(turn_id=turn_id, finish=finish, log=log)
+        def on_completed(summary: str) -> None:
+            """The proof-conclusion call completed the project and the turn halts on its
+            summary (#3542 lead 1). Recorded here because no Stop hook fires after a halt,
+            and shown after the turn because a PostToolUse halt leaves no deny chip.
+
+            It must not CLOBBER a reason a halt already set, as ``on_allow`` must not: one
+            of the agent's own calls can have lost the grant lock, met the spend cap, the
+            patron's Stop or a superseded epoch, and recording `completed` over that would
+            close a turn the worker must raise on or report differently."""
+            if terminal["reason"] is not None:
+                log(ev="completion_halt_after_halt", turn_id=turn_id, recorded=terminal["reason"])
+                return
+            terminal["reason"] = TERMINAL_COMPLETED
+            terminal["halted"] = True
+            terminal["completion_summary"] = summary
+            log(ev="completion_halt", turn_id=turn_id, session_id=session_id)
+
+        # The project's status just before each main-thread proof-conclusion call, the one
+        # read the completion halt needs. Read there and nowhere else, and never once the
+        # store is down; a call with no reading counts as already completed, so the halt
+        # never fires on a guess.
+        status_before: dict[str, str | None] = {}
+
+        async def pretool(input_data, tool_use_id, context):
+            reply = await hook(input_data, tool_use_id, context)
+            # After the hook, and only when it let the call run: a halted or denied call
+            # never reaches PostToolUse, so its reading would be a wasted document read.
+            # All of it inside the try: a raising PreToolUse fails a call the patron was
+            # entitled to make, and the halt is only an optimisation.
+            try:
+                data = input_data if isinstance(input_data, dict) else {}
+                use_id = tool_use_id or data.get("tool_use_id")
+                answer = reply if isinstance(reply, dict) else {}
+                stopped = answer.get("continue_") is False or (
+                    (answer.get("hookSpecificOutput") or {}).get("permissionDecision") == "deny")
+                if use_id and not stopped and not attempt["store_down"] and wants_status_before(data):
+                    status_before[str(use_id)] = status_before_call(read_research(conn, project_id))
+            except Exception as exc:  # noqa: BLE001 - the call runs on
+                log(ev="completion_status_failed", turn_id=turn_id,
+                    error=f"{type(exc).__name__}: {exc}")
+                if store_error(exc):
+                    store_unavailable()
+            return reply
+
+        def research_now() -> dict[str, Any] | None:
+            """The project just after the call, for the halt; never from a down store, and a
+            read that finds it down records it so nothing asks again (U23)."""
+            if attempt["store_down"]:
+                return None
+            try:
+                return read_research(conn, project_id)
+            except Exception as exc:
+                if store_error(exc):
+                    store_unavailable()
+                raise
+
+        posttool = make_posttool_hook(
+            turn_id=turn_id, finish=finish, log=log,
+            research=research_now,
+            status_before=lambda use_id: status_before.get(str(use_id), "completed"),
+            on_completed=on_completed,
+        )
 
         stop_hook = None
         max_nudges = turn_max_nudges(message, _AUTONOMOUS_MAX_NUDGES)
@@ -2885,7 +2954,7 @@ async def _run_turn(
             agents=agents,
             store=store,
             config_dir=config_dir,
-            pretool_hook=hook,
+            pretool_hook=pretool,
             posttool_hook=posttool,
             resume=resume,
             session_id=None if resume else sdk_session_id,
@@ -2939,6 +3008,12 @@ async def _run_turn(
                                              "(transcript append refused)")
                         raise MirrorError(f"session store append failed: {msg.error or msg.data}")
                     for event in map_message(msg, tool_names, tasks, live, task_ids=task_ids):
+                        # A main-thread message after a completion halt: the turn went on,
+                        # so the summary is not added after the model's own last words. Read
+                        # off the message, not the event: a subagent's text carries no
+                        # `agent` label once its task is popped or never had a tool_use_id.
+                        if event.get("kind") == "text" and not getattr(msg, "parent_tool_use_id", None):
+                            terminal.pop("completion_summary", None)
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                     if isinstance(msg, ResultMessage):
                         pass_result = msg
@@ -2979,6 +3054,12 @@ async def _run_turn(
             # turn stays open and the redelivery bears the current grant under a new lock.
             if terminal["reason"] == GRANT_LOCK_LOST:
                 raise GrantLockLost(f"the grant lock of {held.user_id} was lost mid-attempt")
+
+            # #3542 lead 1: the turn halted on the agent's summary, which no chip carries
+            # after a PostToolUse halt. Shown as the turn's text, as the alpha does.
+            if terminal.get("completion_summary"):
+                write_event(conn, session_id, {"kind": "text", "text": terminal["completion_summary"]},
+                            TRANSIENT_KINDS, counters)
 
             # U10 D6: a model turn that appended nothing. The SDK flushes every pending
             # frame before it yields each ResultMessage, so the count is final here. The
