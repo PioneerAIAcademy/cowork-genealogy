@@ -22,7 +22,6 @@ Block a test from executing when:
 
 from __future__ import annotations
 
-import ast
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +32,7 @@ from harness.allowed_tools import (
     uncovered_agent_fixtures,
 )
 from harness.fixtures import InvalidFixtureError, build_manifest, load_fixtures
+from harness.gate_tags import file_gate_tags
 from harness.loader import TestSpec
 from harness.rubric import InvalidRubricError, parse_rubric_or_empty
 from harness.schema_validator import (
@@ -55,67 +55,13 @@ class RunnabilityResult:
 
 
 def tag_gated_validator_tags(validators_dir: Path, skill: str) -> set[str]:
-    """Tags that gate an opt-in validator in the skill's validator file.
-
-    Recognizes the repo-wide opt-in gate idiom — an `if` whose test is
-    `"<tag>" not in test.get("tags", [])` and whose body calls
-    `pytest.skip(...)`:
-
-        if "no-browse-no-write" not in test.get("tags", []):
-            pytest.skip("not a no-browse-no-write scenario")
-
-    The tag check may be one operand of a compound condition, as in
-    citation's `if test.get("type") != "positive" and "no-new-source" not
-    in test.get("tags", []):`, so the whole `if` test is walked rather
-    than shape-matched. Both `test.get("tags", [])` and
-    `(test.get("tags") or [])` spellings are recognized.
-
-    Only the `not in` direction counts. The inverse (`"<tag>" in tags` ->
-    skip) is an *exclusion* gate — it turns a validator OFF for tagged
-    tests (e.g. `redirect-no-browse`), so it can never be the invariant a
-    grade_on_invariant test relies on.
-
-    Static (ast) rather than by import: the validator modules declare
-    pytest fixtures the harness injects by signature, so importing them
-    here to introspect would drag in a fixture-resolution dependency the
-    gate has no business owning.
-
-    Returns an empty set when the file is absent or unparseable — the
-    caller turns that into the same "no invariant validator" failure,
-    which is the correct verdict either way.
-    """
+    """Tags that gate an opt-in validator in the skill's validator file — the
+    whole-module view, `report_*` functions included. The idiom and why it is
+    read statically: `harness.gate_tags`. Empty when the file is absent."""
     path = Path(validators_dir) / f"test_{skill.replace('-', '_')}.py"
     if not path.exists():
         return set()
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-    except SyntaxError:
-        return set()
-
-    tags: set[str] = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.If):
-            continue
-        if not any(
-            isinstance(sub, ast.Call)
-            and ast.unparse(sub.func).endswith("pytest.skip")
-            for sub in ast.walk(node)
-        ):
-            continue
-        for cmp_node in ast.walk(node.test):
-            if not isinstance(cmp_node, ast.Compare):
-                continue
-            if len(cmp_node.ops) != 1 or not isinstance(cmp_node.ops[0], ast.NotIn):
-                continue
-            if not (
-                isinstance(cmp_node.left, ast.Constant)
-                and isinstance(cmp_node.left.value, str)
-            ):
-                continue
-            if "tags" not in ast.unparse(cmp_node.comparators[0]):
-                continue
-            tags.add(cmp_node.left.value)
-    return tags
+    return file_gate_tags(path.read_text(encoding="utf-8"))
 
 
 def check_runnable(

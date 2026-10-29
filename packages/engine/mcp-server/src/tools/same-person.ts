@@ -35,12 +35,13 @@ import {
   projectRecordPersonas,
   projectedRecordDocument,
   recordPartyKeyer,
+  sameRecord,
   type RecordPersonaGroup,
 } from "../utils/record-persona.js";
 import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
 import { Mob } from "../utils/mob.js";
 import { preferredName } from "../utils/name-helpers.js";
-import { arkToBareId, toArk } from "../utils/ark.js";
+import { arkToBareId } from "../utils/ark.js";
 
 /** Concurrency cap for the relatives-mode fan-out of per-pair FS calls. */
 const PAIR_CONCURRENCY = 5;
@@ -109,17 +110,6 @@ function cacheFor(): Map<string, SimplifiedGedcomX> {
     recordDocCache.set(store, m);
   }
   return m;
-}
-
-/** Same-record test that tolerates the stored id spellings (resolver URL, bare
- *  `ark:`, type-prefixed), which the corpus carries all of.
- *
- *  Compares the CANONICAL ARK, not `arkToBareId`: dropping the `n:n:` type
- *  segment would pool the assertions of `1:1:X` (a persona), `1:2:X` (a source)
- *  and `3:1:X` (an image) into one projected record. See `scoresRef`. */
-function sameRecord(a: unknown, b: unknown): boolean {
-  if (typeof a !== "string" || typeof b !== "string") return false;
-  return toArk(a).toLowerCase() === toArk(b).toLowerCase();
 }
 
 function personNames(p: SimplifiedPerson): string[] {
@@ -733,6 +723,7 @@ export function buildRecordedScore(
     assertion_id: assertionId,
     record_source: fetchable ? "record_read" : "projection",
     computed: new Date().toISOString(),
+    party_resolved: true,
   };
 }
 
@@ -814,8 +805,8 @@ async function resolveRecordSide(
   // here is safe.
   //
   // Only a persona-bearing producer's sidecar (record_search, record_read) carries
-  // a persona. A fulltext_search or external_links_search entry also has a
-  // results_ref, but its results hold no gedcomx and key on `id` rather than
+  // a persona. A fulltext_search entry (or a legacy external_links_search one) also
+  // has a results_ref, but its results hold no gedcomx and key on `id` rather than
   // `recordId` (PERSONA_BEARING_PRODUCERS) — passing one would look up nothing.
   const log: any[] = Array.isArray(research?.log) ? research.log : [];
   const logEntry = log.find((l) => l?.id === assertion?.log_entry_id);

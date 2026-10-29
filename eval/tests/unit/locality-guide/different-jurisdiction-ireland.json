@@ -20,7 +20,7 @@
     "scenario": null
   },
   "execution": {
-    "max_wall_clock_seconds": 720,
+    "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 360
   },
   "judge_context": [

@@ -104,7 +104,6 @@ const DEF_FOR: Record<string, string> = {
   timelines: "timeline",
   proof_summaries: "proof_summary",
   evaluations: "evaluation_entry",
-  known_holdings: "known_holding",
   localities: "locality",
   namesakes: "namesake",
 };
@@ -340,6 +339,18 @@ describe("the rendered plan examples teach a call the tool accepts", () => {
     expect(callOnly(exampleFor("plan_items", "update") ?? "")).not.toContain('planId: "pl_001"');
     // and it says how to work the id out
     expect(exampleFor("plan_items", "append") ?? "").toMatch(/highest existing pl_/);
+  });
+
+  it("a `proof_summaries` update shows `edits` only for a refusal over the narrative fields", () => {
+    for (const named of [["edits"], ["narrative_markdown"], ["exhaustive_search_summary", "tier"]]) {
+      expect(exampleFor("proof_summaries", "update", named) ?? "", named.join()).toContain("edits: [");
+    }
+    // A tier-only refusal taught `edits` would hand a payload for a field it never named.
+    for (const named of [["tier"], []]) {
+      const ex = exampleFor("proof_summaries", "update", named) ?? "";
+      expect(ex, named.join()).not.toContain("edits: [");
+      expect(ex, named.join()).toContain("fields: {");
+    }
   });
 
   it("every rendered append example is the call shape its section requires", () => {

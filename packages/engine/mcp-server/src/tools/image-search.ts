@@ -8,6 +8,7 @@ import type {
   ImageSearchResult,
   ChildrenNamesResponse,
 } from "../types/image-search.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const GROUP_SERVICE_BASE =
   "https://sg30p0.familysearch.org/service/records/rms/group-service";
@@ -107,9 +108,7 @@ async function fetchChildren(
   );
 
   if (response.status === 401) {
-    throw new Error(
-      "FamilySearch session not accepted; call the login tool to re-authenticate."
-    );
+    throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
   }
   if (response.status === 403) {
     throw new Error("FamilySearch image search API error: 403 Forbidden.");
@@ -284,9 +283,7 @@ async function resolveItem(
       timing(),
     );
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (!response.ok) {
       throw new Error(

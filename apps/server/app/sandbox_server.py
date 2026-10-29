@@ -76,6 +76,13 @@ def _read_json(path: Path):
         return None
 
 
+COLLECTIONS_FILE = "external-collections.json"
+
+
+def _collections_frame(data) -> dict:
+    return {"type": "document_updated", "name": COLLECTIONS_FILE, "data": data}
+
+
 def _ts() -> str:
     return time.strftime("%H:%M:%S")
 
@@ -358,19 +365,29 @@ class Hub:
         while True:
             await asyncio.sleep(_WATCH_INTERVAL)
             try:
-                for f in PROJECT_DIR.rglob("*"):
-                    if not f.is_file():
-                        continue
-                    rel = str(f.relative_to(PROJECT_DIR))
-                    try:
-                        mt = f.stat().st_mtime
-                    except OSError:
-                        continue
-                    if seen.get(rel) != mt:  # new or changed
-                        seen[rel] = mt
-                        await self._emit_change(rel)
+                await self._poll_once(seen)
             except OSError:
                 pass
+
+    async def _poll_once(self, seen: dict[str, float]) -> None:
+        for f in PROJECT_DIR.rglob("*"):
+            if not f.is_file():
+                continue
+            rel = str(f.relative_to(PROJECT_DIR))
+            try:
+                mt = f.stat().st_mtime
+            except OSError:
+                continue
+            if seen.get(rel) != mt:  # new or changed
+                seen[rel] = mt
+                await self._emit_change(rel)
+        await self._emit_collections_removed(seen)
+
+    async def _emit_collections_removed(self, seen: dict[str, float]) -> None:
+        # The one optional root file: its removal clears the viewer's section.
+        if COLLECTIONS_FILE in seen and not (PROJECT_DIR / COLLECTIONS_FILE).is_file():
+            del seen[COLLECTIONS_FILE]
+            await self.broadcast(_collections_frame(None))
 
     @staticmethod
     def _is_internal(rel: str) -> bool:
@@ -404,6 +421,12 @@ class Hub:
             d = _read_json(PROJECT_DIR / rel)
             if d is not None:
                 await self.broadcast({"type": "gedcomx_updated", "data": d})
+        elif rel == COLLECTIONS_FILE:
+            # Sent only when this file changes, never on a research.json write
+            # (lead ruling 2026-10-06), in the frame the proto tier already uses.
+            d = _read_json(PROJECT_DIR / rel)
+            if d is not None:
+                await self.broadcast(_collections_frame(d))
         elif rel.startswith("results/") and rel.endswith(".json"):
             log_id = rel[len("results/"): -len(".json")]
             try:
@@ -421,6 +444,9 @@ class Hub:
         gedcomx = _read_json(PROJECT_DIR / "tree.gedcomx.json")
         if gedcomx is not None:
             await self.send_one(ws, {"type": "gedcomx_updated", "data": gedcomx})
+        # Sent even when absent (data null), so a reconnect after the file was
+        # removed clears the section instead of keeping the old list.
+        await self.send_one(ws, _collections_frame(_read_json(PROJECT_DIR / COLLECTIONS_FILE)))
         results = PROJECT_DIR / "results"
         if results.is_dir():
             for f in sorted(results.glob("*.json")):

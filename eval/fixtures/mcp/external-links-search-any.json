@@ -36,5 +36,61 @@
         "linkText": "National Archives and Records Administration (NARA)"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/collections/census/",
+      "linkText": "U.S. Federal Census Collection — Ancestry.com",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": ""
+    },
+    {
+      "url": "https://www.familysearch.org/en/wiki/Category:Vital_Records",
+      "linkText": "Vital Records — FamilySearch Wiki",
+      "record_type": "Vital Records",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": ""
+    },
+    {
+      "url": "https://www.findagrave.com/",
+      "linkText": "Cemetery Records — Find A Grave",
+      "record_type": "Cemeteries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": ""
+    },
+    {
+      "url": "https://www.newspapers.com/",
+      "linkText": "Historical Newspapers — Newspapers.com",
+      "record_type": "Newspapers",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": ""
+    },
+    {
+      "url": "https://www.fold3.com/",
+      "linkText": "Military Records — Fold3",
+      "record_type": "Military Records",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": ""
+    },
+    {
+      "url": "https://www.archives.gov/",
+      "linkText": "National Archives and Records Administration (NARA)",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": ""
+    }
+  ]
 }

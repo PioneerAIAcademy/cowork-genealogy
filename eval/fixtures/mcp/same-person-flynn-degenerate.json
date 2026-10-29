@@ -1,13 +1,14 @@
 {
   "tool": "same_person",
-  "description": "same_person — a near-zero score (0.005) produced because the TREE CANDIDATE IS THIN: I1 is a local stub carrying one name and one fact, and the match engine scores on document content, so a sparse subject scores low against everything. The number is not a real mismatch signal and must not veto an overwhelming qualitative correlation — that guardrail is genuine and is what this fixture exists for. Its CAUSE was previously described as a missing FamilySearch ARK; that is refuted (dev/probe-same-person-local-id.ts: an ARK-less focus person scores 0.9999484 against a 0.999967 control), so an ARK-less or locally-minted id is scorable and is never an excuse to skip the call.",
+  "description": "same_person — a weak-band score (0.2415) for the right record against a THIN tree subject: I1 carries one name and one fact, so it scores lower than a fuller person would (0.44 with two more facts), yet far above an unrelated person (7e-9) and well above the Germany-birthplace baptism that conflicts (0.026). Measured live on 2026-10-24 with main's same_person (dev probe, flynn-record-matching). The 0.005 this fixture once returned came from scoring the census's first persona, Thomas, not Patrick. An ARK-less or locally-minted id is scorable on content (dev/probe-same-person-local-id.ts: 0.9999484 against a 0.999967 control), so a missing ARK is never a reason to skip the call.",
   "args": {
     "assertionId": "~",
     "treePersonId": "~"
   },
   "response": {
-    "matched": false,
-    "score": 0.005,
+    "matched": true,
+    "confidence": 2,
+    "score": 0.2415185,
     "recordSource": "record_read",
     "recorded": true,
     "recordPersona": {

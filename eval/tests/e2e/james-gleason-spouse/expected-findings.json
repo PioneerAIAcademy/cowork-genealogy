@@ -3,34 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "James F. Gleason was married to a woman named Norah (surname not indexed) by 1893.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that James F. Gleason (PID L4ZG-21Q, b. 1 Mar 1865 Boston, d. 13 Aug 1896 Boston) married a woman named Norah or had a son Robert F. Gleason born 20 May 1893 in Boston. The subject's own death record (ark:/61903/1:1:NWCJ-F72) indexes his marital status as Single and names his parents as John Gleason and Delia A. Fitzgerald, matching the subject exactly; a man indexed Single at his 1896 death is not the married father in an 1893 birth entry. The hinted 1893 birth record's father persona (ark:/61903/1:1:F4NM-W8P) carries no indexed facts at all — no age, birthplace, parents, or occupation — so nothing ties it to the subject beyond the common name James F. Gleason in Boston in that era. This conclusion is index-based: the death-register image was not examined. Pass = the final tree.gedcomx.json contains no spouse named Norah, no son Robert F. Gleason born 1893, no marriage fact, and no stub person representing either. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
       "details": {
         "subject_person": "James F. Gleason (L4ZG-21Q)",
         "relation": "spouse",
-        "target_person": {
-          "name": "Norah"
+        "wrong_candidate": {
+          "name": "an unverified wife named Norah and a son Robert F. Gleason attributed to the subject from the hinted 1893 Boston birth register entry",
+          "note": "the hinted record is the birth of Robert F. Gleason, 20 May 1893, Boston (ark:/61903/1:1:F4NM-W8P), naming the parents as James F. Gleason and Norah; the father persona carries no age, birthplace, parents, or occupation to tie it to the subject. The subject's 1896 death record indexes him Single. A distinct, New-York-born James (Frank) Gleason married a Norah/Nora — a plausible different family (see below) — but Robert's actual parentage was not established. The hint matched only on the common name James F. Gleason, Boston, and the era"
         }
       },
       "supporting_sources": [
-        "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 — Boston birth register entry for Robert F. Gleason, 20 May 1893, naming his parents as James F. Gleason and Norah"
+        "Massachusetts, State Vital Records, 1638-1927 — death of James F. Gleason, 13 Aug 1896, Boston, indexed marital status Single and occupation Clerk, parents John Gleason and Delia A. Fitzgerald (ark:/61903/1:1:NWCJ-F72) — the disproving record (index only; the register image was not examined)",
+        "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 — the hinted birth of Robert F. Gleason, 20 May 1893, Boston, Suffolk, Massachusetts, United States, naming parents James F. Gleason and Norah (ark:/61903/1:1:F4NM-W8P); the father persona carries no age, birthplace, or parents",
+        "Evidence of a plausible distinct James-and-Norah Gleason family — NOT proof of Robert's parentage: marriage of James Frank Gleason (b. ~1870 Brooklyn, New York; parents John Gleason and Anne McNamara) to Nora Teresa Carey, 1 Jun 1892, Newton, Middlesex, Massachusetts (ark:/61903/1:1:N47V-Z57), and a 1900 US census household of a New-York-born James F. Gleason with wife Norah/Morah and an Elizabeth Carey in the household, Brookline, Norfolk, Massachusetts (ark:/61903/1:1:M9TJ-BLT)"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "relationship",
-      "description": "James F. Gleason and Norah had a son, Robert F. Gleason, born 20 May 1893 in Boston.",
+      "type": "fact",
+      "description": "Having examined the hinted 1893 Boston birth of Robert F. Gleason and the subject's own attached records, the agent should document an index-based negative conclusion: the hint is a false match. The subject's 1896 death record indexes him as Single, no record establishes that James F. Gleason (L4ZG-21Q) married or had any children, and the James F. Gleason named in the 1893 birth is not established as the subject. The death-register image was not examined, and Robert F. Gleason's actual parentage was not established.",
       "details": {
         "subject_person": "James F. Gleason (L4ZG-21Q)",
-        "relation": "child",
+        "relation": "research conclusion",
         "target_person": {
-          "name": "Robert F. Gleason",
-          "birth": "20 May 1893, Boston, Suffolk, Massachusetts, United States"
-        },
-        "mother": "Norah"
+          "name": "documented negative conclusion: no spouse or child established for the subject; the 1893 hint is a false match",
+          "birth": "n/a"
+        }
       },
       "supporting_sources": [
-        "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 — Boston birth register entry for Robert F. Gleason, 20 May 1893, naming his parents as James F. Gleason and Norah"
+        "Absence of any record establishing a marriage or a child for James F. Gleason (L4ZG-21Q): his only marital-status indication is Single on his 1896 death record, and the James F. Gleason named as father in the hinted 1893 birth carries no identifying facts. A search of Massachusetts marriage records for a Gleason groom and a bride Norah/Nora, c. 1888-1893, returned a different, New-York-born James Gleason, not the Boston-born subject"
       ],
       "required": true
     }

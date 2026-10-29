@@ -55,6 +55,7 @@ import {
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -97,7 +98,7 @@ const MARITAL_STATUS_VALUES = new Set([
   "Divorced",
   "Widowed",
 ]);
-const RECORD_TYPE_TO_INT: Record<string, number> = {
+const RECORD_TYPE_TO_INT = {
   birth: 0,
   marriage: 1,
   death: 2,
@@ -106,7 +107,38 @@ const RECORD_TYPE_TO_INT: Record<string, number> = {
   military: 5,
   probate: 6,
   other: 7,
+} as const satisfies Record<string, number>;
+type UpstreamRecordType = keyof typeof RECORD_TYPE_TO_INT;
+/**
+ * Plan-item record types that are not upstream record types, each mapped to the
+ * upstream types its records are indexed under, so a search built straight from
+ * a plan item is not refused. Measured by dev/probe-record-type-aliases.ts (a
+ * recordType facet over every collection whose title names the type): land is
+ * 86% other; tax 90% other and 9% census; court 54% other and 9% probate;
+ * vital and church records are births, marriages and deaths; cemetery records
+ * are deaths. Land leaves out military: its bounty-land files are military-typed,
+ * but so are the draft cards. A list sends `f.recordType` once per type, which
+ * FamilySearch ORs (the totals sum).
+ */
+const PLAN_RECORD_TYPE_ALIASES: Record<string, readonly UpstreamRecordType[]> = {
+  land: ["other"],
+  tax: ["other", "census"],
+  court: ["other", "probate"],
+  vital_record: ["birth", "marriage", "death"],
+  church: ["birth", "marriage", "death"],
+  cemetery: ["death"],
 };
+/** Whether `recordType` is accepted: an upstream type or a plan-item alias. Own
+ *  properties only, so an inherited key such as `constructor` is refused. */
+function isAcceptedRecordType(recordType: string): boolean {
+  return Object.hasOwn(RECORD_TYPE_TO_INT, recordType) || Object.hasOwn(PLAN_RECORD_TYPE_ALIASES, recordType);
+}
+/** The upstream record types a `recordType` value sends; empty when none. */
+function upstreamRecordTypes(recordType: string): readonly UpstreamRecordType[] {
+  if (Object.hasOwn(RECORD_TYPE_TO_INT, recordType)) return [recordType as UpstreamRecordType];
+  if (Object.hasOwn(PLAN_RECORD_TYPE_ALIASES, recordType)) return PLAN_RECORD_TYPE_ALIASES[recordType];
+  return [];
+}
 
 interface EventGroup {
   prefix: string;
@@ -283,10 +315,11 @@ export function validateInput(input: RecordSearchInput): void {
   // `f.recordType=function%20Object()%20{...}` upstream instead of rejecting.
   if (
     input.recordType !== undefined &&
-    !Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)
+    !isAcceptedRecordType(input.recordType)
   ) {
     throw new Error(
-      "recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."
+      "recordType must be one of: birth, marriage, death, census, immigration, military, probate, other " +
+        "(a plan item's vital_record, church, cemetery, land, court or tax is also accepted)."
     );
   }
 }
@@ -375,8 +408,8 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   // hasOwn again, not just a truthiness check: buildSearchUrl is exported and
   // reachable without validateInput, so the emit site keeps the invariant on
   // its own rather than trusting the caller to have validated first.
-  if (input.recordType && Object.hasOwn(RECORD_TYPE_TO_INT, input.recordType)) {
-    add("f.recordType", RECORD_TYPE_TO_INT[input.recordType]);
+  for (const type of input.recordType ? upstreamRecordTypes(input.recordType) : []) {
+    add("f.recordType", RECORD_TYPE_TO_INT[type]);
   }
   if (input.maritalStatus) add("f.maritalStatus", input.maritalStatus);
   if (input.isPrincipal !== undefined) add("q.isPrincipal", input.isPrincipal);
@@ -983,9 +1016,7 @@ export async function recordSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
@@ -1125,8 +1156,8 @@ export async function recordSearchTool(
       // strip inside `finalizeStagedResults`.
       //
       // Withheld HERE and not inside `stageSearchResults`, which is shared by
-      // `record_search`, `fulltext_search` and `external_links_search` and should
-      // not know one caller's field names. Destructuring a copy also keeps `out`
+      // `record_search`, `fulltext_search` and the read/transcribe tools and
+      // should not know one caller's field names. Destructuring a copy also keeps `out`
       // itself untouched, so the live response the model reads is unaffected and
       // the key order (`rankingSkipped` before `results`) is preserved in both.
       const {
@@ -1450,7 +1481,7 @@ export const recordSearchToolSchema = {
       imageGroupNumber: { type: "string", description: "Filter to a specific digitized volume by image group number (e.g., `'004010852'`). Also accepts split DGS format (e.g., `'004010852_001_M9QY-X6Y'`). Use the `volume_search` tool first to find the image group number for a place and date range." },
       recordCountry: { type: "string", description: "Country where the record was created (e.g., `'United States'`, `'England'`). Acts as an anchor — at least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Combining it (or `recordSubdivision`) with `batchNumber` is REJECTED (the batch anchors on its own): a country that does not match the batch silently returns 0, which is indistinguishable from a wrong batch." },
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it. Both this and `recordCountry` are ALREADY STRICT — a nonexistent country or subdivision returns 0 rather than being ignored, so no `*Exact` qualifier exists for either and none is needed. Reading a nil: a nil at one place level does NOT settle another. Whether dropping to a STATE-level scope rescues a search that nils at COUNTY level is a separate, unfinished place investigation, so re-run at the wider level rather than concluding the record is absent." },
-      recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
+      recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other", "vital_record", "church", "cemetery", "land", "court", "tax"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool. A plan item's type passes as is and searches where its records are indexed: land 'other'; tax 'other'+census; court 'other'+probate; vital_record and church birth+marriage+death; cemetery death." },
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
       isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false`. Each result now carries a `role` field (\"Principal\", \"Father\", \"Mother\", \"Spouse\", \"Other\") naming the matched person's relationship to the record — read it before inferring the role from the relationship graph. `record_read` carries `principal` (boolean) but not the role string; for the string, use the search result's `role`. Omit to return both." },
 

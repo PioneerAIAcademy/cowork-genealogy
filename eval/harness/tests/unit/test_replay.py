@@ -67,6 +67,21 @@ def test_batch_log_append_ops_get_the_implied_section():
     assert r.unmodelled == {}
 
 
+def test_an_already_logged_re_send_is_not_a_second_append():
+    """A re-sent staged ref answers with the existing id and writes nothing."""
+    first = '[{"type": "text", "text": "{\\"ok\\": true, \\"logId\\": \\"log_001\\"}"}]'
+    again = '[{"type": "text", "text": "{\\"ok\\": true, \\"logId\\": \\"log_001\\", \\"alreadyLogged\\": true}"}]'
+    batch = '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": [{\\"logId\\": \\"log_001\\", \\"alreadyLogged\\": true}, {\\"logId\\": \\"log_002\\"}]}"}]'
+    ref = {"stagedResultsRef": "results/.staging/a.json"}
+    r = replay([
+        _call("research_log_append", dict(ref, notes="first"), first),
+        _call("research_log_append", dict(ref, notes="again"), again),
+        _call("research_log_append", {"ops": [ref, {"stagedResultsRef": "results/.staging/b.json"}]}, batch),
+    ])
+    assert [e["id"] for e in r.research["log"]] == ["log_001", "log_002"]
+    assert r.research["log"][0]["notes"] == "first"
+
+
 def test_log_entries_carry_their_body_not_just_an_id():
     """The whole point of replaying the log: a consumer joins on these fields.
 
@@ -430,3 +445,129 @@ def test_an_ops_shaped_extraction_ignores_the_final_notes():
     args = {"ops": [{"section": "assertions", "op": "append", "entry": {"value": "v"}}]}
     r = replay([_call("extraction_append", args, resp)], final_research=STAGED_FINAL)
     assert r.research["assertions"] == [{"value": "v", "id": "a_009"}]
+
+
+# A long answer is cut by the capture (`_summary_truncated`), so the logIds of
+# the later records never reach the replay. The call's own recordIds are never
+# cut; each is back-filled from the final log entry whose query names it.
+TRUNC_FINAL = {
+    "log": [{"id": "log_004", "tool": "record_read", "query": {"recordId": "ark:/61903/1:1:AAA"}},
+            {"id": "log_005", "tool": "record_read", "query": {"recordId": "ark:/61903/1:1:BBB"}},
+            {"id": "log_009", "tool": "record_read", "query": {"recordId": "ark:/61903/1:1:BBB"}}],
+    "sources": [{"id": "src_001", "log_entry_id": "log_004"}, {"id": "src_002", "log_entry_id": "log_005"},
+                {"id": "src_003", "log_entry_id": "log_009"}],
+    "assertions": [{"id": "a_001", "log_entry_id": "log_004"}, {"id": "a_003", "log_entry_id": "log_005"},
+                   {"id": "a_004", "log_entry_id": "log_009"}],
+}
+TRUNC_ARGS = {"projectPath": "/p", "recordIds": ["ark:/61903/1:1:AAA", "ark:/61903/1:1:BBB"]}
+
+
+def test_a_record_cut_from_a_truncated_summary_is_back_filled():
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
+    r = replay([_call("extraction_append", TRUNC_ARGS, resp)], final_research=TRUNC_FINAL)
+    # BBB's EARLIEST entry, log_005 -- never the later call's log_009.
+    assert [e["id"] for e in r.research["log"]] == ["log_004", "log_005"]
+    assert [e["id"] for e in r.research["assertions"]] == ["a_001", "a_003"]
+
+
+def test_a_record_cut_mid_entry_is_back_filled():
+    """The cut fell after BBB's recordId and before its logId."""
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}, '
+            '{"recordId": "ark:/61903/1:1:BBB", "status": "extracted", "summ...')
+    r = replay([_call("extraction_append", TRUNC_ARGS, resp)], final_research=TRUNC_FINAL)
+    assert [e["id"] for e in r.research["log"]] == ["log_004", "log_005"]
+
+
+def test_a_record_the_truncated_summary_shows_refused_is_not_back_filled():
+    """It wrote nothing; the final notes' entry for it belongs to a later call."""
+    resp = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+            '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}, '
+            '{"recordId": "ark:/61903/1:1:BBB", "status": "refused", "summary": "no"}]}}]')
+    r = replay([_call("extraction_append", TRUNC_ARGS, resp)], final_research=TRUNC_FINAL)
+    assert [e["id"] for e in r.research["log"]] == ["log_004"]
+
+
+def test_an_untruncated_summary_is_never_back_filled():
+    resp = '[{"ok": true, "records": [{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}]'
+    r = replay([_call("extraction_append", TRUNC_ARGS, resp)], final_research=TRUNC_FINAL)
+    assert [e["id"] for e in r.research["log"]] == ["log_004"]
+
+
+def test_a_documents_extraction_is_read_back_from_the_final_notes():
+    """The user-provided-documents form writes its source, log entry and
+    assertions host-side exactly as the record-id form does."""
+    final = {"log": [{"id": "log_029", "tool": "user_provided", "query": {"recordId": "src_001"}}],
+             "sources": [{"id": "src_007", "log_entry_id": "log_029"}],
+             "assertions": [{"id": "a_050", "log_entry_id": "log_029"}]}
+    resp = '[{"ok": true, "records": [{"recordId": "src_001", "status": "extracted", "logId": "log_029"}]}]'
+    r = replay([_call("extraction_append", {"projectPath": "/p", "documents": [{"text": "t"}]}, resp)],
+               final_research=final)
+    assert [e["id"] for e in r.research["sources"]] == ["src_007"]
+    assert [e["id"] for e in r.research["assertions"]] == ["a_050"]
+
+
+def test_a_record_extracted_twice_back_fills_the_second_entry():
+    """BBB was extracted once already (log_005); the second, truncated call wrote
+    log_009, the next entry for it -- never the one the replay already holds."""
+    first = '[{"ok": true, "records": [{"recordId": "ark:/61903/1:1:BBB", "status": "extracted", "logId": "log_005"}]}]'
+    second = ('[{"ok": true, "records": {"_summary_truncated": true, "_full_length": 2, "_first_n": '
+              '[{"recordId": "ark:/61903/1:1:AAA", "status": "extracted", "logId": "log_004"}]}}]')
+    r = replay([_call("extraction_append", {"projectPath": "/p", "recordIds": ["ark:/61903/1:1:BBB"]}, first),
+                _call("extraction_append", TRUNC_ARGS, second)], final_research=TRUNC_FINAL)
+    assert [e["id"] for e in r.research["log"]] == ["log_005", "log_004", "log_009"]
+
+
+OK_PS1 = '[{"type": "text", "text": "{\\n  \\"ok\\": true,\\n  \\"entryId\\": \\"ps_001\\"\\n}"}]'
+
+
+def test_a_proof_summary_edits_update_is_replayed():
+    """#3542 lead 2c: research_append accepted each `old` where it occurred once, so the
+    replay reproduces the write where it occurs once in the replayed text too. A
+    `fields` part on the same op applies beside it."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1850", "tier": "probable"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "fields": {"tier": "possible"},
+                       "edits": [{"field": "narrative_markdown", "old": "1850", "new": "1851"}]},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {}
+    assert r.research["proof_summaries"][0] == {"id": "ps_001", "narrative_markdown": "born in 1851", "tier": "possible"}
+
+
+def test_an_edit_the_replayed_text_cannot_show_is_reported_unmodelled():
+    """The replayed narrative lacks `old` (it was written by a call the replay did not
+    model), so the edit is a gap, and the `fields` part still applies."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1849", "tier": "probable"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "fields": {"tier": "possible"},
+                       "edits": [{"field": "narrative_markdown", "old": "1850", "new": "1851"}]},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {"proof_summaries:edits": 1}
+    assert r.research["proof_summaries"][0]["narrative_markdown"] == "born in 1849"
+    assert r.research["proof_summaries"][0]["tier"] == "possible"
+
+
+def test_a_proof_summary_fields_update_reports_nothing():
+    """The other direction: an ordinary update is modelled, so no gap is claimed."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1850"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "fields": {"narrative_markdown": "born in 1851"}},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {}
+    assert r.research["proof_summaries"][0]["narrative_markdown"] == "born in 1851"
+
+
+def test_an_edits_only_update_the_replay_cannot_show_is_not_counted_applied():
+    """An op that is all `edits`, none of which the replayed text can show, changed
+    nothing the replay modelled: a gap, not an apply. "0" occurs twice here."""
+    start = {"proof_summaries": [{"id": "ps_001", "narrative_markdown": "born in 1800"}]}
+    r = replay([_call("research_append",
+                      {"section": "proof_summaries", "op": "update", "entryId": "ps_001",
+                       "edits": [{"field": "narrative_markdown", "old": "0", "new": "1"}]},
+                      OK_PS1)], starting_research=start)
+    assert r.unmodelled == {"proof_summaries:edits": 1}
+    assert r.applied == 0

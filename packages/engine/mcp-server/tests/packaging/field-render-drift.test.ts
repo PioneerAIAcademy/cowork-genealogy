@@ -70,6 +70,10 @@ const COMPONENTS = join(
  * grows past a dozen, the lint is asking the wrong question.
  */
 const NOT_RENDERED: Record<string, string> = {
+  "conflict.weighed_log_entry_ids":
+    "Bookkeeping for the ladder, not a finding: which of the question's log entries conflict-resolution has already weighed, so a second pass can tell new evidence from evidence it has seen. The researcher reads the analysis fields and the resolution, never this list of ids.",
+  "namesake.record_persona_ids":
+    "Tool-stamped persona ids kept only to measure a later rule; meaningless to a researcher, and the raw-data view still shows them.",
   "researcher_profile.experience_level":
     "init-project writes a fixed `novice` on every project, so the label tells the researcher nothing, and a tester read it as a judgment about them.",
   "researcher_profile.narration_guidance":
@@ -92,6 +96,8 @@ const NOT_RENDERED: Record<string, string> = {
     "Host-side path to the mentor's prose artifact. The viewer cannot read it, and it is the reason this section shows the verdict rather than the critique (#1223).",
   "log_entry.plan_item_id":
     "FK to the plan item that prompted the search. The plan renders in its own section; showing a raw pli_ id in the log row would be noise.",
+  "log_entry.staged_ref":
+    "Host bookkeeping: the deleted results/.staging/ file the entry was finalized from, kept so research_log_append can answer a re-sent ref. It names nothing a reader can open.",
 };
 
 /**

@@ -220,7 +220,7 @@ Only `entityId` (as `personId`) and `tags` are kept. All other fields
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Empty `uris` array | Throw: `"uris array must not be empty."` |
 | More than 100 URIs | Chunked into 100-URI POSTs and merged; never surfaced to the caller. See the cap below. |
-| 401 Unauthorized | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
+| 401 Unauthorized | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | 403 Forbidden (WAF) | Throw: `"FamilySearch attachments blocked by WAF. The User-Agent header was rejected."` |
 | Other non-OK status | Throw: `"FamilySearch attachments API error: {status} {statusText}."` |
 

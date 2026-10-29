@@ -4,7 +4,7 @@
     "skill": "tree-survey",
     "name": "A project already exists — hand back to question-selection, call no tool",
     "type": "negative",
-    "description": "The request names an existing project and asks for its next question, which is question-selection's job. The agent must hand back naming question-selection and call no tool. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back).",
+    "description": "The request names an existing project and asks for its next question, which is question-selection's job. The agent must hand back naming question-selection and call no tool. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back). tree-gaps-clean is loaded only so the agent has its one tool, as production always does; with none the CLI refuses to spawn it. The agent must not call it.",
     "tags": [
       "hand-back",
       "handback-to-question-selection",
@@ -22,7 +22,9 @@
     "grade_on_invariant": true,
     "explanation": "This is not a tree-wide survey before a project exists; it belongs to question-selection."
   },
-  "mcp_fixtures": [],
+  "mcp_fixtures": [
+    "tree-gaps-clean"
+  ],
   "execution": {
     "max_wall_clock_seconds": 120
   },

@@ -8,7 +8,7 @@ The deliverable is one research-log entry (`tool: "wikipedia_search"`) whose `no
 
 One test runs with **no project** (`ut_search_wikipedia_002`, tagged `no-project`). There `research_log_append` answers `reason: "no_project"`, nothing is logged, and the agent's reply is the filled template itself. On that test `(no file changes)` is correct, and returning the template is the correct reply, not a restatement.
 
-One test in this suite is a **decline** (`ut_search_wikipedia_008`, tagged `scope-decline`). It logs nothing and makes no tool call, and that is its correct outcome. On that test read "Template fidelity" and "Tool query and response interpretation" as N/A, and grade "Reply economy" on the decline shape described in its own section.
+Two tests make no tool call and log nothing, and that is their correct outcome: the **decline** (`ut_search_wikipedia_008`, an out-of-scope programming request) and the **hand-back** (`ut_search_wikipedia_m7h`, a migration narrative that belongs to historical-context). On both, read "Template fidelity" and "Tool query and response interpretation" as N/A, and grade "Reply economy" on the decline and hand-back shape described in its own section.
 
 Two tests serve a `wikipedia_search` error (agent body step 2). On the **not-found** test (`ut_search_wikipedia_011`, tagged `not-found`) one negative log entry and no template are correct, and the correct reply is "No Wikipedia article was found for that topic." On the **lookup-failed** test (`ut_search_wikipedia_012`, tagged `lookup-failed`) the tool fails with an upstream error; logging nothing and making no second call are correct, `(no file changes)` is correct, and the correct reply is "The Wikipedia lookup failed; nothing was logged." On both, read "Template fidelity" as N/A, and under "Reply economy" the step-2 line is the correct one-line return.
 
@@ -36,6 +36,6 @@ The agent body's `## Return contract`: **exactly one line saying the summary was
 
 This agent carries no `summary_for_user` paragraphs, and that is deliberate rather than an omission — it is on the PENDING list in `tests/packaging/agent-return-contract.test.ts` with the measurement behind it. Do not reward a return that adds them, and do not penalize one for lacking them.
 
-- **pass:** One line saying the summary was saved to the research log (or, with no project, the filled template). Nothing else. On the decline test, two short sentences declining — or naming the owning agent — and nothing else.
+- **pass:** One line saying the summary was saved to the research log (or, with no project, the filled template). Nothing else. On the decline and hand-back tests, two short sentences declining, or naming the owning agent, and nothing else.
 - **partial:** Mid-workflow narration reaches the reply ("Now I'll write the filled template to a file…"), or the reply runs to several sentences, or it characterizes the article in passing ("a useful overview of the county's mining history") — anything beyond the one confirmation line.
 - **fail:** The reply restates, summarizes or quotes the article content, duplicating in chat what the log entry already holds; or it asserts what the subject means for genealogy, which is a fabrication risk even when the extract supports it.
