@@ -57,6 +57,64 @@ FINDINGS_INSTRUCTION = (
     "An empty list is []. Write the block once, as the last thing in your reply."
 )
 
+# --read-all only: an experiment, not production. The shipped agent body lets a
+# large profile end with most of its record ARKs reported as unchecked.
+READ_ALL_INSTRUCTION = (
+    "Read every audit-list source: call record_read on every source whose URL holds `1:1:`, one "
+    "call per source, however many there are. Report a source as \"unchecked\" only when no tool "
+    "you hold can read it, never because the list is long or the records look alike."
+)
+
+# --dedupe only: an experiment. A subject-level record whose own event (type,
+# date, place) and subject persona name match another attached record's is
+# served as a pointer to the richer of the two, so only one copy of the event
+# sits in the agent's context.
+DEDUPE_INSTRUCTION = (
+    "Some record_read results say a record duplicates another attached record: the same event "
+    "indexed twice. Treat it as checked through the record it names, and do not report it as "
+    "\"unchecked\"."
+)
+_DEDUPE_EVENTS = {"Birth", "Christening", "Baptism", "Marriage", "Death", "Burial", "Census", "Residence"}
+
+
+def _record_signature(rec: Any, ark: str) -> tuple[Any, ...] | None:
+    persons = rec.get("persons") or []
+    me = next((q for q in persons if q.get("ark") == ark), None)
+    name = ""
+    if me and me.get("names"):
+        n = me["names"][0]
+        name = f"{n.get('given', '')} {n.get('surname', '')}".strip().lower()
+    facts = [f for q in persons if q.get("principal") for f in q.get("facts") or [] if f.get("type") in _DEDUPE_EVENTS]
+    facts += [f for r in rec.get("relationships") or [] for f in r.get("facts") or [] if f.get("type") in _DEDUPE_EVENTS]
+    ev = tuple(sorted({(f["type"], f.get("standard_date") or f.get("date") or "", (f.get("place") or "").lower()) for f in facts}))
+    return (name, ev) if ev else None
+
+
+def _record_richness(rec: Any) -> int:
+    persons = rec.get("persons") or []
+    return sum(1 + len(q.get("facts") or []) + len(q.get("names") or []) for q in persons) + len(rec.get("relationships") or [])
+
+
+def duplicate_records(snapshot: Path, copy: str, entries: list[dict[str, Any]]) -> dict[str, str]:
+    """{redundant record id: the richer record id it duplicates}, over subject-level personas."""
+    groups: dict[tuple[Any, ...], list[tuple[int, str]]] = {}
+    for e in entries:
+        if e.get("class") != "persona" or e.get("level") != "subject":
+            continue
+        rid = bare_id(e["ark"])
+        rec = read_record(snapshot, copy, rid)
+        sig = _record_signature(rec, to_ark(e["ark"])) if isinstance(rec, dict) and not rec.get("is_error") else None
+        if sig:
+            groups.setdefault(sig, []).append((_record_richness(rec), rid))
+    out: dict[str, str] = {}
+    for members in groups.values():
+        if len(members) > 1:
+            members.sort(key=lambda m: (-m[0], m[1]))
+            for _, rid in members[1:]:
+                out[rid] = members[0][1]
+    return out
+
+
 # --tree-sources only: an experiment, not production. The shipped agent body has
 # no rule for tree links, and production record_read refuses 2:2:/2:3: ARKs,
 # which the mock here serves from the snapshot's trees/ cache.
@@ -180,7 +238,7 @@ def compiled_tree_path(snapshot: Path, ark: str) -> Path:
 
 
 def generate_fixtures(
-    snapshot: Path, copy: str, fixtures_dir: Path, tree_sources: bool = False
+    snapshot: Path, copy: str, fixtures_dir: Path, tree_sources: bool = False, dedupe: bool = False
 ) -> tuple[list[str], dict[str, Any]]:
     """Write mock fixtures for one copy; return (fixture names, facts about the copy)."""
     d = _copy_dir(snapshot, copy)
@@ -196,11 +254,18 @@ def generate_fixtures(
             out.append((f"person-read-{p.stem}", _fixture("person_read", {"personId": f"~{p.stem}"}, _read_json(p))))
 
     personas = [e for e in audit["entries"] if e.get("class") == "persona"]
+    dupes = duplicate_records(snapshot, copy, personas) if dedupe else {}
     for e in personas:
         rid = bare_id(e["ark"])
         rec = read_record(snapshot, copy, rid)
         if rec is None:
             rec = {"is_error": True, "error": f"Record {rid} was not read in the snapshot."}
+        elif rid in dupes:
+            rec = {
+                "duplicate_of": f"ark:/61903/1:1:{dupes[rid]}",
+                "note": f"Record {rid} indexes the same event, for the same person, as attached record "
+                f"{dupes[rid]}, which carries at least as much. Read that one; this copy adds nothing.",
+            }
         out.append((f"record-read-{rid}", _fixture("record_read", {"recordId": f"~{rid}"}, rec)))
 
     if tree_sources:
@@ -280,8 +345,14 @@ def parse_findings(text: str) -> tuple[list[dict[str, Any]], str | None, list[An
     return findings, None, rejected
 
 
-def delegation_for(subject_id: str, workspace: Path, tree_sources: bool = False) -> str:
+def delegation_for(
+    subject_id: str, workspace: Path, tree_sources: bool = False, read_all: bool = False, dedupe: bool = False
+) -> str:
     extra = f"{TREE_SOURCES_INSTRUCTION}\n\n" if tree_sources else ""
+    if read_all:
+        extra += f"{READ_ALL_INSTRUCTION}\n\n"
+    if dedupe:
+        extra += f"{DEDUPE_INSTRUCTION}\n\n"
     return (
         f"Audit the sources attached to {subject_id}. Tell me which of them belong on the profile "
         f"and what is wrong with any that do not.\n\nprojectPath: {workspace}\n\n{extra}{FINDINGS_INSTRUCTION}"
@@ -324,6 +395,8 @@ async def judge_copy(
     agent_return_text: Callable[[Any, str], str],
     quota_reason: str,
     tree_sources: bool = False,
+    read_all: bool = False,
+    dedupe: bool = False,
     silence_seconds: int = DEFAULT_SILENCE_SECONDS,
 ) -> dict[str, Any]:
     """Run the agent on one copy and write judge/<copy>.json (or .aborted.json)."""
@@ -335,11 +408,11 @@ async def judge_copy(
         fixtures_dir = tmp / "fixtures"
         build_workspace(None, SCENARIOS_DIR, SKILLS_DIR, workspace, stage_skills=False)
         shutil.copyfile(_copy_dir(snapshot, copy) / "tree.gedcomx.json", workspace / "tree.gedcomx.json")
-        names, facts = generate_fixtures(snapshot, copy, fixtures_dir, tree_sources)
+        names, facts = generate_fixtures(snapshot, copy, fixtures_dir, tree_sources, dedupe)
         started = time.time()
         try:
             result = await run_skill(
-                user_message=direct_dispatch_prompt(AGENT, delegation_for(facts["subject_id"], workspace, tree_sources)),
+                user_message=direct_dispatch_prompt(AGENT, delegation_for(facts["subject_id"], workspace, tree_sources, read_all, dedupe)),
                 workspace=workspace,
                 fixture_names=names,
                 fixtures_dir=fixtures_dir,
@@ -370,6 +443,8 @@ async def judge_copy(
             "rejected_findings": rejected,
             "harness_miss": harness_miss,
             "tree_sources": tree_sources,
+            "read_all": read_all,
+            "dedupe": dedupe,
             "not_audited": facts["not_audited"],
             "calls": calls,
             "tool_args": [
@@ -447,6 +522,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-tool-calls", type=int, default=DEFAULT_MAX_TOOL_CALLS)
     ap.add_argument("--max-wall-clock-seconds", type=int, default=DEFAULT_MAX_WALL_CLOCK_SECONDS)
     ap.add_argument("--tree-sources", action="store_true", help="experiment: tell the agent how to read 4:1:/2:2:/2:3: sources, and serve them")
+    ap.add_argument("--read-all", action="store_true", help="experiment: tell the agent to read every 1:1: source")
+    ap.add_argument("--dedupe", action="store_true", help="experiment: serve a duplicate record as a pointer to the richer copy")
     ap.add_argument("--silence-seconds", type=int, default=DEFAULT_SILENCE_SECONDS)
     args = ap.parse_args(argv)
     if not 0 < args.silence_seconds <= args.max_wall_clock_seconds:
@@ -491,6 +568,8 @@ def main(argv: list[str] | None = None) -> int:
                     agent_return_text=agent_return_text,
                     quota_reason=QUOTA_ABORT_REASON,
                     tree_sources=args.tree_sources,
+                    read_all=args.read_all,
+                    dedupe=args.dedupe,
                     silence_seconds=args.silence_seconds,
                 )
             )

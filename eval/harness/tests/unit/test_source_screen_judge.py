@@ -148,12 +148,13 @@ class FakeRunner:
     def __init__(self, calls: list[tuple[str, dict[str, Any]]], text: str, aborted: str | None = None):
         self.calls, self.text, self.aborted = calls, text, aborted
         self.seen: dict[str, Any] = {}
+        self.results: list[Any] = []
 
     async def __call__(self, **kw):
         self.seen = kw
         _server, call_log, tools = create_mock_server(kw["fixture_names"], kw["fixtures_dir"], workspace=kw["workspace"])
         for tool, args in self.calls:
-            await tools[tool].handler(args)
+            self.results.append(await tools[tool].handler(args))
         return SimpleNamespace(
             text_response="",
             agent_returns=[{"subagent_type": "source-evaluation", "text": self.text}],
@@ -163,7 +164,7 @@ class FakeRunner:
         )
 
 
-def _judge(snap: Path, copy: str, runner, quota: str = "quota_exhausted"):
+def _judge(snap: Path, copy: str, runner, quota: str = "quota_exhausted", **kw):
     return asyncio.run(
         judge.judge_copy(
             snap,
@@ -178,6 +179,7 @@ def _judge(snap: Path, copy: str, runner, quota: str = "quota_exhausted"):
             direct_dispatch_prompt=lambda agent, d: f"{agent}: {d}",
             agent_return_text=lambda returns, agent: "\n".join(r["text"] for r in returns or [] if r["subagent_type"] == agent),
             quota_reason=quota,
+            **kw,
         )
     )
 
@@ -367,3 +369,63 @@ def test_refuses_a_silence_window_outside_the_wall_clock_cap(tmp_path):
     for bad in ("0", "1201"):
         with pytest.raises(judge.JudgeError, match="silence-seconds"):
             judge.main(["--snapshot", str(snap), "--silence-seconds", bad])
+
+
+def _event_record(snap: Path, persona_id: str, birth: str, *, extra_names: int = 0) -> None:
+    names = [{"given": "John", "surname": "Smith"}] + [{"given": "Jno", "surname": "Smith"}] * extra_names
+    _w(
+        snap / "records" / f"{persona_id}.json",
+        {"persons": [{"id": "p_1", "ark": f"ark:/61903/1:1:{persona_id}", "principal": True, "names": names, "facts": [{"type": "Birth", "date": birth, "place": "Kent, England"}]}]},
+    )
+
+
+def _record_read_bodies(names: list[str], fixtures_dir: Path) -> dict[str, Any]:
+    out = {}
+    for n in names:
+        f = json.loads((fixtures_dir / f"{n}.json").read_text(encoding="utf-8"))
+        if f["tool"] == "record_read":
+            out[f["args"]["recordId"].lstrip("~")] = f["response"]
+    return out
+
+
+def test_dedupe_serves_the_poorer_copy_of_one_event_as_a_pointer_and_only_with_the_flag(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["RICH-111", "POOR-111", "OTHR-111", "NOEV-111"])
+    _event_record(snap, "RICH-111", "1 Jan 1850", extra_names=1)
+    _event_record(snap, "POOR-111", "1 Jan 1850")
+    _event_record(snap, "OTHR-111", "2 Feb 1852")
+    off_names, _ = judge.generate_fixtures(snap, "KWCB-QZ3", tmp_path / "off")
+    on_names, _ = judge.generate_fixtures(snap, "KWCB-QZ3", tmp_path / "on", dedupe=True)
+    off = _record_read_bodies(off_names, tmp_path / "off")
+    on = _record_read_bodies(on_names, tmp_path / "on")
+    assert not any("duplicate_of" in b for b in off.values())
+    assert on["POOR-111"]["duplicate_of"] == "ark:/61903/1:1:RICH-111"
+    assert "persons" in on["RICH-111"] and "persons" in on["OTHR-111"] and "persons" in on["NOEV-111"]
+
+
+def test_dedupe_matches_on_the_subject_personas_name_not_only_the_event(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111", "BBBB-111"])
+    _event_record(snap, "AAAA-111", "1 Jan 1850")
+    _event_record(snap, "BBBB-111", "1 Jan 1850")
+    rec = json.loads((snap / "records" / "BBBB-111.json").read_text(encoding="utf-8"))
+    rec["persons"][0]["names"] = [{"given": "Mary", "surname": "Smith"}]
+    _w(snap / "records" / "BBBB-111.json", rec)
+    assert judge.duplicate_records(snap, "KWCB-QZ3", json.loads((snap / "persons" / "KWCB-QZ3" / "audit.json").read_text(encoding="utf-8"))["entries"]) == {}
+
+
+def test_read_all_and_dedupe_add_their_rules_to_the_delegation_only_with_their_flags(tmp_path):
+    plain = judge.delegation_for("KWCB-QZ3", tmp_path)
+    assert judge.READ_ALL_INSTRUCTION not in plain and judge.DEDUPE_INSTRUCTION not in plain
+    both = judge.delegation_for("KWCB-QZ3", tmp_path, read_all=True, dedupe=True)
+    assert judge.READ_ALL_INSTRUCTION in both and judge.DEDUPE_INSTRUCTION in both and both.endswith(judge.FINDINGS_INSTRUCTION)
+
+
+def test_the_judge_record_says_which_experiments_ran_and_passes_them_through(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["RICH-111", "POOR-111"])
+    _event_record(snap, "RICH-111", "1 Jan 1850", extra_names=1)
+    _event_record(snap, "POOR-111", "1 Jan 1850")
+    runner = FakeRunner([("record_read", {"recordId": "ark:/61903/1:1:POOR-111"})], FINDINGS)
+    rec = _judge(snap, "KWCB-QZ3", runner, read_all=True, dedupe=True)
+    assert rec["read_all"] is True and rec["dedupe"] is True
+    assert "RICH-111" in json.dumps(runner.results[0])
+    assert judge.READ_ALL_INSTRUCTION in runner.seen["user_message"] and judge.DEDUPE_INSTRUCTION in runner.seen["user_message"]
+    assert _judge(snap, "KWCB-QZ3", FakeRunner([], FINDINGS))["read_all"] is False
