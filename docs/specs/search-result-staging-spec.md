@@ -198,8 +198,11 @@ part of `staged`.
   `indexFields` maps each persona's `gedcomx.persons[].id` to the per-person index values the raw
   FamilySearch body carries in `fields[]` and `toSimplified` drops — `relationshipToHead`,
   `sortKey`, `personNbr`, `lineNbr`, `householdId`, `age`, `fatherBirthPlace`, `motherBirthPlace`,
-  each optional. It is omitted entirely when no persona carries any, so a record type with no
-  index data stages what it always did.
+  each optional — plus `censusPlace`, the `place.original` of the persona's first census fact,
+  which the census relationship-column decision reads because `record_read` may give that fact
+  an as-written `place` and an English `standard_place` that name the jurisdiction differently.
+  It is omitted entirely when no persona carries any, so a record type with no index data stages
+  what it always did.
 
   **Only `record_read` stages it, and that asymmetry is the point.** A `record_search` response
   populates `fields[]` for the searched persona alone; every co-resident arrives with names and
@@ -354,8 +357,9 @@ same ground truth production does.
   staged result against the tree subject) and `record_read` in **sidecar mode**
   (`record_read({ recordId, resultsRef, projectPath })` returns one record's
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
-  search stage's standardized places as-is (a live read uses pure `toSimplified`,
-  keeping only the record's own normalized places, never resolver-derived ones);
+  search stage's standardized places as-is (a live read uses `recordReadDocument`,
+  keeping only the record's own standardized places, named by their place ids,
+  never resolver-derived ones);
   used by search-records to avoid re-fetching a record it already searched;
   `extraction_append` does not use it — it always reads the record live). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized

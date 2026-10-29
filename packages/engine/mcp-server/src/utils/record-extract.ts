@@ -25,7 +25,7 @@
 // the caller supplies those. It never writes identity links. It never decides
 // which questions a fact answers; `extracted_for_question_ids` is the caller's.
 
-import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
+import type { SimplifiedFact, SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
 import type { DocumentMode } from "./structured-document.js";
 
@@ -1017,13 +1017,15 @@ export function extractRecord(
   const statedHouseholds: Party[][] = [];
 
   if (recordType === "census") {
-    // Decide the column from the census fact's place and year, per household.
-    const census = ps
-      .flatMap((p) => (p.person.facts ?? []).map((fact, i) => ({ fact, note: mode?.factMarks.get(`${p.id}#${i}`)?.note })))
-      .find(({ fact }) => /census/i.test(String(fact.type ?? "")));
-    const censusFact = census?.fact;
+    // Decide the column from the census fact's place and year, per household:
+    // the place as FamilySearch sent it when the staged read carries it.
+    const isCensus = (f: SimplifiedFact) => /census/i.test(String(f.type ?? ""));
+    const censusParty = ps.find((p) => (p.person.facts ?? []).some(isCensus));
+    const censusIndex = censusParty?.person.facts?.findIndex(isCensus) ?? -1;
+    const censusFact = censusParty?.person.facts?.[censusIndex];
+    const censusNote = censusParty ? mode?.factMarks.get(`${censusParty.id}#${censusIndex}`)?.note : undefined;
     const year = Number(String(censusFact?.date ?? "").match(/\d{4}/)?.[0]);
-    const place = censusFact?.standard_place ?? censusFact?.place;
+    const place = censusParty?.fields?.censusPlace ?? censusFact?.standard_place ?? censusFact?.place;
     const stated =
       mode && "censusStates" in mode
         ? (mode.censusStates ?? null)
@@ -1037,7 +1039,7 @@ export function extractRecord(
     }
     if (stated === null) {
       // The note is relayed in the summary, so a flagged census fact's place is withheld.
-      const shown = isSuspiciousText(census?.note) ? WITHHELD_SUSPICIOUS : JSON.stringify(place ?? null);
+      const shown = isSuspiciousText(censusNote) ? WITHHELD_SUSPICIOUS : JSON.stringify(place ?? null);
       notes.push(
         `census jurisdiction not in the relationship-column table ` +
           `(place ${shown}, year ${year || "unknown"}) — ` +

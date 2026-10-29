@@ -738,11 +738,26 @@ stays an opt-out, as on an append. The levers:
      geocoded. Another persona's or record's standard place for the same text
      is never taken (lead, 2026-10-26: "have the engine take FamilySearch's
      standardization from the record a tree fact cites";
-     `src/utils/record-standards.ts`, shared with `tree_edit`);
+     `src/utils/record-standards.ts`, shared with `tree_edit`). When that gives
+     none, if the op's sidecar-matched record (§3.5) gives the op's own fact a
+     converter-resolved `standard_place`, it is **copied** — no geocoding call.
+     The op's own fact is a fact of its `record_persona_id` (the persona's own,
+     or one of a relationship whose `person1` or `person2` it is, as a
+     couple's marriage; a ParentChild relationship's facts are not read) whose
+     type is the op's `fact_type` once both are folded as "Boundary shape normalization" folds
+     labels ("Baptism" is `christening`, "BirthRegistration" is
+     `birth_registration`) and whose `place` equals the op's place string
+     (trimmed, case-insensitive). It is copied only when every such fact
+     carries the same `standard_place`: one person's name never lands on
+     another's fact (a census household where FamilySearch standardized only
+     the head's place), and one fact's name never lands on another fact of the
+     same person (one place named for two eras);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
      it: the places the call's other assertions with the same `record_id` name,
+     each by its `standard_place` when it has one, else its `place` (a record
+     read's named fact carries its as-written text as `place`, "Den Haag"),
      and the record's country, from the sidecar record the assertion comes from
      and never read off the record's facts or the place text, by the tool that
      staged it:

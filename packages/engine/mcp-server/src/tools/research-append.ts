@@ -85,9 +85,10 @@ import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
+  loadStoredCollectionUrls,
   readExternalCollections,
-  storedCollectionKeys,
   EXTERNAL_COLLECTIONS_FILE,
+  type StoredCollectionUrls,
   type ExternalCollectionsDoc,
   type StoredCollectionRow,
 } from "../utils/external-collections-store.js";
@@ -5560,20 +5561,6 @@ function planItemSkipInvariants(
   return errors;
 }
 
-/** The curated collections in `external-collections.json`, by `collectionKey`, or
- *  why they could not be read. Every place's rows, so a plan item's free-text
- *  jurisdiction never has to be matched to a stored place. Read once per call,
- *  before the sync apply loop, and only when an op sets `collection_url`. */
-export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
-
-async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
-  try {
-    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
-  }
-}
-
 /** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
  *  inline `items[]`. An update is not an append, so a status change never warns. */
 function appendedPlanItems(ops: readonly ResearchAppendOp[]): any[] {
@@ -7878,6 +7865,39 @@ function applyOne(
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
+/** The converter-resolved standard_place a sidecar record's simplified gedcomx
+ *  gives an assertion's own fact: the facts of its `record_persona_id` (the
+ *  persona's own, and those of a relationship whose `person1` or `person2` it
+ *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
+ *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
+ *  case-insensitive). Null unless every such fact carries the same one, so one
+ *  fact's name never lands on another person's or another fact's. Never geocode
+ *  what the source record already resolved. */
+function sidecarStandardPlace(gx: any, entry: any): string | null {
+  if (!gx || typeof gx !== "object") return null;
+  const persona = entry.record_persona_id;
+  const facts: any[] = [];
+  for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
+    if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
+  }
+  for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
+    if ((r?.person1 === persona || r?.person2 === persona) && Array.isArray(r.facts)) facts.push(...r.facts);
+  }
+  const want = entry.place.trim().toLowerCase();
+  const names = new Set(
+    facts
+      .filter(
+        (f) =>
+          typeof f?.place === "string" &&
+          f.place.trim().toLowerCase() === want &&
+          canonicalFactKey(f.type) === canonicalFactKey(entry.fact_type),
+      )
+      .map((f) => f.standard_place),
+  );
+  const [name] = names;
+  return names.size === 1 && typeof name === "string" ? name : null;
+}
+
 /** A sidecar result's record id: record_search and record_read stage GedcomX
  *  personas keyed on `recordId`, the persona-less producers (full text,
  *  external links) transcripts keyed on `id` (#2038). */
@@ -8053,9 +8073,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = factTypeKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
-  return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
+  return [a.source_id, arkToBareId(a.record_id), log, who, canonicalFactKey(a.fact_type)].join("\u0000");
+}
+
+/** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
+ *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
+ *  `birth_registration`. */
+function canonicalFactKey(ft: unknown): string {
+  const key = factTypeKey(ft);
+  return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
@@ -8657,12 +8683,15 @@ async function prepareOps(
     }
   }
 
-  // The other places each record's assertions name in this batch: a bare place
-  // ("Shenandoah") is resolved against them, not against the whole world.
+  // The other places each record's assertions name in this batch, each by its
+  // standard_place when it has one, else its place: a bare place ("Shenandoah")
+  // is resolved against them, not against the whole world. A record read's
+  // named fact carries its as-written text ("Den Haag") as `place`, so the
+  // standard is the one that still names the fact's jurisdictions.
   const placesByRecord = new Map<string, string[]>();
   for (const op of ops) {
     const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
-    const place = e ? factText(e.place) : undefined;
+    const place = e ? (factText(e.standard_place) ?? factText(e.place)) : undefined;
     if (!place) continue;
     const key = String(e.record_id ?? "");
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
@@ -8687,7 +8716,14 @@ async function prepareOps(
       valueDerived = false,
       countryProducer,
       countryRecord = null,
-    }: { dropContradiction?: boolean; valueDerived?: boolean; countryProducer?: string; countryRecord?: any } = {},
+      matchedRecord = null,
+    }: {
+      dropContradiction?: boolean;
+      valueDerived?: boolean;
+      countryProducer?: string;
+      countryRecord?: any;
+      matchedRecord?: any;
+    } = {},
   ): Promise<void> => {
     const flaggedText = isSuspiciousText(entry.informant_bias_notes);
     const unresolved = (why = "") => {
@@ -8697,7 +8733,9 @@ async function prepareOps(
     // ── Place lever (b): never geocode what FamilySearch already standardized —
     // take FamilySearch's own standard_place for the same text on the
     // assertion's record persona (record-standards.ts), and none when its values
-    // disagree. `standard_place: null` is an explicit opt-out
+    // disagree; else copy the standard_place the matched sidecar record gives
+    // this assertion's own fact (same persona, fact type and place string).
+    // `standard_place: null` is an explicit opt-out
     // (skip resolution + guard); only a fully omitted field triggers
     // resolution. A non-place phrase ("Same House") is left unset, silently: it
     // has no standard form.
@@ -8710,6 +8748,7 @@ async function prepareOps(
     ) {
       const fromRecord = await recordStandards.for([entry], entry.place);
       let sp: string | null = fromRecord.length === 1 ? fromRecord[0] : null;
+      if (fromRecord.length === 0 && matchedRecord) sp = sidecarStandardPlace(matchedRecord.gedcomx, entry);
       if (sp) filled = "sidecar";
       if (fromRecord.length > 1) {
         unresolved(`: FamilySearch standardized it differently on its record (${fromRecord.join("; ")})`);
@@ -8956,7 +8995,7 @@ async function prepareOps(
       }
     }
 
-    await applyPlaceLevers(entry, i, { valueDerived: liftedFromValue.has(entry), countryProducer, countryRecord });
+    await applyPlaceLevers(entry, i, { valueDerived: liftedFromValue.has(entry), countryProducer, countryRecord, matchedRecord });
   }
 
   /** The record country's source for an assertion update's lookups: the sidecar

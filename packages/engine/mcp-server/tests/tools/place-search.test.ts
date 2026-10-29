@@ -9,6 +9,7 @@ import {
   placeSearchAllTool,
   __clearPlaceSearchCacheForTests,
 } from "../../src/tools/place-search.js";
+import { getPlaceReps } from "../../src/utils/place-api.js";
 import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
@@ -578,6 +579,76 @@ describe("getPlaceRepIds", () => {
   it("returns empty array on 404", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: "Not Found" });
     expect(await getPlaceRepIds("0000")).toEqual([]);
+  });
+
+  it("getPlaceReps gives each representation's English name, date range and names from the same listing (Olne, live 2026-10-26)", async () => {
+    const rep = (
+      id: string,
+      fullName: string | undefined,
+      formal: string | undefined,
+      names: { lang?: string; value?: string }[] | undefined,
+      pid = "1959431",
+    ) => ({
+      id,
+      ...(fullName ? { display: { fullName, name: "Olne", type: "Municipality" } } : {}),
+      ...(formal ? { temporalDescription: { formal } } : {}),
+      ...(names ? { names } : {}),
+      place: { resource: `https://api.familysearch.org/platform/places/${pid}`, resourceId: pid },
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "1959431", names: [{ lang: "wa", value: "ône" }, { lang: "fr", value: "Olne" }, { lang: "fr", value: "Aulne" }] },
+          rep("12441861", "Olne, Liège, Belgium", "+1830/", [{ lang: "fr", value: "Olne" }]),
+          // Constructed: a second language, and a name with no value.
+          rep("418460", "Olne, Prince-Bishopric of Liège, Holy Roman Empire", "/+1795", [
+            { lang: "fr", value: "Olne" },
+            { lang: "wa" },
+            { lang: "de", value: "Olne-Lüttich" },
+          ]),
+          rep("418460", "Olne, Duplicate", "+1900/", [{ lang: "fr", value: "Duplicate" }]),
+          rep("7", undefined, undefined, undefined),
+          rep("999", "Elsewhere", "+1800/", [{ lang: "en", value: "Elsewhere" }], "9999"),
+        ],
+      }),
+    });
+    expect(await getPlaceReps("1959431")).toEqual([
+      { placeRepId: "12441861", fullName: "Olne, Liège, Belgium", dateRange: "+1830/", names: ["Olne"] },
+      {
+        placeRepId: "418460",
+        fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire",
+        dateRange: "/+1795",
+        names: ["Olne", "Olne-Lüttich"],
+      },
+      { placeRepId: "7", names: [] },
+    ]);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.familysearch.org/platform/places/1959431",
+      expect.objectContaining({ headers: expect.objectContaining({ "Accept-Language": "en" }) }),
+    );
+  });
+
+  it("reads past a names list that is not a list, or holds a null entry, so place_search_all's getPlaceRepIds does not throw", async () => {
+    // Constructed: no live listing has these shapes.
+    const listing = {
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "100", place: { resourceId: "9001" }, names: "Olne" },
+          { id: "101", place: { resourceId: "9001" }, names: [null, { lang: "fr", value: "Olne" }] },
+          { id: "102", place: { resourceId: "9001" }, names: { lang: "fr", value: "Olne" } },
+        ],
+      }),
+    };
+    mockFetch.mockResolvedValueOnce(listing);
+    expect(await getPlaceReps("9001")).toEqual([
+      { placeRepId: "100", names: [] },
+      { placeRepId: "101", names: ["Olne"] },
+      { placeRepId: "102", names: [] },
+    ]);
+    mockFetch.mockResolvedValueOnce(listing);
+    expect(await getPlaceRepIds("9001")).toEqual(["100", "101", "102"]);
   });
 
   it("retries a server error, then throws once the retries are spent", async () => {
