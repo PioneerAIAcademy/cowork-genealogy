@@ -22,12 +22,8 @@ tools:
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
   # This is the tool set the skill declared, plus `wiki_read` (the probate-office
-  # fetch, issue #2262) and `Read` (the skill relied on the built-in; an agent
-  # must list it). `project_context` is deliberately absent - Step 1 rules it
-  # out by name - and so is `research_query`: this agent reads the two project
-  # files directly, and a query tool it does not need is capability a delegation
-  # could steer (docs/skill-to-agent-pair-conversion.md, section 2).
-  - Read
+  # fetch, issue #2262), `project_context`, `research_query` and `tree_query`
+  # (the project reads).
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_append
@@ -37,6 +33,15 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 # Citation
@@ -78,7 +83,7 @@ exists, or document a nil search result) — proceed.
 
 ---
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **If you write to `research.json`, call `validate_research_schema` before you present. Mandatory, every time.** `research_append` returning `ok` is not a substitute and does not discharge this. Never report a citation as validated, saved clean, or schema-checked without that call in the ledger. Step 6 carries the call shape and the one case that skips it.
 
@@ -105,7 +110,7 @@ walkthrough, in your chat response.**
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
-| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. Check the `author` field on the matching source description in `tree.gedcomx.json` first; use that value before falling back to historical inference. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
+| **Who** | `who` | The person, agency, or body that CREATED the record -- not the repository that hosts it. Check the `author` field on the matching source from `tree_query` first; use that value before falling back to historical inference. | "U.S. Census Bureau", "Pennsylvania Department of Health", "St. Mary's Catholic Church" |
 | **What** | `what` | Title or name of the source. If untitled, a clear item-specific description. | "1850 U.S. Federal Census, population schedule", "Death certificate no. 4521" |
 | **When** | `when_created` | Date the record was created or the event it reports | "1850", "1908-03-14" |
 | | `when_accessed` | Date the researcher accessed the record (required for online sources) | "2026-05-04" |
@@ -135,24 +140,16 @@ distinguishes a document citation from a mere collection reference.
 
 ### 1. Read existing sources
 
-Read `research.json` and identify source entries needing citation
-refinement. Prioritize:
+Call `research_query({ projectPath, section: "sources" })` and identify
+source entries needing citation refinement. Use only the `projectPath` the
+delegation gave; with none, skip the steps that need a project. Prioritize:
 - Sources with incomplete `citation_detail` (missing fields)
 - Sources with rough `citation` strings that don't follow Evidence
   Explained patterns
 - Sources the user specifically asks about
 
-**Read the files directly. Do not reach for `project_context` here.** That
-tool returns a compact projection built for a different job, and its
-per-source shape carries only `id`, `repository`,
-`gedcomx_source_description_id`, the covered `record_id`s and an assertion
-count. It omits every field this agent works on — `citation`,
-`citation_detail`, `notes`, `access_date`, `url` — and it does not carry the
-GedcomX `author` this agent needs for `who`. Working from the projection
-would hide exactly the on-file detail the source fidelity rules require you
-to find: a certificate number recorded only in a source's `notes` is
-invisible there, and a locator you cannot see is a locator you are one step
-from inventing.
+For the GedcomX `author` and `title` of a source, call
+`tree_query({ projectPath })` and read its `sources`.
 
 ### 2. Refine citation_detail
 
@@ -205,7 +202,7 @@ sources), and identify the informant (critical for death certificates).
 
 Every value you write into `citation` or `citation_detail` must be
 traceable to the existing source entry (including its `notes`),
-`research.json`, `tree.gedcomx.json`, or the user's message. These
+`research_query` or `tree_query` results, or the user's message. These
 rules outrank completeness — an honest citation with flagged gaps
 beats a complete-looking citation with invented detail:
 
@@ -249,7 +246,7 @@ beats a complete-looking citation with invented detail:
    Data recorded on a sibling source for the same underlying record
    (e.g., the family number on the FamilySearch copy of the same
    census page, or a place name on a related source) and anywhere
-   else in `research.json` or `tree.gedcomx.json` is verifiable and
+   else in `research_query` or `tree_query` results is verifiable and
    SHOULD be used. Write the clean value into the field
    ("dwelling 84, family 91") and record its provenance in the
    `notes` field or your narration ("family 91 corroborated from
@@ -277,7 +274,7 @@ beats a complete-looking citation with invented detail:
    chains. Mention the inferred repository in `notes` or flag it
    needs-verification; never write it into the citation as
    established fact. The creator never doubles as the custodian: a
-   name in `who` — including a `tree.gedcomx.json` `author` — must
+   name in `who` — including a `tree_query` source `author` — must
    never be repeated in the custody parenthetical of `where`.
 
 ### Review path is read-only
@@ -380,8 +377,8 @@ guardianship. Name the office the page gives for the document in hand,
 never the courthouse building or a generic records office. If the page
 does not name an office for that document type, treat `who` as missing
 data and flag it under the missing-data rule — do not fall back to
-inference. Where `tree.gedcomx.json` carries an `author` on the matching
-source description, that value wins for `who` — but make the lookup first
+inference. Where `tree_query` returns an `author` on the matching
+source, that value wins for `who` — but make the lookup first
 and decide after. An `author` on file is a previous extraction's best effort,
 and the page is how you check that it names a real office for this document
 type rather than a courthouse or a records office. Never skip the lookup

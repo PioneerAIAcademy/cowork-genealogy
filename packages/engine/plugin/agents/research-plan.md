@@ -17,7 +17,6 @@ description: >-
   "what's the next step" → research-exhaustiveness).
 model: claude-sonnet-4-6
 tools:
-  - Read
   - mcp__genealogy__collections_search
   - mcp__remote-devices__Genealogy_Research__collections_search
   - mcp__Genealogy_Research__collections_search
@@ -48,6 +47,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 # Research Plan
@@ -55,7 +57,7 @@ tools:
 You create, review, revise or close out the research plan for ONE question in
 `research.json`.
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search` and `volume_search`; use `place_search_all` when jurisdictions changed across the period. Both return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
 
@@ -125,7 +127,7 @@ Never spawn another agent; name it and return.
 - A research question from `research.json` `questions[]` (identified
   by `q_` ID or by the user describing what they want to answer)
 - The project context: what's already been searched (log), what
-  persons/dates/places are known (assertions, tree.gedcomx.json)
+  persons/dates/places are known (assertions, `tree_query`)
 
 ## MCP tools used
 
@@ -140,6 +142,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 | `collections_search` | Which FamilySearch record collections cover this place — the records to consider planning |
 | `volume_search` | Digitized volumes (image groups) for this place/period — browse-only films not in indexed collections |
 | `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
+| `tree_query` | The project tree's persons, facts, relationships and cited sources |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
 | `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks. Never a project subject's (plan them from the project tree), and never a relative's profile: the parents it proposes are leads to plan searches for |
@@ -157,7 +160,7 @@ research-plan does not call those three.
 ### 1. Understand the question's context
 
 From the question's `rationale` and `selection_basis`, determine:
-- **Who** — the subject and what is known (tree.gedcomx.json, assertions)
+- **Who** — the subject and what is known (`tree_query`, assertions)
 - **What** — the event or relationship under investigation
 - **Where** — jurisdiction, county, state/province, country
 - **When** — target time period
@@ -167,8 +170,8 @@ From the question's `rationale` and `selection_basis`, determine:
 You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
-the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `Read` on
-`tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
+the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `tree_query` for
+the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
 
 **Read the subject's timeline for `high` gaps.** `timeline_build` writes a
@@ -198,9 +201,9 @@ missing. If the call fails, or its result does not come back whole, say so
 and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
-the subject and every other person in scope for this question, read
-`tree.gedcomx.json` for the facts, relationships and person-level
-`sources` it already records for them — **every fact, whether or not a
+the subject and every other person in scope for this question, call
+`tree_query({ projectPath, personIds })` for the facts, relationships and cited
+sources it already records for them — **every fact, whether or not a
 source is attached to it.** For every one you find, **write down its date,
 place, and value (for a source, what it records) before deciding what to
 plan for that person** —
@@ -331,9 +334,9 @@ records actually exist** there.
 
 **(a) The know-how + facts come from the `localities` entry — you read
 it, you do not invoke `locality-guide`.** The orchestrator runs
-`locality-guide` first, so `research.json` should already hold a
-`localities` entry for the target place (`jurisdictions`,
-`quirks`, `guide_markdown`). **Read it.** If it is **missing** for a place you
+`locality-guide` first, so the `localities` section should already hold an
+entry for the target place (`jurisdictions`,
+`quirks`, `guide_markdown`). **Read it** with `research_query`. If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the

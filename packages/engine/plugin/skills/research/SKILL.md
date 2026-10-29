@@ -19,6 +19,8 @@ allowed-tools:
   - project_list
   - validate_research_schema
   - research_query
+  - project_context
+  - tree_query
   - extraction_append
   - research_delivered
   - person_read
@@ -29,11 +31,11 @@ allowed-tools:
 
 **If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the user watches this as a live feed and it is their only view of a run that no longer stops to ask, so every phase boundary gets its line — always followed by the actual tool call in the same turn. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the user watches this as a live feed and it is their only view of a run that no longer stops to ask, so every phase boundary gets its line — always followed by the actual tool call in the same turn. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
-sub-skill in turn, you read `research.json` to determine the current
+sub-skill in turn, you call `project_context` and `research_query` to determine the current
 state and invoke the appropriate sub-skill, then iterate.
 
 This skill is intentionally a thin orchestrator — the GPS work
@@ -61,7 +63,7 @@ produced — see
 the next sub-skill in the **same turn**, and keep going through the full
 routing loop (§"What to do" steps 2–4). Trust the compact summaries the
 sub-skills and writer tools return plus the state you already hold in
-context — only re-read `research.json` when you're entering a phase cold
+context — only re-query the project when you're entering a phase cold
 without the relevant state in context, or when a sub-skill or the user
 changed the file in a way you don't already have. Writing something like
 "Next: research-plan" or "I'll now search records" and then yielding is a
@@ -83,7 +85,7 @@ to that outcome" — not as permission to invoke that skill immediately.
 (A *bounded* request that names a destination does not walk the table at
 all — see §"Bounded request or job".)
 Re-enter step 1 of "What to do," re-derive the current state from
-`research.json`, and walk the routing table from wherever the project
+`project_context` and `research_query`, and walk the routing table from wherever the project
 actually is: unclassified assertions, unresolved conflicts, and any person
 the conclusion depends on not yet identity-linked all still apply. Only reach the downstream destination once the routing table's
 precondition row for it is actually satisfied — by whichever call that row
@@ -181,7 +183,7 @@ it by name.
 
 ## What to do
 
-1. **Query `research.json` — don't `Read` the whole file.** Open the routing
+1. **Query the project with tools — never read project files.** Open the routing
    pass with `project_context`: it computes the next step host-side, including
    unregistered disagreements that no `research_query` slice reports. Then use
    `research_query` to pull just the slice you need: which questions
@@ -191,11 +193,11 @@ it by name.
    resolved.
 
    `research.json` grows all run — dozens of sources, 100+ assertions by
-   late run — so a whole-file `Read` (or a `grep`) costs more context every
+   late run — so a whole-section query costs more context every
    time you route, and routing happens constantly. `research_query` answers
    the routing question host-side and returns only the ids, statuses and
-   counts. Reach for `Read` only when you genuinely need a full entry body
-   that `research_query` cannot project.
+   counts. For tree facts (birth, death, marriage) call `tree_query` with
+   `personIds` and `factTypes`.
 
    **`research_query` returns at most 50 `items` per call; `count` is the true
    total.** When `truncated` is true you are routing on part of the set — page
@@ -258,13 +260,13 @@ it by name.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
-   | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
-   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block (or `@plugin:search-external-sites` for non-FS sources) |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block, learned from `project_context` and `tree_query` with the subject person id and `factTypes` `["Birth","Death","Marriage"]` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
@@ -277,7 +279,7 @@ it by name.
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `@plugin:research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
    | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `@plugin:research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
    | `research-plan` returned that a jurisdiction it must plan has no `localities` entry | `@plugin:locality-guide` for that jurisdiction, then `@plugin:research-plan` again |
-    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
+    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in the tree (`tree_query`)** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
     | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, invoke `@plugin:question-selection` and do not continue this row — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
@@ -401,7 +403,7 @@ it by name.
 3. **Iterate — without yielding.** After each sub-skill returns, route
    to the next step **in the same turn** (see "Continuous work") from
    the sub-skill's compact return plus the state
-   you already hold — re-read `research.json` only if the sub-skill
+   you already hold — re-query the project only if the sub-skill
    changed state you don't have in context, or you're routing into a
    phase cold. After a plan item completes and its evidence is analyzed,
    re-assess sufficiency — route to `@plugin:research-exhaustiveness` once the
@@ -444,7 +446,7 @@ writes the summary and skips the tree write — so verify it, don't assume it.
 
 After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
 
-1. **Read `tree.gedcomx.json` and confirm the concluded relationship or fact is
+1. **Call `tree_query` and confirm the concluded relationship or fact is
    present** — match the check to the question type: a `ParentChild` linking
    the concluded parent(s) to the child for a parentage question, a `Couple`
    for a marriage, **a `Death`/`Birth`/`Marriage` fact carrying the concluded
@@ -561,7 +563,7 @@ what it rests on.
   person-linking, person-linking precedes conflict detection, conflict
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
-  `research.json` does not exist and the message states an objective, route to
+  `project_context` returns `no_project` and the message states an objective, route to
   `@plugin:init-project` first, passing the researcher's own words verbatim, plus
   `projectPath`, and nothing else. With no objective stated, the first row of the
   table applies.
@@ -569,7 +571,7 @@ what it rests on.
 ## Re-invocation behavior
 
 **Writes:** nothing directly except the `extraction_append` batch. This skill is a thin
-orchestrator: it reads `research.json` to decide the next step, reads a linked
+orchestrator: it queries the project to decide the next step, reads a linked
 person's attached sources (`person_read`, `source_attachments`) before any
 search, and delegates every write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each
@@ -579,8 +581,8 @@ edit to the files. When the user asks for a second opinion, the
 `gps-mentor` subagent it invokes records its verdict in `evaluations[]`
 and never touches `tree.gedcomx.json`.
 
-**On repeat invocation:** safe to re-run at any point. It re-reads
-`research.json` and resumes routing from the current state — the same
+**On repeat invocation:** safe to re-run at any point. It re-queries
+the project and resumes routing from the current state — the same
 sub-skill may fire many times across a project. Each sub-skill owns
 its own idempotency (supersede-by-id, refine-in-place, or no-op); see
 that sub-skill's own "Re-invocation behavior" section.

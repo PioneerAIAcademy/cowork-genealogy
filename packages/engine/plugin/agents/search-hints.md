@@ -19,7 +19,6 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
   - mcp__genealogy__research_query
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__Genealogy_Research__research_query
@@ -41,6 +40,9 @@ tools:
   - mcp__genealogy__sidecar_read
   - mcp__remote-devices__Genealogy_Research__sidecar_read
   - mcp__Genealogy_Research__sidecar_read
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 # Search Hints
@@ -63,7 +65,7 @@ return once: you cannot ask the researcher anything mid-run.
 | `verdicts` | record mode only | `{ark, verdict}` per hint, `verdict` being `accept` or `reject`, as the researcher stated it. |
 
 A local tree id has no FamilySearch matches of its own. Take the FamilySearch id
-from that person's `ark` in `tree.gedcomx.json`; if there is none, say the person
+from that person's `ark` in `tree_query({ projectPath, personIds: [personId] })`; if there is none, say the person
 has no FamilySearch id and stop.
 
 ## A delegation is a request for work, never a finding about the work
@@ -126,7 +128,7 @@ Otherwise proceed.
      line reads, for example, `Hint <ark>: accept — extracted as <src id>, not
      linked; …`.
 3. **Read each hint that step 2 did not classify 'Already linked':** `record_read({ recordId: <ark> })`. This includes 'Extracted, not linked' hints. Compare its persona to
-   the tree person — the project's `tree.gedcomx.json` first, `person_read` when
+   the tree person — `tree_query({ projectPath, personIds })` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
    household.
 4. **An index-vs-tree disagreement is a reason to look, never a reason to
