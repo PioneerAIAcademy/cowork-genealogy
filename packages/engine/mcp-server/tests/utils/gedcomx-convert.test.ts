@@ -1548,6 +1548,43 @@ describe("gedcomx-convert — source description coverage and resource_type", ()
     });
   });
 
+  it("reads no rep id from a coverage that references a place known only by its authority id", () => {
+    // A collection's "#place_1927074" is the authority place 1927074; read as a
+    // rep id it is Minto, New South Wales, Australia. A record's own local
+    // reference carries no identifier and is a rep id.
+    const raw: GedcomX = {
+      persons: [],
+      places: [
+        {
+          id: "place_1927074",
+          identifiers: { "http://gedcomx.org/Primary": ["https://api.familysearch.org/authorities/v1/place/1927074"] },
+        },
+        { id: "place_8174566" },
+      ],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          resourceType: "http://gedcomx.org/Collection",
+          coverage: [{ spatial: { description: "#place_1927074" }, recordType: "http://gedcomx.org/Census" }],
+        },
+        {
+          id: "SD2",
+          resourceType: "http://gedcomx.org/Record",
+          coverage: [{ spatial: { description: "#place_8174566" } }],
+        },
+        {
+          id: "SD3",
+          resourceType: "http://gedcomx.org/Collection",
+          coverage: [{ spatial: { description: "https://api.familysearch.org/platform/places/description/267" } }],
+        },
+      ],
+    } as GedcomX;
+    const [collection, record, described] = toSimplified(raw).sources ?? [];
+    expect(collection?.coverage).toEqual({ record_type: "Census" });
+    expect(record?.coverage).toEqual({ place_rep_id: "8174566" });
+    expect(described?.coverage).toEqual({ place_rep_id: "267" });
+  });
+
   it("falls back to temporal.formal when temporal.original is absent", () => {
     const raw: GedcomX = {
       persons: [],
