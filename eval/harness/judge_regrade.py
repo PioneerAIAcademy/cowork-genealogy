@@ -77,7 +77,7 @@ from harness.runlog import (
     refresh_test_entry_outcome,
     validate_run_log,
 )
-from harness.versioning import select_latest_full_skill_runlog
+from harness.versioning import latest_full_skill_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 UNIT_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -116,24 +116,13 @@ class RegradeResult:
 
 
 def _latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict[str, Any]] | None:
-    """Return (filename, parsed_log) for the skill's latest full-skill log.
-
-    Selection is `versioning.select_latest_full_skill_runlog`, the same call
-    the run-log gate makes. It used to be a local copy that sorted on version
-    first, so a v34 candidate beat a released v33 and a regrade stamped a file
-    the gate never read -- nine skills in the corpus.
-
-    Reading stays here: an unreadable log is skipped (this is best-effort
-    collection), where the gate raises on one.
-    """
+    """The log rule 2b grades (`versioning.latest_full_skill_runlog`), or None
+    when the directory is absent or the log is unreadable. Ordered by landing on
+    `origin/main`, which stands in for the BASE_SHA CI orders by."""
     if not skill_dir.is_dir():
         return None
-    names = [p.name for p in skill_dir.glob("*.json") if p.is_file()]
-    filename = select_latest_full_skill_runlog(names)
-    if filename is None:
-        return None
     try:
-        return (filename, json.loads((skill_dir / filename).read_text(encoding="utf-8")))
+        return latest_full_skill_runlog(skill_dir, "origin/main")
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 

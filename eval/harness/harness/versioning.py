@@ -16,11 +16,12 @@ See docs/plan/eval-runlog-versioning.md §A3, §A5, §A6.
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from collections.abc import Iterable
-from typing import Literal, NamedTuple
+from typing import Callable, Iterable, Literal, NamedTuple
 
 
 # Filename grammar: `YYYY-MM-DD_HH-MM-SS` — underscore separates the
@@ -68,35 +69,6 @@ def classify_ann(filename: str) -> Classification:
     return Classification("other", None, None)
 
 
-def select_latest_full_skill_runlog(filenames: Iterable[str]) -> str | None:
-    """The one full-skill run log a reader should treat as a skill's latest.
-
-    A **released** `v{N}.json` beats every candidate, whatever the version
-    numbers say. A `v{N+1}_<ts>.json` beside a release is an unreleased draft:
-    a reader that preferred it would stamp, grade or fingerprint a file the
-    run-log gate never reads. With no release, the newest candidate by
-    (version, timestamp) wins. Scratch and unrecognized names never win.
-
-    Shared because the two readers disagreed. `check_runlogs` preferred any
-    release; `judge_regrade` sorted on version first, so a v34 candidate beat
-    a released v33 -- nine skills in the corpus, where a regrade stamped one
-    file and the gate read another.
-    """
-    released: list[int] = []
-    candidates: list[tuple[int, str, str]] = []
-    for name in filenames:
-        c = classify(name)
-        if c.kind == "released" and c.version is not None:
-            released.append(c.version)
-        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
-            candidates.append((c.version, c.timestamp, name))
-    if released:
-        return f"v{max(released)}.json"
-    if candidates:
-        return max(candidates)[2]
-    return None
-
-
 #: How many candidate run logs to keep per skill. Nothing in the repo reads
 #: deeper than this: `skill_latency_report` reads logs[-1]/logs[-2],
 #: `check_runlogs` and `skill-improver` read the latest, and the CRUD UI halts
@@ -134,6 +106,99 @@ def prunable_candidates(filenames: list[str], *, keep: int) -> list[str]:
     ]
     candidates.sort()
     return [name for _, _, name in candidates[:-keep]] if len(candidates) > keep else []
+
+
+def landed_order(skill_dir: Path, ref: str) -> dict[str, int] | None:
+    """When each run log in `skill_dir` landed on `ref`: the position, counted
+    from the oldest, of the first-parent commit that last added it. A log `ref`
+    never added -- one a branch adds -- is absent. None when git cannot answer
+    (no repository, an unknown ref).
+
+    `--no-renames` so a candidate -> release rename counts as the release
+    landing; first-parent so a log lands when its PR merged, not when the
+    branch commit that wrote it was made."""
+    try:
+        out = subprocess.run(
+            ["git", "log", "--first-parent", "--no-renames", "--diff-filter=A",
+             "--relative", "--name-only", "--format=%x00", ref, "--", "."],
+            cwd=skill_dir, capture_output=True, text=True, encoding="utf-8", check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    commits = out.split("\x00")[1:]
+    order: dict[str, int] = {}
+    for i, block in enumerate(commits):
+        for name in block.split():
+            order.setdefault(name, len(commits) - i)
+    return order
+
+
+def _is_full_skill(name: str) -> bool:
+    c = classify(name)
+    return c.version is not None and (
+        c.kind == "released" or (c.kind == "candidate" and c.timestamp is not None)
+    )
+
+
+def newest_full_skill_runlog(
+    names: Iterable[str],
+    read: Callable[[str], dict],
+    *,
+    landed: dict[str, int] | None = None,
+) -> tuple[str, dict] | None:
+    """Return (filename, parsed_log) for the newest full-skill run log among
+    `names`, released or candidate; `read` parses one by name. Scratch runs
+    ignored.
+
+    With `landed` (`landed_order`), the log that landed last wins, and one that
+    has not landed beats every one that has. Two PRs that run one suite can
+    merge in the opposite order to the one they ran in, and the log that merged
+    last is the one CI checked against the tree that followed.
+
+    Among logs that landed together, or with no `landed`, by when the run
+    happened, not by kind. A candidate line above the newest release starts
+    only once that release exists (`next_filename_for`), so it is newer; one
+    below it is older. A candidate left beside the release of its own version
+    line can be either, so at equal versions the candidate's filename time is
+    compared with the release's envelope `timestamp`, which the release flow
+    preserves; the release wins a tie, and when it has no `timestamp` to
+    compare.
+    """
+    if landed is not None:
+        full = [n for n in names if _is_full_skill(n)]
+        if full:
+            last = max(landed.get(n, float("inf")) for n in full)
+            names = [n for n in full if landed.get(n, float("inf")) == last]
+    release: tuple[int, str] | None = None
+    candidate: tuple[int, str, str] | None = None
+    for name in names:
+        c = classify(name)
+        if c.kind == "released" and c.version is not None:
+            release = max(release or (c.version, name), (c.version, name))
+        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
+            entry = (c.version, c.timestamp, name)
+            candidate = max(candidate or entry, entry)
+
+    if release is not None and (candidate is None or candidate[0] <= release[0]):
+        log = read(release[1])
+        released_at = log.get("timestamp")
+        if candidate is None or candidate[0] < release[0] or not released_at or str(released_at) >= candidate[1]:
+            return release[1], log
+    if candidate is None:
+        return None
+    return candidate[2], read(candidate[2])
+
+
+def latest_full_skill_runlog(
+    skill_dir: Path, ref: str | None = None
+) -> tuple[str, dict] | None:
+    """`newest_full_skill_runlog` over the run logs on disk in `skill_dir`,
+    ordered by when they landed on `ref` when one is given and git can say."""
+    return newest_full_skill_runlog(
+        [p.name for p in skill_dir.iterdir() if p.is_file()],
+        lambda name: json.loads((skill_dir / name).read_text(encoding="utf-8")),
+        landed=landed_order(skill_dir, ref) if ref else None,
+    )
 
 
 def ann_filename_for(runlog_filename: str) -> str:

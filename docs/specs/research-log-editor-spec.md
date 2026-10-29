@@ -126,10 +126,11 @@ so a corrected re-send finds every one. Several checks run over every op before 
 op is applied: the staged ref itself (it exists under `results/.staging/` and its
 `tool` matches), a staged ref named by two ops (`ops[j]: stagedResultsRef '…' is also
 ops[i]'s` — with removal deferred, both would finalize it), the §8.2 census check,
-and the §8.3 query check. So a bad ref in op[1] is refused before op[0] writes a
-sidecar. These checks run over **every** op before the call refuses, and the
-refusal lists each failing op's `ops[i]: <msg>`, so one corrected re-send can fix
-them all; the batch still writes all or nothing.
+the §8.3 query check, and the §8.4 filtered-nil-retry check (batch-aware — an
+unfiltered sibling in the same batch clears it). So a bad ref in op[1] is refused
+before op[0] writes a sidecar. These checks run over **every** op before the call
+refuses, and the refusal lists each failing op's `ops[i]: <msg>`, so one corrected
+re-send can fix them all; the batch still writes all or nothing.
 
 **A staged ref that was already logged.** Re-sending a `stagedResultsRef` whose
 staged file is gone because an earlier call finalized it (typically after a
@@ -195,6 +196,18 @@ plan waits for a run that shows a completed-plan write is wrong.
 it is the string the skill presents as the clickable link and persists into
 `research.json`, the same caller-composed shape `build_external_search_url`
 refuses as `invalid_base_url`. Trimmed before both the check and the write.
+
+**A collection url must be stored.** A `urlGenerated` that names one collection
+(an Ancestry collection id in either spelling, a MyHeritage collection page) is
+refused unless its collection key is in `external-collections.json`, for any
+place; a site's or an archive's own search names no collection and is not
+checked. A missing file refuses with the fetch that creates it, an unreadable one
+with the read error and the re-fetch. A url already in the log is not re-checked
+unless the op opens a new hand-off (`partial` with `captureReceived: false`):
+closing a hand-off, or logging a capture that came back later, logs its url
+again, and one built before the list existed, or whose collection a re-fetch
+dropped, must stay closable. A `urlGenerated` that is not a string is refused. `captureReceived` is coerced like `resultsExamined` (a stringified `"false"` is the boolean) and refused when it is still not a boolean, so a hand-off is never saved where `awaitingUser` cannot see it. The check runs in the
+preflight pass, so a batch reports every refused op at once.
 
 **`resultsExamined` validation.** Must be a non-negative integer. A numeric
 string (`"5"`, the same stringified-argument slip `resultsAvailable` is coerced
@@ -415,6 +428,8 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
+| a `fulltext_search` entry returned zero hits with a post-search filter set (`place`, `recordPlace0`–`3`, `recordType`, `yearFrom`/`yearTo`) and no unfiltered retry — a sibling `fulltext_search` with the same `keywords`/`nlQuery` whose filter-key set is a strict subset of this op's, in the same batch or already in `log[]` | input error; write nothing, and in a batch no op's staged file is consumed. The message names the filter keys and the exact unfiltered `fulltext_search` call to make, then says to log both in one batch. Exempt: a `name`-field query and a query with no `keywords`/`nlQuery` term. Keyed on zero hits, not `outcome`. See §8.4 |
+| an `external_site` op's `urlGenerated` names a collection whose key is not in `external-collections.json`, and either the url is not in the log or the op opens a new hand-off (`partial`, `captureReceived: false`) | input error, raised in the preflight pass so a batch names every refused op; write nothing. The message names the fix: a site-wide search, a stored url from `research_query`, or — with nothing stored or the file unreadable — `external_links_search` first |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
 ### 8.1 Non-blocking warnings (never fail the op)
@@ -953,6 +968,49 @@ The unit harness stages the call's arguments, not a fixture's canned query: the
 eval mock echoes the args into `query` for these two tools, as production does,
 or this check would refuse honest entries in every unit eval whose fixture was
 recorded for different arguments.
+
+### 8.4 A precondition that blocks: a filtered zero-hit search with no unfiltered retry
+
+A `fulltext_search` log op that returned zero hits while a post-search filter was
+set is refused unless the search was also tried without that filter. A zero-hit
+filtered search does not rule the record out: the filter may be the thing
+excluding it, so a nil under a filter proves nothing until the unfiltered query
+has been run. The agent body states this, and the model skipped it; it is
+decidable from the op and the log alone, which is ADR-0011's test for a
+writer-tool precondition.
+
+The post-search filters are `place`, `recordPlace0`–`3`, `recordType` and the
+`yearFrom`/`yearTo` pair. `keywords` and `nlQuery` are the search terms, not
+filters. The **unfiltered retry** that clears the op is a sibling `fulltext_search`
+with the SAME `keywords`/`nlQuery` whose own filter-key set is a strict subset of
+this op's — the canonical bare retry, or one that merely relaxes a filter — found
+either in the same batch (an in-batch sibling clears it, so the check judges the
+whole resolved batch) or already in `log[]`. A sibling with different keywords is
+a different search, not this one's retry, so it does not clear it.
+
+Zero hits, not `outcome`. An agent logs `negative` for a search that had hits none
+of which were relevant; keyed on outcome, the rule would demand the unfiltered
+retry of a search that already returned results. Zero hits means: a staged ref
+whose recomputed count is zero, or — the reachable case — no staged ref with
+`resultsExamined` zero and `resultsAvailable` zero or absent. The
+`resultsAvailable` arm separates a true nil from a lossy log of a search that had
+hits but retained none. A real zero-hit `fulltext_search` stages nothing
+(`stageSearchResults` returns null on empty results), so the staged-count-zero
+branch does not arise from `fulltext_search` in practice and is defensive; the
+reachable trigger is the no-ref nil. When a ref is present the sent query is read
+from the staged echo (ground truth, §8.3), else from the op's own `query`.
+
+Two exemptions. A `name`-field query has no stable sibling key, so it is left
+alone. A query with no `keywords`/`nlQuery` term is left alone too: its unfiltered
+retry would drop its only field, which `fulltext_search`'s `validateInput`
+refuses, so there is no legal retry to name. The refusal names the filter keys and
+the exact unfiltered `fulltext_search` call to make, then says to log the filtered
+search and that retry together in one batch. The check is tolerant of a bad or
+unreadable staged ref, which the staged-ref check reports instead. The corpus fire
+count and the command that measured it are in
+`guardrail-enforcement-spec.md`'s write-boundary invariants table, which is where
+measured figures for these preconditions live.
+
 ---
 
 ## 9. Test plan (vitest)
@@ -1009,6 +1067,15 @@ recorded for different arguments.
   that echoes the call, an omitted `query` (filled, plumbing stripped), no staged
   handle, a staged payload with no `query`, and a legacy `external_links_search`
   handle.
+- **Filtered zero-hit retry check (§8.4)** — refused, with nothing written: a
+  filtered `fulltext_search` nil logged with no staged ref (the reachable path),
+  and one whose staged payload recomputes to a zero count (the defensive branch).
+  Allowed: an unfiltered retry in the same batch, an unfiltered retry already in
+  `log[]`, a `name`-field query, a filtered search that had hits but was logged
+  negative, a positive filtered search, and a lossy no-ref log whose
+  `resultsAvailable` is above zero. The refuse cases are also replayed by the
+  guard-case file `filtered-nil-no-unfiltered-retry.json` through
+  `filteredNilRetryInvariants`, and fail with the rule removed.
 - **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
   and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
   table escaped twice, one with a single real leading or trailing newline, an

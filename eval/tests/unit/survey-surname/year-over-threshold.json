@@ -4,7 +4,7 @@
     "skill": "survey-surname",
     "name": "Year over the 600 threshold — agent asks for counties instead of paging",
     "type": "positive",
-    "description": "A two-year survey spanning the threshold boundary: 1840 (441 matches, under threshold) and 1850 (2218 matches, over threshold). The agent should search 1840 normally and for 1850 read totalMatches, stop, and ask the user which counties to survey.",
+    "description": "A two-year survey spanning the threshold boundary: 1840 (102 matches, under threshold) and 1850 (2218 matches, over threshold). The agent should search 1840 normally and for 1850 read totalMatches, stop, and ask the user which counties to survey.",
     "tags": ["survey", "threshold", "multi-year", "direct-arm"]
   },
   "input": {
@@ -24,7 +24,8 @@
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged.",
     "Should call place_search for Virginia, then record_search for 1840 and 1850.",
-    "1840 has totalMatches 6 (under the 600 threshold) — the agent should fetch all results across two pages (hasMore: true on page 1, offset 100 for page 2) and include them in the table.",
+    "1840 has totalMatches 102 (under the 600 threshold) — the agent should fetch all results across two pages (100 on page 1 with hasMore: true, then offset 100 for the last 2) and include them in the table.",
+    "The judge sees only a sample of each record_search response. The two 1840 pages hold 102 distinct heads of household, one per recordArk: XJQV-HH1840-A to -D and -G01 to -G96 on page 1, -E (Samuel, Henrico) and -F (Richard, Frederick) on page 2. Rows naming them are not fabricated because the sample omits them.",
     "1850 has totalMatches 2218 (OVER the 600 threshold) — the agent should NOT fetch additional pages for this year. It should report the count (2218) and ask the user which counties to survey for 1850. This is the key behavior being tested.",
     "The agent should still log the 1850 first-page search with research_log_append, even though it did not page further.",
     "The table is logged as one research-log entry (tool survey_surname, planItemId null, query {surname, place, yearSpan}, no stagedResultsRef) whose notes hold the whole table and end with the sentence 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' It appears in the file changes summary as a new `log` entry; grade Table structure from that entry's notes. No file is written: the agent holds no `Write`.",

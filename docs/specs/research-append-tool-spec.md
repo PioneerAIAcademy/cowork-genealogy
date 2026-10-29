@@ -682,7 +682,8 @@ was measured and rejected. `external_links_search` is likewise persona-less but 
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
-the base, no sidecar is consulted (geocoding only), a resolved value is written into
+the base, no sidecar value is copied (geocoding only; its sidecar record still gives
+the record's country, below), a resolved value is written into
 the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place:
@@ -693,32 +694,109 @@ with a warning rather than kept for the new place:
   and the guard; a non-place phrase such as "Same House" or "Do", tested by
   `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
   unset with no warning):
-  1. if the op's sidecar-matched record (§3.5) has a fact whose `place` equals the
-     op's place string (trimmed, case-insensitive), its converter-resolved
-     `standard_place` is **copied** — no geocoding call;
+  1. if the op's sidecar-matched record (§3.5) gives the op's own fact a
+     converter-resolved `standard_place`, it is **copied** — no geocoding call.
+     The op's own fact is a fact of its `record_persona_id` (the persona's own,
+     or one of a relationship whose `person1` or `person2` it is, as a
+     couple's marriage; a ParentChild relationship's facts are not read) whose
+     type is the op's `fact_type` once both are folded as "Boundary shape normalization" folds
+     labels ("Baptism" is `christening`, "BirthRegistration" is
+     `birth_registration`) and whose `place` equals the op's place string
+     (trimmed, case-insensitive). It is copied only when every such fact
+     carries the same `standard_place`: one person's name never lands on
+     another's fact (a census household where FamilySearch standardized only
+     the head's place), and one fact's name never lands on another fact of the
+     same person (one place named for two eras);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
-     it: the places the call's other assertions with the same `record_id` name.
-     A bare single-segment place ("Shenandoah") has no context of its own, so
-     the resolver uses that record context: a sibling place whose first segment
-     is the name, or the name after an administrative prefix ("Borough of",
-     "Town of", "City of", "Township of", …), is resolved instead — "New York" is
-     not the fuller form of "York", else a best match typed continent, country,
-     state or province is kept as it is, even against the record's area (a bare
-     "Germany" beside Gettysburg is not Germany Township; the cost: a bare
-     "Washington" beside Kentucky places is the state), else only a candidate
-     whose own name starts with the same word and has a segment equal to a
-     jurisdiction the siblings share counts (a variant-name hit, "Laxton" for
-     "Lexington", never does), else the best match is kept only
-     when FamilySearch types it a jurisdiction (continent, country, state,
-     province, territory, county, district, region, or first/second-level admin
-     division) and is otherwise left unset (genealogist ruling 2026-10-06, option
-     C with fallback B′). Measured on
-     the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
-     of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
-     Temple" to France, and the country guard below cannot catch either, since a
-     one-token place names no country.
+     it: the places the call's other assertions with the same `record_id` name,
+     each by its `standard_place` when it has one, else its `place` (a record
+     read's named fact carries its as-written text as `place`, "Den Haag"),
+     and the record's country, from the sidecar record the assertion comes from
+     and never read off the record's facts or the place text, by the tool that
+     staged it:
+     - a FamilySearch record (`record_search`, `record_read`): the last segment
+       of its Collection coverage place (its `coverage.standard_place`, else its
+       `coverage.place_rep_id` resolved by id);
+     - a page `image_transcribe` read: the last segment of the staged
+       transcription's `source.place`, its film's coverage place (lead,
+       2026-10-29: image records carry their film's country). The log entry's
+       sidecar is that one transcription, so it gives the country whatever the
+       assertion's `record_id` (`capture:…`, a record ARK). A full-text record
+       comes this way too: it is extracted from its page, which
+       `image_transcribe` reads.
+
+     A country is named as a FamilySearch standard place names it
+     (`countryOfPlace`). A historical state counts as the one country it lies
+     in today, by the list builder's own map (matcher-lab m13, stage S4:
+     "historical states count inside their modern countries"), so "…, Moravia"
+     is a Czechia record. A state that map puts in several countries keeps its
+     own name ("…, Russian Empire"), as do Burma and German South West Africa,
+     which it puts in India and South Africa, and only the last segment counts
+     ("…, Moravia, Austria" is an Austria record). "Brasil" is Brazil; a
+     country the country guard's alias table knows takes its English name
+     ("México" is Mexico, "USA" the United States); and England, Scotland,
+     Wales and Northern Ireland are the United Kingdom ("Campbeltown, Argyll,
+     Scotland" is a United Kingdom record, as "…, Scotland, United Kingdom"
+     is). There is none without such a place, and none for the World, a
+     continent, an ocean or a sea (a place FamilySearch types Sea, such as the
+     North Sea or the Gulf of Mexico), which are no country.
+
+     A bare single-segment place ("Kent", "Shenandoah") names no parent, so
+     FamilySearch's best hit for it is whichever same-named place ranks highest
+     anywhere, and the country guard below cannot catch a wrong one, since a
+     one-token place names no country. In order:
+     1. the bundled one-word list answers, with no search: the text, folded
+        (case, accents, punctuation and spacing; "Co. Clare" is "co clare"), is
+        looked up in `config/one-word-places.json` (`listedOneWordPlace`,
+        `src/utils/one-word-places.ts`). Most entries apply to every record. An
+        entry for one record country ("Texas", US records) applies only when
+        the record's country is that country, and one withheld in some record
+        countries ("Louth", not British records, where it is the Lincolnshire
+        town) only when the record's country is known and another. An
+        accent-exact entry applies only to its accented spellings as written
+        ("Ísland" is Iceland), and its spelling without them is left unset by
+        every step below too (the English word "Island" is never standardized);
+     2. else a sibling place from the record context whose first segment is the
+        name, or the name after an administrative prefix ("Borough of", "Town
+        of", "City of", "Township of", …), is resolved instead — "New York" is
+        not the fuller form of "York";
+     3. else, when the record's country is known, FamilySearch's best hit for
+        the name (the undated name search and `pickBest`), only when no other
+        place shares its top score (a hit is told apart by its place id, else
+        by its representation id) and the last segment of its full name is the
+        record's country; with no record country nothing is searched;
+     4. else the field is left unset with the warning above.
+
+     The list is the lead's (2026-10-26): "Mis-standardizing a place is worse
+     than not standardizing it", with every listed entry at least 95% right.
+     English historic counties and Irish counties are listed over their foreign
+     namesakes ("Kent" is the English county, "Dublin" County Dublin), and
+     Georgia (the US state), Republic of Georgia, New York, Quebec, Mexico,
+     Washington, New Jersey and Jersey (the Channel Island) are curated. A
+     country, state or province is listed even where a county or town shares its
+     name ("Counties and towns should not block states or countries"; "Costa
+     Rica", "Ohio", "Peru"). Step 3 is the lead's bar for a place the engine
+     standardizes itself (2026-10-29): "around 80% including coarser and finer".
+     The rule it replaces, the genealogist's ruling of 2026-10-06 (option C with
+     fallback B′), kept a best hit FamilySearch typed a country, state or other
+     jurisdiction, and searched inside the jurisdiction the siblings share.
+     Measured on the 3,643 one-word facts of matcher-lab
+     m13's held-out records, scored against FamilySearch's own standardization
+     and re-run on the same recorded FamilySearch responses: the old rule
+     (measured at b4741d558) was right on 2,413, coarser or finer on 113 and
+     wrong on 168, and left 949 unset. With the record's country as this tool
+     derives it, this rule is right on 2,555, coarser or finer on 44 and wrong on
+     32, and leaves 1,012 unset; step 3 answers 330 of them (297 right, 14
+     coarser or finer, 19 wrong), and 15 of the 32 wrong answers are on facts the
+     old rule left unset. With no record country (as `tree_edit` and
+     `tree_correct` call it) it is right on 2,053 and wrong on 13, each of the 13
+     also wrong before. Record context is passed because of the record-structurer
+     trials (2026-10-04): with none, the will's "Shenandoah" beside "Borough of
+     Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
+     Temple" to France. `dev/build-one-word-places.ts` rebuilds the list from
+     matcher-lab's `m13/one_word_places_final.json`.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
@@ -1091,6 +1169,7 @@ audit's recommendation #5):
 | `plan_items` append/update newly setting **`status: "skipped"`**, and a `plans` op's inline `items` doing the same | **must carry `skip_category`**, unless the item was already `skipped` before this call. A `plan_items` update setting `skipped` additionally must not change `rationale`; the skip detail goes in `skip_reason` | A skipped item records a decision, and the exhaustiveness gate has to tell "decided not to" from "could not reach it" — the two route differently, and only `inaccessible` and `no_coverage` are eligible for the decisive-record exception. Measured over the e2e corpus: **38 leftover items across 9 declarations of 181, all 38 carrying a `rationale` and none a skip reason**, so the distinction was unrecoverable from the document. Keeping `rationale` unchanged on the same op is what stops the skip detail overwriting the item's original purpose; it goes in `skip_reason`. `planItemSkipInvariants` |
 | `plan_items` append/update setting **`collection_url`**, and a `plans` op's inline `items` doing the same | **must name a collection in `external-collections.json`**, under any stored place, compared by collection key (`ancestry:<id>`, so `/search/collections/<id>/` and `?dbid=<id>` are one collection); an update that leaves the field unchanged is not re-checked | A plan item names a collection FamilySearch curates for the place, never one recalled from memory. Omit the field for a site-wide search. `collectionUrlInvariants` |
 | A `plan_items` append, or an inline item of a `plans` append, whose `repository` is not FamilySearch and that has no `collection_url` | **a warning, never a refusal**, listing the stored collections that fit it: rows of a stored place whose first part names a part of the item's jurisdiction, narrowed to its record type | The agent sees its choices as it writes. The free-text jurisdiction is matched loosely, which a hint can afford and a refusal could not. Silent when nothing fits or nothing is stored. `storedCollectionsHint` |
+| A `plan_items` append, a `plan_items` update that changes `jurisdiction`, or an inline item of a `plans` op whose `jurisdiction` changed | **refused** when the `jurisdiction` splits on "and", "or", "&", ";" or "/" into two or more parts and every part sits inside, or encloses, a recorded `localities[].place` (the same tail match as the locality warning) | search-records hands a plan item's jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and Texas, United States" names no searchable place. Requiring every part to be a researched locality is what leaves a single place with a joiner in its name ("Lewis and Clark County, Montana") alone; an elided part ("Smith County and Hill County, Texas") is not caught. Not applied to an edit that leaves a stored item's jurisdiction unchanged, even one re-sending it, so an item written before the rule stays editable. A two-place jurisdiction with one part the project has not researched ("Alabama and Georgia" where only Alabama is recorded) passes. The message tells the agent to write one item per place. | `compoundJurisdictionError` |
 | any section | a **required-object field** holding a primitive is rejected — `search_stop`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled. `search_stop` renamed from `exhaustive_declaration` (2026-10-07) | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-append.ts` ("must not carry an id — the tool assigns it"); id immutability: [`research-schema-spec.md` §"3. ID Conventions"](research-schema-spec.md#3-id-conventions) |
 | `assertions` append | **not a second copy of a fact the same extraction pass already wrote** (§3.4.3): in a batch that re-persists an already-persisted record (§3.4.1 `updated_existing`), refused, op-indexed, when the PRE-CALL document holds an assertion with the same (`source_id`, canonical `record_id`, `log_entry_id`, person — `record_persona_id` when set, else `record_role` — canonical `fact_type`). Batch-internal pairs are never compared; values are ignored; `record_role: "absent"` is exempt. Cost on the committed corpus (189 e2e runs, 4,817 writer calls, replayed by `dev/replay-reextraction-guard.ts`, 2026-09-23): of 145 folding calls it refuses 73, every one a re-send of the same pass (60 verbatim, 13 reworded) and none a call that recorded success; 0 image passes refused; the gate spares 26 calls the ungated key would have hit, the distinct later facts (a second parentage) among them | ADR-0011; D17 live run 2026-09-23 (`docs/plan/search-agent-prototype.md`); lead ruling 2026-09-23 |
@@ -1681,10 +1760,11 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | A `proof_summaries` `claims[]` entry that is not a ParentChild relationship: `relationship` absent, null, of another type, or not an object | document-level error naming the claim. An absent, null or other-typed `relationship` keeps its opening words and adds why: `claims[]` holds ParentChild relationship claims only, fact claims are not supported yet, keep the ParentChild claims in `claims[]`, and `tier` must equal the strongest `proof_tier` among the claims that remain (the existing rule, never the weakest). A `relationship` that is not an object, `""`, `false` and `0` included, is refused as `must be an object — got <type>`; write nothing |
 | A `proof_summaries` entry whose `narrative_markdown` is present but not a string (a number, a boolean, a list or an object) | document-level error `'narrative_markdown' must be a string, got <type> <the value as JSON, cut to 60 characters>`. The value is in the message because the call-introduced diff keys an error on its path plus its message: an update that replaces a legacy non-string with a different one of the same type is a new error and is refused, while one that leaves it alone rides as a pre-existing warning, so a legacy document is not frozen. `null` keeps its own required-field refusal and the empty string is a string; the length advisory of §5.7 stays silent on a narrative that is not text; write nothing |
 | `section: questions`, `op: append` while another question is `open`, `in_progress` or `exhaustive_declared` without both halves of the exemption (§5) | op-indexed hard error on that `questions` op; write nothing. Opens `a new question cannot be opened while another is still open: <q_id> (<status>, <pli_ids> still to do)` — or `(<status>, no proof summary)` when nothing is outstanding — and then prescribes reporting the open question and offering to wrap it up, naming the proof-summary-plus-nothing-outstanding exemption and saying a `resources_spent` stop is not one |
+| `section: questions`, `op: append` with `selection_basis: "fan_pivot"` whose `unblocks` names no question that is `open`, `in_progress` or `exhaustive_declared` in the pre-call snapshot | op-indexed hard error on that op; write nothing. Says a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out, and lists the open ids (or says none is open). Every committed e2e `fan_pivot` append with empty `unblocks` (3 of 4, measured 2026-10-28) depended on an open `q_001` it would have advanced |
 | `section: plan_items`, `op: append`, whose parent plan is **terminal** (`completed` or `superseded`) (§5) | op-indexed hard error on that `plan_items` op; write nothing. Opens `plans entry '<planId>' is '<status>' (question '<qid>') — a <status> plan is a settled audit trail and takes no new items.` and then prescribes: when the same call created exactly one plan, `This call created plan '<newId>' — re-issue these items with planId '<newId>'.`; otherwise `Append to that question's active plan, or create one first; if these items belong to a different question, re-issue with that question's plan id.` Both the status and the question id are guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with either absent. An `op: update` is never refused — it targets an item already inside the plan, and denying it would strand an `in_progress` item there. **This error preempts the misrouted-items error below** whenever the misrouted-to plan is terminal: it throws in `applyOne`, so those items are not among the ops the post-pass that produces the other message judges, which is why the prescription is repeated here |
 | A `plan_items` op leaving the item at `status: "completed"` while no `log[]` entry carries its id, or a `plans` op whose `items` do the same (§5) | op-indexed hard error on that op; write nothing. Opens `plan_items[<pli_id>]: no log[] entry names <pli_id>, so completing it would claim a search nothing in the document records.` and then prescribes: `Log the search that satisfies this item with research_log_append({ planItemId: "<pli_id>", ... }) before completing it — planItemId: null is only for an ad-hoc search that matches no plan item. If that search was already logged with planItemId: null, leave this item 'in_progress' rather than logging the same search twice.` A refused **append** gets its own prescription instead, because its id is assigned inside the call and `in_progress` is one of the two statuses that block the question's exhaustive declaration (`planned` is the other): `plan_items[<pli_id>]: an appended item cannot arrive 'completed' — its id is assigned in this call, so no log[] entry can name it. Don't add a plan item for a search that was already done: cite that search's log id in the question's search_stop.log_entry_ids when you declare. If the search has not been done yet, append the item as 'planned', then complete it after logging the search …` The prescription names an **append**, never a fix to the existing entry, because `research_log_append` has no update op — every op allocates the next log id — so an entry already written with `planItemId: null` cannot be re-attributed and telling the agent to correct it would be an instruction it cannot follow. The `in_progress` fallback is the settled remedy for that case: re-logging writes a durable duplicate that every reader of `log[]` counts twice, and `skipped` states the search was not done, which is false. The id is guarded for shape, because this fires **before** document validation and a hand-edited `research.json` can reach it with the id absent; a legacy `log: [null]` element is stepped over rather than dereferenced. An `op: update` on an item already sitting at `completed` before the call is never refused, whether or not it re-sends `status` |
 | A `plan_items` op, or a `plans` op's inline `items`, newly setting `status: "skipped"` with no `skip_category`; or a `plan_items` update setting `skipped` while changing `rationale` (§5) | op-indexed hard error on that op; write nothing. Names all seven `skip_category` values and points the detail at `skip_reason` |
-| A `plan_items` op, or a `plans` op's inline `items`, newly setting `status: "skipped"` on an item whose search ran: a tied `record_search`, `fulltext_search` or `image_search` entry with any outcome but `error`, or a tied `external_site` entry whose capture arrived (lead, 2026-10-20) | op-indexed hard error on that op; write nothing. `plan_items[<pli_id>]: <log_id> (<tool>, <outcome>) shows this item's search ran, so it cannot be marked 'skipped', which says nothing was searched.` It continues `Set it to 'completed' instead: <log_id> names this item, so the completion is attributed.` **Silent where capture-pending would refuse `completed`** (lead, 2026-10-20), for any `skip_category`: capture-pending answers alone there. It lets an `inaccessible` or `user_declined` skip stand, and refuses any other category with a message naming those two. That is search-records' escalation, where search-external-sites, with no user to capture, logs a deferred hand-off and skips the item; refusing the skip too would leave the item `in_progress` for good. Re-stating an item already `skipped` is never refused |
+| A `plan_items` op, or a `plans` op's inline `items`, newly setting `status: "skipped"` on an item whose search ran: a tied `record_search`, `fulltext_search` or `image_search` entry with any outcome but `error`, or a tied `external_site` entry whose capture arrived (lead, 2026-10-20) | op-indexed hard error on that op; write nothing. `plan_items[<pli_id>]: <log_id> (<tool>, <outcome>) shows this item's search ran, so it cannot be marked 'skipped', which says nothing was searched.` It continues `Set it to 'completed' instead: <log_id> names this item, so the completion is attributed.` **Silent where capture-pending would refuse `completed`** (lead, 2026-10-20), for any `skip_category`: capture-pending answers alone there. It lets an `inaccessible` or `user_declined` skip stand, and refuses any other category with a message naming those two. That is search-records' escalation, where search-external-sites, with no user to capture, logs a deferred hand-off and skips the item; refusing the skip too would leave the item `in_progress` for good. **Also silent where the completion record-type check would refuse `completed`** (no attributed search names the item's `record_type`), so the skip is that item's exit too. Re-stating an item already `skipped` is never refused |
 | A `plan_items` update setting `status: "in_progress"` on an item already `completed` | **not an error.** The status is dropped from the op and the warning `plan item '<pli_id>' is already completed; left completed` is returned. With no other field left, the op is a no-op and nothing is written; any other fields in the same op still apply. search-records writes `in_progress` after every search it logs, and `extraction_append` completes the item once a record it found is extracted, so without this a later search would reopen it |
 | A plan item setting a `collection_url` that names no stored collection (by collection key), or set while `external-collections.json` is absent or unreadable (§5) | op-indexed hard error on that op; write nothing. Names `research_query({section: "external_collections", place, recordType})` as where to copy a url from, `external_links_search({standardPlace, projectPath})` when nothing is stored, and omitting the field for a site-wide search |
 | A §5 invariant violated | input error with the specific rule; write nothing |
@@ -2743,6 +2823,12 @@ and no genealogist sign-off gates them.
 | probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
 | probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
 | probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
+| land | **a grantor's own statements:** their name, sex, residence, marital status, the relationships they state ("Mary my wife"), and the conveyance itself (date, place, consideration, land, and each party's part in it) | the grantor | `self` | `primary` |
+| land | **the grantee's, and any other party's, name and sex** | the grantor | `self` | `primary` |
+| land | the grantee's, and any other party's, **residence** | the grantor | `self` | `indeterminate` |
+| land | the witnesses' names, sex and presence | the witnesses | `witness` | `primary` |
+| land | the acknowledging officer (justice of the peace) and the register's recording: the officer's name, sex and part, and the acknowledgment and recording date and place | the officer | `official_duty` | `primary` |
+| land | **beyond the transaction:** anyone's age, birthplace or birth, a decedent's death ("late of X, deceased"), a non-grantor's stated relationship, a grantor's occupation | the grantor | `family_not_present` | `secondary` |
 | newspaper announcement | **the announced event and its people**: the principals' names and residences, the date and place, officiant, attendants and guests, the parents' names | the announcement's submitter (usually unnamed family) | `household_member` | `indeterminate` |
 | newspaper announcement | **life history**: the principals' birthplaces and birth dates, education, occupations, earlier residences | the announcement's submitter | `family_not_present` | `secondary` |
 
@@ -2799,6 +2885,8 @@ above leave a case open:
 - A named informant replaces the generic string on the family rows only
   (`household_member`, `family_not_present`), never on an officiant's,
   clerk's, enumerator's or witness's row.
+
+The land rows are the genealogist's ruling (2026-10-27), on document mode only. There the roles are read from `statedRelation` (grantor, grantee, witness, officer); on the indexed path they are positional, so no row is keyed on them and a land record keeps the default and the "no table row covers a land record yet" note. The transaction is the grantor's own act, so the grantor's statements and the conveyance are `self` / `primary`. The grantee's name is `primary`, but their residence is `indeterminate`: the deed gives it on the grantor's say-so. Everything beyond the transaction is secondhand. A named `informant` replaces the generic string on the `family_not_present` rows only, never on a grantor, witness or officer row.
 
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows

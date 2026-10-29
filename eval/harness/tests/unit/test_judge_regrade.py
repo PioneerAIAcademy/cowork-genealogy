@@ -970,60 +970,6 @@ def test_before_snapshot_is_staged_once_per_scenario_and_again_after_an_edit(dis
     assert snap["research_json"]["sources"][0]["id"] == "src_009"
 
 
-# --- the gate and the regrade must resolve the SAME log ----------------------
-# Review 2026-10-26, blocker 2. Each had its own selector: `check_runlogs`
-# preferred any released `v{N}.json`, `judge_regrade` sorted on version first.
-# A released v33 beside a v34 candidate resolved two different files, so a
-# regrade stamped a log the gate never reads and rule 2b stayed red after a
-# $5 run. Nine of 33 skills in the corpus were in that state.
-
-
-def _skill_dir_with(tmp_path: Path, names: list[str]) -> Path:
-    d = tmp_path / "unit" / "demo"
-    d.mkdir(parents=True)
-    for n in names:
-        (d / n).write_text(json.dumps({"skill": "demo", "runs": []}), encoding="utf-8")
-    return d
-
-
-def _gate_pick(skill_dir: Path) -> str | None:
-    import sys
-
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-    import check_runlogs
-
-    got = check_runlogs.latest_full_skill_runlog(skill_dir)
-    return got[0] if got else None
-
-
-@pytest.mark.parametrize(
-    "names",
-    [
-        # the shape the two selectors disagreed on
-        ["v33.json", "v34_2026-10-23_12-00-55.json"],
-        # no release: both must take the newest candidate
-        ["v4_2026-10-20_08-00-00.json", "v4_2026-10-24_09-30-00.json"],
-        # several releases
-        ["v2.json", "v11.json", "v3_2026-10-25_23-00-00.json"],
-        # a scratch run must not win either reading
-        ["v1.json", "scratch_2026-10-25_23-25-10.json"],
-    ],
-)
-def test_gate_and_regrade_resolve_the_same_runlog(tmp_path, names):
-    skill_dir = _skill_dir_with(tmp_path, names)
-    regrade = judge_regrade._latest_full_skill_runlog(skill_dir)
-    assert regrade is not None
-    assert regrade[0] == _gate_pick(skill_dir)
-
-
-def test_a_release_outranks_a_higher_numbered_candidate(tmp_path):
-    """Named separately from the agreement test above: the two could agree on
-    the wrong file, and the gate's choice is the one that must win."""
-    skill_dir = _skill_dir_with(tmp_path, ["v33.json", "v34_2026-10-23_12-00-55.json"])
-    got = judge_regrade._latest_full_skill_runlog(skill_dir)
-    assert got is not None and got[0] == "v33.json"
-
-
 def _stale_log(skill: str = "demo") -> dict:
     """A log in the shape a regrade used to leave behind.
 

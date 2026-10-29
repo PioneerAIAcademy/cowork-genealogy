@@ -1882,8 +1882,7 @@ def _clean_log(test_id="ut_ip_1", outcome="pass"):
 
 
 def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
-    """A released `v1.json` beside candidates — the shape `init-project` has on
-    main, and the one `latest_full_skill_runlog` resolves backwards."""
+    """A skill's run-log directory, for released `v{N}.json` beside candidates."""
     runlogs = tmp_path / "runlogs"
     skill_dir = runlogs / skill
     skill_dir.mkdir(parents=True)
@@ -1895,11 +1894,10 @@ def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
     return skill_dir
 
 
-def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, capsys):
-    """`latest_full_skill_runlog` returns ANY released `v{N}.json` in preference to
-    every candidate, whatever the date. So a PR adding a red candidate beside a
-    clean released log would be read as clean if rule 6 used that resolution.
-    It reads the log the PR ADDED instead."""
+def test_rule6_grades_the_added_log_not_the_newest_one(tmp_path, monkeypatch, capsys):
+    """`latest_full_skill_runlog` reads the newest run on disk, so a clean run main
+    wrote after the PR's red one would be read in its place and the PR would pass.
+    Rule 6 reads the log the PR ADDED instead."""
     skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
     (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
     _write_ann(skill_dir, "v1.json", [])
@@ -1908,6 +1906,9 @@ def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, 
         json.dumps(_clean_log("ut_ip_2", "fail")), encoding="utf-8"
     )
     _write_ann(skill_dir, added, [])
+    newer = "v2_2026-09-23_09-00-00.json"
+    (skill_dir / newer).write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, newer, [])
     _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
 
     rc = check_runlogs.main()
@@ -1985,9 +1986,9 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
 
 # --- Rules 2, 2b and 3 grade the run log the PR adds (#3272) ---------------------
 #
-# `latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate, so
-# when main released a log newer than the PR's own candidate, rules 2 and 3 graded main's
-# release and the PR's own run was checked by nothing. These build that shape with a
+# `latest_full_skill_runlog` reads the newest run on disk, so when main released a log
+# newer than the PR's own candidate, rules 2 and 3 graded main's release and the PR's
+# own run was checked by nothing. These build that shape with a
 # snapshot that names a file really on disk: `_clean_log`'s empty snapshot can never be
 # stale, so a test on it would never reach rule 2's comparison.
 
@@ -2066,6 +2067,54 @@ def test_rules_2_and_2b_grade_the_candidate_the_pr_adds_not_a_newer_release(
     assert "v3.json" not in out
 
 
+@pytest.mark.parametrize("pr_edits_the_stale_file", [False, True], ids=["main-had-it", "pr-made-it"])
+def test_rule2_fallback_blocks_only_on_a_file_the_pr_changed(
+    tmp_path, monkeypatch, capsys, pr_edits_the_stale_file
+):
+    """An annotation-only PR on a skill whose latest log main had already left stale
+    (a cosmetic-skip waiver on the PR that made the change) warns. The same PR also
+    editing the stale file owes the re-run, and blocks."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False)
+    paths = [f"{_RUNLOGS_REL}/v3.ann.json"] + ([_TRACKED_REL] if pr_edits_the_stale_file else [])
+    _patch_diffs(monkeypatch, paths)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_edits_the_stale_file:
+        assert rc == 1 and _violations(out) == 1
+        assert "`v3.json`" in _only_line(out, "NOT active")
+        assert "none of which this PR changed" not in out
+    else:
+        assert rc == 0
+        warned = _only_line(out, "none of which this PR changed")
+        assert warned.startswith("::warning") and "`v3.json`" in warned
+        assert "NOT active" not in out
+
+
+@pytest.mark.parametrize("pr_adds_the_log", [True, False], ids=["own-log", "main-log"])
+def test_main_compares_rule2c_with_main_only_on_a_log_the_pr_did_not_add(
+    tmp_path, monkeypatch, capsys, pr_adds_the_log
+):
+    """`main` changed the suite's validator before this PR. A log the PR adds must
+    still match the tree it merges into; main's own latest log only warns."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    name = "v3_2026-10-29_10-00-00.json" if pr_adds_the_log else "v3.json"
+    _put_runlog(skill_dir, name, active=True, instrument=_instr())
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
+    _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" if pr_adds_the_log else f"{_RUNLOGS_REL}/v3.ann.json"])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_adds_the_log:
+        assert rc == 1 and "validators.suite" in _only_line(out, "::error")
+        assert "already has that change" not in out
+    else:
+        assert rc == 0, out
+        assert "validators.suite" in _only_line(out, "already has that change")
+
+
 def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
     tmp_path, monkeypatch, capsys
 ):
@@ -2108,15 +2157,32 @@ def test_a_pr_that_adds_two_candidates_is_graded_on_the_newer_one(
     assert "rule 6: graded 2 added run log(s)" in out
 
 
-def test_a_pr_that_adds_no_run_log_is_still_graded_on_the_latest_on_disk(
+def test_a_pr_that_adds_no_run_log_is_graded_on_the_newest_run_on_disk(
     tmp_path, monkeypatch, capsys
 ):
-    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, and resolve
-    exactly as before: a released log beats every candidate whatever its version, so the
-    stale `v3.json` is graded and the newer active candidate beside it is not."""
+    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, so they are
+    graded on the run that ran last, released or not: an active candidate newer than a
+    stale release passes. Ranking the release first failed every such PR on a log `main`
+    had already superseded."""
     skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
-    _put_runlog(skill_dir, "v3.json", active=False)
-    candidate = "v4_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-01_10-00-00")
+    _put_runlog(skill_dir, "v4_2026-10-08_10-00-00.json", active=True)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "NOT active" not in out
+
+
+def test_a_pr_that_adds_no_run_log_is_graded_on_a_release_newer_than_a_candidate(
+    tmp_path, monkeypatch, capsys
+):
+    """A candidate left beside the release of its own version line ran before that
+    release, so the release is graded, not the candidate."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-08_10-00-00")
+    candidate = "v3_2026-10-01_10-00-00.json"
     _put_runlog(skill_dir, candidate, active=True)
     _patch_diffs(monkeypatch, [_TRACKED_REL])
 
@@ -2798,9 +2864,9 @@ def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_pat
 
 # --- Rule 2c (instrument fingerprint) — issue #2479 PR 3 ---------------------
 #
-# Blocks on the suite-specific halves (`validators.suite`, `tools.fixture`),
-# warns on the corpus-wide ones (`validators.shared`, `tools.live`,
-# `live_modules`) so no change ever owes a re-run of every suite.
+# Blocks on `validators.suite`. Warns on `tools.fixture` (lead, 2026-10-29) and on
+# the corpus-wide halves (`validators.shared`, `tools.live`, `live_modules`) so no
+# change ever owes a re-run of every suite.
 
 _H = {c: c * 64 for c in "abcdef0123456789"}
 
@@ -2829,33 +2895,26 @@ def test_rule2c_passes_silently_when_nothing_moved(monkeypatch, capsys):
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize(
-    "moved, names",
-    [
-        ({"validators__suite": _H["0"]}, "validators.suite"),
-        ({"tools__fixture": _H["0"]}, "tools.fixture"),
-    ],
-    ids=["suite-validator", "fixture-tool"],
-)
-def test_rule2c_blocks_on_a_suite_specific_change(monkeypatch, capsys, moved, names):
-    _stub_current_instrument(monkeypatch, _instr(**moved))
+def test_rule2c_blocks_on_a_suite_validator_change(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
-    assert "::error" in out and names in out and "skill `demo`" in out
+    assert "::error" in out and "validators.suite" in out and "skill `demo`" in out
     assert "make eval-skill SKILL=demo" in out
 
 
 @pytest.mark.parametrize(
     "moved, names",
     [
+        ({"tools__fixture": _H["0"]}, "tools.fixture"),
         ({"validators__shared": _H["0"]}, "validators.shared"),
         ({"tools__live": _H["0"]}, "tools.live"),
         ({"live_modules__research_append": _H["0"]}, "live_modules (research_append)"),
     ],
-    ids=["shared-validators", "live-tool-schema", "live-module"],
+    ids=["fixture-tool", "shared-validators", "live-tool-schema", "live-module"],
 )
-def test_rule2c_only_warns_on_a_corpus_wide_change(monkeypatch, capsys, moved, names):
+def test_rule2c_only_warns_on_a_change_outside_the_suite_validator(monkeypatch, capsys, moved, names):
     _stub_current_instrument(monkeypatch, _instr(**moved))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 0
@@ -2902,6 +2961,102 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
     assert rc == 1
     out = capsys.readouterr().out
     assert "::error" in out and "tool-schemas.js" in out
+
+
+# A suite validator main already has at its current value was waived or owed on
+# the PR that changed it, so a log this PR did not add only warns on it.
+
+
+def test_rule2c_warns_on_a_suite_validator_main_already_has(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::error" not in out
+    assert "validators.suite" in _only_line(out, "`main` already has that change")
+
+
+@pytest.mark.parametrize(
+    "base", [_H["a"], _H["1"], None], ids=["base-at-stored", "base-elsewhere", "no-base"]
+)
+def test_rule2c_blocks_on_a_suite_validator_this_pr_changed(monkeypatch, capsys, base):
+    """`main` at the stored value, `main` at a third value, or no base to read: the PR
+    changed the validator, or nothing says it did not."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: base)
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out and "validators.suite" in out
+    assert "already has that change" not in out
+
+
+def test_rule2c_blocks_and_skips_main_when_the_pr_added_the_log(monkeypatch, capsys):
+    """A log the PR adds is its own evidence: it must match the tree it merges into."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for the PR's own log")
+    )
+    rc = check_runlogs.rule2c_instrument(
+        "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", compare_base=False
+    )
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2c_reads_no_base_when_only_a_warn_only_half_moved(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"], tools__live=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for a warn-only half")
+    )
+    assert check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json") == 0
+
+
+def test_base_suite_validators_reads_the_base_checkout(monkeypatch, tmp_path):
+    from harness import instrument as instr_mod
+
+    validators = tmp_path / "eval" / "harness" / "validators"
+    validators.mkdir(parents=True)
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert ctx\n", encoding="utf-8")
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    got = check_runlogs.base_suite_validators("demo")
+    assert got == instr_mod.validators_fingerprint("demo", validators)["suite"]
+
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert not ctx\n", encoding="utf-8")
+    assert check_runlogs.base_suite_validators("demo") != got
+
+
+@pytest.mark.parametrize("base_tree", [None, "missing"], ids=["unset", "no-such-dir"])
+def test_base_suite_validators_is_none_with_no_base_checkout(monkeypatch, tmp_path, base_tree):
+    if base_tree is None:
+        monkeypatch.delenv("BASE_TREE", raising=False)
+    else:
+        monkeypatch.setenv("BASE_TREE", str(tmp_path / base_tree))
+    assert check_runlogs.base_suite_validators("demo") is None
+
+
+_SCOUT_REL = "packages/engine/plugin/agents/scout.md"
+
+
+@pytest.mark.parametrize(
+    "key, pr_paths, frontmatter_changed, expected",
+    [
+        (_TRACKED_REL, {_TRACKED_REL}, None, True),
+        (_TRACKED_REL, {"some/other/file.md"}, None, False),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, True, True),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, False, False),
+        (_SCOUT_REL + "#frontmatter", set(), None, False),
+    ],
+    ids=["changed", "untouched", "frontmatter-changed", "body-only", "agent-untouched"],
+)
+def test_pr_changed_snapshot_key(monkeypatch, key, pr_paths, frontmatter_changed, expected):
+    def _changed(agent):
+        assert agent == "scout" and frontmatter_changed is not None
+        return frontmatter_changed
+
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed)
+    assert check_runlogs.pr_changed_snapshot_key(key, pr_paths) is expected
 
 
 @pytest.mark.parametrize(
@@ -3246,7 +3401,7 @@ def test_a_non_test_validator_module_marks_every_suite(monkeypatch):
 
 def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeypatch, capsys, tmp_path):
     """A shared MCP fixture's `tool` field feeds `tools.fixture`; changing it is
-    graded on the PR that makes it, not left for the next author of those suites."""
+    reported on the PR that makes it. `tools.fixture` warns (lead, 2026-10-29)."""
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     _seed_instrument_suite(runlogs, monkeypatch, _instr())
@@ -3260,8 +3415,9 @@ def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeyp
     monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/fixtures/mcp/shared-fix.json"])
     rc = check_runlogs.main()
     out = capsys.readouterr().out
-    assert rc == 1, out
-    assert "skill `convert-dates`" in out and "tools.fixture" in out
+    assert rc == 0, out
+    warned = _only_line(out, "tools.fixture")
+    assert warned.startswith("::warning") and "skill `convert-dates`" in warned
 
 
 # --- #3568: a touched agent gates a suite only if its graded log can see it -----
@@ -3743,17 +3899,6 @@ def test_rule11_aborted_runs_are_ignored_beside_a_completed_one():
 def test_rule11_a_test_with_no_runs_is_left_to_rule_6():
     head = _r11_test(["planning", "stops-for-verdicts"])
     assert _rule11(head_test=head, head_log={"tests": [{"test_id": "ut_research_rpn", "runs": []}]}) == 0
-
-
-def test_newest_full_skill_name_prefers_a_newer_candidate_over_an_older_release():
-    names = ["v1.json", "v1.ann.json", "v2_2026-10-01_00-00-00.json", "v2_2026-10-02_00-00-00.json",
-             "v3_scratch_x.json"]
-    assert check_runlogs.newest_full_skill_name(names) == "v2_2026-10-02_00-00-00.json"
-    assert check_runlogs.newest_full_skill_name(["v2.json", "v1_2026-10-02_00-00-00.json"]) == "v2.json"
-    assert check_runlogs.newest_full_skill_name(["README.md"]) is None
-    # At one version a candidate is the later run: releasing renames one, and
-    # a candidate beside its release was run after it.
-    assert check_runlogs.newest_full_skill_name(["v2.json", "v2_2026-10-03_00-00-00.json"]) == "v2_2026-10-03_00-00-00.json"
 
 
 _R11_VALIDATOR = """import pytest

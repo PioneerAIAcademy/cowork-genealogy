@@ -802,6 +802,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "research_log_append",
       "sidecar_read",
+      "volume_bisect",
       "volume_search",
     ],
     denies: [],
