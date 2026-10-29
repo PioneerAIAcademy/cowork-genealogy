@@ -370,7 +370,7 @@ Either way, the research skill's first line says that without an `Agent` tool, r
 ## Phase 3: release and operations
 
 **D1 Environments.** P0.3's two environments, both on the shared ALB.
-- **When the web environment joins, by 11 December, these environment properties:**
+- **When the web environment joins, by 4 December, these environment properties:**
   - the DSNs and the bucket;
   - `FS_TOKEN_ENC_KEY`, the same on both tiers, and the session secret;
   - the issuer and the web tier's public URL, on both tiers;
@@ -491,7 +491,7 @@ The lead does the items "What this is" names. The team builds the rest from thes
 
 | Item | Issue | Level | Due |
 |---|---|---|---|
-| S1 Schema | issue #3977 | junior | 20 Nov |
+| S1 Schema | issue #3977 | junior | 13 Nov |
 | E1 One front door | issue #3984 | senior | 7 Dec |
 | E2 Project tools: links, uploads, settings | issue #3978 | junior | 7 Dec |
 | E2 Project tools: the connector's `project_list` | issue #3991 | senior | 14 Dec |
@@ -499,10 +499,10 @@ The lead does the items "What this is" names. The team builds the rest from thes
 | E4 Limits: process-wide | issue #3979 | junior | 31 Dec |
 | E4 Limits: per user | issue #3999 | senior | 31 Dec |
 | E5 Fit for a connector | issue #3996 | junior | 14 Dec |
-| W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior | 30 Nov |
+| W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior | 23 Nov |
 | W1 Settings: pool, TLS, nginx | issue #3980 | senior | 7 Dec |
-| W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior | 7 Dec |
-| W2 Sign-in: Claude's authorization server | issue #3997 | senior | 14 Dec |
+| W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior | 30 Nov |
+| W2 Sign-in: Claude's authorization server | issue #3997 | senior | 7 Dec |
 | W3 Project routes: viewer data | issue #3981 | senior | 7 Dec |
 | W3 Project routes: uploads and download | issue #3987 | senior | 14 Dec |
 | W3 Project routes: feedback | issue #3986 | junior | 31 Dec |
@@ -539,8 +539,9 @@ The team makes these too, from one issue, with Richard reviewing:
 |---|---|
 | 26 Oct – 8 Nov | Phase 0 |
 | 2 Nov – 14 Dec | The issues due by 14 December under "Who builds what", the sign-in chain first. G3 after P0.2; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
-| By 11 Dec | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce |
-| 14 – 18 Dec | The first live sign-in in Cowork, then the dress rehearsal |
+| By 4 Dec | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce |
+| 7 – 11 Dec | The first live sign-in in Cowork, and its fixes |
+| 14 – 18 Dec | The dress rehearsal |
 | 2 Nov – 31 Dec | The issues due 31 December, all unit-testable |
 | 4 – 17 Jan | The rest of D1; D2–D5; L1 |
 | 18 – 31 Jan | Phase 4 |
