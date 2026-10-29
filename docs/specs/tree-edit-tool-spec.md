@@ -429,7 +429,7 @@ value is kept.
    are doubt, and doubt is no `standard_place`; nothing is looked up.
 2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
    the places of the holder's other facts as context for a bare single-segment
-   place (see research-append-tool-spec §3.6, lever B).
+   place, and no record country (see research-append-tool-spec §3.6, lever B).
 
 A non-place phrase has no answer, and neither does an answer whose country
 contradicts the text's (`countryConsistency`).

@@ -56,7 +56,9 @@ import {
   UK_CONSTITUENTS,
   placeTypeKey,
   resolveStandardPlace,
+  repIdToStandardPlace,
   countryConsistency,
+  countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
   standardPlaceNamedInText,
@@ -7893,6 +7895,48 @@ function applyOne(
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
+/** A sidecar result's record id: record_search and record_read stage GedcomX
+ *  personas keyed on `recordId`, the persona-less producers (full text,
+ *  external links) transcripts keyed on `id` (#2038). */
+function sidecarResultId(tool: string, r: any): string | undefined {
+  const v = PERSONA_BEARING_PRODUCERS.has(tool) ? r?.recordId : r?.id;
+  return typeof v === "string" ? v : undefined;
+}
+
+/**
+ * The country of the sidecar record an assertion comes from, by its producer,
+ * never read off the assertions' places (`countryOfPlace` names it, and says
+ * which places are no country):
+ * - a FamilySearch record (record_search, record_read): its Collection source's
+ *   coverage place, the coverage's `standard_place` (a live `record_read`
+ *   resolves it), else its `place_rep_id` resolved by id. A World collection
+ *   gives none (matcher-lab m13's list builder, stage S2);
+ * - a page `image_transcribe` read: its source's `place`, the coverage place of
+ *   the FamilySearch image group (the film) it was read from (lead, 2026-10-29).
+ *   A full-text record is extracted from its page this way.
+ * Null when the record names no such place.
+ */
+async function recordCountryOf(producer: string | undefined, record: any): Promise<string | null> {
+  if (producer === "image_transcribe") {
+    return typeof record?.source?.place === "string" ? countryOfPlace(record.source.place) : null;
+  }
+  const sources: any[] = Array.isArray(record?.gedcomx?.sources) ? record.gedcomx.sources : [];
+  const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
+  let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
+  if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
+  return place ? countryOfPlace(place) : null;
+}
+
+/** The sidecar record an assertion's country comes from: the result its
+ *  record_id names, else, for a page `image_transcribe` staged, that page. The
+ *  sidecar holds the one transcription its log entry logged
+ *  (`extraction_append` logs the staged ref it cites), and a record_id the
+ *  caller chose ("capture:…", a record ARK) need not be the page's id. */
+function countrySidecarRecord(producer: string | undefined, results: any[] | null, matched: any): any {
+  if (matched) return matched;
+  return producer === "image_transcribe" && results?.length === 1 ? results[0] : null;
+}
+
 interface PreparedOps {
   treeMutated: boolean;
   /** Attestations for every record a `person_evidence` op in this batch links
@@ -8643,16 +8687,22 @@ async function prepareOps(
    *  standard_place contradicting the place's country is an error, unless
    *  `dropContradiction` or the place is `valueDerived` (lifted from `value`),
    *  when the lookup is dropped instead. A value-derived place keeps a geocoded
-   *  answer the country check cannot judge only when the text names no country
-   *  the check knows, and, for a text of more than one comma part, the answer's
-   *  own name is one of them: a one-part text is the resolver's bare-name rule's
-   *  to judge. A dropped lookup is warned about and listed in unresolvedPlaces,
-   *  never in resolvedPlaces. A place on an assertion flagged as suspicious text
-   *  is never looked up, and a refusal shows it as WITHHELD_SUSPICIOUS. */
+   *  answer the country check cannot judge only when `unconfirmedValueAnswer`
+   *  confirms it. A dropped lookup is warned about and listed in
+   *  unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
+   *  as suspicious text is never looked up, and a refusal shows it as
+   *  WITHHELD_SUSPICIOUS. `countryRecord` is the sidecar record the assertion
+   *  comes from and `countryProducer` the tool that staged it, which give the
+   *  resolver the record's country (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
-    { dropContradiction = false, valueDerived = false }: { dropContradiction?: boolean; valueDerived?: boolean } = {},
+    {
+      dropContradiction = false,
+      valueDerived = false,
+      countryProducer,
+      countryRecord = null,
+    }: { dropContradiction?: boolean; valueDerived?: boolean; countryProducer?: string; countryRecord?: any } = {},
   ): Promise<void> => {
     const flaggedText = isSuspiciousText(entry.informant_bias_notes);
     const unresolved = (why = "") => {
@@ -8679,13 +8729,15 @@ async function prepareOps(
       if (fromRecord.length > 1) {
         unresolved(`: FamilySearch standardized it differently on its record (${fromRecord.join("; ")})`);
       } else if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
+        // resolveStandardPlace returns null on a miss and can throw on a
+        // failure (a bare name's top-hit search does), and the catch makes the
+        // two look the same here — both warrant the warning (a silently
+        // unresolved place is part of the wrong-geocode theme).
         try {
           const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
             .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+          const recordCountry = () => recordCountryOf(countryProducer, countryRecord);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces, recordCountry })) ?? null;
         } catch {
           sp = null;
         }
@@ -8741,6 +8793,8 @@ async function prepareOps(
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
+    let countryProducer: string | undefined;
+    let countryRecord: any = null;
     const logId = entry.log_entry_id;
     const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
     if (logEntry) {
@@ -8804,10 +8858,7 @@ async function prepareOps(
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
           const personaBearing = PERSONA_BEARING_PRODUCERS.has(producer);
-          const resultId = (r: any): string | undefined => {
-            const v = personaBearing ? r?.recordId : r?.id;
-            return typeof v === "string" ? v : undefined;
-          };
+          const resultId = (r: any): string | undefined => sidecarResultId(producer, r);
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
             (r) => r && typeof r === "object" && resultId(r) !== undefined && arkToBareId(resultId(r)!) === key,
@@ -8915,11 +8966,26 @@ async function prepareOps(
           );
           continue;
         }
+        countryProducer = producer;
+        countryRecord = countrySidecarRecord(producer, results, matchedRecord);
       }
     }
 
-    await applyPlaceLevers(entry, i, { valueDerived: liftedFromValue.has(entry) });
+    await applyPlaceLevers(entry, i, { valueDerived: liftedFromValue.has(entry), countryProducer, countryRecord });
   }
+
+  /** The record country's source for an assertion update's lookups: the sidecar
+   *  record the stored assertion comes from. No sidecar value is copied. */
+  const updateCountrySource = async (view: any): Promise<{ countryProducer?: string; countryRecord: any }> => {
+    const logEntry = typeof view.log_entry_id === "string" ? logById.get(view.log_entry_id) : undefined;
+    const results = typeof logEntry?.results_ref === "string" ? await readSidecarResults(logEntry.results_ref) : null;
+    const key = arkToBareId(String(view.record_id ?? ""));
+    const record = results?.find((r) => {
+      const id = sidecarResultId(logEntry.tool, r);
+      return id !== undefined && arkToBareId(id) === key;
+    });
+    return { countryProducer: logEntry?.tool, countryRecord: countrySidecarRecord(logEntry?.tool, results, record) };
+  };
 
   // An assertions update that corrects `place` to another place and says nothing of
   // `standard_place` gets the same levers, with the existing assertion as the
@@ -8946,7 +9012,7 @@ async function prepareOps(
       if (!setsPlace) {
         cur.place = merged.place;
         const view: any = { ...merged };
-        await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: true });
+        await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: true, ...(await updateCountrySource(view)) });
         if (typeof view.standard_place === "string") cur.standard_place = view.standard_place;
         continue;
       }
@@ -8956,7 +9022,7 @@ async function prepareOps(
     const place = factText(fields.place);
     if (place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: lifted });
+    await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: lifted, ...(await updateCountrySource(view)) });
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {

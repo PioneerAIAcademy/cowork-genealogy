@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_images_d7",
+    "skill": "search-images",
+    "name": "Find one year in a split browse-only volume with volume_bisect, not by probing pages (direct-agent arm)",
+    "type": "positive",
+    "description": "Mined from hosted session 54c4edd6 (2026-10-14, #3549): asked for an 1853 birth in the Alsweiler civil birth register 008230326_001_M964-RDH (370 images, not indexed), search-images spent ~16 of its 20 capped reads hand-bisecting for the year with image_transcribe and never reached it. The body now sends one-year navigation in a split group to volume_bisect. volume_bisect is mocked to its converged answer (1853 starts at position 75 = 008230326_00076); the target entry is on 008230326_00078. Also gates lookingFor to names, event and year: in that session every FOUND came from a navigation phrase in lookingFor and none was the target.",
+    "tags": [
+      "browse",
+      "unindexed",
+      "direct-arm",
+      "bisect-navigation",
+      "lookingfor-no-navigation"
+    ]
+  },
+  "input": {
+    "delegation": "Browse the digitized Alsweiler civil birth register for the birth of Catharina Staub, born about 1853, daughter of Jacobus Staub and Catharina Hoffmann, and log the browse. This is an ad-hoc browse, not a plan item.\n\nimageGroupNumber: 008230326_001_M964-RDH\nlooking_for: Catharina Staub, daughter of Jacobus Staub and Catharina Hoffmann, born about 1853\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "image-search-alsweiler-births-1850-1856",
+    "volume-bisect-alsweiler-births-1853",
+    "image-transcribe-alsweiler-births-staub",
+    "image-transcribe-alsweiler-births-any",
+    "volume-search-any",
+    "image-search-any",
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour. The project folder is an unrelated Flynn project; the browse is ad hoc (no plan item), so planItemId is null.",
+    "Image group 008230326_001_M964-RDH is a split Natural Group: the Alsweiler, Rhineland civil birth register 1850-1856, 370 images, not indexed. The target is one year (1853), so the agent should list the group with image_search, call volume_bisect with targetYear 1853 BEFORE reading any page, and read pages only from the returned bracket forward.",
+    "HARNESS NOTE: volume_bisect is mocked to its converged answer on every call — the bracket says 1853 begins at position 75 (image 008230326_00076), after position 74 (1852), and `stopped` is set. One volume_bisect call is the expected count; more is not a fault while the agent stops on `stopped`. Image 008230326_00078 carries the target (entry Nr. 9 of 1853, Catharina, born 5 February 1853 to Jacob Staub and Catharina Hoffmann); every other page of the film is an ordinary birth page naming nobody sought. Reaching 00078 in a few reads is a pass.",
+    "A deterministic validator (test_bisect_before_transcribe) checks that the first volume_bisect call precedes every image_transcribe and that no page before the bracket is read. Another (test_lookingfor_has_no_navigation_phrase) checks that no image_transcribe lookingFor carries a navigation phrase. Do not re-grade those; grade the triage, the log and the return.",
+    "Should append a research_log_append entry with tool image_search naming the group, the record type and the images examined; outcome positive. The return names 008230326_00078 with its staged.resultsRef and hands it to record-structurer; it never reproduces the transcription in full.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by two unlabeled paragraphs in plain language, with no identifiers, file names, tool names or field names in them."
+  ]
+}

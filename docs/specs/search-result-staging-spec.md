@@ -188,7 +188,9 @@ part of `staged`.
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
   results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found?, image_ref? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
-  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
+  extraction id convention, as `record-structurer` uses it), and `source` is the query's input
+  plus, for an `imageId` or `ark`, `place`: the image group's coverage place
+  (`image-transcribe-tool-spec.md` §5.5.1). The tool also returns a `digest` beside the handle.
 - `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
   `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
   reads it back unchanged.
