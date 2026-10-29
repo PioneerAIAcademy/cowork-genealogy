@@ -824,16 +824,17 @@ const DOCUMENT_ONLY_TYPES: ReadonlySet<RecordType> = new Set(["obituary", "proba
  */
 function classifyLandRow(role: string, factType: string): Classification {
   const grantor = "the grantor";
-  if (/^witness(_\d+)?$/.test(role)) {
+  const identity = /^(name|sex|role)$/.test(factType);
+  if (/^witness(_\d+)?$/.test(role) && identity) {
     return { informant: "the witnesses", informant_proximity: "witness", information_quality: "primary" };
   }
   const officer = "the acknowledging officer (justice of the peace or register)";
-  if (/^(justice_of_the_peace|register|notary(_public)?|clerk)(_\d+)?$/.test(role) || /^(recorded|recording|acknowledg(ed|ment)|registered|registration)$/.test(factType)) {
+  if ((/^(justice_of_the_peace|register|notary(_public)?|clerk)(_\d+)?$/.test(role) && identity) || /^(recorded|recording|acknowledg(ed|ment)|registered|registration)$/.test(factType)) {
     return { informant: officer, informant_proximity: "official_duty", information_quality: "primary" };
   }
-  const transaction = /^(conveyance|sale|purchase|transfer|grant|land[_ ]?grant|deed|release|quitclaim|mortgage|lease|land|consideration)$/.test(factType);
-  const ownStatement = /^(name|residence|relationship|marital[_ ]status)$/.test(factType);
-  if (transaction || (/^grantor(_\d+)?$/.test(role) && ownStatement) || (!/^grantor(_\d+)?$/.test(role) && factType === "name")) {
+  const transaction = /^(conveyance|sale|purchase|transfer|grant|land[_ ]?grant|deed|release|quitclaim|mortgage|lease|land|consideration|role)$/.test(factType);
+  const ownStatement = /^(name|sex|residence|relationship|marital[_ ]status)$/.test(factType);
+  if (transaction || (/^grantor(_\d+)?$/.test(role) && ownStatement) || (!/^grantor(_\d+)?$/.test(role) && /^(name|sex)$/.test(factType))) {
     return { informant: grantor, informant_proximity: "self", information_quality: "primary" };
   }
   if (!/^grantor(_\d+)?$/.test(role) && factType === "residence") {

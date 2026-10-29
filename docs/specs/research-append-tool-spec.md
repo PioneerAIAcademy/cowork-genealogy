@@ -2821,11 +2821,11 @@ and no genealogist sign-off gates them.
 | probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
 | probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
 | probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
-| land | **a grantor's own statements:** their name, residence, marital status, the relationships they state ("Mary my wife"), and the conveyance itself (date, place, consideration, land) | the grantor | `self` | `primary` |
-| land | **the grantee's, and any other party's, name** | the grantor | `self` | `primary` |
+| land | **a grantor's own statements:** their name, sex, residence, marital status, the relationships they state ("Mary my wife"), and the conveyance itself (date, place, consideration, land, and each party's part in it) | the grantor | `self` | `primary` |
+| land | **the grantee's, and any other party's, name and sex** | the grantor | `self` | `primary` |
 | land | the grantee's, and any other party's, **residence** | the grantor | `self` | `indeterminate` |
-| land | the witnesses' names and presence | the witnesses | `witness` | `primary` |
-| land | the acknowledging officer (justice of the peace) and the register's recording: acknowledgment and recording date and place | the officer | `official_duty` | `primary` |
+| land | the witnesses' names, sex and presence | the witnesses | `witness` | `primary` |
+| land | the acknowledging officer (justice of the peace) and the register's recording: the officer's name, sex and part, and the acknowledgment and recording date and place | the officer | `official_duty` | `primary` |
 | land | **beyond the transaction:** anyone's age, birthplace or birth, a decedent's death ("late of X, deceased"), a non-grantor's stated relationship, a grantor's occupation | the grantor | `family_not_present` | `secondary` |
 | newspaper announcement | **the announced event and its people**: the principals' names and residences, the date and place, officiant, attendants and guests, the parents' names | the announcement's submitter (usually unnamed family) | `household_member` | `indeterminate` |
 | newspaper announcement | **life history**: the principals' birthplaces and birth dates, education, occupations, earlier residences | the announcement's submitter | `family_not_present` | `secondary` |
