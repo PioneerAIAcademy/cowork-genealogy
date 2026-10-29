@@ -322,7 +322,7 @@ come from what the researcher actually said, and are written afterwards through
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
-| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
+| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. Over MCP `server.ts`'s unknown-argument guard sends this message before the handler runs (`PERSON_READ_REF_REMOVED`, `src/utils/tool-hint-messages.ts`); a direct call gets it from the handler. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
 | `personId` present but not a non-empty string | — |
 | `tree` with any entry beside `personId` | "People the researcher names beside a read" above |
 | The read fails (no login, a person FamilySearch does not hold, the read holds no person with the requested id) | The read's own message, which names the remedy (log in; check the ID) |

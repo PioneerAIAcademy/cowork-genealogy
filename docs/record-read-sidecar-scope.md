@@ -34,10 +34,12 @@ round-trips for content it already has staged on disk.
   the search response supplied a `normalized` value, resolver-derived otherwise —
   a null resolve or soft-cap overflow leaves some empty), and `sources` **if** the
   FS search response carried `sourceDescriptions`.
-- `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
-  `standardizePlaces` — see Findings), so it keeps only the record's own
-  `normalized` places and never adds resolver-derived `standard_place`. Its
-  output also carries the source `citation`.
+- `record_read`'s live path uses **`recordReadDocument`** (it does **not** run
+  `standardizePlaces` — see Findings), so it keeps only the places FamilySearch
+  standardized on the record itself (an `Interpreted` value of the place's
+  `Place` field; a recapi record sends no `normalized`), named in English by
+  their place ids, and never adds resolver-derived `standard_place`. Its output
+  also carries the source `citation`.
 
 Two deltas were identified; delta 1 is now **settled** (see Findings), delta 2
 remains **unverified**:
@@ -88,8 +90,9 @@ backward-compatible):
   loses nothing by sourcing it from the sidecar.
 - Place standardization: the staged result carries the search stage's standardized
   place (for the facts the resolve reached); the tool returns it as-is. A live read
-  performs **no** resolver standardization at all (pure `toSimplified` since #614),
-  so there is nothing to be less reliable — see Findings.
+  performs **no** resolver standardization at all (none since #614; it names only
+  the place ids FamilySearch chose), so there is nothing to be less reliable — see
+  Findings.
 - If the sidecar carries citations → the win is large (sidecar for nearly
   everything). If it doesn't → the skill still triages from the sidecar and only
   reads live for records it **keeps**, killing the duplicate re-reads regardless.
@@ -129,13 +132,27 @@ England death/burial). For **the person you searched** (the matched persona):
   reliable only for its FS-normalized share — its resolver-derived share came from
   the same resolver — and the sidecar tool returns the staged place **as-is** (no
   `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
-  now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
-  whatever `standard_place` the record's own `normalized` value supplies and never
-  falls back to the resolver, rather than resolving an un-normalized name to a
-  wrong place. (How often a recapi record response carries a `normalized` place
-  was measured by `dev/probe-record-read-places.ts` on 2026-09-11: **0 of the 28
-  observations** carried one, so the live path produced no `standard_place` at all
-  for the probed records.) Staged records carry the search stage's standardized
+  no longer uses `toSimplifiedStandardized`, so it keeps whatever
+  `standard_place` the record itself carries and never falls back to the
+  resolver, rather than resolving an unstandardized name to a wrong place. A
+  recapi record never carries a `normalized` place (`dev/probe-record-read-places.ts`,
+  2026-09-11: **0 of the 28 observations**); FamilySearch's standardized place is
+  an `Interpreted` value of the place's `Place` field instead, which
+  `toSimplifiedRecordRead` reads (`gedcomx-convert-spec.md`, "Places on facts").
+  Its text is in the record's language, so `recordReadDocument` names each by
+  its place id with `repIdToStandardPlaceAt`: the English name, when exactly one
+  name is valid across all of that place's representations at the fact's date
+  (FamilySearch's `date.formal`, else `date.original` as `stdDate` reads it).
+  Any doubt — a fact whose own text names none of the chosen place's names
+  (only its first part may name a settlement), FamilySearch's own text naming
+  another candidate place, no date, no such name, two names, a failed lookup, a
+  place renamed since the name the fact's text gives it, or a name in another
+  country, US state, Puerto Rico or Canadian province than the fact's place
+  text — leaves the fact with `place.original` and no `standard_place`, as
+  `toSimplified` gives it; FamilySearch's text is never kept. A fact with no place id of its own
+  takes no standard. A fact with no as-written text of its own (no `Original`
+  value) is checked against FamilySearch's own text, which always passes; those
+  facts are still named. Staged records carry the search stage's standardized
   place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other

@@ -819,7 +819,10 @@ def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
 
 
 def test_read_route_chooser():
-    assert deny.read_route("/project/results/x.json", "/project") == "record_read({recordId, resultsRef})"
+    assert deny.read_route("/project/results/x.json", "/project") == (
+        "record_read({recordId, resultsRef}) for a record or search sidecar, or "
+        "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar"
+    )
     assert deny.read_route("/project/evaluations/x.json", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/uploads/notes.txt", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/research.json", "/project") == "research_query"
@@ -5191,7 +5194,8 @@ def test_the_delivery_summary_reaches_a_human():
 
 def test_an_empty_summary_does_not_corrupt_the_stop_reason():
     """`summary` is declared required but NOTHING enforces it: the hook halts before the
-    body, and the server does not validate inputSchema. An argument-free call must still
+    body, and the server refuses unknown argument names but never a call for a missing
+    required key alone. An argument-free call must still
     produce a clean reason rather than a dangling 'Delivered: '."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",

@@ -172,15 +172,24 @@ describe("extraction_append: only the three call shapes", () => {
   it.each(RETIRED)("refuses %s, writing nothing and resolving no place", async (_label, form) => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");
-    const r = await extractionAppend({ projectPath: dir, ...form } as any, LOCAL);
-    expect(r.ok).toBe(false);
-    const text = (r.errors ?? []).join(" ");
+    const r = await callTool("extraction_append", { projectPath: dir, ...form });
+    expect(r.isError).toBe(true);
+    const text = r.text;
     expect(text).toMatch(/no longer takes/);
     expect(text).toMatch(/`recordIds`.*`documents`.*`absences`/);
     // A caller holding only this writer is not pointed at one it lacks.
     expect(text).not.toContain("research_append");
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
+
+  it("still refuses a retired form called directly, as the unit harness calls it", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await extractionAppend({ projectPath: dir, recordIds: ["MZGS-1BH"], ops: [] } as any, LOCAL);
+    expect(r.ok).toBe(false);
+    expect((r.errors ?? []).join(" ")).toMatch(/no longer takes `ops`/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
   it("refuses no call shape at all, and two current shapes together, naming them", async () => {
@@ -1012,7 +1021,10 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     plan_item_id: planItemId,
     performed: "2026-01-01T00:00:00Z",
     tool,
-    query: { surname: "Miller" },
+    // Every item() is record_type "census", so the search that found the record
+    // names census — satisfying planItemCompletionRecordTypeInvariants when the
+    // extracted record completes the item.
+    query: { surname: "Miller", recordType: "census" },
     outcome,
     results_examined: 1,
     external_site: null,
@@ -1294,6 +1306,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
 
 import { ATTACHMENT_LINK_RATIONALE, isAttachmentLink } from "../../src/utils/tree-person.js";
 import { errorsOf } from "../helpers/narrow.js";
+import { callTool } from "../helpers/call-tool.js";
 
 describe("extraction_append: personId extracts and links a person's attachments", () => {
   const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
