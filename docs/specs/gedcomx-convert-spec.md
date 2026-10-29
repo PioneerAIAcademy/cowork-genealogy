@@ -424,7 +424,8 @@ equivalent.
       "qualifiers": [{ "name": "http://familysearch.org/types/qualifiers/Preferred", "value": "true" }] } ] }] }
                                                   →  place: "dos Mainhos", standard_place: "Faial, Santana, Madeira, Portugal"
                                                      (toSimplifiedRecordRead; placeIds gives this fact
-                                                      { placeId: "1831208", original: "Faial, Santana, Madeira, Portugal" })
+                                                      { placeId: "1831208", ids: ["1831208"], written: "dos Mainhos",
+                                                        original: "Faial, Santana, Madeira, Portugal" })
 ```
 
 `place` is the place as the record wrote it: `place.original` verbatim, except
@@ -473,15 +474,20 @@ extractor decides a census's relationship column from `standard_place ?? place`
 Massachusetts") decides nothing.
 
 **Place ids.** `toSimplifiedRecordRead` returns `{ doc, placeIds }`. `placeIds`
-maps each fact whose `standard_place` came from step 2 to
-`{ placeId, original, formal }`: the place id of the chosen value,
-`place.original` (absent when the place has none), which is the fact's `place`
-when it keeps no `standard_place`, and the fact's `date.formal` (absent when
+maps each fact that has a `place` and no `normalized` value, except a non-place
+phrase (below), to `{ placeId, ids, written, original, formal }`: `placeId`,
+the place id of the chosen value, when its `standard_place` came from step 2;
+`ids`, the place id of every step-2 candidate, chosen or not (empty when
+FamilySearch gave the fact none); `written`, the as-written text above, which is
+the fact's `place` when it keeps a `standard_place`; `original`,
+`place.original`, which is the fact's `place` when it keeps none (both absent
+when the place has no text); and `formal`, the fact's `date.formal` (absent when
 the date has none), which dates the name. These ride beside the document, never
 on it: a fact has no field for them
 (`TREE_FACT_FIELDS` in `validation/tree-shape.ts` is a closed list).
 `record_read` uses them to name each place in English, or else to give the fact
-what `toSimplified` gives it (below).
+what `toSimplified` gives it, and to give a fact with no place id the one its
+record's same-text facts carry (below).
 
 The `description` reference is otherwise dropped; richer place data lives in
 the top-level `places[]` array (Rule 12).
@@ -513,7 +519,8 @@ run `standardizePlaces` over the flattened facts of a multi-result response
 callers that want no I/O. Exception — `record_read`'s live path never calls
 `toSimplifiedStandardized` and never falls back to the resolver. It calls
 `recordReadDocument` (`tools/record-read.ts`): `toSimplifiedRecordRead`, then
-each `placeIds` fact named by its id, then each coverage place named by its id.
+the copy of a place id between same-text facts (below), then each `placeIds`
+fact that has a place id named by it, then each coverage place named by its id.
 The step-2 text is in the record's language, and the engine compares standard
 places as English text (`factsEquivalent` in `merge-gedcomx.ts`,
 `standardPlaceCountry` in `research-append.ts`), so each fact's
@@ -527,17 +534,32 @@ and exactly one name is valid at its date across all representations of that
 place.** Any doubt names nothing:
 
 - The fact's own text is its `place`: the `Original` text where **As-written
-  text** above takes it, else `place.original`. Some comma-separated part of it
-  must be one of the chosen place's names, in any language, as the place's
-  listing gives them for every representation (`names[]`), compared as
-  `checkFirstPlace` compares names (case, accents, "St"/"Saint" and type words
-  ignored). Otherwise FamilySearch's choice of place is in doubt: Q2W9-1GVF's
-  1881 census, written "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was
-  given the town of Aberayron, its registration district, and SGZQ-Y3L's
-  "Saint Peter, Carmarthenshire, Wales" the town of Carmarthen. "Kuopio,
-  Kuopio" names place 1962838, whose 1854 representation is "Kuopion
-  kaupunki", and "Firenze" names Florence. A fact with no place text is named
-  nothing.
+  text** above takes it, else `place.original`. Some part of it must be one of
+  the chosen place's names, in any language, as the place's listing gives them
+  for every representation (`names[]`), compared as `checkFirstPlace` compares
+  names (case, accents, "St"/"Saint" and type words ignored). A part is a
+  comma-separated part without anything from its first "(" or `"` on:
+  QLNH-QVQB's "Vorden (Bronckhorst)" is "Vorden", and ZMX8-MHT2's
+  `La Matriz "El Carmen" de Guano` is "La Matriz". Any part may name it, not
+  only the first: a text that names its places largest first ("Switzerland,
+  Zürich, Zürich"), or a ward or church first ("Milwaukee city, ward 10, …"),
+  names its place in a later part. Of 40 names drawn at random from those the
+  first part alone would drop over the matcher corpus, 33 are right, 5 coarser,
+  1 wrong and 1 undecided. Otherwise FamilySearch's
+  choice of place is in doubt: Q2W9-1GVF's 1881 census, written
+  "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was given the town of
+  Aberayron, its registration district, and SGZQ-Y3L's "Saint Peter,
+  Carmarthenshire, Wales" the town of Carmarthen. "Kuopio, Kuopio" names place
+  1962838, whose 1854 representation is "Kuopion kaupunki", and "Firenze" names
+  Florence. A fact with no place text is named nothing.
+- A fact whose Place field has no `Original` value has no text of its own: its
+  `place.original` is FamilySearch's own `Interpreted` text, which names
+  FamilySearch's choice by construction, so this check cannot catch a wrong
+  choice there. Such facts are still named: all 12 in the 40-record sample are
+  named right (4MB5-YKPZ, 66FT-QDBL, 666R-QTQP, 6BQC-LJJP, 6FZT-K3Y1,
+  6J8F-6678, 6J3W-KF7B, 6VC3-T612, WS89-MGMM, X3HZ-K14S, X7S5-8J2Z and
+  XS6T-95RP, among them the era-correct Florence 1813, Olne 1874 and Caracas
+  1794).
 - The fact's years are its `date.formal` (`gedcomxDateYears`), which
   FamilySearch sends whatever language or form `date.original` takes ("4
   sierpnia 1794" is `+1794-08-04`); else `date.original` as `stdDate` reads
@@ -550,25 +572,57 @@ place.** Any doubt names nothing:
 - The representations are the place's listing (`getPlaceReps`, one call per
   place, which gives each one's English full name, range and names in every
   language); the chosen one's description gives its place. Both lookups are
-  cached. The description answers an old representation id with the current
-  one (1829107 is 439844, "Vorden, Gelderland, Netherlands"), so the listing
-  need not hold the id the record cites. Nothing is named when either lookup fails or a range in the listing
+  cached. The description answers a retired representation id with another
+  representation of its place (1829107 with 439844, "Vorden, Gelderland,
+  Netherlands", valid to 2004), so the listing need not hold the id the record
+  cites. Nothing is named when either lookup fails or a range in the listing
   cannot be read.
 - Two names valid at once name nothing: Olne in 1830 is "Olne, Liège,
   Netherlands" (to 1830) and "Olne, Liège, Belgium" (from 1830), and
   4M3P-3SZM's Christ Church, Middlesex has two representations with no range,
   "…, British Colonial America" and "…, United States".
-- Nothing is named when the place was renamed and the fact's `place` still
-  gives the chosen representation's name: the valid name's own name (the first
-  part of the full name) differs from the chosen representation's, and a
-  comma-separated part of `place` is the chosen one's own name. Names are
-  compared as `checkFirstPlace` compares them (case, accents, "St"/"Saint" and
-  type words ignored on both sides, so "Simmern" is "Kreis Simmern").
-  FamilySearch then matched the record's text to a name the place did not have
-  at the fact's date. A 1980 death written "Bela Vista" was given
-  representation 10979131, Bela Vista 1938–1944, whose place has been Echaporã
-  since 1944; the record more likely means another Bela Vista. A new
-  jurisdiction under the same name (Olne in Belgium) is no rename.
+- Nothing is named when the place was renamed and no part of the fact's
+  `place` is a name the place had at the fact's date: one of the `names[]`, in
+  any language, of a representation valid then. The place was renamed when the
+  valid name's own name (the first part of the full name) differs from the
+  chosen representation's, or when the description answered the cited id with
+  another representation, whose own name is not the cited one's to compare (a
+  retired id). Names are compared as `checkFirstPlace` compares them (case,
+  accents, "St"/"Saint" and type words ignored on both sides, so "Simmern" is
+  "Kreis Simmern"). FamilySearch then matched the record's text to a name the
+  place did not have at the fact's date. A 1980 death written "Bela Vista" was
+  given representation 10979131, Bela Vista 1938–1944, whose place has been
+  Echaporã since 1944; the record more likely means another Bela Vista. So
+  does one written "Catequese", the place's name to 1937, and one citing a
+  retired id the description answers with Echaporã's representation. A new
+  jurisdiction under the same name (Olne in Belgium) is no rename. Over the
+  matcher corpus this reads 140 names as doubt that comparing only the chosen
+  representation's English name passed: 66 under the cited id (59 of them
+  1838–1866 censuses written "Киевское воеводство, Польша", the 1569–1793
+  name, given "Kiev Governorate, Russian Empire") and 74 under a retired id (49
+  of them a town's retired id that now answers its region or state, as
+  "Speyer, Pfalz, Bavaria" given "Palatinate, Bavaria"); and it names 21 that
+  rule refused, whose text gives the name at the date as well as the chosen
+  one (1870 "Nitra" given "Nyitra, Hungary").
+
+**Copying a place id within a record.** A fact with a `place` but no step-2
+candidate of its own (`ids` empty: FamilySearch standardized none of its
+values) takes the place id of the record's other facts whose as-written text
+(`written`) is the same, case, accents, commas and spacing folded
+(`placeTextKey`: "Camberwell, Surrey, England" is "camberwell surrey
+england"), when those facts carry exactly one place id between them, counting
+every candidate of each, chosen or not. Two or more is doubt, and none leaves
+the fact as it is. A fact that has candidates of its own never takes one, even when its own choice
+is in doubt, and a fact with no text or a non-place phrase takes none. The fact
+then takes its as-written text as `place` and is named by its copied id for its
+own date and its own text, by exactly the rules above, so a copy never names
+what those rules withhold; when it is not named it keeps `place.original`.
+FamilySearch often standardizes a census household's place on one person's
+fact and not on the others'. Over the matcher corpus, 641 facts are named this
+way, and 40 of them drawn at random are all right; most copies the rules leave
+unnamed share their text with facts those rules leave unnamed too. Another 946
+facts have same-text facts carrying two or more ids; naming each id for the
+fact's date would give one name for 43 of them, which this rule does not do.
 
 When nothing is named, or the name contradicts the fact's `place`
 (`countryConsistency`, the check `research_append` refuses a record on), the
@@ -757,7 +811,9 @@ format as `resource_type` and `coverage`:
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
   `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
   via `repIdToStandardPlace`), `standard_place` (the name of the response's own
-  `places[]` entry whose `id` is that id, when it gives one — a search response
+  `places[]` entry whose `id` is that id, when it gives a non-empty one; a
+  coverage with no `place_rep_id` takes none, even beside an entry with no `id`
+  — a search response
   names the places its record refers to, keyed by the bare id; a record read's
   entries are keyed `place_<id>` and carry no names, so `record_read` names the
   id by its own name, whatever the coverage's dates, when `spatial.description`

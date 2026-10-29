@@ -1787,8 +1787,9 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
       ],
     });
     const [birth, check] = doc.persons![0].facts!;
-    expect(placeIds.get(birth)).toEqual({ placeId: "5775", original: "Bolívar, Colombia", formal: "+1856-05-07" });
-    expect(placeIds.get(check)).toEqual({ placeId: "5775", original: "Bolívar, Colombia" });
+    const bolivar = { placeId: "5775", ids: ["5775"], written: "Bolívar, Colombia", original: "Bolívar, Colombia" };
+    expect(placeIds.get(birth)).toStrictEqual({ ...bolivar, formal: "+1856-05-07" });
+    expect(placeIds.get(check)).toStrictEqual(bolivar);
   });
 
   it("prefers the candidate marked Preferred (QLGD-48KS)", () => {
@@ -1951,7 +1952,12 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     const fact = doc.relationships![0].facts![0];
     expect(fact.place).toBe("Ramore, Ontario, Canada");
     expect(fact.standard_place).toBe("Ramore, Black River-Matheson Township, Cochrane, Ontario, Canada");
-    expect(placeIds.get(fact)).toEqual({ placeId: "9159962", original: "Ramore, Ontario, Canada" });
+    expect(placeIds.get(fact)).toStrictEqual({
+      placeId: "9159962",
+      ids: ["9159962"],
+      written: "Ramore, Ontario, Canada",
+      original: "Ramore, Ontario, Canada",
+    });
   });
 
   it("yields nothing when the candidates disagree and nothing chooses between them (65TF-GJMJ without its description)", () => {
@@ -2335,6 +2341,24 @@ describe("gedcomx-convert — coverage.standard_place from the response's places
       expect(out.sources?.map((s) => s.coverage)).toEqual([
         { place_rep_id: "10579589", record_type: "Census" },
         { place_rep_id: "1927095", record_type: "Census" },
+      ]);
+    }
+  });
+
+  it("names no coverage that has no place, beside a places[] entry with no id, and copies no empty name", () => {
+    // Constructed: X1SW-6LB's places[] entries have no id, and 6 of the 40
+    // record reads have a coverage with no place, but no record has both.
+    const body = {
+      sourceDescriptions: [
+        { id: "sd_c_1", coverage: [{ temporal: { original: "1851" }, recordType: "http://gedcomx.org/Census" }] },
+        coverageSource("src_r_2", "#10593184"),
+      ],
+      places: [{ names: [{ value: "Mingary, South Australia, Australia" }] }, { id: "10593184", names: [{ value: "" }] }],
+    } as GedcomX;
+    for (const out of [toSimplified(body), toSimplifiedRecordRead(body).doc]) {
+      expect(out.sources?.map((s) => s.coverage)).toStrictEqual([
+        { date_range: "1851", record_type: "Census" },
+        { place_rep_id: "10593184", record_type: "Census" },
       ]);
     }
   });

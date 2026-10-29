@@ -673,8 +673,9 @@ with a warning rather than kept for the new place:
   1. if the op's sidecar-matched record (§3.5) gives the op's own fact a
      converter-resolved `standard_place`, it is **copied** — no geocoding call.
      The op's own fact is a fact of its `record_persona_id` (the persona's own,
-     or one of a relationship the persona is a party to) whose type is the op's
-     `fact_type` once both are folded as "Boundary shape normalization" folds
+     or one of a relationship whose `person1` or `person2` it is, as a
+     couple's marriage; a ParentChild relationship's facts are not read) whose
+     type is the op's `fact_type` once both are folded as "Boundary shape normalization" folds
      labels ("Baptism" is `christening`, "BirthRegistration" is
      `birth_registration`) and whose `place` equals the op's place string
      (trimmed, case-insensitive). It is copied only when every such fact

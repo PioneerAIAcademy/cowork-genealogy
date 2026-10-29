@@ -148,8 +148,12 @@ England death/burial). For **the person you searched** (the matched persona):
   name, two names, a failed lookup, a place renamed since the name the fact's
   text gives it, or a name that contradicts the fact's place text — leaves the
   fact with `place.original` and no `standard_place`, as `toSimplified` gives
-  it; FamilySearch's text is never kept. Staged records
-  carry the search stage's standardized place regardless.
+  it; FamilySearch's text is never kept. A fact with no place id of its own
+  first takes the one its record's other facts with the same as-written text
+  carry, when they carry exactly one, and is then named by the same rules. A
+  fact with no as-written text of its own (no `Original` value) is checked
+  against FamilySearch's own text, which always passes; those facts are still
+  named. Staged records carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills

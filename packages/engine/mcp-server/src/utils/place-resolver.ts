@@ -35,6 +35,9 @@ type SearchEntry = Awaited<ReturnType<typeof searchPlace>>[number];
 
 interface RepInfo {
   standardPlace: string;
+  /** The representation the description answered with: another one than the
+   *  id asked for when FamilySearch has retired that id. */
+  placeRepId: string;
   placeId?: string;
   latitude?: number;
   longitude?: number;
@@ -122,6 +125,12 @@ function normalizeKey(s: string): string {
  *  equal. */
 function foldPlaceName(s: string): string {
   return normalizeKey(s).normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+/** A place text as written, with case, accents, commas and spacing folded:
+ *  "Kuopio, Kuopio" and "kuopio  kuopio" are one text. */
+export function placeTextKey(text: string): string {
+  return foldPlaceName(text.replace(/,/g, " "));
 }
 
 /** Letters NFD leaves whole, so `\p{Diacritic}` cannot strip them. */
@@ -952,6 +961,7 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   const info: RepInfo | null = place
     ? {
         standardPlace: place.fullName,
+        placeRepId: place.placeRepId,
         placeId: place.placeId,
         latitude: place.latitude,
         longitude: place.longitude,
@@ -1032,6 +1042,14 @@ function ownName(fullName: string): string {
   return placeSegments(fullName)[0] ?? "";
 }
 
+/** The parts of a place text a place's name is looked for in: each
+ *  comma-separated part, without anything from its first "(" or quotation mark
+ *  on ("Vorden (Bronckhorst)" is "Vorden", `La Matriz "El Carmen" de Guano` is
+ *  "La Matriz "). */
+function nameParts(placeText: string): string[] {
+  return placeSegments(placeText).map((part) => part.replace(/[("].*/, ""));
+}
+
 /**
  * The English name of `repId`'s place in `years`: the one full name its
  * representations valid in those years share. A FamilySearch place has a
@@ -1041,21 +1059,28 @@ function ownName(fullName: string): string {
  * representation with no range is valid in every year. Two lookups, both cached:
  * `repId`'s description, for its place, and the place's listing, which gives
  * every representation's name, range and names in every language. The listing
- * need not hold `repId`: the description answers an old id with its current
- * representation (1829107 is 439844, "Vorden, Gelderland, Netherlands").
+ * need not hold `repId`: the description answers a retired id with another
+ * representation of its place (1829107 with 439844, "Vorden, Gelderland,
+ * Netherlands", valid to 2004).
  *
  * Null whenever that is in doubt. First, FamilySearch's choice of place: no
- * comma-separated part of `placeText`, the record's own text, is one of the
- * place's names in any language, compared as `checkFirstPlace` compares names
- * (case, accents, "St"/"Saint" and type words ignored). FamilySearch gave
- * Q2W9-1GVF's "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales" the town of
- * Aberayron, its registration district. Then the date: no representation is
- * valid in `years`, two names are (Olne in 1830 is "Olne, Liège, Netherlands"
- * and "Olne, Liège, Belgium"), a range cannot be read, or a lookup fails. Null
- * too when the place was renamed and `placeText` gives `repId`'s own name: place
- * 6283855 is "Bela Vista" 1938-1944 and "Echaporã" from 1944, so a 1980 record
- * that wrote "Bela Vista" and was given representation 10979131 doubts
- * FamilySearch's choice of place.
+ * part of `placeText` (`nameParts`) is one of the place's names in any
+ * language, compared as `checkFirstPlace` compares names (case, accents,
+ * "St"/"Saint" and type words ignored). FamilySearch gave Q2W9-1GVF's
+ * "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales" the town of Aberayron, its
+ * registration district. For a fact whose Place field has no `Original` value
+ * `record_read` passes FamilySearch's own text, which names FamilySearch's
+ * choice by construction, so this check cannot catch a wrong choice there;
+ * such facts are still named (all 12 in the 40-record sample are named right). Then
+ * the date: no representation is valid in `years`, two names are (Olne in 1830
+ * is "Olne, Liège, Netherlands" and "Olne, Liège, Belgium"), a range cannot be
+ * read, or a lookup fails. Null too when the place was renamed and no part of
+ * `placeText` is a name it had in `years`: renamed when the valid name's own
+ * name is not `repId`'s, or when the description answered with another
+ * representation, whose own name is not `repId`'s to compare. Place 6283855 is
+ * "Bela Vista" 1938-1944 and "Echaporã" from 1944, so a 1980 record that wrote
+ * "Bela Vista", or "Catequese" (its name to 1937), doubts FamilySearch's choice
+ * of place.
  */
 export async function repIdToStandardPlaceAt(
   repId: string,
@@ -1065,19 +1090,19 @@ export async function repIdToStandardPlaceAt(
   const chosen = await getRepInfo(repId);
   if (!chosen?.placeId) return null;
   const reps = await placeReps(chosen.placeId);
-  const parts = placeSegments(placeText);
-  if (!reps.some((rep) => rep.names.some((n) => parts.some((part) => sameName(part, n))))) return null;
-  const names = new Set<string | undefined>();
+  const parts = nameParts(placeText);
+  const named = (rep: PlaceRep) => rep.names.some((n) => parts.some((part) => sameName(part, n)));
+  if (!reps.some(named)) return null;
+  const valid: PlaceRep[] = [];
   for (const rep of reps) {
     const range = repYears(rep.dateRange);
     if (range === null) return null;
-    if (range.from <= years.from && years.to <= range.to) names.add(rep.fullName);
+    if (range.from <= years.from && years.to <= range.to) valid.push(rep);
   }
-  const [name, ...others] = names;
+  const [name, ...others] = new Set(valid.map((rep) => rep.fullName));
   if (name === undefined || others.length > 0) return null;
-  const chosenName = ownName(chosen.standardPlace);
-  const renamed = !sameName(ownName(name), chosenName);
-  if (renamed && parts.some((part) => sameName(part, chosenName))) return null;
+  const renamed = chosen.placeRepId !== repId || !sameName(ownName(name), ownName(chosen.standardPlace));
+  if (renamed && !valid.some(named)) return null;
   return name;
 }
 

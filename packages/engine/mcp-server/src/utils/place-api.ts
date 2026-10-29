@@ -31,7 +31,7 @@ interface FSPlaceLookupEntry {
   identifiers?: Record<string, string[]>;
   display?: { name: string; fullName: string; type: string };
   temporalDescription?: { formal?: string };
-  names?: { lang?: string; value?: string }[];
+  names?: ({ lang?: string; value?: string } | null)[];
 }
 
 interface FSPlaceLookupResponse {
@@ -500,7 +500,9 @@ export async function getPlaceReps(
       placeRepId: entry.id,
       ...(fullName ? { fullName } : {}),
       ...(dateRange ? { dateRange } : {}),
-      names: (entry.names ?? []).map((n) => n.value).filter((value) => typeof value === "string"),
+      names: (Array.isArray(entry.names) ? entry.names : [])
+        .map((n) => n?.value)
+        .filter((value): value is string => typeof value === "string"),
     });
   }
   return reps;

@@ -7194,7 +7194,8 @@ function applyOne(
 
 /** The converter-resolved standard_place a sidecar record's simplified gedcomx
  *  gives an assertion's own fact: the facts of its `record_persona_id` (the
- *  persona's own, and those of a relationship it is a party to) of its
+ *  persona's own, and those of a relationship whose `person1` or `person2` it
+ *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
  *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
  *  case-insensitive). Null unless every such fact carries the same one, so one
  *  fact's name never lands on another person's or another fact's. Never geocode

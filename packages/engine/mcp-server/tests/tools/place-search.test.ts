@@ -627,6 +627,28 @@ describe("getPlaceRepIds", () => {
     );
   });
 
+  it("reads past a names list that is not a list, or holds a null entry, so place_search_all's getPlaceRepIds does not throw", async () => {
+    // Constructed: no live listing has these shapes.
+    const listing = {
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "100", place: { resourceId: "9001" }, names: "Olne" },
+          { id: "101", place: { resourceId: "9001" }, names: [null, { lang: "fr", value: "Olne" }] },
+          { id: "102", place: { resourceId: "9001" }, names: { lang: "fr", value: "Olne" } },
+        ],
+      }),
+    };
+    mockFetch.mockResolvedValueOnce(listing);
+    expect(await getPlaceReps("9001")).toEqual([
+      { placeRepId: "100", names: [] },
+      { placeRepId: "101", names: ["Olne"] },
+      { placeRepId: "102", names: [] },
+    ]);
+    mockFetch.mockResolvedValueOnce(listing);
+    expect(await getPlaceRepIds("9001")).toEqual(["100", "101", "102"]);
+  });
+
   it("retries a server error, then throws once the retries are spent", async () => {
     mockFetch.mockResolvedValue(serverError());
     await expect(getPlaceRepIds("9001")).rejects.toThrow(

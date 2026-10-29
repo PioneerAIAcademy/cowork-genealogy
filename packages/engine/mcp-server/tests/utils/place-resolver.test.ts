@@ -600,6 +600,13 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "12114895": { fullName: "Florence, Florence, Tuscany", placeId: "5061195", dateRange: "+1569/+1860", names: ["Florenz", "Florence", "Firenze"] },
     // Piauí, place 1929896 (6B9K-FXBZ's 1905 birth, written "Liro, Piaui").
     "5736": { fullName: "Piauí, Brazil", placeId: "1929896", dateRange: "+1889/", names: ["Piauí", "Piauí"] },
+    // La Matriz, place 9544725 (ZMX8-MHT2's 1896 baptism, written `Ecuador,
+    // Chimborazo, Guano, La Matriz "El Carmen" de Guano`).
+    "11016701": { fullName: "La Matriz, Guano, Chimborazo, Ecuador", placeId: "9544725", dateRange: "+1845/" },
+    // Nitra, place 1939489 (6N9M-7NKV's 1870 baptism, written "Nitra, Slovensko").
+    "444190": { fullName: "Nitra, Slovakia", placeId: "1939489", dateRange: "+1993/", names: ["Nitra"] },
+    "444191": { fullName: "Nitra, Czechoslovakia", placeId: "1939489", dateRange: "+1920/+1992", names: ["Nitra"] },
+    "12200061": { fullName: "Nyitra, Hungary", placeId: "1939489", dateRange: "/+1920", names: ["Neutra", "Nitra", "Nyitra"] },
   };
   const placeReps: Record<string, string[]> = {
     "1959431": ["12441861", "12441860", "12441859", "418460"],
@@ -616,6 +623,8 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "5059906": ["2242535", "2242536", "10579589", "10278967"],
     "5061195": ["7344713", "12114895"],
     "1929896": ["5736"],
+    "9544725": ["11016701"],
+    "1939489": ["444190", "444191", "12200061"],
   };
   const description = (table: Record<string, Partial<Rep> & { fullName: string }>) => async (id: string) => {
     const rep = table[id];
@@ -678,6 +687,17 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     expect(await repIdToStandardPlaceAt("11973621", year(1850), "Simmern")).toBe("Kreis Simmern, Rhineland, Prussia");
   });
 
+  it("reads each part only up to its first parenthesis or quotation mark (ZMX8-MHT2's dedication, QLNH-QVQB's municipality)", async () => {
+    const matriz = 'Ecuador, Chimborazo, Guano, La Matriz "El Carmen" de Guano';
+    expect(await repIdToStandardPlaceAt("11016701", year(1896), matriz)).toBe("La Matriz, Guano, Chimborazo, Ecuador");
+    expect(await repIdToStandardPlaceAt("11016701", year(1896), 'La Matriz" de Guano')).toBe(
+      "La Matriz, Guano, Chimborazo, Ecuador",
+    );
+    expect(await repIdToStandardPlaceAt("11016701", year(1896), "La Matriz de Guano")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5736", year(1905), "Piaui (Liro)")).toBe("Piauí, Brazil");
+    expect(await repIdToStandardPlaceAt("5736", year(1905), "Liro (Piaui)")).toBeNull();
+  });
+
   it("names nothing when no representation is valid at the date (6589-3NS5 Bolívar, born 1856)", async () => {
     expect(await repIdToStandardPlaceAt("5775", year(1856), "Bolívar, Colombia")).toBeNull();
     expect(await repIdToStandardPlaceAt("5775", year(1880, 1890), "Bolívar, Colombia")).toBeNull();
@@ -711,14 +731,35 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     expect(await repIdToStandardPlaceAt("418460", { from: 1850, to: Infinity }, "Olne")).toBe("Olne, Liège, Belgium");
   });
 
-  it("names nothing when the place was renamed and the record's text names the chosen representation (6B9K-FXBZ Bela Vista 1980)", async () => {
+  it("names nothing when the place was renamed and the record's text gives none of its names at the date (6B9K-FXBZ Bela Vista 1980)", async () => {
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista")).toBeNull();
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista, São Paulo, Brasil")).toBeNull();
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Brasil, São Paulo, BELA VISTA")).toBeNull();
-    // The record's text names the place as it was named in 1980, or by an older name.
+    // An older name than the chosen representation's: Catequese to 1937.
+    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Catequese")).toBeNull();
+    // The record's text names the place as it was named in 1980.
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Echaporã")).toBe("Echaporã, São Paulo, Brazil");
-    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Catequese")).toBe("Echaporã, São Paulo, Brazil");
+    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista, Echaporã")).toBe("Echaporã, São Paulo, Brazil");
     expect(await repIdToStandardPlaceAt("10979131", year(1940), "Bela Vista")).toBe("Bela Vista, São Paulo, Brazil");
+  });
+
+  it("names a renamed place when the record's text gives a name it had at the date, in any language (6N9M-7NKV's 1870 Nitra)", async () => {
+    // 444190 is "Nitra, Slovakia" from 1993; in 1870 the place is "Nyitra, Hungary", also named "Nitra" and "Neutra".
+    expect(await repIdToStandardPlaceAt("444190", year(1870), "Nitra, Slovensko")).toBe("Nyitra, Hungary");
+    expect(await repIdToStandardPlaceAt("444190", year(1870), "Neutra")).toBe("Nyitra, Hungary");
+    expect(await repIdToStandardPlaceAt("444190", year(1950), "Nitra")).toBe("Nitra, Czechoslovakia");
+  });
+
+  it("counts a retired id the description answers with another representation as renamed (Bela Vista 1980 under a retired id)", async () => {
+    // Constructed: a 1980 "Bela Vista" record citing a retired id the description
+    // answers with Echaporã's representation, 3052592. The cited id's own name
+    // is unknown, so the record's text must give the place's name in 1980.
+    mockGetPlaceById.mockImplementation(async (id: string) =>
+      id === "99999999" ? description(reps)("3052592") : description(reps)(id),
+    );
+    expect(await repIdToStandardPlaceAt("99999999", year(1980), "Bela Vista")).toBeNull();
+    expect(await repIdToStandardPlaceAt("99999999", year(1980), "Catequese, São Paulo")).toBeNull();
+    expect(await repIdToStandardPlaceAt("99999999", year(1980), "Echaporã, São Paulo")).toBe("Echaporã, São Paulo, Brazil");
   });
 
   it("does not count a new jurisdiction under the same name as a rename (Olne 1874, Bela Vista 1940)", async () => {
@@ -763,8 +804,8 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     expect(await repIdToStandardPlaceAt("418460", year(1790), "Olne")).toBeNull();
   });
 
-  it("names an old representation id from its place's listing, which holds only the current one (QLNH-QVQB's 1829107)", async () => {
-    // The description answers 1829107 with representation 439844.
+  it("names a retired representation id from its place's listing, which does not hold it (QLNH-QVQB's 1829107)", async () => {
+    // The description answers 1829107 with representation 439844, valid to 2004.
     const vorden: Record<string, Rep> = {
       "1829107": { fullName: "Vorden, Gelderland, Netherlands", placeId: "1935460", dateRange: "/+2004", placeRepId: "439844" },
       "11132478": { fullName: "Vorden, Bronckhorst, Gelderland, Netherlands", placeId: "1935460", dateRange: "+2005/" },
@@ -773,6 +814,7 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     mockGetPlaceById.mockImplementation(description(vorden));
     mockGetPlaceReps.mockImplementation(listing(vorden, { "1935460": ["11132478", "439844"] }));
     expect(await repIdToStandardPlaceAt("1829107", year(1893), "Vorden, Gelderland, Nederland")).toBe("Vorden, Gelderland, Netherlands");
+    expect(await repIdToStandardPlaceAt("1829107", year(1893), "Vorden (Bronckhorst)")).toBe("Vorden, Gelderland, Netherlands");
     expect(await repIdToStandardPlaceAt("1829107", year(2010), "Vorden")).toBe("Vorden, Bronckhorst, Gelderland, Netherlands");
   });
 

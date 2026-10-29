@@ -9010,6 +9010,45 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(vi.mocked(resolveStandardPlace).mock.calls.map(([text]) => text)).toEqual([place, place, place]);
   });
 
+  it("matches the assertion's place to its own fact's with case and surrounding spaces ignored", async () => {
+    await writeProject(sidecarResearch());
+    const standard = "St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom";
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:SGZQ-Y3L",
+        primaryId: "p_head",
+        gedcomx: {
+          persons: [
+            { id: "p_head", facts: [{ type: "Census", date: "1851", place: "Saint Peter, Carmarthenshire, Wales", standard_place: standard }] },
+          ],
+        },
+      },
+    ]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:SGZQ-Y3L",
+            log_entry_id: "log_001",
+            record_persona_id: "p_head",
+            record_role: "head_of_household",
+            fact_type: "census",
+            value: "1851",
+            date: "1851",
+            place: " saint peter, CARMARTHENSHIRE, Wales ",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await readResearch()).assertions.at(-1).standard_place).toBe(standard);
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
+
   it("copies a couple's fact to either spouse only, and nothing when the persona's matching facts disagree", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar([

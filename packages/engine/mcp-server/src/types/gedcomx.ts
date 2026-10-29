@@ -173,7 +173,8 @@ export interface SimplifiedFact {
   // Standardized place name (the snake_case data-format spelling of
   // `standardPlace`). Populated by the converter from raw `place.normalized`; on
   // a record read with none, by `record_read` from the place id of the chosen
-  // `Interpreted` place value, named in English for the fact's date
+  // `Interpreted` place value, or for a fact with none from the one its record's
+  // same-text facts carry, named in English for the fact's date
   // (`toSimplifiedRecordRead`, then `recordReadDocument`); or by the network
   // standardization pass (`toSimplifiedStandardized`) for free-text places.
   // Dropped on `toGedcomX`, like `standard_date`.
