@@ -34,7 +34,6 @@ const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
 export const STAGING_SEARCH_TOOLS = new Set([
   "record_search",
   "fulltext_search",
-  "external_links_search",
 ]);
 
 /**
@@ -43,10 +42,11 @@ export const STAGING_SEARCH_TOOLS = new Set([
  * retained as a ONE-element `results[]` envelope, so finalize needs no second
  * shape. The acquisition producers carry none of the search notes:
  * `extraction_append` logs each read it makes with that read's own staged ref,
- * and an upload as `user_provided`, and a `person_read` file is staged for
- * `project_create` to build the starting tree from (issue #2944's Stage B, not
- * yet built) rather than logged, so there is nothing to nag about. An
- * unfinalized acquisition file is simply TTL-pruned.
+ * and an upload as `user_provided`, and a `person_read` file is never logged:
+ * `project_create` reads the person itself (`personId`, issue #3384), and a
+ * staged read is evidence only — what a hand-entered fact or relationship is
+ * checked against before it is cited to the FamilySearch Family Tree — so there
+ * is nothing to nag about. An unfinalized acquisition file is simply TTL-pruned.
  */
 export const STAGING_CAPABLE_TOOLS = new Set([
   ...STAGING_SEARCH_TOOLS,
@@ -62,9 +62,10 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * staging producer added is treated as persona-less until it is listed here,
  * which fails safe rather than silently matching nothing on a `recordId` field
  * it does not carry (#2038). `record_search` and `record_read` results key on
- * `recordId`; the persona-less producers (`fulltext_search`,
- * `external_links_search`) key on `id`. Mirrors `personaReachable` in
- * research-append.ts and `_persona_reachable` in the eval harness.
+ * `recordId`; the persona-less producer `fulltext_search` keys on `id`, as do
+ * legacy `external_links_search` sidecars from before #2995. Mirrors
+ * `personaReachable` in research-append.ts and `_persona_reachable` in the eval
+ * harness.
  *
  * `record_read` was MISSING here until issue #2937, and both mirrors already
  * counted it — `personaReachable` returns true on `logEntry.tool ===
@@ -78,6 +79,16 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * assertion drawn from one was refused outright.
  */
 export const PERSONA_BEARING_PRODUCERS = new Set(["record_search", "record_read"]);
+
+/**
+ * An accepted FamilySearch hint's log entry: the positive `person_record_matches`
+ * verdict `search-hints` logs. It stages nothing, so the record behind it is read
+ * by `extraction_append`, whose staged read verifies the persona ids written under
+ * this entry (research_append D2) and the validator accepts them (D5).
+ */
+export function isAcceptedHint(logEntry: any): boolean {
+  return logEntry?.tool === "person_record_matches" && logEntry?.outcome === "positive";
+}
 
 export interface StagedHandle {
   resultsRef: string;
@@ -514,9 +525,11 @@ export async function unloggedStagedSearches(
     const ref = entry.ref;
     try {
       const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
-      // An acquisition read is logged as `user_provided` or under the search that
-      // found it, never under its own tool name, so it can never pair here.
-      if (STAGING_CAPABLE_TOOLS.has(envelope.tool) && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
+      // Only a search producer's file can be owed a log entry. An acquisition read
+      // is logged as `user_provided` or under the search that found it, and a
+      // legacy `external_links_search` file (that tool stopped staging in #2995)
+      // can no longer pair, so either would nag until the TTL.
+      if (typeof envelope.tool === "string" && !STAGING_SEARCH_TOOLS.has(envelope.tool)) continue;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({

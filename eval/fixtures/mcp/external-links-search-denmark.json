@@ -24,5 +24,37 @@
         "linkText": "Dansk Demografisk Database — 1787 and 1801 census transcriptions"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.sa.dk/ao-soegesider/en/other/index-creator/71",
+      "linkText": "Rigsarkivet arkivalieronline — Lægdsruller (military levying rolls), free browsable images",
+      "record_type": "Military Records",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Thisted, Denmark"
+    },
+    {
+      "url": "https://www.sa.dk/ao-soegesider/en/other/other-collection/16",
+      "linkText": "Rigsarkivet arkivalieronline — Kirkebøger (church books), Thisted Amt",
+      "record_type": "Church Records",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Thisted, Denmark"
+    },
+    {
+      "url": "https://ddd.dda.dk/ddd_en.htm",
+      "linkText": "Dansk Demografisk Database — 1787 and 1801 census transcriptions",
+      "record_type": "Census",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Thisted, Denmark"
+    }
+  ]
 }

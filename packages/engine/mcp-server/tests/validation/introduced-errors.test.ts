@@ -513,3 +513,34 @@ describe("validateIntroduced validates the serialized form (#2934)", () => {
     // Reverting: the `before.tree` round-trip.
   });
 });
+
+describe("validateIntroduced — duplicate entry ids", () => {
+  const hyp = (id: string, claim: string) => ({
+    id,
+    claim,
+    status: "active",
+    supporting_assertion_ids: [],
+    contradicting_assertion_ids: [],
+    ruled_out: false,
+    ruled_out_reason: null,
+    notes: null,
+    related_question_ids: [],
+  });
+  const t = tree([validPerson("I1", "John", "Smith")]);
+
+  it("does not block a write on a project that already carried a duplicate", async () => {
+    const before = { ...minimalResearch, hypotheses: [hyp("h_001", "A"), hyp("h_001", "B")] };
+    const after = { ...before, hypotheses: [...before.hypotheses, hyp("h_002", "C")] };
+    const res = await validateIntroduced({ research: before, tree: t }, { research: after, tree: t });
+    expect(res.errors).toEqual([]);
+    expect(res.valid).toBe(true);
+  });
+
+  it("blocks a write that introduces the duplicate", async () => {
+    const before = { ...minimalResearch, hypotheses: [hyp("h_001", "A")] };
+    const after = { ...before, hypotheses: [...before.hypotheses, hyp("h_001", "B")] };
+    const res = await validateIntroduced({ research: before, tree: t }, { research: after, tree: t });
+    expect(res.valid).toBe(false);
+    expect(res.errors.map((e) => e.message).join(" | ")).toContain("duplicate hypothesis id 'h_001'");
+  });
+});

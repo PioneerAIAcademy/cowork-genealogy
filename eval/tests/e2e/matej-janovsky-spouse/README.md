@@ -1,4 +1,4 @@
-# Matěj Janovský — a wife named Marie and a son baptised in 1874, Malšice, Bohemia
+# Matěj Janovský — wife Kateřina Votýpková and children Anna (1869) and František (1874), Malšice, Bohemia
 
 **Source PID:** `GMBS-DQZ`
 **Matěj Janovský is deceased.** (FamilySearch ToS requires
@@ -28,19 +28,66 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 8, `hint-samples.csv` row 239,
-flags `adds_spouse,adds_son`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Czech Republic, Church Books, 1552-1981", a Malšice baptism entry for Josef Janovsky, born 25 January 1874 and baptised the next day, naming his father Matěj Janovský and his mother only as Marie, with no surname. Retrieval was tool-assisted (`dev/try-record-read.ts`).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Marie as his wife and Josef (1874) as his son, plus a `required` finding that the report documents
-the rejection.
+**Resolved: FALSE MATCH, answerable differently (outcome 2)** (adjudicated 2026-10-28;
+identity `different`; `image_basis: true`). Retrieval was tool-assisted (`dev/try-record-read.ts`,
+`dev/try-record-search.ts`, and `dev/try-image-transcribe.ts` for the register pages); the
+genealogist opened the deciding records on familysearch.org and made the identity call.
 
-The place fits exactly: the hint is a Malšice baptism and the subject married at Malšice in 1866, so this is the same parish and the same name. The tree does not already cite this entry or any 1874 record; the subject's only source is his 1866 marriage.
+**The hint is another man.** The hint (`ark:/61903/1:1:657F-BZDF`, father persona in the
+26 Jan 1874 Malšice baptism of Josef, `ark:/61903/1:1:657F-BZDD`) names a Matěj Janovský and a
+mother Marie, with no surnames. Malšice was home to at least three married Matěj Janovskýs in the
+period, each indexed with his own parents:
 
-The mother's name is the problem. The tree's wife is Kateřina Votýpková, married seven years earlier, and the hint's mother is Marie. That leaves three readings: Kateřina died between 1866 and 1873 and Matěj remarried a Marie; a second Matěj Janovský lived in the parish; or the indexer took the wrong name from the entry. Czech baptism registers of this period name the mother with her own parents and give the family's house number, so the discriminating check is the baptism image linked from the hint record: the mother's maiden name and parents, and whether the house number matches the groom's on the 1866 marriage entry. If she is Kateřina daughter of Josef Votýpka, the hint is the right family with an index error and the "wife" finding becomes (b). A Malšice burial for Kateřina before 1874, or a second marriage entry for Matěj, would settle the remarriage reading.
+| Groom | His parents | Bride | Marriage | Index ark |
+|---|---|---|---|---|
+| **Tree person**, b. ~1843 | Ján Janovský & Anna Háková | Kateřina Votýpková (dau. Josef Votýpka & Anna Peštová) | 27 Oct 1866 | `ark:/61903/1:1:QG1P-HL64` |
+| b. ~1840 | Matěj Janovský & Anna Matějčková | Marie Sokorová (dau. Vojtěch Sokora & Anna Hermanová) | 23 May 1871 | `ark:/61903/1:1:QG1P-68DD` |
+| b. ~1840 | Václav Janovský & Kateřina Háková | Marie Fialová | 7 Jan 1873 | `ark:/61903/1:1:QG1P-QKZ7` |
+
+**What decided it (direct evidence).** The baptism of **František**, born 4 Oct 1874 at Malšice
+no. 80 and baptised the next day (`ark:/61903/1:1:657F-KZ8N`), is indexed to "Matěj Janovský" and
+"Kateřina". Its register page (`ark:/61903/3:1:3QSQ-G93W-H9L5-B`) names the father as **son of Jan
+Janovský and Anna Haklová (Háková)** and the mother as **Kateřina, daughter of Josef Vo[týpka] and
+Anna Peštová**, the same parents as on the 1866 marriage. So eight months after Josef's January 1874
+baptism, the tree person was still married to Kateřina and having children with her. No Malšice
+burial of a Kateřina Janovská (1866–1890) and no second marriage of the tree person turned up in
+"Czech Republic, Church Books, 1552-1981", so the remarriage reading has nothing behind it. The two
+grooms who married a Marie before 1874 are the hint's candidates.
+
+**Image calibration.**
+- **František's page (`3:1:3QSQ-G93W-H9L5-B`): licensed.** Two other indexed entries on the page
+  were compared and both matched on child, father, mother, day and month: Marie Šedivá (b. 24, bp.
+  25 Sep 1874, father Václav Šedivý, mother Anna; `ark:/61903/1:1:657F-TVSR`) and Marie Matějčková
+  (b./bp. 25 Sep 1874, father Jan Matějček, mother Veronika; `ark:/61903/1:1:657F-KZZW`). The OCR
+  labelled the year column "[1870]", carried down from the page's first row; the index has all three
+  entries in 1874, so the year comes from the index, not the reading. The house number (no. 80) is
+  not licensed by the check and is not relied on.
+- **Josef's page (`3:1:3QSQ-G93W-H9LR-R`): unlicensed.** Only one other entry on the page was found
+  in the index (Josefa Černá, b. 28, bp. 29 Jan 1874, father Vojtěch Černý, mother Veronika;
+  `ark:/61903/1:1:657F-BZXY`, which matched). The model's OCR misread the other page-mates' names
+  (a reviewer reads them as Terezie Marie Papáčová, Marie Švecová and Jan Fiala), so the searches run
+  under the OCR spellings found none, and the page was not licensed. Unchecked, the reading points at
+  the 1871 groom of Marie Sokorová. **Nothing in the fixture rests on that reading**: f3 names neither
+  of the two other grooms as the hint's father, and the rejection stands on the licensed František
+  page and the indexes alone.
+
+**The findings.**
+- **f1 (required)** is František, born 1874, mother Kateřina Votýpková, image-confirmed.
+- **f2 (not required)** is a daughter Anna, b. 17 May 1869, bp. 18 May 1869
+  (`ark:/61903/1:1:657F-1961`), indexed to "Matěj Janovský" and "Kateřina". Her page
+  (`ark:/61903/3:1:3QS7-L93W-H9JM-4`) was not read, so her link to this Matěj rests on him being the
+  only Matěj Janovský found marrying a Kateřina at Malšice. That is why she is not required.
+- **f3 (avoid)** fails an agent that gives Matěj a wife Marie or the son Josef (1874). Its
+  description says only that the hint belongs to another Matěj Janovský who married a Marie at
+  Malšice before 1874; the indexes leave two such grooms (1871 and 1873) and it names neither. Its
+  `target_person` is "Marie Janovská", the wrong wife under her married name (with "Marie Janovsky",
+  the unaccented spelling the starting tree uses for the family, as `alternate_name`), rather than Josef,
+  because the starting tree already holds Matěj's brother **Josef Janovský** (`LZG9-NLS`); naming
+  Josef would make the avoid-guard's name matcher fire on the brother in every run. The judge still
+  grades the Josef half from the description.
+
+Other Matěj-and-Marie baptisms at Malšice belong to the same other family and are not the tree
+person's: Anna, bp. 11 Jan 1875 (`ark:/61903/1:1:657F-1SW2`), and František, bp. 12 Feb 1877
+(`ark:/61903/1:1:657F-YVF4`).
 
 One thing to note in passing: the 1866 marriage entry indexes the groom with an Anna Háková, while the tree's mother for him is Anna Puncochar of the Kolín district, some 80 km away. The tree's parents for Matěj may be a separate mis-attachment. That does not affect this question.

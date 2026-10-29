@@ -95,9 +95,6 @@ export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
  *  `project` and `researcher_profile` are absent from both lists because they
  *  are objects, not arrays, and this tool pages arrays. */
 export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
-  known_holdings:
-    "write-only; issue #2069 deletes it from the schema, so exposing it here " +
-    "would create a contract that card then has to remove",
   warning_justifications:
     "writer-tool only; persisted by the warning gate as a side-effect of a " +
     "justified write. No tool returns it, and no agent needs it to",

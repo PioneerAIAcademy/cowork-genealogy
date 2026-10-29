@@ -24,6 +24,7 @@ import os
 import sys
 from pathlib import Path
 
+from harness.skill_runner import load_step_boundary
 from e2e.orchestrator import (
     DEFAULT_FIXTURES_ROOT,
     DEFAULT_MCP_SERVER_ENTRY,
@@ -363,6 +364,19 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--step-mode",
+        choices=("step", "job"),
+        default=None,
+        help=(
+            "Run under step mode (docs/plan/research-step-mode.md section F): one "
+            "persistent session, one step per turn, each boundary answered by the "
+            "host's own next_auto_reply. `job` opens as a \"Keep going\" run, which "
+            "is what a fixture that should reach a proof wants; `step` runs one step "
+            "and stops. Default off: the one long turn every committed run used. "
+            "Recorded in the runlog's usage block as `step_mode`."
+        ),
+    )
+    parser.add_argument(
         "--deny-shell",
         action="store_true",
         help=(
@@ -385,7 +399,38 @@ def main(argv: list[str] | None = None) -> int:
             "the runlog's usage block."
         ),
     )
+    parser.add_argument(
+        "--wrap-up-after",
+        metavar="STEP",
+        default=None,
+        help=(
+            "Answer \"Wrap it up.\" after the named step instead of what "
+            "next_auto_reply chose, which exercises B2's link-then-conclude path "
+            "(section F's separate arm). The step is a bare agent name, e.g. "
+            "search-records. Needs --step-mode; the run ends after that reply, "
+            "because the turn it opens reads `wrapup`."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    # Three shapes used to exit 0 having done nothing, and record
+    # `usage.wrap_up_after` as if the arm had run: no --step-mode, --step-mode
+    # step (where `next_auto_reply` never replies, so there is nothing to swap),
+    # and a step name the gate never records -- a misspelling, or a GROUP key
+    # like `search` rather than the member `search-records`. A bought run that
+    # measures nothing is the failure worth refusing loudly.
+    if args.wrap_up_after and args.step_mode != "job":
+        print("--wrap-up-after needs --step-mode job: only a job turn gets a host "
+              "reply, so under any other mode there is nothing to override.",
+              file=sys.stderr)
+        return 2
+    if args.wrap_up_after:
+        known = {s for group in load_step_boundary().GROUPS.values() for s in group}
+        if args.wrap_up_after not in known:
+            print(f"--wrap-up-after {args.wrap_up_after!r} is no step the gate "
+                  f"records, so the override could never fire. One of: "
+                  f"{', '.join(sorted(known))}.", file=sys.stderr)
+            return 2
 
     fixtures_root: Path = args.fixtures_root
     if not fixtures_root.exists():
@@ -481,6 +526,8 @@ def main(argv: list[str] | None = None) -> int:
         "deny_project_reads": args.deny_project_reads,
         "context_1m": args.context_1m,
         "tool_search": args.tool_search,
+        "step_mode": args.step_mode,
+        "wrap_up_after": args.wrap_up_after,
     }
 
     results: list[E2eResult] = []
