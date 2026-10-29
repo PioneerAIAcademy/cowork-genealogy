@@ -83,9 +83,10 @@ import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
+  loadStoredCollectionUrls,
   readExternalCollections,
-  storedCollectionKeys,
   EXTERNAL_COLLECTIONS_FILE,
+  type StoredCollectionUrls,
   type ExternalCollectionsDoc,
   type StoredCollectionRow,
 } from "../utils/external-collections-store.js";
@@ -5556,20 +5557,6 @@ function planItemSkipInvariants(
     );
   }
   return errors;
-}
-
-/** The curated collections in `external-collections.json`, by `collectionKey`, or
- *  why they could not be read. Every place's rows, so a plan item's free-text
- *  jurisdiction never has to be matched to a stored place. Read once per call,
- *  before the sync apply loop, and only when an op sets `collection_url`. */
-export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
-
-async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
-  try {
-    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
-  }
 }
 
 /** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's

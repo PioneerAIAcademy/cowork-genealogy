@@ -50,12 +50,19 @@ export function closesHandOff(entry: any, url: string): boolean {
  * entry logged with `capture_received: false` already had its results in hand
  * (alpha feedback #2864, `log_012`/`log_013`) and is not waiting on anyone.
  */
+/** The entry shape that opens a hand-off: a `partial` with no capture yet. One
+ *  rule for the log reader below and for `research_log_append`'s collection
+ *  guard, which refuses a new one for an invented collection. */
+export function opensHandOff(outcome: unknown, captureReceived: unknown): boolean {
+  return outcome === "partial" && captureReceived === false;
+}
+
 export function awaitingUserHandOffs(log: unknown): AwaitingHandOff[] {
   const entries: any[] = Array.isArray(log) ? log : [];
   const open: AwaitingHandOff[] = [];
   entries.forEach((entry, i) => {
     const ext = externalSiteOf(entry);
-    if (ext === null || entry.outcome !== "partial" || ext.capture_received !== false) return;
+    if (ext === null || !opensHandOff(entry.outcome, ext.capture_received)) return;
     if (typeof entry.id !== "string") return;
     if (entries.slice(i + 1).some((later) => closesHandOff(later, ext.url_generated))) return;
     open.push({
