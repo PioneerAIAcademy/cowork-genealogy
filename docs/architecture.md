@@ -653,6 +653,13 @@ Architecturally:
   have a live spec, and the spec is what the implementation gets checked
   against. Copy `src/tools/wikipedia.ts` and its sibling four files as the
   template.
+- **Every key the handler reads is on the schema.** `server.ts` refuses any
+  argument key absent from the tool's `inputSchema.properties` before the
+  handler runs (`rejectUnknownArgs`, `src/utils/unknown-args.ts`), so a key the
+  handler reads but the schema omits is unreachable over MCP while every
+  handler-level test stays green. Advertise it, or, for a deliberate unadvertised
+  alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
+  that list). The unit harness calls handlers directly and never runs the guard.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
