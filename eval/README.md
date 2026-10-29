@@ -246,6 +246,10 @@ applying a **PR label** — no branch checkout, no commands, nothing to install.
 
 The same label waives rule 2c for that skill, so a typo fix in an advertised tool description does not owe a paid re-run either.
 
+A waiver is applied once, on the PR that makes the change. Later PRs do not
+re-apply it: a run log they did not add blocks only on what they changed
+themselves, and staleness `main` already carries only warns.
+
 **The waiver is per skill.** The label is `eval-cosmetic-skip:<skill>`, where
 `<skill>` is the name in `eval/runlogs/unit/<skill>/` — the name rule 2's error
 prints. It waives that one skill. Every other skill the PR touches keeps the

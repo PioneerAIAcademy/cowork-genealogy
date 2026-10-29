@@ -2067,6 +2067,54 @@ def test_rules_2_and_2b_grade_the_candidate_the_pr_adds_not_a_newer_release(
     assert "v3.json" not in out
 
 
+@pytest.mark.parametrize("pr_edits_the_stale_file", [False, True], ids=["main-had-it", "pr-made-it"])
+def test_rule2_fallback_blocks_only_on_a_file_the_pr_changed(
+    tmp_path, monkeypatch, capsys, pr_edits_the_stale_file
+):
+    """An annotation-only PR on a skill whose latest log main had already left stale
+    (a cosmetic-skip waiver on the PR that made the change) warns. The same PR also
+    editing the stale file owes the re-run, and blocks."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False)
+    paths = [f"{_RUNLOGS_REL}/v3.ann.json"] + ([_TRACKED_REL] if pr_edits_the_stale_file else [])
+    _patch_diffs(monkeypatch, paths)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_edits_the_stale_file:
+        assert rc == 1 and _violations(out) == 1
+        assert "`v3.json`" in _only_line(out, "NOT active")
+        assert "none of which this PR changed" not in out
+    else:
+        assert rc == 0
+        warned = _only_line(out, "none of which this PR changed")
+        assert warned.startswith("::warning") and "`v3.json`" in warned
+        assert "NOT active" not in out
+
+
+@pytest.mark.parametrize("pr_adds_the_log", [True, False], ids=["own-log", "main-log"])
+def test_main_compares_rule2c_with_main_only_on_a_log_the_pr_did_not_add(
+    tmp_path, monkeypatch, capsys, pr_adds_the_log
+):
+    """`main` moved `tools.fixture` before this PR. A log the PR adds must still match
+    the tree it merges into; main's own latest log only warns."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    name = "v3_2026-10-29_10-00-00.json" if pr_adds_the_log else "v3.json"
+    _put_runlog(skill_dir, name, active=True, instrument=_instr())
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_instrument", lambda skill: _instr(tools__fixture=_H["0"]))
+    _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" if pr_adds_the_log else f"{_RUNLOGS_REL}/v3.ann.json"])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_adds_the_log:
+        assert rc == 1 and "tools.fixture" in _only_line(out, "::error")
+        assert "already has that change" not in out
+    else:
+        assert rc == 0, out
+        assert "tools.fixture" in _only_line(out, "already has that change")
+
+
 def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
     tmp_path, monkeypatch, capsys
 ):
@@ -2826,6 +2874,119 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
     assert rc == 1
     out = capsys.readouterr().out
     assert "::error" in out and "tool-schemas.js" in out
+
+
+# A suite-specific half main already has at its current value was waived or owed
+# on the PR that moved it (#4017 moved `wiki_read` for 8 suites and waived them;
+# every later PR touching engine source inherited the 8 blocks). It warns.
+
+
+@pytest.mark.parametrize("half", ["validators__suite", "tools__fixture"])
+def test_rule2c_warns_on_a_half_main_already_has(monkeypatch, capsys, half):
+    _stub_current_instrument(monkeypatch, _instr(**{half: _H["0"]}))
+    monkeypatch.setattr(check_runlogs, "base_instrument", lambda skill: _instr(**{half: _H["0"]}))
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::error" not in out
+    assert "::warning" in out and "`main` already has that change" in out
+    assert half.replace("__", ".") in out
+
+
+@pytest.mark.parametrize(
+    "base",
+    [_instr(), _instr(tools__fixture=_H["1"]), None],
+    ids=["base-unmoved", "base-moved-elsewhere", "no-base"],
+)
+def test_rule2c_blocks_on_a_half_this_pr_moved(monkeypatch, capsys, base):
+    """`main` at the stored value, `main` at a third value, or no base to read: the PR
+    moved the half, or nothing says it did not."""
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_instrument", lambda skill: base)
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out and "tools.fixture" in out
+    assert "already has that change" not in out
+
+
+def test_rule2c_blocks_and_skips_main_when_the_pr_added_the_log(monkeypatch, capsys):
+    """A log the PR adds is its own evidence: it must match the tree it merges into."""
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_instrument", lambda skill: pytest.fail("base read for the PR's own log")
+    )
+    rc = check_runlogs.rule2c_instrument(
+        "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", compare_base=False
+    )
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2c_reads_no_base_when_only_a_corpus_wide_half_moved(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(tools__live=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_instrument", lambda skill: pytest.fail("base read for a warn-only half")
+    )
+    assert check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json") == 0
+
+
+def test_base_instrument_reads_the_base_checkout(monkeypatch, tmp_path):
+    seen = {}
+
+    def _load(build, **kwargs):
+        seen["build"] = build
+        return {"t": {}}
+
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    check_runlogs._base_tool_catalog.cache_clear()
+    monkeypatch.setattr(check_runlogs, "load_tool_catalog", _load)
+    monkeypatch.setattr(
+        check_runlogs, "instrument_for", lambda skill, root, **k: {"root": root, "catalog": k["catalog"]}
+    )
+    got = check_runlogs.base_instrument("demo")
+    check_runlogs._base_tool_catalog.cache_clear()
+    assert got == {"root": tmp_path, "catalog": {"t": {}}}
+    assert seen["build"] == tmp_path / "packages" / "engine" / "mcp-server" / "build"
+
+
+def test_base_instrument_is_none_with_no_base_tree(monkeypatch):
+    monkeypatch.delenv("BASE_TREE", raising=False)
+    monkeypatch.setattr(check_runlogs, "_base_tool_catalog", lambda root: pytest.fail("catalog read"))
+    assert check_runlogs.base_instrument("demo") is None
+
+
+def test_base_instrument_warns_once_when_the_base_catalog_cannot_be_read(monkeypatch, tmp_path, capsys):
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    check_runlogs._base_tool_catalog.cache_clear()
+    assert check_runlogs.base_instrument("demo") is None
+    assert check_runlogs.base_instrument("other") is None
+    check_runlogs._base_tool_catalog.cache_clear()
+    out = capsys.readouterr().out
+    assert out.count("::warning") == 1 and "main's tool catalog" in out and "tool-schemas.js" in out
+
+
+_AGENT_REL = "packages/engine/plugin/agents/scout.md"
+
+
+@pytest.mark.parametrize(
+    "key, pr_paths, frontmatter_changed, expected",
+    [
+        (_TRACKED_REL, {_TRACKED_REL}, None, True),
+        (_TRACKED_REL, {"some/other/file.md"}, None, False),
+        (_AGENT_REL + "#frontmatter", {_AGENT_REL}, True, True),
+        (_AGENT_REL + "#frontmatter", {_AGENT_REL}, False, False),
+        (_AGENT_REL + "#frontmatter", set(), None, False),
+    ],
+    ids=["changed", "untouched", "frontmatter-changed", "body-only", "agent-untouched"],
+)
+def test_pr_changed_snapshot_key(monkeypatch, key, pr_paths, frontmatter_changed, expected):
+    def _changed(agent):
+        assert agent == "scout" and frontmatter_changed is not None
+        return frontmatter_changed
+
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed)
+    assert check_runlogs.pr_changed_snapshot_key(key, pr_paths) is expected
 
 
 @pytest.mark.parametrize(

@@ -9,7 +9,9 @@ name: Check runlog discipline
 #   released v{N}.json it adds, else its newest candidate) must be "active
 #   on skill-side files": its embedded snapshot matches the current
 #   PR-branch state of all snapshot-tracked files. A PR that adds no run
-#   log is held to the latest full-skill run log on disk instead.
+#   log is held to the run log that landed on main last instead, and that
+#   one blocks only on a file this PR changed; staleness main already had
+#   warns.
 #
 #   Rule 2b (blocking on a judge-prompt PR): The same run log's
 #   judge_prompt_hash matches the current eval/harness/judge/prompt.md.
@@ -20,8 +22,9 @@ name: Check runlog discipline
 #   `instrument` fingerprint matches the current validators and advertised
 #   tool schemas. A change to the suite's own validator file or to a tool its
 #   fixtures serve blocks; a change to the shared validators, the LIVE_TOOLS
-#   schemas or a live tool's compiled module warns. Needs the engine build,
-#   so this job builds it.
+#   schemas or a live tool's compiled module warns, and so, on a log the PR
+#   did not add, does a change main already had. Needs the engine built at the
+#   PR and at its base, so this job builds both.
 #
 #   Rule 3 (blocking): The same run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
@@ -221,11 +224,26 @@ jobs:
           npm ci
           npm run build
 
+      # Rule 2c blocks only on an instrument change this PR makes. One main already
+      # has -- waived on the PR that made it -- warns, so later PRs do not inherit
+      # it. Telling the two apart needs main's tool catalog as well as this PR's.
+      - name: Build the engine at the base (rule 2c compares against main's catalog)
+        if: steps.scope.outputs.needs_engine == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+          cd "$RUNNER_TEMP/base/packages/engine/mcp-server"
+          npm ci
+          npm run build
+
       - name: Run runlog discipline checks
         if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # The base checkout built above. Unset on a PR that grades no suite.
+          BASE_TREE: ${{ steps.scope.outputs.needs_engine == 'true' && format('{0}/base', runner.temp) || '' }}
           # Raw PR label names, one per line (empty on a push). Set through env,
           # never interpolated into a script: a label name is repo-controlled text.
           COSMETIC_SKIP_LABELS: ${{ steps.cosmetic.outputs.labels }}
